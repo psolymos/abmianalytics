@@ -1,6 +1,7 @@
 ROOT <- "y:/Oracle_access_2015"
 getwd()
-source("R/00globalvars.R")
+if (interactive())
+    source("~/repos/abmianalytics/species/R/00globalvars.R") else source("R/00globalvars.R")
 
 T <- "Mosses"
 if (do.prof) {
@@ -108,8 +109,9 @@ sum(grepl("ALPAC-SK", rownames(xt)))
 ## get taxonomy
 z <- nonDuplicated(res[!(res$SCIENTIFIC_NAME %in% c("VNA", "DNC")),],
     res$SCIENTIFIC_NAME[!(res$SCIENTIFIC_NAME %in% c("VNA", "DNC"))], TRUE)
+rownames(z) <- z$sppnam
 ## add here higher taxa too
-z <- z[,c("TSN_ID","COMMON_NAME","SCIENTIFIC_NAME","RANK_NAME")]
+z <- z[,c("TSN_ID","COMMON_NAME","SCIENTIFIC_NAME","RANK_NAME","sppnam")]
 z2 <- taxo[taxo$SCIENTIFIC_NAME %in% z$SCIENTIFIC_NAME,]
 z <- data.frame(z, z2[match(z$SCIENTIFIC_NAME, z2$SCIENTIFIC_NAME),setdiff(colnames(taxo), colnames(z))])
 #z[] <- lapply(z, function(z) z[drop=TRUE])
@@ -135,15 +137,19 @@ tmp <- m@taxa$SCIENTIFIC_NAME
 tmp <- sapply(strsplit(as.character(tmp)," "), function(z) {
     if (z[1]=="X") {
         dd <- if (length(z) == 2)
-            paste(z[2], "spp.") else paste(z[2], z[3])
+            #paste(z[2], "spp.") else paste(z[2], z[3])
+            z[2] else paste(z[2], z[3])
         return(dd)
     }
     if (length(z) == 1)
-        paste(z[1], "spp.") else paste(z[1], z[2])
+        #paste(z[1], "spp.") else paste(z[1], z[2])
+        z[1] else paste(z[1], z[2])
     })
 taxa(m)$SpeciesFinal <- as.factor(tmp)
 zz <- nonDuplicated(m@taxa, m@taxa$SpeciesFinal, TRUE)
 m <- groupSums(m, 2, m@taxa$SpeciesFinal, replace=zz)
+colnames(m) <- nameAlnum(colnames(m),"first",collapse="")
+
 xtab(m) <- as(xtab(m) > 0, "dgCMatrix") # can be >1 due to COMM_DOM
 table(m@taxa$RANK_NAME) # here are sub-specific levels
 
