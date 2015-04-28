@@ -1,14 +1,15 @@
-source("y:/Oracle_access/src2/00globalvars.R")
+ROOT <- "y:/Oracle_access_2015"
+getwd()
+source("R/00globalvars.R")
+
 T <- "VPlants"
+
 if (do.prof) {
     proffile <- paste(D, "OUT_", tolower(T), d, ".Rprof",sep="")
     Rprof(proffile)
 }
-## load mefa4 package
-stopifnot(require(mefa4))
-## load package RODBC
-stopifnot(require(RODBC))
-## extablish connection
+
+if (FALSE) {## extablish connection
 con <- odbcConnectAccess2007(DBVERSION)
 ## queries
 res <- sqlQuery(con, paste("SELECT * FROM CSVDOWNLOAD_A_RT_VASCULAR_PLANT_V"))
@@ -16,6 +17,7 @@ res <- sqlQuery(con, paste("SELECT * FROM CSVDOWNLOAD_A_RT_VASCULAR_PLANT_V"))
 taxo <- sqlQuery(con, paste("SELECT * FROM PUBLIC_ACCESS_PUBLIC_DETAIL_TAXONOMYS"))
 ## close connection
 close(con)
+}
 
 ## Labels etc
 rr <- LabelFun(res)
@@ -51,6 +53,8 @@ levels(res$SCIENTIFIC_NAME) <- sapply(strsplit(levels(res$SCIENTIFIC_NAME), " ")
 
 res$SPECIES_OLD <- res$SCIENTIFIC_NAME
 levels(res$SCIENTIFIC_NAME) <- nameAlnum(levels(res$SCIENTIFIC_NAME), capitalize="mixed", collapse="")
+res$SCIENTIFIC_NAME <- droplevels(res$SCIENTIFIC_NAME)
+
 xt <- Xtab(~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 
     rdrop=qs.to.exclude, drop.unused.levels = FALSE)
 xt[xt>0] <- 1

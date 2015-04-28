@@ -1,5 +1,6 @@
 ROOT <- "y:/Oracle_access_2015"
-source(file.path(ROOT, "R/00globalvars.R"))
+getwd()
+source("R/00globalvars.R")
 
 T <- "Mites"
 if (do.prof) {
@@ -94,6 +95,8 @@ res$count <- as.integer(res$count)
 
 res$SPECIES_OLD <- res$SCIENTIFIC_NAME
 levels(res$SCIENTIFIC_NAME) <- nameAlnum(levels(res$SCIENTIFIC_NAME), capitalize="mixed", collapse="")
+res$SCIENTIFIC_NAME <- droplevels(res$SCIENTIFIC_NAME)
+
 xt <- Xtab(count ~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 
     rdrop=qs.to.exclude, drop.unused.levels = FALSE)
 #xt <- Xtab(~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 

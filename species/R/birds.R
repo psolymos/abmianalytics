@@ -1,5 +1,6 @@
 ROOT <- "y:/Oracle_access_2015"
-source(file.path(ROOT, "R/00globalvars.R"))
+getwd()
+source("R/00globalvars.R")
 
 T <- "Birds"
 if (do.prof) {
@@ -70,6 +71,8 @@ pcs.to.exclude <- setdiff(tmp001, tmp002)
 ## crosstab
 res$SPECIES_OLD <- res$COMMON_NAME
 levels(res$COMMON_NAME) <- nameAlnum(levels(res$COMMON_NAME), capitalize="mixed", collapse="")
+res$COMMON_NAME <- droplevels(res$COMMON_NAME)
+
 xt <- Xtab(~ Label + COMMON_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 
     rdrop=pcs.to.exclude, drop.unused.levels = FALSE)
 #xt <- Xtab(~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 

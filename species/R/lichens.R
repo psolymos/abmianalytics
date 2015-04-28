@@ -1,5 +1,6 @@
 ROOT <- "y:/Oracle_access_2015"
-source(file.path(ROOT, "R/00globalvars.R"))
+getwd()
+source("R/00globalvars.R")
 
 T <- "Lichens"
 if (do.prof) {
@@ -114,6 +115,7 @@ qs.to.exclude <- unique(as.character(res$Label[res$Label2 %in% pcs.to.exclude]))
 ## crosstab
 res$sppnam <- res$SCIENTIFIC_NAME
 levels(res$sppnam) <- nameAlnum(levels(res$sppnam),"first",collapse="")
+res$sppnam <- droplevels(res$sppnam)
 
 xt <- Xtab(~ Label + sppnam, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 
     rdrop=qs.to.exclude, drop.unused.levels = FALSE)
