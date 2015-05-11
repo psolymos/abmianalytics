@@ -44,3 +44,7 @@ Temporary Items
 
 # output files from scripts
 /species/out/*
+
+## R related files
+*.Rdata
+*.Rhistory

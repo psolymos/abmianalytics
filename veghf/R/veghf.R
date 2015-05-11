@@ -1,0 +1,1619 @@
+##% Processing backfilled veg + HF (cutblock ages incorporated)
+##% P Solymos
+##% April 28, 2015
+
+## root directory
+ROOT <- "c:/p"
+## version (structure is still in change, so not really useful)
+VER <- "AB_data_v2015"
+## current year
+THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
+
+library(mefa4)
+source("~/repos/abmianalytics/veghf/R/veghf_functions.R")
+
+hftypes <- read.csv(file.path(ROOT, VER, "lookup/HFtype_lookup_20150428.csv"))
+hfgroups <- read.csv(file.path(ROOT, VER, "lookup/HFclassification_20150428.csv"))
+hflt <- hfgroups[match(hftypes$HF_GROUP, hfgroups$HF_GROUP),]
+rownames(hflt) <- hftypes$FEATURE_TY
+
+## ABMI sites and points, all scales --------------------------------------------
+
+f1ha <- file.path(ROOT, VER, "data/veghf", "Center1ha.csv")
+d1ha <- read.csv(f1ha)
+d1ha$Site_YEAR <- with(d1ha, interaction(ABMI_Assigned_Site_ID, survey_year, sep="_", drop=TRUE))
+dd1ha <- make_vegHF_wide(d1ha, col.label = "Site_YEAR", col.year="survey_year")
+dd1ha$scale <- "1 ha square around site centre"
+
+f150m <- file.path(ROOT, VER, "data/veghf", "Bird150m.csv")
+d150m <- read.csv(f150m)
+d150m$Site_YEAR_bird <- with(d150m, 
+    interaction(Site_ID, Bird, survey_year, sep="_", drop=TRUE))
+dd150m <- make_vegHF_wide(d150m, col.label = "Site_YEAR_bird", col.year="survey_year")
+dd150m$scale <- "150 m radius circle around bird points"
+
+f1km <- file.path(ROOT, VER, "data/veghf", "Bird564m.csv")
+d1km <- read.csv(f1km)
+d1km$Site_YEAR_bird <- with(d1km, 
+    interaction(Site_ID, survey_year, Bird, sep="_", drop=TRUE))
+dd1km <- make_vegHF_wide(d1km, col.label = "Site_YEAR_bird", col.year="survey_year")
+dd1km$scale <- "564 m radius circle around bird points"
+
+
+
+
+## old --
+
+SITES <- data.frame(SITE_YEAR=rownames(dd1ha$veg_current))
+tmp <- sapply(rownames(dd1ha$veg_current), strsplit, "_")
+SITES$SITE <- sapply(tmp, "[[", 1)
+SITES$YEAR <- as.integer(sapply(tmp, "[[", 2))
+
+tmp <- strsplit(SITES$SITE, "-")
+ll <- sapply(tmp, length)
+SITES$NEAREST <- as.integer(sapply(1:length(ll), function(i) 
+    tmp[[i]][ifelse(ll[i]==4, 3, 1)]))
+REG <- read.csv(file.path(ROOT, VER, "data/clim", "RegionsWithPublicCoords.csv"))
+SITES$NR <- REG$NATURAL_REGIONS[match(SITES$NEAREST, REG$SITE_ID)]
+SITES$NSR <- REG$NATURAL_SUBREGIONS[match(SITES$NEAREST, REG$SITE_ID)]
+SITES$PUBLIC_X <- REG$PUBLIC_LONGITUDE[match(SITES$NEAREST, REG$SITE_ID)]
+SITES$PUBLIC_Y <- REG$PUBLIC_LATTITUDE[match(SITES$NEAREST, REG$SITE_ID)]
+
+POINTS <- data.frame(SITE_YEAR_POINT=rownames(ddpt$veg_current))
+tmp <- sapply(rownames(ddpt$veg_current), strsplit, "_")
+POINTS$SITE <- sapply(tmp, "[[", 1)
+POINTS$YEAR <- as.integer(sapply(tmp, "[[", 2))
+POINTS$SITE_YEAR <- interaction(POINTS$SITE, POINTS$YEAR, sep="_", drop=TRUE)
+POINTS$BIRDPT <- as.integer(sapply(tmp, "[[", 3))
+POINTS$NEAREST <- SITES$NEAREST[match(POINTS$SITE, SITES$SITE)]
+POINTS$NR <- REG$NATURAL_REGIONS[match(POINTS$NEAREST, REG$SITE_ID)]
+POINTS$NSR <- REG$NATURAL_SUBREGIONS[match(POINTS$NEAREST, REG$SITE_ID)]
+POINTS$PUBLIC_X <- REG$PUBLIC_LONGITUDE[match(POINTS$NEAREST, REG$SITE_ID)]
+POINTS$PUBLIC_Y <- REG$PUBLIC_LATTITUDE[match(POINTS$NEAREST, REG$SITE_ID)]
+
+CLIM <- read.csv(file.path(ROOT, VER, "data/clim", "climateVariablesOnBirdPoints.csv"))
+colnames(CLIM)[colnames(CLIM)=="Populus_tremuloides_brtpred_nofp"] <- "pAspen"
+colnames(CLIM)[colnames(CLIM)=="Eref"] <- "PET"
+tmp <- unname(sapply(as.character(CLIM$Site_ID), strsplit, "_"))
+CLIM$SITE <- sapply(tmp, "[[", 1)
+CLIM$YEAR <- as.integer(sapply(tmp, "[[", 2))
+CLIM$SITE_YEAR_POINT <- interaction(CLIM$SITE, CLIM$YEAR, CLIM$Bird, sep="_", drop=TRUE)
+CLIM1 <- CLIM[CLIM$Bird == 1,]
+
+SITES <- data.frame(SITES, CLIM1[match(SITES$SITE_YEAR, CLIM1$Site_ID),
+    c("AHM", "PET", "FFP", "MAP", "MAT", "MCMT", "MWMT", "pAspen")])
+POINTS <- data.frame(POINTS, CLIM[match(POINTS$SITE_YEAR_POINT, CLIM$SITE_YEAR_POINT),
+    c("AHM", "PET", "FFP", "MAP", "MAT", "MCMT", "MWMT", "pAspen")])
+
+rownames(SITES) <- as.character(SITES$SITE_YEAR)
+rownames(POINTS) <- as.character(POINTS$SITE_YEAR_POINT)
+
+## O2 extra
+o2 <- read.csv(file.path(ROOT, VER, "data/veghf/birds_int_o2_tbl.csv"))
+o2$SITE_YEAR_POINT <- interaction(o2$Site_ID, o2$Bird, drop=TRUE, sep="_")
+o2 <- nonDuplicated(o2, o2$SITE_YEAR_POINT, TRUE)
+rownames(o2) <- o2$SITE_YEAR_POINT
+#o2 <- o2[rownames(POINTS),c("SITE_YEAR_POINT","meff_v2_km", "meff_v1_km", "meff_fores", "meff_nonfo")]
+o2 <- o2[rownames(POINTS),]
+
+save(POINTS, SITES, dd1ha, o2, dd1km, ddpt, ddqs, ddcp, file=file.path(ROOT, VER, "R/veghf_abmi_allscales.Rdata"))
+
+
+
+## treat forestry as plain forest except recent CC
+cn <- colnames(vhf)
+
+#cn[!grepl("CC", cn) & substr(cn, nchar(cn), nchar(cn)) == "R"] <- "Burn"
+#cn[grepl("CC", cn) & substr(cn, nchar(cn), nchar(cn)) == "R"] <- "RecentClearcut"
+#cn[grepl("CCOpen", cn)] <- "RecentClearcut"
+
+cn[!grepl("CC", cn) & substr(cn, nchar(cn), nchar(cn)) == "R"] <- "Burn"
+cn[grepl("CC", cn) & substr(cn, nchar(cn), nchar(cn)) == "R"] <- "HFor"
+cn[grepl("CCOpen", cn)] <- "HFor"
+
+cn[grepl("Deciduous", cn)] <- "Deciduous"
+cn[grepl("Mixedwood", cn)] <- "Mixedwood"
+cn[grepl("WhiteSpruce", cn)] <- "WhiteSpruce"
+cn[grepl("Pine", cn)] <- "Pine"
+cn[grepl("BlackSpruce", cn)] <- "TreedWetland"
+cn[grepl("LarchFen", cn)] <- "TreedWetland"
+cn[grepl("Swamp", cn)] <- "OpenWetland"
+cn[grepl("Marsh", cn)] <- "OpenWetland"
+cn[cn %in% c("CultivationCropPastureBareground",
+    "HighDensityLivestockOperation")] <- "Cult"
+cn[cn %in% c("Water", "BorrowpitsDugoutsSumps",
+    "MunicipalWaterSewage","Reservoirs","Canals")] <- "Water"
+cn[cn %in% c("Urban","RuralResidentialIndustrial",
+    "IndustrialSiteRural","WindGenerationFacility",
+    "OtherDisturbedVegetation","MineSite","PeatMine","WellSite")] <- "UrbInd"
+cn[cn %in% c("Pipeline","TransmissionLine","SeismicLine","RoadTrailVegetated",
+    "RoadVegetatedVerge","RailVegetatedVerge")] <- "SoftLin"
+cn[cn %in% c("RoadHardSurface", "RailHardSurface")] <- "HardLin"
+cn2 <- cn
+cn[grepl("Bog", cn)] <- "OpenWetland"
+cn[grepl("Fen", cn)] <- "OpenWetland"
+#cn2[grepl("Bog", cn2)] <- "TreedWetland"
+#cn2[grepl("Fen", cn2)] <- "TreedWetland"
+
+vhf2 <- groupSums(vhf, 2, cn)
+vhf2b <- groupSums(vhf, 2, cn2)
+o3 <- o2[rownames(vhf2),c("meff_v2_km", "meff_v1_km", "meff_fores", "meff_nonfo")]
+
+round(cor(cbind(vhf2,o3)),2)
+
+cn3 <- colnames(vhf2)
+cn3[cn3 == "Deciduous"] <- "For"
+cn3[cn3 == "Burn"] <- "For"
+cn3[cn3 == "Mixedwood"] <- "For"
+cn3[cn3 == "WhiteSpruce"] <- "For"
+cn3[cn3 == "Pine"] <- "For"
+cn3[cn3 == "TreedWetland"] <- "For"
+cn3[cn3 == "OpenWetland"] <- "NonFor"
+cn3[cn3 == "Shrubland"] <- "NonFor"
+cn3[cn3 == "Grassland"] <- "NonFor"
+cn3[cn3 == "Bare"] <- "NonFor"
+cn3[cn3 == "Water"] <- "NonFor"
+cn3[cn3 == "Cult"] <- "NonFor"
+cn3[cn3 == "UrbInd"] <- "NonFor"
+cn3[cn3 == "SoftLin"] <- "NonFor"
+cn3[cn3 == "HardLin"] <- "NonFor"
+cn3[cn3 == "HFor"] <- "For"
+
+vhf3 <- groupSums(vhf2, 2, cn3)
+round(cor(cbind(vhf3,o3)),2)
+
+## BAM and BBS update 2015 Feb -----------------------------------------------
+
+## cut this huge file into chunks
+bam2 <- read.csv(file.path(ROOT, VER, "data/raw3/bird-extra/bird_buf451m_vegHf_2005Feb.csv"))
+gc()
+
+bam2$Shape_Length <- NULL
+bam2$Part <- NULL
+bam2$OBJECTID <- NULL
+bam2$PCODE <- NULL
+bam2$POINT_X <- NULL
+bam2$POINT_Y <- NULL
+bam2$PCT_P <- NULL
+
+colnames(bam2)[colnames(bam2) == "year"] <- "HF_Year"
+levels(bam2$HF_Year) <- gsub(",", "", levels(bam2$HF_Year))
+bam2$HF_Year <- as.integer(as.character(bam2$HF_Year))
+levels(bam2$ORIGIN_YEAR) <- gsub(",", "", levels(bam2$ORIGIN_YEAR))
+bam2$ORIGIN_YEAR <- as.integer(as.character(bam2$ORIGIN_YEAR))
+levels(bam2$Shape_Area) <- gsub(",", "", levels(bam2$Shape_Area))
+bam2$Shape_Area <- as.numeric(as.character(bam2$Shape_Area))
+
+NP <- 100
+
+ii <- as.integer(cut(seq_len(nlevels(bam2$SS)), breaks=NP))
+tmpss <- lapply(1:length(unique(ii)), function(i) levels(bam2$SS)[ii==i])
+lapply(tmpss, head)
+
+for (i in 1:length(tmpss)) {
+    cat(i, "\n")
+    tmp <- bam2[bam2$SS %in% tmpss[[i]],]
+    print(head(tmp))
+    flush.console()
+    write.csv(tmp, file.path(ROOT, VER, paste0("data/raw3/bird-extra/bird_buf451m_", i, ".csv")),
+        row.names=FALSE)
+}
+
+
+
+source("c:/Dropbox/abmi/intactness/dataproc/data_proc_common_2014.R")
+
+library(RODBC)
+con <- odbcConnectAccess2007("c:/bam/BAM_BayneAccess.accdb")
+pkbam <- sqlFetch(con, "SSandPKEYjoinBAM")
+colnames(pkbam) <- toupper(colnames(pkbam))
+pkbam$YEAR <- pkbam$YYYY
+pkbam$POINT_X <- pkbam$X
+pkbam$POINT_Y <- pkbam$Y
+pkbbs <- sqlFetch(con, "SSandPKEYjoinBBS_AB")
+colnames(pkbbs) <- toupper(colnames(pkbbs))
+close(con)
+xy <- read.csv(file.path(ROOT, VER, "data/raw3/bird-extra/BirdPointsAB_BAM-BBS_2015-02-05.csv"))
+xy2 <- rbind(pkbam[,c("PKEY","SS","PCODE","POINT_X","POINT_Y","YEAR")],
+    pkbbs[,c("PKEY","SS","PCODE","POINT_X","POINT_Y","YEAR")])
+table(xy$Part)
+table(xy$Part == "ANJOLENE") # Year=2014
+length(intersect(xy$SS, xy2$SS))
+length(setdiff(xy$SS, xy2$SS))
+length(setdiff(xy2$SS, xy$SS))
+
+anj <- xy[xy$Part == "ANJOLENE",]
+anj$PKEY <- interaction(anj$SS, 1, sep=":")
+anj$YEAR <- 2014
+xyyr <- rbind(xy2[xy2$SS %in% xy$SS,], anj[,colnames(xy2)])
+xyyr <- droplevels(xyyr)
+table(xyyr$PCODE)
+
+## 451m buffer
+
+fl <- paste0(file.path(ROOT, VER, "data/raw3/bird-extra/bird_buf451m_"), 1:NP, ".csv")
+
+xveg_current <- list()
+xveg_reference <- list()
+#xsoil_current <- list()
+#xsoil_reference <- list()
+
+for (j in 1:length(fl)) {
+    gc()
+    cat(j, "of", length(fl), "\n")
+    flush.console()
+    d <- read.csv(fl[j])
+    xyyrx <- droplevels(xyyr[xyyr$SS %in% d$SS, c("PKEY","SS","YEAR")])
+    cat("\t", nrow(xyyrx), "\n")
+    d2 <- merge(xyyrx, d, "SS", all=TRUE)
+    d2 <- droplevels(d2[!is.na(d2$PKEY) & !is.na(d2$Shape_Area),])
+    out <- make_vegHF_wide2(d2, col.label="PKEY", col.year="YEAR", wide=TRUE, sparse=TRUE)
+    xveg_current[[j]] <- out$veg_current
+    xveg_reference[[j]] <- out$veg_reference
+#    xsoil_current[[j]] <- out$soil_current
+#    xsoil_reference[[j]] <- out$soil_reference
+    cat("\t", nrow(out$veg_current), "\n")
+}
+
+veg_current <- xveg_current[[1]]
+veg_reference <- xveg_reference[[1]]
+for (j in 2:length(fl)) {
+    cat(j, "of", length(fl), "\n")
+    flush.console()
+    veg_current <- bind_fun2(veg_current, xveg_current[[j]])
+    veg_reference <- bind_fun2(veg_reference, xveg_reference[[j]])
+}
+
+dd451 <- list(
+    veg_current = veg_current,
+    veg_reference = veg_reference,
+    soil_current = NULL, #soil_current,
+    soil_reference = NULL, #soil_reference,
+    sample_year=NA)
+dd451$scale <- "451 m radius circle (64 ha = QS) around bird points"
+
+## 150m buffer
+
+d <- read.csv(file.path(ROOT, VER, "data/raw3/bird-extra/bird_buf150m_vegHf_2005Feb.csv"))
+colnames(d)[colnames(d) == "year"] <- "HF_Year"
+d <- d[,c("SS", 
+    "FEATURE_TY", "HF_Year", "DEM_WET_BOUND", "Veg_Type_1", "source_1", 
+    "ORIGIN_TYPE", "ORIGIN_YEAR", "PCT_P", "SOIL_TYPE", "WET_1", 
+    "MOIST_REG_2", "EC_Type", "Shape_Length", "Shape_Area")]
+d$Shape_Length <- NULL
+levels(d$HF_Year) <- gsub(",", "", levels(d$HF_Year))
+d$HF_Year <- as.integer(as.character(d$HF_Year))
+levels(d$ORIGIN_YEAR) <- gsub(",", "", levels(d$ORIGIN_YEAR))
+d$ORIGIN_YEAR <- as.integer(as.character(d$ORIGIN_YEAR))
+levels(d$Shape_Area) <- gsub(",", "", levels(d$Shape_Area))
+d$Shape_Area <- as.numeric(as.character(d$Shape_Area))
+sum(is.na(d$Shape_Area))
+as.character(d$SA)[is.na(d$Shape_Area)]
+
+d2 <- merge(xyyr, d, "SS", all=TRUE)
+d2 <- droplevels(d2[!is.na(d2$PKEY) & !is.na(d2$Shape_Area),])
+out <- make_vegHF_wide2(d2, col.label="PKEY", col.year="YEAR", wide=TRUE, sparse=TRUE)
+dd150 <- list(
+    veg_current = out$veg_current,
+    veg_reference = out$veg_reference,
+    soil_current = NULL, #out$soil_current,
+    soil_reference = NULL, #out$soil_reference,
+    sample_year=NA)
+dd150$scale <- "150 m radius circle around bird points"
+
+## climate & stuff
+
+climbam <- read.csv(file.path(ROOT, VER, "data/raw3/bird-extra/bird_points_climates_2005Mar_with_NRg_Luf_JOSM.csv"))
+#climbam <- read.csv(file.path(ROOT, VER, "data/raw3/bird-extra/bird_points_Climates_2005Feb.csv"))
+colnames(climbam)[colnames(climbam)=="Populus_tremuloides_brtpred_nofp"] <- "pAspen"
+colnames(climbam)[colnames(climbam)=="Eref"] <- "PET"
+colnames(climbam)[colnames(climbam)=="NSRNAME"] <- "NSR"
+colnames(climbam)[colnames(climbam)=="NRNAME"] <- "NR"
+colnames(climbam)[colnames(climbam)=="LUF_NAME"] <- "LUF"
+
+xybam <- xyyr
+
+ii <- as.character(xybam$PKEY)
+ii <- intersect(rownames(dd150[[1]]), ii)
+ii <- intersect(rownames(dd451[[1]]), ii)
+
+rownames(xybam) <- xybam$PKEY
+
+xybam <- droplevels(xybam[ii,])
+xybam <- data.frame(xybam, climbam[match(xybam$SS, climbam$SS),])
+xybam$PCODE.1 <- NULL
+xybam$SS.1 <- NULL
+xybam$POINT_X.1 <- NULL
+xybam$POINT_Y.1 <- NULL
+
+dd150[[1]] <- dd150[[1]][ii,]
+dd150[[2]] <- dd150[[2]][ii,]
+#dd150[[3]] <- dd150[[3]][ii,]
+#dd150[[4]] <- dd150[[4]][ii,]
+
+dd451[[1]] <- dd451[[1]][ii,]
+dd451[[2]] <- dd451[[2]][ii,]
+#dd451[[3]] <- dd451[[3]][ii,]
+#dd451[[4]] <- dd451[[4]][ii,]
+
+save(dd150, dd451, xybam, climbam, file=file.path(ROOT, VER, "josm2015/veghf_bambbs_allscales.Rdata"))
+
+
+## BAM and BBS -------------------------------------------------------
+
+bamxy <- read.csv(file.path(ROOT, VER, "data/veghf/bambbs/Bird_PointYear_20140626.csv"))
+source("c:/Dropbox/abmi/intactness/dataproc/data_proc_common_2014.R")
+
+for (BUF in c("buf150m", "buf451m")) {
+    cat("\n\n", BUF, "\n")
+    fl <- list.files(file.path(ROOT, VER, "data/veghf/bambbs", BUF))
+    d <- read.csv(file.path(ROOT, VER, "data/veghf/bambbs", BUF, fl[1]))
+    colnames(d)[colnames(d) == "year"] <- "HF_Year"
+    out <- make_vegHF_wide2(d, col.label="PKEY", col.year="year_", wide=TRUE, sparse=TRUE)
+    veg_current <- out$veg_current
+    veg_reference <- out$veg_reference
+    soil_current <- out$soil_current
+    soil_reference <- out$soil_reference
+    for (j in 2:length(fl)) {
+        d <- read.csv(file.path(ROOT, VER, "data/veghf/bambbs", BUF, fl[j]))
+        colnames(d)[colnames(d) == "year"] <- "HF_Year"
+        out <- make_vegHF_wide2(d, col.label="PKEY", col.year="year_", wide=TRUE, sparse=TRUE)
+        veg_current <- bind_fun2(veg_current, out$veg_current)
+        veg_reference <- bind_fun2(veg_reference, out$veg_reference)
+        soil_current <- bind_fun2(soil_current, out$soil_current)
+        soil_reference <- bind_fun2(soil_reference, out$soil_reference)
+        cat(j, "of", length(fl), "-", fl[j], "\n")
+        flush.console()
+    }
+    dd <- list(
+        veg_current = veg_current,
+        veg_reference = veg_reference,
+        soil_current = soil_current,
+        soil_reference = soil_reference,
+        sample_year=NA)
+    if (BUF=="buf150m") {
+        dd150 <- dd
+        dd150$scale <- "150 m radius circle around bird points"
+        
+    }
+    if (BUF=="buf451m") {
+        dd451 <- dd
+        dd451$scale <- "451 m radius circle (64 ha = QS) around bird points"
+    }
+    rm(dd)
+}
+
+d <- read.csv("c:/p/AB_data_v2014/data/veghf/bambbs/Points/BAM_BBS_Pts_on_VegHF.csv")
+colnames(d)[colnames(d) == "year"] <- "HF_Year"
+ddbamcp <- make_vegHF_wide2(d, col.label="PKEY", col.year="year_", wide=FALSE)
+
+climbam <- read.csv("c:/p/AB_data_v2014/data/veghf/bambbs/BAM_BBS_climate_aspen_NaturalRegion.csv")
+colnames(climbam)[colnames(climbam)=="aspen"] <- "pAspen"
+colnames(climbam)[colnames(climbam)=="Eref"] <- "PET"
+colnames(climbam)[colnames(climbam)=="NSRNAME"] <- "NSR"
+colnames(climbam)[colnames(climbam)=="NRNAME"] <- "NR"
+
+o2bam <- read.csv("c:/p/AB_data_v2014/data/veghf/bambbs/bambbs_o2.csv")
+xybam <- read.csv("c:/p/AB_data_v2014/data/veghf/bambbs/Bird_PointYear_20140626.csv")
+
+ii <- as.character(xybam$PKEY)
+rownames(xybam) <- ii
+
+rownames(o2bam) <- o2bam$PKEY
+o2bam <- o2bam[ii,]
+
+rownames(climbam) <- climbam$PKEY
+climbam <- climbam[ii,]
+
+dd150[[1]] <- dd150[[1]][ii,]
+dd150[[2]] <- dd150[[2]][ii,]
+dd150[[3]] <- dd150[[3]][ii,]
+dd150[[4]] <- dd150[[4]][ii,]
+dd451[[1]] <- dd451[[1]][ii,]
+dd451[[2]] <- dd451[[2]][ii,]
+dd451[[3]] <- dd451[[3]][ii,]
+dd451[[4]] <- dd451[[4]][ii,]
+
+save(dd150, dd451, o2bam, xybam, ddbamcp, climbam, file=file.path(ROOT, VER, "R/veghf_bambbs_allscales.Rdata"))
+
+
+## QS for prediction -------------------------------------------------------
+
+source("c:/Dropbox/abmi/intactness/dataproc/data_proc_common_2014.R")
+
+fl <- list.files(file.path(ROOT, VER, "data/veghf/qs/csv"))
+
+## sorting out possible values
+
+if (FALSE) {
+    d <- read.csv(file.path(ROOT, VER, "data/veghf/qs/csv", fl[1]))
+    x <- list(WET_1=levels(d$WET_1), MOIST_REG_2=levels(d$MOIST_REG_2))
+    for (j in 2:length(fl)) {
+        cat(j, "\n");flush.console()
+        d <- read.csv(file.path(ROOT, VER, "data/veghf/qs/csv", fl[j]))
+        x$WET_1 <- union(x$WET_1, levels(d$WET_1))
+        x$MOIST_REG_2 <- union(x$MOIST_REG_2, levels(d$MOIST_REG_2))
+    }
+
+l_WET_1 <- c(
+ ""                 , "DEM_rip"     ,      "GVI_water"        ,
+ "GVI_wet"          , "LAKE-PER"    ,      "LAKE-RECUR"       ,
+ "Marsh"            , "Open Water"  ,      "STR-PER"          ,
+ "STR-RECUR"        , "LAKE-REP-PRI",      "OXBOW-PER"        ,
+ "RIV-MAJ"          , "DITCH"      ,       "OXBOW-RECUR"      ,
+ "RESERVOIR"        , "CANAL"      ,       "FLOW-ARB-MANUAL"  ,
+ "RIV-MAJ-REP-PRI"  , "STR-INDEF"  ,       "LAGOON"           ,
+ "AVI_water"        , "AVI_wet"    ,       "CANAL-MAJ"        ,
+ "CANAL-MAJ-REP-PRI", "DUGOUT"     ,       "QUARRY"           ,
+ "AQUEDUCT"         , "SPILLWAY"   ,       "FLOW-ARB-DEM"     ,
+ "CPVI_water"       , "CPVI_wet"   ,       "Fen"              ,
+ "PLVI_GF"          , "PLVI_M"     ,       "PLVI_SF"          ,
+ "PLVI_water"       , "Bog"        ,       "Swamp"            ,
+ "PLVI_TF"          , "PLVI_WS"    ,       "PLVI_WT"          ,
+ "Hydro_wetland"    , "WBNP_Bog"   ,       "WBNP_Fen"         ,
+ "WBNP_Marsh"       , "WBNP_Swamp" ,       "WBNP_Water"       ,
+ "RIV-MAJ-REP-SEC"  , "ICEFIELD"         )
+
+l_MOIST_REG_2 <- c(
+ ""           ,"LenS"       ,"LenT"       ,"LenW"       ,"Li"        ,
+ "Lo"         ,"LtcD"       ,"LtcH"       ,"LtcS"       ,"Ov"        ,
+ "TB"         ,"BlO"        ,"LenA"       ,"BdL"        ,"LtcR"      ,
+ "SL"         ,"Cy"         ,"Sb"         ,"Sy"         ,"Blo"       ,
+ "LenSP"      ,"LtcC"       ,"Sa"         ,"SwG"        ,"Gr"        ,
+ "CS"         ,"a"          ,"d"          ,"m"          ,"w"         ,
+ "SY"         ,"3B"         ,"3C"         ,"4C"         ,"5D"        ,
+ "6D"         ,"9C"         ,"9D"         ,"9E"         ,"7D"        ,
+ "5C"         ,"7C"         ,"9B"         ,"7B"         ,"5B"        ,
+ "Bog"        ,"Fen"        ,"Marsh"      ,"Swamp"      ,"WBNP_Water",
+ "LotC"       ,"6E"         ,"6C"   )
+luf <- read.csv(file.path(ROOT, VER, "data/veghf", "QS_Luf_NaturalRegion_SubRegion_v2.csv"))
+
+## LARP stuff
+    d <- read.csv(file.path(ROOT, VER, "data/veghf/qs/csv", fl[1]))
+    d$WET_1 <- as.factor(d$WET_1)
+    d$MOIST_REG_2 <- as.factor(d$MOIST_REG_2)
+    levels(d$WET_1) <- c(levels(d$WET_1), setdiff(l_WET_1, levels(d$WET_1)))
+    levels(d$MOIST_REG_2) <- c(levels(d$MOIST_REG_2), setdiff(l_MOIST_REG_2, levels(d$MOIST_REG_2)))
+    d$WET_1[is.na(d$WET_1)] <- ""
+    d$MOIST_REG_2[is.na(d$MOIST_REG_2)] <- ""
+    d$wetmoist <- interaction(d$WET_1, d$MOIST_REG_2, drop=FALSE, sep=".")
+    d$hf <- hflt$HF_GROUP[match(d$FEATURE_TY, rownames(hflt))]
+    d$wmhf <- d$wetmoist
+    levels(d$wmhf) <- c(levels(d$wmhf), levels(d$hf))
+    d$wmhf[!is.na(d$hf)] <- d$hf[!is.na(d$hf)]
+    d$luf <- luf$LUF_NAME[match(d$LinkID, luf$LinkID)]
+    dd0 <- Xtab(Shape_Area ~ wetmoist + luf, d)
+    dd1 <- Xtab(Shape_Area ~ wmhf + luf, d)
+    for (j in 2:length(fl)) {
+        cat(j, "\n");flush.console()
+        d <- read.csv(file.path(ROOT, VER, "data/veghf/qs/csv", fl[j]))
+        d$WET_1 <- as.factor(d$WET_1)
+        d$MOIST_REG_2 <- as.factor(d$MOIST_REG_2)
+        levels(d$WET_1) <- c(levels(d$WET_1), setdiff(l_WET_1, levels(d$WET_1)))
+        levels(d$MOIST_REG_2) <- c(levels(d$MOIST_REG_2), setdiff(l_MOIST_REG_2, levels(d$MOIST_REG_2)))
+        d$WET_1[is.na(d$WET_1)] <- ""
+        d$MOIST_REG_2[is.na(d$MOIST_REG_2)] <- ""
+        d$wetmoist <- interaction(d$WET_1, d$MOIST_REG_2, drop=FALSE, sep=".")
+        d$hf <- hflt$HF_GROUP[match(d$FEATURE_TY, rownames(hflt))]
+        d$wmhf <- d$wetmoist
+        levels(d$wmhf) <- c(levels(d$wmhf), levels(d$hf))
+        d$wmhf[!is.na(d$hf)] <- d$hf[!is.na(d$hf)]
+        d$luf <- luf$LUF_NAME[match(d$LinkID, luf$LinkID)]
+        dd0x <- Xtab(Shape_Area ~ wetmoist + luf, d)
+        dd1x <- Xtab(Shape_Area ~ wmhf + luf, d)
+        dd0x <- dd0x[rownames(dd0),colnames(dd0)]
+        dd1x <- dd1x[rownames(dd1),colnames(dd1)]
+        dd0 <- dd0 + dd0x
+        dd1 <- dd1 + dd1x
+    }
+    dd0 <- as.matrix(dd0 / 10^6)
+    dd1 <- as.matrix(dd1 / 10^6)
+    dd0 <- dd0[rowSums(dd0)>0,]
+    dd1 <- dd1[rowSums(dd1)>0,]
+    write.csv(dd0, file=file.path(ROOT, VER, "data", "UplandLowland_LUF_reference.csv"))
+    write.csv(dd1, file=file.path(ROOT, VER, "data", "UplandLowland_LUF_current.csv"))
+
+
+    x <- list(WET_1=levels(d$WET_1), MOIST_REG_2=levels(d$MOIST_REG_2))
+    for (j in 2:length(fl)) {
+        cat(j, "\n");flush.console()
+        d <- read.csv(file.path(ROOT, VER, "data/veghf/qs/csv", fl[j]))
+        x$WET_1 <- union(x$WET_1, levels(d$WET_1))
+        x$MOIST_REG_2 <- union(x$MOIST_REG_2, levels(d$MOIST_REG_2))
+    }
+
+}
+
+if (FALSE) {
+    out <- list()
+    for (j in 1:length(fl)) {
+        d <- read.csv(file.path(ROOT, VER, "data/veghf/qs/csv", fl[j]))
+        colnames(d)[colnames(d) == "year"] <- "HF_Year"
+        out[[j]] <- make_vegHF_wide2(d, col.label="LinkID", col.year=NULL, wide=TRUE, sparse=TRUE)
+        cat(j, "of", length(fl), "-", fl[j], "\n")
+        flush.console()
+    }
+    unique(unlist(out))
+    which(sapply(out,length)>0)
+}
+
+Start <- c(1, 51, 101, 151, 201, 251, 301, 351, 401, 451,
+    501, 551, 601, 651, 701, 751, 802)
+
+for (s in 1:(length(Start)-1)) {
+#for (s in 1:8) {
+#for (s in 9:16) {
+
+    j <- Start[s]
+    d <- read.csv(file.path(ROOT, VER, "data/veghf/qs/csv", fl[j]))
+    colnames(d)[colnames(d) == "year"] <- "HF_Year"
+    dd <- make_vegHF_wide2(d, col.label="LinkID", col.year=NULL, wide=TRUE, sparse=TRUE)
+
+    ## year
+    sample_year <- dd$sample_year
+
+    ## class %
+    veg_current <- dd$veg_current
+    veg_reference <- dd$veg_reference
+    soil_current <- dd$soil_current
+    soil_reference <- dd$soil_reference
+
+    ## total areas
+#    rs_veg_current <- dd$rs_veg_current
+#    rs_veg_reference <- dd$rs_veg_reference
+#    rs_soil_current <- dd$rs_soil_current
+#    rs_soil_reference <- dd$rs_soil_reference
+
+    BAD <- list()
+    check_cols <- function(x, y) {
+        setdiff(union(colnames(x), colnames(y)), 
+            intersect(colnames(x), colnames(y)))
+    }
+
+    for (i in (Start[s]+1):(Start[s+1]-1)) {
+        cat(i, "of", length(fl), "-", fl[i], "\t")
+        flush.console()
+        ERR <- list()
+        d <- read.csv(file.path(ROOT, VER, "data/veghf/qs/csv", fl[i]))
+        colnames(d)[colnames(d) == "year"] <- "HF_Year"
+        dd <- try(make_vegHF_wide2(d, col.label="LinkID", col.year=NULL, 
+            wide=TRUE, sparse=TRUE), silent=TRUE)
+        if (inherits(dd, "try-error")) {
+            ERR$i <- i
+            ERR$tile <- fl[i]
+            ERR$error <- as.character(dd)
+            cat("E0")
+        } else {
+            if (length(check_cols(veg_current, dd$veg_current))) {
+                ERR$veg_current <- check_cols(veg_current, dd$veg_current)
+                cat("E1")
+            }
+            if (length(check_cols(veg_reference, dd$veg_reference))) {
+                ERR$veg_reference <- check_cols(veg_reference, dd$veg_reference)
+                cat("E2")
+            }
+            if (length(check_cols(soil_current, dd$soil_current))) {
+                ERR$soil_current <- check_cols(soil_current, dd$soil_current)
+                cat("E3")
+            }
+            if (length(check_cols(soil_reference, dd$soil_reference))) {
+                ERR$soil_reference <- check_cols(soil_reference, dd$soil_reference)
+                cat("E4")
+            }
+            if (length(ERR)==0) {
+            ## class %
+                veg_current <- bind_fun2(veg_current, dd$veg_current)
+                veg_reference <- bind_fun2(veg_reference, dd$veg_reference)
+                soil_current <- bind_fun2(soil_current, dd$soil_current)
+                soil_reference <- bind_fun2(soil_reference, dd$soil_reference)
+                ## total areas
+#                rs_veg_current <- c_fun(rs_veg_current, dd$rs_veg_current)[rownames(veg_current)]
+#                rs_veg_reference <- c_fun(rs_veg_reference, dd$rs_veg_reference)[rownames(veg_reference)]
+#                rs_soil_current <- c_fun(rs_soil_current, dd$rs_soil_current)[rownames(soil_current)]
+#                rs_soil_reference <- c_fun(rs_soil_reference, dd$rs_soil_reference)[rownames(soil_reference)]
+                
+                cat("OK", nrow(veg_current))
+            }
+        }
+        if (length(ERR)>0) {
+            BAD[[length(BAD)+1]] <- ERR
+            cat("\t!!!")
+        }
+        cat("\n")
+    }
+    cat("\nEnd of block", s, "\n------------------------------\n")
+    save(sample_year,
+        veg_current,
+        veg_reference,
+        soil_current,
+        soil_reference,
+#        rs_veg_current,
+#        rs_veg_reference,
+#        rs_soil_current,
+#        rs_soil_reference,
+        BAD,
+        file=file.path(ROOT, VER, "data/veghf/qs/rda", paste0("Part", Start[s], ".Rdata")))
+}
+
+fl2 <- list.files(file.path(ROOT, VER, "data/veghf/qs/rda"))
+
+load(file.path(ROOT, VER, "data/veghf/qs/rda", fl2[1]))
+
+## class %
+veg_current0 <- veg_current
+veg_reference0 <- veg_reference
+soil_current0 <- soil_current
+soil_reference0 <- soil_reference
+## total areas
+#rs_veg_current0 <- rs_veg_current
+#rs_veg_reference0 <- rs_veg_reference
+#rs_soil_current0 <- rs_soil_current
+#rs_soil_reference0 <- rs_soil_reference
+
+for (i in 2:length(fl2)) {
+    cat(i, "\n");flush.console()
+    load(file.path(ROOT, VER, "data/veghf/qs/rda", fl2[i]))
+
+    veg_current0 <- bind_fun2(veg_current0, veg_current)
+    veg_reference0 <- bind_fun2(veg_reference0, veg_reference)
+    soil_current0 <- bind_fun2(soil_current0, soil_current)
+    soil_reference0 <- bind_fun2(soil_reference0, soil_reference)
+    print(cbind(vcr=dim(veg_current0), vrf=dim(veg_reference0),
+        scr=dim(soil_current0), srf=dim(soil_reference0)))
+
+#    rs_veg_current0 <- c_fun(rs_veg_current0, rs_veg_current)
+#    rs_veg_reference0 <- c_fun(rs_veg_reference0, rs_veg_reference)
+#    rs_soil_current0 <- c_fun(rs_soil_current0, rs_soil_current)
+#    rs_soil_reference0 <- c_fun(rs_soil_reference0, rs_soil_reference)
+#    print(c(vcr=length(rs_veg_current0), vrf=length(rs_veg_reference0),
+#        scr=length(rs_soil_current0), srf=length(rs_soil_reference0)))
+}
+
+veg_current <- veg_current0
+veg_reference <- veg_reference0
+soil_current <- soil_current0
+soil_reference <- soil_reference0
+
+rs_veg_current <- rowSums(veg_current)
+range(rs_veg_current)
+rs_veg_reference <- rowSums(veg_reference)
+range(rs_veg_reference)
+rs_soil_current <- rowSums(soil_current)
+range(rs_soil_current)
+rs_soil_reference <- rowSums(soil_reference)
+range(rs_soil_reference)
+
+veg_current <- veg_current / ifelse(rs_veg_current==0, 1, rs_veg_current)
+veg_reference <- veg_reference / ifelse(rs_veg_reference==0, 1, rs_veg_reference)
+soil_current <- soil_current / ifelse(rs_soil_current==0, 1, rs_soil_current)
+soil_reference <- soil_reference / ifelse(rs_soil_reference==0, 1, rs_soil_reference)
+
+save(veg_current, rs_veg_current,
+    file=file.path(ROOT, VER, "R/veg_current_QSlevel.Rdata"))
+save(veg_reference, rs_veg_reference,
+    file=file.path(ROOT, VER, "R/veg_reference_QSlevel.Rdata"))
+save(soil_current, rs_soil_current,
+    file=file.path(ROOT, VER, "R/soil_current_QSlevel.Rdata"))
+save(soil_reference, rs_soil_reference,
+    file=file.path(ROOT, VER, "R/soil_reference_QSlevel.Rdata"))
+
+## debug
+#col.year=NULL; wide=TRUE; sparse=FALSE
+#col.label="LinkID"
+
+## QS non veg stuff --------------------------------------------------------------------
+
+load(file.path(ROOT, VER, "R/veg_current_QSlevel.Rdata"))
+#f <- file.path(ROOT, VER, "data/veghf", "QS_Center_LatLong.csv")
+f <- file.path(ROOT, VER, "data/veghf", "QS_center_latLong_with29ShiftedInABBound.csv")
+d <- read.csv(f, colClasses=c("integer","factor","numeric","numeric"))
+rownames(d) <- d$LinkID
+d <- d[rownames(veg_current),]
+
+tmp <- strsplit(as.character(d$LinkID), "-")
+d$MER <- sapply(tmp, function(z) as.integer(z[1]))
+d$RGE <- sapply(tmp, function(z) as.integer(z[2]))
+d$TWP <- sapply(tmp, function(z) as.integer(z[3]))
+d$SEC <- sapply(tmp, function(z) as.integer(z[4]))
+d$QS <- as.factor(sapply(tmp, function(z) z[5]))
+d$TWNSHIP <- with(d, interaction(MER, RGE, TWP, sep="-", drop=TRUE))
+d$SECTION <- interaction(d$TWNSHIP, d$SEC, sep="-", drop=TRUE)
+
+f2 <- file.path(ROOT, VER, "data/veghf", "QS_Center_LengthAndArea.csv")
+d2 <- read.csv(f2, colClasses=c("integer","factor","numeric","numeric"))
+rownames(d2) <- d2$LinkID
+d2 <- d2[rownames(d),]
+
+QS <- d
+QS$OBJECTID <- NULL
+QS$LinkID <- NULL
+QS$Area_km2 <- d2$Shape_Area / 10^6
+
+f3 <- file.path(ROOT, VER, "data/veghf", "qs_dist_to_NRg.csv")
+d3 <- read.csv(f3)
+rownames(d3) <- d3$LinkID
+d3 <- d3[rownames(QS),]
+QS$NEAR_DIST_GRA_km <- d3$NEAR_DIST_GRA / 10^3
+QS$NEAR_DIST_PARK_km <- d3$NEAR_DIST_PARK / 10^3
+QS$NEAR_DIST_FOOTHILL_km <- d3$NEAR_DIST_FOOTHILL / 10^3
+QS$NEAR_DIST_BoSh_km <- d3$NEAR_DIST_BoSh / 10^3
+#rm(d,d2,d3)
+
+#f4 <- file.path(ROOT, VER, "data/veghf", "quarter_section_center_lat_long_NaturalRegion_Luf.csv")
+#f4 <- file.path(ROOT, VER, "data/veghf", "QS_Luf_NaturalRegion_SubRegion.csv")
+f4 <- file.path(ROOT, VER, "data/veghf", "QS_Luf_NaturalRegion_SubRegion_v2.csv")
+d4 <- read.csv(f4)
+rownames(d4) <- d4$LinkID
+d4 <- d4[rownames(QS),]
+QS$NR <- d4$NRNAME
+QS$NSR <- d4$NSRNAME
+QS$LUF <- d4$LUF_NAME
+#QS$TWNSHIP <- with(d4, interaction(MER, RGE, TWP, sep="-", drop=TRUE))
+#QS$SECTION <- interaction(QS$TWNSHIP, d4$SEC, sep="-", drop=TRUE)
+#plot(QS[,1:2], pch=".")
+#points(QS[is.na(QS$LUF),1:2], pch=19,cex=0.5,col=2)
+
+#QS <- droplevels(QS[!is.na(QS$LUF),])
+
+f5 <- file.path(ROOT, VER, "data/veghf", "climate7_on_QS.csv")
+d5 <- read.csv(f5)
+f6 <- file.path(ROOT, VER, "data/veghf", "populus_on_QS_Redo.csv")
+d6 <- read.csv(f6)
+rownames(d5) <- d5$LinkID
+rownames(d6) <- d6$LinkID
+d5 <- d5[rownames(QS),]
+d6 <- d6[rownames(QS),]
+QS$pAspen_mean <- d6$Mean
+QS$AHM <- d5$AHM
+QS$PET <- d5$Eref
+QS$FFP <- d5$FFP
+QS$MAP <- d5$MAP
+QS$MAT <- d5$MAT
+QS$MCMT <- d5$MCMT
+QS$MWMT <- d5$MWMT
+
+## random pick from QS:
+tmp <- as.integer(QS$TWNSHIP)
+QS$RND <- integer(length(tmp))
+#QS$TWP_X <- numeric(length(tmp))
+#QS$TWP_Y <- numeric(length(tmp))
+set.seed(1234)
+for (i in seq_len(max(tmp))) {
+    lg <- tmp == i
+    QS$RND[lg] <- sample.int(sum(lg))
+#    QS$TWP_X[lg] <- mean(QS$POINT_X[lg])
+#    QS$TWP_Y[lg] <- mean(QS$POINT_Y[lg])
+}
+
+## handling remaining NAs: more rounds
+    zz <- is.na(QS$MAP)
+    ii <- which(zz)
+    for (i in ii) {
+        dx <- QS$POINT_X[i] - QS$POINT_X
+        dy <- QS$POINT_Y[i] - QS$POINT_Y
+        d <- sqrt(dx^2 + dy^2)
+        d[i] <- max(d)
+        d[zz] <- max(d)
+        j <- which.min(d)
+        for (k in c("AHM","PET","FFP","MAP","MAT","MCMT","MWMT")) {
+            QS[i,k] <- QS[j,k]
+        }
+    }
+
+    zz <- is.na(QS$NEAR_DIST_GRA_km)
+    ii <- which(zz)
+    for (i in ii) {
+        dx <- QS$POINT_X[i] - QS$POINT_X
+        dy <- QS$POINT_Y[i] - QS$POINT_Y
+        d <- sqrt(dx^2 + dy^2)
+        d[i] <- max(d)
+        d[zz] <- max(d)
+        j <- which.min(d)
+        for (k in c("NEAR_DIST_GRA_km","NEAR_DIST_PARK_km",
+            "NEAR_DIST_FOOTHILL_km","NEAR_DIST_BoSh_km")) {
+            QS[i,k] <- QS[j,k]
+        }
+    }
+
+
+save(QS, file=file.path(ROOT, VER, "R/xy_clim_regions_QSlevel.Rdata"))
+
+
+## QS for transition -------------------------------------------------------
+
+source("c:/Dropbox/abmi/intactness/dataproc/data_proc_common_2014.R")
+
+fl <- list.files(file.path(ROOT, VER, "data/veghf/qs/csv"))
+
+cc <- c("LinkID","VEGAGEclass","VEGHFAGEclass","SOILclass","SOILHFclass","Shape_Area")
+
+Start <- c(0:79*10+1, 802)
+
+d <- read.csv(file.path(ROOT, VER, "data/veghf/qs/csv", fl[1]))
+colnames(d)[colnames(d) == "year"] <- "HF_Year"
+dd <- make_vegHF_wide2(d, col.label="LinkID", col.year=NULL, wide=FALSE)
+ddd0 <- dd[character(0),cc]
+xddd0 <- ddd0
+
+for (s in 1:(length(Start)-1)) {
+    cat("----------------------\nStarting block", s, "\n")
+    for (i in Start[s]:(Start[s+1]-1)) {
+        cat(i, "of", length(fl), "-", fl[i], "\t")
+        flush.console()
+        if (i == Start[s]) {
+            d <- read.csv(file.path(ROOT, VER, "data/veghf/qs/csv", fl[i]))
+            colnames(d)[colnames(d) == "year"] <- "HF_Year"
+            dd <- make_vegHF_wide2(d, col.label="LinkID", col.year=NULL, wide=FALSE)
+            dd0 <- dd[,cc]
+        } else {
+            d <- read.csv(file.path(ROOT, VER, "data/veghf/qs/csv", fl[i]))
+            colnames(d)[colnames(d) == "year"] <- "HF_Year"
+            dd <- make_vegHF_wide2(d, col.label="LinkID", col.year=NULL, wide=FALSE)
+            dd0 <- rbind(dd0, dd[,cc])
+        }
+        cat("OK", nrow(dd0), "\n")
+    }
+    ddd0 <- rbind(ddd0, dd0)
+    cat("\nFinished block", s, "dim:", nrow(ddd0), "\n")
+    if (i %in% c(100, 200, 300, 400, 500, 600, 700, 801)) {
+        save(ddd0, file=file.path(ROOT, VER, "data/veghf/qs/long", paste0("Long-part", i, ".Rdata")))
+        ddd0 <- xddd0
+        gc()
+    }
+}
+
+
+load(file.path(ROOT, VER, "R/xy_clim_regions_QSlevel.Rdata"))
+lu <- read.csv(file.path(ROOT, VER, "lookup/VEG_HF_interim.csv"))
+su <- read.csv(file.path(ROOT, VER, "lookup/SOIL_HF_interim.csv"))
+
+fl3 <- list.files(file.path(ROOT, VER, "data/veghf/qs/long"))
+
+resv <- list()
+ress <- list()
+
+for (j in 1:length(fl3)) {
+    cat("\n", j);flush.console()
+
+    load(file.path(ROOT, VER, "data/veghf/qs/long", fl3[j]))
+    ddd0 <- ddd0[ddd0$Shape_Area >= 0,]
+    ddd0$NR <- QS$NR[match(ddd0$LinkID, rownames(QS))]
+    ddd0$NSR <- QS$NSR[match(ddd0$LinkID, rownames(QS))]
+    ddd0 <- ddd0[rowSums(is.na(ddd0))==0,]
+    zz <- ddd0$NR != ""
+    cat("\tblanks:", sum(!zz), "\n")
+    ddd0 <- ddd0[zz,]
+    ddd0$NR <- droplevels(ddd0$NR)
+    ddd0$NSR <- droplevels(ddd0$NSR)
+#    levels(ddd0$NR)[levels(ddd0$NR) %in% c("Boreal","Canadian Shield")] <- "BorSh"
+
+    ## define region here
+    #ddd0$REG <- ddd0$NSR
+
+    ddd0$REG <- ddd0$NR
+    levels(ddd0$REG)[levels(ddd0$REG) %in% c("Grassland","Parkland")] <- "South"
+    levels(ddd0$REG)[levels(ddd0$REG) %in% c("Boreal","Foothills","Rocky Mountain","Canadian Shield")] <- "North"
+    ddd0$REG[ddd0$NSR %in% "Dry Mixedwood"] <- "South"
+
+    levels(ddd0$VEGAGEclass) <- lu$Levels4[match(levels(ddd0$VEGAGEclass), lu$VEGHFAGE)]
+    levels(ddd0$VEGHFAGEclass) <- lu$Levels4[match(levels(ddd0$VEGHFAGEclass), lu$VEGHFAGE)]
+    levels(ddd0$SOILclass) <- su$Levels3[match(levels(ddd0$SOILclass), su$SOILclass)]
+    levels(ddd0$SOILHFclass) <- su$Levels3[match(levels(ddd0$SOILHFclass), su$SOILclass)]
+
+    for (type in c("veg", "soil")) {
+#    for (type in c("veg")) {
+        if (type=="veg") {
+            xt0 <- Xtab(Shape_Area ~ VEGHFAGEclass + VEGAGEclass, ddd0)
+            xt <- Xtab(Shape_Area ~ VEGHFAGEclass + VEGAGEclass + REG, ddd0)
+        }
+        if (type=="soil") {
+            xt0 <- Xtab(Shape_Area ~ SOILHFclass + SOILclass, ddd0)
+            xt <- Xtab(Shape_Area ~ SOILHFclass + SOILclass + REG, ddd0)
+        }
+
+        xtv <- vector("list", nlevels(ddd0$REG)+1)
+        names(xtv) <- c("All", levels(ddd0$REG))
+        xtv$All <- Melt(xt0)
+        xtv$All$gr <- factor("All", levels=names(xtv))
+        for (i in names(xtv)[-1]) {
+            if (i %in% names(xt)) {
+                xtv[[i]] <- Melt(xt[[i]])
+                xtv[[i]]$gr <- factor(i, levels=names(xtv))
+            } else {
+                tmp <- xt0
+                tmp[] <- 0
+                xtv[[i]] <- Melt(tmp)
+                xtv[[i]]$gr <- factor(character(0), levels=names(xtv))
+            }
+        }
+        if (type=="veg")
+            resv[[j]] <- do.call(rbind, xtv)
+        if (type=="soil")
+            ress[[j]] <- do.call(rbind, xtv)
+    }
+}
+resvv <- do.call(rbind, resv)
+resss <- do.call(rbind, ress)
+
+save(resvv, resss, file=file.path(ROOT, VER, "R/transitions_NorthSouth.Rdata"))
+#save(resvv, resss, file=file.path(ROOT, VER, "R/transitions_NSR.Rdata"))
+
+mat_fun <- function(what="All", type="veg") {
+    d <- switch(type, "veg"=resvv, "soil"=resss)
+    tr0 <- as.matrix(Xtab(value ~ rows + cols, d, subset=d$gr %in% what))
+    i <- rownames(tr0) %in% colnames(tr0)
+    tr0 <- tr0[c(rownames(tr0)[i], rownames(tr0)[!i]),]
+    #tr0 <- as.matrix(Xtab(Shape_Area ~ cr + rf, dd))
+    tr <- round(100*t(t(tr0)/colSums(tr0)), 2)
+    #tr[tr<1] <- 0
+    c <- round(100*colSums(tr0)/sum(tr0),2)
+    r <- c(round(100*rowSums(tr0)/sum(tr0), 2), Total=100)
+    tr2 <- cbind(rbind(tr, Total=c), Total=r)
+    #write.csv(tr2, file.path(ROOT, VER, "R/transitions.csv"))
+    tr2
+}
+
+a1 <- mat_fun("All", "veg")
+a2 <- mat_fun("South", "soil")
+a3 <- mat_fun("North", "veg")
+
+write.csv(a1, file.path(ROOT, VER, "R/transitions_veg_allProvince.csv"))
+#write.csv(a1, file.path(ROOT, VER, "R/transitions_veg_allProvince_allClasses.csv"))
+write.csv(a2, file.path(ROOT, VER, "R/transitions_soil_South.csv"))
+write.csv(a3, file.path(ROOT, VER, "R/transitions_veg_North.csv"))
+
+
+con1 <- file(file.path(ROOT, VER, "R/transitions_veg_byNSR.csv"), "w")
+con2 <- file(file.path(ROOT, VER, "R/transitions_soil_byNSR.csv"), "w")
+for (i in levels(resvv$gr)) {
+    cat("Natural Subregion:", i, "\n", file=con1)
+    cat("Natural Subregion:", i, "\n", file=con2)
+    b1 <- mat_fun(i, "veg")
+    b1[is.na(b1)] <- 0
+    b2 <- mat_fun(i, "soil")
+    b2[is.na(b2)] <- 0
+    write.csv(b1, file=con1)
+    write.csv(b2, file=con2)
+    cat("\n", file=con1)
+    cat("\n", file=con2)
+}
+close(con1)
+close(con2)
+
+
+zz <- file("ex.data", "w")  # open an output file connection
+cat("TITLE extra line", "2 3 5 7", "", "11 13 17", file = zz, sep = "\n")
+cat("One more line\n", file = zz)
+close(zz)
+readLines("ex.data")
+unlink("ex.data")
+
+
+
+## checks
+
+library(mefa4)
+## root directory
+ROOT <- "c:/p"
+## version (structure is still in change, so not really useful)
+VER <- "AB_data_v2014"
+
+load(file.path(ROOT, VER, "R/veg_current_QSlevel.Rdata"))
+load(file.path(ROOT, VER, "R/veg_reference_QSlevel.Rdata"))
+load(file.path(ROOT, VER, "R/soil_current_QSlevel.Rdata"))
+load(file.path(ROOT, VER, "R/soil_reference_QSlevel.Rdata"))
+load(file.path(ROOT, VER, "R/xy_clim_regions_QSlevel.Rdata"))
+
+lu <- read.csv(file.path(ROOT, VER, "lookup/VEG_HF_interim.csv"))
+su <- read.csv(file.path(ROOT, VER, "lookup/SOIL_HF_interim.csv"))
+
+
+plot_subset <- function(z, ...) {
+    points(QS$POINT_X[z], QS$POINT_Y[z], pch=15, cex=0.3, col=2, ...)
+    invisible(NULL)
+}
+plot_base <- function(main="", ...) {
+    plot(QS$POINT_X, QS$POINT_Y, pch=15, cex=0.3, col="lightgrey", 
+        ann=FALSE, axes=FALSE, ...)
+    title(main=main)
+    invisible(NULL)
+}
+
+plot_brdr <- function() {
+    nr1 <- QS$NEAR_DIST_GRA_km<1 & QS$NEAR_DIST_GRA_km>0
+    nr1[is.na(nr1)] <- FALSE
+    plot_subset(nr1)
+    nr1 <- QS$NEAR_PARK_GRA_km<1 & QS$NEAR_PARK_GRA_km>0
+    nr1[is.na(nr1)] <- FALSE
+    plot_subset(nr1)
+    nr1 <- QS$NEAR_FOOTHILL_GRA_km<1 & QS$NEAR_FOOTHILL_GRA_km>0
+    nr1[is.na(nr1)] <- FALSE
+    plot_subset(nr1)
+    nr1 <- QS$NEAR_DIST_BoSh_km<1 & QS$NEAR_DIST_BoSh_km>0
+    nr1[is.na(nr1)] <- FALSE
+    plot_subset(nr1)
+
+
+plot_all <- function(z, main="", ...) {
+    br <- seq(0, max(z, na.rm=TRUE), len=11)
+    txt <- paste0(format(br[-length(br)], digits=3, nsmall=1), "-", format(br[-1], digits=3, nsmall=1))
+    br[1] <- br[1] - 1
+    cz <- cut(z, br)
+    #col <- rev(terrain.colors(nlevels(cz)+5)[1:nlevels(cz)])
+    col <- rev(terrain.colors(nlevels(cz)))
+    plot(QS$POINT_X, QS$POINT_Y, pch=15, cex=0.3, col=col[cz], 
+        ann=FALSE, axes=FALSE)
+    legend("bottomleft", fill=rev(col), legend=rev(txt), bty="n")
+    title(main=main)
+    invisible(NULL)
+}
+
+setwd(file.path(ROOT, VER, "data/veghf/qs/plots"))
+
+png("Climate-missing.png", width=500, height=1000)
+op <- par(mar=c(0, 1, 3, 0) + 0.1)
+plot_base(main="Missing climate data")
+plot_subset(is.na(QS$MAP))
+par(op)
+dev.off()
+
+png("NatReg-missing.png", width=500, height=1000)
+op <- par(mar=c(0, 1, 3, 0) + 0.1)
+plot_base(main="Missing NR")
+plot_subset(is.na(QS$NR))
+par(op)
+dev.off()
+
+png("Aspen-missing.png", width=500, height=1000)
+op <- par(mar=c(0, 1, 3, 0) + 0.1)
+plot_base(main="Missing Aspen data")
+plot_subset(is.na(QS$pAspen_mean))
+par(op)
+dev.off()
+
+cn <- as.character(lu$Levels3)[match(colnames(veg_current), lu$VEGHFAGE)]
+dat <- groupSums(veg_current, 2, cn)
+dat <- as.matrix(dat)
+for (i in colnames(dat)) {
+    cat(i, "\n");flush.console()
+    png(paste0("Current-veg-", i, ".png"), width=500, height=1000)
+    op <- par(mar=c(0, 1, 3, 0) + 0.1)
+    plot_all(dat[,i], main=paste0("Current-veg-", i))
+    par(op)
+    dev.off()
+}
+
+cn <- as.character(lu$Levels3)[match(colnames(veg_reference), lu$VEGHFAGE)]
+dat <- groupSums(veg_reference, 2, cn)
+dat <- as.matrix(dat)
+for (i in colnames(dat)) {
+    cat(i, "\n");flush.console()
+    png(paste0("Reference-veg-", i, ".png"), width=500, height=1000)
+    op <- par(mar=c(0, 1, 3, 0) + 0.1)
+    plot_all(dat[,i], main=paste0("Reference-veg-", i))
+    par(op)
+    dev.off()
+}
+
+cn <- as.character(su$Levels2)[match(colnames(soil_current), su$SOILclass)]
+dat <- groupSums(soil_current, 2, cn)
+dat <- as.matrix(dat)
+for (i in colnames(dat)) {
+    cat(i, "\n");flush.console()
+    png(paste0("Current-soil-", i, ".png"), width=500, height=1000)
+    op <- par(mar=c(0, 1, 3, 0) + 0.1)
+    plot_all(dat[,i], main=paste0("Current-soil-", i))
+    par(op)
+    dev.off()
+}
+
+cn <- as.character(su$Levels2)[match(colnames(soil_reference), su$SOILclass)]
+dat <- groupSums(soil_reference, 2, cn)
+dat <- as.matrix(dat)
+for (i in colnames(dat)) {
+    cat(i, "\n");flush.console()
+    png(paste0("Reference-soil-", i, ".png"), width=500, height=1000)
+    op <- par(mar=c(0, 1, 3, 0) + 0.1)
+    plot_all(dat[,i], main=paste0("Reference-soil-", i))
+    par(op)
+    dev.off()
+}
+
+
+
+
+## maps
+
+
+
+
+## -------------- soil stuff
+
+dd <- make_vegHF_wide2(d1km, col.label = "Site_YEAR", col.year="year", wide=FALSE)
+tt <- read.csv("c:/p/AB_data_v2014/lookup/VEG_HF_interim.csv")
+dd$cr <- dd$VEGHFAGEclass
+levels(dd$cr) <- as.character(tt$Levels3)[match(levels(dd$cr), tt$VEGHFAGE)]
+dd$rf <- dd$VEGAGEclass
+levels(dd$rf) <- as.character(tt$Levels3)[match(levels(dd$rf), tt$VEGHFAGE)]
+
+tr0 <- as.matrix(Xtab(Shape_Area ~ cr + rf, dd))
+tr <- round(100*t(t(tr0)/colSums(tr0)), 2)
+tr[tr<1] <- 999
+c <- round(100*colSums(tr0)/sum(tr0),2)
+r <- c(round(100*rowSums(tr0)/sum(tr0), 2), Total=100)
+tr2 <- cbind(rbind(tr, Total=c), Total=r)
+write.csv(tr2, file.path(ROOT, VER, "R/transitions.csv"))
+
+
+x <- dd1km$soil_reference
+SITES$soil <- rowSums(x[,!(colnames(x) %in% c("UNK","Water","Len","LenW","Ltc","LtcR"))])
+SITES$nonwtr <- rowSums(x[,!(colnames(x) %in% c("Water","Len","LenW","Ltc","LtcR"))])
+SITES$psoil <- with(SITES, soil / nonwtr)
+SITES$psoil[is.na(SITES$psoil)] <- 0
+cc <- c("Grassland","Shrubland","CultivationCropPastureBareground","HighDensityLivestockOperation")
+xx <- dd1km$veg_current
+SITES$grass <- rowSums(xx[,cc])
+plot(SITES$grass, SITES$psoil)
+
+
+by(SITES[,c("soil","grass")], SITES$NR, summary)
+by(SITES[SITES$NR=="Boreal",c("soil","grass")], droplevels(SITES$NSR[SITES$NR=="Boreal"]), summary)
+plot(REG[,6:5],pch=ifelse(REG$NATURAL_SUBREGIONS=="Dry Mixedwood",19,21))
+## incorporate soil %
+## separate the 2 blobs by diagonal (lat*long function)
+
+rn <- rownames(dd1km$current)
+all(rn == rownames(dd1ha$current))
+
+pdf(file.path(ROOT, VER, "results/tmp.pdf"), onefile=TRUE)
+for (i in colnames(dd1ha$reference)) {
+    cr1km <- dd1km$current[,i]
+    cr1ha <- dd1ha$current[,i]
+    rf1km <- dd1km$reference[,i]
+    rf1ha <- dd1ha$reference[,i]
+    boxplot(cbind(cr1km,cr1ha,rf1km,rf1ha), main=i)
+    #plot(cr1km, rf1km)
+    #points(cr1ha, rf1ha, col=2)
+}
+for (i in setdiff(colnames(dd1ha$current), colnames(dd1ha$reference))) {
+    cr1km <- dd1km$current[,i]
+    cr1ha <- dd1ha$current[,i]
+    boxplot(cbind(cr1km,cr1ha), main=i)
+    #plot(cr1km, rf1km)
+    #points(cr1ha, rf1ha, col=2)
+}
+for (i in colnames(dd1ha$soil)) {
+    rf1km <- dd1km$soil[,i]
+    rf1ha <- dd1ha$soil[,i]
+    boxplot(cbind(rf1km,rf1ha), main=i)
+    #plot(cr1km, rf1km)
+    #points(cr1ha, rf1ha, col=2)
+}
+dev.off()
+
+
+
+plot(dd1km$current[,""]
+
+
+## --
+library(mefa4)
+load("veg_current_QSlevel.Rdata")
+lt <- read.csv("lookup/VEG_HF_interim.csv")
+rownames(lt) <- lt[,1]
+cn <- as.character(lt$Levels4)[match(colnames(veg_current), rownames(lt))]
+## leave it as sparse, that speeds up things a bit
+vhf <- groupSums(veg_current, 2, cn)
+
+
+## HF 2012
+
+library(mefa4)
+ROOT <- "c:/p"
+VER <- "AB_data_v2014"
+THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
+
+hftypes <- read.csv(file.path(ROOT, VER, "lookup/HFtype_lookup_20140514.csv"))
+hfgroups <- read.csv(file.path(ROOT, VER, "lookup/HFclassification_20140514.csv"))
+hflt <- hfgroups[match(hftypes$HF_GROUP, hfgroups$HF_GROUP),]
+rownames(hflt) <- hftypes$FEATURE_TY
+
+load(file.path(ROOT, VER, "R/xy_clim_regions_QSlevel.Rdata"))
+
+setdiff(d10$FEATURE_TY, rownames(hflt))
+setdiff(d12$FEATURE_TY, rownames(hflt))
+
+d10 <- read.csv(file.path(ROOT, VER, "data/veghf", "HF2010_int_QS.csv"))
+d12 <- read.csv(file.path(ROOT, VER, "data/veghf", "HF2012_int_QS.csv"))
+
+d10$HF <- hflt$HF_GROUP[match(d10$FEATURE_TY, rownames(hflt))]
+levels(d10$LinkID) <- c(levels(d10$LinkID), setdiff(rownames(QS), levels(d10$LinkID)))
+d12$HF <- hflt$HF_GROUP[match(d12$FEATURE_TY, rownames(hflt))]
+levels(d12$LinkID) <- c(levels(d12$LinkID), setdiff(rownames(QS), levels(d12$LinkID)))
+
+hf10 <- Xtab(Shape_Area ~ LinkID + HF, d10)
+hf10 <- hf10[rownames(QS),]
+
+hf12 <- Xtab(Shape_Area ~ LinkID + HF, d12)
+hf12 <- hf12[rownames(QS),]
+
+AAm <- QS$Area_km2*10^6
+
+range(AAm)
+range(hf10)
+range(hf12)
+
+px10 <- hf10 / AAm
+px12 <- hf12 / AAm
+
+px10=hf10
+px12=hf12
+
+
+setwd("c:/p/AB_data_v2014/R")
+
+for (i in 1:ncol(px12)) {
+    cat(i, "\n");flush.console()
+    dat <- cbind(px12[,i], px10[,i])
+    #png(paste0("w2wHFcomp-", colnames(px12)[i], "-old.png"))
+    png(paste0("Area-w2wHFcomp-", colnames(px12)[i], "-awa.png"))
+    plot(dat, main=colnames(px12)[i], 
+        #ylim=c(0,1), xlim=c(0,1),
+        ylim=c(0,max(dat)), xlim=c(0,max(dat)),
+        xlab="w2w HF 2012", ylab="w2w HF 2010")
+    abline(0,1)
+    dev.off()
+}
+
+save(hf10,hf12,file="c:/p/AB_data_v2014/R/w2wHF_2010vs2012.Rdata")
+
+res <- list()
+for (i in 1:ncol(px12)) {
+    j <- colnames(px12)[i]
+    zz <- round(cbind(HF2010=by(100*px10[,i], QS$NR, mean),
+        HF2012=by(100*px12[,i], QS$NR, mean)), 2)
+    res[[j]] <- data.frame(HFtype=j, NR=rownames(zz), zz)
+}
+res <- do.call(rbind, res)
+rownames(res) <- NULL
+res$diff <- res$HF2012 - res$HF2010
+res$abs_diff <- abs(res$diff)
+
+res2 <- list()
+for (i in 1:ncol(px12)) {
+    j <- colnames(px12)[i]
+    zz <- round(cbind(HF2010=by(100*px10[,i], QS$NR, mean),
+        HF2012=by(100*px12[,i], QS$NSR, mean)), 2)
+    res2[[j]] <- data.frame(HFtype=j, NSR=rownames(zz), zz)
+}
+res2 <- do.call(rbind, res2)
+rownames(res2) <- NULL
+res2$diff <- res2$HF2012 - res2$HF2010
+res2$abs_diff <- abs(res2$diff)
+
+res[order(res$abs_diff),]
+res2[order(res2$abs_diff),]
+
+write.csv(res, file="w2wHF_2010-2012_comparison_NR-level.csv", row.names=FALSE)
+write.csv(res2, file="w2wHF_2010-2012_comparison_NSR-level.csv", row.names=FALSE)
+
+op <- par(mar=c(4,16,4,1)+0.1, las=1, mfcol=c(2,2))
+boxplot(diff~HFtype,res, horizontal=TRUE, main="NR")
+abline(v=0, col=2)
+boxplot(diff~HFtype,res2, horizontal=TRUE, main="NSR")
+abline(v=0, col=2)
+boxplot(diff~NR,res, horizontal=TRUE, main="NR")
+abline(v=0, col=2)
+boxplot(diff~NSR,res2, horizontal=TRUE, main="NSR")
+abline(v=0, col=2)
+par(op)
+
+
+aa <- rowSums(x) / 656000
+names(aa) <- rownames(x)
+aa <- sort(aa, decreasing=TRUE)
+
+bb <- px12[,"CultivationCropPastureBareground"] - px10[,"CultivationCropPastureBareground"]
+bb <- sort(bb, decreasing=TRUE)
+
+cc <- px12[,"CutBlocks"] - px10[,"CutBlocks"]
+cc <- sort(cc, decreasing=TRUE)
+
+m <- matrix(c(1, 0.97,
+    0.8, 0.7,
+    -0.7, -0.8,
+    -0.9, -1), 2, 4)
+db <- apply(m, 2, function(z) names(bb)[bb < z[1] & bb > z[2]][1:10])
+dc <- apply(m, 2, function(z) names(cc)[cc < z[1] & cc > z[2]][1:10])
+colnames(db) <- colnames(dc) <- c("12only","12>10","10>12","10only")
+
+
+## HF 2010 for HF letter
+
+library(mefa4)
+ROOT <- "c:/p"
+VER <- "AB_data_v2014"
+THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
+
+hftypes <- read.csv(file.path(ROOT, VER, "lookup/HFtype_lookup_20140514.csv"))
+hfgroups <- read.csv(file.path(ROOT, VER, "lookup/HFclassification_20140514.csv"))
+hflt <- hfgroups[match(hftypes$HF_GROUP, hfgroups$HF_GROUP),]
+rownames(hflt) <- hftypes$FEATURE_TY
+rownames(hfgroups) <- hfgroups$HF_GROUP
+
+load(file.path(ROOT, VER, "R/xy_clim_regions_QSlevel.Rdata"))
+load(file.path(ROOT, VER, "R/veg_current_QSlevel.Rdata"))
+
+NR <- QS$NR
+levels(NR)[levels(NR) %in% c("Boreal","Canadian Shield")] <- "Boreal & Canadian Shield"
+
+x <- veg_current * rs_veg_current
+x <- as.matrix(x)
+x <- groupSums(x, 1, NR)
+x <- x[rownames(x) != "",]
+Ar <- rowSums(x)
+AA <- sum(x)
+cn <- colnames(x)
+cn[substr(cn, 1, 2) == "CC"] <- "CutBlocks"
+x <- groupSums(x, 2, cn)
+#Ac <- colSums(x)
+
+x <- x[,colnames(x) %in% rownames(hfgroups)]
+cn <- as.character(hfgroups$UseInReporting)[match(colnames(x), rownames(hfgroups))]
+x <- groupSums(x, 2, cn)
+
+xx <- colSums(x)
+xxx <- rowSums(x)
+xxxx <- sum(x)
+
+x <- 100*x/Ar
+xx <- 100*xx/AA
+
+xxx <- 100*xxx/Ar
+xxxx <- 100*xxxx/AA
+
+x <- rbind(x, Total=xx)
+x <- cbind(x, Total=c(xxx, xxxx))
+x <- t(x)
+x <- round(x, 2)
+
+write.csv(x, file="c:/Dropbox/abmi/w2wHF2010_byNR_forHFletter.csv")
+
+
+## AlPac 3x7 yearly stuff
+
+ROOT <- "c:/p"
+## version (structure is still in change, so not really useful)
+VER <- "AB_data_v2014"
+## current year
+THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
+
+library(mefa4)
+#setwd("c:/Dropbox/abmi/intactness/dataproc")
+source("c:/Dropbox/abmi/intactness/dataproc/data_proc_common_2014.R")
+
+hftypes <- read.csv(file.path(ROOT, VER, "lookup/HFtype_lookup_20140514.csv"))
+hfgroups <- read.csv(file.path(ROOT, VER, "lookup/HFclassification_20140514.csv"))
+hflt <- hfgroups[match(hftypes$HF_GROUP, hfgroups$HF_GROUP),]
+rownames(hflt) <- hftypes$FEATURE_TY
+
+fl <- list.files(file.path(ROOT, VER, "data/veghf/alpac"))
+
+#i <- 1
+for (i in 1:length(fl)) {
+    cat(i, "\n")
+    flush.console()
+    fp <- file.path(ROOT, VER, "data/veghf/alpac", fl[i])
+
+    d <- read.csv(fp)
+    print(colnames(d))
+    cat("\n")
+    flush.console()
+
+    if (!("year" %in% colnames(d)))
+        d$year <- d$YEAR
+    if (any(is.na(d$year)))
+        d$year[is.na(d$year)] <- 0
+    if (any(d$year==1))
+        d$year[d$year==1] <- 0
+    d$HF_Year <- d$year
+    yr <- as.integer(strsplit(fl[i], "_")[[1]][4])
+    d$YEAR <- yr
+    type <- strsplit(fl[i], "_")[[1]][5]
+    d$Site_YEAR <- interaction(d$ABMI, yr, drop=TRUE, sep="_")
+
+    dd <- make_vegHF_wide2(d, col.label = "Site_YEAR", col.year="YEAR")
+    dd$year <- yr
+    dd$bound_type <- type
+
+    save(dd, file=paste0(file.path(ROOT, VER, "data/veghf/alpac", fl[i]), ".Rdata"))
+}
+
+## all provice 3x7 yearly stuff
+
+fl <- list.files(file.path(ROOT, VER, "data/veghf/allprov3x7"))
+
+#i <- 1
+for (i in 1:length(fl)) {
+    gc()
+    cat(i, "\n")
+    flush.console()
+    fp <- file.path(ROOT, VER, "data/veghf/allprov3x7", fl[i])
+
+    d <- read.csv(fp)
+    print(colnames(d))
+    cat("\n")
+    flush.console()
+
+    if (!("year" %in% colnames(d)))
+        d$year <- d$YEAR
+    if (any(is.na(d$year)))
+        d$year[is.na(d$year)] <- 0
+    if (any(d$year==1))
+        d$year[d$year==1] <- 0
+    d$HF_Year <- d$year
+    yr <- as.integer(substr(strsplit(fl[i], "_")[[1]][4], 1, 4))
+    d$YEAR <- yr
+    d$Site_YEAR <- interaction(d$ABMI, yr, drop=TRUE, sep="_")
+
+    dd <- make_vegHF_wide2(d, col.label = "Site_YEAR", col.year="YEAR")
+    dd$year <- yr
+
+    save(dd, file=paste0(file.path(ROOT, VER, "data/veghf/allprov3x7", fl[i]), ".Rdata"))
+}
+
+## mammals
+fl <- c("c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_2001.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_2002.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_2003.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_2004.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_2005.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_2006.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_2007.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_2008.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_2009.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_2010.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_2011.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_2012.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_2013.csv")
+
+full_res <- list()
+#i <- 1
+for (i in 1:length(fl)) {
+    cat(i, "\n");flush.console()
+    d <- read.csv(fl[[i]])
+    yr <- as.integer(substr(strsplit(fl[i], "_")[[1]][7], 1, 4))
+    d$YEAR <- yr
+    d$Site_YEAR <- interaction(d$ABMISite, yr, drop=TRUE, sep="_")
+    dd <- make_vegHF_wide2(d, col.label = "Site_YEAR", col.year="YEAR")
+    dd$sample_year <- yr
+    full_res[[as.character(yr)]] <- dd
+}
+
+
+
+fl <- c("c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_interLevel2001.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_interLevel2002.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_interLevel2003.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_interLevel2004.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_interLevel2005.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_interLevel2006.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_interLevel2007.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_interLevel2008.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_interLevel2009.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_interLevel2010.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_interLevel2011.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_interLevel2012.csv",
+    "c:/p/AB_data_v2014/data/veghf/mammal/veg_hf_mammal_transect_interLevel2013.csv")
+
+int_res <- list()
+#i <- 1
+for (i in 1:length(fl)) {
+    cat(i, "\n");flush.console()
+    d <- read.csv(fl[[i]])
+    yr <- as.integer(substr(strsplit(fl[i], "_")[[1]][7], 11, 14))
+    d$YEAR <- yr
+    d$Site_YEAR_inter <- interaction(d$ABMISite_1, yr, d$interLevel, drop=TRUE, sep="_")
+    dd <- make_vegHF_wide2(d, col.label = "Site_YEAR_inter", col.year="YEAR")
+    dd$sample_year <- yr
+    int_res[[as.character(yr)]] <- dd
+}
+
+mammal_transects <- full_res[[1]]
+mammal_transects$sample_year <- NA
+for (i in 2:length(full_res)) {
+    mammal_transects$veg_current <- rBind(mammal_transects$veg_current, full_res[[i]]$veg_current)
+    mammal_transects$veg_reference <- rBind(mammal_transects$veg_reference, full_res[[i]]$veg_reference)
+    mammal_transects$soil_current <- rBind(mammal_transects$soil_current, full_res[[i]]$soil_current)
+    mammal_transects$soil_reference <- rBind(mammal_transects$soil_reference, full_res[[i]]$soil_reference)
+}
+sapply(full_res,function(z) dim(z[[1]])[1])
+
+mammal_inter <- int_res[[1]]
+mammal_inter$sample_year <- NA
+for (i in 2:length(int_res)) {
+    mammal_inter$veg_current <- rBind(mammal_inter$veg_current, int_res[[i]]$veg_current)
+    mammal_inter$veg_reference <- rBind(mammal_inter$veg_reference, int_res[[i]]$veg_reference)
+    mammal_inter$soil_current <- rBind(mammal_inter$soil_current, int_res[[i]]$soil_current)
+    mammal_inter$soil_reference <- rBind(mammal_inter$soil_reference, int_res[[i]]$soil_reference)
+}
+sapply(int_res,function(z) dim(z[[1]])[1])
+
+save(mammal_transects, mammal_inter, 
+    file=paste0(file.path(ROOT, VER, "results/mammals_veghf"), ".Rdata"))
+
+## wetlands for MC
+
+fl <- c("c:/p/AB_data_v2014/data/veghf/wetland/veg_hf_on_wetland_site_2007.csv",
+    "c:/p/AB_data_v2014/data/veghf/wetland/veg_hf_on_wetland_site_2008.csv",
+    "c:/p/AB_data_v2014/data/veghf/wetland/veg_hf_on_wetland_site_2009.csv",
+    "c:/p/AB_data_v2014/data/veghf/wetland/veg_hf_on_wetland_site_2010.csv",
+    "c:/p/AB_data_v2014/data/veghf/wetland/veg_hf_on_wetland_site_2011.csv",
+    "c:/p/AB_data_v2014/data/veghf/wetland/veg_hf_on_wetland_site_2012.csv",
+    "c:/p/AB_data_v2014/data/veghf/wetland/veg_hf_on_wetland_site_2013.csv")
+ba <- read.csv("c:/p/AB_data_v2014/data/veghf/wetland/wetland_sites_bufferArea_allYears.csv")
+zc <- read.csv("c:/p/AB_data_v2014/data/veghf/wetland/ZoneCategories_on_wetland_sites_allYears.csv")
+
+w <- list()
+#i <- 1
+for (i in 1:length(fl)) {
+    cat(i, "\n");flush.console()
+    d <- read.csv(fl[[i]])
+    yr <- as.integer(substr(strsplit(fl[i], "_")[[1]][8], 1, 4))
+    #d$YEAR <- yr
+    levels(d$FEATURE_TY) <- sub(' +$', '', levels(d$FEATURE_TY))
+    d$Site_Year_Dist <- interaction(d$Site_ID_DPan, d$year_, d$distance, drop=TRUE, sep="_")
+    dd <- try(make_vegHF_wide2(d, col.label = "Site_Year_Dist", col.year="year_"))
+    dd$sample_year <- yr
+    w[[as.character(yr)]] <- dd
+}
+sapply(w,function(z) dim(z[[1]])[1])
+
+ww <- w[[1]]
+ww$sample_year <- NA
+for (i in 2:length(w)) {
+    ww$veg_current <- rBind(ww$veg_current, w[[i]]$veg_current)
+    ww$veg_reference <- rBind(ww$veg_reference, w[[i]]$veg_reference)
+    ww$soil_current <- rBind(ww$soil_current, w[[i]]$soil_current)
+    ww$soil_reference <- rBind(ww$soil_reference, w[[i]]$soil_reference)
+}
+
+r <- strsplit(rownames(ww[[1]]), "_")
+rr <- data.frame(site=sapply(r, "[[", 1), year=sapply(r, "[[", 2),
+    dist=sapply(r, "[[", 3))
+rr$site_year <- interaction(rr$site, rr$year, sep="_", drop=TRUE)
+labels <- levels(rr$site_year)
+
+ww1 <- ww2 <- ww3 <- ww12 <- ww123 <- ww
+for (i in 1:4) {
+    ww1[[i]] <- ww[[i]][rr$dist=="20",]
+    rownames(ww1[[i]]) <- rr$site_year[rr$dist=="20"]
+    ww1[[i]] <- ww1[[i]][labels,]
+
+    ww2[[i]] <- ww[[i]][rr$dist=="100",]
+    rownames(ww2[[i]]) <- rr$site_year[rr$dist=="100"]
+    ww2[[i]] <- ww2[[i]][labels,]
+
+    ww3[[i]] <- ww[[i]][rr$dist=="250",]
+    rownames(ww3[[i]]) <- rr$site_year[rr$dist=="250"]
+    ww3[[i]] <- ww3[[i]][labels,]
+
+    ww12[[i]] <- ww1[[i]] + ww2[[i]]
+    ww123[[i]] <- ww1[[i]] + ww2[[i]] + ww3[[i]]
+
+    ww1[[i]] <- ww1[[i]]/rowSums(ww1[[i]])
+    ww12[[i]] <- ww12[[i]]/rowSums(ww12[[i]])
+    ww123[[i]] <- ww123[[i]]/rowSums(ww123[[i]])
+}
+
+ww1$buffer <- "0-20 m buffer around wetlands"
+ww12$buffer <- "0-100 m buffer around wetlands"
+ww123$buffer <- "0-250 m buffer around wetlands"
+
+#ba$site_year <- interaction(ba$Site_ID_DPan, ba$year_, sep="_", drop=TRUE)
+#rownames(ba) <- ba$site_year
+
+save(ww1, ww12, ww123, file=file.path(ROOT, VER, "R/veghf_abmiWetlands_allbuffers.Rdata"))
+
+
+
