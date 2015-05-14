@@ -9,7 +9,7 @@
 ##---
 
 ### Intro
-
+##
 ## The 'all-in-one' analyses will produce 1 km$^2$ level predictions
 ## in a format that lists predictions along with the cell ID.
 ## (Cell ID is a combination of raster row and column IDs.)
@@ -61,7 +61,7 @@ bbox(rt)
 #bbox(xyz)
 ## Resolution
 res(rt)
-## This trivial conversion should work, but it does not, that is 
+## This trivial conversion should work, but it does not, that is
 ## why this whole section is commented out:
 #rout <- rasterize(xyz, rt, field="MAT", fun="first")
 
