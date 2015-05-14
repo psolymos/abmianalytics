@@ -27,6 +27,7 @@
 library(raster)
 library(sp)
 library(rgdal)
+library(mefa4)
 
 ## These requirements can be found on the FTP site.
 ## First the csv file that has lat/long, cell ID and a bunch of other
@@ -40,6 +41,9 @@ str(km)
 ## Here is the raster template:
 rt <- raster(file.path(ROOT, VER, "data", "kgrid", "AHM1k.asc"))
 plot(rt)
+## Define projection
+crs <- CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+projection(rt) <- crs
 
 ### Rasterize tables
 
@@ -67,15 +71,22 @@ res(rt)
 
 ## Let us assume that the predicted values is a column named `Var` in the
 ## `km` data frame. We can then turn that into a matrix where each cell
-## coreespond to a raster cell. Thus using the `rt` raster object
+## correspond to a raster cell. Thus using the `rt` raster object
 ## as a template, we can do what we want:
 Var <- "MAT"
-nr <- length(unique(km[,"ROW"]))
-nc <- length(unique(km[,"COL"]))
-mat <- matrix(NA, nr, nc)
-for (i in 1:nrow(km)) {
-    mat[km$ROW[i], km$COL[i]] <- km[[Var]][i]
-}
+#nr <- length(unique(km[,"ROW"]))
+#nc <- length(unique(km[,"COL"]))
+#mat0 <- matrix(NA, nr, nc)
+#for (i in 1:nrow(km)) {
+#    mat0[km$ROW[i], km$COL[i]] <- km[[Var]][i]
+#}
+## A similar template can be created by:
+mat0 <- as.matrix(rt)
+## Or in a simpler fashion (thus only works if row x col values are unique):
+mat <- as.matrix(Xtab(MAT ~ ROW + COL, km))
+## Now we need to add in the NA values from `mat0`, but `mat0` needs to
+## be created only once and can be used as a template:
+mat[is.na(mat0)] <- NA
 ## Making sure that we did it right (row 1, col 2 is in the NW corner):
 image(mat)
 ## Turn the matrix into a raster using `rt` as template:
@@ -85,5 +96,27 @@ plot(rr)
 ## description of output file formats:
 #writeRaster(rr, file.path(ROOT, VER, "out", paste0(Var, ".asc")))
 
+### Production quality maps
+
+## Now we start a new process by using the raster we have just created:
+library(dismo) 
+ROOT <- "c:/p"
+VER <- "AB_data_v2015"
+r <- raster(file.path(ROOT, VER, "out", "MAT.asc"))
+projection(r) <- CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+
+g <- gmap(r, type="terrain") 
+r2 <- raster(g) 
+dim(r2) <- dim(r) 
+r2 <- projectRaster(r, r2) 
+
+plot(g, scale=2) 
+plot(r2, add=TRUE, alpha=0.75, axes=F,box=F,legend=F) 
 
 
+
+## Use the `rasterVis` package for plotting:
+library(rasterVis)
+levelplot(r, contour=TRUE, par.settings=RdBuTheme)
+
+## Adding points to the map (e.g. detections etc.)
