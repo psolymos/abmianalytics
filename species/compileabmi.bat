@@ -1,49 +1,53 @@
 :: switch off commad echo
 @echo off
+:: output folder
+set out=y:\Oracle_access_2015\out\
 
 :: test
 :: echo Running test (hit OK to read/write exception error if happens)
-:: R CMD BATCH --vanilla "y:\Oracle_access_2015\R\00test.R" "y:\Oracle_access_2015\out\OUT_test.log"
+:: R CMD BATCH --vanilla "00test.R" "%out%OUT_test.log"
 
 :: MasterList
 :: echo Compiling master list for sites
-:: R CMD BATCH --vanilla "y:\Oracle_access_2015\R\00masterlist.R" "y:\Oracle_access_2015\out\00masterlist.log"
+:: R CMD BATCH --vanilla "00masterlist.R" "%out%00masterlist.log"
 
 :: Birds
 echo Compiling species data for terrestrial birds
-R CMD BATCH --vanilla "c:\Users\Peter\repos\abmianalytics\species\R\birds.R" "y:\Oracle_access_2015\out\OUT_birds.log"
+R CMD BATCH --vanilla "birds.R" "%out%OUT_birds.log"
 
 :: VPlants
 echo Compiling species data for terrestrial vascular plants
-R CMD BATCH --vanilla "c:\Users\Peter\repos\abmianalytics\species\R\vplants.R" "y:\Oracle_access_2015\out\OUT_vplants.log"
+R CMD BATCH --vanilla "vplants.R" "%out%OUT_vplants.log"
 
 :: Mites
 echo Compiling species data for terrestrial mites
-R CMD BATCH --vanilla "c:\Users\Peter\repos\abmianalytics\species\R\mites.R" "y:\Oracle_access_2015\out\OUT_mites.log"
+R CMD BATCH --vanilla "mites.R" "%out%OUT_mites.log"
 
 :: Mosses
 echo Compiling species data for terrestrial mosses
-R CMD BATCH --vanilla "c:\Users\Peter\repos\abmianalytics\species\R\mosses.R" "y:\Oracle_access_2015\out\OUT_mosses.log"
+R CMD BATCH --vanilla "mosses.R" "%out%OUT_mosses.log"
 
 :: Lichens
 echo Compiling species data for terrestrial lichens
-R CMD BATCH --vanilla "c:\Users\Peter\repos\abmianalytics\species\R\lichens.R" "y:\Oracle_access_2015\out\OUT_lichens.log"
+R CMD BATCH --vanilla "lichens.R" "%out%OUT_lichens.log"
 
 :: Mammals
 :: echo Compiling species data for terrestrial mammals
-:: R CMD BATCH --vanilla "c:\Users\Peter\repos\abmianalytics\species\R\mammals.R" "y:\Oracle_access_2015\out\OUT_mammals.log"
+:: R CMD BATCH --vanilla "c:\Users\Peter\repos\abmianalytics\species\R\mammals.R" "%out%OUT_mammals.log"
 
 :: AqVPlants
 ::echo Compiling species data for aquatic vascular plants
-::R CMD BATCH --vanilla "c:\Users\Peter\repos\abmianalytics\species\R\aqplants.R" "y:\Oracle_access_2015\out\OUT_aqplants.log"
+::R CMD BATCH --vanilla "c:\Users\Peter\repos\abmianalytics\species\R\aqplants.R" "%out%OUT_aqplants.log"
 
 :: AqInverts
 ::echo Compiling species data for aquatic invertebrates
-::R CMD BATCH --vanilla "c:\Users\Peter\repos\abmianalytics\species\R\aqinverts.R" "y:\Oracle_access_2015\out\OUT_aqinverts.log"
+::R CMD BATCH --vanilla "c:\Users\Peter\repos\abmianalytics\species\R\aqinverts.R" "%out%OUT_aqinverts.log"
 
 :: Summary
 ::echo Running summaries
-::R CMD BATCH --vanilla "c:\Users\Peter\repos\abmianalytics\species\R\00summary.R" "y:\Oracle_access_2015\out\00summary.log"
+::R CMD BATCH --vanilla "c:\Users\Peter\repos\abmianalytics\species\R\00summary.R" "%out%00summary.log"
 
+:: erase output folder variable
+set out=
 :: Exit
 exit

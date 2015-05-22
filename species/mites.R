@@ -1,7 +1,7 @@
 ROOT <- "y:/Oracle_access_2015"
 getwd()
 if (interactive())
-    source("~/repos/abmianalytics/species/R/00globalvars.R") else source("R/00globalvars.R")
+    source("~/repos/abmianalytics/species/00globalvars.R") else source("00globalvars.R")
 
 T <- "Mites"
 if (do.prof) {

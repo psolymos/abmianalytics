@@ -1,9 +1,9 @@
 ROOT <- "y:/Oracle_access_2015"
 getwd()
 if (interactive())
-    source("~/repos/abmianalytics/species/R/00globalvars.R") else source("R/00globalvars.R")
+    source("~/repos/abmianalytics/species/00globalvars.R") else source("00globalvars.R")
 
-T <- "Lichens"
+T <- "Mosses"
 if (do.prof) {
     proffile <- paste(D, "/OUT_", tolower(T), d, ".Rprof",sep="")
     Rprof(proffile)
@@ -12,17 +12,16 @@ if (do.prof) {
 if (FALSE) {## extablish connection
 con <- odbcConnectAccess2007(DBVERSION)
 ## queries
-resa0 <- sqlFetch(con, "CSVDOWNLOAD_A_RT_LAB_LICHEN_03_08_V")
-resb0 <- sqlFetch(con, "CSVDOWNLOAD_A_RT_LAB_LICHEN_CURRENT_V")
-#resb0 <- sqlFetch(con, "PUBLIC_ACCESS_MOSS_LICHEN_DATA_V")
+resa0 <- sqlQuery(con, paste("SELECT * FROM CSVDOWNLOAD_A_RT_LAB_MOSS_03_08_V"))
+resb0 <- sqlQuery(con, paste("SELECT * FROM CSVDOWNLOAD_A_RT_LAB_MOSS_CURRENT_V"))
 #lookup <- sqlQuery(con, paste("SELECT * FROM RAWDATA_G_OFFGRID_SITE_LABEL"))
 taxo <- sqlQuery(con, paste("SELECT * FROM PUBLIC_ACCESS_PUBLIC_DETAIL_TAXONOMYS"))
 ## close connection
 close(con)
 }
 
-resa0 <- read.csv(file.path(ROOT, "data/lichens0308.csv"))
-resb0 <- read.csv(file.path(ROOT, "data/lichens09.csv"))
+resa0 <- read.csv(file.path(ROOT, "data/mosses0308.csv"))
+resb0 <- read.csv(file.path(ROOT, "data/mosses09.csv"))
 taxo <- read.csv(file.path(ROOT, "data/taxonomy.csv"))
 cs <- read.csv(file.path(ROOT, "data/moss-lichen-collstatus.csv"))
 
@@ -39,49 +38,25 @@ resb0 <- resb0[!grepl("ALPAC-SK", resb0$SITE_LABEL),]
 rrb <- LabelFun(resb0)
 rrb <- nonDuplicated(rrb, Label, TRUE)
 resb <- data.frame(resb0, rrb[match(resb0$SITE_LABEL, rrb$Label),])
+#resb <- data.frame(resb0, rrb[match(resb0$SITE_LABEL, rownames(rrb)),])
 
 ## identification issues to exclude
 resb <- resb[resb$QUALIFIER != "cf.",]
 
-if (FALSE) {
-tmp <- t(sapply(as.character(resb0$MS_SITE), function(z) {
-    zz <- strsplit(z, "-")[[1]]
-    if (length(zz) == 4)
-        zz else c("IG", "ABMI", zz, NA)
-}))
-resb0$SITE_LABEL <- as.factor(with(resb0, paste0("T_", tmp[,1], "_", tmp[,2],
-    "_", MS_SITE, "_", MS_YEAR, "_1_PL-MH_", MS_QUADRANT, "-XX")))
-sum(grepl("ALPAC-SK", resb0$SITE_LABEL))
-resb0 <- resb0[!grepl("ALPAC-SK", resb0$SITE_LABEL),]
-rrb <- LabelFun(resb0)
-rrb <- nonDuplicated(rrb, Label, TRUE)
-resb <- data.frame(resb0, rrb[match(resb0$SITE_LABEL, rrb$Label),])
-#resb <- data.frame(resb0, rrb[match(resb0$SITE_LABEL, rownames(rrb)),])
-}
-
 sum(grepl("ALPAC-SK", resa0$SITE_LABEL))
 sum(grepl("ALPAC-SK", resb0$SITE_LABEL))
-sum(grepl("ALPAC-SK", resa$Label2))
-sum(grepl("ALPAC-SK", resb$Label2))
 table(resa0$YEAR)
 table(resb0$YEAR)
 
-#resa$TMLIR_PLOT <- resa$TLML_PLOT
-#resa$TMLIR_STRATUM <- resa$TLML_MICROHABITAT_TYPE
-#resb$TSN_ID <- resb$TSNID
-#resb$SCIENTIFIC_NAME <- resb$MLS_SCIENTIFIC_NAME
-#resb$YEAR <- resb$MS_YEAR
-
-resa$TMLIR_COLLECTION_STATUS <- factor("C", levels(resb$TMLIR_COLLECTION_STATUS))
-#ccol <- c("SITE_LABEL","ROTATION", "SITE", "YEAR", "ADATE", "CREWS", "TMLIR_PLOT", 
-#    "TMLIR_STRATUM", "SCIENTIFIC_NAME", "COMMON_NAME", "RANK_NAME", "TSN_ID",
-#    "OnOffGrid", "SiteLabel", "DataProvider", 
-#    "SubType", "SubTypeID", "OGSeqenceID",
-#    "Visit", "ClosestABMISite", "Label", "Label2")
-ccol <- c("SITE_LABEL","YEAR", "SCIENTIFIC_NAME", 
+resa$TMLIR_PLOT <- resa$TLML_PLOT
+resa$TMLIR_STRATUM <- resa$TLML_MICROHABITAT_TYPE
+resb$TSN_ID <- resb$TSNID
+#resa$TMLIR_COLLECTION_STATUS <- factor("C", levels(resb$TMLIR_COLLECTION_STATUS))
+ccol <- c("SITE_LABEL","ROTATION", "SITE", "YEAR", "ADATE", "CREWS", "TMLIR_PLOT", 
+    "TMLIR_STRATUM", "SCIENTIFIC_NAME", "COMMON_NAME", "RANK_NAME", "TSN_ID",
     "OnOffGrid", "SiteLabel", "DataProvider", 
     "SubType", "SubTypeID", "OGSeqenceID",
-    "Visit", "ClosestABMISite", "Label", "Label2","TMLIR_COLLECTION_STATUS")
+    "Visit", "ClosestABMISite", "Label", "Label2")
 res <- rbind(resa[,ccol], resb[,ccol])
 #res <- rbind(resa, resb)
 
@@ -95,10 +70,16 @@ tmp <- as.factor(substr(res$SubTypeID, 1, 2))
 levels(tmp)[levels(tmp)=="DN"] <- "DNC"
 levels(tmp)[levels(tmp)=="VN"] <- "VNA"
 levels(tmp)[!(levels(tmp) %in% c("DNC", "VNA", "NW","NE","SW","SE"))] <- "Plot1ha"
-tmp[tmp != "Plot1ha" & res$YEAR < 2009] <- "Plot1ha"
 table(tmp, res$YEAR)
 res$Quadrant <- tmp
 res$Label <- paste(res$Label2, "PL", res$Quadrant, sep="_")
+
+## unique labels where species is VNA,DNC
+#tmp001 <- unique(res[res$SCIENTIFIC_NAME %in% c("DNC","VNA"),c("Label")])
+## unique labels where species is NOT VNA,DNC
+#tmp002 <- unique(res[!(res$SCIENTIFIC_NAME %in% c("DNC","VNA")),c("Label")])
+## unique labels where only VNA,DNC species occur (no data collected)
+#pcs.to.exclude <- setdiff(tmp001, tmp002)
 
 ## this should all apply at site level!
 ## unique labels where species is DNC
@@ -106,11 +87,11 @@ tmp001 <- unique(res[res$SCIENTIFIC_NAME %in% c("DNC"),c("Label2")])
 ## unique labels where species is NOT DNC
 tmp002 <- unique(res[!(res$SCIENTIFIC_NAME %in% c("DNC")),c("Label2")])
 ## use the collection status (does not work for 03-08 data)
-tmp003 <- unique(res[res$TMLIR_COLLECTION_STATUS %in% c("DNC","PNA"),c("Label2")])
+#tmp003 <- unique(res[res$TMLIR_COLLECTION_STATUS %in% c("DNC","PNA"),c("Label2")])
 ## unique labels where only DNC species occur (no data collected)
 pcs.to.exclude <- setdiff(tmp001, tmp002)
 ## unique labels where collection status indicates so
-pcs.to.exclude <- union(pcs.to.exclude, tmp003)
+#pcs.to.exclude <- union(pcs.to.exclude, tmp003)
 qs.to.exclude <- unique(as.character(res$Label[res$Label2 %in% pcs.to.exclude]))
 
 ## crosstab
@@ -126,11 +107,11 @@ xt <- xt[!grepl("ALPAC-SK", rownames(xt)),]
 sum(grepl("ALPAC-SK", rownames(xt)))
 
 ## get taxonomy
-z <- nonDuplicated(res[!(res$SCIENTIFIC_NAME %in% c("VNA", "DNC")) & !is.na(res$SCIENTIFIC_NAME),],
-    res$sppnam[!(res$SCIENTIFIC_NAME %in% c("VNA", "DNC")) & !is.na(res$SCIENTIFIC_NAME)], TRUE)
-if (FALSE) {
+z <- nonDuplicated(res[!(res$SCIENTIFIC_NAME %in% c("VNA", "DNC")),],
+    res$SCIENTIFIC_NAME[!(res$SCIENTIFIC_NAME %in% c("VNA", "DNC"))], TRUE)
+rownames(z) <- z$sppnam
 ## add here higher taxa too
-z <- z[,c("TSN_ID","COMMON_NAME","SCIENTIFIC_NAME","RANK_NAME")]
+z <- z[,c("TSN_ID","COMMON_NAME","SCIENTIFIC_NAME","RANK_NAME","sppnam")]
 z2 <- taxo[taxo$SCIENTIFIC_NAME %in% z$SCIENTIFIC_NAME,]
 z <- data.frame(z, z2[match(z$SCIENTIFIC_NAME, z2$SCIENTIFIC_NAME),setdiff(colnames(taxo), colnames(z))])
 #z[] <- lapply(z, function(z) z[drop=TRUE])
@@ -139,13 +120,8 @@ z <- data.frame(z, z2[match(z$SCIENTIFIC_NAME, z2$SCIENTIFIC_NAME),setdiff(colna
 for (i in 1:ncol(z))
     if (is.factor(z[[i]]))
         levels(z[[i]]) <- sub(' +$', '', levels(z[[i]]))
-}
 
-#x <- nonDuplicated(res[,c("Label", "Label2", "ROTATION", "SITE", "YEAR", "ADATE", "CREWS", 
-#    "OnOffGrid", 
-#    "SiteLabel", "DataProvider", "Visit", "ClosestABMISite",
-#    "SubType", "SubTypeID", "OGSeqenceID", "Quadrant")], res$Label, TRUE)
-x <- nonDuplicated(res[,c("Label", "Label2", "YEAR", 
+x <- nonDuplicated(res[,c("Label", "Label2", "ROTATION", "SITE", "YEAR", "ADATE", "CREWS", 
     "OnOffGrid", 
     "SiteLabel", "DataProvider", "Visit", "ClosestABMISite",
     "SubType", "SubTypeID", "OGSeqenceID", "Quadrant")], res$Label, TRUE)
@@ -153,27 +129,29 @@ x <- nonDuplicated(res[,c("Label", "Label2", "YEAR",
 ## crosstab on PC level
 m <- Mefa(xt, x, z)
 ## exclude not species level taxa
-#table(m@taxa$RANK_NAME) # here are sub-specific levels
-#m <- m[,taxa(m)$RANK_NAME %in% c("Genus", "Species", "Subspecies", "Variety")]
+table(m@taxa$RANK_NAME) # here are sub-specific levels
+m <- m[,taxa(m)$RANK_NAME %in% c("Genus", "Species", "Subspecies", "Variety")]
 
 ## here I want to collapse sub-specific taxa, but TAX WB is not that clean to map these
-if (FALSE) {
 tmp <- m@taxa$SCIENTIFIC_NAME
 tmp <- sapply(strsplit(as.character(tmp)," "), function(z) {
     if (z[1]=="X") {
         dd <- if (length(z) == 2)
-            paste(z[2], "spp.") else paste(z[2], z[3])
+            #paste(z[2], "spp.") else paste(z[2], z[3])
+            z[2] else paste(z[2], z[3])
         return(dd)
     }
     if (length(z) == 1)
-        paste(z[1], "spp.") else paste(z[1], z[2])
+        #paste(z[1], "spp.") else paste(z[1], z[2])
+        z[1] else paste(z[1], z[2])
     })
 taxa(m)$SpeciesFinal <- as.factor(tmp)
 zz <- nonDuplicated(m@taxa, m@taxa$SpeciesFinal, TRUE)
 m <- groupSums(m, 2, m@taxa$SpeciesFinal, replace=zz)
-}
+colnames(m) <- nameAlnum(colnames(m),"first",collapse="")
+
 xtab(m) <- as(xtab(m) > 0, "dgCMatrix") # can be >1 due to COMM_DOM
-#table(m@taxa$RANK_NAME) # here are sub-specific levels
+table(m@taxa$RANK_NAME) # here are sub-specific levels
 
 ## site level info
 mmm <- m[samp(m)$Quadrant != "DNC",]
