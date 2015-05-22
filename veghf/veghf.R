@@ -10,34 +10,110 @@ VER <- "AB_data_v2015"
 THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
 
 library(mefa4)
-source("~/repos/abmianalytics/veghf/R/veghf_functions.R")
+source("~/repos/abmianalytics/veghf/veghf_functions.R")
 
 hftypes <- read.csv(file.path(ROOT, VER, "lookup/HFtype_lookup_20150428.csv"))
 hfgroups <- read.csv(file.path(ROOT, VER, "lookup/HFclassification_20150428.csv"))
 hflt <- hfgroups[match(hftypes$HF_GROUP, hfgroups$HF_GROUP),]
 rownames(hflt) <- hftypes$FEATURE_TY
 
-## ABMI sites and points, all scales --------------------------------------------
+### ABMI on+off grid sites
 
+#### Vehetation and HF processing
+
+## ABMI sites (on+off) cetre 1 ha
 f1ha <- file.path(ROOT, VER, "data/veghf", "Center1ha.csv")
 d1ha <- read.csv(f1ha)
 d1ha$Site_YEAR <- with(d1ha, interaction(ABMI_Assigned_Site_ID, survey_year, sep="_", drop=TRUE))
+head(d1ha)
 dd1ha <- make_vegHF_wide(d1ha, col.label = "Site_YEAR", col.year="survey_year")
 dd1ha$scale <- "1 ha square around site centre"
 
+## ABMI sites (on+off) 9 bird points / site, 150 m radius buffer
 f150m <- file.path(ROOT, VER, "data/veghf", "Bird150m.csv")
 d150m <- read.csv(f150m)
 d150m$Site_YEAR_bird <- with(d150m, 
-    interaction(Site_ID, Bird, survey_year, sep="_", drop=TRUE))
+    interaction(Site_ID, Bird, sep="_", drop=TRUE))
+head(d150m)
 dd150m <- make_vegHF_wide(d150m, col.label = "Site_YEAR_bird", col.year="survey_year")
 dd150m$scale <- "150 m radius circle around bird points"
 
+## ABMI sites (on+off) 9 bird points / site, 1 km^2 buffer
 f1km <- file.path(ROOT, VER, "data/veghf", "Bird564m.csv")
 d1km <- read.csv(f1km)
 d1km$Site_YEAR_bird <- with(d1km, 
-    interaction(Site_ID, survey_year, Bird, sep="_", drop=TRUE))
+    interaction(Site_ID, Bird, sep="_", drop=TRUE))
+head(d1km)
 dd1km <- make_vegHF_wide(d1km, col.label = "Site_YEAR_bird", col.year="survey_year")
 dd1km$scale <- "564 m radius circle around bird points"
+
+#### Climate and regions
+
+## Public coordinates
+gis <- read.csv(file.path("y:/Oracle_access_2015", "data", "sitemetadata.csv"))
+rownames(gis) <- gis$SIDE_ID
+
+## climate for all bird pts (pt=1 centre for 1ha)
+clim1 <- read.csv(file.path(ROOT, VER, "data/climate", "OnOffBirds_climateLUFNrg.csv"))
+colnames(clim1)[colnames(clim1) == "Eref"] <- "PET"
+colnames(clim1)[colnames(clim1) == "Populus_tremuloides_brtpred_nofp"] <- "pAspen"
+clim1$Site_YEAR_bird <- with(clim1, interaction(Site_ID, Bird, sep="_", drop=TRUE))
+rownames(clim1) <- clim1$Site_YEAR_bird
+clim1 <- droplevels(clim1[!grepl("OG-ALPAC-SK", rownames(clim1)),])
+
+tmp <- strsplit(as.character(clim1$Site_ID), "_")
+clim1$Site <- as.factor(sapply(tmp, "[[", 1))
+clim1$Year <- as.integer(sapply(tmp, "[[", 2))
+tmp <- strsplit(as.character(clim1$Site), "-")
+clim1$Nearest <- sapply(tmp, function(z) if (length(z)>1) z[3] else z)
+clim1$DataProvider <- sapply(tmp, function(z) if (length(z)>1) z[2] else "ABMI")
+clim1$OnOffGrid <- sapply(tmp, function(z) if (length(z)>1) z[1] else "IG")
+clim1$POINT_X <- gis$PUBLIC_LONGITUDE[match(clim1$Nearest, rownames(gis))]
+clim1$POINT_Y <- gis$PUBLIC_LATTITUDE[match(clim1$Nearest, rownames(gis))]
+
+clim2 <- droplevels(clim1[clim1$Bird == 1,])
+rownames(clim2) <- clim2$Site_ID
+source("~/repos/bamanalytics/R/dataprocessing_functions.R")
+
+compare.sets(rownames(clim2), rownames(dd1ha$veg_current))
+setdiff(rownames(clim2), rownames(dd1ha$veg_current))
+
+compare.sets(rownames(clim1), rownames(dd150m$veg_current))
+setdiff(rownames(clim1), rownames(dd150m$veg_current))
+
+compare.sets(rownames(clim1), rownames(dd1km$veg_current))
+setdiff(rownames(clim1), rownames(dd1km$veg_current))
+
+save(dd1ha, dd150m, dd1km, clim1, clim2,
+    file=file.path(ROOT, VER, "out/abmi_onoff", "veg-hf-clim-reg_abmi-onoff.Rdata"))
+
+
+### Snow transects
+
+## 1 km length (250 m buffer) mammal transect (inter level)
+fmi <- file.path(ROOT, VER, "data/veghf", "InterLevel.csv")
+dmi <- read.csv(fmi)
+dmi$Site_YEAR_tr <- with(dmi, interaction(ABMISite, interLevel, survey_year, sep="_", drop=TRUE))
+ddmi <- make_vegHF_wide(dmi, col.label = "Site_YEAR_tr", col.year="survey_year")
+ddmi$scale <- "inter level mammal transects"
+
+## 9-10 km length (250 m buffer) mammal transect (full transect level)
+fmt <- file.path(ROOT, VER, "data/veghf", "TransectLevel.csv")
+dmt <- read.csv(fmt)
+dmt$Site_YEAR <- with(dmt, interaction(ABMISite, survey_year, sep="_", drop=TRUE))
+ddmt <- make_vegHF_wide(dmt, col.label = "Site_YEAR", col.year="survey_year")
+ddmt$scale <- "full transect level mammal transects"
+
+## mammal stuff
+c:\p\AB_data_v2015\data\climate\mamTrack_interLevel_latLong_climate_naturalReg_V2.csv
+c:\p\AB_data_v2015\data\climate\mamTrack_latLong_climate_naturalReg_V2.csv
+
+
+
+## BAM+BBS bird points, 150 m radius buffer
+
+## BAM+BBS bird points, 1 km^2 buffer
+
 
 
 
