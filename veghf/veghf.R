@@ -11,6 +11,7 @@ THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
 
 library(mefa4)
 source("~/repos/abmianalytics/veghf/veghf_functions.R")
+source("~/repos/bamanalytics/R/dataprocessing_functions.R")
 
 hftypes <- read.csv(file.path(ROOT, VER, "lookup/HFtype_lookup_20150428.csv"))
 hfgroups <- read.csv(file.path(ROOT, VER, "lookup/HFclassification_20150428.csv"))
@@ -73,7 +74,6 @@ clim1$POINT_Y <- gis$PUBLIC_LATTITUDE[match(clim1$Nearest, rownames(gis))]
 
 clim2 <- droplevels(clim1[clim1$Bird == 1,])
 rownames(clim2) <- clim2$Site_ID
-source("~/repos/bamanalytics/R/dataprocessing_functions.R")
 
 compare.sets(rownames(clim2), rownames(dd1ha$veg_current))
 setdiff(rownames(clim2), rownames(dd1ha$veg_current))
@@ -93,7 +93,7 @@ save(dd1ha, dd150m, dd1km, clim1, clim2,
 ## 1 km length (250 m buffer) mammal transect (inter level)
 fmi <- file.path(ROOT, VER, "data/veghf", "InterLevel.csv")
 dmi <- read.csv(fmi)
-dmi$Site_YEAR_tr <- with(dmi, interaction(ABMISite, interLevel, survey_year, sep="_", drop=TRUE))
+dmi$Site_YEAR_tr <- with(dmi, interaction(ABMISite, survey_year, interLevel, sep="_", drop=TRUE))
 ddmi <- make_vegHF_wide(dmi, col.label = "Site_YEAR_tr", col.year="survey_year")
 ddmi$scale <- "inter level mammal transects"
 
@@ -101,12 +101,51 @@ ddmi$scale <- "inter level mammal transects"
 fmt <- file.path(ROOT, VER, "data/veghf", "TransectLevel.csv")
 dmt <- read.csv(fmt)
 dmt$Site_YEAR <- with(dmt, interaction(ABMISite, survey_year, sep="_", drop=TRUE))
+## strange site issue: "394-2005_2005" --> "394-2005_2006"
+levels(dmt$Site_YEAR)[levels(dmt$Site_YEAR)=="394-2005_2005"] <- "394-2005_2006"
 ddmt <- make_vegHF_wide(dmt, col.label = "Site_YEAR", col.year="survey_year")
 ddmt$scale <- "full transect level mammal transects"
 
+## Transect segment labels
+seg <- nonDuplicated(dmi, Site_YEAR_tr, TRUE)
+tmp <- strsplit(rownames(seg), "_")
+seg$Site <- as.factor(sapply(tmp, "[[", 1))
+seg$Inter <- as.integer(sapply(tmp, "[[", 3))
+seg$Site_Inter <- with(seg, interaction(Site, Inter, sep="_", drop=TRUE))
+seg$OnOffGrid <- as.factor(ifelse(substr(sapply(tmp, "[[", 1), 1, 2) == "OG", "OG", "IG"))
+
 ## mammal stuff
-c:\p\AB_data_v2015\data\climate\mamTrack_interLevel_latLong_climate_naturalReg_V2.csv
-c:\p\AB_data_v2015\data\climate\mamTrack_latLong_climate_naturalReg_V2.csv
+clim3 <- read.csv(file.path(ROOT, VER, "data/climate", 
+    "mamTrack_interLevel_latLong_climate_naturalReg_V2.csv"))
+colnames(clim3)[colnames(clim3) == "Eref"] <- "PET"
+colnames(clim3)[colnames(clim3) == "Populus_tremuloides_brtpred_nofp"] <- "pAspen"
+clim3$Site_Inter <- with(clim3, interaction(ABMISite, interLevel, sep="_", drop=TRUE))
+clim3$Year <- seg$survey_year[match(clim3$Site_Inter, seg$Site_Inter)]
+clim3$Site_Year_Inter <- with(clim3, 
+    interaction(ABMISite, Year, interLevel, sep="_", drop=TRUE))
+clim3$Site_Inter[is.na(clim3$Site_Year_Inter)]
+clim3 <- droplevels(clim3[!is.na(clim3$Site_Year_Inter),])
+clim3$Site_Year <- as.factor(paste(clim3$ABMISite, clim3$Year, sep="_"))
+rownames(clim3) <- clim3$Site_Year_Inter
+
+compare.sets(rownames(clim3), rownames(ddmi$veg_current))
+
+seg2 <- nonDuplicated(clim3, Site_Year, TRUE)
+seg2 <- seg2[,c("ABMISite","interLevel","Site_Inter","Year","Site_Year_Inter","Site_Year")]
+clim4 <- read.csv(file.path(ROOT, VER, "data/climate", 
+    "mamTrack_latLong_climate_naturalReg_V2.csv"))
+colnames(clim4)[colnames(clim4) == "Eref"] <- "PET"
+colnames(clim4)[colnames(clim4) == "Populus_tremuloides_brtpred_nofp"] <- "pAspen"
+clim4$Year <- seg2$Year[match(clim4$ABMISite, seg2$ABMISite)]
+rownames(clim4) <- paste(clim4$ABMISite, clim4$Year, sep="_")
+
+compare.sets(clim4$ABMISite, seg2$ABMISite)
+compare.sets(rownames(clim4), rownames(ddmt$veg_current))
+setdiff(rownames(clim4), rownames(ddmt$veg_current))
+setdiff(rownames(ddmt$veg_current), rownames(clim4))
+
+save(ddmi, ddmt, clim3, clim4,
+    file=file.path(ROOT, VER, "out/abmi_onoff", "veg-hf-clim-reg_mammals-onoff.Rdata"))
 
 
 
