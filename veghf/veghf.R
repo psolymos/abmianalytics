@@ -84,7 +84,49 @@ setdiff(rownames(clim1), rownames(dd150m$veg_current))
 compare.sets(rownames(clim1), rownames(dd1km$veg_current))
 setdiff(rownames(clim1), rownames(dd1km$veg_current))
 
-save(dd1ha, dd150m, dd1km, clim1, clim2,
+birds <- read.csv(file.path(ROOT, VER, "out","species",
+    "OUT_Birds_Species_PC-Counts_2015-05-22.csv"))
+rownames(birds) <- birds$Label
+mites <- read.csv(file.path(ROOT, VER, "out","species",
+    "OUT_Mites_Species_Site-Binomial_2015-05-22.csv"))
+rownames(mites) <- mites$Label2
+
+clim1$Label <- with(clim1, paste0("T_", OnOffGrid, "_", DataProvider, 
+    "_", Site, "_", Year, "_1_PT_", Bird))
+clim1$Label2 <- with(clim1, paste0("T_", OnOffGrid, "_", DataProvider, 
+    "_", Site, "_", Year, "_1"))
+clim2$Label2 <- with(clim2, paste0("T_", OnOffGrid, "_", DataProvider, 
+    "_", Site, "_", Year, "_1"))
+
+clim1 <- clim1[rownames(dd150m$veg_current),]
+clim2 <- clim2[rownames(dd1ha$veg_current),]
+stopifnot(all(rownames(clim1) == rownames(dd150m$veg_current)))
+stopifnot(all(rownames(clim2) == rownames(dd1ha$veg_current)))
+
+rownames(clim1) <- clim1$Label
+rownames(clim2) <- clim2$Label2
+rownames(dd150m[[1]]) <- rownames(dd150m[[2]]) <- rownames(clim1)
+rownames(dd150m[[3]]) <- rownames(dd150m[[4]]) <- rownames(clim1)
+rownames(dd1km[[1]]) <- rownames(dd1km[[2]]) <- rownames(clim1)
+rownames(dd1km[[3]]) <- rownames(dd1km[[4]]) <- rownames(clim1)
+rownames(dd1ha[[1]]) <- rownames(dd1ha[[2]]) <- rownames(clim2)
+rownames(dd1ha[[3]]) <- rownames(dd1ha[[4]]) <- rownames(clim2)
+
+climPoint <- clim1
+climSite <- clim2
+
+compare.sets(rownames(climPoint), rownames(birds))
+setdiff(rownames(climPoint), rownames(birds))
+setdiff(rownames(birds), rownames(climPoint))
+compare.sets(rownames(climSite), as.character(birds$Label2))
+setdiff(rownames(climSite), as.character(birds$Label2))
+setdiff(as.character(birds$Label2), rownames(climSite))
+
+compare.sets(rownames(climSite), rownames(mites))
+setdiff(rownames(climSite), rownames(mites))
+setdiff(rownames(mites), rownames(climSite))
+
+save(dd1ha, dd150m, dd1km, climSite, climPoint,
     file=file.path(ROOT, VER, "out/abmi_onoff", "veg-hf-clim-reg_abmi-onoff.Rdata"))
 
 
