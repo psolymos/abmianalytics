@@ -52,7 +52,7 @@ dd1km$scale <- "564 m radius circle around bird points"
 
 ## Public coordinates
 gis <- read.csv(file.path("y:/Oracle_access_2015", "data", "sitemetadata.csv"))
-rownames(gis) <- gis$SIDE_ID
+rownames(gis) <- gis$SITE_ID
 
 ## climate for all bird pts (pt=1 centre for 1ha)
 clim1 <- read.csv(file.path(ROOT, VER, "data/climate", "OnOffBirds_climateLUFNrg.csv"))
