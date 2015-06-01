@@ -15,14 +15,18 @@
 #EXT_ILM_MAMMAL_HU_OLD
 #EXT_ILM_MAMMAL_OLD
 
-source("y:/Oracle_access/src2/00globalvars.R")
+ROOT <- "y:/Oracle_access_2015"
+getwd()
+if (interactive())
+    source("~/repos/abmianalytics/species/00globalvars.R") else source("00globalvars.R")
+
 T <- "Mammals"
 if (do.prof) {
-    proffile <- paste(D, "OUT_", tolower(T), d, ".Rprof",sep="")
+    proffile <- paste(D, "/OUT_", tolower(T), d, ".Rprof",sep="")
     Rprof(proffile)
 }
-## load mefa4 package
-stopifnot(require(mefa4))
+
+if (FALSE) {
 ## load package RODBC
 stopifnot(require(RODBC))
 ## extablish connection
@@ -41,6 +45,19 @@ ilm3 <- sqlFetch(con, "PUBLIC_ACCESS_EXT_ILM_MAMMAL_SNOW") # snow etc
 ilm4 <- sqlFetch(con, "PUBLIC_ACCESS_EXT_ILM_MAMMAL_COORDINATES") # xy
 
 close(con)
+}
+
+## ABMI data
+abmi1 <- read.csv(file.path(ROOT, "data/snowtracking-transect.csv"))
+abmi2 <- read.csv(file.path(ROOT, "data/snowtracking-hu.csv"))
+abmi3 <- read.csv(file.path(ROOT, "data/snowtracking-site-v.csv"))
+
+## ILM data
+ilm1 <- read.csv(file.path(ROOT, "data/snowtracking-ilm.csv"))
+ilm2 <- read.csv(file.path(ROOT, "data/snowtracking-ilm-hu.csv"))
+ilm3 <- read.csv(file.path(ROOT, "data/snowtracking-ilm-snow.csv"))
+ilm4 <- read.csv(file.path(ROOT, "data/snowtracking-ilm-coord.csv"))
+
 
 abmi1$Date <- strptime(abmi1$ADATE, "%d-%b-%y") # 27-Jan-05
 abmi1$YearSampling <- abmi1$Date$year + 1900
@@ -57,7 +74,8 @@ tmp <- abmi3[abmi3$SITE_LABEL %in% as.character(abmi3$SITE_LABEL)[abmi3$TMTC_VIS
 with(tmp, table(as.character(SITE_LABEL), YEAR))
 vis2 <- as.character(tmp$SITE_LABEL)
 
-abmi1$INTER_SEG <- ifelse(abmi1$YEAR < 2005, abmi1$TMTT_SEGMENT, ((abmi1$TMTT_SEGMENT - 1) %/% 4) + 1)
+abmi1$INTER_SEG <- ifelse(abmi1$YEAR < 2005, abmi1$TMTT_SEGMENT, 
+    ((abmi1$TMTT_SEGMENT - 1) %/% 4) + 1)
 table(abmi1$TMTT_SEGMENT, abmi1$INTER_SEG)
 abmi1$label_tr <- with(abmi1, paste("T", "IG", "ABMI", SITE, YEAR, 1, sep="_"))
 abmi1$label_int <- with(abmi1, paste("T", "IG", "ABMI", SITE, YEAR, 1, "SI", INTER_SEG, sep="_"))
@@ -69,10 +87,13 @@ abmi1$TSNID <- as.integer(as.character(abmi1$TSNID))
 
 #ilm1$method <- as.factor(ifelse(ilm1$ABMIYEAR < 2005, "triangle", "linear"))
 table(ilm1$SEGMENT, ilm1$ABMIYEAR)
-ilm1$INTER_SEG <- ifelse(ilm1$ABMIYEAR < 2005, ilm1$SEGMENT, ((ilm1$SEGMENT - 1) %/% 4) + 1)
+ilm1$INTER_SEG <- ifelse(ilm1$ABMIYEAR < 2005, ilm1$SEGMENT, 
+    ((ilm1$SEGMENT - 1) %/% 4) + 1)
 table(ilm1$INTER_SEG, ilm1$ABMIYEAR)
-ilm1$label_tr <- with(ilm1, paste("T", "OG", "ILM", ABMI_SITE, ABMIYEAR, 1, sep="_"))
-ilm1$label_int <- with(ilm1, paste("T", "OG", "ILM", ABMI_SITE, ABMIYEAR, 1, "SI", INTER_SEG, sep="_"))
+ilm1$label_tr <- with(ilm1, paste("T", "OG", "ILM", ABMI_SITE, 
+    ABMIYEAR, 1, sep="_"))
+ilm1$label_int <- with(ilm1, paste("T", "OG", "ILM", ABMI_SITE, 
+    ABMIYEAR, 1, "SI", INTER_SEG, sep="_"))
 ilm1$length <- ifelse(ilm1$ABMIYEAR < 2005, 1000, 250)
 ilm1 <- ilm1[ilm1$SPP_COUNT != "DNC",]
 
@@ -149,6 +170,8 @@ z <- nonDuplicated(res[!is.na(res$TSNuse),c(6,3,4)], TSNuse, TRUE)
 m <- Mefa(xt, x, z)
 m
 colnames(m) <- tax0$COMMON_NAME[match(colnames(m), as.character(tax0$TSNuse))]
+colnames(m) <- nameAlnum(colnames(m),"first",collapse="")
+
 
 m2 <- groupSums(m, 1, samp(m)$label_tr, ra.rm=TRUE)
 x2 <- nonDuplicated(samp(m), label_tr, TRUE)
@@ -193,18 +216,28 @@ write.csv(zzz,file="y:/Oracle_access/mammals/ProblemSegments_Mammals_Oct18-2013.
 if (combine.tables) {
     out1 <- data.frame(samp1, resm1)
     out2 <- data.frame(samp2, resm2)
-    write.csv(out1, file=paste(D, "OUT_", T, "_Species_InterSegment", d, ".csv",sep=""), row.names = FALSE)
-    write.csv(out2, file=paste(D, "OUT_", T, "_Species_Transect-Binomial-Length-DSS", d, ".csv",sep=""), 
+    write.csv(out1, file=paste(D, "/OUT_", T, "_Species_InterSegment", d, 
+        ".csv",sep=""), row.names = FALSE)
+    write.csv(out2, file=paste(D, "/OUT_", T, 
+        "_Species_Transect-Binomial-Length-DSS", d, ".csv",sep=""), 
         row.names = FALSE)
 } else {
-    write.csv(resm1, file=paste(D, "OUT_", T, "_Species_InterSegment", d, ".csv",sep=""), row.names = TRUE)
-    write.csv(resm2, file=paste(D, "OUT_", T, "_Species_Transect-Binomial", d, ".csv",sep=""), row.names = TRUE)
-    write.csv(samp1, file=paste(D, "OUT_", T, "_Species_SegmentInfo", d, ".csv",sep=""), row.names = TRUE)
-    write.csv(samp2, file=paste(D, "OUT_", T, "_Species_TransectInfo-Length-DSS", d, ".csv",sep=""), row.names = TRUE)
+    write.csv(resm1, file=paste(D, "/OUT_", T, "_Species_InterSegment", 
+        d, ".csv",sep=""), row.names = TRUE)
+    write.csv(resm2, file=paste(D, "/OUT_", T, "_Species_Transect-Binomial", 
+        d, ".csv",sep=""), row.names = TRUE)
+    write.csv(samp1, file=paste(D, "/OUT_", T, "_Species_SegmentInfo", 
+        d, ".csv",sep=""), row.names = TRUE)
+    write.csv(samp2, file=paste(D, "/OUT_", T, "_Species_TransectInfo-Length-DSS", 
+        d, ".csv",sep=""), row.names = TRUE)
 }
+tax <- data.frame(Species=colnames(m), taxa(m))
+write.csv(tax, file=paste(D, "/OUT_", T, "_Species_Taxa", d, ".csv",sep=""), 
+    row.names = FALSE)
+
 if (do.prof)
     summaryRprof(proffile)
 if (do.image)
-    save.image(paste(D, "OUT_", tolower(T), d, ".Rdata",sep=""))
+    save.image(paste(D, "/OUT_", tolower(T), d, ".Rdata",sep=""))
 ## quit without saving workspace
 quit(save="no")
