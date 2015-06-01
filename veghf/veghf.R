@@ -20,7 +20,7 @@ rownames(hflt) <- hftypes$FEATURE_TY
 
 ### ABMI on+off grid sites
 
-#### Vehetation and HF processing
+#### Vegetation and HF processing
 
 ## ABMI sites (on+off) cetre 1 ha
 f1ha <- file.path(ROOT, VER, "data/veghf", "Center1ha.csv")
