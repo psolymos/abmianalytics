@@ -186,7 +186,69 @@ compare.sets(rownames(clim4), rownames(ddmt$veg_current))
 setdiff(rownames(clim4), rownames(ddmt$veg_current))
 setdiff(rownames(ddmt$veg_current), rownames(clim4))
 
-save(ddmi, ddmt, clim3, clim4,
+inter <- read.csv(file.path(ROOT, VER, "out","species",
+    "OUT_Mammals_Species_InterSegment_2015-06-01.csv"))
+tran <- read.csv(file.path(ROOT, VER, "out","species",
+    "OUT_Mammals_Species_Transect-Binomial-Length-DSS_2015-06-01.csv"))
+climInter <- clim3[rownames(ddmi$veg_current),]
+climTr <- clim4[rownames(ddmt$veg_current),]
+all(rownames(climInter) == rownames(ddmi[[1]]))
+all(rownames(climTr) == rownames(ddmt[[1]]))
+rm(clim3, clim4)
+
+tran$SiteFunny <- tran$Site
+levels(tran$SiteFunny)[levels(tran$SiteFunny) == "1"] <- "001"
+levels(tran$SiteFunny)[levels(tran$SiteFunny) == "2"] <- "002"
+levels(tran$SiteFunny)[levels(tran$SiteFunny) == "3"] <- "003"
+tran$YearFunny <- paste0("-", as.character(tran$Year))
+tran$YearFunny[grep("-ILM-", as.character(tran$Site))] <- ""
+tran$SiteYear <- paste0(tran$SiteFunny, tran$YearFunny)
+compare.sets(tran$SiteYear, climTr$ABMISite)
+## Transect level is all good
+setdiff(tran$SiteYear, climTr$ABMISite)
+setdiff(climTr$ABMISite, tran$SiteYear)
+climTr$label_tr <- as.character(tran$label_tr)[match(climTr$ABMISite,
+    tran$SiteYear)]
+climTr$label_tr[is.na(climTr$label_tr)] <- as.character(climTr$ABMISite)[is.na(climTr$label_tr)]
+climTr$label_tr <- as.factor(climTr$label_tr)
+
+
+inter$SiteFunny <- inter$Site
+levels(inter$SiteFunny)[levels(inter$SiteFunny) == "1"] <- "001"
+levels(inter$SiteFunny)[levels(inter$SiteFunny) == "2"] <- "002"
+levels(inter$SiteFunny)[levels(inter$SiteFunny) == "3"] <- "003"
+inter$YearFunny <- paste0("-", as.character(inter$Year))
+inter$YearFunny[grep("-ILM-", as.character(inter$Site))] <- ""
+inter$SiteYear <- paste0(inter$SiteFunny, inter$YearFunny)
+compare.sets(inter$SiteYear, climInter$ABMISite)
+inter$Site_Year_Inter <- with(inter, interaction(SiteYear, Year, InterSegID, 
+    sep="_", drop=TRUE))
+compare.sets(inter$Site_Year_Inter, climInter$Site_Year_Inter)
+setdiff(inter$Site_Year_Inter, climInter$Site_Year_Inter)
+setdiff(climInter$Site_Year_Inter, inter$Site_Year_Inter)
+
+climInter$label_int <- as.character(inter$label_int)[match(climInter$Site_Year_Inter,
+    inter$Site_Year_Inter)]
+climInter$label_int[is.na(climInter$label_int)] <- 
+    as.character(climInter$Site_Year_Inter)[is.na(climInter$label_int)]
+
+climInter$label_tr <- as.character(inter$label_tr)[match(climInter$Site_Year_Inter,
+    inter$Site_Year_Inter)]
+climInter$label_tr[is.na(climInter$label_tr)] <- 
+    as.character(climInter$Site_Year)[is.na(climInter$label_tr)]
+climInter$label_int <- as.factor(climInter$label_int)
+climInter$label_tr <- as.factor(climInter$label_tr)
+
+rownames(climInter) <- climInter$label_int
+rownames(ddmi[[1]]) <- rownames(ddmi[[2]]) <- rownames(climInter)
+rownames(ddmi[[3]]) <- rownames(ddmi[[4]]) <- rownames(climInter)
+rownames(climTr) <- climTr$label_tr
+rownames(ddmt[[1]]) <- rownames(ddmt[[2]]) <- rownames(climTr)
+rownames(ddmt[[3]]) <- rownames(ddmt[[4]]) <- rownames(climTr)
+all(rownames(climInter) == rownames(ddmi[[1]]))
+all(rownames(climTr) == rownames(ddmt[[1]]))
+
+save(ddmi, ddmt, climInter, climTr,
     file=file.path(ROOT, VER, "out/abmi_onoff", "veg-hf-clim-reg_mammals-onoff.Rdata"))
 
 
