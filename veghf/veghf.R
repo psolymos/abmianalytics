@@ -252,13 +252,250 @@ save(ddmi, ddmt, climInter, climTr,
     file=file.path(ROOT, VER, "out/abmi_onoff", "veg-hf-clim-reg_mammals-onoff.Rdata"))
 
 
+### BAM+BBS bird points, 150 m radius buffer
 
-## BAM+BBS bird points, 150 m radius buffer
+## processing csv files
+fl <- list.files(file.path(ROOT, VER, "data", "veghf", "bammbbs150m"))
+tmplist <- list()
+for (fn in fl) {
+    cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
+    f <- file.path(ROOT, VER, "data", "veghf", "bammbbs150m", fn)
+    d <- read.csv(f)
+    dd <- make_vegHF_wide(d, col.label="PKEY", col.year="YEAR_", sparse=TRUE)
+    tmplist[[fn]] <- dd
+}
 
-## BAM+BBS bird points, 1 km^2 buffer
+## binding together the pieces
+veg_current <- tmplist[[1]]$veg_current
+veg_reference <- tmplist[[1]]$veg_reference
+soil_current <- tmplist[[1]]$soil_current
+soil_reference <- tmplist[[1]]$soil_reference
+for (j in 2:length(tmplist)) {
+    cat("binding", j-1, "&", j, "/", length(tmplist), "\n");flush.console()
+    veg_current <- bind_fun2(veg_current, tmplist[[j]]$veg_current)
+    veg_reference <- bind_fun2(veg_reference, tmplist[[j]]$veg_reference)
+    soil_current <- bind_fun2(soil_current, tmplist[[j]]$soil_current)
+    soil_reference <- bind_fun2(soil_reference, tmplist[[j]]$soil_reference)
+}
+
+## assembling return object
+dd150m_bambbs <- list(
+    veg_current = veg_current,
+    veg_reference = veg_reference,
+    soil_current = soil_current,
+    soil_reference = soil_reference,
+    sample_year=NA,
+    scale = "150 m radius circle around bird points")
+
+### BAM+BBS bird points, 1 km^2 buffer
+
+## processing csv files
+fl <- list.files(file.path(ROOT, VER, "data", "veghf", "bammbbs564m"))
+tmplist <- list()
+for (fn in fl) {
+    cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
+    f <- file.path(ROOT, VER, "data", "veghf", "bammbbs564m", fn)
+    d <- read.csv(f)
+    dd <- make_vegHF_wide(d, col.label="PKEY", col.year="YEAR_", sparse=TRUE)
+    tmplist[[fn]] <- dd
+}
+
+## binding together the pieces
+veg_current <- tmplist[[1]]$veg_current
+veg_reference <- tmplist[[1]]$veg_reference
+soil_current <- tmplist[[1]]$soil_current
+soil_reference <- tmplist[[1]]$soil_reference
+for (j in 2:length(tmplist)) {
+    cat("binding", j-1, "&", j, "/", length(tmplist), "\n");flush.console()
+    veg_current <- bind_fun2(veg_current, tmplist[[j]]$veg_current)
+    veg_reference <- bind_fun2(veg_reference, tmplist[[j]]$veg_reference)
+    soil_current <- bind_fun2(soil_current, tmplist[[j]]$soil_current)
+    soil_reference <- bind_fun2(soil_reference, tmplist[[j]]$soil_reference)
+}
+
+## assembling return object
+dd1km_bambbs <- list(
+    veg_current = veg_current,
+    veg_reference = veg_reference,
+    soil_current = soil_current,
+    soil_reference = soil_reference,
+    sample_year=NA,
+    scale = "564 m radius circle around bird points")
+
+save(dd150m_bambbs, dd1km_bambbs,
+    file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs.Rdata"))
+
+### 1K grid
+
+## Sample year is current year, so that forest ages are relative to present
+## and not relative to HF or veg inventory year.
+
+fl <- list.files(file.path(ROOT, VER, "data", "kgrid", "tiles"))
+
+## test feature types
+if (FALSE) {
+NEW <- character(0)
+for (fn in fl) {
+    cat("checking", which(fl == fn), "/", length(fl));flush.console()
+    f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
+    d <- read.csv(f)
+    diff <- setdiff(levels(d$FEATURE_TY), rownames(hflt))
+    if (length(diff))
+        NEW <- union(NEW, diff)
+    cat("\t", length(NEW), "new types found\n")
+}
+
+## tracking the strange area mismatch
+natrack <- list()
+for (fn in fl) {
+    cat("checking", which(fl == fn), "/", length(fl), "\n");flush.console()
+    f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
+    d <- read.csv(f)
+    dd <- make_vegHF_wide(d, col.label="Row_Col", col.year=NULL, wide=FALSE)
+    tmp <- colSums(is.na(dd[,c("VEGAGEclass",
+        "VEGHFAGEclass","SOILclass","SOILHFclass")]))
+    natrack[[fn]] <- tmp
+    if (tmp[1] > 0)
+        break
+}
+
+}
+
+## processing csv files in batches of 50
+
+Start <- c(1, 51, 101, 151, 201, 251, 301, 351, 401, 451,
+    501, 551, 601, 651, 701, 751, 802)
+tmplist <- list()
+
+for (s in 1:(length(Start)-1)) {
+
+    gc()
+    fn <- fl[Start[s]]
+    cat("\n\n------------- batch", s, "----------------\n")
+    cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
+    f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
+    d <- read.csv(f)
+    dd <- make_vegHF_wide(d, col.label="Row_Col", col.year=NULL, sparse=TRUE)
+    veg_current <- dd$veg_current
+    veg_reference <- dd$veg_reference
+    soil_current <- dd$soil_current
+    soil_reference <- dd$soil_reference
+    sample_year <- dd$sample_year[1]
+
+#lapply(dd[1:4], sum)
+
+    for (i in (Start[s]+1):(Start[s+1]-1)) {
+
+        fn <- fl[i]
+        cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
+        f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
+        d <- read.csv(f)
+        dd <- make_vegHF_wide(d, col.label="Row_Col", col.year=NULL, sparse=TRUE)
+        veg_current <- bind_fun2(veg_current, dd$veg_current)
+        veg_reference <- bind_fun2(veg_reference, dd$veg_reference)
+        soil_current <- bind_fun2(soil_current, dd$soil_current)
+        soil_reference <- bind_fun2(soil_reference, dd$soil_reference)
+
+    }
+    tmplist[[s]] <- list(
+        veg_current = veg_current,
+        veg_reference = veg_reference,
+        soil_current = soil_current,
+        soil_reference = soil_reference,
+        sample_year = sample_year,
+        scale = "1 km x 1 km prediction grid cells")
+}
+
+## binding together the pieces
+veg_current <- tmplist[[1]]$veg_current
+veg_reference <- tmplist[[1]]$veg_reference
+soil_current <- tmplist[[1]]$soil_current
+soil_reference <- tmplist[[1]]$soil_reference
+for (j in 2:length(tmplist)) {
+    cat("binding", j-1, "&", j, "/", length(tmplist), "\n");flush.console()
+    veg_current <- bind_fun2(veg_current, tmplist[[j]]$veg_current)
+    veg_reference <- bind_fun2(veg_reference, tmplist[[j]]$veg_reference)
+    soil_current <- bind_fun2(soil_current, tmplist[[j]]$soil_current)
+    soil_reference <- bind_fun2(soil_reference, tmplist[[j]]$soil_reference)
+}
+
+## assembling return object
+dd1km_pred <- list(
+    veg_current = veg_current,
+    veg_reference = veg_reference,
+    soil_current = soil_current,
+    soil_reference = soil_reference,
+    sample_year = tmplist[[1]]$sample_year,
+    scale = "1 km x 1 km prediction grid cells")
+
+save(dd1km_pred, 
+    file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid.Rdata"))
 
 
+kgrid <- read.csv(
+    file.path(ROOT, VER, "data", "kgrid", 
+    "Grid1km_template_final_clippedBy_ABBound_with_atts_to_Peter.csv"))
+rownames(kgrid) <- kgrid$Row_Col
 
+compare.sets(rownames(dd1km_pred$veg_current), rownames(kgrid))
+
+## NSR x LUF regions used as prediction regions in sector effects etc.
+kgrid$nsr_luf <- with(kgrid, paste(as.integer(NSRNAME), as.integer(LUF_NAME), sep="_"))
+colnames(kgrid)[colnames(kgrid) == "col"] <- "Col"
+colnames(kgrid)[colnames(kgrid) == "Eref"] <- "PET"
+colnames(kgrid)[colnames(kgrid) == "Populus_tremuloides_brtpred_nofp"] <- "pAspen"
+
+## 10 x 10 km grid
+kgrid$Row10 <- 1 + kgrid$Row %/% 10
+kgrid$Col10 <- 1 + kgrid$Col %/% 10
+kgrid$Row10_Col10 <- interaction(kgrid$Row10, kgrid$Col10, sep="_", drop=TRUE)
+
+## random pick from 10K grid
+tmp <- as.integer(kgrid$Row10_Col10)
+kgrid$Rnd10 <- integer(length(tmp))
+set.seed(1234)
+for (i in seq_len(max(tmp))) {
+    lg <- tmp == i
+    kgrid$Rnd10[lg] <- sample.int(sum(lg))
+}
+
+dd1km_pred$veg_current <- dd1km_pred$veg_current[rownames(kgrid),]
+dd1km_pred$veg_reference <- dd1km_pred$veg_reference[rownames(kgrid),]
+dd1km_pred$soil_current <- dd1km_pred$soil_current[rownames(kgrid),]
+dd1km_pred$soil_reference <- dd1km_pred$soil_reference[rownames(kgrid),]
+
+## check area diff
+af <- function(i, j)
+    rowSums(dd1km_pred[[i]]) - rowSums(dd1km_pred[[j]])
+sum(abs(af(1,2)) > 10^4)
+
+## proportion of water -- for mapping purposes
+kgrid$pWater <- dd1km_pred$veg_current[,"Water"] / 10^6
+
+## veg based area < soil based area, thus using the max
+kgrid$Area_km2 <- rowSums(dd1km_pred$soil_reference) / 10^6
+
+if (FALSE) {
+aa <- cbind(rowSums(dd1km_pred$veg_current) / 10^6,
+    rowSums(dd1km_pred$veg_reference) / 10^6,
+    rowSums(dd1km_pred$soil_current) / 10^6,
+    rowSums(dd1km_pred$soil_reference) / 10^6)
+plot(aa[,c(1,3)])
+
+col <- rev(heat.colors(100))
+plot(kgrid$POINT_X, kgrid$POINT_Y, pch=".", 
+    col=col[pmin(pmax(1, 1 + (aa[,3]-aa[,1]) %/% 0.001), 100)])
+
+plot(kgrid$POINT_X, kgrid$POINT_Y, pch=".", 
+    col=col[pmin(pmax(1, 1 + (aa[,3]-aa[,2]) %/% 0.001), 100)])
+
+plot(kgrid$POINT_X, kgrid$POINT_Y, pch=".", 
+    col=col[pmin(1 + kgrid$pWater %/% 0.001, 100)])
+}
+
+
+save(kgrid,
+    file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
 
 
 ## old --

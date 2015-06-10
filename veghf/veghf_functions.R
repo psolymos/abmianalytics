@@ -47,12 +47,19 @@ function(d, col.label, col.year=NULL, wide=TRUE, sparse=FALSE) {
 
         "GrassHerb", "NonVeg", "Shrub", "Water", 
 
-        "Swamp-Conif0", "Swamp-Conif1", "Swamp-Conif4", "Swamp-Conif5", 
-        "Swamp-Conif6", "Swamp-Conif7", "Swamp-Conif8", 
-        "Swamp-Decid0", "Swamp-Decid3", "Swamp-Decid4", "Swamp-Decid5", 
-        "Swamp-Mixwood0", "Swamp-Mixwood2", "Swamp-Mixwood3", "Swamp-Mixwood4", "Swamp-Mixwood5", 
-        "Swamp-Mixwood6", "Swamp-Mixwood8", "Swamp-Mixwood9", "Swamp-MixwoodR", 
-        "Swamp-Pine0", 
+        "Swamp-Conif0", "Swamp-ConifR", "Swamp-Conif1", "Swamp-Conif2", 
+        "Swamp-Conif3", "Swamp-Conif4", "Swamp-Conif5", "Swamp-Conif6", 
+        "Swamp-Conif7", "Swamp-Conif8", "Swamp-Conif9", 
+        "Swamp-Decid0", "Swamp-DecidR", "Swamp-Decid1", "Swamp-Decid2", 
+        "Swamp-Decid3", "Swamp-Decid4", "Swamp-Decid5", "Swamp-Decid6", 
+        "Swamp-Decid7", "Swamp-Decid8", "Swamp-Decid9", 
+        "Swamp-Mixwood0", "Swamp-MixwoodR", "Swamp-Mixwood1", "Swamp-Mixwood2", 
+        "Swamp-Mixwood3", "Swamp-Mixwood4", "Swamp-Mixwood5", 
+        "Swamp-Mixwood6", "Swamp-Mixwood7", "Swamp-Mixwood8", "Swamp-Mixwood9", 
+        "Swamp-Pine0", "Swamp-PineR", "Swamp-Pine1", "Swamp-Pine2", 
+        "Swamp-Pine3", "Swamp-Pine4", 
+        "Swamp-Pine5", "Swamp-Pine6", "Swamp-Pine7", "Swamp-Pine8", "Swamp-Pine9",  
+
 
         "Wetland-Bare", "Wetland-GrassHerb", "Wetland-Shrub",
 
@@ -102,10 +109,11 @@ function(d, col.label, col.year=NULL, wide=TRUE, sparse=FALSE) {
     ## check if we have all the feature types in the lookup table
     ## "" blank is for non-HF classes in current veg
     levels(d$FEATURE_TY)[levels(d$FEATURE_TY) == "''"] <- ""
+    levels(d$FEATURE_TY)[levels(d$FEATURE_TY) == " "] <- ""
     if (!all(setdiff(levels(d$FEATURE_TY), rownames(hflt)) == ""))
         stop("HF diff:\n\t", 
-            paste(setdiff(levels(d$FEATURE_TY), rownames(hflt)), 
-            collapse="\n\t"), sep="")
+            dput(paste(setdiff(levels(d$FEATURE_TY), rownames(hflt)), 
+            collapse="\n\t", sep="")))
     ## classify feature types according to the chosen level of HF designation
     ## which comes from hf.level column of hflt (HF lookup table)
     d$HFclass <- hflt$HF_GROUP[match(d$FEATURE_TY, rownames(hflt))]
@@ -170,6 +178,10 @@ function(d, col.label, col.year=NULL, wide=TRUE, sparse=FALSE) {
     d$AgeRf[tmp == 1L] <- 999L
     ## set 0 year in treed habitats as max (assumed old forest)
 #    d$AgeRf[d$AgeRf == 0L & d$VEGclass %in% TreedClasses] <- 9L
+    ## unknown age is set to 0
+    #table(d$AgeRf, d$VEGclass, useNA="a") # check NA ORIGIN_YEAR values
+    #d$AgeRf[is.na(d$AgeRf)] <- 0L
+
     ## incorporate HF year for cutblocks
     d$CC_ORIGIN_YEAR <- d$ORIGIN_YEAR
     ii <- d$HFclass == "CutBlocks" & d$HF_Year > d$ORIGIN_YEAR
@@ -182,6 +194,9 @@ function(d, col.label, col.year=NULL, wide=TRUE, sparse=FALSE) {
     ## placeholder for recent CC (0-9 years)
     tmp <- as.integer(sign(d$CC_ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$CC_ORIGIN_YEAR) / 10)))
     d$AgeCr[tmp == 1L] <- 999L
+    ## unknown age is set to 0
+    #table(d$AgeCr, d$VEGclass, useNA="a") # check NA ORIGIN_YEAR values
+    #d$AgeCr[is.na(d$AgeCr)] <- 0L
 
     ## correcting reference age class based on cutblock info:
     ## these happened as a result of backfilling, so we accept HF age instead
@@ -206,7 +221,7 @@ function(d, col.label, col.year=NULL, wide=TRUE, sparse=FALSE) {
     ## making current age as factor
     d$AgeCr <- factor(d$AgeCr, levels=c(as.character(c(0:9, 999)), ""))
     ## NA --> "0" as unknown age class
-    d$AgeRf[is.na(d$AgeRf)] <- "0"
+    d$AgeCr[is.na(d$AgeCr)] <- "0"
     ## age is not relevant in non-treed veg types (no HF)
     d$AgeCr[d$VEGclass %in% NontreedClasses & d$HFclass == ""] <- ""
     ## age is not relevant outside of cutblocks
@@ -277,6 +292,7 @@ function(d, col.label, col.year=NULL, wide=TRUE, sparse=FALSE) {
     d$SOILclass[is.na(d$SOILclass)] <- ""
     ## unknown soil type outside of GVI and Dry Mixedwood
     levels(d$SOILclass)[levels(d$SOILclass) == ""] <- "UNK"
+    levels(d$SOILclass)[levels(d$SOILclass) == " "] <- "UNK"
     ## get rid of modifiers
     levels(d$SOILclass) <- sapply(strsplit(levels(d$SOILclass), "-"), function(z) z[1L])
     ## add in Water label
@@ -300,16 +316,17 @@ function(d, col.label, col.year=NULL, wide=TRUE, sparse=FALSE) {
     #### crosstabs
     ## veg reference
     VegRf <- Xtab(Shape_Area ~ LABEL + VEGAGEclass, d)
-    rn <- rownames(VegRf) # make sure row labels are identical across tables
-    VegRf <- VegRf[rn, RfLab, drop=FALSE]
     ## veg + HF current
     VegCr <- Xtab(Shape_Area ~ LABEL + VEGHFAGEclass, d)
-    VegCr <- VegCr[rn, AllLabels, drop=FALSE]
     ## soils (`reference`)
     SoilRf <- Xtab(Shape_Area ~ LABEL + SOILclass, d)
-    SoilRf <- SoilRf[rn, SoilLab, drop=FALSE]
     ## soils (`current`, soil + HF)
     SoilCr <- Xtab(Shape_Area ~ LABEL + SOILHFclass, d)
+
+    rn <- rownames(VegRf) # make sure row labels are identical across tables
+    VegRf <- VegRf[rn, RfLab, drop=FALSE]
+    VegCr <- VegCr[rn, AllLabels, drop=FALSE]
+    SoilRf <- SoilRf[rn, SoilLab, drop=FALSE]
     SoilCr <- SoilCr[rn, SoilHFLab, drop=FALSE]
 
     out <- list(veg_current=VegCr, 
@@ -359,8 +376,8 @@ bind_fun <- function(x) {
 bind_fun2 <- function(x, y, check.col=TRUE) {
     if (check.col && 
         length(union(colnames(x), colnames(y))) != length(intersect(colnames(x), colnames(y))))
-            stop("colnames must be same", setdiff(union(colnames(x), colnames(y)), 
-                intersect(colnames(x), colnames(y))))
+            stop("colnames must be same", dput(setdiff(union(colnames(x), colnames(y)), 
+                intersect(colnames(x), colnames(y)))))
     melx <- Melt(x)
     mely <- Melt(y)
     mel <- rbind(melx, mely)
