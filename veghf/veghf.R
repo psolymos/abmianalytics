@@ -487,8 +487,22 @@ save(dd1km_pred,
 save(kgrid,
     file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
 
-## todo: produce maps/figures
-## for that: organize lookup table for columnss
+## 1. organize lookup table for columnss
+## 2. produce maps/figures
+## 3. transition matrices
+
+tab_veg <- data.frame(Label=colnames(dd1km_pred[[2]]),
+    prop_cr=colSums(dd1km_pred[[2]]) / sum(dd1km_pred[[2]]))
+#tab_veg$prop_rf <- (colSums(dd1km_pred[[2]]) / sum(dd1km_pred[[2]]))[match(
+#    colnames(dd1km_pred[[1]]), colnames(dd1km_pred[[2]]))]
+
+tab_soil <- data.frame(Label=colnames(dd1km_pred[[3]]),
+    prop_cr=colSums(dd1km_pred[[3]]) / sum(dd1km_pred[[3]]))
+tab_soil$prop_rf <- (colSums(dd1km_pred[[4]]) / sum(dd1km_pred[[4]]))[match(
+    colnames(dd1km_pred[[3]]), colnames(dd1km_pred[[4]]))]
+
+write.csv(tab_veg, file=file.path(ROOT, VER, "out", "tab_veg.csv"))
+write.csv(tab_veg, file=file.path(ROOT, VER, "out", "tab_soil.csv"))
 
 ### Transition for 1K grid
 

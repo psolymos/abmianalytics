@@ -1,0 +1,24 @@
+HF_GROUP,Category,Type,UseInAnalysis,SuccAlien,NonlinLin,UseInReporting,Sector,Description 
+Urban,Urban & Rural & Industrial,Urban ,UrbInd,Alien,Nonlin,"Urban, Rural & Industrial",RuralUrban,Cities and towns 
+RuralResidentialIndustrial,Urban & Rural & Industrial,Rural (Residential/Industrial) ,UrbInd,Alien,Nonlin,"Urban, Rural & Industrial",RuralUrban,Small rural development (confounded with rural industrial development) 
+IndustrialSiteRural,Urban & Rural & Industrial,Industrial Site Rural ,UrbInd,Alien,Nonlin,"Urban, Rural & Industrial",RuralUrban,Rural area developed for industrial use 
+WindGenerationFacility,Urban & Rural & Industrial,Wind Generation Facility,UrbInd,Alien,Nonlin,"Mines, Wells & Other Energy Features",Energy,Area around the windmill 
+OtherDisturbedVegetation,Urban & Rural & Industrial,Other Disturbed Vegetation ,UrbInd,Alien,Nonlin,"Urban, Rural & Industrial",Misc,"Recreation areas and other vegetated areas created for human use, including golf courses, grave yards, vegetated edges of airports, sometimes along roads and any other disturbed areas that have recovered vegetation "
+MineSite,Mines ,Mine Site ,Mine,Alien,Nonlin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed 
+PeatMine,Mines ,Peat Mine ,Mine,Alien,Nonlin,"Mines, Wells & Other Energy Features",Misc,Area where vegetation is disturbed 
+WellSite,Wells ,Well Site ,UrbInd,Alien,Nonlin,"Mines, Wells & Other Energy Features",Energy,Well pads created by the energy industry 
+Pipeline,Vegetated Linear Industrial Features,Pipeline ,SoftLin,Succ,Lin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed 
+TransmissionLine,Vegetated Linear Industrial Features,Transmission Line ,SoftLin,Succ,Lin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed 
+SeismicLine,Vegetated Linear Industrial Features,Seismic Line ,SoftLin,Succ,Lin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed 
+RoadHardSurface,Transportation ,Road – Hard Surface ,HardLin,Alien,Lin,Transportation,Transportation,Paved or gravel 
+RailHardSurface,Transportation ,Rail – Hard Surface ,HardLin,Alien,Lin,Transportation,Transportation,Usually gravel 
+RoadTrailVegetated,Transportation ,Road/Trail (Vegetated) ,SoftLin,Succ,Lin,Transportation,Transportation,Road/Trail without gravel or pavement 
+RoadVegetatedVerge,Transportation ,Road – Vegetated Verge ,SoftLin,Succ,Lin,Transportation,Transportation,Vegetated strips along paved/gravel roads 
+RailVegetatedVerge,Transportation ,Rail – Vegetated Verge ,SoftLin,Succ,Lin,Transportation,Transportation,Vegetated strips along railways 
+CultivationCropPastureBareground,Agriculture,Cultivation (Crop/Pasture/Bare Ground) ,Cult,Alien,Nonlin,Agriculture,Agriculture,Any area where evidence of cultivation is visible during the photo interpretation 
+HighDensityLivestockOperation,Agriculture,High Density Livestock Operation ,Cult,Alien,Nonlin,Agriculture,Agriculture,Confined feeding operation and other high density livestock area 
+CutBlocks,Managed Forest ,Cut Blocks ,HFor,Succ,Nonlin,Forest Harvest,Forestry,Area with trees harvested for industrial purposes 
+BorrowpitsDugoutsSumps,Human-created Water Bodies ,"Borrow-Pits, Dug-outs, Sumps ",HWater,Alien,Nonlin,Human-created Water Bodies,Misc,"Created to extract fill, or for livestock watering "
+MunicipalWaterSewage,Human-created Water Bodies ,Municipal (Water and Sewage) ,HWater,Alien,Nonlin,Human-created Water Bodies,Misc,Created for municipal purposes (some/many of these may be mislabelled)
+Reservoirs,Human-created Water Bodies ,Reservoirs ,HWater,Alien,Nonlin,Human-created Water Bodies,Misc,Man-made lake 
+Canals,Human-created Water Bodies ,Canals ,HWater,Alien,Nonlin,Human-created Water Bodies,Misc,Created to transport water 
