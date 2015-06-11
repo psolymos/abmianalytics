@@ -13,8 +13,10 @@ library(mefa4)
 source("~/repos/abmianalytics/veghf/veghf_functions.R")
 source("~/repos/bamanalytics/R/dataprocessing_functions.R")
 
-hftypes <- read.csv(file.path(ROOT, VER, "lookup/HFtype_lookup_20150428.csv"))
-hfgroups <- read.csv(file.path(ROOT, VER, "lookup/HFclassification_20150428.csv"))
+#hftypes <- read.csv(file.path(ROOT, VER, "lookup/HFtype_lookup_20150428.csv"))
+#hfgroups <- read.csv(file.path(ROOT, VER, "lookup/HFclassification_20150428.csv"))
+hftypes <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-type.csv")
+hfgroups <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-class.csv")
 hflt <- hfgroups[match(hftypes$HF_GROUP, hfgroups$HF_GROUP),]
 rownames(hflt) <- hftypes$FEATURE_TY
 
@@ -491,18 +493,42 @@ save(kgrid,
 ## 2. produce maps/figures
 ## 3. transition matrices
 
-tab_veg <- data.frame(Label=colnames(dd1km_pred[[2]]),
-    prop_cr=colSums(dd1km_pred[[2]]) / sum(dd1km_pred[[2]]))
-#tab_veg$prop_rf <- (colSums(dd1km_pred[[2]]) / sum(dd1km_pred[[2]]))[match(
-#    colnames(dd1km_pred[[1]]), colnames(dd1km_pred[[2]]))]
+#tab_veg <- data.frame(Label=colnames(dd1km_pred[[2]]),
+#    prop_cr=colSums(dd1km_pred[[2]]) / sum(dd1km_pred[[2]]))
+#write.csv(tab_veg, file=file.path(ROOT, VER, "out", "tab_veg.csv"))
 
-tab_soil <- data.frame(Label=colnames(dd1km_pred[[3]]),
-    prop_cr=colSums(dd1km_pred[[3]]) / sum(dd1km_pred[[3]]))
-tab_soil$prop_rf <- (colSums(dd1km_pred[[4]]) / sum(dd1km_pred[[4]]))[match(
-    colnames(dd1km_pred[[3]]), colnames(dd1km_pred[[4]]))]
+ltveg <- read.csv("~/repos/abmianalytics/lookup/lookup-veg.csv")
+ltsoil <- read.csv("~/repos/abmianalytics/lookup/lookup-soil.csv")
 
-write.csv(tab_veg, file=file.path(ROOT, VER, "out", "tab_veg.csv"))
-write.csv(tab_veg, file=file.path(ROOT, VER, "out", "tab_soil.csv"))
+tveg <- data.frame(VEGHFAGE=colnames(dd1km_pred$veg_current))
+tveg$HF <- hfgroups$HF_GROUP[match(tveg$VEGHFAGE, hfgroups$HF_GROUP)]
+tveg$HF[substr(as.character(tveg$VEGHFAGE), 1, 2) == "CC"] <- "CutBlocks"
+tveg$VEGAGE <- ltveg$VEGAGE[match(tveg$VEGHFAGE, ltveg$VEGAGE)]
+tveg$VEGAGE <- as.character(tveg$VEGAGE)
+tveg$VEGHFAGE <- as.character(tveg$VEGHFAGE)
+tveg$VEGAGE[substr(tveg$VEGHFAGE, 1, 2) == "CC"] <- 
+    substr(tveg$VEGHFAGE, 3, nchar(tveg$VEGHFAGE))[substr(tveg$VEGHFAGE, 1, 2) == "CC"]
+tveg <- data.frame(tveg, 
+    ltveg[match(tveg$VEGAGE, ltveg$VEGAGE),-1],
+    hfgroups[match(tveg$HF, hfgroups$HF_GROUP),-1])
+tveg$VEGAGE <- as.factor(tveg$VEGAGE)
+rownames(tveg) <- tveg$VEGHFAGE
+colnames(tveg)[colnames(tveg)=="Type.1"] <- "HFtype"
+
+tsoil <- data.frame(SOILHF=colnames(dd1km_pred$soil_current))
+tsoil$HF <- hfgroups$HF_GROUP[match(tsoil$SOILHF, hfgroups$HF_GROUP)]
+tsoil$SOIL <- ltsoil$SOILclass[match(tsoil$SOILHF, ltsoil$SOILclass)]
+tsoil <- data.frame(tsoil, 
+    ltsoil[match(tsoil$SOILHF, ltsoil$SOILclass),-1],
+    hfgroups[match(tsoil$SOILHF, hfgroups$HF_GROUP),-1])
+rownames(tsoil) <- tsoil$SOILHF
+
+write.csv(tveg, file="~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
+write.csv(tsoil, file="~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
+
+tmp <- dd1km_pred$veg_current[,
+toPlot <- data.frame(
+
 
 ### Transition for 1K grid
 
