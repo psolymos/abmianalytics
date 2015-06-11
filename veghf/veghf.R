@@ -465,9 +465,7 @@ dd1km_pred$soil_current <- dd1km_pred$soil_current[rownames(kgrid),]
 dd1km_pred$soil_reference <- dd1km_pred$soil_reference[rownames(kgrid),]
 
 ## check area diff
-af <- function(i, j)
-    rowSums(dd1km_pred[[i]]) - rowSums(dd1km_pred[[j]])
-sum(abs(af(1,2)) > 10^4)
+range(sapply(dd1km_pred[1:4], sum) / 10^6)
 
 ## proportion of water -- for mapping purposes
 kgrid$pWater <- dd1km_pred$veg_current[,"Water"] / 10^6
@@ -475,27 +473,27 @@ kgrid$pWater <- dd1km_pred$veg_current[,"Water"] / 10^6
 ## veg based area < soil based area, thus using the max
 kgrid$Area_km2 <- rowSums(dd1km_pred$soil_reference) / 10^6
 
-if (FALSE) {
-aa <- cbind(rowSums(dd1km_pred$veg_current) / 10^6,
-    rowSums(dd1km_pred$veg_reference) / 10^6,
-    rowSums(dd1km_pred$soil_current) / 10^6,
-    rowSums(dd1km_pred$soil_reference) / 10^6)
-plot(aa[,c(1,3)])
+## UTM projection for fake maps
+library(raster)
+library(sp)
+library(rgdal)
+XYlatlon <- kgrid[,c("POINT_X", "POINT_Y")]
+coordinates(XYlatlon) <- ~ POINT_X + POINT_Y
+proj4string(XYlatlon) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+XY <- as.data.frame(spTransform(XYlatlon, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")))
+kgrid$X <- XY$POINT_X
+kgrid$Y <- XY$POINT_Y
 
-col <- rev(heat.colors(100))
-plot(kgrid$POINT_X, kgrid$POINT_Y, pch=".", 
-    col=col[pmin(pmax(1, 1 + (aa[,3]-aa[,1]) %/% 0.001), 100)])
-
-plot(kgrid$POINT_X, kgrid$POINT_Y, pch=".", 
-    col=col[pmin(pmax(1, 1 + (aa[,3]-aa[,2]) %/% 0.001), 100)])
-
-plot(kgrid$POINT_X, kgrid$POINT_Y, pch=".", 
-    col=col[pmin(1 + kgrid$pWater %/% 0.001, 100)])
-}
-
+kgrid$NEAR_DIST <- NULL
 
 save(kgrid,
     file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
+
+## todo: produce maps/figures
+## for that: organize lookup table for columnss
+
+### Transition for 1K grid
+
 
 
 ## old --
