@@ -1,4 +1,4 @@
-"","VEGHFAGE","HF","VEGAGE","VEG","AGE","Broad","Type","AGE_Description","AgeMin","AgeMax","StructuralStage","EC_AGE","Category","HFtype","UseInAnalysis","SuccAlien","NonlinLin","UseInReporting","Sector","Description"
+"VEGHFAGE","HF","VEGAGE","VEG","AGE","Broad","Type","AGE_Description","AgeMin","AgeMax","StructuralStage","EC_AGE","Category","HFtype","UseInAnalysis","SuccAlien","NonlinLin","UseInReporting","Sector","Description"
 "Conif0","Conif0",NA,"Conif0","Conif","0","Forest","Conif","Unknown",NA,NA,"Unknown","D",NA,NA,NA,NA,NA,NA,NA,NA
 "ConifR","ConifR",NA,"ConifR","Conif","R","Forest","Conif","Recent (0-9 yr old)",0,9,"Herb (Post-Disturbance Stages)","R",NA,NA,NA,NA,NA,NA,NA,NA
 "Conif1","Conif1",NA,"Conif1","Conif","1","Forest","Conif","10-19 yr old",10,19,"Shrub (Stand Initiation Stages)","A",NA,NA,NA,NA,NA,NA,NA,NA

@@ -38,23 +38,22 @@ map_fun <-
 function(x, q=1, main="", colScale="terrain",
 plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, legend=TRUE)
 {
-
     ## these might need to be truncated to have pale in the middle
-    
-    ## Colour gradient for reference and current
-    Pal1 <- colorRampPalette(rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8",
-        "#91BFDB","#4575B4")))(255)
-    ## Colour gradient for difference map
-    Pal2 <- colorRampPalette(c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0",
-        "#A1D76A","#4D9221"))(255)
-
-    col <- switch(colScale,
-        "terrain" = rev(terrain.colors(255)),
-        "heat" = rev(heat.colors(255)),
-        "topo" = rev(topo.colors(255)),
-        "grey" = grey(seq(1,0,len=255)),
-        "abund" = Pal1,
-        "diff" = Pal2)
+    if (is.character(colScale)) {
+        col <- switch(colScale,
+            "terrain" = rev(terrain.colors(255)),
+            "heat" = rev(heat.colors(255)),
+            "topo" = rev(topo.colors(255)),
+            "grey" = grey(seq(1,0,len=255)),
+            "hf" = colorRampPalette(brewer.pal("YlOrRd", n=9)[1:6])(255),
+            "soil" = colorRampPalette(brewer.pal("Oranges", n=9)[1:6])(255),
+            "abund" = colorRampPalette(rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8",
+                "#91BFDB","#4575B4")))(255),
+            "diff" = colorRampPalette(c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0",
+                "#A1D76A","#4D9221"))(255))
+    } else {
+        col <- colScale(255)
+    }
 
     r <- as_Raster(kgrid$Row, kgrid$Col, x, rt)
     r[r > quantile(r, q)] <- quantile(r, q)
