@@ -89,16 +89,23 @@ plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, legend=TRUE)
 }
 
 xy_map <-
-function(xy, pal="Pastel1", plotWater=TRUE, legend=FALSE, ...)
+function(xy, pa, plotWater=TRUE, legend=FALSE, main="", 
+pch0=3, pch1=19, cex0=0.3, cex1=0.8, col0="red1", col1="red4")
 {
+
+    xy2 <- rbind(xy[pa <= 0,], xy[pa > 0,])
+    Found <- c(rep(FALSE, sum(pa <= 0)), rep(TRUE, sum(pa > 0)))
+
     coordinates(xy) <- ~ POINT_X + POINT_Y
     proj4string(xy) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
     xy <- spTransform(xy, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))
 
-    plot(nr, axes=FALSE, box=FALSE, legend=legend, 
-        col=brewer.pal(pal, n=6)) 
+    plot(nr, axes=FALSE, box=FALSE, legend=legend, main=main,
+        col=brewer.pal("Pastel1", n=6)[c(3,1,2,6,5,4)]) 
     if (plotWater)
         plot(r_water, add=TRUE, alpha=1, legend=FALSE, col="#664DCC")
-    points(xy, ...)
+    points(xy, pch=ifelse(Found, pch1, pch0), 
+        cex=ifelse(Found, cex1, cex0), 
+        col=ifelse(Found, col1, col0))
     invisible(xy)
 }

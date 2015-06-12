@@ -154,8 +154,26 @@ dev.off()
 
 ## this is how detections can be mapped
 ## xy has lat/long in it -- reprojected into UTM
-xy <- kgrid[sample.int(nrow(kgrid), 200), c("POINT_X","POINT_Y")]
-xy_map(xy, pch=c(21, 19), cex=0.8, col=2:4)
+
+## mites
+spp1 <- "AchipteriaColeoptrata"
+x <- read.csv(file.path(ROOT, VER, "out", "species",
+    "OUT_Mites_Species_Site-Binomial_2015-05-22.csv"))
+x <- x[!is.na(x$PUBLIC_X),]
+y <- as.matrix(x[,which(colnames(x) == spp1):ncol(x)])
+xy <- x[,c("PUBLIC_X","PUBLIC_Y")]
+colnames(xy) <- c("POINT_X", "POINT_Y")
+#xy <- kgrid[sample.int(nrow(kgrid), 200), c("POINT_X","POINT_Y")]
+
+#i <- 1
+pdf(file.path(ROOT, VER, "out", "figs", "mites-pa.pdf"),
+    width=6, height=9, onefile=TRUE)
+for (i in 1:ncol(y)) {
+    cat(i, "/", ncol(y), "\n");flush.console()
+    xy_map(xy, y[,i], main=colnames(y)[i])
+}
+dev.off()
+
 
 
 ## ------- tests
