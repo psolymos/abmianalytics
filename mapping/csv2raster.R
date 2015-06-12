@@ -18,7 +18,7 @@
 ## as a csv file. But people usually want predictions in raster
 ## format so that manipulation in GIS is straightforward.
 ## This script describes how to translate the csv style table
-## (aither created in R or read in from a text file)
+## (either created in R or read in from a text file)
 ## to a raster.
 
 ### Requirements

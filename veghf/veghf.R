@@ -489,10 +489,6 @@ save(dd1km_pred,
 save(kgrid,
     file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
 
-## 1. organize lookup table for columnss
-## 2. produce maps/figures
-## 3. transition matrices
-
 #tab_veg <- data.frame(Label=colnames(dd1km_pred[[2]]),
 #    prop_cr=colSums(dd1km_pred[[2]]) / sum(dd1km_pred[[2]]))
 #write.csv(tab_veg, file=file.path(ROOT, VER, "out", "tab_veg.csv"))
@@ -525,9 +521,6 @@ rownames(tsoil) <- tsoil$SOILHF
 
 write.csv(tveg, file="~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
 write.csv(tsoil, file="~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
-
-tmp <- dd1km_pred$veg_current[,
-toPlot <- data.frame(
 
 
 ### Transition for 1K grid
