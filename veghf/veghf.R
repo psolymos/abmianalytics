@@ -10,11 +10,9 @@ VER <- "AB_data_v2015"
 THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
 
 library(mefa4)
-source("~/repos/abmianalytics/veghf/veghf_functions.R")
+source("~/repos/abmianalytics/R/veghf_functions.R")
 source("~/repos/bamanalytics/R/dataprocessing_functions.R")
 
-#hftypes <- read.csv(file.path(ROOT, VER, "lookup/HFtype_lookup_20150428.csv"))
-#hfgroups <- read.csv(file.path(ROOT, VER, "lookup/HFclassification_20150428.csv"))
 hftypes <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-type.csv")
 hfgroups <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-class.csv")
 hflt <- hfgroups[match(hftypes$HF_GROUP, hfgroups$HF_GROUP),]
