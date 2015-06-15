@@ -93,7 +93,7 @@ function(xy, pa, plotWater=TRUE, legend=FALSE, main="",
 pch0=3, pch1=19, cex0=0.3, cex1=0.8, col0="red1", col1="red4")
 {
 
-    xy2 <- rbind(xy[pa <= 0,], xy[pa > 0,])
+    xy <- rbind(xy[pa <= 0,], xy[pa > 0,])
     Found <- c(rep(FALSE, sum(pa <= 0)), rep(TRUE, sum(pa > 0)))
 
     coordinates(xy) <- ~ POINT_X + POINT_Y

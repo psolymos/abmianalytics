@@ -140,13 +140,17 @@ veg4[,"NonVeg"] <- veg4[,"NonVeg"] + veg4[,"Bare"]
 veg4 <- veg4[,colnames(veg4) != "Bare"]
 veg4 <- veg4[,colnames(veg4) != "Water"]
 veg4 <- veg4[,setdiff(colnames(veg4), colnames(veg3))]
+colnames(veg4) <- paste0(colnames(veg4), " (up+low)")
+veg5 <- as.matrix(groupSums(veg1, 2, vt$VEG))
+veg5 <- veg5[,!(colnames(veg5) %in% c("NonVeg","GrassHerb","Shrub",
+    "Water","Wetland-Bare"))]
 
-vegAll <- cbind(veg3, veg4, veg2)
+vegAll <- cbind(veg3, veg5, veg4, veg2)
 
 pdf(file.path(ROOT, VER, "out", "figs", "veg", "veg-1file.pdf"),
     width=8, height=12, onefile=TRUE)
 for (i in 1:ncol(vegAll)) {
-    cat(i, "/", ncol(vegAll), "\n");flush.console()
+    cat(i, "/", ncol(vegAll), colnames(vegAll)[i], "\n");flush.console()
     map_fun(100*vegAll[,i], q=0.999, main=colnames(vegAll)[i], 
         colScale="terrain", maskRockies=FALSE, plotWater=TRUE)
 }
