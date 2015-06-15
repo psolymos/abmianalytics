@@ -1,4 +1,4 @@
-## wrsi
+## wrsi: weighted relative suitability index
 
 wrsi <-
     function(Y, X)
@@ -22,11 +22,7 @@ wrsi <-
         Pw <- colSums(Xu) / colSums(X)
         ## Weighted Relative Suitability Index
         WRSI <- Pused / Pavail
-        Var <- (1/colSums(Xu)) - (1/sum(Xu)) + (1/colSums(X)) - (1/sum(X))
-        ## fake glm
-        #ymat <- cbind(colSums(Xu), colSums(X)-colSums(Xu))
-        #xmat <- diag(1,K,K)
-        #m <- suppressWarnings(glm(ymat ~ xmat-1, family=binomial))
+        #Var <- (1/colSums(Xu)) - (1/sum(Xu)) + (1/colSums(X)) - (1/sum(X))
         res <- data.frame(
             WRSI=WRSI,
             zWRSI=log(WRSI),
@@ -35,54 +31,17 @@ wrsi <-
             Pavail=Pavail,
             Pw=Pw,
             u=colSums(Xu),
-            a=colSums(X),
-            V=Var)#,
-            #coef(summary(m))[,1:2])
+            a=colSums(X))
         rownames(res) <- colnames(X)
         class(res) <- c("wrsi", "data.frame")
         res
     }
 
-confint.wrsi <-
-    function(object, parm, level = 0.95, ...)
-    {
-        pnames <- rownames(object)
-        if (missing(parm))
-            parm <- pnames
-        else if (is.numeric(parm))
-            parm <- pnames[parm]
-        if (is.null(parm))
-            parm <- 1
-        a <- (1 - level)/2
-        a <- c(a, 1 - a)
-        np <- length(parm)
-        pct <- paste(format(100 * a, trim = TRUE, scientific = FALSE,
-                            digits = 3), "%")
-        ci <- array(NA, dim = c(np, 2L), dimnames = list(parm, pct))
-        cf <- log(object$WRSI)
-        fac <- qnorm(a)
-        ci[] <- exp(log(object[parm, "WRSI"]) + sqrt(object[parm, "V"]) %o% fac)
-        ci
-    }
+if (FALSE) {
+library(mefa4)
+library(RColorBrewer)
 
-pwfun <- function(object, level = 0.95) {
-    a <- (1 - level)/2
-    a <- c(a, 1 - a)
-    cf <- object[,"Estimate"]
-    se <- object[,"Std..Error"]
-    ci <- sapply(1:length(cf), function(i) {
-        quantile(rnorm(10^4, cf[i], se[i]), a)
-    })
-    out <- plogis(t(ci))
-    out[object$Pw==0,] <- 0
-    out
-}
-
-
-summary.wrsi <- function(object, ...)
-    data.frame(Estimate=object$WRSI, exp(confint(object, ...)),
-               Pw=object$Pw, pwfun(object, ...))
-
+source("~/repos/abmianalytics/R/wrsi_functions.R")
 
 load("~/Dropbox/Public/OUT_mites_2015-05-22.Rdata")
 load("~/Dropbox/Public/veg-hf-clim-reg_abmi-onoff.Rdata")
@@ -98,39 +57,52 @@ vvv <- as.character(tveg$Broad)
 vvv[is.na(vvv)] <- as.character(tveg$UseInAnalysis[is.na(vvv)])
 vvv[!is.na(tveg$Broad) & tveg$Broad=="Forest"] <-
     as.character(tveg$Type)[!is.na(tveg$Broad) & tveg$Broad=="Forest"]
+
+vvv[colnames(dd1ha$veg_current) %in% c("Wetland-GrassHerb","Wetland-Shrub")] <- "WetOpen"
+vvv[vvv=="Mine"] <- "UrbInd"
+vvv[vvv=="Wetland"] <- "WetTreed"
+vvv[vvv %in% c("Water","HWater","NonVeg","Wetland-Bare")] <- "EXCLUDE"
+
 hhh <- groupSums(hhh, 2, vvv)
-hhh[,"UrbInd"] <- hhh[,"UrbInd"] + hhh[,"Mine"]
-hhh <- hhh[,!(colnames(hhh) %in% c("Water","HWater","NonVeg","Mine"))]
+hhh <- hhh[,colnames(hhh) != "EXCLUDE"]
 hhh <- hhh / ifelse(rowSums(hhh) == 0, 1, rowSums(hhh))
 
-#c("Decid", "Mixwood", "Conif", "Pine",
-#  "GrassHerb", "NonVeg",
-#  "Shrub", "Water", "Swamp", "Wetland", "HWater", "Cult", "UrbInd",
-#  "Mine", "SoftLin", "HardLin")
+hhh <- hhh[, c("Decid", "Mixwood", "Conif", "Pine", "Shrub", "GrassHerb", 
+    "WetTreed", "WetOpen", "Swamp", "Cult", "UrbInd", "HardLin", "SoftLin")]
+
+keep <- rowSums(hhh) > 0
+yyy <- yyy[keep,]
+hhh <- hhh[keep,]
+yyy <- yyy[,colSums(yyy>0) > 1]
+
+plot_wrsi <- 
+function(Y, X, ...)
+{
+    w <- wrsi(Y, X)
+    rw <- w$rWRSI
+    names(rw) <- rownames(w)
+
+    col <- brewer.pal(8, "Accent")[c(1,1,1,1, 3,3, 2,2,2, 5,5, 8,8)]
+    op <- par(mar=c(6,4,2,2)+0.1, las=2)
+    tmp <- barplot(rw, horiz=FALSE, ylab="Affinity", 
+        space=NULL, col=col, border=col, #width=sqrt(w$Pavail),
+        ylim=c(-1,1), axes=FALSE, ...)
+    axis(2)
+    abline(h=0, col="red4", lwd=2)
+    par(op)
+    invisible(w)
+}
 
 spp <- 1
-w <- wrsi(yyy[,spp], hhh)
-rw <- w$rWRSI
-names(rw) <- rownames(w)
+plot_wrsi(yyy[,spp], hhh)
 
-op <- par(mar=c(4,6,2,2)+0.1, las=1)
-tmp <- barplot(rw, horiz=TRUE, xlab="Affinity", main=colnames(yyy)[spp],
-    xlim=c(-1,1))
-box()
-abline(v=0)
-par(op)
+pdf("~/Dropbox/Public/mites-pw.pdf", onefile=TRUE)
+for (i in 1:ncol(yyy)) {
+    main <- paste0(as.character(taxa(m2)[colnames(yyy)[i], "SPECIES_OLD"]),
+        " (", sum(yyy[,i] > 0), " detection", ifelse(sum(yyy[,i] > 0) > 2,
+        "s)", ")"))
+    plot_wrsi(yyy[,i], hhh, main=main)
+}
+dev.off()
 
-op <- par(mar=c(6,4,2,2)+0.1, las=2)
-tmp <- barplot(rw, horiz=FALSE, ylab="Affinity", main=colnames(yyy)[spp],
-    space=NULL, width=sqrt(w$Pavail),
-    ylim=c(-1,1))
-box()
-abline(h=0)
-par(op)
-
-w <- wrsi(YY[,spp], ZZ3)
-tmp <- barplot(pw[spp,], horiz=TRUE, col=COL, xlab="Pw",
-               main=paste0("#occ=",sum(YY[,spp])), xlim=c(0,1))
-segments(pw1[spp,], tmp[,1], pw2[spp,], tmp[,1], col="grey", lwd=3)
-axis(4, lwd=0, tick=FALSE,
-     labels=paste0(round(w$Pw,3)," (", round(w$Pavail,3), ")"), at=tmp[,1])
+}
