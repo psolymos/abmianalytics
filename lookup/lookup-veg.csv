@@ -1,129 +1,129 @@
-VEGAGE,VEG,AGE,Broad,Type,AGE_Description,AgeMin,AgeMax,StructuralStage,EC_AGE
-Conif0,Conif,0,Forest,Conif,Unknown,NA,NA,Unknown,D
-ConifR,Conif,R,Forest,Conif,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
-Conif1,Conif,1,Forest,Conif,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
-Conif2,Conif,2,Forest,Conif,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
-Conif3,Conif,3,Forest,Conif,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
-Conif4,Conif,4,Forest,Conif,60-79 yr old,60,79,Young Forest (Stem Exclusion Stages),C
-Conif5,Conif,5,Forest,Conif,80-99 yr old,80,99,Mature Forest (Understory Re-initiation Stages),D
-Conif6,Conif,6,Forest,Conif,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
-Conif7,Conif,7,Forest,Conif,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
-Conif8,Conif,8,Forest,Conif,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
-Conif9,Conif,9,Forest,Conif,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
-Decid0,Decid,0,Forest,Decid,Unknown,NA,NA,Unknown,D
-DecidR,Decid,R,Forest,Decid,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
-Decid1,Decid,1,Forest,Decid,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
-Decid2,Decid,2,Forest,Decid,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
-Decid3,Decid,3,Forest,Decid,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
-Decid4,Decid,4,Forest,Decid,60-79 yr old,60,79,Mature Forest (Understory Re-initiation Stages),D
-Decid5,Decid,5,Forest,Decid,80-99 yr old,80,99,Old Forest (Understory Re-initiation Stages),D
-Decid6,Decid,6,Forest,Decid,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
-Decid7,Decid,7,Forest,Decid,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
-Decid8,Decid,8,Forest,Decid,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
-Decid9,Decid,9,Forest,Decid,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
-Mixwood0,Mixwood,0,Forest,Mixwood,Unknown,NA,NA,Unknown,D
-MixwoodR,Mixwood,R,Forest,Mixwood,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
-Mixwood1,Mixwood,1,Forest,Mixwood,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
-Mixwood2,Mixwood,2,Forest,Mixwood,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
-Mixwood3,Mixwood,3,Forest,Mixwood,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
-Mixwood4,Mixwood,4,Forest,Mixwood,60-79 yr old,60,79,Mature Forest (Understory Re-initiation Stages),D
-Mixwood5,Mixwood,5,Forest,Mixwood,80-99 yr old,80,99,Old Forest (Understory Re-initiation Stages),D
-Mixwood6,Mixwood,6,Forest,Mixwood,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
-Mixwood7,Mixwood,7,Forest,Mixwood,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
-Mixwood8,Mixwood,8,Forest,Mixwood,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
-Mixwood9,Mixwood,9,Forest,Mixwood,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
-Pine0,Pine,0,Forest,Pine,Unknown,NA,NA,Unknown,D
-PineR,Pine,R,Forest,Pine,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
-Pine1,Pine,1,Forest,Pine,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
-Pine2,Pine,2,Forest,Pine,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
-Pine3,Pine,3,Forest,Pine,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
-Pine4,Pine,4,Forest,Pine,60-79 yr old,60,79,Young Forest (Stem Exclusion Stages),C
-Pine5,Pine,5,Forest,Pine,80-99 yr old,80,99,Mature Forest (Understory Re-initiation Stages),D
-Pine6,Pine,6,Forest,Pine,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
-Pine7,Pine,7,Forest,Pine,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
-Pine8,Pine,8,Forest,Pine,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
-Pine9,Pine,9,Forest,Pine,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
-GrassHerb,GrassHerb,,GrassHerb,GrassHerb,,,,,
-NonVeg,NonVeg,,NonVeg,NonVeg,,,,,
-Shrub,Shrub,,Shrub,Shrub,,,,,
-Water,Water,,Water,Water,,,,,
-Swamp-Conif0,Swamp-Conif,0,Swamp,Conif,Unknown,NA,NA,Unknown,D
-Swamp-ConifR,Swamp-Conif,R,Swamp,Conif,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
-Swamp-Conif1,Swamp-Conif,1,Swamp,Conif,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
-Swamp-Conif2,Swamp-Conif,2,Swamp,Conif,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
-Swamp-Conif3,Swamp-Conif,3,Swamp,Conif,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
-Swamp-Conif4,Swamp-Conif,4,Swamp,Conif,60-79 yr old,60,79,Young Forest (Stem Exclusion Stages),C
-Swamp-Conif5,Swamp-Conif,5,Swamp,Conif,80-99 yr old,80,99,Mature Forest (Understory Re-initiation Stages),D
-Swamp-Conif6,Swamp-Conif,6,Swamp,Conif,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
-Swamp-Conif7,Swamp-Conif,7,Swamp,Conif,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
-Swamp-Conif8,Swamp-Conif,8,Swamp,Conif,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
-Swamp-Conif9,Swamp-Conif,9,Swamp,Conif,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
-Swamp-Decid0,Swamp-Decid,0,Swamp,Decid,Unknown,NA,NA,Unknown,D
-Swamp-DecidR,Swamp-Decid,R,Swamp,Decid,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
-Swamp-Decid1,Swamp-Decid,1,Swamp,Decid,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
-Swamp-Decid2,Swamp-Decid,2,Swamp,Decid,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
-Swamp-Decid3,Swamp-Decid,3,Swamp,Decid,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
-Swamp-Decid4,Swamp-Decid,4,Swamp,Decid,60-79 yr old,60,79,Mature Forest (Understory Re-initiation Stages),D
-Swamp-Decid5,Swamp-Decid,5,Swamp,Decid,80-99 yr old,80,99,Old Forest (Understory Re-initiation Stages),D
-Swamp-Decid6,Swamp-Decid,6,Swamp,Decid,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
-Swamp-Decid7,Swamp-Decid,7,Swamp,Decid,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
-Swamp-Decid8,Swamp-Decid,8,Swamp,Decid,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
-Swamp-Decid9,Swamp-Decid,9,Swamp,Decid,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
-Swamp-Mixwood0,Swamp-Mixwood,0,Swamp,Mixwood,Unknown,NA,NA,Unknown,D
-Swamp-MixwoodR,Swamp-Mixwood,R,Swamp,Mixwood,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
-Swamp-Mixwood1,Swamp-Mixwood,1,Swamp,Mixwood,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
-Swamp-Mixwood2,Swamp-Mixwood,2,Swamp,Mixwood,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
-Swamp-Mixwood3,Swamp-Mixwood,3,Swamp,Mixwood,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
-Swamp-Mixwood4,Swamp-Mixwood,4,Swamp,Mixwood,60-79 yr old,60,79,Mature Forest (Understory Re-initiation Stages),D
-Swamp-Mixwood5,Swamp-Mixwood,5,Swamp,Mixwood,80-99 yr old,80,99,Old Forest (Understory Re-initiation Stages),D
-Swamp-Mixwood6,Swamp-Mixwood,6,Swamp,Mixwood,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
-Swamp-Mixwood7,Swamp-Mixwood,7,Swamp,Mixwood,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
-Swamp-Mixwood8,Swamp-Mixwood,8,Swamp,Mixwood,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
-Swamp-Mixwood9,Swamp-Mixwood,9,Swamp,Mixwood,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
-Swamp-Pine0,Swamp-Pine,0,Swamp,Pine,Unknown,NA,NA,Unknown,D
-Swamp-PineR,Swamp-Pine,R,Swamp,Pine,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
-Swamp-Pine1,Swamp-Pine,1,Swamp,Pine,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
-Swamp-Pine2,Swamp-Pine,2,Swamp,Pine,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
-Swamp-Pine3,Swamp-Pine,3,Swamp,Pine,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
-Swamp-Pine4,Swamp-Pine,4,Swamp,Pine,60-79 yr old,60,79,Young Forest (Stem Exclusion Stages),C
-Swamp-Pine5,Swamp-Pine,5,Swamp,Pine,80-99 yr old,80,99,Mature Forest (Understory Re-initiation Stages),D
-Swamp-Pine6,Swamp-Pine,6,Swamp,Pine,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
-Swamp-Pine7,Swamp-Pine,7,Swamp,Pine,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
-Swamp-Pine8,Swamp-Pine,8,Swamp,Pine,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
-Swamp-Pine9,Swamp-Pine,9,Swamp,Pine,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
-Wetland-Bare,Wetland-Bare,,Wetland,Bare,,,,,
-Wetland-GrassHerb,Wetland-GrassHerb,,Wetland,GrassHerb,,,,,
-Wetland-Shrub,Wetland-Shrub,,Wetland,Shrub,,,,,
-Wetland-BSpr0,Wetland-BSpr,0,Wetland,BSpr,Unknown,NA,NA,Unknown,D
-Wetland-BSprR,Wetland-BSpr,R,Wetland,BSpr,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
-Wetland-BSpr1,Wetland-BSpr,1,Wetland,BSpr,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
-Wetland-BSpr2,Wetland-BSpr,2,Wetland,BSpr,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
-Wetland-BSpr3,Wetland-BSpr,3,Wetland,BSpr,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
-Wetland-BSpr4,Wetland-BSpr,4,Wetland,BSpr,60-79 yr old,60,79,Young Forest (Stem Exclusion Stages),C
-Wetland-BSpr5,Wetland-BSpr,5,Wetland,BSpr,80-99 yr old,80,99,Mature Forest (Understory Re-initiation Stages),D
-Wetland-BSpr6,Wetland-BSpr,6,Wetland,BSpr,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
-Wetland-BSpr7,Wetland-BSpr,7,Wetland,BSpr,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
-Wetland-BSpr8,Wetland-BSpr,8,Wetland,BSpr,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
-Wetland-BSpr9,Wetland-BSpr,9,Wetland,BSpr,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
-Wetland-Decid0,Wetland-Decid,0,Wetland,Decid,Unknown,NA,NA,Unknown,D
-Wetland-DecidR,Wetland-Decid,R,Wetland,Decid,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
-Wetland-Decid1,Wetland-Decid,1,Wetland,Decid,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
-Wetland-Decid2,Wetland-Decid,2,Wetland,Decid,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
-Wetland-Decid3,Wetland-Decid,3,Wetland,Decid,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
-Wetland-Decid4,Wetland-Decid,4,Wetland,Decid,60-79 yr old,60,79,Mature Forest (Understory Re-initiation Stages),D
-Wetland-Decid5,Wetland-Decid,5,Wetland,Decid,80-99 yr old,80,99,Old Forest (Understory Re-initiation Stages),D
-Wetland-Decid6,Wetland-Decid,6,Wetland,Decid,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
-Wetland-Decid7,Wetland-Decid,7,Wetland,Decid,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
-Wetland-Decid8,Wetland-Decid,8,Wetland,Decid,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
-Wetland-Decid9,Wetland-Decid,9,Wetland,Decid,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
-Wetland-Larch0,Wetland-Larch,0,Wetland,Larch,Unknown,NA,NA,Unknown,D
-Wetland-LarchR,Wetland-Larch,R,Wetland,Larch,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
-Wetland-Larch1,Wetland-Larch,1,Wetland,Larch,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
-Wetland-Larch2,Wetland-Larch,2,Wetland,Larch,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
-Wetland-Larch3,Wetland-Larch,3,Wetland,Larch,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
-Wetland-Larch4,Wetland-Larch,4,Wetland,Larch,60-79 yr old,60,79,Young Forest (Stem Exclusion Stages),C
-Wetland-Larch5,Wetland-Larch,5,Wetland,Larch,80-99 yr old,80,99,Mature Forest (Understory Re-initiation Stages),D
-Wetland-Larch6,Wetland-Larch,6,Wetland,Larch,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
-Wetland-Larch7,Wetland-Larch,7,Wetland,Larch,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
-Wetland-Larch8,Wetland-Larch,8,Wetland,Larch,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
-Wetland-Larch9,Wetland-Larch,9,Wetland,Larch,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
+VEGAGE,VEG,AGE,Broad,Type,VEGAGE_use,AGE_Description,AgeMin,AgeMax,StructuralStage,EC_AGE
+Conif0,Conif,0,Forest,Conif,Conif0,Unknown,NA,NA,Unknown,D
+ConifR,Conif,R,Forest,Conif,ConifR,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
+Conif1,Conif,1,Forest,Conif,Conif1,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
+Conif2,Conif,2,Forest,Conif,Conif2,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
+Conif3,Conif,3,Forest,Conif,Conif3,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
+Conif4,Conif,4,Forest,Conif,Conif4,60-79 yr old,60,79,Young Forest (Stem Exclusion Stages),C
+Conif5,Conif,5,Forest,Conif,Conif5,80-99 yr old,80,99,Mature Forest (Understory Re-initiation Stages),D
+Conif6,Conif,6,Forest,Conif,Conif6,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
+Conif7,Conif,7,Forest,Conif,Conif7,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
+Conif8,Conif,8,Forest,Conif,Conif8,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
+Conif9,Conif,9,Forest,Conif,Conif9,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
+Decid0,Decid,0,Forest,Decid,Decid0,Unknown,NA,NA,Unknown,D
+DecidR,Decid,R,Forest,Decid,DecidR,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
+Decid1,Decid,1,Forest,Decid,Decid1,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
+Decid2,Decid,2,Forest,Decid,Decid2,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
+Decid3,Decid,3,Forest,Decid,Decid3,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
+Decid4,Decid,4,Forest,Decid,Decid4,60-79 yr old,60,79,Mature Forest (Understory Re-initiation Stages),D
+Decid5,Decid,5,Forest,Decid,Decid5,80-99 yr old,80,99,Old Forest (Understory Re-initiation Stages),D
+Decid6,Decid,6,Forest,Decid,Decid6,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
+Decid7,Decid,7,Forest,Decid,Decid7,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
+Decid8,Decid,8,Forest,Decid,Decid8,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
+Decid9,Decid,9,Forest,Decid,Decid9,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
+Mixwood0,Mixwood,0,Forest,Mixwood,Mixwood0,Unknown,NA,NA,Unknown,D
+MixwoodR,Mixwood,R,Forest,Mixwood,MixwoodR,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
+Mixwood1,Mixwood,1,Forest,Mixwood,Mixwood1,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
+Mixwood2,Mixwood,2,Forest,Mixwood,Mixwood2,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
+Mixwood3,Mixwood,3,Forest,Mixwood,Mixwood3,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
+Mixwood4,Mixwood,4,Forest,Mixwood,Mixwood4,60-79 yr old,60,79,Mature Forest (Understory Re-initiation Stages),D
+Mixwood5,Mixwood,5,Forest,Mixwood,Mixwood5,80-99 yr old,80,99,Old Forest (Understory Re-initiation Stages),D
+Mixwood6,Mixwood,6,Forest,Mixwood,Mixwood6,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
+Mixwood7,Mixwood,7,Forest,Mixwood,Mixwood7,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
+Mixwood8,Mixwood,8,Forest,Mixwood,Mixwood8,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
+Mixwood9,Mixwood,9,Forest,Mixwood,Mixwood9,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
+Pine0,Pine,0,Forest,Pine,Pine0,Unknown,NA,NA,Unknown,D
+PineR,Pine,R,Forest,Pine,PineR,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
+Pine1,Pine,1,Forest,Pine,Pine1,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
+Pine2,Pine,2,Forest,Pine,Pine2,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
+Pine3,Pine,3,Forest,Pine,Pine3,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
+Pine4,Pine,4,Forest,Pine,Pine4,60-79 yr old,60,79,Young Forest (Stem Exclusion Stages),C
+Pine5,Pine,5,Forest,Pine,Pine5,80-99 yr old,80,99,Mature Forest (Understory Re-initiation Stages),D
+Pine6,Pine,6,Forest,Pine,Pine6,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
+Pine7,Pine,7,Forest,Pine,Pine7,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
+Pine8,Pine,8,Forest,Pine,Pine8,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
+Pine9,Pine,9,Forest,Pine,Pine9,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
+GrassHerb,GrassHerb,,GrassHerb,GrassHerb,GrassHerb,,,,,
+NonVeg,NonVeg,,NonVeg,NonVeg,NonVeg,,,,,
+Shrub,Shrub,,Shrub,Shrub,Shrub,,,,,
+Water,Water,,Water,Water,Water,,,,,
+Swamp-Conif0,Swamp-Conif,0,Swamp,Conif,Conif0,Unknown,NA,NA,Unknown,D
+Swamp-ConifR,Swamp-Conif,R,Swamp,Conif,ConifR,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
+Swamp-Conif1,Swamp-Conif,1,Swamp,Conif,Conif1,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
+Swamp-Conif2,Swamp-Conif,2,Swamp,Conif,Conif2,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
+Swamp-Conif3,Swamp-Conif,3,Swamp,Conif,Conif3,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
+Swamp-Conif4,Swamp-Conif,4,Swamp,Conif,Conif4,60-79 yr old,60,79,Young Forest (Stem Exclusion Stages),C
+Swamp-Conif5,Swamp-Conif,5,Swamp,Conif,Conif5,80-99 yr old,80,99,Mature Forest (Understory Re-initiation Stages),D
+Swamp-Conif6,Swamp-Conif,6,Swamp,Conif,Conif6,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
+Swamp-Conif7,Swamp-Conif,7,Swamp,Conif,Conif7,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
+Swamp-Conif8,Swamp-Conif,8,Swamp,Conif,Conif8,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
+Swamp-Conif9,Swamp-Conif,9,Swamp,Conif,Conif9,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
+Swamp-Decid0,Swamp-Decid,0,Swamp,Decid,Decid0,Unknown,NA,NA,Unknown,D
+Swamp-DecidR,Swamp-Decid,R,Swamp,Decid,DecidR,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
+Swamp-Decid1,Swamp-Decid,1,Swamp,Decid,Decid1,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
+Swamp-Decid2,Swamp-Decid,2,Swamp,Decid,Decid2,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
+Swamp-Decid3,Swamp-Decid,3,Swamp,Decid,Decid3,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
+Swamp-Decid4,Swamp-Decid,4,Swamp,Decid,Decid4,60-79 yr old,60,79,Mature Forest (Understory Re-initiation Stages),D
+Swamp-Decid5,Swamp-Decid,5,Swamp,Decid,Decid5,80-99 yr old,80,99,Old Forest (Understory Re-initiation Stages),D
+Swamp-Decid6,Swamp-Decid,6,Swamp,Decid,Decid6,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
+Swamp-Decid7,Swamp-Decid,7,Swamp,Decid,Decid7,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
+Swamp-Decid8,Swamp-Decid,8,Swamp,Decid,Decid8,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
+Swamp-Decid9,Swamp-Decid,9,Swamp,Decid,Decid9,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
+Swamp-Mixwood0,Swamp-Mixwood,0,Swamp,Mixwood,Mixwood0,Unknown,NA,NA,Unknown,D
+Swamp-MixwoodR,Swamp-Mixwood,R,Swamp,Mixwood,MixwoodR,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
+Swamp-Mixwood1,Swamp-Mixwood,1,Swamp,Mixwood,Mixwood1,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
+Swamp-Mixwood2,Swamp-Mixwood,2,Swamp,Mixwood,Mixwood2,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
+Swamp-Mixwood3,Swamp-Mixwood,3,Swamp,Mixwood,Mixwood3,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
+Swamp-Mixwood4,Swamp-Mixwood,4,Swamp,Mixwood,Mixwood4,60-79 yr old,60,79,Mature Forest (Understory Re-initiation Stages),D
+Swamp-Mixwood5,Swamp-Mixwood,5,Swamp,Mixwood,Mixwood5,80-99 yr old,80,99,Old Forest (Understory Re-initiation Stages),D
+Swamp-Mixwood6,Swamp-Mixwood,6,Swamp,Mixwood,Mixwood6,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
+Swamp-Mixwood7,Swamp-Mixwood,7,Swamp,Mixwood,Mixwood7,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
+Swamp-Mixwood8,Swamp-Mixwood,8,Swamp,Mixwood,Mixwood8,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
+Swamp-Mixwood9,Swamp-Mixwood,9,Swamp,Mixwood,Mixwood9,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
+Swamp-Pine0,Swamp-Pine,0,Swamp,Pine,Pine0,Unknown,NA,NA,Unknown,D
+Swamp-PineR,Swamp-Pine,R,Swamp,Pine,PineR,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
+Swamp-Pine1,Swamp-Pine,1,Swamp,Pine,Pine1,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
+Swamp-Pine2,Swamp-Pine,2,Swamp,Pine,Pine2,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
+Swamp-Pine3,Swamp-Pine,3,Swamp,Pine,Pine3,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
+Swamp-Pine4,Swamp-Pine,4,Swamp,Pine,Pine4,60-79 yr old,60,79,Young Forest (Stem Exclusion Stages),C
+Swamp-Pine5,Swamp-Pine,5,Swamp,Pine,Pine5,80-99 yr old,80,99,Mature Forest (Understory Re-initiation Stages),D
+Swamp-Pine6,Swamp-Pine,6,Swamp,Pine,Pine6,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
+Swamp-Pine7,Swamp-Pine,7,Swamp,Pine,Pine7,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
+Swamp-Pine8,Swamp-Pine,8,Swamp,Pine,Pine8,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
+Swamp-Pine9,Swamp-Pine,9,Swamp,Pine,Pine9,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
+Wetland-Bare,Wetland-Bare,,Wetland,WetBare,WetBare,,,,,
+Wetland-GrassHerb,Wetland-GrassHerb,,Wetland,WetGrassHerb,WetGrassHerb,,,,,
+Wetland-Shrub,Wetland-Shrub,,Wetland,WetShrub,WetShrub,,,,,
+Wetland-BSpr0,Wetland-BSpr,0,Wetland,BSpr,BSpr0,Unknown,NA,NA,Unknown,D
+Wetland-BSprR,Wetland-BSpr,R,Wetland,BSpr,BSprR,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
+Wetland-BSpr1,Wetland-BSpr,1,Wetland,BSpr,BSpr1,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
+Wetland-BSpr2,Wetland-BSpr,2,Wetland,BSpr,BSpr2,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
+Wetland-BSpr3,Wetland-BSpr,3,Wetland,BSpr,BSpr3,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
+Wetland-BSpr4,Wetland-BSpr,4,Wetland,BSpr,BSpr4,60-79 yr old,60,79,Young Forest (Stem Exclusion Stages),C
+Wetland-BSpr5,Wetland-BSpr,5,Wetland,BSpr,BSpr5,80-99 yr old,80,99,Mature Forest (Understory Re-initiation Stages),D
+Wetland-BSpr6,Wetland-BSpr,6,Wetland,BSpr,BSpr6,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
+Wetland-BSpr7,Wetland-BSpr,7,Wetland,BSpr,BSpr7,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
+Wetland-BSpr8,Wetland-BSpr,8,Wetland,BSpr,BSpr8,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
+Wetland-BSpr9,Wetland-BSpr,9,Wetland,BSpr,BSpr9,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
+Wetland-Decid0,Wetland-Decid,0,Wetland,Decid,Decid0,Unknown,NA,NA,Unknown,D
+Wetland-DecidR,Wetland-Decid,R,Wetland,Decid,DecidR,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
+Wetland-Decid1,Wetland-Decid,1,Wetland,Decid,Decid1,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
+Wetland-Decid2,Wetland-Decid,2,Wetland,Decid,Decid2,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
+Wetland-Decid3,Wetland-Decid,3,Wetland,Decid,Decid3,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
+Wetland-Decid4,Wetland-Decid,4,Wetland,Decid,Decid4,60-79 yr old,60,79,Mature Forest (Understory Re-initiation Stages),D
+Wetland-Decid5,Wetland-Decid,5,Wetland,Decid,Decid5,80-99 yr old,80,99,Old Forest (Understory Re-initiation Stages),D
+Wetland-Decid6,Wetland-Decid,6,Wetland,Decid,Decid6,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
+Wetland-Decid7,Wetland-Decid,7,Wetland,Decid,Decid7,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
+Wetland-Decid8,Wetland-Decid,8,Wetland,Decid,Decid8,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
+Wetland-Decid9,Wetland-Decid,9,Wetland,Decid,Decid9,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
+Wetland-Larch0,Wetland-Larch,0,Wetland,Larch,Larch0,Unknown,NA,NA,Unknown,D
+Wetland-LarchR,Wetland-Larch,R,Wetland,Larch,LarchR,Recent (0-9 yr old),0,9,Herb (Post-Disturbance Stages),R
+Wetland-Larch1,Wetland-Larch,1,Wetland,Larch,Larch1,10-19 yr old,10,19,Shrub (Stand Initiation Stages),A
+Wetland-Larch2,Wetland-Larch,2,Wetland,Larch,Larch2,20-39 yr old,20,39,Pole/Sapling (Stem Exclusion Stages),B
+Wetland-Larch3,Wetland-Larch,3,Wetland,Larch,Larch3,40-59 yr old,40,59,Young Forest (Stem Exclusion Stages),C
+Wetland-Larch4,Wetland-Larch,4,Wetland,Larch,Larch4,60-79 yr old,60,79,Young Forest (Stem Exclusion Stages),C
+Wetland-Larch5,Wetland-Larch,5,Wetland,Larch,Larch5,80-99 yr old,80,99,Mature Forest (Understory Re-initiation Stages),D
+Wetland-Larch6,Wetland-Larch,6,Wetland,Larch,Larch6,100-119 yr old,100,119,Old Forest (Understory Re-initiation Stages),D
+Wetland-Larch7,Wetland-Larch,7,Wetland,Larch,Larch7,120-139 yr old,120,139,Old Forest (Understory Re-initiation Stages),D
+Wetland-Larch8,Wetland-Larch,8,Wetland,Larch,Larch8,140-159 yr old,140,159,Old Forest (Understory Re-initiation Stages),D
+Wetland-Larch9,Wetland-Larch,9,Wetland,Larch,Larch9,160 yr and older,160,400,Old Forest (Understory Re-initiation Stages),D
