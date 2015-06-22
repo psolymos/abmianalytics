@@ -43,6 +43,7 @@ library(RColorBrewer)
 
 source("~/repos/abmianalytics/R/wrsi_functions.R")
 
+
 load("~/Dropbox/Public/OUT_mites_2015-05-22.Rdata")
 load("~/Dropbox/Public/veg-hf-clim-reg_abmi-onoff.Rdata")
 tveg <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
@@ -53,22 +54,21 @@ hhh <- as.matrix(dd1ha$veg_current)
 iii <- intersect(rownames(yyy), rownames(hhh))
 yyy <- yyy[iii,]
 hhh <- hhh[iii,]
-vvv <- as.character(tveg$Broad)
+vvv <- as.character(tveg$Type)
 vvv[is.na(vvv)] <- as.character(tveg$UseInAnalysis[is.na(vvv)])
-vvv[!is.na(tveg$Broad) & tveg$Broad=="Forest"] <-
-    as.character(tveg$Type)[!is.na(tveg$Broad) & tveg$Broad=="Forest"]
 
-vvv[colnames(dd1ha$veg_current) %in% c("Wetland-GrassHerb","Wetland-Shrub")] <- "WetOpen"
-vvv[vvv=="Mine"] <- "UrbInd"
-vvv[vvv=="Wetland"] <- "WetTreed"
-vvv[vvv %in% c("Water","HWater","NonVeg","Wetland-Bare")] <- "EXCLUDE"
+vvv[vvv %in% c("WetGrassHerb","WetShrub")] <- "Wet"
+vvv[vvv %in% c("GrassHerb","Shrub")] <- "Open"
+vvv[vvv %in% c("Water","HWater","NonVeg","WetBare")] <- "EXCLUDE"
 
 hhh <- groupSums(hhh, 2, vvv)
 hhh <- hhh[,colnames(hhh) != "EXCLUDE"]
 hhh <- hhh / ifelse(rowSums(hhh) == 0, 1, rowSums(hhh))
 
-hhh <- hhh[, c("Decid", "Mixwood", "Conif", "Pine", "Shrub", "GrassHerb", 
-    "WetTreed", "WetOpen", "Swamp", "Cult", "UrbInd", "HardLin", "SoftLin")]
+hhh <- hhh[, c("Decid", "Mixwood", "Conif", "Pine", 
+    "BSpr", "Larch",
+    "Open", "Wet",
+    "Cult", "UrbInd", "HardLin", "SoftLin")]
 
 keep <- rowSums(hhh) > 0
 yyy <- yyy[keep,]
