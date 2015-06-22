@@ -12,13 +12,13 @@ VER <- "AB_data_v2015"
 ## source functions
 source("~/repos/abmianalytics/R/maps_functions.R")
 
-## lookup tables for veg and soil classes (combined with hf)
-tveg <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
-tsoil <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
-
 ## cell x vag/soil matrices and xy lookup table (climate, region, etc)
 load(file.path(ROOT, VER, "out", "kgrid", "veg-hf_1kmgrid.Rdata"))
 load(file.path(ROOT, VER, "out", "kgrid", "kgrid_table.Rdata"))
+
+## lookup tables for veg and soil classes (combined with hf)
+tveg <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
+tsoil <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
 
 ## raster template to use
 rt <- raster(file.path(ROOT, VER, "data", "kgrid", "AHM1k.asc"))
