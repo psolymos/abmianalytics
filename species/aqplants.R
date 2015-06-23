@@ -38,7 +38,7 @@ res <- droplevels(res[keep,])
 ## crosstab
 
 ## using species only
-res$SPECIES_OLD <- res$SCIENTIFIC_NAME
+res$SPECIES_OLD <- res$SCIENTIFICNAME
 levels(res$SCIENTIFICNAME) <- gsub("X ", "", levels(res$SCIENTIFICNAME))
 levels(res$SCIENTIFICNAME) <- gsub(" x ", " ", levels(res$SCIENTIFICNAME))
 levels(res$SCIENTIFICNAME) <- sapply(strsplit(levels(res$SCIENTIFICNAME), " "), function(z) {
@@ -55,9 +55,10 @@ xt[xt>0] <- 1
 z <- nonDuplicated(res[!(res$SCIENTIFICNAME %in% c("VNA", "DNC")),],
     res$SCIENTIFICNAME[!(res$SCIENTIFICNAME %in% c("VNA", "DNC"))], TRUE)
 ## add here higher taxa too
-z <- z[,c("TSNID","COMMONNAME","SCIENTIFICNAME","TAXONOMICRESOLUTION")]
-z2 <- taxo[taxo$SCIENTIFIC_NAME %in% z$SCIENTIFICNAME,]
-z <- data.frame(z, z2[match(z$SCIENTIFICNAME, z2$SCIENTIFIC_NAME),setdiff(colnames(taxo), colnames(z))])
+z <- z[,c("TSNID","COMMONNAME","SCIENTIFICNAME","SPECIES_OLD","TAXONOMICRESOLUTION")]
+#z2 <- taxo[taxo$SCIENTIFIC_NAME %in% z$PECIES_OLD,]
+z2 <- taxo[match(z$SPECIES_OLD, taxo$SCIENTIFIC_NAME),]
+z <- data.frame(z, z2[,setdiff(colnames(z2), colnames(z))])
 levels(z$RANK_NAME)[levels(z$RANK_NAME) %in% c("Subspecies","Variety")] <- "Species"
 #z[] <- lapply(z, function(z) z[drop=TRUE])
 #summary(z)
