@@ -34,7 +34,7 @@ make_vegHF_sector <- function(d, col.label, col.year=NULL, wide=TRUE, sparse=FAL
 
 
 make_vegHF_wide <- 
-function(d, col.label, col.year=NULL, wide=TRUE, sparse=FALSE) {
+function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) {
 
     RfLab <- c("Conif0", "ConifR", "Conif1", "Conif2", "Conif3", "Conif4", "Conif5", "Conif6", 
         "Conif7", "Conif8", "Conif9", 
@@ -91,6 +91,7 @@ function(d, col.label, col.year=NULL, wide=TRUE, sparse=FALSE) {
 
     ## designate a label column (there are different column names in use)
     d$LABEL <- d[,col.label]
+    d$HF_Year <- d[,col.HFyear]
     if (any(is.na(d$LABEL)))
         stop("missing LABEL")
     #    d <- d[!is.na(d$LABEL),]
@@ -184,8 +185,9 @@ function(d, col.label, col.year=NULL, wide=TRUE, sparse=FALSE) {
 
     ## incorporate HF year for cutblocks
     d$CC_ORIGIN_YEAR <- d$ORIGIN_YEAR
-    ii <- d$HFclass == "CutBlocks" & d$HF_Year > d$ORIGIN_YEAR
-#    ii[is.na(ii)] <- FALSE
+    ii <- d$HFclass == "CutBlocks"
+    ii[ii & !is.na(d$ORIGIN_YEAR) & d$HF_Year >= d$ORIGIN_YEAR] <- TRUE
+    ii[ii & is.na(d$ORIGIN_YEAR)] <- TRUE
     d$CC_ORIGIN_YEAR[ii] <- d$HF_Year[ii]
     ## age for current with cutblock ages
     d$AgeCr <- as.integer(sign(d$CC_ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$CC_ORIGIN_YEAR) / 20)))
@@ -197,14 +199,17 @@ function(d, col.label, col.year=NULL, wide=TRUE, sparse=FALSE) {
     ## unknown age is set to 0
     #table(d$AgeCr, d$VEGclass, useNA="a") # check NA ORIGIN_YEAR values
     #d$AgeCr[is.na(d$AgeCr)] <- 0L
+    #table(d$AgeCr,useNA="a")
 
     ## correcting reference age class based on cutblock info:
     ## these happened as a result of backfilling, so we accept HF age instead
     ## but this should be rare (ref age must be >= current)
-    ii <- !is.na(d$AgeCr) & d$AgeCr > d$AgeRf & d$AgeCr < 999L
-    if (sum(ii)>0)
-        warning(paste("AgeCr > AgeRf for this many cases:", sum(ii)))
-    d$AgeRf[ii] <- d$AgeCr[ii]
+    #ii <- !is.na(d$AgeCr) & d$AgeCr > d$AgeRf & d$AgeCr < 999L
+    #if (sum(ii)>0)
+    #    warning(paste("AgeCr > AgeRf for this many cases:", sum(ii)))
+    #d$AgeRf[ii] <- d$AgeCr[ii]
+    d$AgeRf[is.na(d$AgeRf)] <- 0L
+    table(rf=d$AgeRf,cr=d$AgeCr,useNA="a")
     ## turning age values into factor: 
     ## 0=no age info, 
     ## 1:9=valid age classes for treed veg types, 
