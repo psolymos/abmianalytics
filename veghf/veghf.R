@@ -2,6 +2,8 @@
 ##% P Solymos
 ##% April 28, 2015
 
+SAVE <- TRUE
+
 ## root directory
 ROOT <- "c:/p"
 ## version (structure is still in change, so not really useful)
@@ -27,7 +29,8 @@ f1ha <- file.path(ROOT, VER, "data/veghf", "Center1ha.csv")
 d1ha <- read.csv(f1ha)
 d1ha$Site_YEAR <- with(d1ha, interaction(ABMI_Assigned_Site_ID, survey_year, sep="_", drop=TRUE))
 head(d1ha)
-dd1ha <- make_vegHF_wide(d1ha, col.label = "Site_YEAR", col.year="survey_year")
+dd1ha <- make_vegHF_wide(d1ha, col.label = "Site_YEAR", 
+    col.year="survey_year", col.HFyear="year_")
 dd1ha$scale <- "1 ha square around site centre"
 
 ## ABMI sites (on+off) 9 bird points / site, 150 m radius buffer
@@ -36,7 +39,8 @@ d150m <- read.csv(f150m)
 d150m$Site_YEAR_bird <- with(d150m, 
     interaction(Site_ID, Bird, sep="_", drop=TRUE))
 head(d150m)
-dd150m <- make_vegHF_wide(d150m, col.label = "Site_YEAR_bird", col.year="survey_year")
+dd150m <- make_vegHF_wide(d150m, col.label = "Site_YEAR_bird", 
+    col.year="survey_year", col.HFyear="year_")
 dd150m$scale <- "150 m radius circle around bird points"
 
 ## ABMI sites (on+off) 9 bird points / site, 1 km^2 buffer
@@ -45,7 +49,8 @@ d1km <- read.csv(f1km)
 d1km$Site_YEAR_bird <- with(d1km, 
     interaction(Site_ID, Bird, sep="_", drop=TRUE))
 head(d1km)
-dd1km <- make_vegHF_wide(d1km, col.label = "Site_YEAR_bird", col.year="survey_year")
+dd1km <- make_vegHF_wide(d1km, col.label = "Site_YEAR_bird", 
+    col.year="survey_year", col.HFyear="year_")
 dd1km$scale <- "564 m radius circle around bird points"
 
 #### Climate and regions
@@ -126,8 +131,9 @@ compare.sets(rownames(climSite), rownames(mites))
 setdiff(rownames(climSite), rownames(mites))
 setdiff(rownames(mites), rownames(climSite))
 
-save(dd1ha, dd150m, dd1km, climSite, climPoint,
-    file=file.path(ROOT, VER, "out/abmi_onoff", "veg-hf-clim-reg_abmi-onoff.Rdata"))
+if (SAVE)
+    save(dd1ha, dd150m, dd1km, climSite, climPoint,
+        file=file.path(ROOT, VER, "out/abmi_onoff", "veg-hf-clim-reg_abmi-onoff.Rdata"))
 
 
 ### Snow transects
@@ -136,7 +142,9 @@ save(dd1ha, dd150m, dd1km, climSite, climPoint,
 fmi <- file.path(ROOT, VER, "data/veghf", "InterLevel.csv")
 dmi <- read.csv(fmi)
 dmi$Site_YEAR_tr <- with(dmi, interaction(ABMISite, survey_year, interLevel, sep="_", drop=TRUE))
-ddmi <- make_vegHF_wide(dmi, col.label = "Site_YEAR_tr", col.year="survey_year")
+head(dmi)
+ddmi <- make_vegHF_wide(dmi, col.label = "Site_YEAR_tr", 
+    col.year="survey_year", col.HFyear="year_")
 ddmi$scale <- "inter level mammal transects"
 
 ## 9-10 km length (250 m buffer) mammal transect (full transect level)
@@ -145,7 +153,9 @@ dmt <- read.csv(fmt)
 dmt$Site_YEAR <- with(dmt, interaction(ABMISite, survey_year, sep="_", drop=TRUE))
 ## strange site issue: "394-2005_2005" --> "394-2005_2006"
 levels(dmt$Site_YEAR)[levels(dmt$Site_YEAR)=="394-2005_2005"] <- "394-2005_2006"
-ddmt <- make_vegHF_wide(dmt, col.label = "Site_YEAR", col.year="survey_year")
+head(dmt)
+ddmt <- make_vegHF_wide(dmt, col.label = "Site_YEAR", 
+    col.year="survey_year", col.HFyear="year_")
 ddmt$scale <- "full transect level mammal transects"
 
 ## Transect segment labels
@@ -248,8 +258,9 @@ rownames(ddmt[[3]]) <- rownames(ddmt[[4]]) <- rownames(climTr)
 all(rownames(climInter) == rownames(ddmi[[1]]))
 all(rownames(climTr) == rownames(ddmt[[1]]))
 
-save(ddmi, ddmt, climInter, climTr,
-    file=file.path(ROOT, VER, "out/abmi_onoff", "veg-hf-clim-reg_mammals-onoff.Rdata"))
+if (SAVE)
+    save(ddmi, ddmt, climInter, climTr,
+        file=file.path(ROOT, VER, "out/abmi_onoff", "veg-hf-clim-reg_mammals-onoff.Rdata"))
 
 
 ### BAM+BBS bird points, 150 m radius buffer
@@ -261,7 +272,11 @@ for (fn in fl) {
     cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
     f <- file.path(ROOT, VER, "data", "veghf", "bammbbs150m", fn)
     d <- read.csv(f)
-    dd <- make_vegHF_wide(d, col.label="PKEY", col.year="YEAR_", sparse=TRUE)
+    hfc <- "year"
+    if (!(hfc %in% colnames(d)))
+        hfc <- "YEAR"
+    dd <- make_vegHF_wide(d, col.label="PKEY", 
+        col.year="YEAR_", col.HFyear=hfc, sparse=TRUE)
     tmplist[[fn]] <- dd
 }
 
@@ -296,7 +311,11 @@ for (fn in fl) {
     cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
     f <- file.path(ROOT, VER, "data", "veghf", "bammbbs564m", fn)
     d <- read.csv(f)
-    dd <- make_vegHF_wide(d, col.label="PKEY", col.year="YEAR_", sparse=TRUE)
+    hfc <- "year"
+    if (!(hfc %in% colnames(d)))
+        hfc <- "YEAR"
+    dd <- make_vegHF_wide(d, col.label="PKEY", 
+        col.year="YEAR_", col.HFyear=hfc, sparse=TRUE)
     tmplist[[fn]] <- dd
 }
 
@@ -322,8 +341,10 @@ dd1km_bambbs <- list(
     sample_year=NA,
     scale = "564 m radius circle around bird points")
 
-save(dd150m_bambbs, dd1km_bambbs,
-    file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs.Rdata"))
+if (SAVE)
+    save(dd150m_bambbs, dd1km_bambbs,
+        file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs.Rdata"))
+
 
 ### 1K grid
 
@@ -351,7 +372,8 @@ for (fn in fl) {
     cat("checking", which(fl == fn), "/", length(fl), "\n");flush.console()
     f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
     d <- read.csv(f)
-    dd <- make_vegHF_wide(d, col.label="Row_Col", col.year=NULL, wide=FALSE)
+    dd <- make_vegHF_wide(d, col.label="Row_Col", 
+        col.year=NULL, col.HFyear="CutYear", wide=FALSE)
     tmp <- colSums(is.na(dd[,c("VEGAGEclass",
         "VEGHFAGEclass","SOILclass","SOILHFclass")]))
     natrack[[fn]] <- tmp
@@ -375,7 +397,8 @@ for (s in 1:(length(Start)-1)) {
     cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
     f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
     d <- read.csv(f)
-    dd <- make_vegHF_wide(d, col.label="Row_Col", col.year=NULL, sparse=TRUE)
+    dd <- make_vegHF_wide(d, col.label="Row_Col", 
+        col.year=NULL, col.HFyear="CutYear", sparse=TRUE)
     veg_current <- dd$veg_current
     veg_reference <- dd$veg_reference
     soil_current <- dd$soil_current
@@ -390,7 +413,8 @@ for (s in 1:(length(Start)-1)) {
         cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
         f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
         d <- read.csv(f)
-        dd <- make_vegHF_wide(d, col.label="Row_Col", col.year=NULL, sparse=TRUE)
+        dd <- make_vegHF_wide(d, col.label="Row_Col", 
+            col.year=NULL, col.HFyear="CutYear", sparse=TRUE)
         veg_current <- bind_fun2(veg_current, dd$veg_current)
         veg_reference <- bind_fun2(veg_reference, dd$veg_reference)
         soil_current <- bind_fun2(soil_current, dd$soil_current)
@@ -482,10 +506,33 @@ kgrid$Y <- XY$POINT_Y
 
 kgrid$NEAR_DIST <- NULL
 
+## fill-in NA values with nearest
+
+lnas <- is.na(kgrid[,"pAspen"])
+wnas <- which(!lnas)
+for (i in which(lnas)) {
+    j <- wnas[which.min(sqrt((kgrid$X[!lnas] - kgrid$X[i])^2 +
+        (kgrid$Y[!lnas] - kgrid$Y[i])^2))]
+    kgrid[i,"pAspen"] <- kgrid[j,"pAspen"]
+}
+
+cvs <- c("AHM", "PET", "FFP", "MAP", "MAT", "MCMT", "MWMT")
+lnas <- is.na(kgrid[,cvs[1]])
+wnas <- which(!lnas)
+for (i in which(lnas)) {
+    j <- wnas[which.min(sqrt((kgrid$X[!lnas] - kgrid$X[i])^2 +
+        (kgrid$Y[!lnas] - kgrid$Y[i])^2))]
+    kgrid[i,cvs] <- kgrid[j,cvs]
+}
+
+sum(is.na(kgrid))
+
+if (SAVE) {
 save(dd1km_pred, 
     file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid.Rdata"))
 save(kgrid,
     file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
+}
 
 #tab_veg <- data.frame(Label=colnames(dd1km_pred[[2]]),
 #    prop_cr=colSums(dd1km_pred[[2]]) / sum(dd1km_pred[[2]]))
@@ -642,7 +689,8 @@ for (j in 1:length(fl3)) {
 resvv <- do.call(rbind, resv)
 resss <- do.call(rbind, ress)
 
-save(resvv, resss, file=file.path(ROOT, VER, "R/transitions_NorthSouth.Rdata"))
+if (SAVE)
+    save(resvv, resss, file=file.path(ROOT, VER, "R/transitions_NorthSouth.Rdata"))
 #save(resvv, resss, file=file.path(ROOT, VER, "R/transitions_NSR.Rdata"))
 
 mat_fun <- function(what="All", type="veg") {
@@ -972,7 +1020,8 @@ for (i in 1:ncol(px12)) {
     dev.off()
 }
 
-save(hf10,hf12,file="c:/p/AB_data_v2014/R/w2wHF_2010vs2012.Rdata")
+if (SAVE)
+    save(hf10,hf12,file="c:/p/AB_data_v2014/R/w2wHF_2010vs2012.Rdata")
 
 res <- list()
 for (i in 1:ncol(px12)) {
@@ -1246,8 +1295,9 @@ for (i in 2:length(int_res)) {
 }
 sapply(int_res,function(z) dim(z[[1]])[1])
 
-save(mammal_transects, mammal_inter, 
-    file=paste0(file.path(ROOT, VER, "results/mammals_veghf"), ".Rdata"))
+if (SAVE)
+    save(mammal_transects, mammal_inter, 
+        file=paste0(file.path(ROOT, VER, "results/mammals_veghf"), ".Rdata"))
 
 ## wetlands for MC
 
@@ -1320,7 +1370,8 @@ ww123$buffer <- "0-250 m buffer around wetlands"
 #ba$site_year <- interaction(ba$Site_ID_DPan, ba$year_, sep="_", drop=TRUE)
 #rownames(ba) <- ba$site_year
 
-save(ww1, ww12, ww123, file=file.path(ROOT, VER, "R/veghf_abmiWetlands_allbuffers.Rdata"))
+if (SAVE)
+    save(ww1, ww12, ww123, file=file.path(ROOT, VER, "R/veghf_abmiWetlands_allbuffers.Rdata"))
 
 
 
