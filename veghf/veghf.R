@@ -140,7 +140,7 @@ if (SAVE)
 ### Snow transects
 
 ## 1 km length (250 m buffer) mammal transect (inter level)
-fmi <- file.path(ROOT, VER, "data/veghf", "InterLevel.csv")
+fmi <- file.path(ROOT, VER, "data/veghf", "InterLevel_SRDFireFix.csv")
 dmi <- read.csv(fmi)
 dmi$Site_YEAR_tr <- with(dmi, interaction(ABMISite, survey_year, interLevel, sep="_", drop=TRUE))
 head(dmi)
@@ -149,7 +149,7 @@ ddmi <- make_vegHF_wide(dmi, col.label = "Site_YEAR_tr",
 ddmi$scale <- "inter level mammal transects"
 
 ## 9-10 km length (250 m buffer) mammal transect (full transect level)
-fmt <- file.path(ROOT, VER, "data/veghf", "TransectLevel.csv")
+fmt <- file.path(ROOT, VER, "data/veghf", "TransectLevel_SRDFireFix.csv")
 dmt <- read.csv(fmt)
 dmt$Site_YEAR <- with(dmt, interaction(ABMISite, survey_year, sep="_", drop=TRUE))
 ## strange site issue: "394-2005_2005" --> "394-2005_2006"
@@ -261,7 +261,8 @@ all(rownames(climTr) == rownames(ddmt[[1]]))
 
 if (SAVE)
     save(ddmi, ddmt, climInter, climTr,
-        file=file.path(ROOT, VER, "out/abmi_onoff", "veg-hf-clim-reg_mammals-onoff.Rdata"))
+        file=file.path(ROOT, VER, "out/abmi_onoff", 
+        "veg-hf-clim-reg_mammals-onoff_fix-fire.Rdata"))
 
 
 ### BAM+BBS bird points, 150 m radius buffer
