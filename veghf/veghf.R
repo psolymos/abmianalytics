@@ -25,7 +25,7 @@ rownames(hflt) <- hftypes$FEATURE_TY
 #### Vegetation and HF processing
 
 ## ABMI sites (on+off) cetre 1 ha
-f1ha <- file.path(ROOT, VER, "data/veghf", "Center1ha.csv")
+f1ha <- file.path(ROOT, VER, "data/veghf", "Center1haFixFire.csv")
 d1ha <- read.csv(f1ha)
 d1ha$Site_YEAR <- with(d1ha, interaction(ABMI_Assigned_Site_ID, survey_year, sep="_", drop=TRUE))
 head(d1ha)
@@ -34,7 +34,7 @@ dd1ha <- make_vegHF_wide(d1ha, col.label = "Site_YEAR",
 dd1ha$scale <- "1 ha square around site centre"
 
 ## ABMI sites (on+off) 9 bird points / site, 150 m radius buffer
-f150m <- file.path(ROOT, VER, "data/veghf", "Bird150m.csv")
+f150m <- file.path(ROOT, VER, "data/veghf", "Bird150mFixFire.csv")
 d150m <- read.csv(f150m)
 d150m$Site_YEAR_bird <- with(d150m, 
     interaction(Site_ID, Bird, sep="_", drop=TRUE))
@@ -44,7 +44,7 @@ dd150m <- make_vegHF_wide(d150m, col.label = "Site_YEAR_bird",
 dd150m$scale <- "150 m radius circle around bird points"
 
 ## ABMI sites (on+off) 9 bird points / site, 1 km^2 buffer
-f1km <- file.path(ROOT, VER, "data/veghf", "Bird564m.csv")
+f1km <- file.path(ROOT, VER, "data/veghf", "Bird564mFixFire.csv")
 d1km <- read.csv(f1km)
 d1km$Site_YEAR_bird <- with(d1km, 
     interaction(Site_ID, Bird, sep="_", drop=TRUE))
@@ -133,7 +133,8 @@ setdiff(rownames(mites), rownames(climSite))
 
 if (SAVE)
     save(dd1ha, dd150m, dd1km, climSite, climPoint,
-        file=file.path(ROOT, VER, "out/abmi_onoff", "veg-hf-clim-reg_abmi-onoff.Rdata"))
+        file=file.path(ROOT, VER, "out/abmi_onoff", 
+        "veg-hf-clim-reg_abmi-onoff_fix-fire.Rdata"))
 
 
 ### Snow transects
