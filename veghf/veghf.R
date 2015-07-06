@@ -555,6 +555,8 @@ save(kgrid,
     file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
 }
 
+## compiling lookup tables -------------------------
+
 #tab_veg <- data.frame(Label=colnames(dd1km_pred[[2]]),
 #    prop_cr=colSums(dd1km_pred[[2]]) / sum(dd1km_pred[[2]]))
 #write.csv(tab_veg, file=file.path(ROOT, VER, "out", "tab_veg.csv"))
@@ -587,6 +589,36 @@ rownames(tsoil) <- tsoil$SOILHF
 
 write.csv(tveg, file="~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
 write.csv(tsoil, file="~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
+
+## compiling hab-age tables by NSR ------------------------
+
+lt <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
+
+summary(rowSums(dd1km_pred$veg_current)/10^6)
+vhf <- groupSums(dd1km_pred$veg_current, 1, kgrid$NSRNAME)
+stopifnot(all(colnames(vhf) == rownames(lt)))
+
+lt$AGE[lt$AGE == ""] <- NA
+labs_to_keep <- is.na(lt$HF) & !is.na(lt$AGE)
+
+## - use nchar and substr (instead of grep, Cenif vs. *Conif problem)
+## - derive proportions (adding to 1) in NSRs (or a 3D array):
+##   + Target group x age class
+##   + rowname+colname gives the label
+##   + leave in a 0 age class as sum(0)
+## - repeat this for backfilled as well
+
+## no CC included here
+Target0 <- c("Conif0", "Decid0", "Mixwood0", "Pine0", 
+    "Swamp-Conif0", "Swamp-Decid0", "Swamp-Mixwood0", "Swamp-Pine0", 
+    "Wetland-BSpr0", "Wetland-Decid0", "Wetland-Larch0")
+Target <- gsub("0", "", Target0)
+
+
+
+known_ages <- list()
+for (nsr in levels(kgrid$NSRNAME))
+
 
 
 ### Transition for 1K grid
