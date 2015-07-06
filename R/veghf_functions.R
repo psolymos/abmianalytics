@@ -126,7 +126,7 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
     ## slivers (tiny polys with no veg info): 
     #stopifnot(max(d$Shape_Area[d$VEGclass == ""]) < 1)
     if (any(d$HABIT == ""))
-        stop("check blank HABIT cases")
+        warning(paste("blank HABIT:", sum(d$Shape_Area[d$HABIT != ""]), "m^2"))
     d <- d[d$HABIT != "",]
     d$HABIT <- droplevels(d$HABIT)
 

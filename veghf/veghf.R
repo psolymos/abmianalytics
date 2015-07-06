@@ -383,6 +383,25 @@ for (fn in fl) {
         break
 }
 
+## check blank HABIT cases
+blank_n <- numeric(length(fl)) # no. of cases
+blank_a <- numeric(length(fl)) # total area
+for (i in 1:length(fl)) {
+    cat("\nchecking", i, "/", length(fl));flush.console()
+    f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fl[i])
+    d <- read.csv(f)
+    tmp <- d[d$HABIT == "",,drop=FALSE]
+    if (nrow(tmp)) {
+        blank_n[i] <- nrow(tmp)
+        blank_a[i] <- sum(tmp$Shape_Area)
+        cat("\tfound:", nrow(tmp))
+    }
+}
+
+(blanks <- which(blank_n > 0))
+sum(blank_a) # 1.262801 < 2 m^2
+blank_a[blanks]
+
 }
 
 ## processing csv files in batches of 50
@@ -531,7 +550,7 @@ sum(is.na(kgrid))
 
 if (SAVE) {
 save(dd1km_pred, 
-    file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid.Rdata"))
+    file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
 save(kgrid,
     file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
 }
