@@ -398,3 +398,44 @@ c_fun <- function(x, y) {
     structure(rowSums(xt), names=rownames(xt))
 }
 
+## redistributing unknown ages among known ages
+fill_in_0ages <- 
+function(x, NSR) 
+{
+    Target <- c("Conif", "Decid", "Mixwood", "Pine", 
+        "Swamp-Conif", "Swamp-Decid", "Swamp-Mixwood", "Swamp-Pine", 
+        "Wetland-BSpr", "Wetland-Decid", "Wetland-Larch")
+    Ages <- c("0", "R", as.character(1:9))
+    NSR <- droplevels(as.factor(NSR))
+    NSRs <- levels(NSR)
+    for (current in c(TRUE, FALSE)) {
+        xx <- if (current)
+            x$veg_current else x$veg_reference
+        xx <- as.matrix(xx)
+        ag <- if (current)
+            AvgAges$current else AvgAges$reference
+        for (nsr in NSRs) {
+            cat(ifelse(current, "current:", "reference:"), nsr)
+            flush.console()
+            for (i in Target) {
+                Cols <- paste0(i, Ages)
+                j <- NSR == nsr
+                if (any(j)) {
+                    Mat <- xx[j, Cols]
+                    ## multiply Mat[,1] (unknown age) with this matrix
+                    Unk <- Mat[,1] * t(matrix(ag[i,,nsr], length(Ages), sum(j)))
+                    Mat[,1] <- 0 # will be 0 and redistributed from Unk
+                    Mat <- Mat + Unk
+                    xx[j, Cols] <- Mat # ridiculously slow as sparse matrix
+                }
+                cat("--- OK\n")
+            }
+        }
+        if (current) {
+            x$veg_current <- as(xx, "dgCMatrix")
+        } else {
+            x$veg_reference <- as(xx, "dgCMatrix")
+        }
+    }
+    x
+}
