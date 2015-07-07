@@ -13,7 +13,7 @@ VER <- "AB_data_v2015"
 source("~/repos/abmianalytics/R/maps_functions.R")
 
 ## cell x vag/soil matrices and xy lookup table (climate, region, etc)
-load(file.path(ROOT, VER, "out", "kgrid", "veg-hf_1kmgrid.Rdata"))
+load(file.path(ROOT, VER, "out", "kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata"))
 load(file.path(ROOT, VER, "out", "kgrid", "kgrid_table.Rdata"))
 
 ## lookup tables for veg and soil classes (combined with hf)
@@ -90,7 +90,8 @@ dev.off()
 
 ## maps: soils
 
-soil1 <- (dd1km_pred$soil_reference) / rowSums(dd1km_pred$soil_reference)
+soil1 <- dd1km_pred$soil_reference
+soil1 <- soil1 / ifelse(rowSums(soil1) <= 0, 1, rowSums(soil1))
 st <- tsoil[colnames(soil1),]
 soil1 <- as.matrix(groupSums(soil1, 2, st$Levels1))
 pSoil <- 1 - soil1[,"SoilUnknown"]
@@ -132,20 +133,11 @@ veg2 <- as.matrix(groupSums(veg1, 2, vt$AGE))
 veg2 <- veg2[,colnames(veg2) != ""]
 colnames(veg2) <- paste0("Forest age: ", 
     as.character(vt$AGE_Description)[match(colnames(veg2), vt$AGE)])
-veg3 <- as.matrix(groupSums(veg1, 2, vt$Broad))
-veg3 <- veg3[,colnames(veg3) != "NonVeg"]
-veg3 <- veg3[,colnames(veg3) != "Water"]
-veg4 <- as.matrix(groupSums(veg1, 2, vt$Type))
-veg4[,"NonVeg"] <- veg4[,"NonVeg"] + veg4[,"Bare"]
-veg4 <- veg4[,colnames(veg4) != "Bare"]
-veg4 <- veg4[,colnames(veg4) != "Water"]
-veg4 <- veg4[,setdiff(colnames(veg4), colnames(veg3))]
-colnames(veg4) <- paste0(colnames(veg4), " (up+low)")
-veg5 <- as.matrix(groupSums(veg1, 2, vt$VEG))
-veg5 <- veg5[,!(colnames(veg5) %in% c("NonVeg","GrassHerb","Shrub",
-    "Water","Wetland-Bare"))]
+veg2 <- veg2[,-1] # unknown ages are fixed
 
-vegAll <- cbind(veg3, veg5, veg4, veg2)
+veg4 <- as.matrix(groupSums(veg1, 2, vt$Type))
+
+vegAll <- cbind(veg4, veg2)
 
 pdf(file.path(ROOT, VER, "out", "figs", "veg", "veg-1file.pdf"),
     width=8, height=12, onefile=TRUE)
@@ -155,6 +147,17 @@ for (i in 1:ncol(vegAll)) {
         colScale="terrain", maskRockies=FALSE, plotWater=TRUE)
 }
 dev.off()
+
+climAll <- kgrid[,c("AHM","PET","FFP","MAP","MAT","MCMT","MWMT")]
+pdf(file.path(ROOT, VER, "out", "figs", "clim", "clim-1file.pdf"),
+    width=8, height=12, onefile=TRUE)
+for (i in 1:ncol(climAll)) {
+    cat(i, "/", ncol(climAll), colnames(climAll)[i], "\n");flush.console()
+    map_fun(climAll[,i], q=0.999, main=colnames(climAll)[i], 
+        colScale="terrain", maskRockies=FALSE, plotWater=TRUE)
+}
+dev.off()
+
 
 ## this is how detections can be mapped
 ## xy has lat/long in it -- reprojected into UTM
