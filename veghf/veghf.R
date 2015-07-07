@@ -594,6 +594,9 @@ write.csv(tsoil, file="~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
 
 lt <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
 
+load(file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
+load(file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
+
 summary(rowSums(dd1km_pred$veg_current)/10^6)
 vhf <- groupSums(dd1km_pred$veg_current, 1, kgrid$NSRNAME)
 vhf2 <- groupSums(dd1km_pred$veg_current, 1, kgrid$NRNAME)
@@ -658,32 +661,96 @@ for (What in c("cr","rf")) {
                 ## we have known ages to work with
                 tmp[1] <- 0
             }
-            tmp <- tmp / sum(tmp)
+            #stopifnot(all(!is.na(tmp / sum(tmp))))
+            tmp <- tmp / ifelse(sum(tmp) <= 0, 1, sum(tmp))
+            stopifnot(all(!is.na(tmp)))
             if (What == "cr")
                 ages_cr[i,,nsr] <- tmp
             if (What == "rf")
-                ages_cr[i,,nsr] <- tmp
+                ages_rf[i,,nsr] <- tmp
         }
     }
     cat("\n\n")
 }
 
+sum(is.na(ages_cr))
+sum(is.na(ages_rf))
 AvgAges <- list(current=ages_cr, reference=ages_rf)
 
 if (SAVE)
 save(AvgAges, 
     file=file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
 
-## fix age 0 in saved files
+## fix age 0 in saved files -----------------------------
 
 load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
+Target0 <- c("Conif0", "Decid0", "Mixwood0", "Pine0", 
+    "Swamp-Conif0", "Swamp-Decid0", "Swamp-Mixwood0", "Swamp-Pine0", 
+    "Wetland-BSpr0", "Wetland-Decid0", "Wetland-Larch0")
 
+## dd1ha, dd150m, dd1km, climSite, climPoint
+load(file.path(ROOT, VER, "out/abmi_onoff", 
+    "veg-hf-clim-reg_abmi-onoff_fix-fire.Rdata"))
+#dd1hav <- fill_in_0ages(dd1ha, climSite$NSRNAME)
+#round(data.frame(w0=100*colSums(dd1ha$veg_current)/sum(dd1ha$veg_current), 
+#    wo0=100*colSums(dd1hav$veg_current)/sum(dd1hav$veg_current)), 4)
+sum(dd1ha[[1]][,Target0])
+sum(dd1ha[[1]])
+dd1ha <- fill_in_0ages(dd1ha, climSite$NSRNAME)
+sum(dd1ha[[1]][,Target0])
+sum(dd1ha[[1]])
 
+sum(dd150m[[1]][,Target0])
+dd150m <- fill_in_0ages(dd150m, climPoint$NSRNAME)
+sum(dd150m[[1]][,Target0])
+
+sum(dd1km[[1]][,Target0])
+dd1km <- fill_in_0ages(dd1km, climPoint$NSRNAME)
+sum(dd1km[[1]][,Target0])
+
+save(dd1ha, dd150m, dd1km, climSite, climPoint,
+    file=file.path(ROOT, VER, "out/abmi_onoff", 
+    "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0.Rdata"))
+
+## ddmi, ddmt, climInter, climTr
+load(file.path(ROOT, VER, "out/abmi_onoff", 
+    "veg-hf-clim-reg_mammals-onoff_fix-fire.Rdata"))
+
+sum(ddmi[[1]][,Target0])
+ddmi <- fill_in_0ages(ddmi, climInter$NSRNAME)
+sum(ddmi[[1]][,Target0])
+
+sum(ddmt[[1]][,Target0])
+ddmt <- fill_in_0ages(ddmt, climTr$NSRNAME)
+sum(ddmt[[1]][,Target0])
+
+save(ddmi, ddmt, climInter, climTr,
+    file=file.path(ROOT, VER, "out/abmi_onoff", 
+    "veg-hf-clim-reg_mammals-onoff_fix-fire_fix-age0.Rdata"))
+
+## dd150m_bambbs, dd1km_bambbs
+#load(file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire.Rdata"))
+#
+#save(dd150m_bambbs, dd1km_bambbs,
+#    file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire_fix-age0.Rdata"))
+
+## 1 km grid
 load(file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
 load(file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
 
-x <- dd1km_pred
-NSR <- kgrid$NSRNAME
+sum(dd1km_pred[[1]][,Target0])
+sum(dd1km_pred[[2]][,Target0])
+sum(dd1km_pred[[1]])
+sum(dd1km_pred[[2]])
+dd1km_pred <- fill_in_0ages(dd1km_pred, kgrid$NSRNAME)
+sum(dd1km_pred[[1]][,Target0])
+sum(dd1km_pred[[2]][,Target0])
+sum(dd1km_pred[[1]])
+sum(dd1km_pred[[2]])
+
+save(dd1km_pred, 
+    file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata"))
+
 
 
 

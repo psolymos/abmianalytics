@@ -421,15 +421,15 @@ function(x, NSR)
                 Cols <- paste0(i, Ages)
                 j <- NSR == nsr
                 if (any(j)) {
-                    Mat <- xx[j, Cols]
+                    Mat <- xx[j, Cols, drop=FALSE]
                     ## multiply Mat[,1] (unknown age) with this matrix
                     Unk <- Mat[,1] * t(matrix(ag[i,,nsr], length(Ages), sum(j)))
                     Mat[,1] <- 0 # will be 0 and redistributed from Unk
                     Mat <- Mat + Unk
                     xx[j, Cols] <- Mat # ridiculously slow as sparse matrix
                 }
-                cat("--- OK\n")
             }
+            cat(" --- OK\n")
         }
         if (current) {
             x$veg_current <- as(xx, "dgCMatrix")
