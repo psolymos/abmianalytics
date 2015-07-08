@@ -209,7 +209,7 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
     #    warning(paste("AgeCr > AgeRf for this many cases:", sum(ii)))
     #d$AgeRf[ii] <- d$AgeCr[ii]
     d$AgeRf[is.na(d$AgeRf)] <- 0L
-    table(rf=d$AgeRf,cr=d$AgeCr,useNA="a")
+    #table(rf=d$AgeRf,cr=d$AgeCr,useNA="a")
     ## turning age values into factor: 
     ## 0=no age info, 
     ## 1:9=valid age classes for treed veg types, 
