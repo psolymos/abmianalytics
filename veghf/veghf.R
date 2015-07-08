@@ -548,6 +548,9 @@ for (i in which(lnas)) {
 
 sum(is.na(kgrid))
 
+kgrid$LUFxNSR <- interaction(kgrid$LUF_NAME, kgrid$NSRNAME, drop=TRUE, sep="_")
+levels(kgrid$LUFxNSR) <- gsub(" ", "", levels(kgrid$LUFxNSR))
+
 if (SAVE) {
 save(dd1km_pred, 
     file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
@@ -752,27 +755,24 @@ save(dd1km_pred,
     file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata"))
 
 
+### Transition for 1K grid ------------------------------------------------
 
+## this is based on the fix-fire fix-age0 version
+## label collapsing as desired (swamp/wetland, ages?)
 
+source("~/repos/abmianalytics/R/veghf_functions.R")
 
-### Transition for 1K grid
+load(file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
+fl <- list.files(file.path(ROOT, VER, "data", "kgrid", "tiles"))
 
-
-
-
-## QS for transition -------------------------------------------------------
-
-source("c:/Dropbox/abmi/intactness/dataproc/data_proc_common_2014.R")
-
-fl <- list.files(file.path(ROOT, VER, "data/veghf/qs/csv"))
-
-cc <- c("LinkID","VEGAGEclass","VEGHFAGEclass","SOILclass","SOILHFclass","Shape_Area")
+cc <- c("Row_Col","VEGAGEclass","VEGHFAGEclass","SOILclass","SOILHFclass","Shape_Area")
 
 Start <- c(0:79*10+1, 802)
 
-d <- read.csv(file.path(ROOT, VER, "data/veghf/qs/csv", fl[1]))
-colnames(d)[colnames(d) == "year"] <- "HF_Year"
-dd <- make_vegHF_wide2(d, col.label="LinkID", col.year=NULL, wide=FALSE)
+
+d <- read.csv(file.path(ROOT, VER, "data", "kgrid", "tiles", fl[1]))
+dd <- make_vegHF_wide(d, col.label="Row_Col", 
+    col.year=NULL, col.HFyear="CutYear", wide=FALSE)
 ddd0 <- dd[character(0),cc]
 xddd0 <- ddd0
 
@@ -781,15 +781,12 @@ for (s in 1:(length(Start)-1)) {
     for (i in Start[s]:(Start[s+1]-1)) {
         cat(i, "of", length(fl), "-", fl[i], "\t")
         flush.console()
+        d <- read.csv(file.path(ROOT, VER, "data", "kgrid", "tiles", fl[i]))
+        dd <- make_vegHF_wide(d, col.label="Row_Col", 
+            col.year=NULL, col.HFyear="CutYear", wide=FALSE)
         if (i == Start[s]) {
-            d <- read.csv(file.path(ROOT, VER, "data/veghf/qs/csv", fl[i]))
-            colnames(d)[colnames(d) == "year"] <- "HF_Year"
-            dd <- make_vegHF_wide2(d, col.label="LinkID", col.year=NULL, wide=FALSE)
             dd0 <- dd[,cc]
         } else {
-            d <- read.csv(file.path(ROOT, VER, "data/veghf/qs/csv", fl[i]))
-            colnames(d)[colnames(d) == "year"] <- "HF_Year"
-            dd <- make_vegHF_wide2(d, col.label="LinkID", col.year=NULL, wide=FALSE)
             dd0 <- rbind(dd0, dd[,cc])
         }
         cat("OK", nrow(dd0), "\n")
@@ -797,12 +794,14 @@ for (s in 1:(length(Start)-1)) {
     ddd0 <- rbind(ddd0, dd0)
     cat("\nFinished block", s, "dim:", nrow(ddd0), "\n")
     if (i %in% c(100, 200, 300, 400, 500, 600, 700, 801)) {
-        save(ddd0, file=file.path(ROOT, VER, "data/veghf/qs/long", paste0("Long-part", i, ".Rdata")))
+        save(ddd0, file=file.path(ROOT, VER, 
+            "data", "kgrid", "long", paste0("Long-part", i, ".Rdata")))
         ddd0 <- xddd0
         gc()
     }
 }
 
+## ---- here
 
 load(file.path(ROOT, VER, "R/xy_clim_regions_QSlevel.Rdata"))
 lu <- read.csv(file.path(ROOT, VER, "lookup/VEG_HF_interim.csv"))
