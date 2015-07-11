@@ -345,7 +345,7 @@ dd1km_bambbs <- list(
 
 if (SAVE)
     save(dd150m_bambbs, dd1km_bambbs,
-        file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs.Rdata"))
+        file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire.Rdata"))
 
 
 ### 1K grid
@@ -731,11 +731,22 @@ save(ddmi, ddmt, climInter, climTr,
     file=file.path(ROOT, VER, "out/abmi_onoff", 
     "veg-hf-clim-reg_mammals-onoff_fix-fire_fix-age0.Rdata"))
 
-## dd150m_bambbs, dd1km_bambbs
+
+## dd150m_bambbs, dd1km_bambbs -- need NSR from previous climate table
 #load(file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire.Rdata"))
+#
+#sum(dd150m_bambbs[[1]][,Target0])
+#dd150m_bambbs <- fill_in_0ages(dd150m_bambbs, climInter$NSRNAME)
+#sum(dd150m_bambbs[[1]][,Target0])
+#
+#sum(dd1km_bambbs[[1]][,Target0])
+#dd1km_bambbs <- fill_in_0ages(dd1km_bambbs, climTr$NSRNAME)
+#sum(dd1km_bambbs[[1]][,Target0])
 #
 #save(dd150m_bambbs, dd1km_bambbs,
 #    file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire_fix-age0.Rdata"))
+
+
 
 ## 1 km grid
 load(file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
