@@ -733,18 +733,24 @@ save(ddmi, ddmt, climInter, climTr,
 
 
 ## dd150m_bambbs, dd1km_bambbs -- need NSR from previous climate table
-#load(file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire.Rdata"))
-#
-#sum(dd150m_bambbs[[1]][,Target0])
-#dd150m_bambbs <- fill_in_0ages(dd150m_bambbs, climInter$NSRNAME)
-#sum(dd150m_bambbs[[1]][,Target0])
-#
-#sum(dd1km_bambbs[[1]][,Target0])
-#dd1km_bambbs <- fill_in_0ages(dd1km_bambbs, climTr$NSRNAME)
-#sum(dd1km_bambbs[[1]][,Target0])
-#
-#save(dd150m_bambbs, dd1km_bambbs,
-#    file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire_fix-age0.Rdata"))
+
+climPoint_bambbs <- read.csv(
+    file.path(ROOT, VER, "data/climate", "BAM_BBS_climate_aspen_NaturalRegion.csv"))
+
+load(file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire.Rdata"))
+
+compare.sets(as.character(climPoint_bambbs$PKEY), rownames(dd150m_bambbs[[1]]))
+
+sum(dd150m_bambbs[[1]][,Target0])
+dd150m_bambbs <- fill_in_0ages(dd150m_bambbs, climInter$NSRNAME)
+sum(dd150m_bambbs[[1]][,Target0])
+
+sum(dd1km_bambbs[[1]][,Target0])
+dd1km_bambbs <- fill_in_0ages(dd1km_bambbs, climTr$NSRNAME)
+sum(dd1km_bambbs[[1]][,Target0])
+
+save(dd150m_bambbs, dd1km_bambbs, climPoint_bambbs,
+    file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire_fix-age0.Rdata"))
 
 
 
