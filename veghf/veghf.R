@@ -343,8 +343,24 @@ dd1km_bambbs <- list(
     sample_year=NA,
     scale = "564 m radius circle around bird points")
 
+climPoint_bambbs <- read.csv(
+    file.path(ROOT, VER, "data/climate", "AllBird_fromPeter_april2015_climates.csv"))
+colnames(climPoint_bambbs)[colnames(climPoint_bambbs) == "Eref"] <- "PET"
+colnames(climPoint_bambbs)[colnames(climPoint_bambbs) == 
+    "Populus_tremuloides_brtpred_nofp"] <- "pAspen"
+climPoint_bambbs$OBJECTID <- NULL
+colnames(climPoint_bambbs)[colnames(climPoint_bambbs) == "YEAR_"] <- "YEAR"
+rownames(climPoint_bambbs) <- climPoint_bambbs$PKEY
+
+compare.sets(rownames(dd150m_bambbs[[1]]), rownames(dd1km_bambbs[[1]]))
+compare.sets(rownames(climPoint_bambbs), rownames(dd150m_bambbs[[1]]))
+
+all(rownames(dd150m_bambbs[[1]]) == rownames(dd1km_bambbs[[1]]))
+climPoint_bambbs <- climPoint_bambbs[rownames(dd150m_bambbs[[1]]),]
+all(rownames(dd150m_bambbs[[1]]) == rownames(climPoint_bambbs))
+
 if (SAVE)
-    save(dd150m_bambbs, dd1km_bambbs,
+    save(dd150m_bambbs, dd1km_bambbs, climPoint_bambbs,
         file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire.Rdata"))
 
 
@@ -734,19 +750,14 @@ save(ddmi, ddmt, climInter, climTr,
 
 ## dd150m_bambbs, dd1km_bambbs -- need NSR from previous climate table
 
-climPoint_bambbs <- read.csv(
-    file.path(ROOT, VER, "data/climate", "BAM_BBS_climate_aspen_NaturalRegion.csv"))
-
 load(file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire.Rdata"))
 
-compare.sets(as.character(climPoint_bambbs$PKEY), rownames(dd150m_bambbs[[1]]))
-
 sum(dd150m_bambbs[[1]][,Target0])
-dd150m_bambbs <- fill_in_0ages(dd150m_bambbs, climInter$NSRNAME)
+dd150m_bambbs <- fill_in_0ages(dd150m_bambbs, climPoint_bambbs$NSRNAME)
 sum(dd150m_bambbs[[1]][,Target0])
 
 sum(dd1km_bambbs[[1]][,Target0])
-dd1km_bambbs <- fill_in_0ages(dd1km_bambbs, climTr$NSRNAME)
+dd1km_bambbs <- fill_in_0ages(dd1km_bambbs, climPoint_bambbs$NSRNAME)
 sum(dd1km_bambbs[[1]][,Target0])
 
 save(dd150m_bambbs, dd1km_bambbs, climPoint_bambbs,
