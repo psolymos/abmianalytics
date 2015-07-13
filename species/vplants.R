@@ -5,6 +5,8 @@ if (interactive())
 
 T <- "VPlants"
 
+com_dom <- FALSE
+
 if (do.prof) {
     proffile <- paste(D, "OUT_", tolower(T), d, ".Rprof",sep="")
     Rprof(proffile)
@@ -66,7 +68,7 @@ xt <- Xtab(~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "
     rdrop=qs.to.exclude, drop.unused.levels = FALSE)
 xt[xt>0] <- 1
 
-if (FALSE) {
+if (com_dom) {
     res$comdom <- res$COMM_DOM
     levels(res$comdom)[!(levels(res$comdom) %in% c("Dominant", "Common"))] <- "Uncommon"
     table(res$comdom)
@@ -150,7 +152,7 @@ if (!combine.tables) {
 } else {
     res1 <- data.frame(samp(m), as.matrix(m))
     mmm <- Mefa(xtab(m2), data.frame(nonDuplicated(samp(m)[,-which(colnames(samp(m))=="Label")], 
-        Label2, TRUE), samp(m2)))
+        Label2, TRUE)[rownames(m2),], samp(m2)))
     res2 <- data.frame(samp(mmm), as.matrix(mmm))
     rntw <- FALSE
 }
@@ -195,18 +197,24 @@ if (check.completeness) {
 }
 
 ## write static files into csv
-write.csv(res1, file=paste(D, "/OUT_", T, "_Species_QU-PA", d, ".csv",sep=""), row.names = rntw)
-write.csv(res2, file=paste(D, "/OUT_", T, "_Species_Site-Binomial", d, ".csv",sep=""), row.names = rntw)
-write.csv(tax, file=paste(D, "/OUT_", T, "_Species_Taxa", d, ".csv",sep=""), row.names = TRUE)
-#write.csv(rr, file=paste(D, "/OUT_", T, "_SampleInfo", d, ".csv",sep=""))
+write.csv(res1, file=paste(D, "/OUT_", T, "_Species_QU-PA", d, 
+    ifelse(com_dom, "_ComDom", ""), ".csv",sep=""), row.names = rntw)
+write.csv(res2, file=paste(D, "/OUT_", T, "_Species_Site-Binomial", d, 
+    ifelse(com_dom, "_ComDom", ""), ".csv",sep=""), row.names = rntw)
+write.csv(tax, file=paste(D, "/OUT_", T, "_Species_Taxa", d, 
+    ifelse(com_dom, "_ComDom", ""), ".csv",sep=""), row.names = TRUE)
+#write.csv(rr, file=paste(D, "/OUT_", T, "_SampleInfo", d, 
+#    ifelse(com_dom, "_ComDom", ""), ".csv",sep=""))
 write.csv(data.frame(Excluded_Sites=sort(pcs.to.exclude)),
-    file=paste(D, "/OUT_", T, "_Excluded_Sites", d, ".csv",sep=""), row.names = FALSE)
+    file=paste(D, "/OUT_", T, "_Excluded_Sites", d, 
+    ifelse(com_dom, "_ComDom", ""), ".csv",sep=""), row.names = FALSE)
 
 
 if (do.prof)
     summaryRprof(proffile)
 if (do.image)
-    save.image(paste(D, "/OUT_", tolower(T), d, ".Rdata",sep=""))
+    save.image(paste(D, "/OUT_", tolower(T), d, 
+        ifelse(com_dom, "_ComDom", ""), ".Rdata",sep=""))
 ## quit without saving workspace
 quit(save="no")
 
