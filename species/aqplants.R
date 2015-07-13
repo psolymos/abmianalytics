@@ -24,6 +24,12 @@ close(con)
 res <- read.csv(file.path(ROOT, "data/aqplants.csv"))
 gis <- read.csv(file.path(ROOT, "data/sitemetadata.csv"))
 taxo <- read.csv(file.path(ROOT, "data/taxonomy.csv"))
+cap <- read.csv(file.path(ROOT, "data/aqsitecap.csv"))
+
+cap$Label <- with(cap, interaction(SITE, YEAR, ZONE, sep="_"))
+
+res$capLabel <- with(res, interaction(SITE, YEAR, ZONE1, sep="_"))
+#compare.sets(res$capLabel, cap$Label)
 
 rr <- LabelFun(res)
 #rr <- nonDuplicated(rr, Label, TRUE)
@@ -34,6 +40,12 @@ res <- data.frame(res, rr[match(res$SITE_LABEL, rr$Label),])
 ## remove bad wetlands
 keep <- !(res$SITE %in% REJECT)
 res <- droplevels(res[keep,])
+
+keep[res$TRANSECT == "Upland"] <- FALSE
+keep[res$ZONE1 == "TransitionTransect"] <- FALSE
+res <- res[keep,]
+res$TRANSECT <- droplevels(res$TRANSECT)
+res$ZONE1 <- droplevels(res$ZONE1)
 
 ## crosstab
 
@@ -49,7 +61,10 @@ res$SCIENTIFICNAME <- droplevels(res$SCIENTIFICNAME)
 
 xt <- Xtab(~ Label + SCIENTIFICNAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 
     drop.unused.levels = FALSE)
-xt[xt>0] <- 1
+#xt[xt>0] <- 1
+
+#xtcap <- Xtab(~ Label + WTD_TRANSECT_CODE, cap)
+#rowSums(xtcap[,2:6])
 
 ## get taxonomy
 z <- nonDuplicated(res[!(res$SCIENTIFICNAME %in% c("VNA", "DNC")),],

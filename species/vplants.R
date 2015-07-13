@@ -20,6 +20,12 @@ taxo <- sqlQuery(con, paste("SELECT * FROM PUBLIC_ACCESS_PUBLIC_DETAIL_TAXONOMYS
 close(con)
 }
 
+#res <- read.csv(file.path(ROOT, "data", "plants2015",
+#    "A_T15_Vascular_Plants_AllYear_AB_689250437025811679.csv"), row.names=NULL)
+res <- read.csv(file.path(ROOT, "data", "vplants.csv"))
+gis <- read.csv(file.path(ROOT, "data/sitemetadata.csv"))
+taxo <- read.csv(file.path(ROOT, "data/taxonomy.csv"))
+
 ## Labels etc
 rr <- LabelFun(res)
 rr <- nonDuplicated(rr, Label, TRUE)
@@ -189,10 +195,10 @@ if (check.completeness) {
 }
 
 ## write static files into csv
-write.csv(res1, file=paste(D, "OUT_", T, "_Species_QU-PA", d, ".csv",sep=""), row.names = rntw)
-write.csv(res2, file=paste(D, "OUT_", T, "_Species_Site-Binomial", d, ".csv",sep=""), row.names = rntw)
-write.csv(tax, file=paste(D, "OUT_", T, "_Species_Taxa", d, ".csv",sep=""), row.names = TRUE)
-#write.csv(rr, file=paste(D, "OUT_", T, "_SampleInfo", d, ".csv",sep=""))
+write.csv(res1, file=paste(D, "/OUT_", T, "_Species_QU-PA", d, ".csv",sep=""), row.names = rntw)
+write.csv(res2, file=paste(D, "/OUT_", T, "_Species_Site-Binomial", d, ".csv",sep=""), row.names = rntw)
+write.csv(tax, file=paste(D, "/OUT_", T, "_Species_Taxa", d, ".csv",sep=""), row.names = TRUE)
+#write.csv(rr, file=paste(D, "/OUT_", T, "_SampleInfo", d, ".csv",sep=""))
 write.csv(data.frame(Excluded_Sites=sort(pcs.to.exclude)),
     file=paste(D, "/OUT_", T, "_Excluded_Sites", d, ".csv",sep=""), row.names = FALSE)
 
@@ -200,7 +206,7 @@ write.csv(data.frame(Excluded_Sites=sort(pcs.to.exclude)),
 if (do.prof)
     summaryRprof(proffile)
 if (do.image)
-    save.image(paste(D, "OUT_", tolower(T), d, ".Rdata",sep=""))
+    save.image(paste(D, "/OUT_", tolower(T), d, ".Rdata",sep=""))
 ## quit without saving workspace
 quit(save="no")
 
