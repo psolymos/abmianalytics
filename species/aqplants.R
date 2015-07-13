@@ -41,6 +41,7 @@ res <- data.frame(res, rr[match(res$SITE_LABEL, rr$Label),])
 keep <- !(res$SITE %in% REJECT)
 res <- droplevels(res[keep,])
 
+keep <- rep(TRUE, nrow(res))
 keep[res$TRANSECT == "Upland"] <- FALSE
 keep[res$ZONE1 == "TransitionTransect"] <- FALSE
 res <- res[keep,]
@@ -89,7 +90,7 @@ table(m@taxa$RANK_NAME) # here are sub-specific levels
 m <- m[,m@taxa$RANK_NAME %in% c("Genus", "Species")]
 ## exclude not species level taxa
 #m <- m[,m@taxa$TAXONOMICRESOLUTION == "Species"]
-xtab(m) <- as(xtab(m) > 0, "dgCMatrix")
+#xtab(m) <- as(xtab(m) > 0, "dgCMatrix")
 
 ## site level info
 m2 <- groupSums(m, 1, m@samp$Label2)
