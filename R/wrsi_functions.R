@@ -45,7 +45,7 @@ source("~/repos/abmianalytics/R/wrsi_functions.R")
 
 
 load("~/Dropbox/Public/OUT_mites_2015-05-22.Rdata")
-load("~/Dropbox/Public/veg-hf-clim-reg_abmi-onoff.Rdata")
+load("~/Dropbox/Public/veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0.Rdata")
 tveg <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
 
 
@@ -82,7 +82,8 @@ function(Y, X, ...)
     rw <- w$rWRSI
     names(rw) <- rownames(w)
 
-    col <- brewer.pal(8, "Accent")[c(1,1,1,1, 3,3, 2,2,2, 5,5, 8,8)]
+    #col <- brewer.pal(8, "Accent")[c(1,1,1,1, 3,3, 2,2,2, 5,5, 8,8)]
+    col <- brewer.pal(8, "Accent")[c(1,1,1,1, 2,2,3,5, 8,8,8,8)]
     op <- par(mar=c(6,4,2,2)+0.1, las=2)
     tmp <- barplot(rw, horiz=FALSE, ylab="Affinity", 
         space=NULL, col=col, border=col, #width=sqrt(w$Pavail),
