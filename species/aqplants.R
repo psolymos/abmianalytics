@@ -26,9 +26,12 @@ gis <- read.csv(file.path(ROOT, "data/sitemetadata.csv"))
 taxo <- read.csv(file.path(ROOT, "data/taxonomy.csv"))
 cap <- read.csv(file.path(ROOT, "data/aqsitecap.csv"))
 
-cap$Label <- with(cap, interaction(SITE, YEAR, ZONE, sep="_"))
+cap <- droplevels(cap[cap$ZONE != "Upland" & !(cap$WTD_TRANSECT_CODE %in% 
+    c("DNC","Transition Transect","Transect 6")),])
+cap$Label <- with(cap, interaction(SITE, YEAR, ZONE, sep="_", drop=TRUE))
+xtc <- rowSums(as.matrix(Xtab(~Label + WTD_TRANSECT_CODE, cap)))
 
-res$capLabel <- with(res, interaction(SITE, YEAR, ZONE1, sep="_"))
+res$capLabel <- with(res, interaction(SITE, YEAR, ZONE1, sep="_", drop=TRUE))
 #compare.sets(res$capLabel, cap$Label)
 
 rr <- LabelFun(res)
@@ -42,11 +45,13 @@ keep <- !(res$SITE %in% REJECT)
 res <- droplevels(res[keep,])
 
 keep <- rep(TRUE, nrow(res))
-keep[res$TRANSECT == "Upland"] <- FALSE
-keep[res$ZONE1 == "TransitionTransect"] <- FALSE
+keep[res$ZONE1 == "Upland"] <- FALSE
+keep[res$TRANSECT == "Transition Transect"] <- FALSE
 res <- res[keep,]
 res$TRANSECT <- droplevels(res$TRANSECT)
 res$ZONE1 <- droplevels(res$ZONE1)
+res$Label <- droplevels(res$Label)
+res$Label2 <- droplevels(res$Label2)
 
 ## crosstab
 
@@ -60,8 +65,17 @@ levels(res$SCIENTIFICNAME) <- sapply(strsplit(levels(res$SCIENTIFICNAME), " "), 
 levels(res$SCIENTIFICNAME) <- nameAlnum(levels(res$SCIENTIFICNAME), capitalize="mixed", collapse="")
 res$SCIENTIFICNAME <- droplevels(res$SCIENTIFICNAME)
 
+## getting rid of duplicate rows for species
+res$uid <- paste(res$Label, res$TRANSECT, res$SCIENTIFICNAME, sep="::")
+dim(res)
+nlevels(res$SCIENTIFICNAME)
+res <- nonDuplicated(res, uid)
+dim(res)
+nlevels(res$SCIENTIFICNAME)
+
 xt <- Xtab(~ Label + SCIENTIFICNAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 
     drop.unused.levels = FALSE)
+range(xt)
 #xt[xt>0] <- 1
 
 #xtcap <- Xtab(~ Label + WTD_TRANSECT_CODE, cap)
@@ -81,7 +95,7 @@ levels(z$RANK_NAME)[levels(z$RANK_NAME) %in% c("Subspecies","Variety")] <- "Spec
 
 x <- nonDuplicated(res[,c("Label", "Label2", "ROTATION", "SITE", "YEAR", "FIELDDATE", "CREWMEMBER", 
     "ZONE1", "OnOffGrid", 
-    "SiteLabel", "DataProvider", "Visit", "ClosestABMISite")], res$Label, TRUE)
+    "SiteLabel", "DataProvider", "Visit", "ClosestABMISite","capLabel")], res$Label, TRUE)
 
 ## crosstab on PC level
 m <- Mefa(xt, x, z)
@@ -103,6 +117,7 @@ if (!combine.tables) {
     res2 <- as.matrix(m2)
     rntw <- TRUE
 } else {
+    samp(m)$TotlaNoOfTransects <- xtc[match(samp(m)$capLabel, names(xtc))]
     res1 <- data.frame(samp(m), as.matrix(m))
     mmm <- Mefa(xtab(m2), data.frame(nonDuplicated(samp(m)[,-which(colnames(samp(m))=="Label")], 
         Label2, TRUE)))
@@ -121,7 +136,8 @@ range(xtab(m2))
 
 
 ## write static files into csv
-write.csv(res1, file=paste(D, "/OUT_", T, "_Species_WZ", d, ".csv",sep=""), row.names = rntw)
+write.csv(res1, file=paste(D, "/OUT_", T, "_Species_WZ-Binomial", d, 
+    ".csv",sep=""), row.names = rntw)
 write.csv(res2, file=paste(D, "/OUT_", T, "_Species_Site", d, ".csv",sep=""), row.names = rntw)
 write.csv(tax, file=paste(D, "/OUT_", T, "_Species_Taxa", d, ".csv",sep=""), row.names = TRUE)
 
