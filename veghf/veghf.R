@@ -20,9 +20,9 @@ hfgroups <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-class.csv")
 hflt <- hfgroups[match(hftypes$HF_GROUP, hfgroups$HF_GROUP),]
 rownames(hflt) <- hftypes$FEATURE_TY
 
-### ABMI on+off grid sites
-
 #### Vegetation and HF processing
+
+### ABMI on+off grid sites --------------------------------------------------
 
 ## ABMI sites (on+off) cetre 1 ha
 f1ha <- file.path(ROOT, VER, "data/veghf", "Center1haFixFire.csv")
@@ -137,7 +137,7 @@ if (SAVE)
         "veg-hf-clim-reg_abmi-onoff_fix-fire.Rdata"))
 
 
-### Snow transects
+### Snow transects -------------------------------------------------------
 
 ## 1 km length (250 m buffer) mammal transect (inter level)
 fmi <- file.path(ROOT, VER, "data/veghf", "InterLevel_SRDFireFix.csv")
@@ -265,7 +265,7 @@ if (SAVE)
         "veg-hf-clim-reg_mammals-onoff_fix-fire.Rdata"))
 
 
-### BAM+BBS bird points, 150 m radius buffer
+### BAM+BBS bird points, 150 m radius buffer --------------------------------
 
 ## processing csv files
 fl <- list.files(file.path(ROOT, VER, "data", "veghf", "bammbbs150m"))
@@ -363,8 +363,74 @@ if (SAVE)
     save(dd150m_bambbs, dd1km_bambbs, climPoint_bambbs,
         file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire.Rdata"))
 
+## wetland zones ----------------------------------------------------
 
-### 1K grid
+fw <- file.path(ROOT, VER, "data/veghf/wetlands", 
+    "VerifiedHF_Veg_onWetSitesBuffferRings_allYear_July14_2015.csv")
+dw250m <- read.csv(fw)
+dw250m$Site_YEAR <- with(dw250m, 
+    interaction(Pin_Wetland_ID, Year_survey, sep="_", drop=TRUE))
+head(dw250m)
+table(dw250m$BUFF_DIST)
+setdiff(levels(dw250m$FEATURE_TY), levels(hftypes$FEATURE_TY))
+levels(dw250m$FEATURE_TY) <- gsub(" ", "", levels(dw250m$FEATURE_TY))
+levels(dw250m$FEATURE_TY) <- toupper(levels(dw250m$FEATURE_TY))
+setdiff(levels(dw250m$FEATURE_TY), levels(hftypes$FEATURE_TY))
+
+dw20m <- dw250m[dw250m$BUFF_DIST <= 20,]
+dw100m <- dw250m[dw250m$BUFF_DIST <= 100,]
+
+ddw20m <- make_vegHF_wide(dw20m, col.label = "Site_YEAR", 
+    col.year="Year_survey", col.HFyear="YEAR_cut")
+ddw20m$scale <- "0-20 m buffer around wetlands"
+
+ddw100m <- make_vegHF_wide(dw100m, col.label = "Site_YEAR", 
+    col.year="Year_survey", col.HFyear="YEAR_cut")
+ddw100m$scale <- "0-100 m buffer around wetlands"
+
+ddw250m <- make_vegHF_wide(dw250m, col.label = "Site_YEAR", 
+    col.year="Year_survey", col.HFyear="YEAR_cut")
+ddw250m$scale <- "0-250 m buffer around wetlands"
+
+all(rownames(ddw20m[[1]]) == rownames(ddw100m[[1]]))
+all(rownames(ddw20m[[1]]) == rownames(ddw250m[[1]]))
+all(rownames(ddw100m[[1]]) == rownames(ddw250m[[1]]))
+
+climWet <- read.csv(file.path(ROOT, VER, "data/climate", 
+    "climates_on_wetlandPin.csv"))
+colnames(climWet)[colnames(climWet) == "Eref"] <- "PET"
+colnames(climWet)[colnames(climWet) == 
+    "Populus_tremuloides_brtpred_nofp"] <- "pAspen"
+climWet$OBJECTID <- NULL
+climWet$Site_YEAR <- with(climWet, 
+    interaction(Pin_Wetland_ID, year, sep="_", drop=TRUE))
+
+compare.sets(rownames(ddw250m[[1]]), levels(climWet$Site_YEAR))
+setdiff(rownames(ddw250m[[1]]), levels(climWet$Site_YEAR))
+setdiff(levels(climWet$Site_YEAR), rownames(ddw250m[[1]]))
+
+source("~/repos/abmianalytics/species/00globalvars_wetland.R")
+sort(REJECT)
+
+#totalA <- read.csv(file.path(ROOT, VER, "data/veghf/wetlands", 
+#    "BufferRings_all_year_July14_2015.csv"))
+
+ii <- intersect(levels(climWet$Site_YEAR), rownames(ddw250m[[1]]))
+ii <- ii[ii != "W-213_2013"] # outside of AB bound
+
+for (i in 1:4) {
+    ddw20m[[i]] <- ddw20m[[i]][ii,]
+    ddw100m[[i]] <- ddw100m[[i]][ii,]
+    ddw250m[[i]] <- ddw250m[[i]][ii,]
+}
+rownames(climWet) <- climWet$Site_YEAR
+climWet <- droplevels(climWet[ii,])
+
+if (SAVE)
+    save(ddw20m, ddw100m, ddw250m, climWet,
+        file=file.path(ROOT, VER, "out/wetlands", "veg-hf_wetlands_fix-fire.Rdata"))
+
+### 1K grid --------------------------------------------------------
 
 ## Sample year is current year, so that forest ages are relative to present
 ## and not relative to HF or veg inventory year.
@@ -763,7 +829,23 @@ sum(dd1km_bambbs[[1]][,Target0])
 save(dd150m_bambbs, dd1km_bambbs, climPoint_bambbs,
     file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire_fix-age0.Rdata"))
 
+## Wetlands
 
+sum(ddw20m[[1]][,Target0])
+ddw20m <- fill_in_0ages(ddw20m, climWet$NSRNAME)
+sum(ddw20m[[1]][,Target0])
+
+sum(ddw100m[[1]][,Target0])
+ddw100m <- fill_in_0ages(ddw100m, climWet$NSRNAME)
+sum(ddw100m[[1]][,Target0])
+
+sum(ddw250m[[1]][,Target0])
+ddw250m <- fill_in_0ages(ddw250m, climWet$NSRNAME)
+sum(ddw250m[[1]][,Target0])
+
+save(ddw20m, ddw100m, ddw250m, climWet,
+    file=file.path(ROOT, VER, "out/wetlands", 
+    "veg-hf_wetlands_fix-fire_fix-age0.Rdata"))
 
 ## 1 km grid
 load(file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
