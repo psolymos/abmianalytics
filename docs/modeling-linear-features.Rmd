@@ -1,0 +1,79 @@
+---
+title: "Modeling linear feature effects"
+author: "P. Solymos"
+date: '2015-07-15'
+output:
+  html_document:
+    toc: no
+  pdf_document:
+    toc: no
+    toc_depth: 2
+---
+
+# The model
+
+$N = A_h D_h + A_l D_l$ where $h$ is surrounding habitat in a circular buffer
+and $l$ is the linear feature, $A$ is area, $D$ is density, $N$ is abundance
+at a point count.
+
+$N = (1-p) A D_h + p A \delta D_h$, where $A=A_h + A_l$ and $D_l = \delta D_h$.
+It follows that $D = N/A = D_h (1 - p + p \delta)$.
+
+# The problem
+
+We model $D_h = exp(X \beta)$, and $D = exp(X \beta) exp(\beta_l p)$.
+But the scaling with $p$ is not the same in the intuitive model above,
+and the model that is easy to implement in a `glm` framework. 
+Let us plot $D/D_h$ in 2 different ways:
+
+```{r}
+delta <- 0.1
+p <- seq(0, 1, by = 0.01)
+op <- par(mfrow=c(1,3))
+plot(p, exp(log(delta)*p), type = "l", col = 2, lwd = 2)
+plot(p, 1-p+p*delta, type = "l", col = 2, lwd = 2)
+plot(exp(log(delta)*p), 1-p+p*delta, type = "l", col = 2, lwd = 2)
+abline(0, 1, lty = 2)
+par(op)
+```
+
+# The solution
+
+What would be a function of $p$ that would best approximate the intuitive model?
+
+We will compare polynomial terms to estimate bias when the data is simulated
+under the intuitive model.
+
+```{r}
+set.seed(1234)
+n <- 1000
+Dh <- 2
+delta <- 0.1
+p <- runif(n, 0, 1)
+p <- p[order(p)]
+lam <- (1-p)*Dh + p*delta*Dh
+y <- rpois(n, lam)
+
+summary(m <- glm(y ~ p, family=poisson))
+exp(coef(m)[1]) # Dh
+exp(coef(m)[1] + coef(m)[2]) # Dl
+exp(coef(m)[2]) # delta
+
+f <- fitted(m)
+plot(p, lam, ylim = c(0, max(lam, f)))
+lines(p, f)
+
+
+summary(m <- glm(y ~ I(p^2), family=poisson))
+exp(coef(m)[1]) # Dh
+exp(coef(m)[1] + coef(m)[2]) # Dl
+exp(coef(m)[2]) # delta
+
+f <- fitted(m)
+plot(p, lam, ylim = c(0, max(lam, f)))
+lines(p, f)
+```
+
+The linear `glm` is not a bad approximation.
+
+
