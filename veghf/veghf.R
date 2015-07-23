@@ -769,7 +769,20 @@ for (What in c("cr","rf")) {
 
 sum(is.na(ages_cr))
 sum(is.na(ages_rf))
-AvgAges <- list(current=ages_cr, reference=ages_rf)
+
+## we need to know availability for combining forest classes
+nsr_cr <- groupSums(dd1km_pred$veg_current, 1, kgrid$NSRNAME)
+nsr_rf <- groupSums(dd1km_pred$veg_reference, 1, kgrid$NSRNAME)
+cn1 <- as.character(lt$VEG)
+cn1[!is.na(lt$HF)] <- "HF"
+cn2 <- cn1[is.na(lt$HF)]
+nsr_cr <- as.matrix(groupSums(nsr_cr, 2, cn1))
+nsr_rf <- as.matrix(groupSums(nsr_rf, 2, cn2))
+nsr_cr <- nsr_cr[,dimnames(ages_cr)[[1]]]
+nsr_rf <- nsr_rf[,dimnames(ages_cr)[[1]]]
+
+AvgAges <- list(current=ages_cr, reference=ages_rf,
+    area_cr=nsr_cr, area_rf=nsr_rf)
 
 if (SAVE)
 save(AvgAges, 
@@ -1009,8 +1022,13 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
                 xxx0$vhf <- sapply(strsplit(as.character(xxx0$vegTr), "->"), 
                     function(z) z[length(z)])
                 xxx0$vhf[xxx0$vhf == xxx0$veg] <- ""
-                ## needs to sum to 1 !!!
-                bf0 <- groupMeans(AvgAges$reference[,,nsr], 1, recl$reclass)[,-1]
+
+                ## needs to sum to 1, include availability
+                ages <- AvgAges$reference[,,nsr]
+                areas <- AvgAges$area_rf[nsr,]
+                bf0 <- groupMeans(ages * areas, 1, recl$reclass)[,-1]
+                bf0 <- bf0 / rowSums(bf0)
+
                 tmp <- list()
                 for (k in 1:10) {
                     tmpv <- xxx0
