@@ -1009,8 +1009,8 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
                 xxx0$vhf <- sapply(strsplit(as.character(xxx0$vegTr), "->"), 
                     function(z) z[length(z)])
                 xxx0$vhf[xxx0$vhf == xxx0$veg] <- ""
-
-                bf0 <- groupSums(AvgAges$reference[,,nsr], 1, recl$reclass)[,-1]
+                ## needs to sum to 1 !!!
+                bf0 <- groupMeans(AvgAges$reference[,,nsr], 1, recl$reclass)[,-1]
                 tmp <- list()
                 for (k in 1:10) {
                     tmpv <- xxx0
@@ -1042,6 +1042,8 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
     trVeg <- trVeg[,allVegTr]
     trSoil <- Xtab(Shape_Area ~ Row_Col + soilTr, sunits)
     trSoil <- trSoil[rownames(trVeg),allSoilTr]
+    range(rowSums(trVeg)/10^6)
+    range(rowSums(trSoil)/10^6)
     
     save(trVeg, trSoil, file=file.path(ROOT, VER, "out", "transitions", 
         paste0(i, ".Rdata")))
