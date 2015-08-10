@@ -1068,74 +1068,63 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
 }
 
 
-## -------------- soil stuff
+## 3 x 7 yearly veg+HF
 
-dd <- make_vegHF_wide2(d1km, col.label = "Site_YEAR", col.year="year", wide=FALSE)
-tt <- read.csv("c:/p/AB_data_v2014/lookup/VEG_HF_interim.csv")
-dd$cr <- dd$VEGHFAGEclass
-levels(dd$cr) <- as.character(tt$Levels3)[match(levels(dd$cr), tt$VEGHFAGE)]
-dd$rf <- dd$VEGAGEclass
-levels(dd$rf) <- as.character(tt$Levels3)[match(levels(dd$rf), tt$VEGHFAGE)]
+fl <- c("veg_hf_3x7_1999.csv","veg_hf_3x7_2001.csv",
+    "veg_hf_3x7_2002.csv","veg_hf_3x7_2003.csv","veg_hf_3x7_2004.csv",
+    "veg_hf_3x7_2005.csv","veg_hf_3x7_2006.csv","veg_hf_3x7_2007.csv",
+    "veg_hf_3x7_2008.csv","veg_hf_3x7_2009.csv","veg_hf_3x7_2010.csv",
+    "veg_hf_3x7_2011.csv","veg_hf_3x7_2012.csv","veg_hf_3x7_2013.csv")
+yr <- c(1999, 2001, 2002:2013)
 
-tr0 <- as.matrix(Xtab(Shape_Area ~ cr + rf, dd))
-tr <- round(100*t(t(tr0)/colSums(tr0)), 2)
-tr[tr<1] <- 999
-c <- round(100*colSums(tr0)/sum(tr0),2)
-r <- c(round(100*rowSums(tr0)/sum(tr0), 2), Total=100)
-tr2 <- cbind(rbind(tr, Total=c), Total=r)
-write.csv(tr2, file.path(ROOT, VER, "R/transitions.csv"))
+yearly_vhf0 <- list()
 
+#i <- 1
+for (i in 1:length(fl)) {
+    cat(i, "\n");flush.console()
+    f <- file.path(ROOT, VER, "data/veghf/3x7", fl[i])
+    d <- read.csv(f)
 
-x <- dd1km$soil_reference
-SITES$soil <- rowSums(x[,!(colnames(x) %in% c("UNK","Water","Len","LenW","Ltc","LtcR"))])
-SITES$nonwtr <- rowSums(x[,!(colnames(x) %in% c("Water","Len","LenW","Ltc","LtcR"))])
-SITES$psoil <- with(SITES, soil / nonwtr)
-SITES$psoil[is.na(SITES$psoil)] <- 0
-cc <- c("Grassland","Shrubland","CultivationCropPastureBareground","HighDensityLivestockOperation")
-xx <- dd1km$veg_current
-SITES$grass <- rowSums(xx[,cc])
-plot(SITES$grass, SITES$psoil)
+    d$inventory_year <- yr[i]
+    #head(d)
+    if (!("year" %in% colnames(d)))
+        colnames(d)[colnames(d) == "YEAR"] <- "year"
+    dd <- make_vegHF_wide(d, col.label = "ABMI", 
+        col.year="inventory_year", col.HFyear="year")
+    dd$scale <- "3x7 km rectangle around NSF site"
+    dd$sample_year <- yr[i]
+    #str(dd)
 
-
-by(SITES[,c("soil","grass")], SITES$NR, summary)
-by(SITES[SITES$NR=="Boreal",c("soil","grass")], droplevels(SITES$NSR[SITES$NR=="Boreal"]), summary)
-plot(REG[,6:5],pch=ifelse(REG$NATURAL_SUBREGIONS=="Dry Mixedwood",19,21))
-## incorporate soil %
-## separate the 2 blobs by diagonal (lat*long function)
-
-rn <- rownames(dd1km$current)
-all(rn == rownames(dd1ha$current))
-
-pdf(file.path(ROOT, VER, "results/tmp.pdf"), onefile=TRUE)
-for (i in colnames(dd1ha$reference)) {
-    cr1km <- dd1km$current[,i]
-    cr1ha <- dd1ha$current[,i]
-    rf1km <- dd1km$reference[,i]
-    rf1ha <- dd1ha$reference[,i]
-    boxplot(cbind(cr1km,cr1ha,rf1km,rf1ha), main=i)
-    #plot(cr1km, rf1km)
-    #points(cr1ha, rf1ha, col=2)
+    yearly_vhf0[[as.character(yr[i])]] <- dd
 }
-for (i in setdiff(colnames(dd1ha$current), colnames(dd1ha$reference))) {
-    cr1km <- dd1km$current[,i]
-    cr1ha <- dd1ha$current[,i]
-    boxplot(cbind(cr1km,cr1ha), main=i)
-    #plot(cr1km, rf1km)
-    #points(cr1ha, rf1ha, col=2)
+
+## age0
+
+load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
+Target0 <- c("Conif0", "Decid0", "Mixwood0", "Pine0", 
+    "Swamp-Conif0", "Swamp-Decid0", "Swamp-Mixwood0", "Swamp-Pine0", 
+    "Wetland-BSpr0", "Wetland-Decid0", "Wetland-Larch0")
+gis <- read.csv(file.path("y:/Oracle_access_2015", "data", "sitemetadata.csv"))
+rownames(gis) <- gis$SITE_ID
+
+Sites <- rownames(gis)
+NSR <- gis$NATURAL_SUBREGIONS
+
+yearly_vhf0 <- yearly_vhf
+
+for (i in 1:length(fl)) {
+    yearly_vhf0[[i]][[1]] <- yearly_vhf0[[i]][[1]][Sites,]
+    yearly_vhf0[[i]][[2]] <- yearly_vhf0[[i]][[2]][Sites,]
+    yearly_vhf0[[i]][[3]] <- yearly_vhf0[[i]][[3]][Sites,]
+    yearly_vhf0[[i]][[4]] <- yearly_vhf0[[i]][[4]][Sites,]
+    yearly_vhf[[i]] <- fill_in_0ages(yearly_vhf0[[i]], NSR)
 }
-for (i in colnames(dd1ha$soil)) {
-    rf1km <- dd1km$soil[,i]
-    rf1ha <- dd1ha$soil[,i]
-    boxplot(cbind(rf1km,rf1ha), main=i)
-    #plot(cr1km, rf1km)
-    #points(cr1ha, rf1ha, col=2)
-}
-dev.off()
 
+lapply(yearly_vhf, function(zz) 
+    sapply(zz[1:4], function(z) range(rowSums(z) / (3*7*10^6))))
+lapply(yearly_vhf0, function(zz) sum(zz[[1]][,Target0]))
+lapply(yearly_vhf, function(zz) sum(zz[[1]][,Target0]))
 
-
-plot(dd1km$current[,""]
-
-
-
-
+save(yearly_vhf,
+    file=file.path(ROOT, VER, "out/3x7", 
+    "veg-hf_3x7_fix-fire_fix-age0.Rdata"))
