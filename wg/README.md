@@ -18,6 +18,8 @@ rm ~/abmi/*
 module load application/git/1.7.10.1
 cd ~/repos/abmianalytics/
 git pull
+cd ~/repos/bragging/
+git pull
 cd ~/abmi/
 cp ~/repos/abmianalytics/wg/* ~/abmi/
 ```
