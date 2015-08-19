@@ -83,6 +83,7 @@ SPP <- setdiff(SPP, DONE)
 if (TEST)
     SPP <- SPP[1:2]
 
+#system.time(aaa <- do_1spec1run_noW(1, i="ALFL", mods=mods,  hsh_name=NA, CAICalpha=1))
 #system.time(aaa <- do_1spec1run_noW(1, i=SPP1, mods=mods,  hsh_name=NA, CAICalpha=1))
 # j=2
 # i="AMBI"
