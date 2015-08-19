@@ -5,14 +5,34 @@ modsVeg <- list(
     "Age"=list( # 2
         .~. + wtAge,
         .~. + wtAge + wtAge2,
+        ## here dec+mix is both as intercept
+        .~. + wtAge + wtAge2 + wtAge:isCon + wtAge2:isCon,
+        .~. + wtAge + wtAge2 + wtAge:isUpCon + wtAge:isBSLarch +
+            wtAge2:isUpCon + wtAge2:isBSLarch,
         .~. + wtAge + wtAge2 + wtAge:isMix + wtAge:isPine + wtAge:isWSpruce + wtAge:isBSLarch +
-            wtAge2:isMix + wtAge2:isPine + wtAge2:isWSpruce + wtAge2:isBSLarch),
+            wtAge2:isMix + wtAge2:isPine + wtAge2:isWSpruce + wtAge2:isBSLarch,
+        .~. + wtAge05,
+        .~. + wtAge05 + wtAge05:isCon,
+        .~. + wtAge05 + wtAge05:isUpCon + wtAge05:isBSLarch,
+        .~. + wtAge05 + wtAge05:isMix + wtAge05:isPine + wtAge05:isWSpruce + wtAge05:isBSLarch,
+        .~. + wtAge05 + wtAge,
+        .~. + wtAge05 + wtAge + wtAge05:isCon + wtAge:isCon,
+        .~. + wtAge05 + wtAge + wtAge05:isUpCon + wtAge05:isBSLarch +
+            wtAge:isUpCon + wtAge:isBSLarch,
+        .~. + wtAge05 + wtAge + wtAge05:isMix + wtAge05:isPine + wtAge05:isWSpruce + wtAge05:isBSLarch +
+            wtAge:isMix + wtAge:isPine + wtAge:isWSpruce + wtAge:isBSLarch),
     "CC"=list( # 3
         .~. + fCC2),
     "Contrast"=list( # 4
         .~. + ROAD01,
         .~. + SoftLin_PC,
-        .~. + ROAD01 + SoftLin_PC),
+        .~. + ROAD01 + SoftLin_PC,
+        .~. + ROAD01 + ROAD01:hab_lcc2,
+        .~. + ROAD01 + SoftLin_PC + ROAD01:hab_lcc2,
+        .~. + ROAD01 + ROAD01:hab_lcc3,
+        .~. + ROAD01 + SoftLin_PC + ROAD01:hab_lcc3,
+        .~. + ROAD01 + ROAD01:hab_lcc, # 5 levels
+        .~. + ROAD01 + SoftLin_PC + ROAD01:hab_lcc),
     "ARU"=list( # 5
         .~. + ARU),
     "Space"=list( # 6
@@ -72,7 +92,8 @@ modsSoil <- list(
         .~. + soil1v,
         .~. + soil1v + pAspen),
     "Contrast"=list( # 2
-        .~. + ROAD01), # no real linear features in mostly open field
+        .~. + ROAD01,
+        .~. + ROAD01 + ROAD01:hab_lcc2),
     "Space"=list( # 3
         .~.+ xPET,## climate only
         .~.+ xMAT,

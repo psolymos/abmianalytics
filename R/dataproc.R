@@ -113,6 +113,10 @@ for (i in 1:4) {
     dd1km[[i]] <- dd1km[[i]][rn,]
 }
 
+tmp <- strsplit(rownames(DAT2), "_")
+DAT2$SS <- as.factor(sapply(tmp, function(z) paste("ABMI", z[4], z[8], sep="_")))
+DAT2$SITE <- DAT2$SS
+
 ## join
 YY <- rbind(YY, YY2)
 for (i in 1:4) {
@@ -423,9 +427,12 @@ DAT$Nonlin2_KM <- DAT$Nonlin_KM^2
 ## restricted data use
 
 PCODE_useOK <- c("ABCAWAWEST", "MGLE", "FTL", "THIN", 
-    "LMWELL", "EMB-ASP", "EMB-BS", "EMB-NOISE", "ECJOSM", "EMCLA")
+    "LMWELL", "EMB-ASP", "EMB-BS", "EMB-NOISE", 
+    "ECJOSM", "ECJOSM_JRB", 
+    "EMCLA", "EMCLA2014", "ABMI", "BBSAB")
 DAT$useOK <- DAT$PCODE %in% PCODE_useOK
 DAT$useOK[DAT$YEAR > 2007 & DAT$PCODE == "CL"] <- TRUE # Calling Lake
+
 
 ## YR
 
@@ -460,21 +467,188 @@ DAT$useSouth[DAT$useSouth & is.na(DAT$soil1)] <- FALSE
 ## use in north
 DAT$useNorth <- DAT$NRNAME != "Grassland"
 
-## subsets
+## within year visits
 
-DAT <- droplevels(DAT[DAT$YEAR >= 1997 & !is.na(DAT$hab1),])
-YY <- YY[rownames(DAT),]
+DAT <- DAT[sample.int(nrow(DAT), nrow(DAT)),]
+DAT$SS_YR <- interaction(DAT$SS, DAT$YEAR, drop=TRUE)
+table(table(DAT$SS_YR))
+dup <- unique(DAT$SS_YR[duplicated(DAT$SS_YR)])
+tmp1 <- DAT[DAT$SS_YR %in% dup, c("PKEY","SS_YR")]
+rownames(tmp1) <- tmp1$PKEY
+dim(tmp1)
+tmp2 <- nonDuplicated(tmp1[sample.int(nrow(tmp1)),], SS_YR)
+rownames(tmp2) <- tmp2$PKEY
+dim(tmp2)
+dim(tmp1) - dim(tmp2)
+tmp1 <- tmp1[setdiff(rownames(tmp1), rownames(tmp2)),]
+dim(tmp1)
+dim(tmp1) + dim(tmp2)
+DAT$Revisit <- DAT$PKEY %in% rownames(tmp1)
+table(DAT$Revisit)
+table(DAT$PCODE,DAT$Revisit)
+DAT$SS_YR <- NULL
 
-DATS <- DAT[DAT$useSouth,]
-DATN <- DAT[DAT$useNorth,]
+DAT$SITE <- as.character(DAT$SITE)
+DAT$SITE[is.na(DAT$SITE)] <- as.character(DAT$SS)[is.na(DAT$SITE)]
+DAT$SITE <- as.factor(DAT$SITE)
 
-aaS <- colSums(is.na(DATS))
-aaN <- colSums(is.na(DATN))
-aaS[aaS>0]
-aaN[aaN>0]
+## derived variables
 
-## bootids
+DAT$xlat2 <- DAT$xlat^2
+DAT$xlong2 <- DAT$xlong^2
+DAT$wtAge2 <- DAT$wtAge^2
+DAT$wtAge05 <- DAT$wtAge^0.5
+
+DAT$hab_lcc3 <- DAT$hab_lcc
+levels(DAT$hab_lcc3) <- c("1", "1", "2", "2", "3")
+DAT$hab_lcc2 <- DAT$hab_lcc
+levels(DAT$hab_lcc2) <- c("1", "1", "1", "1", "2")
+
+## simply treat Mixed as intercept with Decid as reference
+DAT$isMix <- ifelse(DAT$hab1 == "Mixwood", 1L, 0L)
+DAT$isWSpruce <- ifelse(DAT$hab1 == "Conif", 1L, 0L)
+DAT$isPine <- ifelse(DAT$hab1 == "Pine", 1L, 0L)
+DAT$isBSpruce <- ifelse(DAT$hab1 == "BSpr", 1L, 0L)
+DAT$isLarch <- ifelse(DAT$hab1 == "Larch", 1L, 0L)
+DAT$isBSLarch <- ifelse(DAT$hab1 %in% c("BSpr", "Larch"), 1L, 0L)
+DAT$isUpCon <- ifelse(DAT$hab1 %in% c("Conif", "Pine"), 1L, 0L)
+DAT$isCon <- ifelse(DAT$hab1 %in% c("BSpr", "Larch",
+    "Conif", "Pine"), 1L, 0L)
+
+source("~/repos/abmianalytics/R/analysis_models.R")
+source("~/repos/bragging/R/glm_skeleton.R")
+compare.sets(getTerms(modsSoil, "list"), colnames(DAT))
+setdiff(getTerms(modsSoil, "list"), colnames(DAT))
+compare.sets(getTerms(modsVeg, "list"), colnames(DAT))
+setdiff(getTerms(modsVeg, "list"), colnames(DAT))
+
+
+
 
 ## offsets
 
+offdat <- DAT[,c("JDAY","TSSR","TREE","LCC_combo","MAXDUR","MAXDIS")]
+
+library(detect)
+load_BAM_QPAD(version=1)
+BAMspp <- getBAMspecieslist()
+load("~/Dropbox/abmi/intactness/dataproc/BAMCOEFS25.Rdata")
+source("~/repos/bamanalytics/R/dataprocessing_functions.R")
+
+(sppp <- union(BAMspp, BAMCOEFS25$spp))
+
+OFF <- matrix(NA, nrow(offdat), length(sppp))
+rownames(OFF) <- rownames(offdat)
+colnames(OFF) <- sppp
+for (i in sppp) {
+    cat(i, date(), "\n");flush.console()
+    tmp <- try(offset_fun(j=1, i, offdat))
+    if (!inherits(tmp, "try-error"))
+        OFF[,i] <- tmp
+}
+## 99-100 percentile can be crazy high (~10^5), thus reset
+for (i in sppp) {
+    q <- quantile(OFF[,i], 0.99, na.rm=TRUE)
+    OFF[!is.na(OFF[,i]) & OFF[,i] > q, i] <- q
+}
+colSums(is.na(OFF))/nrow(OFF)
+apply(exp(OFF), 2, range, na.rm=TRUE)
+
+OFFmean <- log(rowMeans(exp(OFF)))
+
+compare.sets(rownames(OFF),rownames(DAT))
+
+## subsets
+
+keep <- DAT$YEAR >= 1997 & !is.na(DAT$hab1) & !DAT$Revisit
+DAT <- droplevels(DAT[keep,])
+YY <- YY[rownames(DAT),]
+
+plot(DAT$X, DAT$Y, col=ifelse(DAT$useOK, 1, 2), pch=19, cex=0.2)
+
+OFF <- OFF[rownames(DAT),]
+OFFmean <- OFFmean[rownames(DAT)]
+
+compare.sets(rownames(OFF),rownames(DAT))
+save(DAT, YY, OFF, OFFmean,
+    file=file.path(ROOT2, "out", "birds", "data", "data-full.Rdata"))
+
+
+DATSfull <- DAT[DAT$useSouth,]
+DATNfull <- DAT[DAT$useNorth,]
+
+aaS <- colSums(is.na(DATSfull))
+aaN <- colSums(is.na(DATNfull))
+aaS[aaS>0]
+aaN[aaN>0]
+
+DATS <- DATSfull[DATSfull$useOK,]
+DATN <- DATNfull[DATNfull$useOK,]
+
+sapply(list(DATSfull,DATNfull,DATS,DATN), nrow)
+
+YYS <- YY[rownames(DATS),]
+YYN <- YY[rownames(DATN),]
+YYSfull <- YY[rownames(DATSfull),]
+YYNfull <- YY[rownames(DATNfull),]
+
+## bootids
+
+#DAT1 <- DAT
+source("~/repos/detect/R/hbootindex.R")
+B <- 239
+
+bbfun <- function(DAT1, B) {
+    set.seed(1234)
+    ## make sure that time intervals are considered as blocks
+    ## keep out 10% of the data for validation
+    id2 <- list()
+    for (l in levels(DAT1$bootid)) {
+        sset <- which(DAT1$bootid == l)
+        id2[[l]] <- sample(sset, floor(length(sset) * 0.9), FALSE)
+    }
+    KEEP_ID <- unname(unlist(id2))
+    HOLDOUT_ID <- setdiff(seq_len(nrow(DAT1)), KEEP_ID)
+
+    DAT1k <- DAT1[KEEP_ID,]
+    DAT1 <- DAT1[c(KEEP_ID, HOLDOUT_ID),]
+    DAT1k$SITE <- droplevels(DAT1k$SITE)
+    BB1 <- hbootindex(DAT1k$SITE, DAT1k$bootid, B=B)
+    BB1
+}
+BBS <- bbfun(DATS, B)
+BBN <- bbfun(DATN, B)
+#BBSfull <- bbfun(DATSfull, B)
+#BBNfull <- bbfun(DATNfull, B)
+
+## figure out sets of species to analyze
+
+## pa maps and habitat suitability: DAT[useOK,]
+## S/N: nmin=25
+## look at taxonomy???
+
+
+OFF0 <- OFF
+OFFmean0 <- OFFmean
+nmin <- 25
+
+DAT <- DATS
+YY <- YYS
+YY <- YY[,colSums(YY>0) >= nmin]
+BB <- BBS
+OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
+OFFmean <- OFFmean0[rownames(DAT)]
+mods <- modsSoil
+save(DAT, YY, OFF, OFFmean, mods, BB,
+    file=file.path(ROOT2, "out", "birds", "data", "data-useok-south.Rdata"))
+
+DAT <- DATN
+YY <- YYN[rownames(DAT),]
+YY <- YY[,colSums(YY>0) >= nmin]
+BB <- BBN
+OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
+OFFmean <- OFFmean0[rownames(DAT)]
+mods <- modsVeg
+save(DAT, YY, OFF, OFFmean, mods, BB,
+    file=file.path(ROOT2, "out", "birds", "data", "data-useok-north.Rdata"))
 
