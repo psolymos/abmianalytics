@@ -70,7 +70,7 @@ tmpcl <- clusterEvalQ(cl, load(file.path("data", fn)))
 #### project identifier ####
 
 PROJECT <- if (TEST)
-    paste0("abmi-", fid, "-test") else paste0("bam-", fid) 
+    paste0("abmi-", fid, "-test") else paste0("abmi-", fid) 
 
 
 #### checkpoint ####
