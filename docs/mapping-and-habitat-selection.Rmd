@@ -144,7 +144,7 @@ function(Y, X, ...)
     rw <- w$rWRSI
     names(rw) <- rownames(w)
     ## set up a color palette
-    col <- brewer.pal(8, "Accent")[c(1,1,1,1, 3,3, 2,2,2, 5,5, 8,8)]
+    col <- brewer.pal(8, "Accent")[c(1,1,1,1, 2,2, 3,5, 8,8s, 8,8)]
     ## adjust margins and text direction
     op <- par(mar=c(6,4,2,2)+0.1, las=2)
     ## produce a barplot without axes

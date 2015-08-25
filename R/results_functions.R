@@ -323,3 +323,27 @@ function(spp, burn=TRUE)
 
     invisible(pr2)
 }
+
+rank_fun <- function(x, l, u, n=1, col=NULL, lab=NULL) {
+    p <- data.frame(x=x, l=l, u=u, n=n)
+    rownames(p) <- lab
+    if (is.null(col))
+        col <- 1
+    p$col <- col
+    p <- p[!is.na(p$x),]
+    p <- p[order(p$x),]
+    cex <- log(p$n) / 10
+    n <- nrow(p)
+
+    op <- par(mar = c(6, 4, 2, 2)+0.1, las=2, cex.axis=0.6)
+    plot(1:n, p$x, ann=FALSE, type="n", axes=FALSE, ylim=c(-100,100))
+    abline(h=0, col="red4")
+    segments(1:n, y0=p$l, y1=p$u, col=p$col)
+    points(1:n, p$x, pch=19, cex=cex, col=p$col)
+    axis(1, at=1:n, tick=FALSE, labels=rownames(p))
+    axis(2)
+    par(op)
+
+    invisible(NULL)
+}
+

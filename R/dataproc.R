@@ -157,11 +157,18 @@ DAT <- droplevels(DAT)
 ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
 ts$UseInAnalysis <- as.character(ts$UseInAnalysis)
 ts$UseInAnalysis[is.na(ts$UseInAnalysis)] <- as.character(ts$Levels4)[is.na(ts$UseInAnalysis)]
+ts$Levels1 <- as.character(ts$Levels1)
+ts$Levels1[is.na(ts$Levels1)] <- ts$UseInAnalysis[is.na(ts$Levels1)]
 
 SoilKmCr <- groupSums(dd1km$soil_current, 2, ts[colnames(dd1km$soil_current), "UseInAnalysis"])
 SoilKmRf <- groupSums(dd1km$soil_reference, 2, ts[colnames(dd1km$soil_reference), "UseInAnalysis"])
 SoilPcCr <- groupSums(dd150m$soil_current, 2, ts[colnames(dd150m$soil_current), "UseInAnalysis"])
 SoilPcRf <- groupSums(dd150m$soil_reference, 2, ts[colnames(dd150m$soil_reference), "UseInAnalysis"])
+
+psoilhf <- groupSums(dd150m$soil_current, 2, ts[colnames(dd150m$soil_current), "Levels1"])
+psoilhf <- psoilhf[,!(colnames(psoilhf) %in% c("SoilUnknown", "SoilWater",
+    "SoilWetland", "HWater", "HFor", "SoftLin", "HardLin"))]
+psoilhf <- as.matrix(psoilhf / rowSums(psoilhf))
 
 #SoilKmCr <- SoilKmCr[,colnames(SoilKmCr) != "HFor"] # exclude forestry
 SoilKmCr <- as.matrix(SoilKmCr / rowSums(SoilKmCr))
@@ -224,6 +231,10 @@ tmp <- groupSums(dd150m$veg_reference, 2, tv[colnames(dd150m$veg_reference), "Us
 tmp <- tmp[,!(colnames(tmp) %in% c("NonVeg", "Water"))]
 tmp <- as.matrix(tmp / rowSums(tmp))
 DAT$hab0 <- find_max(tmp)
+
+tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "UseInAnalysis2"])
+pveghf <- tmp[,!(colnames(tmp) %in% c("NonVeg", "Water","HWater"))]
+pveghf <- as.matrix(pveghf / rowSums(pveghf))
 
 tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "UseInAnalysis3"])
 tmp <- tmp[,!(colnames(tmp) %in% c("NonVeg", "Water","HWater","SoftLin","HardLin"))]
@@ -561,6 +572,14 @@ compare.sets(rownames(OFF),rownames(DAT))
 ## subsets
 
 keep <- DAT$YEAR >= 1997 & !is.na(DAT$hab1) & !DAT$Revisit
+
+DAT$keep <- keep
+YY <- YY[rownames(DAT),]
+pveghf <- pveghf[rownames(DAT),]
+psoilhf <- psoilhf[rownames(DAT),]
+save(DAT, YY, OFF, OFFmean, TAX, pveghf, psoilhf,
+    file=file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
+
 DAT <- droplevels(DAT[keep,])
 YY <- YY[rownames(DAT),]
 
@@ -570,8 +589,9 @@ OFF <- OFF[rownames(DAT),]
 OFFmean <- OFFmean[rownames(DAT)]
 
 compare.sets(rownames(OFF),rownames(DAT))
-save(DAT, YY, OFF, OFFmean, TAX,
-    file=file.path(ROOT2, "out", "birds", "data", "data-full.Rdata"))
+pveghf <- pveghf[rownames(DAT),]
+#save(DAT, YY, OFF, OFFmean, TAX, pveghf,
+#    file=file.path(ROOT2, "out", "birds", "data", "data-full.Rdata"))
 
 
 DATSfull <- DAT[DAT$useSouth,]
