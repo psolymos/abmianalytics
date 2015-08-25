@@ -570,7 +570,7 @@ OFF <- OFF[rownames(DAT),]
 OFFmean <- OFFmean[rownames(DAT)]
 
 compare.sets(rownames(OFF),rownames(DAT))
-save(DAT, YY, OFF, OFFmean,
+save(DAT, YY, OFF, OFFmean, TAX,
     file=file.path(ROOT2, "out", "birds", "data", "data-full.Rdata"))
 
 
