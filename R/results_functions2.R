@@ -305,96 +305,97 @@ function(spp, burn=TRUE)
 
 
 pred_hf <- 
-function(spp, n=200, fillin=0) 
+function(est, Xn, n=200, fillin=0, remn=FALSE) 
 {
-    res <- loadSPP(spp)
-    stage <- 6
-    est <- getEst(res, stage, na.out=FALSE)
-#    Mean <- pred_hab(res)["MeanNoRoad",2]
-    cc <- c("THF_QS", "Lin_QS", "Nonlin_QS", "Succ_QS", "Alien_QS", "Noncult_QS", "Cult_QS", 
-        "THF2_QS", "Nonlin2_QS", "Succ2_QS", "Alien2_QS", "Noncult2_QS",
-        "Remn_QS", "Remn2_QS")
-    ehf <- est # est[,cc]
+    cc <- paste(c("THF", "Lin", "Nonlin", "Succ", "Alien", "Noncult", "Cult", 
+        "THF2", "Nonlin2", "Succ2", "Alien2", "Noncult2"),
+        "KM", sep="_")
+    if (remn)
+        cc <- c(cc, paste(c("Remn", "Remn2"), "KM", sep="_"))
+    ehf <- est
     ehf[] <- 0
     ehf[,cc] <- est[,cc]
 
         pr <- list()
-        for (type in c("Remn", "Cult", "UrbInd", "HFor", "SoftLin", "HardLin")) {
+        Types <- c("Cult", "UrbInd", "HFor", "SoftLin", "HardLin")
+        if (remn)
+            Types <- c("Remn", Types)
+        for (type in Types) {
             Range <- if (type %in% c("SoftLin", "HardLin"))
                 c(0, 0.25) else c(0, 1)
             hf <- seq(Range[1], Range[2], len=n)
             Xhf <- Xn[1:n,] # matrix(0, n, length(cc))
             Xhf[] <- 0
             rownames(Xhf) <- NULL
-            if (type == "Remn") {
-                Xhf[,"Remn_QS"] <- hf
-                Xhf[,"Remn2_QS"] <- hf^2
+            if (remn & type == "Remn") {
+                Xhf[,"Remn_KM"] <- hf
+                Xhf[,"Remn2_KM"] <- hf^2
             }
             if (type == "Cult") {
-                Xhf[,"THF_QS"] <- hf
-                Xhf[,"THF2_QS"] <- hf^2
-                Xhf[,"Alien_QS"] <- hf
-                Xhf[,"Alien2_QS"] <- hf^2
-                Xhf[,"Cult_QS"] <- hf
-                Xhf[,"Nonlin_QS"] <- hf
-                Xhf[,"Nonlin2_QS"] <- hf^2
+                Xhf[,"THF_KM"] <- hf
+                Xhf[,"THF2_KM"] <- hf^2
+                Xhf[,"Alien_KM"] <- hf
+                Xhf[,"Alien2_KM"] <- hf^2
+                Xhf[,"Cult_KM"] <- hf
+                Xhf[,"Nonlin_KM"] <- hf
+                Xhf[,"Nonlin2_KM"] <- hf^2
                 if (fillin) {
-                    Xhf[,"Remn_QS"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_QS"] <- Xhf[,"Remn_QS"]^2
+                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
+                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
                 }
             }
             if (type == "UrbInd") {
-                Xhf[,"THF_QS"] <- hf
-                Xhf[,"THF2_QS"] <- hf^2
-                Xhf[,"Alien_QS"] <- hf
-                Xhf[,"Alien2_QS"] <- hf^2
-                Xhf[,"Noncult_QS"] <- hf
-                Xhf[,"Noncult2_QS"] <- hf^2
-                Xhf[,"Nonlin_QS"] <- hf
-                Xhf[,"Nonlin2_QS"] <- hf^2
+                Xhf[,"THF_KM"] <- hf
+                Xhf[,"THF2_KM"] <- hf^2
+                Xhf[,"Alien_KM"] <- hf
+                Xhf[,"Alien2_KM"] <- hf^2
+                Xhf[,"Noncult_KM"] <- hf
+                Xhf[,"Noncult2_KM"] <- hf^2
+                Xhf[,"Nonlin_KM"] <- hf
+                Xhf[,"Nonlin2_KM"] <- hf^2
                 if (fillin) {
-                    Xhf[,"Remn_QS"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_QS"] <- Xhf[,"Remn_QS"]^2
+                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
+                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
                 }
             }
             if (type == "HFor") {
-                Xhf[,"THF_QS"] <- hf
-                Xhf[,"THF2_QS"] <- hf^2
-                Xhf[,"Succ_QS"] <- hf
-                Xhf[,"Succ2_QS"] <- hf^2
-                Xhf[,"Noncult_QS"] <- hf
-                Xhf[,"Noncult2_QS"] <- hf^2
-                Xhf[,"Nonlin_QS"] <- hf
-                Xhf[,"Nonlin2_QS"] <- hf^2
+                Xhf[,"THF_KM"] <- hf
+                Xhf[,"THF2_KM"] <- hf^2
+                Xhf[,"Succ_KM"] <- hf
+                Xhf[,"Succ2_KM"] <- hf^2
+                Xhf[,"Noncult_KM"] <- hf
+                Xhf[,"Noncult2_KM"] <- hf^2
+                Xhf[,"Nonlin_KM"] <- hf
+                Xhf[,"Nonlin2_KM"] <- hf^2
                 if (fillin) {
-                    Xhf[,"Remn_QS"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_QS"] <- Xhf[,"Remn_QS"]^2
+                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
+                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
                 }
             }
             if (type == "SoftLin") {
-                Xhf[,"THF_QS"] <- hf
-                Xhf[,"THF2_QS"] <- hf^2
-                Xhf[,"Succ_QS"] <- hf
-                Xhf[,"Succ2_QS"] <- hf^2
-                Xhf[,"Noncult_QS"] <- hf
-                Xhf[,"Noncult2_QS"] <- hf^2
-                Xhf[,"Lin_QS"] <- hf
+                Xhf[,"THF_KM"] <- hf
+                Xhf[,"THF2_KM"] <- hf^2
+                Xhf[,"Succ_KM"] <- hf
+                Xhf[,"Succ2_KM"] <- hf^2
+                Xhf[,"Noncult_KM"] <- hf
+                Xhf[,"Noncult2_KM"] <- hf^2
+                Xhf[,"Lin_KM"] <- hf
                 if (fillin) {
-                    Xhf[,"Remn_QS"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_QS"] <- Xhf[,"Remn_QS"]^2
+                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
+                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
                 }
             }
             if (type == "HardLin") {
-                Xhf[,"THF_QS"] <- hf
-                Xhf[,"THF2_QS"] <- hf^2
-                Xhf[,"Alien_QS"] <- hf
-                Xhf[,"Alien2_QS"] <- hf^2
-                Xhf[,"Noncult_QS"] <- hf
-                Xhf[,"Noncult2_QS"] <- hf^2
-                Xhf[,"Lin_QS"] <- hf
+                Xhf[,"THF_KM"] <- hf
+                Xhf[,"THF2_KM"] <- hf^2
+                Xhf[,"Alien_KM"] <- hf
+                Xhf[,"Alien2_KM"] <- hf^2
+                Xhf[,"Noncult_KM"] <- hf
+                Xhf[,"Noncult2_KM"] <- hf^2
+                Xhf[,"Lin_KM"] <- hf
                 if (fillin) {
-                    Xhf[,"Remn_QS"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_QS"] <- Xhf[,"Remn_QS"]^2
+                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
+                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
                 }
             }
         #prst <- predStat(Xhf, ehf, level, n=0, ci=TRUE, raw=FALSE)[,c("Median", "CL1q","CL2q")]
@@ -402,14 +403,15 @@ function(spp, n=200, fillin=0)
         #prst[,2] <- prst[,2] / prst[1,1]
         #prst[,2] <- prst[,2] / prst[1,1]
         prst <- t(exp(predStat(Xhf, ehf, raw=TRUE)))
+        Mean <- colMeans(prst)
         prst <- t(apply(t(prst / prst[,1]), 1, quantile, c(0.5, 0.05, 0.95), na.rm=TRUE))
         colnames(prst) <- c("Median", "CL1q","CL2q")
-        pr[[type]] <- data.frame(hf=hf*100, prst)
+        pr[[type]] <- data.frame(hf=hf*100, prst, Mean=Mean)
     }
     pr
 }
 
-fig_hf <- 
+fig_hf_noremn <- 
 function(spp, fillin=0) 
 {
     pr <- pred_hf(spp, fillin=fillin)

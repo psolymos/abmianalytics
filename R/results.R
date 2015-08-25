@@ -85,7 +85,7 @@ stage_hab_n <- 5
 stage_hab_s <- 2
 
 ## tax placeholders for all the output
-tax$map_det <- tax$ndet > 0
+tax$map_det <- (tax$ndet_n + tax$ndet_s) > 0
 tax$useavail_north <- tax$ndet_n > 3
 tax$useavail_south <- tax$ndet_s > 3
 tax$trend_north <- tax$modelN
@@ -189,13 +189,28 @@ proj4string(city) <- CRS(paste0("+proj=longlat +datum=WGS84 ",
 city <- as.data.frame(spTransform(city, CRS(paste0("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 ",
     "+x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))))
 xyw <- as.matrix(kgrid[kgrid$pWater >= 0.99,c("X","Y")])
+blank <- matrix(0, 0, 2)
 for (spp in rownames(tax)) {
 if (tax[spp, "map_det"]) {
     cat(spp, "\n");flush.console()
-    xy0 <- as.matrix(dat[yy[,spp] == 0,c("X","Y")])
-    xy1 <- as.matrix(dat[yy[,spp] > 0,c("X","Y")])
+    if (spp %in% colnames(yyn)) {
+        xy0n <- as.matrix(xnn[yyn[,spp] == 0,c("X","Y")])
+        xy1n <- as.matrix(xnn[yyn[,spp] > 0,c("X","Y")])
+    } else {
+        xy0n <- blank
+        xy1n <- blank
+    }
+    if (spp %in% colnames(yys)) {
+        xy0s <- as.matrix(xns[yys[,spp] == 0,c("X","Y")])
+        xy1s <- as.matrix(xns[yys[,spp] > 0,c("X","Y")])
+    } else {
+        xy0s <- blank
+        xy1s <- blank
+    }
+    xy0 <- rbind(xy0n, xy0s)
+    xy1 <- rbind(xy1n, xy1s)
     NAM <- as.character(tax[spp, "English_Name"])
-    NDAT <- sum(yy[,spp] > 0)
+    NDAT <- length(unique(rownames(xy1)))
     fname <- file.path(ROOT, "figs", "map-det", 
         paste0(as.character(tax[spp, "file"]), ".png"))
 	png(file=fname, width=600, height=1000)
@@ -215,46 +230,183 @@ if (tax[spp, "map_det"]) {
 
 
 ## veghf-north
+## linear-north
+## table: veghf-north
+
+res_veghf <- list()
+for (spp in rownames(tax)) {
+    cat(spp, "\n");flush.console()
+    NAM <- as.character(tax[spp, "English_Name"])
+if (tax[spp, "veghf_north"]) {
+    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-north_", spp, ".Rdata")))
+    estn_hab <- getEst(resn, stage=stage_hab_n, na.out=FALSE, Xnn)
+    prn <- pred_veghf(estn_hab, Xnn)
+    res_veghf[[spp]] <- prn
+    NDAT <- sum(yyn[,spp] > 0)
+    fname <- file.path(ROOT, "figs", "veghf-north", 
+        paste0(as.character(tax[spp, "file"]), ".png"))
+    png(file=fname,width=1500,height=700)
+	fig_hab(prn, paste0(NAM, " (n = ", NDAT, " detections)"))
+	dev.off()
+}
+}
+
+## todo
+## - add linear figure copied after DH
+## - do the same for South
+## - create tables (CI as well)
+
 ## soilhf-treed-south
 ## soilhf-nontreed-south
-## linear-north
 ## linear-south
-## table: veghf-north
 ## table: soilhf-north
 
-resn <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-north_", spp, ".Rdata")))
-ress <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-south_", spp, ".Rdata")))
-estn_hab <- getEst(resn, stage=stage_hab_n, na.out=FALSE, Xnn)
-ests_hab <- getEst(ress, stage=stage_hab_s, na.out=FALSE, Xns)
-prn <- pred_veghf(estn_hab, Xnn)
-prs <- pred_soilhf(ests_hab, Xns)
+res_soilhf <- list()
+if (tax[spp, "soilhf_treed_north"] | tax[spp, "soilhf_nontreed_north"]) {
+    ress <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-south_", spp, ".Rdata")))
+    ests_hab <- getEst(ress, stage=stage_hab_s, na.out=FALSE, Xns)
+    prs <- pred_soilhf(ests_hab, Xns)
+    res_soilhf[[spp]] <- prs
+}
 
 ## FIXME produce plots / save tables--------------------------------------------- FIXME
 
-## surroundinghf-north
-## surroundinghf-south
-## table: residual climate coefs north (with surrounding hf)
-## table: residual climate coefs south (with surrounding hf)
 
-## climate & surrounding hf
-resn <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-north_", spp, ".Rdata")))
-ress <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-south_", spp, ".Rdata")))
+## climate & surrounding hf tables, climate surface maps
+
 cn <- c("xPET", "xMAT", "xAHM", "xFFP", 
     "xMAP", "xMWMT", "xMCMT", "xlat", "xlong", "xlat2", "xlong2", 
     "THF_KM", "Lin_KM", "Nonlin_KM", "Succ_KM", "Alien_KM", "Noncult_KM", 
     "Cult_KM", "THF2_KM", "Nonlin2_KM", "Succ2_KM", "Alien2_KM", 
     "Noncult2_KM")
-estn_sp <- getEst(resn, stage=stage_hab_n + 2, na.out=FALSE, Xnn)
-ests_sp <- getEst(ress, stage=stage_hab_s + 2, na.out=FALSE, Xns)
-sp_n <- colMeans(estn_sp[,cn])
-sp_s <- colMeans(ests_sp[,cn])
+clim_n <- list()
+clim_s <- list()
+transform_CLIM <- function(x, ID="PKEY") {
+    z <- x[,ID,drop=FALSE]
+    z$xlong <- (x$POINT_X - (-113.7)) / 2.15
+    z$xlat <- (x$POINT_Y - 53.8) / 2.28
+    z$xAHM <- (x$AHM - 0) / 50
+    z$xPET <- (x$PET - 0) / 800
+    z$xFFP <- (x$FFP - 0) / 130
+    z$xMAP <- (x$MAP - 0) / 2200
+    z$xMAT <- (x$MAT - 0) / 6
+    z$xMCMT <- (x$MCMT - 0) / 25
+    z$xMWMT <- (x$MWMT - 0) / 20
+    z
+}
+xclim <- transform_CLIM(kgrid, "Row_Col")
+xclim$xlat2 <- xclim$xlat^2
+xclim$xlong2 <- xclim$xlong^2
+ffTerms <- getTerms(modsn["Space"], "formula", intercept=FALSE)
+Xclim <- model.matrix(ffTerms, xclim)
+colnames(Xclim) <- fixNames(colnames(Xclim))
+excln <- kgrid$NRNAME %in% c("Rocky Mountain", "Grassland")
+excls <- !(kgrid$NRNAME %in% c("Grassland"))
+Col <- rev(terrain.colors(10))
+for (spp in rownames(tax)) {
+    cat(spp, "\n");flush.console()
+    NAM <- as.character(tax[spp, "English_Name"])
+if (tax[spp, "surroundinghf_north"]) {
+    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-north_", spp, ".Rdata")))
+    estn_sp <- getEst(resn, stage=stage_hab_n + 2, na.out=FALSE, Xnn)
+    sp_n <- colMeans(estn_sp[,cn])
+    clim_n[[spp]] <- sp_n
 
-## FIXME surrounding plot--------------------------------------------- FIXME
-## FIXME save tables--------------------------------------------- FIXME
+    fname <- file.path(ROOT, "figs", "climate-north", 
+        paste0(as.character(tax[spp, "file"]), ".png"))
+    ## quick and dirty
+    pr <- exp(drop(Xclim %*% colMeans(estn_sp[,colnames(Xclim)])))
+    ## bootstrap based and correct
+#    pr <- rowMeans(exp(apply(estn_sp[,colnames(Xclim)], 1, function(z) drop(Xclim %*% z))))
+    q <- quantile(pr, 0.99)
+    pr[pr > q] <- q
+    pr <- pr/max(pr)
+    pr[excln] <- NA
+    z <- cut(pr, seq(0, 1, 0.1))
+	png(file=fname, width=600, height=1000)
 
-## trend-north
-## trend-south
-## table: north and south trend estimates
+    plot(kgrid$X, kgrid$Y, pch=15, cex=0.2, col=Col[z], axes=FALSE, ann=FALSE)
+    points(kgrid$X[excln], kgrid$Y[excln], pch=15, cex=0.2, col="darkgrey")
+    mtext(paste0(NAM, ", North"), line=2, side=3, adj=0.5, cex=1.4, col="grey40")
+    points(xyw, pch=15, cex=0.2, col=rgb(0.3,0.45,0.9))
+    points(city, pch=18, col="grey10")
+    text(city, rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    legend("bottomleft", col=rev(Col), fill=rev(Col),
+        legend=c("High", rep("", 8), "Low"), bty="n")
+
+	dev.off()
+}
+if (tax[spp, "surroundinghf_south"]) {
+    ress <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-south_", spp, ".Rdata")))
+    ests_sp <- getEst(ress, stage=stage_hab_s + 2, na.out=FALSE, Xns)
+    sp_s <- colMeans(ests_sp[,cn])
+    clim_s[[spp]] <- sp_s
+
+    fname <- file.path(ROOT, "figs", "climate-south", 
+        paste0(as.character(tax[spp, "file"]), ".png"))
+    ## quick and dirty
+    pr <- exp(drop(Xclim %*% colMeans(ests_sp[,colnames(Xclim)])))
+    ## bootstrap based and correct
+#    pr <- rowMeans(exp(apply(ests_sp[,colnames(Xclim)], 1, function(z) drop(Xclim %*% z))))
+    q <- quantile(pr, 0.99)
+    pr[pr > q] <- q
+    pr <- pr/max(pr)
+    pr[excls] <- NA
+    z <- cut(pr, seq(0, 1, 0.1))
+	png(file=fname, width=600, height=1000)
+
+    plot(kgrid$X, kgrid$Y, pch=15, cex=0.2, col=Col[z], axes=FALSE, ann=FALSE)
+    points(kgrid$X[excls], kgrid$Y[excls], pch=15, cex=0.2, col="darkgrey")
+    mtext(paste0(NAM, ", South"), line=2, side=3, adj=0.5, cex=1.4, col="grey40")
+    points(xyw, pch=15, cex=0.2, col=rgb(0.3,0.45,0.9))
+    points(city, pch=18, col="grey10")
+    text(city, rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    legend("bottomleft", col=rev(Col), fill=rev(Col),
+        legend=c("High", rep("", 8), "Low"), bty="n")
+
+	dev.off()
+}
+}
+
+clim_N <- data.frame(tax[names(clim_n), c("English_Name","Scientific_Name")], 
+    do.call(rbind, clim_n))
+clim_S <- data.frame(tax[names(clim_s), c("English_Name","Scientific_Name")], 
+    do.call(rbind, clim_s))
+write.csv(clim_N, file=file.path(ROOT, "figs", "climatehf-north.csv"))
+write.csv(clim_S, file=file.path(ROOT, "figs", "climatehf-south.csv"))
+
+
+## surroundinghf-north
+## surroundinghf-south
+
+for (spp in rownames(tax)) {
+    cat(spp, "\n");flush.console()
+    NAM <- as.character(tax[spp, "English_Name"])
+if (tax[spp, "surroundinghf_north"]) {
+    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-north_", spp, ".Rdata")))
+    estn_sp <- getEst(resn, stage=stage_hab_n + 2, na.out=FALSE, Xnn)
+    fname <- file.path(ROOT, "figs", "surroundinghf-north", 
+        paste0(as.character(tax[spp, "file"]), ".png"))
+    png(file=fname, width=7.5, height=5.7, units="in", res=300)
+    op <- par(mai=c(0.9,1,0.2,0.3))
+    fig_hf_noremn(estn_sp, Xnn, LAB=paste0(NAM, ", North"))
+    par(op)
+    dev.off()
+}
+if (tax[spp, "surroundinghf_south"]) {
+    ress <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-south_", spp, ".Rdata")))
+    ests_sp <- getEst(ress, stage=stage_hab_s + 2, na.out=FALSE, Xns)
+    fname <- file.path(ROOT, "figs", "surroundinghf-south", 
+        paste0(as.character(tax[spp, "file"]), ".png"))
+    png(file=fname, width=7.5, height=5.7, units="in", res=300)
+    op <- par(mai=c(0.9,1,0.2,0.3))
+    fig_hf_noremn(ests_sp, Xns, LAB=paste0(NAM, ", North"))
+    par(op)
+    dev.off()
+}
+}
+
+## trend
 
 res_trend <- matrix(NA, nrow(tax), 10)
 colnames(res_trend) <- c("Mean_North","Median_North","LCL_North","UCL_North","n_North",
