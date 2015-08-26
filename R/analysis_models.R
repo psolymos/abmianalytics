@@ -93,7 +93,10 @@ modsSoil <- list(
         .~. + soil1v + pAspen),
     "Contrast"=list( # 2
         .~. + ROAD01,
-        .~. + ROAD01 + ROAD01:hab_lcc2),
+        .~. + SoftLin_PC,
+        .~. + ROAD01 + SoftLin_PC,
+        .~. + ROAD01 + ROAD01:hab_lcc2,
+        .~. + ROAD01 + SoftLin_PC + ROAD01:hab_lcc2),
     "Space"=list( # 3
         .~.+ xPET,## climate only
         .~.+ xMAT,

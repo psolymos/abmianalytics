@@ -1,8 +1,8 @@
 #!/bin/bash
 #PBS -S /bin/bash
-#PBS -N run5s
-#PBS -o run5s.out
-#PBS -e run5s.err
+#PBS -N run5s_rev
+#PBS -o run5s_rev.out
+#PBS -e run5s_rev.err
 #PBS -M solymos@ualberta.ca
 #PBS -m bea
 #PBS -l walltime=10:00:00
@@ -23,6 +23,6 @@ export OMPI_MCA_mpi_paffinity_alone=0
 echo "Starting run at: `date`"
 
 ## arg1: nodes, arg2: south/north
-mpiexec -n 1 Rscript --vanilla abmi_models.R 5 south
+mpiexec -n 1 Rscript --vanilla abmi_models_rev.R 5 south
 
 echo "Program finished with exit code $? at: `date`"
