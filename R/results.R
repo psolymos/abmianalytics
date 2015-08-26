@@ -243,18 +243,20 @@ if (tax[spp, "veghf_north"]) {
     prn <- pred_veghf(estn_hab, Xnn)
     res_veghf[[spp]] <- prn
     NDAT <- sum(yyn[,spp] > 0)
+    ## veghf
     fname <- file.path(ROOT, "figs", "veghf-north", 
         paste0(as.character(tax[spp, "file"]), ".png"))
     png(file=fname,width=1500,height=700)
-	fig_hab(prn, paste0(NAM, " (n = ", NDAT, " detections)"))
+	fig_veghf(prn, paste0(NAM, " (n = ", NDAT, " detections)"))
 	dev.off()
+	## linear
+    fname <- file.path(ROOT, "figs", "linear-north", 
+        paste0(as.character(tax[spp, "file"]), ".png"))
+	png(file=fname,width=350,height=400)
+    fig_linear(attr(prn, "linear"), paste0(NAM, "\nNorth (n = ", NDAT, " det.)"))
+    dev.off()
 }
 }
-
-## todo
-## - add linear figure copied after DH
-## - do the same for South
-## - create tables (CI as well)
 
 ## soilhf-treed-south
 ## soilhf-nontreed-south
@@ -262,25 +264,57 @@ if (tax[spp, "veghf_north"]) {
 ## table: soilhf-north
 
 res_soilhf <- list()
-if (tax[spp, "soilhf_treed_north"] | tax[spp, "soilhf_nontreed_north"]) {
+for (spp in rownames(tax)) {
+    cat(spp, "\n");flush.console()
+    NAM <- as.character(tax[spp, "English_Name"])
+if (tax[spp, "soilhf_treed_south"] | tax[spp, "soilhf_nontreed_south"]) {
     ress <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-south_", spp, ".Rdata")))
     ests_hab <- getEst(ress, stage=stage_hab_s, na.out=FALSE, Xns)
     prs <- pred_soilhf(ests_hab, Xns)
     res_soilhf[[spp]] <- prs
+    NDAT <- sum(yys[,spp] > 0)
+    ## treed
+    fname <- file.path(ROOT, "figs", "soilhf-treed-south", 
+        paste0(as.character(tax[spp, "file"]), ".png"))
+    png(file=fname,width=500,height=450)
+	fig_soilhf(prs$treed, paste0(NAM, ", South, Treed (n = ", NDAT, " detections)"))
+	dev.off()
+    ## nontreed
+    fname <- file.path(ROOT, "figs", "soilhf-nontreed-south", 
+        paste0(as.character(tax[spp, "file"]), ".png"))
+    png(file=fname,width=500,height=450)
+	fig_soilhf(prs$nontreed, paste0(NAM, ", South, Non-treed (n = ", NDAT, " detections)"))
+	dev.off()
+	## linear
+    fname <- file.path(ROOT, "figs", "linear-south", 
+        paste0(as.character(tax[spp, "file"]), ".png"))
+	png(file=fname,width=350,height=400)
+    fig_linear(prs$linear, paste0(NAM, "\nSouth (n = ", NDAT, " det.)"))
+    dev.off()
 }
-
-## FIXME produce plots / save tables--------------------------------------------- FIXME
+}
 
 
 ## climate & surrounding hf tables, climate surface maps
+
+## use in south
+DAT$useSouth <- FALSE
+DAT$useSouth[DAT$NRNAME %in% c("Grassland", "Parkland")] <- TRUE
+DAT$useSouth[DAT$NSRNAME %in% c("Dry Mixedwood")] <- TRUE
+DAT$useSouth[DAT$useSouth & DAT$POINT_Y > 56.7] <- FALSE
+DAT$useSouth[DAT$useSouth & DAT$pWater > 0.5] <- FALSE
+DAT$useSouth[DAT$useSouth & SoilPcRf[,"SoilUnknown"] > 0] <- FALSE
+DAT$useSouth[DAT$useSouth & is.na(DAT$soil1)] <- FALSE
+
+## use in north
+DAT$useNorth <- DAT$NRNAME != "Grassland"
+
 
 cn <- c("xPET", "xMAT", "xAHM", "xFFP", 
     "xMAP", "xMWMT", "xMCMT", "xlat", "xlong", "xlat2", "xlong2", 
     "THF_KM", "Lin_KM", "Nonlin_KM", "Succ_KM", "Alien_KM", "Noncult_KM", 
     "Cult_KM", "THF2_KM", "Nonlin2_KM", "Succ2_KM", "Alien2_KM", 
     "Noncult2_KM")
-clim_n <- list()
-clim_s <- list()
 transform_CLIM <- function(x, ID="PKEY") {
     z <- x[,ID,drop=FALSE]
     z$xlong <- (x$POINT_X - (-113.7)) / 2.15
@@ -301,8 +335,12 @@ ffTerms <- getTerms(modsn["Space"], "formula", intercept=FALSE)
 Xclim <- model.matrix(ffTerms, xclim)
 colnames(Xclim) <- fixNames(colnames(Xclim))
 excln <- kgrid$NRNAME %in% c("Rocky Mountain", "Grassland")
-excls <- !(kgrid$NRNAME %in% c("Grassland"))
+excls <- rep(TRUE, nrow(kgrid))
+excls[kgrid$NRNAME %in% c("Grassland", "Parkland")] <- FALSE
+excls[kgrid$NSRNAME %in% c("Dry Mixedwood")] <- FALSE
 Col <- rev(terrain.colors(10))
+clim_n <- list()
+clim_s <- list()
 for (spp in rownames(tax)) {
     cat(spp, "\n");flush.console()
     NAM <- as.character(tax[spp, "English_Name"])
@@ -322,7 +360,8 @@ if (tax[spp, "surroundinghf_north"]) {
     pr[pr > q] <- q
     pr <- pr/max(pr)
     pr[excln] <- NA
-    z <- cut(pr, seq(0, 1, 0.1))
+    qq <- quantile(pr, seq(0.1, 0.9, 0.1), na.rm=TRUE)
+    z <- cut(pr, c(-1, qq, 2))
 	png(file=fname, width=600, height=1000)
 
     plot(kgrid$X, kgrid$Y, pch=15, cex=0.2, col=Col[z], axes=FALSE, ann=FALSE)
@@ -352,7 +391,8 @@ if (tax[spp, "surroundinghf_south"]) {
     pr[pr > q] <- q
     pr <- pr/max(pr)
     pr[excls] <- NA
-    z <- cut(pr, seq(0, 1, 0.1))
+    qq <- quantile(pr, seq(0.1, 0.9, 0.1), na.rm=TRUE)
+    z <- cut(pr, c(-1, qq, 2))
 	png(file=fname, width=600, height=1000)
 
     plot(kgrid$X, kgrid$Y, pch=15, cex=0.2, col=Col[z], axes=FALSE, ann=FALSE)

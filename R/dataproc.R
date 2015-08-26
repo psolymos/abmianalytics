@@ -465,8 +465,6 @@ table(DAT$bootid, DAT$YR5)
 DAT$bootid <- interaction(DAT$bootid, as.integer(DAT$YR5))
 
 ## use in south
-
-
 DAT$useSouth <- FALSE
 DAT$useSouth[DAT$NRNAME %in% c("Grassland", "Parkland")] <- TRUE
 DAT$useSouth[DAT$NSRNAME %in% c("Dry Mixedwood")] <- TRUE

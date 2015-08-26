@@ -135,8 +135,8 @@ function(est, Xn)
     out <- pr[,c(1,2,5,6)]
     ## Linear features
     MEAN <- mean(out[,"Median"])
-    Soft <- MEAN * mean(exp(0.1*est[,"SoftLin_PC"]))
-    Hard <- MEAN * mean(exp(est[,"ROAD01"]))
+    Soft <- quantile(MEAN * exp(0.1*est[,"SoftLin_PC"]), c(0.5, (1-level)/2, 1-(1-level)/2))
+    Hard <- quantile(MEAN * exp(est[,"ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
     attr(out, "linear") <- c(Baseline=MEAN, Soft=Soft, Hard=Hard)
     ## burn should not be shown when it is not selected (i.e. when sum == 0)
     ## REALLY: burn should be just part of young age class, and not being on its own
@@ -165,13 +165,51 @@ function(est, Xn)
     pr1 <- predStat(X1, est, level, n=0, ci=TRUE, raw=FALSE)
     ## Linear features
     MEAN <- mean(pr0[,"Median"])
-#    Soft <- MEAN * mean(exp(0.1*est[,"SoftLin_PC"]))
-    Hard <- MEAN * mean(exp(est[,"ROAD01"]))
+    #Soft <- quantile(MEAN * exp(0.1*est[,"SoftLin_PC"]), c(0.5, (1-level)/2, 1-(1-level)/2))
+    Hard <- quantile(MEAN * exp(est[,"ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
     list(treed=pr1[,c(1,2,5,6)], nontreed=pr0[,c(1,2,5,6)],
         linear=c(Baseline=MEAN, Soft=MEAN, Hard=Hard))
 }
 
-fig_hab <- 
+fig_soilhf <-
+function(pr, LAB="") 
+{
+        labs <- c("Productive", "Clay", "Saline", "RapidDrain", 
+            "Cult", "UrbInd")
+        op <- par(mai=c(1.5,1,0.2,0.3))
+        pr2 <- pr[labs,]
+        lci <- pr2[,3]
+        uci <- pr2[,4]
+        y1 <- pr2[,2]
+        x <- 1:6
+        ymax <- max(min(max(uci[x]),2*max(y1)),y1*1.02)
+        space <- c(1,x[-1]-x[-length(x)])-0.9
+        col.r <- c(0,0.3,0.5,1,rep(0.2,2))  # The red part of the rgb
+        col.g<-c(0.8,0.5,0,0.2,rep(0.2,2))  # The green part
+        col.b<-c(0,0.5,0.5,0.2,rep(0.2,2))  # The blue part
+        x1 <- barplot(y1[x], space=space, border="white", col=rgb(col.r,col.g,col.b),
+            ylim=c(0,ymax), xlim=c(-0.5,7.2), xaxs="i", yaxt="n", ylab="Relative abundance",
+            col.lab="grey50", cex.lab=1.2,axisnames=FALSE)[,1]
+        ax <- axis(side=2,cex.axis=0.9,col.axis="grey50",col.ticks="grey50",las=2)
+        abline(h=ax, col="grey80")
+        x1 <- barplot(y1[x], space=space, border="white", col=rgb(col.r,col.g,col.b),
+            ylim=c(0,ymax), xlim=c(-0.5,7.2), xaxs="i", yaxt="n", ylab="Relative abundance",
+            col.lab="grey50", cex.lab=1.2,axisnames=FALSE, add=TRUE)[,1]
+        box(bty="l",col="grey50")
+        for (i in 1:length(x1)) {
+            lines(rep(x1[i],2),c(lci[i],y1[i]),col="grey90")
+            lines(rep(x1[i],2),c(uci[i],y1[i]),col=rgb(col.r[i],col.g[i],col.b[i]))
+        }
+        mtext(side=1,at=x1[1:4],line=1.4,c("Productive","Clay","Saline","Rapid Drain"),
+            col=rgb(col.r,col.g,col.b)[1:4],las=1)
+        mtext(side=1,at=x1[5:6],line=0.7,c("Cultivated HF","Urban/Industry HF"),
+            col=rgb(col.r,col.g,col.b)[5:6],las=2)
+        mtext(side=3,at=0,adj=0,LAB,col="grey30")
+        par(op)
+    invisible(NULL)
+}
+
+fig_veghf <- 
 function(pr, LAB="") 
 {
 
@@ -474,6 +512,27 @@ function(est, Xn, fillin=0,LAB="")
     
     par(op)
     
+    invisible(NULL)
+}
+
+fig_linear <-
+function(pr, LAB)
+{
+		p.mean <- pr[1]
+		p.softlin10 <- pr[2]
+		p.hardlin10 <- pr[5]
+		ymax1<-max(p.softlin10,p.hardlin10,2*p.mean)*1.03
+		plot(c(1,1.95,2.05),c(p.mean,p.softlin10,p.hardlin10),pch=c(1,16,15),col=c("grey30","blue3","red4"),xlab="Human footprint",ylab="Relative abundance",xlim=c(0.8,2.8),ylim=c(0,ymax1),tck=0.01,yaxs="i",xaxt="n",yaxt="n",bty="l",cex=2,lwd=2,cex.lab=1.4,cex.axis=1.3,col.lab="grey40") 
+		axis(side=2,at=pretty(c(0,ymax1),n=5),cex.axis=1.3,tck=0.01,cex.axis=1.3,col.axis="grey40",col.ticks="grey40")
+		axis(side=1,at=c(1,2),lab=c("None","10% linear"),tck=0.01,cex.axis=1.3,col.axis="grey40",col.ticks="grey40")
+		box(bty="l",col="grey40")
+		lines(c(1,1.95),c(p.mean,p.softlin10),col="blue3")
+		lines(c(1,2.05),c(p.mean,p.hardlin10),col="red4")
+		points(c(1,1.95,2.05),c(p.mean,p.softlin10,p.hardlin10),pch=c(1,16,15),col=c("grey30","blue3","red4"),cex=2,lwd=2)  # Put these back on top of the lines
+		ly<-c(p.softlin10,p.hardlin10)  # Label y values - adjust so not overlapping
+		if (abs(ly[2]-ly[1])<ymax1/20) ly<-c(mean(ly)+ymax1/40*sign(ly[1]-ly[2]),mean(ly)+ymax1/40*sign(ly[2]-ly[1]))
+		text(c(2.15,2.15),ly,c("Soft linear","Hard linear"),col=c("blue3","red4"),cex=1.3,adj=0)
+		mtext(side=3,at=0.8,adj=0,LAB,col="grey30",cex=1.3)
     invisible(NULL)
 }
 
