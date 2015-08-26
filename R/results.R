@@ -258,6 +258,23 @@ if (tax[spp, "veghf_north"]) {
 }
 }
 
+f1 <- function(x) {
+    rr <- attr(x, "linear")[-1]
+    names(rr) <- c("SoftLinear", "SoftLinear.LCL", "SoftLinear.UCL", 
+        "HardLinear", "HardLinear.LCL", "HardLinear.UCL")
+    x <- x[rownames(x) != "Burn",c(2,3,4)]
+    rownames(x) <- gsub(" ", "", rownames(x))
+    xx <- t(x)
+    dim(xx) <- NULL
+    names(xx) <- paste0(rep(rownames(x), each=3), c("", ".LCL", ".UCL"))
+    c(xx, rr)
+}
+vhf <- t(sapply(res_veghf, f1))
+vhf2 <- data.frame(tax[rownames(vhf), c("English_Name","Scientific_Name")],
+    vhf)
+write.csv(vhf2, file=file.path(ROOT, "figs", "veghf-north.csv"))
+
+
 ## soilhf-treed-south
 ## soilhf-nontreed-south
 ## linear-south
@@ -294,21 +311,22 @@ if (tax[spp, "soilhf_treed_south"] | tax[spp, "soilhf_nontreed_south"]) {
 }
 }
 
+f2 <- function(x) {
+    rr <- x$linear[5:7]
+    names(rr) <- c("HardLinear", "HardLinear.LCL", "HardLinear.UCL")
+    x <- x$nontreed
+    rownames(x) <- gsub(" ", "", rownames(x))
+    xx <- t(x[,2:4])
+    dim(xx) <- NULL
+    names(xx) <- paste0(rep(rownames(x), each=3), c("", ".LCL", ".UCL"))
+    c(xx, rr)
+}
+soil <- t(sapply(res_soilhf, f2))
+soil2 <- data.frame(tax[rownames(soil), c("English_Name","Scientific_Name")],
+    soil)
+write.csv(soil2, file=file.path(ROOT, "figs", "soilhf-south.csv"))
 
 ## climate & surrounding hf tables, climate surface maps
-
-## use in south
-DAT$useSouth <- FALSE
-DAT$useSouth[DAT$NRNAME %in% c("Grassland", "Parkland")] <- TRUE
-DAT$useSouth[DAT$NSRNAME %in% c("Dry Mixedwood")] <- TRUE
-DAT$useSouth[DAT$useSouth & DAT$POINT_Y > 56.7] <- FALSE
-DAT$useSouth[DAT$useSouth & DAT$pWater > 0.5] <- FALSE
-DAT$useSouth[DAT$useSouth & SoilPcRf[,"SoilUnknown"] > 0] <- FALSE
-DAT$useSouth[DAT$useSouth & is.na(DAT$soil1)] <- FALSE
-
-## use in north
-DAT$useNorth <- DAT$NRNAME != "Grassland"
-
 
 cn <- c("xPET", "xMAT", "xAHM", "xFFP", 
     "xMAP", "xMWMT", "xMCMT", "xlat", "xlong", "xlat2", "xlong2", 
@@ -338,7 +356,6 @@ excln <- kgrid$NRNAME %in% c("Rocky Mountain", "Grassland")
 excls <- rep(TRUE, nrow(kgrid))
 excls[kgrid$NRNAME %in% c("Grassland", "Parkland")] <- FALSE
 excls[kgrid$NSRNAME %in% c("Dry Mixedwood")] <- FALSE
-Col <- rev(terrain.colors(10))
 clim_n <- list()
 clim_s <- list()
 for (spp in rownames(tax)) {
@@ -361,7 +378,8 @@ if (tax[spp, "surroundinghf_north"]) {
     pr <- pr/max(pr)
     pr[excln] <- NA
     qq <- quantile(pr, seq(0.1, 0.9, 0.1), na.rm=TRUE)
-    z <- cut(pr, c(-1, qq, 2))
+    z <- cut(pr, c(-1, unique(qq), 2))
+    Col <- rev(terrain.colors(nlevels(z)))
 	png(file=fname, width=600, height=1000)
 
     plot(kgrid$X, kgrid$Y, pch=15, cex=0.2, col=Col[z], axes=FALSE, ann=FALSE)
@@ -371,7 +389,7 @@ if (tax[spp, "surroundinghf_north"]) {
     points(city, pch=18, col="grey10")
     text(city, rownames(city), cex=0.8, adj=-0.1, col="grey10")
     legend("bottomleft", col=rev(Col), fill=rev(Col),
-        legend=c("High", rep("", 8), "Low"), bty="n")
+        legend=c("High", rep("", length(Col)-2), "Low"), bty="n")
 
 	dev.off()
 }
@@ -392,7 +410,8 @@ if (tax[spp, "surroundinghf_south"]) {
     pr <- pr/max(pr)
     pr[excls] <- NA
     qq <- quantile(pr, seq(0.1, 0.9, 0.1), na.rm=TRUE)
-    z <- cut(pr, c(-1, qq, 2))
+    z <- cut(pr, c(-1, unique(qq), 2))
+    Col <- rev(terrain.colors(nlevels(z)))
 	png(file=fname, width=600, height=1000)
 
     plot(kgrid$X, kgrid$Y, pch=15, cex=0.2, col=Col[z], axes=FALSE, ann=FALSE)
@@ -402,7 +421,7 @@ if (tax[spp, "surroundinghf_south"]) {
     points(city, pch=18, col="grey10")
     text(city, rownames(city), cex=0.8, adj=-0.1, col="grey10")
     legend("bottomleft", col=rev(Col), fill=rev(Col),
-        legend=c("High", rep("", 8), "Low"), bty="n")
+        legend=c("High", rep("", length(Col)-2), "Low"), bty="n")
 
 	dev.off()
 }

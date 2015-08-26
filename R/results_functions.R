@@ -168,7 +168,7 @@ function(est, Xn)
     #Soft <- quantile(MEAN * exp(0.1*est[,"SoftLin_PC"]), c(0.5, (1-level)/2, 1-(1-level)/2))
     Hard <- quantile(MEAN * exp(est[,"ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
     list(treed=pr1[,c(1,2,5,6)], nontreed=pr0[,c(1,2,5,6)],
-        linear=c(Baseline=MEAN, Soft=MEAN, Hard=Hard))
+        linear=c(Baseline=MEAN, Soft=rep(MEAN, 3), Hard=Hard))
 }
 
 fig_soilhf <-
