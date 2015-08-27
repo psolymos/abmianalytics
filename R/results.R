@@ -4,6 +4,13 @@ library(RColorBrewer)
 
 ROOT <- "c:/p/AB_data_v2015/out/birds"
 
+#setwd("c:/p/AB_data_v2015/out/birds/results")
+#fl <- list.files()
+#fl2 <- gsub("birds_bam-", "birds_abmi-", fl)
+#for (i in 1:length(fl))
+#    if (fl[i] != fl2[i])
+#        file.rename(fl[i], fl2[i])
+
 level <- 0.9
 
 up <- function() {
@@ -52,10 +59,10 @@ rm(e, en, es)
 ## model for species
 fl <- list.files(file.path(ROOT, "results"))
 fln <- fl[grep("-north_", fl)]
-fln <- sub("birds_bam-north_", "", fln)
+fln <- sub("birds_abmi-north_", "", fln)
 fln <- sub(".Rdata", "", fln)
 fls <- fl[grep("-south_", fl)]
-fls <- sub("birds_bam-south_", "", fls)
+fls <- sub("birds_abmi-south_", "", fls)
 fls <- sub(".Rdata", "", fls)
 
 tax$ndet <- colSums(yy>0)
@@ -238,7 +245,7 @@ for (spp in rownames(tax)) {
     cat(spp, "\n");flush.console()
     NAM <- as.character(tax[spp, "English_Name"])
 if (tax[spp, "veghf_north"]) {
-    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-north_", spp, ".Rdata")))
+    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-north_", spp, ".Rdata")))
     estn_hab <- getEst(resn, stage=stage_hab_n, na.out=FALSE, Xnn)
     prn <- pred_veghf(estn_hab, Xnn)
     res_veghf[[spp]] <- prn
@@ -285,7 +292,7 @@ for (spp in rownames(tax)) {
     cat(spp, "\n");flush.console()
     NAM <- as.character(tax[spp, "English_Name"])
 if (tax[spp, "soilhf_treed_south"] | tax[spp, "soilhf_nontreed_south"]) {
-    ress <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-south_", spp, ".Rdata")))
+    ress <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-south_", spp, ".Rdata")))
     ests_hab <- getEst(ress, stage=stage_hab_s, na.out=FALSE, Xns)
     prs <- pred_soilhf(ests_hab, Xns)
     res_soilhf[[spp]] <- prs
@@ -362,7 +369,7 @@ for (spp in rownames(tax)) {
     cat(spp, "\n");flush.console()
     NAM <- as.character(tax[spp, "English_Name"])
 if (tax[spp, "surroundinghf_north"]) {
-    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-north_", spp, ".Rdata")))
+    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-north_", spp, ".Rdata")))
     estn_sp <- getEst(resn, stage=stage_hab_n + 2, na.out=FALSE, Xnn)
     sp_n <- colMeans(estn_sp[,cn])
     clim_n[[spp]] <- sp_n
@@ -394,7 +401,7 @@ if (tax[spp, "surroundinghf_north"]) {
 	dev.off()
 }
 if (tax[spp, "surroundinghf_south"]) {
-    ress <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-south_", spp, ".Rdata")))
+    ress <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-south_", spp, ".Rdata")))
     ests_sp <- getEst(ress, stage=stage_hab_s + 2, na.out=FALSE, Xns)
     sp_s <- colMeans(ests_sp[,cn])
     clim_s[[spp]] <- sp_s
@@ -442,7 +449,7 @@ for (spp in rownames(tax)) {
     cat(spp, "\n");flush.console()
     NAM <- as.character(tax[spp, "English_Name"])
 if (tax[spp, "surroundinghf_north"]) {
-    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-north_", spp, ".Rdata")))
+    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-north_", spp, ".Rdata")))
     estn_sp <- getEst(resn, stage=stage_hab_n + 2, na.out=FALSE, Xnn)
     fname <- file.path(ROOT, "figs", "surroundinghf-north", 
         paste0(as.character(tax[spp, "file"]), ".png"))
@@ -453,7 +460,7 @@ if (tax[spp, "surroundinghf_north"]) {
     dev.off()
 }
 if (tax[spp, "surroundinghf_south"]) {
-    ress <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-south_", spp, ".Rdata")))
+    ress <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-south_", spp, ".Rdata")))
     ests_sp <- getEst(ress, stage=stage_hab_s + 2, na.out=FALSE, Xns)
     fname <- file.path(ROOT, "figs", "surroundinghf-south", 
         paste0(as.character(tax[spp, "file"]), ".png"))
@@ -476,7 +483,7 @@ rownames(res_trend) <- rownames(tax)
 for (spp in rownames(tax)) {
     cat(spp, "\n");flush.console()
 if (tax[spp, "trend_north"]) {
-    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-north_", spp, ".Rdata")))
+    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-north_", spp, ".Rdata")))
     estn_yr <- getEst(resn, stage=stage_hab_n + 3, na.out=FALSE, Xnn)
     yr_n <- 100 * (exp(estn_yr[,"YR"]) - 1)
     res_trend[spp, 1:4] <- fstat(yr_n)
@@ -484,7 +491,7 @@ if (tax[spp, "trend_north"]) {
     NN <- aggregate(yyn[,spp], list(year=xnn$YEAR), mean)
 }
 if (tax[spp, "trend_south"]) {
-    ress <- loadSPP(file.path(ROOT, "results", paste0("birds_bam-south_", spp, ".Rdata")))
+    ress <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-south_", spp, ".Rdata")))
     ests_yr <- getEst(ress, stage=stage_hab_s + 3, na.out=FALSE, Xns)
     yr_s <- 100 * (exp(ests_yr[,"YR"]) - 1)
     res_trend[spp, 6:9] <- fstat(yr_s)
