@@ -75,5 +75,3 @@ lines(p, f)
 ```
 
 The linear `glm` is not a bad approximation.
-
-

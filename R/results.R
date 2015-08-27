@@ -319,8 +319,9 @@ if (tax[spp, "soilhf_treed_south"] | tax[spp, "soilhf_nontreed_south"]) {
 }
 
 f2 <- function(x) {
-    rr <- x$linear[5:7]
-    names(rr) <- c("HardLinear", "HardLinear.LCL", "HardLinear.UCL")
+    rr <- x$linear[-1]
+    names(rr) <- c("SoftLinear", "SoftLinear.LCL", "SoftLinear.UCL", 
+        "HardLinear", "HardLinear.LCL", "HardLinear.UCL")
     x <- x$nontreed
     rownames(x) <- gsub(" ", "", rownames(x))
     xx <- t(x[,2:4])
@@ -436,9 +437,9 @@ if (tax[spp, "surroundinghf_south"]) {
 
 clim_N <- data.frame(tax[names(clim_n), c("English_Name","Scientific_Name")], 
     do.call(rbind, clim_n))
+write.csv(clim_N, file=file.path(ROOT, "figs", "climatehf-north.csv"))
 clim_S <- data.frame(tax[names(clim_s), c("English_Name","Scientific_Name")], 
     do.call(rbind, clim_s))
-write.csv(clim_N, file=file.path(ROOT, "figs", "climatehf-north.csv"))
 write.csv(clim_S, file=file.path(ROOT, "figs", "climatehf-south.csv"))
 
 

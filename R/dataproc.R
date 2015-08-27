@@ -305,6 +305,23 @@ plot(DAT$wtAge, DAT$fCC1, col=2, pch=".")
 points(DAT$wtAge, DAT$fCC2, col=4, pch=".")
 sum(is.na(DAT$fCC2))
 
+if (FALSE) {
+## Dave`s recovery trajectories
+age <- c(0, 1:20*4)/200
+conif <- 1-c(0, 1.3, 4.7, 10, 17.3, 26, 35.5, 45.3, 54.6, 63.1, 70.7, 77.3, 
+    82.7, 87, 90.1, 92.3, 94, 95.3, 96.7, 98.2, 100)/100
+decid <- 1-c(0, 6.5, 15.1, 25.2, 36.1, 47.2, 57.6, 66.7, 74.3, 80.4, 85, 
+    88.3, 90.5, 92, 93, 94, 95.1, 96.4, 97.6, 98.8, 100)/100
+Age <- seq(0, 100, by=0.5) / 200
+plot(Age*200, approxfun(age, decid)(Age), type="l", col=2, lwd=2, 
+    xlab="Years since disturbance", ylab="Transformed value")
+lines(Age*200, approxfun(age, conif)(Age), col=4, lwd=2)
+lines(Age*200, pmax(0, 1 - (Age * 200 / 50)), col=3, lwd=2)
+lines(Age*200, 1/((Age*200+1)^(1/3)), col=1, lwd=2)
+legend("topright", col=1:4, lty=1, lwd=2, 
+    legend=c("cubic-root","expert decid","linear","expert conif"))
+}
+
 table(DAT$hab1,round(DAT$wtAge,1),useNA="a")
 table(DAT$hab1,DAT$isCC,useNA="a")
 table(DAT$hab1,DAT$isRR,useNA="a")
