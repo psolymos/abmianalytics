@@ -54,68 +54,90 @@ coordinates(city) <- ~ x + y
 proj4string(city) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 city <- spTransform(city, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))
 
-
+## mammals
 dir_in <- "e:/peter/sppweb2015/Mammals/Km2 summaries"
 dir_out <- "e:/peter/sppweb-ftp-content/species/mammals"
-
 lt <- read.csv("e:/peter/sppweb2015/Mammals/mammals-lookup.csv")
+
+## mites
+dir_in <- "e:/peter/sppweb2015/Mites/Km2 summaries"
+dir_out <- "e:/peter/sppweb-ftp-content/species/mites"
+lt <- read.csv("e:/peter/sppweb2015/Mites/mites-lookup.csv")
+
+## vplants
+dir_in <- "e:/peter/sppweb2015/Plants/Km2 summaries"
+dir_out <- "e:/peter/sppweb-ftp-content/species/vplants"
+lt <- read.csv("e:/peter/sppweb2015/Plants/vplants-lookup.csv")
+
+## birds
+
+## mosses
+dir_in <- "e:/peter/sppweb2015/Moss/Combine regions/Km2 summaries"
+dir_out <- "e:/peter/sppweb-ftp-content/species/mammals"
+lt <- read.csv("e:/peter/sppweb2015/Moss/mosses-lookup.csv")
+
+## lichens
+dir_in <- "e:/peter/sppweb2015/Lichen/Combine regions/Km2 summaries"
+dir_out <- "e:/peter/sppweb-ftp-content/species/mammals"
+lt <- read.csv("e:/peter/sppweb2015/Lichen/lichens-lookup.csv")
 
 #spp <- "CanadaLynx"
 spplist <- as.character(lt$sppid[lt$map.pred])
 for (spp in spplist) {
 
-f_in <- file.path(dir_in, paste0(spp, ".csv"))
-dir.create(file.path(dir_out, spp))
-f_out <- file.path(dir_out, paste0(spp, ".zip"))
-ff <- c(paste0(spp, 
-    c("-reference.asc", "-current.asc", "-reference.png", "-current.png")),
-    "README.md")
-f_olist <- file.path(dir_out, spp, ff)
-
-tab <- read.csv(f_in)
-tab <- tab[match(rownames(kgrid), tab$LinkID),]
-tab$RefNA <- ifelse(is.na(tab$Ref), 1L, 0L)
-tab$CurrNA <- ifelse(is.na(tab$Ref), 1L, 0L)
-tab$Ref[tab$RefNA == 1L] <- 0
-tab$Curr[tab$CurrNA == 1L] <- 0
-
-NAM <- as.character(lt$species[lt$sppid == spp])
-
-na_rf <- as_Raster0(kgrid$Row, kgrid$Col, tab$RefNA, rt)
-na_cr <- as_Raster0(kgrid$Row, kgrid$Col, tab$CurrNA, rt)
-
-cat(spp, "\n");flush.console()
-png(f_olist[3], height=1200, width=800)
-r_rf <- map_fun(tab$Ref, 
-    main=paste0(NAM, "\nreference  relative abundance"), 
-    colScale="abund", q=1, 
-    maskRockies=TRUE, plotWater=TRUE, mask=na_rf)
-dev.off()
-writeRaster(r_rf, f_olist[1], overwrite=TRUE)
-
-png(f_olist[4], height=1200, width=800)
-r_cr <- map_fun(tab$Curr, 
-    main=paste0(NAM, "\ncurrent relative abundance"), 
-    colScale="abund", q=1, 
-    maskRockies=TRUE, plotWater=TRUE, mask=na_cr)
-dev.off()
-writeRaster(r_cr, f_olist[2], overwrite=TRUE)
-
-readme <- c(paste0("# ", NAM),
-    "\n## Contents\n",
-    paste0("* ", spp, 
+    gc()
+    f_in <- file.path(dir_in, paste0(spp, ".csv"))
+    dir.create(file.path(dir_out, spp))
+    f_out <- file.path(dir_out, paste0(spp, ".zip"))
+    ff <- c(paste0(spp, 
         c("-reference.asc", "-current.asc", "-reference.png", "-current.png")),
-    "\n## Version\n",
-    "Alberta Biodiversity Monitoring Institute, species website",
-    "Version 3, http://species.abmi.ca",
-    "\n## Raster file information\n",
-    "ASCII grid format\n",
-    "CRS: '+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs'")
-writeLines(readme, file.path(dir_out, spp, "README.md"))
+        "README.md")
+    f_olist <- file.path(dir_out, spp, ff)
 
-setwd(dir_out)
-zip(f_out, paste0("./", spp, "/", ff))
-unlink(file.path(dir_out, spp), recursive=TRUE, force=TRUE)
+    tab <- read.csv(f_in)
+    tab <- tab[match(rownames(kgrid), tab$LinkID),]
+    tab$RefNA <- ifelse(is.na(tab$Ref), 1L, 0L)
+    tab$CurrNA <- ifelse(is.na(tab$Ref), 1L, 0L)
+    tab$Ref[tab$RefNA == 1L] <- 0
+    tab$Curr[tab$CurrNA == 1L] <- 0
+
+    NAM <- as.character(lt$species[lt$sppid == spp])
+
+    na_rf <- as_Raster0(kgrid$Row, kgrid$Col, tab$RefNA, rt)
+    na_cr <- as_Raster0(kgrid$Row, kgrid$Col, tab$CurrNA, rt)
+
+    cat(spp, "\n");flush.console()
+    png(f_olist[3], height=1200, width=800)
+    r_rf <- map_fun(tab$Ref, 
+        main=paste0(NAM, "\nreference  relative abundance"), 
+        colScale="abund", q=1, 
+        maskRockies=TRUE, plotWater=TRUE, mask=na_rf)
+    dev.off()
+    writeRaster(r_rf, f_olist[1], overwrite=TRUE)
+
+    png(f_olist[4], height=1200, width=800)
+    r_cr <- map_fun(tab$Curr, 
+        main=paste0(NAM, "\ncurrent relative abundance"), 
+        colScale="abund", q=1, 
+        maskRockies=TRUE, plotWater=TRUE, mask=na_cr)
+    dev.off()
+    writeRaster(r_cr, f_olist[2], overwrite=TRUE)
+
+    readme <- c(paste0("# ", NAM),
+        "\n## Contents\n",
+        paste0("* ", spp, 
+            c("-reference.asc", "-current.asc", "-reference.png", "-current.png")),
+        "\n## Version\n",
+        "Alberta Biodiversity Monitoring Institute, species website",
+        "Version 3, http://species.abmi.ca",
+        "\n## Raster file information\n",
+        "ASCII grid format\n",
+        "CRS: '+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs'")
+    writeLines(readme, file.path(dir_out, spp, "README.md"))
+
+    setwd(dir_out)
+    zip(f_out, paste0("./", spp, "/", ff))
+    unlink(file.path(dir_out, spp), recursive=TRUE, force=TRUE)
 }
 
 
