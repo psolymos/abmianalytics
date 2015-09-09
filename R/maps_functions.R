@@ -36,7 +36,8 @@ function(x, y, z, r, verbose=0)
 
 map_fun <-
 function(x, q=1, main="", colScale="terrain",
-plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, legend=TRUE)
+plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, legend=TRUE,
+mask=NULL)
 {
     ## these might need to be truncated to have pale in the middle
     if (is.character(colScale)) {
@@ -60,6 +61,8 @@ plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, legend=TRUE)
     ## output raster should be masked as well
     if (maskRockies)
         r[!is.na(r_mask)] <- NA
+    if (!is.null(mask))
+        r[mask == 1L] <- NA
     ## mask >99% water cells
     r[r_water > 0.99] <- NA
 

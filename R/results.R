@@ -542,3 +542,21 @@ rank_fun(res_trend$Mean_North, res_trend$LCL_North, res_trend$UCL_North,
 rank_fun(res_trend$Mean_South, res_trend$LCL_South, res_trend$UCL_South,
     n=res_trend$n_South, col=1, lab = rownames(res_trend))
 
+## ARU effect
+res_aru <- list()
+for (spp in rownames(tax[tax$surroundinghf_north,])) {
+    pres <- sum(yyn[substr(rownames(yyn), 1, 5) == "EMCLA",spp] > 0)
+    if (pres > 0) {
+        cat(spp, "\n");flush.console()
+        resn <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-north_", spp, ".Rdata")))
+        estn <- getEst(resn, stage=6, na.out=FALSE, Xnn)
+        aru <- estn[,"ARU"]
+        res_aru[[spp]] <- c(aru, pres)
+    }
+}
+res_aru <- do.call(rbind, res_aru)
+tmp <- res_aru[res_aru[,241]>19,-241]
+tmp[tmp == 0] <- NA
+rowMeans(exp(tmp), na.rm=TRUE)
+
+
