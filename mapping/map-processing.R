@@ -7,8 +7,10 @@ library(mefa4)
 library(utils)
 source("~/repos/abmianalytics/R/maps_functions.R")
 
-ROOT <- "c:/p"
-VER <- "AB_data_v2015"
+#ROOT <- "c:/p"
+#VER <- "AB_data_v2015"
+ROOT <- "c:/Users/Peter"
+VER <- "www"
 
 ## cell x veg/soil matrices and xy lookup table (climate, region, etc)
 load(file.path(ROOT, VER, "out", "kgrid", "kgrid_table.Rdata"))
@@ -65,21 +67,21 @@ dir_out <- "e:/peter/sppweb-ftp-content/species/mites"
 lt <- read.csv("e:/peter/sppweb2015/Mites/mites-lookup.csv")
 
 ## vplants
-dir_in <- "e:/peter/sppweb2015/Plants/Km2 summaries"
-dir_out <- "e:/peter/sppweb-ftp-content/species/vplants"
-lt <- read.csv("e:/peter/sppweb2015/Plants/vplants-lookup.csv")
+dir_in <- "c:/Users/Peter/www/Plants/Km2 summaries"
+dir_out <- "c:/Users/Peter/www/species/vplants"
+lt <- read.csv("c:/Users/Peter/www/vplants-lookup.csv")
 
 ## birds
 
 ## mosses
-dir_in <- "e:/peter/sppweb2015/Moss/Combine regions/Km2 summaries"
-dir_out <- "e:/peter/sppweb-ftp-content/species/mammals"
-lt <- read.csv("e:/peter/sppweb2015/Moss/mosses-lookup.csv")
+dir_in <- "c:/Users/Peter/www/Moss/Km2 summaries"
+dir_out <- "c:/Users/Peter/www/species/mosses"
+lt <- read.csv("c:/Users/Peter/www/mosses-lookup.csv")
 
 ## lichens
-dir_in <- "e:/peter/sppweb2015/Lichen/Combine regions/Km2 summaries"
-dir_out <- "e:/peter/sppweb-ftp-content/species/mammals"
-lt <- read.csv("e:/peter/sppweb2015/Lichen/lichens-lookup.csv")
+dir_in <- "c:/Users/Peter/www/Lichens/Km2 summaries"
+dir_out <- "c:/Users/Peter/www/species/lichens"
+lt <- read.csv("c:/Users/Peter/www/lichens-lookup.csv")
 
 #spp <- "CanadaLynx"
 spplist <- as.character(lt$sppid[lt$map.pred])
