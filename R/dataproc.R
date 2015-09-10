@@ -687,3 +687,5 @@ mods <- modsVeg
 save(DAT, YY, OFF, OFFmean, mods, BB,
     file=file.path(ROOT2, "out", "birds", "data", "data-useok-north.Rdata"))
 
+save(tv, ts,
+    file=file.path(ROOT2, "out", "birds", "data", "lookup-veg-soil.Rdata"))
