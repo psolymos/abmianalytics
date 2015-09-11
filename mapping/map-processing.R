@@ -7,10 +7,10 @@ library(mefa4)
 library(utils)
 source("~/repos/abmianalytics/R/maps_functions.R")
 
-#ROOT <- "c:/p"
-#VER <- "AB_data_v2015"
-ROOT <- "c:/Users/Peter"
-VER <- "www"
+ROOT <- "c:/p"
+VER <- "AB_data_v2015"
+#ROOT <- "c:/Users/Peter"
+#VER <- "www"
 
 ## cell x veg/soil matrices and xy lookup table (climate, region, etc)
 load(file.path(ROOT, VER, "out", "kgrid", "kgrid_table.Rdata"))
