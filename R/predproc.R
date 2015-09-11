@@ -1,10 +1,8 @@
 library(mefa4)
-#library(raster)
-#library(sp)
-#library(rgdal)
-#library(maptools)
 
 ROOT <- "c:/p/AB_data_v2015"
+OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-1/"
+OUTDIRB <- "e:/peter/sppweb2015/birds-pred-B/"
 
 load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
 load(file.path(ROOT, "out", "kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata"))
@@ -196,8 +194,15 @@ setdiff(cnsHab, colnames(XShab))
 PROP <- 10
 BMAX <- 100
 
-regi <- "LowerPeace_LowerBorealHighlands"
-spp <- "CAWA"
+doB <- FALSE
+
+if (doB)
+    BMAX <- 1
+#spp <- "BTNW"
+SPP <- union(fln, fls)
+for (spp in SPP) { # species START
+
+cat("\n\n---", spp, which(spp==SPP), "/", length(SPP), "---\n")
 
 resn <- loadSPP(file.path(ROOT, "out", "birds", "results", 
     paste0("birds_abmi-north_", spp, ".Rdata")))
@@ -206,14 +211,32 @@ ress <- loadSPP(file.path(ROOT, "out", "birds", "results",
     paste0("birds_abmi-south_", spp, ".Rdata")))
 ests <- suppressWarnings(getEst(ress, stage=length(modss)-2, na.out=FALSE, Xns))
 
+NSest <- c(north=!is.null(resn), south=!is.null(ress))
+
+estn <- if (is.null(resn))
+    estn[rep(1, BMAX),,drop=FALSE] else estn[1:BMAX,,drop=FALSE]
+ests <- if (is.null(ress))
+    ests[rep(1, BMAX),,drop=FALSE] else ests[1:BMAX,,drop=FALSE]
+
+#regi <- "LowerPeace_LowerBorealHighlands"
+#date()
+for (regi in regs) { # regions START
+
+t0 <- proc.time()
+cat(spp, regi, which(regs==regi), "/", length(regs), "\n")
+flush.console()
+gc()
+
+load(file.path(ROOT, "out", "transitions", paste0(regi,".Rdata")))
+
 ii <- kgrid$LUFxNSR == regi
 iib <- ii & kgrid$Rnd10 <= PROP
 Xclim <- model.matrix(fclim, kgrid[ii,,drop=FALSE])
 colnames(Xclim) <- fixNames(colnames(Xclim))
 XclimB <- model.matrix(fclim, kgrid[iib,,drop=FALSE])
 colnames(XclimB) <- fixNames(colnames(XclimB))
-estnClim <- estn[1:BMAX,colnames(Xclim)]
-estsClim <- ests[1:BMAX,colnames(Xclim)]
+estnClim <- estn[,colnames(Xclim)]
+estsClim <- ests[,colnames(Xclim)]
 ## north
 logPNclim1 <- Xclim %*% estnClim[1,]
 logPNclimB <- apply(estnClim, 1, function(z) XclimB %*% z)
@@ -221,8 +244,8 @@ logPNclimB <- apply(estnClim, 1, function(z) XclimB %*% z)
 logPSclim1 <- Xclim %*% estsClim[1,]
 logPSclimB <- apply(estsClim, 1, function(z) XclimB %*% z)
 
-estnHab <- estn[1:BMAX,colnames(XNhab)]
-estsHab <- ests[1:BMAX,colnames(XShab)]
+estnHab <- estn[,colnames(XNhab)]
+estsHab <- ests[,colnames(XShab)]
 ## north
 logPNhab1 <- XNhab %*% estnHab[1,]
 logPNhabB <- apply(estnHab, 1, function(z) XNhab %*% z)
@@ -312,42 +335,69 @@ hbScr1[,j] <- colSums(AD_cr) / colSums(Asoil1)
 hbSrf1[,j] <- colSums(AD_rf) / colSums(Asoil1)
 
 ## BMAX runs
-for (j in 1:BMAX) {
-    ## North
-    D_hab_cr <- exp(logPNhabB[match(ch2veg$cr, rownames(logPNhabB)),j])
-    if (any(ch2veg$VegetatedLinear))
-        D_hab_cr[ch2veg$VegetatedLinear] <- exp(logPNhab_esB[match(ch2veg$rf, 
-            rownames(logPNhab_esB)),j][ch2veg$VegetatedLinear])
-    if (any(ch2veg$cr_zero))
-        D_hab_cr[ch2veg$cr_zero] <- 0
-    if (any(ch2veg$rf_zero))
-        D_hab_cr[ch2veg$rf_zero] <- 0 # things like Water->Road
-    D_hab_rf <- exp(logPNhabB[match(ch2veg$rf, rownames(logPNhabB)),j])
-    if (any(ch2veg$rf_zero))
-        D_hab_rf[ch2veg$rf_zero] <- 0
-    AD_cr <- t(D_hab_cr * t(AvegB)) * exp(logPNclimB[,j])
-    AD_rf <- t(D_hab_rf * t(AvegB)) * exp(logPNclimB[,j])
-    pxNcrB[,j] <- rowSums(AD_cr)
-    pxNrfB[,j] <- rowSums(AD_rf)
-    hbNcrB[,j] <- colSums(AD_cr) / colSums(AvegB)
-    hbNrfB[,j] <- colSums(AD_rf) / colSums(AvegB)
-    ## South
-    D_hab_cr <- exp(logPShabB[match(ch2soil$cr, rownames(logPShabB)),j])
-    if (any(ch2soil$VegetatedLinear))
-        D_hab_cr[ch2soil$VegetatedLinear] <- exp(logPShabB[match(ch2soil$rf, 
-            rownames(logPShabB)),j][ch2soil$VegetatedLinear])
-    if (any(ch2soil$cr_zero))
-        D_hab_cr[ch2soil$cr_zero] <- 0
-    if (any(ch2soil$rf_zero))
-        D_hab_cr[ch2soil$rf_zero] <- 0 # things like Water->Road
-    D_hab_rf <- exp(logPShabB[match(ch2soil$rf, rownames(logPShabB)),j])
-    if (any(ch2soil$rf_zero))
-        D_hab_rf[ch2soil$rf_zero] <- 0
-    AD_cr <- t(D_hab_cr * t(AsoilB)) * exp(logPSclimB[,j])
-    AD_rf <- t(D_hab_rf * t(AsoilB)) * exp(logPSclimB[,j])
-    pxScrB[,j] <- rowSums(AD_cr)
-    pxSrfB[,j] <- rowSums(AD_rf)
-    hbScrB[,j] <- colSums(AD_cr) / colSums(AsoilB)
-    hbSrfB[,j] <- colSums(AD_rf) / colSums(AsoilB)
+if (doB) {
+    for (j in 1:BMAX) {
+        ## North
+        D_hab_cr <- exp(logPNhabB[match(ch2veg$cr, rownames(logPNhabB)),j])
+        if (any(ch2veg$VegetatedLinear))
+            D_hab_cr[ch2veg$VegetatedLinear] <- exp(logPNhab_esB[match(ch2veg$rf, 
+                rownames(logPNhab_esB)),j][ch2veg$VegetatedLinear])
+        if (any(ch2veg$cr_zero))
+            D_hab_cr[ch2veg$cr_zero] <- 0
+        if (any(ch2veg$rf_zero))
+            D_hab_cr[ch2veg$rf_zero] <- 0 # things like Water->Road
+        D_hab_rf <- exp(logPNhabB[match(ch2veg$rf, rownames(logPNhabB)),j])
+        if (any(ch2veg$rf_zero))
+            D_hab_rf[ch2veg$rf_zero] <- 0
+        AD_cr <- t(D_hab_cr * t(AvegB)) * exp(logPNclimB[,j])
+        AD_rf <- t(D_hab_rf * t(AvegB)) * exp(logPNclimB[,j])
+        pxNcrB[,j] <- rowSums(AD_cr)
+        pxNrfB[,j] <- rowSums(AD_rf)
+        hbNcrB[,j] <- colSums(AD_cr) / colSums(AvegB)
+        hbNrfB[,j] <- colSums(AD_rf) / colSums(AvegB)
+        ## South
+        D_hab_cr <- exp(logPShabB[match(ch2soil$cr, rownames(logPShabB)),j])
+        if (any(ch2soil$VegetatedLinear))
+            D_hab_cr[ch2soil$VegetatedLinear] <- exp(logPShabB[match(ch2soil$rf, 
+                rownames(logPShabB)),j][ch2soil$VegetatedLinear])
+        if (any(ch2soil$cr_zero))
+            D_hab_cr[ch2soil$cr_zero] <- 0
+        if (any(ch2soil$rf_zero))
+            D_hab_cr[ch2soil$rf_zero] <- 0 # things like Water->Road
+        D_hab_rf <- exp(logPShabB[match(ch2soil$rf, rownames(logPShabB)),j])
+        if (any(ch2soil$rf_zero))
+            D_hab_rf[ch2soil$rf_zero] <- 0
+        AD_cr <- t(D_hab_cr * t(AsoilB)) * exp(logPSclimB[,j])
+        AD_rf <- t(D_hab_rf * t(AsoilB)) * exp(logPSclimB[,j])
+        pxScrB[,j] <- rowSums(AD_cr)
+        pxSrfB[,j] <- rowSums(AD_rf)
+        hbScrB[,j] <- colSums(AD_cr) / colSums(AsoilB)
+        hbSrfB[,j] <- colSums(AD_rf) / colSums(AsoilB)
+    }
 }
+
+TIME <- proc.time() - t0
+if (!dir.exists(file.path(OUTDIR1, spp)))
+    dir.create(file.path(OUTDIR1, spp))
+save(TIME, NSest,
+    pxNcr1,pxNrf1,
+    pxScr1,pxSrf1,
+    hbNcr1,hbNrf1,
+    hbScr1,hbSrf1,
+    pAspen1,pSoil1,Cells,
+    file=file.path(OUTDIR1, spp, paste0(regi, ".Rdata")))
+if (doB) {
+    if (!dir.exists(file.path(OUTDIRB, spp)))
+        dir.create(file.path(OUTDIRB, spp))
+    save(TIME, NSest,
+        pxNcrB,pxNrfB,
+        pxScrB,pxSrfB,
+        hbNcrB,hbNrfB,
+        hbScrB,hbSrfB,
+        pAspenB,pSoilB,Cells,
+        file=file.path(OUTDIRB, spp, paste0(regi, ".Rdata")))
+}
+
+} # regions END
+} # species END
 
