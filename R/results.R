@@ -110,6 +110,20 @@ yys <- yys[,colnames(yys) != "NONE"]
 yyn <- yyn[,colnames(yyn) != "NONE"]
 tax <- droplevels(tax[colnames(yy),])
 
+## species lookup table for web
+slt <- data.frame(sppid=tax$file,
+    species=tax$English_Name,
+    scinam=tax$Scientific_Name,
+    tax[,c("ndet","modelN","modelS","ndet_n","ndet_s")],
+    map.det=tax$map_det,
+    map.pred=tax$modelN | tax$modelS,
+    useavail.north=tax$useavail_north & !tax$modelN,
+    useavail.south=tax$useavail_south & !tax$modelS,
+    veghf.north=tax$modelN,
+    soilhf.south=tax$modelS)
+slt <- slt[str$map.det,]
+write.csv(slt, row.names=FALSE, file="~/repos/abmispecies/_data/birds.csv")    
+
 ## spp specific output
 
 spp <- "BTNW"

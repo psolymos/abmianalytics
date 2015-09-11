@@ -45,7 +45,7 @@ for (i in 2:length(regs)) {
     rownames(Asoil) <- regs[1:i]
 }
 
-spp <- "CAWA"
+spp <- "ALFL"
 
 for (spp in SPP) {
 
@@ -90,32 +90,134 @@ pxrf <- wS * pxSrf + (1-wS) * pxNrf
 pxrf[useN] <- pxNrf[useN]
 pxrf[useS] <- pxSrf[useS]
 
+pxcr <- pxNcr
+pxrf <- pxNrf
+
 if (!NSest["north"]) {
-    pxcr[useN] <- -1#NA
-    pxrf[useN] <- -1#NA
+    pxcr[useN] <- NA
+    pxrf[useN] <- NA
 }
 if (!NSest["south"]) {
-    pxcr[useS] <- -1#NA
-    pxrf[useS] <- -1#NA
+    pxcr[useS] <- NA
+    pxrf[useS] <- NA
 }
 
 km <- data.frame(LinkID=kgrid$Row_Col,
     Ref=pxrf,
     Curr=pxcr)
-NAM <- as.character(tax[spp, "English_Name"])
-
+#NAM <- as.character(tax[spp, "English_Name"])
 write.csv(km, row.names=FALSE,
     paste0("e:/peter/sppweb2015/birds-pred/", paste0(as.character(tax[spp, "file"]), ".csv")))
 }
 
+## plots
 
-dim(pxNcr)
-dim(kgrid)
+library(raster)
+library(sp)
+library(rgdal)
+city <-data.frame(x = -c(114,113,112,111,117,118)-c(5,30,49,23,8,48)/60,
+    y = c(51,53,49,56,58,55)+c(3,33,42,44,31,10)/60)
+rownames(city) <- c("Calgary","Edmonton","Lethbridge","Fort McMurray",
+    "High Level","Grande Prairie")
+coordinates(city) <- ~ x + y
+proj4string(city) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+city <- spTransform(city, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))
+city <- as.data.frame(city)
 
-with(kgrid, plot(X, Y, col=ifelse(pSoil == 1 & kgrid$pWater < 0.99, 2, 1), pch="."))
+cex <- 0.25
+legcex <- 1.5
 
-* save csv
-* ??? fix PUMA
+Col1 <- rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8","#91BFDB","#4575B4"))  # Colour gradient for reference and current
+Col1fun <- colorRampPalette(Col1, space = "rgb") # Function to interpolate among these colours for reference and current
+C1 <- Col1fun(100)
+Col2 <- c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0","#A1D76A","#4D9221")  # Colour gradient for difference map
+Col2fun <- colorRampPalette(Col2, space = "rgb") # Function to interpolate among these colours for difference map
+C2 <- Col2fun(200)
+CW <- rgb(0.4,0.3,0.8) # water
+CE <- "lightcyan4" # exclude
+
+q <- 0.99
+H <- 1000 
+W <- 600
+
+#spp <- "CAWA"
+for (spp in SPP) {
+    km <- read.csv(paste0("e:/peter/sppweb2015/birds-pred/", 
+        paste0(as.character(tax[spp, "file"]), ".csv")))
+
+    cr <- km$Curr
+    rf <- km$Ref
+    qcr <- quantile(cr, q)
+    cr[cr>qcr] <- qcr
+    qrf <- quantile(rf, q)
+    rf[rf>qrf] <- qrf
+    Max <- max(qcr, qrf)
+
+    df <- (cr-rf) / Max
+    df <- sign(df) * abs(df)^0.5
+    df <- pmin(200, ceiling(99 * df)+100)
+    df[df==0] <- 1
+    cr <- pmin(100, ceiling(99 * sqrt(cr / Max))+1)
+    rf <- pmin(100, ceiling(99 * sqrt(rf / Max))+1)
+    range(cr)
+    range(rf)
+    range(df)
+
+    NAM <- as.character(tax[spp, "English_Name"])
+
+    cat("\n")
+    cat(spp, "\t");flush.console()
+    cat("rf\t");flush.console()
+    png(paste0("e:/peter/sppweb-html-content/species/birds/map-rf/",
+        as.character(tax[spp, "file"]), ".png"),
+        width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=C1[rf], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+        points(X, Y, col=CE, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, "\nReference abundance"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
+    par(op)
+    dev.off()
+
+    cat("cr\t");flush.console()
+    png(paste0("e:/peter/sppweb-html-content/species/birds/map-cr/",
+        as.character(tax[spp, "file"]), ".png"),
+        width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=C1[cr], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+        points(X, Y, col=CE, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, "\nCurrent abundance"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
+    par(op)
+    dev.off()
+
+    cat("df\n");flush.console()
+    png(paste0("e:/peter/sppweb-html-content/species/birds/map-df/",
+        as.character(tax[spp, "file"]), ".png"),
+        width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=C2[df], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+        points(X, Y, col=CE, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, "\nDifference"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
+    par(op)
+    dev.off()
+}
+
+OK * save csv
+OK * ??? fix PUMA
 * plot from csv
 * sector effects
 * sector effects table

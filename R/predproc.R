@@ -194,10 +194,12 @@ setdiff(cnsHab, colnames(XShab))
 PROP <- 10
 BMAX <- 100
 
-doB <- FALSE
+doB <- TRUE
 
-if (doB)
+if (!doB)
     BMAX <- 1
+BMAX
+
 #spp <- "BTNW"
 SPP <- union(fln, fls)
 for (spp in SPP) { # species START
@@ -296,43 +298,45 @@ Cells <- ifelse(iib, 1L, 0L)[ii]
 names(Cells) <- rownames(kgrid)[ii]
 
 ## 1st run
-j <- 1
-## North
-D_hab_cr <- exp(logPNhab1[match(ch2veg$cr, rownames(logPNhab1)),j])
-if (any(ch2veg$VegetatedLinear))
-    D_hab_cr[ch2veg$VegetatedLinear] <- exp(logPNhab_es1[match(ch2veg$rf, 
-        rownames(logPNhab_es1)),j][ch2veg$VegetatedLinear])
-if (any(ch2veg$cr_zero))
-    D_hab_cr[ch2veg$cr_zero] <- 0
-if (any(ch2veg$rf_zero))
-    D_hab_cr[ch2veg$rf_zero] <- 0 # things like Water->Road
-D_hab_rf <- exp(logPNhab1[match(ch2veg$rf, rownames(logPNhab1)),j])
-if (any(ch2veg$rf_zero))
-    D_hab_rf[ch2veg$rf_zero] <- 0
-AD_cr <- t(D_hab_cr * t(Aveg1)) * exp(logPNclim1[,j])
-AD_rf <- t(D_hab_rf * t(Aveg1)) * exp(logPNclim1[,j])
-pxNcr1[,j] <- rowSums(AD_cr)
-pxNrf1[,j] <- rowSums(AD_rf)
-hbNcr1[,j] <- colSums(AD_cr) / colSums(Aveg1)
-hbNrf1[,j] <- colSums(AD_rf) / colSums(Aveg1)
-## South
-D_hab_cr <- exp(logPShab1[match(ch2soil$cr, rownames(logPShab1)),j])
-if (any(ch2soil$VegetatedLinear))
-    D_hab_cr[ch2soil$VegetatedLinear] <- exp(logPShab1[match(ch2soil$rf, 
-        rownames(logPShab1)),j][ch2soil$VegetatedLinear])
-if (any(ch2soil$cr_zero))
-    D_hab_cr[ch2soil$cr_zero] <- 0
-if (any(ch2soil$rf_zero))
-    D_hab_cr[ch2soil$rf_zero] <- 0 # things like Water->Road
-D_hab_rf <- exp(logPShab1[match(ch2soil$rf, rownames(logPShab1)),j])
-if (any(ch2soil$rf_zero))
-    D_hab_rf[ch2soil$rf_zero] <- 0
-AD_cr <- t(D_hab_cr * t(Asoil1)) * exp(logPSclim1[,j])
-AD_rf <- t(D_hab_rf * t(Asoil1)) * exp(logPSclim1[,j])
-pxScr1[,j] <- rowSums(AD_cr)
-pxSrf1[,j] <- rowSums(AD_rf)
-hbScr1[,j] <- colSums(AD_cr) / colSums(Asoil1)
-hbSrf1[,j] <- colSums(AD_rf) / colSums(Asoil1)
+if (!doB) {
+    j <- 1
+    ## North
+    D_hab_cr <- exp(logPNhab1[match(ch2veg$cr, rownames(logPNhab1)),j])
+    if (any(ch2veg$VegetatedLinear))
+        D_hab_cr[ch2veg$VegetatedLinear] <- exp(logPNhab_es1[match(ch2veg$rf, 
+            rownames(logPNhab_es1)),j][ch2veg$VegetatedLinear])
+    if (any(ch2veg$cr_zero))
+        D_hab_cr[ch2veg$cr_zero] <- 0
+    if (any(ch2veg$rf_zero))
+        D_hab_cr[ch2veg$rf_zero] <- 0 # things like Water->Road
+    D_hab_rf <- exp(logPNhab1[match(ch2veg$rf, rownames(logPNhab1)),j])
+    if (any(ch2veg$rf_zero))
+        D_hab_rf[ch2veg$rf_zero] <- 0
+    AD_cr <- t(D_hab_cr * t(Aveg1)) * exp(logPNclim1[,j])
+    AD_rf <- t(D_hab_rf * t(Aveg1)) * exp(logPNclim1[,j])
+    pxNcr1[,j] <- rowSums(AD_cr)
+    pxNrf1[,j] <- rowSums(AD_rf)
+    hbNcr1[,j] <- colSums(AD_cr) / colSums(Aveg1)
+    hbNrf1[,j] <- colSums(AD_rf) / colSums(Aveg1)
+    ## South
+    D_hab_cr <- exp(logPShab1[match(ch2soil$cr, rownames(logPShab1)),j])
+    if (any(ch2soil$VegetatedLinear))
+        D_hab_cr[ch2soil$VegetatedLinear] <- exp(logPShab1[match(ch2soil$rf, 
+            rownames(logPShab1)),j][ch2soil$VegetatedLinear])
+    if (any(ch2soil$cr_zero))
+        D_hab_cr[ch2soil$cr_zero] <- 0
+    if (any(ch2soil$rf_zero))
+        D_hab_cr[ch2soil$rf_zero] <- 0 # things like Water->Road
+    D_hab_rf <- exp(logPShab1[match(ch2soil$rf, rownames(logPShab1)),j])
+    if (any(ch2soil$rf_zero))
+        D_hab_rf[ch2soil$rf_zero] <- 0
+    AD_cr <- t(D_hab_cr * t(Asoil1)) * exp(logPSclim1[,j])
+    AD_rf <- t(D_hab_rf * t(Asoil1)) * exp(logPSclim1[,j])
+    pxScr1[,j] <- rowSums(AD_cr)
+    pxSrf1[,j] <- rowSums(AD_rf)
+    hbScr1[,j] <- colSums(AD_cr) / colSums(Asoil1)
+    hbSrf1[,j] <- colSums(AD_rf) / colSums(Asoil1)
+}
 
 ## BMAX runs
 if (doB) {
@@ -377,15 +381,17 @@ if (doB) {
 }
 
 TIME <- proc.time() - t0
-if (!dir.exists(file.path(OUTDIR1, spp)))
-    dir.create(file.path(OUTDIR1, spp))
-save(TIME, NSest,
-    pxNcr1,pxNrf1,
-    pxScr1,pxSrf1,
-    hbNcr1,hbNrf1,
-    hbScr1,hbSrf1,
-    pAspen1,pSoil1,Cells,
-    file=file.path(OUTDIR1, spp, paste0(regi, ".Rdata")))
+if (!doB) {
+    if (!dir.exists(file.path(OUTDIR1, spp)))
+        dir.create(file.path(OUTDIR1, spp))
+    save(TIME, NSest,
+        pxNcr1,pxNrf1,
+        pxScr1,pxSrf1,
+        hbNcr1,hbNrf1,
+        hbScr1,hbSrf1,
+        pAspen1,pSoil1,Cells,
+        file=file.path(OUTDIR1, spp, paste0(regi, ".Rdata")))
+}
 if (doB) {
     if (!dir.exists(file.path(OUTDIRB, spp)))
         dir.create(file.path(OUTDIRB, spp))
