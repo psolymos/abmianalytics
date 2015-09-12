@@ -120,13 +120,13 @@ tax <- droplevels(tax[colnames(yy),])
 slt <- data.frame(sppid=tax$file,
     species=tax$English_Name,
     scinam=tax$Scientific_Name,
-    tax[,c("ndet","modelN","modelS","ndet_n","ndet_s", "ndet_ns")],
-    map.det=tax$map_det,
-    map.pred=tax$modelN | tax$modelS,
-    useavail.north=tax$useavail_north & !tax$modelN,
-    useavail.south=tax$useavail_south & !tax$modelS,
-    veghf.north=tax$modelN,
-    soilhf.south=tax$modelS)
+    tax[,c("ndet","modelN","modelS","ndet_n","ndet_s", "ndet_ns")])
+slt$map.det <- tax$map_det
+slt$veghf.north <- tax$modelN & tax$ndet_n > 99
+slt$soilhf.south <- tax$modelS & tax$ndet_s > 99
+slt$map.pred <- slt$veghf.north | slt$soilhf.south
+slt$useavail.north=tax$useavail_north & !slt$veghf.north
+slt$useavail.south=tax$useavail_south & !slt$soilhf.south
 slt <- slt[slt$map.det,]
 write.csv(slt, row.names=FALSE, file="~/repos/abmispecies/_data/birds.csv")    
 

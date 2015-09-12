@@ -1,8 +1,17 @@
 library(mefa4)
 
+shf <- TRUE
+
 ROOT <- "c:/p/AB_data_v2015"
-OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-1/"
-OUTDIRB <- "e:/peter/sppweb2015/birds-pred-B/"
+
+## surrounding hf
+if (shf) {
+    OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-shf-1/"
+    OUTDIRB <- "e:/peter/sppweb2015/birds-pred-shf-B/"
+} else {
+    OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-1/"
+    OUTDIRB <- "e:/peter/sppweb2015/birds-pred-B/"
+}
 
 load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
 #source("~/repos/bragging/R/glm_skeleton.R")
@@ -45,7 +54,7 @@ for (i in 2:length(regs)) {
     rownames(Asoil) <- regs[1:i]
 }
 
-spp <- "ALFL"
+spp <- "CAWA"
 
 for (spp in SPP) {
 
@@ -179,12 +188,13 @@ for (spp in SPP) {
     range(df)
 
     NAM <- as.character(tax[spp, "English_Name"])
-
+    TAG <- "-shf"
+    
     cat("\n")
     cat(spp, "\t");flush.console()
     cat("rf\t");flush.console()
     png(paste0("e:/peter/sppweb-html-content/species/birds/map-rf/",
-        as.character(tax[spp, "file"]), ".png"),
+        as.character(tax[spp, "file"]), TAG, ".png"),
         width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=C1[rf], pch=15, cex=cex, ann=FALSE, axes=FALSE)
@@ -202,7 +212,7 @@ for (spp in SPP) {
 
     cat("cr\t");flush.console()
     png(paste0("e:/peter/sppweb-html-content/species/birds/map-cr/",
-        as.character(tax[spp, "file"]), ".png"),
+        as.character(tax[spp, "file"]), TAG, ".png"),
         width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=C1[cr], pch=15, cex=cex, ann=FALSE, axes=FALSE)
@@ -220,7 +230,7 @@ for (spp in SPP) {
 
     cat("df\n");flush.console()
     png(paste0("e:/peter/sppweb-html-content/species/birds/map-df/",
-        as.character(tax[spp, "file"]), ".png"),
+        as.character(tax[spp, "file"]), TAG, ".png"),
         width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=C2[df], pch=15, cex=cex, ann=FALSE, axes=FALSE)
@@ -298,7 +308,7 @@ dA <- colSums(as.matrix(groupSums(dA[,rownames(tv)], 2, tv$Sector)))
 dN <- colSums(as.matrix(groupSums(dN[,rownames(tv)], 2, tv$Sector)))
 U <- dN/dA
 seff <- cbind(dA=dA, dN=dN, U=U)[-1,]
-#(sum(hbNcr)-sum(hbNrf))/sum(hbNrf)
+(sum(hbNcr)-sum(hbNrf))/sum(hbNrf)
 
 }
 

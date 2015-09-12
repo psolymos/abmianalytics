@@ -100,12 +100,13 @@ cnsHab <- c("(Intercept)", "soil1RapidDrain", "soil1SalineAndClay", "soil1Cult",
 ## climate (North & South)
 cnClim <- c("xPET", "xMAT", "xAHM", "xFFP", "xMAP", "xMWMT", "xMCMT", 
     "xlat", "xlong", "xlat2", "xlong2", 
-    "THF_KM", "Lin_KM", "Nonlin_KM", "Succ_KM", "Alien_KM", "Noncult_KM", 
-    "Cult_KM", "THF2_KM", "Nonlin2_KM", "Succ2_KM", "Alien2_KM", "Noncult2_KM", 
     "xFFP:xMAP", "xMAP:xPET", "xAHM:xMAT", "xlat:xlong")
+cnHF <- c("THF_KM", "Lin_KM", "Nonlin_KM", "Succ_KM", "Alien_KM", "Noncult_KM", 
+    "Cult_KM", "THF2_KM", "Nonlin2_KM", "Succ2_KM", "Alien2_KM", "Noncult2_KM")
+cnClimHF <- c(cnClim, cnHF)
 
 ## model matrix for Clim & SurroundingHF
-fclim <- as.formula(paste("~ - 1 +", paste(cnClim, collapse=" + ")))
+fclim <- as.formula(paste("~ - 1 +", paste(cnClimHF, collapse=" + ")))
 
 
 en <- new.env()
@@ -203,7 +204,7 @@ setdiff(cnsHab, colnames(XShab))
 PROP <- 10
 BMAX <- 100
 
-doB <- TRUE
+doB <- FALSE
 
 if (!doB)
     BMAX <- 1
@@ -260,14 +261,27 @@ Xclim <- model.matrix(fclim, kgrid[ii,,drop=FALSE])
 colnames(Xclim) <- fixNames(colnames(Xclim))
 XclimB <- model.matrix(fclim, kgrid[iib,,drop=FALSE])
 colnames(XclimB) <- fixNames(colnames(XclimB))
+## reference has 0 surrounding HF
+Xclim0 <- Xclim
+Xclim0[,cnHF] <- 0
+XclimB0 <- XclimB
+XclimB0[,cnHF] <- 0
 estnClim <- estn[,colnames(Xclim),drop=FALSE]
 estsClim <- ests[,colnames(Xclim),drop=FALSE]
-## north
+
+
+## north - current
 logPNclim1 <- Xclim %*% estnClim[1,]
 logPNclimB <- apply(estnClim, 1, function(z) XclimB %*% z)
-## south
+## south - current
 logPSclim1 <- Xclim %*% estsClim[1,]
 logPSclimB <- apply(estsClim, 1, function(z) XclimB %*% z)
+## north - reference
+logPNclim01 <- Xclim0 %*% estnClim[1,]
+logPNclim0B <- apply(estnClim, 1, function(z) XclimB0 %*% z)
+## south - reference
+logPSclim01 <- Xclim0 %*% estsClim[1,]
+logPSclim0B <- apply(estsClim, 1, function(z) XclimB0 %*% z)
 
 estnHab <- estn[,colnames(XNhab),drop=FALSE]
 estsHab <- ests[,colnames(XShab),drop=FALSE]
@@ -337,7 +351,7 @@ if (!doB) {
     if (any(ch2veg$rf_zero))
         D_hab_rf[ch2veg$rf_zero] <- 0
     AD_cr <- t(D_hab_cr * t(Aveg1)) * exp(logPNclim1[,j])
-    AD_rf <- t(D_hab_rf * t(Aveg1)) * exp(logPNclim1[,j])
+    AD_rf <- t(D_hab_rf * t(Aveg1)) * exp(logPNclim01[,j])
     pxNcr1[,j] <- rowSums(AD_cr)
     pxNrf1[,j] <- rowSums(AD_rf)
     hbNcr1[,j] <- colSums(AD_cr) / colSums(Aveg1)
@@ -355,7 +369,7 @@ if (!doB) {
     if (any(ch2soil$rf_zero))
         D_hab_rf[ch2soil$rf_zero] <- 0
     AD_cr <- t(D_hab_cr * t(Asoil1)) * exp(logPSclim1[,j])
-    AD_rf <- t(D_hab_rf * t(Asoil1)) * exp(logPSclim1[,j])
+    AD_rf <- t(D_hab_rf * t(Asoil1)) * exp(logPSclim01[,j])
     ## pAspen based weighted average
     Asp <- exp(estAsp[j] * pAspen1)
     AD_cr <- pAspen1 * (Asp * AD_cr) + (1-pAspen1) * AD_cr
@@ -382,7 +396,7 @@ if (doB) {
         if (any(ch2veg$rf_zero))
             D_hab_rf[ch2veg$rf_zero] <- 0
         AD_cr <- t(D_hab_cr * t(AvegB)) * exp(logPNclimB[,j])
-        AD_rf <- t(D_hab_rf * t(AvegB)) * exp(logPNclimB[,j])
+        AD_rf <- t(D_hab_rf * t(AvegB)) * exp(logPNclim0B[,j])
         pxNcrB[,j] <- rowSums(AD_cr)
         pxNrfB[,j] <- rowSums(AD_rf)
         hbNcrB[,j] <- colSums(AD_cr) / colSums(AvegB)
@@ -400,7 +414,7 @@ if (doB) {
         if (any(ch2soil$rf_zero))
             D_hab_rf[ch2soil$rf_zero] <- 0
         AD_cr <- t(D_hab_cr * t(AsoilB)) * exp(logPSclimB[,j])
-        AD_rf <- t(D_hab_rf * t(AsoilB)) * exp(logPSclimB[,j])
+        AD_rf <- t(D_hab_rf * t(AsoilB)) * exp(logPSclim0B[,j])
         ## pAspen based weighted average
         Asp <- exp(estAsp[j] * pAspenB)
         AD_cr <- pAspenB * (Asp * AD_cr) + (1-pAspenB) * AD_cr
