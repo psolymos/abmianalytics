@@ -128,7 +128,16 @@ slt$map.pred <- slt$veghf.north | slt$soilhf.south
 slt$useavail.north=tax$useavail_north & !slt$veghf.north
 slt$useavail.south=tax$useavail_south & !slt$soilhf.south
 slt <- slt[slt$map.det,]
+
+gl <- read.csv("y:/Oracle_access/guilds/vertebrateGuilds_Feb2-2011_PS.csv")
+intersect(gl$AOU.Code, rownames(slt))
+slt[setdiff(rownames(slt), gl$AOU.Code),1:3]
+
+slt$oldforest <- gl$Forest.Types.Old[match(rownames(slt), gl$AOU.Code)]
+slt$oldforest[is.na(slt$oldforest)] <- 0
+slt$oldforest[slt$oldforest > 0] <- 1
 write.csv(slt, row.names=FALSE, file="~/repos/abmispecies/_data/birds.csv")    
+
 
 ## spp specific output
 
