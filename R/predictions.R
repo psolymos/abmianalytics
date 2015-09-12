@@ -77,6 +77,7 @@ pxScr <- pxScr[rownames(kgrid),]
 pxSrf <- pxSrf[rownames(kgrid),]
 pSoil <- pSoil[rownames(kgrid)]
 
+if (FALSE) {
 wS <- 1-kgrid$pAspen
 if (!NSest["north"])
     wS[] <- 1
@@ -105,6 +106,17 @@ if (!NSest["south"]) {
 km <- data.frame(LinkID=kgrid$Row_Col,
     Ref=pxrf,
     Curr=pxcr)
+}
+
+#pxNcr[useS] <- NA
+#pxNrf[useS] <- NA
+#pxScr[useN] <- NA
+#pxSrf[useN] <- NA
+km <- data.frame(LinkID=kgrid$Row_Col,
+    RefN=pxNrf,
+    CurrN=pxNcr,
+    RefS=pxSrf,
+    CurrS=pxScr)
 #NAM <- as.character(tax[spp, "English_Name"])
 write.csv(km, row.names=FALSE,
     paste0("e:/peter/sppweb2015/birds-pred/", paste0(as.character(tax[spp, "file"]), ".csv")))
@@ -140,13 +152,16 @@ q <- 0.99
 H <- 1000 
 W <- 600
 
+#SPP <- union(fln, fls)
+SPP <- fln
+
 #spp <- "CAWA"
 for (spp in SPP) {
     km <- read.csv(paste0("e:/peter/sppweb2015/birds-pred/", 
         paste0(as.character(tax[spp, "file"]), ".csv")))
 
-    cr <- km$Curr
-    rf <- km$Ref
+    cr <- km$CurrN
+    rf <- km$RefN
     qcr <- quantile(cr, q)
     cr[cr>qcr] <- qcr
     qrf <- quantile(rf, q)
@@ -176,6 +191,8 @@ for (spp in SPP) {
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
     with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
         points(X, Y, col=CE, pch=15, cex=cex))
+    with(kgrid[kgrid$NRNAME == "Grassland",], 
+        points(X, Y, col=CE, pch=15, cex=cex))
     mtext(side=3,paste(NAM, "\nReference abundance"),col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
@@ -191,6 +208,8 @@ for (spp in SPP) {
     plot(kgrid$X, kgrid$Y, col=C1[cr], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
     with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+        points(X, Y, col=CE, pch=15, cex=cex))
+    with(kgrid[kgrid$NRNAME == "Grassland",], 
         points(X, Y, col=CE, pch=15, cex=cex))
     mtext(side=3,paste(NAM, "\nCurrent abundance"),col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
@@ -208,6 +227,8 @@ for (spp in SPP) {
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
     with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
         points(X, Y, col=CE, pch=15, cex=cex))
+    with(kgrid[kgrid$NRNAME == "Grassland",], 
+        points(X, Y, col=CE, pch=15, cex=cex))
     mtext(side=3,paste(NAM, "\nDifference"),col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
@@ -216,15 +237,69 @@ for (spp in SPP) {
     dev.off()
 }
 
-OK * save csv
-OK * ??? fix PUMA
-* plot from csv
-* sector effects
-* sector effects table
-* regional abund
-* habitat based table -- with upland/lowland
-* create guild classification
-* check how guild figures are made (reuse Dave code)
-* produce old forest guild figures
-* CoV map from Boot (lastly)
+## sector effect
+
+ch2veg <- t(sapply(strsplit(colnames(trVeg), "->"), 
+    function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
+ch2veg <- data.frame(ch2veg)
+colnames(ch2veg) <- c("rf","cr")
+rownames(ch2veg) <- colnames(Aveg)
+
+ch2soil <- t(sapply(strsplit(colnames(trSoil), "->"), 
+    function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
+ch2soil <- data.frame(ch2soil)
+colnames(ch2soil) <- c("rf","cr")
+rownames(ch2soil) <- colnames(Asoil)
+
+lxn <- nonDuplicated(kgrid[,c("LUF_NAME","NRNAME","NSRNAME")], kgrid$LUFxNSR, TRUE)
+lxn$N <- lxn$NRNAME != "Grassland" & lxn$NRNAME != "Rocky Mountain" &
+    lxn$NRNAME != "Parkland" & lxn$NSRNAME != "Dry Mixedwood"
+lxn$S <- lxn$NRNAME == "Grassland" | lxn$NRNAME == "Parkland" |
+    lxn$NSRNAME == "Dry Mixedwood"
+table(lxn$NRNAME, lxn$N)
+table(lxn$NRNAME, lxn$S)
+lxn <- lxn[regs,]
+all(rownames(Aveg) == regs)
+all(rownames(Asoil) == regs)
+AvegN <- colSums(Aveg[lxn$N,])
+AvegN <- AvegN / sum(AvegN)
+AsoilS <- colSums(Asoil[lxn$S,])
+AsoilS <- AsoilS / sum(AsoilS)
+
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
+tv <- droplevels(tv[!is.na(tv$Sector),])
+ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
+ts <- droplevels(ts[!is.na(ts$Sector),])
+
+for (spp in fln) {
+
+cat(spp, "\n");flush.console()
+
+load(file.path(OUTDIR1, spp, paste0(regs[1], ".Rdata")))
+hbNcr <- hbNcr1[,1]
+hbNrf <- hbNrf1[,1]
+for (i in 2:length(regs)) {
+    cat(spp, regs[i], "\n");flush.console()
+    load(file.path(OUTDIR1, spp, paste0(regs[i], ".Rdata")))
+    hbNcr <- rbind(hbNcr, hbNcr1[,1])
+    hbNrf <- rbind(hbNrf, hbNrf1[,1])
+}
+dimnames(hbNcr) <- dimnames(hbNrf) <- list(regs, colnames(Aveg))
+hbNcr[is.na(hbNcr)] <- 0
+hbNrf[is.na(hbNrf)] <- 0
+hbNcr <- hbNcr * Aveg
+hbNrf <- hbNrf * Aveg
+ThbNcr <- colSums(hbNcr[lxn$N,])
+ThbNrf <- colSums(hbNrf[lxn$N,])
+df <- (ThbNcr - ThbNrf) / sum(ThbNrf)
+dA <- Xtab(AvegN ~ rf + cr, ch2veg)
+dN <- Xtab(df ~ rf + cr, ch2veg)
+dA <- colSums(as.matrix(groupSums(dA[,rownames(tv)], 2, tv$Sector)))
+dN <- colSums(as.matrix(groupSums(dN[,rownames(tv)], 2, tv$Sector)))
+U <- dN/dA
+seff <- cbind(dA=dA, dN=dN, U=U)[-1,]
+#(sum(hbNcr)-sum(hbNrf))/sum(hbNrf)
+
+}
+
 

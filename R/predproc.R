@@ -1,8 +1,17 @@
 library(mefa4)
 
+shf <- TRUE
+
 ROOT <- "c:/p/AB_data_v2015"
-OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-1/"
-OUTDIRB <- "e:/peter/sppweb2015/birds-pred-B/"
+
+## surrounding hf
+if (shf) {
+    OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-shf-1/"
+    OUTDIRB <- "e:/peter/sppweb2015/birds-pred-shf-B/"
+} else {
+    OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-1/"
+    OUTDIRB <- "e:/peter/sppweb2015/birds-pred-B/"
+}
 
 load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
 load(file.path(ROOT, "out", "kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata"))
@@ -201,24 +210,38 @@ if (!doB)
 BMAX
 
 #spp <- "BTNW"
-SPP <- union(fln, fls)
+#SPP <- union(fln, fls)
+SPP <- c("ALFL","BTNW","CAWA","OVEN","OSFL")
 for (spp in SPP) { # species START
 
 cat("\n\n---", spp, which(spp==SPP), "/", length(SPP), "---\n")
 
+STAGE <- list(
+    veg =length(modsn) - ifelse(shf, 1, 2), 
+    soil=length(modss) - ifelse(shf, 1, 2))
+
 resn <- loadSPP(file.path(ROOT, "out", "birds", "results", 
     paste0("birds_abmi-north_", spp, ".Rdata")))
-estn <- suppressWarnings(getEst(resn, stage=length(modsn)-2, na.out=FALSE, Xnn))
+estn <- suppressWarnings(getEst(resn, stage=STAGE$veg, na.out=FALSE, Xnn))
 ress <- loadSPP(file.path(ROOT, "out", "birds", "results", 
     paste0("birds_abmi-south_", spp, ".Rdata")))
-ests <- suppressWarnings(getEst(ress, stage=length(modss)-2, na.out=FALSE, Xns))
+ests <- suppressWarnings(getEst(ress, stage=STAGE$soil, na.out=FALSE, Xns))
 
 NSest <- c(north=!is.null(resn), south=!is.null(ress))
 
-estn <- if (is.null(resn))
-    estn[rep(1, BMAX),,drop=FALSE] else estn[1:BMAX,,drop=FALSE]
-ests <- if (is.null(ress))
-    ests[rep(1, BMAX),,drop=FALSE] else ests[1:BMAX,,drop=FALSE]
+
+if (spp == "PUMA") {
+    estn <- if (is.null(resn))
+        estn[rep(1, BMAX),,drop=FALSE] else estn[1:BMAX+1,,drop=FALSE]
+    ests <- if (is.null(ress))
+        ests[rep(1, BMAX),,drop=FALSE] else ests[1:BMAX+1,,drop=FALSE]
+} else {
+    estn <- if (is.null(resn))
+        estn[rep(1, BMAX),,drop=FALSE] else estn[1:BMAX,,drop=FALSE]
+    ests <- if (is.null(ress))
+        ests[rep(1, BMAX),,drop=FALSE] else ests[1:BMAX,,drop=FALSE]
+}
+
 
 #regi <- "LowerPeace_LowerBorealHighlands"
 #date()
@@ -237,8 +260,8 @@ Xclim <- model.matrix(fclim, kgrid[ii,,drop=FALSE])
 colnames(Xclim) <- fixNames(colnames(Xclim))
 XclimB <- model.matrix(fclim, kgrid[iib,,drop=FALSE])
 colnames(XclimB) <- fixNames(colnames(XclimB))
-estnClim <- estn[,colnames(Xclim)]
-estsClim <- ests[,colnames(Xclim)]
+estnClim <- estn[,colnames(Xclim),drop=FALSE]
+estsClim <- ests[,colnames(Xclim),drop=FALSE]
 ## north
 logPNclim1 <- Xclim %*% estnClim[1,]
 logPNclimB <- apply(estnClim, 1, function(z) XclimB %*% z)
@@ -246,8 +269,8 @@ logPNclimB <- apply(estnClim, 1, function(z) XclimB %*% z)
 logPSclim1 <- Xclim %*% estsClim[1,]
 logPSclimB <- apply(estsClim, 1, function(z) XclimB %*% z)
 
-estnHab <- estn[,colnames(XNhab)]
-estsHab <- ests[,colnames(XShab)]
+estnHab <- estn[,colnames(XNhab),drop=FALSE]
+estsHab <- ests[,colnames(XShab),drop=FALSE]
 ## north
 logPNhab1 <- XNhab %*% estnHab[1,]
 logPNhabB <- apply(estnHab, 1, function(z) XNhab %*% z)
@@ -288,6 +311,7 @@ hbSrf1 <- matrix(0, nrow(ch2soil), 1)
 hbScrB <- matrix(0, nrow(ch2soil), BMAX)
 hbSrfB <- matrix(0, nrow(ch2soil), BMAX)
 
+estAsp <- ests[,"pAspen"]
 ## pAspen and pSoil is needed for combo
 pAspen1 <- kgrid$pAspen[ii]
 pAspenB <- kgrid$pAspen[iib]
@@ -332,6 +356,10 @@ if (!doB) {
         D_hab_rf[ch2soil$rf_zero] <- 0
     AD_cr <- t(D_hab_cr * t(Asoil1)) * exp(logPSclim1[,j])
     AD_rf <- t(D_hab_rf * t(Asoil1)) * exp(logPSclim1[,j])
+    ## pAspen based weighted average
+    Asp <- exp(estAsp[j] * pAspen1)
+    AD_cr <- pAspen1 * (Asp * AD_cr) + (1-pAspen1) * AD_cr
+    AD_rf <- pAspen1 * (Asp * AD_rf) + (1-pAspen1) * AD_rf
     pxScr1[,j] <- rowSums(AD_cr)
     pxSrf1[,j] <- rowSums(AD_rf)
     hbScr1[,j] <- colSums(AD_cr) / colSums(Asoil1)
@@ -373,6 +401,10 @@ if (doB) {
             D_hab_rf[ch2soil$rf_zero] <- 0
         AD_cr <- t(D_hab_cr * t(AsoilB)) * exp(logPSclimB[,j])
         AD_rf <- t(D_hab_rf * t(AsoilB)) * exp(logPSclimB[,j])
+        ## pAspen based weighted average
+        Asp <- exp(estAsp[j] * pAspenB)
+        AD_cr <- pAspenB * (Asp * AD_cr) + (1-pAspenB) * AD_cr
+        AD_rf <- pAspenB * (Asp * AD_rf) + (1-pAspenB) * AD_rf
         pxScrB[,j] <- rowSums(AD_cr)
         pxSrfB[,j] <- rowSums(AD_rf)
         hbScrB[,j] <- colSums(AD_cr) / colSums(AsoilB)

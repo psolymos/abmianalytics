@@ -47,14 +47,17 @@ en <- new.env()
 load(file.path(ROOT, "data", "data-useok-north.Rdata"), envir=en)
 xnn <- en$DAT
 modsn <- en$mods
-yyn <- en$YY
+yyn0 <- en$YY
 
 es <- new.env()
 load(file.path(ROOT, "data", "data-useok-south.Rdata"), envir=es)
 xns <- es$DAT
 modss <- es$mods
-yys <- es$YY
+yys0 <- es$YY
 rm(e, en, es)
+
+yyn <- yy[rownames(yyn0),]
+yys <- yy[rownames(yys0),]
 
 ## model for species
 fl <- list.files(file.path(ROOT, "results"))
@@ -68,8 +71,10 @@ fls <- sub(".Rdata", "", fls)
 tax$ndet <- colSums(yy>0)
 tax$modelN <- rownames(tax) %in% fln
 tax$modelS <- rownames(tax) %in% fls
-tax$ndet_n <- colSums(yyn>0)[match(colnames(yy), colnames(yyn))]
-tax$ndet_s <- colSums(yys>0)[match(colnames(yy), colnames(yys))]
+#tax$ndet_n <- colSums(yyn>0)[match(colnames(yy), colnames(yyn))]
+#tax$ndet_s <- colSums(yys>0)[match(colnames(yy), colnames(yys))]
+tax$ndet_n <- colSums(yyn>0)[match(rownames(tax), colnames(yyn))]
+tax$ndet_s <- colSums(yys>0)[match(rownames(tax), colnames(yys))]
 tax$ndet_n[is.na(tax$ndet_n)] <- 0
 tax$ndet_s[is.na(tax$ndet_s)] <- 0
 
@@ -92,7 +97,8 @@ stage_hab_n <- 5
 stage_hab_s <- 2
 
 ## tax placeholders for all the output
-tax$map_det <- (tax$ndet_n + tax$ndet_s) > 0
+tax$ndet_ns <- pmax(tax$ndet_n, tax$ndet_s)
+tax$map_det <- tax$ndet_ns > 0
 tax$useavail_north <- tax$ndet_n > 3
 tax$useavail_south <- tax$ndet_s > 3
 tax$trend_north <- tax$modelN
@@ -114,14 +120,14 @@ tax <- droplevels(tax[colnames(yy),])
 slt <- data.frame(sppid=tax$file,
     species=tax$English_Name,
     scinam=tax$Scientific_Name,
-    tax[,c("ndet","modelN","modelS","ndet_n","ndet_s")],
+    tax[,c("ndet","modelN","modelS","ndet_n","ndet_s", "ndet_ns")],
     map.det=tax$map_det,
     map.pred=tax$modelN | tax$modelS,
     useavail.north=tax$useavail_north & !tax$modelN,
     useavail.south=tax$useavail_south & !tax$modelS,
     veghf.north=tax$modelN,
     soilhf.south=tax$modelS)
-slt <- slt[str$map.det,]
+slt <- slt[slt$map.det,]
 write.csv(slt, row.names=FALSE, file="~/repos/abmispecies/_data/birds.csv")    
 
 ## spp specific output
