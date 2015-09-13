@@ -1,6 +1,13 @@
 library(mefa4)
 
-shf <- TRUE
+shf <- FALSE
+doB <- TRUE
+
+PROP <- 10
+BMAX <- 100
+if (!doB)
+    BMAX <- 1
+BMAX
 
 ROOT <- "c:/p/AB_data_v2015"
 
@@ -162,6 +169,10 @@ ch2veg$SoftLin <- ch2veg$cr %in% c("SeismicLine","TransmissionLine","Pipeline")
 ch2veg$VegetatedLinear <- ch2veg$cr %in% c("RailVegetatedVerge",
     "RoadTrailVegetated","RoadVegetatedVerge",
     "SeismicLine","TransmissionLine","Pipeline")
+ch2veg$EarlySeralLinear <- ch2veg$cr %in% c("RailVegetatedVerge",
+    "RoadTrailVegetated","RoadVegetatedVerge",
+    "TransmissionLine","Pipeline")
+ch2veg$CutLine <- ch2veg$cr == "SeismicLine"
 
 ch2soil <- t(sapply(strsplit(colnames(trSoil), "->"), 
     function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
@@ -181,6 +192,10 @@ ch2soil$SoftLin <- ch2soil$cr %in% c("SeismicLine","TransmissionLine","Pipeline"
 ch2soil$VegetatedLinear <- ch2soil$cr %in% c("RailVegetatedVerge",
     "RoadTrailVegetated","RoadVegetatedVerge",
     "SeismicLine","TransmissionLine","Pipeline")
+ch2soil$EarlySeralLinear <- ch2soil$cr %in% c("RailVegetatedVerge",
+    "RoadTrailVegetated","RoadVegetatedVerge",
+    "TransmissionLine","Pipeline")
+ch2soil$CutLine <- ch2soil$cr == "SeismicLine"
 
 XNhab <- as.matrix(read.csv("~/repos/abmianalytics/lookup/xn-veg.csv"))
 colnames(XNhab) <- gsub("\\.", ":", colnames(XNhab))
@@ -201,18 +216,9 @@ setdiff(ch2soil$cr, rownames(XShab))
 setdiff(cnsHab, colnames(XShab))
 
 
-PROP <- 10
-BMAX <- 100
-
-doB <- FALSE
-
-if (!doB)
-    BMAX <- 1
-BMAX
-
 #spp <- "BTNW"
-#SPP <- union(fln, fls)
-SPP <- c("ALFL","BTNW","CAWA","OVEN","OSFL")
+SPP <- union(fln, fls)
+#SPP <- c("ALFL","BTNW","CAWA","OVEN","OSFL")
 for (spp in SPP) { # species START
 
 cat("\n\n---", spp, which(spp==SPP), "/", length(SPP), "---\n")
@@ -288,11 +294,15 @@ estsHab <- ests[,colnames(XShab),drop=FALSE]
 ## north
 logPNhab1 <- XNhab %*% estnHab[1,]
 logPNhabB <- apply(estnHab, 1, function(z) XNhab %*% z)
+rownames(logPNhabB) <- rownames(logPNhab1)
 logPNhab_es1 <- XNhab_es %*% estnHab[1,]
 logPNhab_esB <- apply(estnHab, 1, function(z) XNhab_es %*% z)
+rownames(logPNhab_esB) <- rownames(logPNhab_es1)
 ## south
 logPShab1 <- XShab %*% estsHab[1,]
 logPShabB <- apply(estsHab, 1, function(z) XShab %*% z)
+rownames(logPShabB) <- rownames(logPShab1)
+
 
 Aveg1 <- trVeg[rownames(kgrid)[ii],,drop=FALSE]
 Aveg1 <- Aveg1 / rowSums(Aveg1)
@@ -340,9 +350,11 @@ if (!doB) {
     j <- 1
     ## North
     D_hab_cr <- exp(logPNhab1[match(ch2veg$cr, rownames(logPNhab1)),j])
-    if (any(ch2veg$VegetatedLinear))
-        D_hab_cr[ch2veg$VegetatedLinear] <- exp(logPNhab_es1[match(ch2veg$rf, 
-            rownames(logPNhab_es1)),j][ch2veg$VegetatedLinear])
+    ## vegetated linear (not cutline) treated as early seral
+    if (any(ch2veg$EarlySeralLinear))
+        D_hab_cr[ch2veg$EarlySeralLinear] <- exp(logPNhab_es1[match(ch2veg$rf, 
+            rownames(logPNhab_es1)),j][ch2veg$EarlySeralLinear])
+    ## 0 density where either cr or rf hab is water or hard linear surface
     if (any(ch2veg$cr_zero))
         D_hab_cr[ch2veg$cr_zero] <- 0
     if (any(ch2veg$rf_zero))
@@ -350,6 +362,9 @@ if (!doB) {
     D_hab_rf <- exp(logPNhab1[match(ch2veg$rf, rownames(logPNhab1)),j])
     if (any(ch2veg$rf_zero))
         D_hab_rf[ch2veg$rf_zero] <- 0
+    ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption)
+    if (any(ch2veg$CutLine))
+        D_hab_cr[ch2veg$CutLine] <- D_hab_rf[ch2veg$CutLine]
     AD_cr <- t(D_hab_cr * t(Aveg1)) * exp(logPNclim1[,j])
     AD_rf <- t(D_hab_rf * t(Aveg1)) * exp(logPNclim01[,j])
     pxNcr1[,j] <- rowSums(AD_cr)
@@ -358,9 +373,10 @@ if (!doB) {
     hbNrf1[,j] <- colSums(AD_rf) / colSums(Aveg1)
     ## South
     D_hab_cr <- exp(logPShab1[match(ch2soil$cr, rownames(logPShab1)),j])
-    if (any(ch2soil$VegetatedLinear))
-        D_hab_cr[ch2soil$VegetatedLinear] <- exp(logPShab1[match(ch2soil$rf, 
-            rownames(logPShab1)),j][ch2soil$VegetatedLinear])
+    ## vegetated linear (not cutline) treated as early seral
+    if (any(ch2soil$EarlySeralLinear))
+        D_hab_cr[ch2soil$EarlySeralLinear] <- exp(logPShab1[match(ch2soil$rf, 
+            rownames(logPShab1)),j][ch2soil$EarlySeralLinear])
     if (any(ch2soil$cr_zero))
         D_hab_cr[ch2soil$cr_zero] <- 0
     if (any(ch2soil$rf_zero))
@@ -368,6 +384,9 @@ if (!doB) {
     D_hab_rf <- exp(logPShab1[match(ch2soil$rf, rownames(logPShab1)),j])
     if (any(ch2soil$rf_zero))
         D_hab_rf[ch2soil$rf_zero] <- 0
+    ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption)
+    if (any(ch2soil$CutLine))
+        D_hab_cr[ch2soil$CutLine] <- D_hab_rf[ch2soil$CutLine]
     AD_cr <- t(D_hab_cr * t(Asoil1)) * exp(logPSclim1[,j])
     AD_rf <- t(D_hab_rf * t(Asoil1)) * exp(logPSclim01[,j])
     ## pAspen based weighted average
@@ -385,9 +404,10 @@ if (doB) {
     for (j in 1:BMAX) {
         ## North
         D_hab_cr <- exp(logPNhabB[match(ch2veg$cr, rownames(logPNhabB)),j])
-        if (any(ch2veg$VegetatedLinear))
-            D_hab_cr[ch2veg$VegetatedLinear] <- exp(logPNhab_esB[match(ch2veg$rf, 
-                rownames(logPNhab_esB)),j][ch2veg$VegetatedLinear])
+        ## vegetated linear (not cutline) treated as early seral
+        if (any(ch2soil$EarlySeralLinear))
+            D_hab_cr[ch2veg$EarlySeralLinear] <- exp(logPNhab_esB[match(ch2veg$rf, 
+                rownames(logPNhab_esB)),j][ch2veg$EarlySeralLinear])
         if (any(ch2veg$cr_zero))
             D_hab_cr[ch2veg$cr_zero] <- 0
         if (any(ch2veg$rf_zero))
@@ -395,6 +415,9 @@ if (doB) {
         D_hab_rf <- exp(logPNhabB[match(ch2veg$rf, rownames(logPNhabB)),j])
         if (any(ch2veg$rf_zero))
             D_hab_rf[ch2veg$rf_zero] <- 0
+        ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption)
+        if (any(ch2veg$CutLine))
+            D_hab_cr[ch2veg$CutLine] <- D_hab_rf[ch2veg$CutLine]
         AD_cr <- t(D_hab_cr * t(AvegB)) * exp(logPNclimB[,j])
         AD_rf <- t(D_hab_rf * t(AvegB)) * exp(logPNclim0B[,j])
         pxNcrB[,j] <- rowSums(AD_cr)
@@ -403,9 +426,10 @@ if (doB) {
         hbNrfB[,j] <- colSums(AD_rf) / colSums(AvegB)
         ## South
         D_hab_cr <- exp(logPShabB[match(ch2soil$cr, rownames(logPShabB)),j])
-        if (any(ch2soil$VegetatedLinear))
-            D_hab_cr[ch2soil$VegetatedLinear] <- exp(logPShabB[match(ch2soil$rf, 
-                rownames(logPShabB)),j][ch2soil$VegetatedLinear])
+        ## vegetated linear (not cutline) treated as early seral
+        if (any(ch2soil$EarlySeralLinear))
+            D_hab_cr[ch2soil$EarlySeralLinear] <- exp(logPShabB[match(ch2soil$rf, 
+                rownames(logPShabB)),j][ch2soil$EarlySeralLinear])
         if (any(ch2soil$cr_zero))
             D_hab_cr[ch2soil$cr_zero] <- 0
         if (any(ch2soil$rf_zero))
@@ -413,6 +437,9 @@ if (doB) {
         D_hab_rf <- exp(logPShabB[match(ch2soil$rf, rownames(logPShabB)),j])
         if (any(ch2soil$rf_zero))
             D_hab_rf[ch2soil$rf_zero] <- 0
+        ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption)
+        if (any(ch2soil$CutLine))
+            D_hab_cr[ch2soil$CutLine] <- D_hab_rf[ch2soil$CutLine]
         AD_cr <- t(D_hab_cr * t(AsoilB)) * exp(logPSclimB[,j])
         AD_rf <- t(D_hab_rf * t(AsoilB)) * exp(logPSclim0B[,j])
         ## pAspen based weighted average

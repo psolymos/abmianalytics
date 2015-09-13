@@ -127,9 +127,10 @@ slt$soilhf.south <- tax$modelS & tax$ndet_s > 99
 slt$map.pred <- slt$veghf.north | slt$soilhf.south
 slt$useavail.north=tax$useavail_north & !slt$veghf.north
 slt$useavail.south=tax$useavail_south & !slt$soilhf.south
+slt$AOU <- rownames(slt)
 slt <- slt[slt$map.det,]
 
-gl <- read.csv("y:/Oracle_access/guilds/vertebrateGuilds_Feb2-2011_PS.csv")
+gl <- read.csv("~/repos/abmianalytics/lookup/vertebrate-guilds.csv")
 intersect(gl$AOU.Code, rownames(slt))
 slt[setdiff(rownames(slt), gl$AOU.Code),1:3]
 
