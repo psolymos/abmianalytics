@@ -61,7 +61,7 @@ all(rownames(kgrid) == rownames(dd1km_pred$veg_current))
 
 ## surrounding HF at 1km scale
 kgrid$THF_KM <- rowSums(dd1km_pred$veg_current[,setdiff(colnames(dd1km_pred$veg_current), 
-    colnames(dd1km_pred$veg_reference))])
+    colnames(dd1km_pred$veg_reference))]) / rowSums(dd1km_pred$veg_current)
 kgrid$Lin_KM <- rowSums(dd1km_pred$veg_current[,c("SeismicLine","TransmissionLine","Pipeline",
     "RailHardSurface", "RailVegetatedVerge","RoadHardSurface","RoadTrailVegetated",
     "RoadVegetatedVerge")]) / rowSums(dd1km_pred$veg_current)
@@ -173,6 +173,12 @@ ch2veg$EarlySeralLinear <- ch2veg$cr %in% c("RailVegetatedVerge",
     "RoadTrailVegetated","RoadVegetatedVerge",
     "TransmissionLine","Pipeline")
 ch2veg$CutLine <- ch2veg$cr == "SeismicLine"
+ch2veg$exclude <- ch2veg$cr %in% c("Water",
+    "Conif0", "Decid0", "Mixwood0", "Pine0", "BSpr0", "Larch0", 
+    "CCConif0", "CCDecid0", "CCMixwood0", "CCPine0")
+ch2veg$exclude[ch2veg$rf %in% c("Water",
+    "Conif0", "Decid0", "Mixwood0", "Pine0", "BSpr0", "Larch0", 
+    "CCConif0", "CCDecid0", "CCMixwood0", "CCPine0")] <- TRUE
 
 ch2soil <- t(sapply(strsplit(colnames(trSoil), "->"), 
     function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
@@ -180,8 +186,10 @@ ch2soil <- data.frame(ch2soil)
 colnames(ch2soil) <- c("rf","cr")
 rownames(ch2soil) <- colnames(trSoil)
 ## strata where abundance is assumed to be 0
-ch2soil$rf_zero <- ch2soil$rf %in% c("NonVeg","Water")
+ch2soil$rf_zero <- ch2soil$rf %in% c("NonVeg","Water",
+    "SoilWater","SoilWetland","SoilUnknown")
 ch2soil$cr_zero <- ch2soil$cr %in% c("NonVeg","Water",
+    "SoilWater","SoilWetland","SoilUnknown","CutBlocks",
     "BorrowpitsDugoutsSumps","MunicipalWaterSewage","Reservoirs","Canals",
     "RailHardSurface","RoadHardSurface",
     "MineSite", "PeatMine")
@@ -196,6 +204,12 @@ ch2soil$EarlySeralLinear <- ch2soil$cr %in% c("RailVegetatedVerge",
     "RoadTrailVegetated","RoadVegetatedVerge",
     "TransmissionLine","Pipeline")
 ch2soil$CutLine <- ch2soil$cr == "SeismicLine"
+ch2soil$exclude <- ch2soil$cr %in% c("SoilWater","SoilUnknown",
+    "Conif0", "Decid0", "Mixwood0", "Pine0", "BSpr0", "Larch0", 
+    "CCConif0", "CCDecid0", "CCMixwood0", "CCPine0")
+ch2soil$exclude[ch2soil$rf %in% c("SoilWater","SoilUnknown",
+    "Conif0", "Decid0", "Mixwood0", "Pine0", "BSpr0", "Larch0", 
+    "CCConif0", "CCDecid0", "CCMixwood0", "CCPine0")] <- TRUE
 
 XNhab <- as.matrix(read.csv("~/repos/abmianalytics/lookup/xn-veg.csv"))
 colnames(XNhab) <- gsub("\\.", ":", colnames(XNhab))
@@ -217,8 +231,8 @@ setdiff(cnsHab, colnames(XShab))
 
 
 #spp <- "BTNW"
-SPP <- union(fln, fls)
-#SPP <- c("ALFL","BTNW","CAWA","OVEN","OSFL")
+#SPP <- union(fln, fls)
+SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL")
 for (spp in SPP) { # species START
 
 cat("\n\n---", spp, which(spp==SPP), "/", length(SPP), "---\n")
@@ -229,9 +243,9 @@ STAGE <- list(
 
 resn <- loadSPP(file.path(ROOT, "out", "birds", "results", 
     paste0("birds_abmi-north_", spp, ".Rdata")))
-estn <- suppressWarnings(getEst(resn, stage=STAGE$veg, na.out=FALSE, Xnn))
 ress <- loadSPP(file.path(ROOT, "out", "birds", "results", 
     paste0("birds_abmi-south_", spp, ".Rdata")))
+estn <- suppressWarnings(getEst(resn, stage=STAGE$veg, na.out=FALSE, Xnn))
 ests <- suppressWarnings(getEst(ress, stage=STAGE$soil, na.out=FALSE, Xns))
 
 NSest <- c(north=!is.null(resn), south=!is.null(ress))
@@ -250,7 +264,7 @@ if (spp == "PUMA") {
 }
 
 
-#regi <- "LowerPeace_LowerBorealHighlands"
+#regi <- "LowerAthabasca_CentralMixedwood"
 #date()
 for (regi in regs) { # regions START
 
@@ -260,6 +274,10 @@ flush.console()
 gc()
 
 load(file.path(ROOT, "out", "transitions", paste0(regi,".Rdata")))
+
+
+#ks <- kgrid[rownames(trVeg),]
+#with(ks, plot(X,Y))
 
 ii <- kgrid$LUFxNSR == regi
 iib <- ii & kgrid$Rnd10 <= PROP
@@ -305,14 +323,27 @@ rownames(logPShabB) <- rownames(logPShab1)
 
 
 Aveg1 <- trVeg[rownames(kgrid)[ii],,drop=FALSE]
-Aveg1 <- Aveg1 / rowSums(Aveg1)
+Aveg1[,ch2veg$exclude] <- 0
+rs <- rowSums(Aveg1)
+rs[rs <= 0] <- 1
+Aveg1 <- Aveg1 / rs
 AvegB <- trVeg[rownames(kgrid)[iib],,drop=FALSE]
-AvegB <- AvegB / rowSums(AvegB)
+AvegB[,ch2veg$exclude] <- 0
+rs <- rowSums(AvegB)
+rs[rs <= 0] <- 1
+AvegB <- AvegB / rs
 
 Asoil1 <- trSoil[rownames(kgrid)[ii],,drop=FALSE]
-Asoil1 <- Asoil1 / rowSums(Asoil1)
+Asoil1[,ch2soil$exclude] <- 0
+rs <- rowSums(Asoil1)
+rs[rs <= 0] <- 1
+Asoil1 <- Asoil1 / rs
 AsoilB <- trSoil[rownames(kgrid)[iib],,drop=FALSE]
-AsoilB <- AsoilB / rowSums(AsoilB)
+AsoilB[,ch2soil$exclude] <- 0
+rs <- rowSums(AsoilB)
+rs[rs <= 0] <- 1
+AsoilB <- AsoilB / rs
+
 
 ## pixel level results, North
 pxNcr1 <- matrix(0, nrow(logPNclim1), 1)
@@ -365,6 +396,12 @@ if (!doB) {
     ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption)
     if (any(ch2veg$CutLine))
         D_hab_cr[ch2veg$CutLine] <- D_hab_rf[ch2veg$CutLine]
+
+ #   if (any(ch2veg$exclude)) {
+ #       D_hab_cr[ch2veg$exclude] <- 0
+ #       D_hab_rf[ch2veg$exclude] <- 0
+ #   }
+
     AD_cr <- t(D_hab_cr * t(Aveg1)) * exp(logPNclim1[,j])
     AD_rf <- t(D_hab_rf * t(Aveg1)) * exp(logPNclim01[,j])
     pxNcr1[,j] <- rowSums(AD_cr)
@@ -454,7 +491,7 @@ if (doB) {
 }
 
 TIME <- proc.time() - t0
-if (!doB) {
+if (TRUE) {
     if (!dir.exists(file.path(OUTDIR1, spp)))
         dir.create(file.path(OUTDIR1, spp))
     save(TIME, NSest,

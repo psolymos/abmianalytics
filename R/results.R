@@ -311,6 +311,17 @@ vhf2 <- data.frame(tax[rownames(vhf), c("English_Name","Scientific_Name")],
     vhf)
 write.csv(vhf2, file=file.path(ROOT, "figs", "veghf-north.csv"))
 
+SPP <- rownames(slt)[slt$veghf.north]
+
+vhf2 <- read.csv(file.path(ROOT, "figs", "birds-veghf-north.csv"))
+rownames(vhf2) <- vhf2$X
+vhf2 <- vhf2[,-(1:3)]
+
+excl <- c(grep(".LCL", colnames(vhf2)), grep(".UCL", colnames(vhf2)))
+vhf2 <- as.matrix(vhf2[,-excl])
+Max <- apply(vhf2[,1:(ncol(vhf2)-2)], 1, max)
+vhf2 <- vhf2 / Max
+vhf2[vhf2[,"HardLinear"] > 5,"HardLinear"] <- 5
 
 ## soilhf-treed-south
 ## soilhf-nontreed-south

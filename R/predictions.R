@@ -221,7 +221,7 @@ km <- data.frame(LinkID=kgrid$Row_Col,
     range(df)
 
     NAM <- as.character(tax[spp, "English_Name"])
-    TAG <- ""
+    TAG <- "-fixed"
     
     cat("\n")
     cat(spp, "\t");flush.console()
@@ -459,53 +459,67 @@ dev.off()
 ks <- kgrid[kgrid$Rnd10 <= 10,]
 xy10 <- groupMeans(as.matrix(kgrid[,c("X","Y")]), 1, kgrid$Row10_Col10)
 
-load(file.path(OUTDIRB, spp, paste0(regs[1], ".Rdata")))
-rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells)[Cells == 1]
-rownames(pxScrB) <- rownames(pxSrfB) <- names(Cells)[Cells == 1]
-pxNcr <- pxNcrB
-pxNrf <- pxNrfB
-pxScr <- pxScrB
-pxSrf <- pxSrfB
-for (i in 2:length(regs)) {
-    cat(spp, regs[i], "\n");flush.console()
-    load(file.path(OUTDIRB, spp, paste0(regs[i], ".Rdata")))
-    rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells)[Cells == 1]
-    rownames(pxScrB) <- rownames(pxSrfB) <- names(Cells)[Cells == 1]
-    pxNcr <- rbind(pxNcr, pxNcrB)
-#    pxNrf <- rbind(pxNrf, pxNrfB)
-    pxScr <- rbind(pxScr, pxScrB)
-#    pxSrf <- rbind(pxSrf, pxSrfB)
-}
-
-pxNcr <- pxNcr[rownames(ks),]
-#pxNrf <- pxNrf[rownames(ks),]
-pxScr <- pxScr[rownames(ks),]
-#pxSrf <- pxSrf[rownames(ks),]
-
-crveg <- groupMeans(pxNcr, 1, ks$Row10_Col10)
-crvegm <- rowMeans(crveg)
-crvegsd <- apply(crveg, 1, sd)
-covN <- crvegsd / crvegm
-covN[is.na(covN)] <- 1
-
-crsoil <- groupMeans(pxScr, 1, ks$Row10_Col10)
-crsoilm <- rowMeans(crsoil)
-crsoilsd <- apply(crsoil, 1, sd)
-covS <- crsoilsd / crsoilm
-covS[is.na(covS)] <- 1
-
-
-
 library(RColorBrewer)
 br <- c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, Inf)
 Col <- rev(brewer.pal(10, "RdYlGn"))
 
-NAM <- as.character(tax[spp, "English_Name"])
+for (spp in as.character(slt$AOU[slt$map.pred])) {
+
+    load(file.path(OUTDIRB, spp, paste0(regs[1], ".Rdata")))
+    rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells)[Cells == 1]
+    rownames(pxScrB) <- rownames(pxSrfB) <- names(Cells)[Cells == 1]
+    pxNcr0 <- pxNcrB
+    #pxNrf0 <- pxNrfB
+    pxScr0 <- pxScrB
+    #pxSrf0 <- pxSrfB
+    for (i in 2:length(regs)) {
+        cat(spp, regs[i], "\n");flush.console()
+        load(file.path(OUTDIRB, spp, paste0(regs[i], ".Rdata")))
+        rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells)[Cells == 1]
+        rownames(pxScrB) <- rownames(pxSrfB) <- names(Cells)[Cells == 1]
+        pxNcr0 <- rbind(pxNcr0, pxNcrB)
+    #    pxNrf0 <- rbind(pxNrf0, pxNrfB)
+        pxScr0 <- rbind(pxScr0, pxScrB)
+    #    pxSrf0 <- rbind(pxSrf0, pxSrfB)
+    }
+
+    pxNcr <- pxNcr0[rownames(ks),]
+    #pxNrf <- pxNrf0[rownames(ks),]
+    pxScr <- pxScr0[rownames(ks),]
+    #pxSrf <- pxSrf0[rownames(ks),]
+    for (k in 1:ncol(pxNcr)) {
+        qN <- quantile(pxNcr[,k], q, na.rm=TRUE)
+        pxNcr[pxNcr[,k] > qN,k] <- qN
+        qS <- quantile(pxScr[,k], q, na.rm=TRUE)
+        pxScr[pxScr[,k] > qS,k] <- qS
+    }
+
+    crveg <- groupMeans(pxNcr, 1, ks$Row10_Col10)
+    #crvegm <- rowMeans(crveg)
+    #crvegsd <- apply(crveg, 1, sd)
+    crvegm <- apply(crveg, 1, median)
+    crvegsd <- apply(crveg, 1, IQR)
+    covN <- crvegsd / crvegm
+    #covN[is.na(covN)] <- 1
+
+    #crsoil <- groupMeans(pxScr, 1, ks$Row10_Col10)
+    #crsoilm <- rowMeans(crsoil)
+    #crsoilsd <- apply(crsoil, 1, sd)
+    #crsoilm <- apply(crsoil, 1, median)
+    #crsoilsd <- apply(crsoil, 1, IQR)
+    #covS <- crsoilsd / crsoilm
+    #covS[is.na(covS)] <- 1
+
+px <- crveg[order(crvegm),]
+matplot(crvegm[order(crvegm)], crveg, type="l", lty=1)
+
+
+    NAM <- as.character(tax[spp, "English_Name"])
 
     zval <- as.integer(cut(covN, breaks=br))
-    zval <- zval[match(kgrid$Row10_Col10, rownames(crsoil))]
+    zval <- zval[match(kgrid$Row10_Col10, rownames(crveg))]
 
-    cat("df\n");flush.console()
+    cat(spp, "saving CoV map\n\n");flush.console()
     png(paste0("e:/peter/sppweb-html-content/species/birds/map-cov-cr/",
         as.character(tax[spp, "file"]), ".png"),
         width=W, height=H)
@@ -526,35 +540,13 @@ NAM <- as.character(tax[spp, "English_Name"])
     if (any(INF))
         TEXT[length(TEXT)] <- paste0(">", 100*br[length(br)-1])
 
-    TITLE <- "Coefficient of variation"
+    TITLE <- "Coefficient of variation\n(IQR / median)"
     legend("bottomleft", border=rev(Col), fill=rev(Col), bty="n", legend=rev(TEXT),
-                title=TITLE, cex=legcex)
+                title=TITLE, cex=legcex*0.8)
     par(op)
     dev.off()
 
 
-
-png(paste0("e:/peter/sppweb-html-content/species/birds/map-cov-cr/",
-    as.character(tax[spp, "file"]), ".png"),
-    width=W, height=H)
-
-
-
-    op <- par(mar=c(0, 0, 1, 0) + 0.1)
-    #with(kgrid, plot(X, Y, col="grey", pch=15, cex=0.35, ann=FALSE, axes=FALSE))
-    with(kgrid, plot(X, Y, pch=15, cex=4, col=Col[zval]))
-    title(main=NAM, cex.main=2)
-    TEXT <- paste0(br[-length(br)], "-", br[-1])
-    INF <- grepl("Inf", TEXT)
-    if (any(INF))
-        TEXT[length(TEXT)] <- paste0(">", br[length(br)-1])
-    TITLE <- "Coefficient of variation"
-    legend("bottomleft", border=rev(Col), fill=rev(Col), bty="n", legend=rev(TEXT),
-                title=TITLE, cex=legcex)
-    par(op)
-    dev.off()
-
-    invisible(NULL)
 }
 
 
