@@ -231,8 +231,8 @@ setdiff(cnsHab, colnames(XShab))
 
 
 #spp <- "BTNW"
-#SPP <- union(fln, fls)
-SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL")
+SPP <- union(fln, fls)
+#SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL")
 for (spp in SPP) { # species START
 
 cat("\n\n---", spp, which(spp==SPP), "/", length(SPP), "---\n")
@@ -251,17 +251,17 @@ ests <- suppressWarnings(getEst(ress, stage=STAGE$soil, na.out=FALSE, Xns))
 NSest <- c(north=!is.null(resn), south=!is.null(ress))
 
 
-if (spp == "PUMA") {
-    estn <- if (is.null(resn))
-        estn[rep(1, BMAX),,drop=FALSE] else estn[1:BMAX+1,,drop=FALSE]
-    ests <- if (is.null(ress))
-        ests[rep(1, BMAX),,drop=FALSE] else ests[1:BMAX+1,,drop=FALSE]
-} else {
+#if (spp == "PUMA") {
+#    estn <- if (is.null(resn))
+#        estn[rep(1, BMAX),,drop=FALSE] else estn[1:BMAX+1,,drop=FALSE]
+#    ests <- if (is.null(ress))
+#        ests[rep(1, BMAX),,drop=FALSE] else ests[1:BMAX+1,,drop=FALSE]
+#} else {
     estn <- if (is.null(resn))
         estn[rep(1, BMAX),,drop=FALSE] else estn[1:BMAX,,drop=FALSE]
     ests <- if (is.null(ress))
         ests[rep(1, BMAX),,drop=FALSE] else ests[1:BMAX,,drop=FALSE]
-}
+#}
 
 
 #regi <- "LowerAthabasca_CentralMixedwood"
@@ -377,7 +377,7 @@ Cells <- ifelse(iib, 1L, 0L)[ii]
 names(Cells) <- rownames(kgrid)[ii]
 
 ## 1st run
-if (!doB) {
+if (TRUE) {
     j <- 1
     ## North
     D_hab_cr <- exp(logPNhab1[match(ch2veg$cr, rownames(logPNhab1)),j])

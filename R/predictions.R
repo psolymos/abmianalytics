@@ -18,8 +18,8 @@ load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
 #source("~/repos/abmianalytics/R/results_functions.R")
 #source("~/repos/bamanalytics/R/makingsense_functions.R")
 regs <- levels(kgrid$LUFxNSR)
-useN <- !(kgrid$NRNAME %in% c("Grassland", "Parkland") | kgrid$NSRNAME == "Dry Mixedwood")
-useS <- kgrid$NRNAME == "Grassland"
+kgrid$useN <- !(kgrid$NRNAME %in% c("Grassland", "Parkland") | kgrid$NSRNAME == "Dry Mixedwood")
+kgrid$useS <- kgrid$NRNAME == "Grassland"
 
 e <- new.env()
 load(file.path(ROOT, "out", "birds", "data", "data-full-withrevisit.Rdata"), envir=e)
@@ -57,9 +57,86 @@ for (i in 2:length(regs)) {
     rownames(Asoil) <- regs[1:i]
 }
 
-spp <- "ALFL"
 
-for (spp in union(fln, fls)) {
+library(raster)
+library(sp)
+library(rgdal)
+city <-data.frame(x = -c(114,113,112,111,117,118)-c(5,30,49,23,8,48)/60,
+    y = c(51,53,49,56,58,55)+c(3,33,42,44,31,10)/60)
+rownames(city) <- c("Calgary","Edmonton","Lethbridge","Fort McMurray",
+    "High Level","Grande Prairie")
+coordinates(city) <- ~ x + y
+proj4string(city) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+city <- spTransform(city, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))
+city <- as.data.frame(city)
+
+cex <- 0.25
+legcex <- 1.5
+
+Col1 <- rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8","#91BFDB","#4575B4"))  # Colour gradient for reference and current
+Col1fun <- colorRampPalette(Col1, space = "rgb") # Function to interpolate among these colours for reference and current
+C1 <- Col1fun(100)
+Col2 <- c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0","#A1D76A","#4D9221")  # Colour gradient for difference map
+Col2fun <- colorRampPalette(Col2, space = "rgb") # Function to interpolate among these colours for difference map
+C2 <- Col2fun(200)
+CW <- rgb(0.4,0.3,0.8) # water
+CE <- "lightcyan4" # exclude
+
+q <- 0.99
+H <- 1000 
+W <- 600
+
+
+## sector effect
+
+ch2veg <- t(sapply(strsplit(colnames(trVeg), "->"), 
+    function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
+ch2veg <- data.frame(ch2veg)
+colnames(ch2veg) <- c("rf","cr")
+rownames(ch2veg) <- colnames(Aveg)
+
+ch2soil <- t(sapply(strsplit(colnames(trSoil), "->"), 
+    function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
+ch2soil <- data.frame(ch2soil)
+colnames(ch2soil) <- c("rf","cr")
+rownames(ch2soil) <- colnames(Asoil)
+
+lxn <- nonDuplicated(kgrid[,c("LUF_NAME","NRNAME","NSRNAME")], kgrid$LUFxNSR, TRUE)
+lxn$N <- lxn$NRNAME != "Grassland" & lxn$NRNAME != "Rocky Mountain" &
+    lxn$NRNAME != "Parkland" & lxn$NSRNAME != "Dry Mixedwood"
+lxn$S <- lxn$NRNAME == "Grassland" | lxn$NRNAME == "Parkland" |
+    lxn$NSRNAME == "Dry Mixedwood"
+table(lxn$NRNAME, lxn$N)
+table(lxn$NRNAME, lxn$S)
+lxn <- lxn[regs,]
+all(rownames(Aveg) == regs)
+all(rownames(Asoil) == regs)
+AvegN <- colSums(Aveg[lxn$N,])
+AvegN <- AvegN / sum(AvegN)
+AsoilS <- colSums(Asoil[lxn$S,])
+AsoilS <- AsoilS / sum(AsoilS)
+
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
+tv <- droplevels(tv[!is.na(tv$Sector),])
+ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
+ts <- droplevels(ts[!is.na(ts$Sector),])
+
+## CoV
+
+ks <- kgrid[kgrid$Rnd10 <= 10,]
+xy10 <- groupMeans(as.matrix(kgrid[,c("X","Y")]), 1, kgrid$Row10_Col10)
+
+library(RColorBrewer)
+br <- c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, Inf)
+Col <- rev(brewer.pal(10, "RdYlGn"))
+
+## csv
+
+spp <- "ALFL"
+SPP <- union(fln, fls)
+SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL")
+
+for (spp in SPP) {
 
 cat(spp, "\n");flush.console()
 
@@ -101,42 +178,16 @@ write.csv(km, row.names=FALSE,
 
 ## plots
 
-library(raster)
-library(sp)
-library(rgdal)
-city <-data.frame(x = -c(114,113,112,111,117,118)-c(5,30,49,23,8,48)/60,
-    y = c(51,53,49,56,58,55)+c(3,33,42,44,31,10)/60)
-rownames(city) <- c("Calgary","Edmonton","Lethbridge","Fort McMurray",
-    "High Level","Grande Prairie")
-coordinates(city) <- ~ x + y
-proj4string(city) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-city <- spTransform(city, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))
-city <- as.data.frame(city)
-
-cex <- 0.25
-legcex <- 1.5
-
-Col1 <- rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8","#91BFDB","#4575B4"))  # Colour gradient for reference and current
-Col1fun <- colorRampPalette(Col1, space = "rgb") # Function to interpolate among these colours for reference and current
-C1 <- Col1fun(100)
-Col2 <- c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0","#A1D76A","#4D9221")  # Colour gradient for difference map
-Col2fun <- colorRampPalette(Col2, space = "rgb") # Function to interpolate among these colours for difference map
-C2 <- Col2fun(200)
-CW <- rgb(0.4,0.3,0.8) # water
-CE <- "lightcyan4" # exclude
-
-q <- 0.99
-H <- 1000 
-W <- 600
-
 #SPP <- union(fln, fls)
-SPP <- fln
+#SPP <- fln
 
 #spp <- "CAWA"
-for (spp in as.character(slt$AOU[slt$map.pred])) {
-#    km <- read.csv(paste0("e:/peter/sppweb2015/birds-pred/", 
-#        paste0(as.character(tax[spp, "file"]), ".csv")))
+SPP <- as.character(slt$AOU[slt$map.pred])
+for (spp in SPP) {
+    km <- read.csv(paste0("e:/peter/sppweb2015/birds-pred/", 
+        paste0(as.character(tax[spp, "file"]), ".csv")))
 
+if (FALSE) {
 load(file.path(OUTDIR1, spp, paste0(regs[1], ".Rdata")))
 rownames(pxNcr1) <- rownames(pxNrf1) <- names(Cells)
 rownames(pxScr1) <- rownames(pxSrf1) <- names(Cells)
@@ -168,42 +219,33 @@ km <- data.frame(LinkID=kgrid$Row_Col,
     CurrN=pxNcr,
     RefS=pxSrf,
     CurrS=pxScr)
+}
 
-if (FALSE) {
-wS <- 1-kgrid$pAspen
+if (TRUE) {
+
+TYPE <- "C" # combo
 if (!slt[spp, "veghf.north"])
-    wS[] <- 1
+    TYPE <- "S"
 if (!slt[spp, "soilhf.south"])
+    TYPE <- "N"
+
+wS <- 1-kgrid$pAspen
+if (TYPE == "S")
+    wS[] <- 1
+if (TYPE == "N")
     wS[] <- 0
-wS[useS] <- 1
-wS[useN] <- 1
+wS[kgrid$useS] <- 1
+wS[kgrid$useN] <- 0
 
-pxcr <- wS * km$CurrNpxScr + (1-wS) * pxNcr
-pxcr[useN] <- pxNcr[useN]
-pxcr[useS] <- pxScr[useS]
-pxrf <- wS * pxSrf + (1-wS) * pxNrf
-pxrf[useN] <- pxNrf[useN]
-pxrf[useS] <- pxSrf[useS]
+cr <- wS * km$CurrS + (1-wS) * km$CurrN
+rf <- wS * km$RefS + (1-wS) * km$RefN
 
-pxcr <- pxNcr
-pxrf <- pxNrf
-
-if (!NSest["north"]) {
-    pxcr[useN] <- NA
-    pxrf[useN] <- NA
-}
-if (!NSest["south"]) {
-    pxcr[useS] <- NA
-    pxrf[useS] <- NA
 }
 
-km <- data.frame(LinkID=kgrid$Row_Col,
-    Ref=pxrf,
-    Curr=pxcr)
-}
-
-    cr <- km$CurrN
-    rf <- km$RefN
+#    cr <- km$CurrN
+#    rf <- km$RefN
+#    cr <- km$CurrS
+#    rf <- km$RefS
     qcr <- quantile(cr, q)
     cr[cr>qcr] <- qcr
     qrf <- quantile(rf, q)
@@ -221,7 +263,7 @@ km <- data.frame(LinkID=kgrid$Row_Col,
     range(df)
 
     NAM <- as.character(tax[spp, "English_Name"])
-    TAG <- "-fixed"
+    TAG <- ""
     
     cat("\n")
     cat(spp, "\t");flush.console()
@@ -234,8 +276,10 @@ km <- data.frame(LinkID=kgrid$Row_Col,
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
     with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
         points(X, Y, col=CE, pch=15, cex=cex))
-    with(kgrid[kgrid$NRNAME == "Grassland",], 
-        points(X, Y, col=CE, pch=15, cex=cex))
+    if (TYPE == "N")
+        with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
+    if (TYPE == "S")
+        with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
     mtext(side=3,paste(NAM, "\nReference abundance"),col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
@@ -252,8 +296,10 @@ km <- data.frame(LinkID=kgrid$Row_Col,
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
     with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
         points(X, Y, col=CE, pch=15, cex=cex))
-    with(kgrid[kgrid$NRNAME == "Grassland",], 
-        points(X, Y, col=CE, pch=15, cex=cex))
+    if (TYPE == "N")
+        with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
+    if (TYPE == "S")
+        with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
     mtext(side=3,paste(NAM, "\nCurrent abundance"),col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
@@ -270,8 +316,10 @@ km <- data.frame(LinkID=kgrid$Row_Col,
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
     with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
         points(X, Y, col=CE, pch=15, cex=cex))
-    with(kgrid[kgrid$NRNAME == "Grassland",], 
-        points(X, Y, col=CE, pch=15, cex=cex))
+    if (TYPE == "N")
+        with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
+    if (TYPE == "S")
+        with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
     mtext(side=3,paste(NAM, "\nDifference"),col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
@@ -280,40 +328,7 @@ km <- data.frame(LinkID=kgrid$Row_Col,
     dev.off()
 }
 
-## sector effect
-
-ch2veg <- t(sapply(strsplit(colnames(trVeg), "->"), 
-    function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
-ch2veg <- data.frame(ch2veg)
-colnames(ch2veg) <- c("rf","cr")
-rownames(ch2veg) <- colnames(Aveg)
-
-ch2soil <- t(sapply(strsplit(colnames(trSoil), "->"), 
-    function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
-ch2soil <- data.frame(ch2soil)
-colnames(ch2soil) <- c("rf","cr")
-rownames(ch2soil) <- colnames(Asoil)
-
-lxn <- nonDuplicated(kgrid[,c("LUF_NAME","NRNAME","NSRNAME")], kgrid$LUFxNSR, TRUE)
-lxn$N <- lxn$NRNAME != "Grassland" & lxn$NRNAME != "Rocky Mountain" &
-    lxn$NRNAME != "Parkland" & lxn$NSRNAME != "Dry Mixedwood"
-lxn$S <- lxn$NRNAME == "Grassland" | lxn$NRNAME == "Parkland" |
-    lxn$NSRNAME == "Dry Mixedwood"
-table(lxn$NRNAME, lxn$N)
-table(lxn$NRNAME, lxn$S)
-lxn <- lxn[regs,]
-all(rownames(Aveg) == regs)
-all(rownames(Asoil) == regs)
-AvegN <- colSums(Aveg[lxn$N,])
-AvegN <- AvegN / sum(AvegN)
-AsoilS <- colSums(Asoil[lxn$S,])
-AsoilS <- AsoilS / sum(AsoilS)
-
-tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
-tv <- droplevels(tv[!is.na(tv$Sector),])
-ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
-ts <- droplevels(ts[!is.na(ts$Sector),])
-
+## sector effects
 seff_res <- list()
 for (spp in as.character(slt$AOU[slt$map.pred])) {
 
@@ -456,13 +471,6 @@ dev.off()
 
 ## CoV
 
-ks <- kgrid[kgrid$Rnd10 <= 10,]
-xy10 <- groupMeans(as.matrix(kgrid[,c("X","Y")]), 1, kgrid$Row10_Col10)
-
-library(RColorBrewer)
-br <- c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, Inf)
-Col <- rev(brewer.pal(10, "RdYlGn"))
-
 for (spp in as.character(slt$AOU[slt$map.pred])) {
 
     load(file.path(OUTDIRB, spp, paste0(regs[1], ".Rdata")))
@@ -494,12 +502,28 @@ for (spp in as.character(slt$AOU[slt$map.pred])) {
         pxScr[pxScr[,k] > qS,k] <- qS
     }
 
-    crveg <- groupMeans(pxNcr, 1, ks$Row10_Col10)
-    #crvegm <- rowMeans(crveg)
-    #crvegsd <- apply(crveg, 1, sd)
-    crvegm <- apply(crveg, 1, median)
-    crvegsd <- apply(crveg, 1, IQR)
-    covN <- crvegsd / crvegm
+TYPE <- "C" # combo
+if (!slt[spp, "veghf.north"])
+    TYPE <- "S"
+if (!slt[spp, "soilhf.south"])
+    TYPE <- "N"
+
+wS <- 1-ks$pAspen
+if (TYPE == "S")
+    wS[] <- 1
+if (TYPE == "N")
+    wS[] <- 0
+wS[ks$useS] <- 1
+wS[ks$useN] <- 0
+
+    cr <- wS * pxScr + (1-wS) * pxNcr
+
+    crveg <- groupMeans(cr, 1, ks$Row10_Col10)
+    crvegm <- rowMeans(crveg)
+    crvegsd <- apply(crveg, 1, sd)
+    #crvegm <- apply(crveg, 1, median)
+    #crvegsd <- apply(crveg, 1, IQR)
+    covC <- crvegsd / crvegm
     #covN[is.na(covN)] <- 1
 
     #crsoil <- groupMeans(pxScr, 1, ks$Row10_Col10)
@@ -510,13 +534,13 @@ for (spp in as.character(slt$AOU[slt$map.pred])) {
     #covS <- crsoilsd / crsoilm
     #covS[is.na(covS)] <- 1
 
-px <- crveg[order(crvegm),]
-matplot(crvegm[order(crvegm)], crveg, type="l", lty=1)
+#px <- crveg[order(crvegm),]
+#matplot(crvegm[order(crvegm)], crveg, type="l", lty=1)
 
 
     NAM <- as.character(tax[spp, "English_Name"])
 
-    zval <- as.integer(cut(covN, breaks=br))
+    zval <- as.integer(cut(covC, breaks=br))
     zval <- zval[match(kgrid$Row10_Col10, rownames(crveg))]
 
     cat(spp, "saving CoV map\n\n");flush.console()
@@ -528,8 +552,10 @@ matplot(crvegm[order(crvegm)], crveg, type="l", lty=1)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
     with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
         points(X, Y, col=CE, pch=15, cex=cex))
-    with(kgrid[kgrid$NRNAME == "Grassland",], 
-        points(X, Y, col=CE, pch=15, cex=cex))
+    if (TYPE == "N")
+        with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
+    if (TYPE == "S")
+        with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
     mtext(side=3,paste(NAM, "CoV"),col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
@@ -540,7 +566,7 @@ matplot(crvegm[order(crvegm)], crveg, type="l", lty=1)
     if (any(INF))
         TEXT[length(TEXT)] <- paste0(">", 100*br[length(br)-1])
 
-    TITLE <- "Coefficient of variation\n(IQR / median)"
+    TITLE <- "Coefficient of variation"
     legend("bottomleft", border=rev(Col), fill=rev(Col), bty="n", legend=rev(TEXT),
                 title=TITLE, cex=legcex*0.8)
     par(op)
