@@ -171,9 +171,12 @@ km <- data.frame(LinkID=kgrid$Row_Col,
     CurrN=pxNcr,
     RefS=pxSrf,
     CurrS=pxScr)
+if (any(is.na(km)))
+    km[is.na(km)] <- 0
 #NAM <- as.character(tax[spp, "English_Name"])
 write.csv(km, row.names=FALSE,
-    paste0("e:/peter/sppweb2015/birds-pred/", paste0(as.character(tax[spp, "file"]), ".csv")))
+    paste0("e:/peter/sppweb2015/birds-pred/", 
+    paste0(as.character(tax[spp, "file"]), ".csv")))
 }
 
 ## plots
@@ -186,7 +189,12 @@ SPP <- as.character(slt$AOU[slt$map.pred])
 for (spp in SPP) {
     km <- read.csv(paste0("e:/peter/sppweb2015/birds-pred/", 
         paste0(as.character(tax[spp, "file"]), ".csv")))
-
+#if (any(is.na(km))) {
+#    km[is.na(km)] <- 0
+#    write.csv(km, row.names=FALSE,
+#        paste0("e:/peter/sppweb2015/birds-pred/", 
+#        paste0(as.character(tax[spp, "file"]), ".csv")))
+#}
 if (FALSE) {
 load(file.path(OUTDIR1, spp, paste0(regs[1], ".Rdata")))
 rownames(pxNcr1) <- rownames(pxNrf1) <- names(Cells)
@@ -470,8 +478,8 @@ dev.off()
 }
 
 ## CoV
-
-for (spp in as.character(slt$AOU[slt$map.pred])) {
+SPP <- as.character(slt$AOU[slt$map.pred])
+for (spp in SPP) {
 
     load(file.path(OUTDIRB, spp, paste0(regs[1], ".Rdata")))
     rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells)[Cells == 1]
@@ -494,11 +502,12 @@ for (spp in as.character(slt$AOU[slt$map.pred])) {
     pxNcr <- pxNcr0[rownames(ks),]
     #pxNrf <- pxNrf0[rownames(ks),]
     pxScr <- pxScr0[rownames(ks),]
+    pxScr[is.na(pxScr)] <- 0
     #pxSrf <- pxSrf0[rownames(ks),]
     for (k in 1:ncol(pxNcr)) {
-        qN <- quantile(pxNcr[,k], q, na.rm=TRUE)
+        qN <- quantile(pxNcr[is.finite(pxNcr[,k]),k], q, na.rm=TRUE)
         pxNcr[pxNcr[,k] > qN,k] <- qN
-        qS <- quantile(pxScr[,k], q, na.rm=TRUE)
+        qS <- quantile(pxScr[is.finite(pxScr[,k]),k], q, na.rm=TRUE)
         pxScr[pxScr[,k] > qS,k] <- qS
     }
 
@@ -518,7 +527,7 @@ wS[ks$useN] <- 0
 
     cr <- wS * pxScr + (1-wS) * pxNcr
 
-    crveg <- groupMeans(cr, 1, ks$Row10_Col10)
+    crveg <- groupMeans(cr, 1, ks$Row10_Col10, na.rm=TRUE)
     crvegm <- rowMeans(crveg)
     crvegsd <- apply(crveg, 1, sd)
     #crvegm <- apply(crveg, 1, median)

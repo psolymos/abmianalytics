@@ -56,6 +56,8 @@ coordinates(city) <- ~ x + y
 proj4string(city) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 city <- spTransform(city, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))
 
+BIRDS <- FALSE
+
 ## mammals
 dir_in <- "e:/peter/sppweb2015/Mammals/Km2 summaries"
 dir_out <- "e:/peter/sppweb-ftp-content/species/mammals"
@@ -71,8 +73,6 @@ dir_in <- "c:/Users/Peter/www/Plants/Km2 summaries"
 dir_out <- "c:/Users/Peter/www/species/vplants"
 lt <- read.csv("c:/Users/Peter/www/vplants-lookup.csv")
 
-## birds
-
 ## mosses
 dir_in <- "c:/Users/Peter/www/Moss/Km2 summaries"
 dir_out <- "c:/Users/Peter/www/species/mosses"
@@ -83,6 +83,13 @@ dir_in <- "c:/Users/Peter/www/Lichens/Km2 summaries"
 dir_out <- "c:/Users/Peter/www/species/lichens"
 lt <- read.csv("c:/Users/Peter/www/lichens-lookup.csv")
 
+## birds
+dir_in <- "e:/peter/sppweb2015/birds-pred/"
+dir_out <- "e:/peter/sppweb-ftp-content/species/birds"
+lt <- read.csv("~/repos/abmispecies/_data/birds.csv")
+BIRDS <- TRUE
+
+rownames(lt) <- lt$sppid
 #spp <- "CanadaLynx"
 spplist <- as.character(lt$sppid[lt$map.pred])
 for (spp in spplist) {
@@ -98,12 +105,33 @@ for (spp in spplist) {
 
     tab <- read.csv(f_in)
     tab <- tab[match(rownames(kgrid), tab$LinkID),]
+
+    if (BIRDS) {
+        TYPE <- "C" # combo
+        if (!lt[spp, "veghf.north"])
+            TYPE <- "S"
+        if (!lt[spp, "soilhf.south"])
+            TYPE <- "N"
+
+        wS <- 1-kgrid$pAspen
+        if (TYPE == "S")
+            wS[] <- 1
+        if (TYPE == "N")
+            wS[] <- 0
+        wS[kgrid$useS] <- 1
+        wS[kgrid$useN] <- 0
+
+        tab$Curr <- wS * tab$CurrS + (1-wS) * tab$CurrN
+        tab$Ref <- wS * tab$RefS + (1-wS) * tab$RefN
+    }
     tab$RefNA <- ifelse(is.na(tab$Ref), 1L, 0L)
     tab$CurrNA <- ifelse(is.na(tab$Ref), 1L, 0L)
     tab$Ref[tab$RefNA == 1L] <- 0
     tab$Curr[tab$CurrNA == 1L] <- 0
 
-    NAM <- as.character(lt$species[lt$sppid == spp])
+    #NAM <- as.character(lt$species[lt$sppid == spp])
+    NAM <- paste0(as.character(lt$species[lt$sppid == spp]),
+        "(", as.character(lt$scinam[lt$sppid == spp]), ")")
 
     na_rf <- as_Raster0(kgrid$Row, kgrid$Col, tab$RefNA, rt)
     na_cr <- as_Raster0(kgrid$Row, kgrid$Col, tab$CurrNA, rt)
