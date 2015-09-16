@@ -177,13 +177,9 @@ dev.off()
 ## topo
 
 r <- raster("c:/p/AB_data_v2015/out/figs/topo/aggregates.asc")
+r[r > quantile(r, 0.99, na.rm=TRUE)] <- quantile(r, 0.99, na.rm=TRUE)
 png(file.path(ROOT, VER, "out", "figs", "topo", "aggregates.png"), width=600, height=1000)
 plot(r, axes=FALSE, box=FALSE, legend=FALSE, main="Aggregate presence", maxpixels=10^6, interpolate=FALSE)
-dev.off()
-
-r <- raster("c:/p/AB_data_v2015/out/figs/topo/cti.asc")
-png(file.path(ROOT, VER, "out", "figs", "topo", "cti.png"), width=600, height=1000)
-plot(r, axes=FALSE, box=FALSE, legend=TRUE, main="Compound topographic index (wetness)", maxpixels=10^6, interpolate=FALSE)
 dev.off()
 
 r <- raster("c:/p/AB_data_v2015/out/figs/topo/dunes.asc")
@@ -201,37 +197,51 @@ png(file.path(ROOT, VER, "out", "figs", "topo", "geol-surf.png"), width=600, hei
 plot(r, axes=FALSE, box=FALSE, legend=FALSE, main="Surficial geology (parent material)", maxpixels=10^6, interpolate=FALSE)
 dev.off()
 
+r <- raster("c:/p/AB_data_v2015/out/figs/topo/cti.asc")
+r[r > quantile(r, 0.99, na.rm=TRUE)] <- quantile(r, 0.99, na.rm=TRUE)
+png(file.path(ROOT, VER, "out", "figs", "topo", "cti.png"), width=600, height=1000)
+plot(r, axes=FALSE, box=FALSE, legend=TRUE, main="Compound topographic index (wetness)", maxpixels=10^6, interpolate=FALSE)
+dev.off()
+
+
 r <- raster("c:/p/AB_data_v2015/out/figs/topo/slope.asc")
+r[r > quantile(r, 0.99, na.rm=TRUE)] <- quantile(r, 0.99, na.rm=TRUE)
 png(file.path(ROOT, VER, "out", "figs", "topo", "slope.png"), width=600, height=1000)
 plot(r, axes=FALSE, box=FALSE, legend=TRUE, main="Slope", maxpixels=10^6, interpolate=FALSE)
 dev.off()
 
 r <- raster("c:/p/AB_data_v2015/out/figs/topo/slpasp.asc")
+r[r > quantile(r, 0.99, na.rm=TRUE)] <- quantile(r, 0.99, na.rm=TRUE)
 png(file.path(ROOT, VER, "out", "figs", "topo", "slpasp.png"), width=600, height=1000)
 plot(r, axes=FALSE, box=FALSE, legend=TRUE, main="Slope / aspect solar radiation index", maxpixels=10^6, interpolate=FALSE)
 dev.off()
 
 r <- raster("c:/p/AB_data_v2015/out/figs/topo/spi.asc")
+r[r > quantile(r, 0.99, na.rm=TRUE)] <- quantile(r, 0.99, na.rm=TRUE)
 png(file.path(ROOT, VER, "out", "figs", "topo", "spi.png"), width=600, height=1000)
 plot(r, axes=FALSE, box=FALSE, legend=TRUE, main="SPI", maxpixels=10^6, interpolate=FALSE)
 dev.off()
 
 r <- raster("c:/p/AB_data_v2015/out/figs/topo/tpi2km.asc")
+r[r > quantile(r, 0.99, na.rm=TRUE)] <- quantile(r, 0.99, na.rm=TRUE)
 png(file.path(ROOT, VER, "out", "figs", "topo", "tpi2km.png"), width=600, height=1000)
 plot(r, axes=FALSE, box=FALSE, legend=TRUE, main="Topographic position index (2-km radius)", maxpixels=10^6, interpolate=FALSE)
 dev.off()
 
 r <- raster("c:/p/AB_data_v2015/out/figs/topo/tri.asc")
+r[r > quantile(r, 0.99, na.rm=TRUE)] <- quantile(r, 0.99, na.rm=TRUE)
 png(file.path(ROOT, VER, "out", "figs", "topo", "tri.png"), width=600, height=1000)
 plot(r, axes=FALSE, box=FALSE, legend=TRUE, main="Topographic ruggedness index", maxpixels=10^6, interpolate=FALSE)
 dev.off()
 
 r <- raster("c:/p/AB_data_v2015/out/figs/topo/vrm11x11.asc")
+r[r > quantile(r, 0.99, na.rm=TRUE)] <- quantile(r, 0.99, na.rm=TRUE)
 png(file.path(ROOT, VER, "out", "figs", "topo", "vrm11x11.png"), width=600, height=1000)
 plot(r, axes=FALSE, box=FALSE, legend=TRUE, main="Vector ruggedness measure (11 x 11 cells)", maxpixels=10^6, interpolate=FALSE)
 dev.off()
 
 r <- raster("c:/p/AB_data_v2015/out/figs/topo/vrm5x5.asc")
+r[r > quantile(r, 0.99, na.rm=TRUE)] <- quantile(r, 0.99, na.rm=TRUE)
 png(file.path(ROOT, VER, "out", "figs", "topo", "vrm5x5.png"), width=600, height=1000)
 plot(r, axes=FALSE, box=FALSE, legend=TRUE, main="Vector ruggedness measure (5 x 5 cells)", maxpixels=10^6, interpolate=FALSE)
 dev.off()
