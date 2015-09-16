@@ -56,6 +56,8 @@ for (i in 2:length(regs)) {
     Asoil <- rbind(Asoil, colSums(trSoil))
     rownames(Asoil) <- regs[1:i]
 }
+Aveg <- Aveg / 10^4
+Asoil <- Asoil / 10^4
 
 
 library(raster)
@@ -185,16 +187,15 @@ write.csv(km, row.names=FALSE,
 #SPP <- fln
 
 #spp <- "CAWA"
+res_luf <- list()
+res_nsr <- list()
 SPP <- as.character(slt$AOU[slt$map.pred])
 for (spp in SPP) {
+
+    cat(spp, "\n");flush.console()
     km <- read.csv(paste0("e:/peter/sppweb2015/birds-pred/", 
         paste0(as.character(tax[spp, "file"]), ".csv")))
-#if (any(is.na(km))) {
-#    km[is.na(km)] <- 0
-#    write.csv(km, row.names=FALSE,
-#        paste0("e:/peter/sppweb2015/birds-pred/", 
-#        paste0(as.character(tax[spp, "file"]), ".csv")))
-#}
+
 if (FALSE) {
 load(file.path(OUTDIR1, spp, paste0(regs[1], ".Rdata")))
 rownames(pxNcr1) <- rownames(pxNrf1) <- names(Cells)
@@ -229,27 +230,23 @@ km <- data.frame(LinkID=kgrid$Row_Col,
     CurrS=pxScr)
 }
 
-if (TRUE) {
 
-TYPE <- "C" # combo
-if (!slt[spp, "veghf.north"])
-    TYPE <- "S"
-if (!slt[spp, "soilhf.south"])
-    TYPE <- "N"
+    TYPE <- "C" # combo
+    if (!slt[spp, "veghf.north"])
+        TYPE <- "S"
+    if (!slt[spp, "soilhf.south"])
+        TYPE <- "N"
 
-wS <- 1-kgrid$pAspen
-if (TYPE == "S")
-    wS[] <- 1
-if (TYPE == "N")
-    wS[] <- 0
-wS[kgrid$useS] <- 1
-wS[kgrid$useN] <- 0
+    wS <- 1-kgrid$pAspen
+    if (TYPE == "S")
+        wS[] <- 1
+    if (TYPE == "N")
+        wS[] <- 0
+    wS[kgrid$useS] <- 1
+    wS[kgrid$useN] <- 0
 
-cr <- wS * km$CurrS + (1-wS) * km$CurrN
-rf <- wS * km$RefS + (1-wS) * km$RefN
-
-}
-
+    cr <- wS * km$CurrS + (1-wS) * km$CurrN
+    rf <- wS * km$RefS + (1-wS) * km$RefN
 #    cr <- km$CurrN
 #    rf <- km$RefN
 #    cr <- km$CurrS
@@ -258,8 +255,16 @@ rf <- wS * km$RefS + (1-wS) * km$RefN
     cr[cr>qcr] <- qcr
     qrf <- quantile(rf, q)
     rf[rf>qrf] <- qrf
-    Max <- max(qcr, qrf)
 
+if (TRUE) {
+    mat <- 100 * cbind(Ncurrent=cr, Nreference=rf) # ha to km^2
+    rownames(mat) <- rownames(kgrid)
+    res_luf[[spp]] <- groupSums(mat, 1, kgrid$LUF_NAME)
+    res_nsr[[spp]] <- groupSums(mat, 1, kgrid$NSRNAME)
+}
+
+if (FALSE) {
+    Max <- max(qcr, qrf)
     df <- (cr-rf) / Max
     df <- sign(df) * abs(df)^0.5
     df <- pmin(200, ceiling(99 * df)+100)
@@ -335,9 +340,40 @@ rf <- wS * km$RefS + (1-wS) * km$RefN
     par(op)
     dev.off()
 }
+}
+
+
+save(res_nsr, res_luf, file=file.path(ROOT, "out", "birds", "luf_Nsummaries.Rdata"))
+
+LUF <- list()
+for (spp in names(res_luf)) {
+    tmp <- res_luf[[spp]] / 10^6 # M males
+    tmp <- t(matrix(tmp, 2*nrow(tmp), 1))
+    colnames(tmp) <- paste(rep(colnames(res_luf[[1]]), each=ncol(tmp)/2), 
+        rep(rownames(res_luf[[1]]), 2))
+    LUF[[spp]] <- data.frame(Species=slt[spp, "species"], tmp)        
+}
+NSR <- list()
+for (spp in names(res_nsr)) {
+    tmp <- res_nsr[[spp]] / 10^6 # M males
+    tmp <- t(matrix(tmp, 2*nrow(tmp), 1))
+    colnames(tmp) <- paste(rep(colnames(res_nsr[[1]]), each=ncol(tmp)/2), 
+        rep(rownames(res_nsr[[1]]), 2))
+    NSR[[spp]] <- data.frame(Species=slt[spp, "species"], tmp)        
+}
+LUF <- do.call(rbind, LUF)
+NSR <- do.call(rbind, NSR)
+write.csv(LUF, row.names=FALSE,
+    file="e:/peter/sppweb-html-content/species/birds/Birds_Abundance_by_LUFregions.csv")
+write.csv(NSR, row.names=FALSE,
+    file="e:/peter/sppweb-html-content/species/birds/Birds_Abundance_by_NaturalSubregions.csv")
+
 
 ## sector effects
 seff_res <- list()
+seff_luf <- list()
+seff_ns <- list()
+
 for (spp in as.character(slt$AOU[slt$map.pred])) {
 
 cat(spp, "\n");flush.console()
@@ -355,11 +391,39 @@ for (i in 2:length(regs)) {
     hbScr <- rbind(hbScr, hbScr1[,1])
     hbSrf <- rbind(hbSrf, hbSrf1[,1])
 }
+
 dimnames(hbNcr) <- dimnames(hbNrf) <- list(regs, colnames(Aveg))
 hbNcr[is.na(hbNcr)] <- 0
 hbNrf[is.na(hbNrf)] <- 0
 hbNcr <- hbNcr * Aveg
 hbNrf <- hbNrf * Aveg
+
+dimnames(hbScr) <- dimnames(hbSrf) <- list(regs, colnames(Asoil))
+hbScr[is.na(hbScr)] <- 0
+hbSrf[is.na(hbSrf)] <- 0
+hbScr <- hbScr * Asoil
+hbSrf <- hbSrf * Asoil
+
+if (FALSE) {
+
+cr <- list()
+rf <- list()
+aa <- list()
+for (i in rownames(lxn)) {
+    cr[[i]] <- if (lxn[i,"NRNAME"] == "Grassland")
+        hbScr[i,] else hbNcr[i,]
+    rf[[i]] <- if (lxn[i,"NRNAME"] == "Grassland")
+        hbSrf[i,] else hbNrf[i,]
+    aa[[i]] <- if (lxn[i,"NRNAME"] == "Grassland")
+        Asoil[i,] else Aveg[i,]
+}
+
+LUF2 <- list()
+for (i in levels(lxn$NRNAME)) {
+
+}
+
+}
 ThbNcr <- colSums(hbNcr[lxn$N,])
 ThbNrf <- colSums(hbNrf[lxn$N,])
 df <- (ThbNcr - ThbNrf) / sum(ThbNrf)
@@ -370,11 +434,6 @@ dN <- colSums(as.matrix(groupSums(dN[,rownames(tv)], 2, tv$Sector)))
 U <- dN/dA
 seffN <- cbind(dA=dA, dN=dN, U=U)[-1,]
 
-dimnames(hbScr) <- dimnames(hbSrf) <- list(regs, colnames(Asoil))
-hbScr[is.na(hbScr)] <- 0
-hbSrf[is.na(hbSrf)] <- 0
-hbScr <- hbScr * Asoil
-hbSrf <- hbSrf * Asoil
 ThbScr <- colSums(hbScr[lxn$S,])
 ThbSrf <- colSums(hbSrf[lxn$S,])
 df <- (ThbScr - ThbSrf) / sum(ThbSrf)
@@ -393,6 +452,24 @@ seff_res[[spp]] <- list(N=seffN, S=seffS)
 }
 
 save(slt, seff_res, file=file.path(ROOT, "out", "birds", "kgrid_table.Rdata"))
+
+nres <- list()
+sres <- list()
+for (spp in names(seff_res)) {
+    nres[[spp]] <- 100*c(PopEffect=seff_res[[spp]]$N[,2], UnitEffect=seff_res[[spp]]$N[,3])
+    sres[[spp]] <- 100*c(PopEffect=seff_res[[spp]]$S[,2], UnitEffect=seff_res[[spp]]$S[,3])
+}
+nres <- do.call(rbind, nres)
+sres <- do.call(rbind, sres)
+nres <- data.frame(Species=slt[rownames(nres), "species"], nres)
+sres <- data.frame(Species=slt[rownames(sres), "species"], sres)
+
+write.csv(nres, row.names=FALSE,
+    file="e:/peter/sppweb-html-content/species/birds/Birds_SectorEffects_North.csv")
+write.csv(sres, row.names=FALSE,
+    file="e:/peter/sppweb-html-content/species/birds/Birds_SectorEffects_South.csv")
+
+
 
 for (spp in as.character(slt$AOU[slt$map.pred])) {
 cat(spp, "\n");flush.console()
