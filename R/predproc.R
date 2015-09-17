@@ -393,7 +393,7 @@ if (TRUE) {
     D_hab_rf <- exp(logPNhab1[match(ch2veg$rf, rownames(logPNhab1)),j])
     if (any(ch2veg$rf_zero))
         D_hab_rf[ch2veg$rf_zero] <- 0
-    ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption)
+    ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption) --- ?????
     if (any(ch2veg$CutLine))
         D_hab_cr[ch2veg$CutLine] <- D_hab_rf[ch2veg$CutLine]
 
@@ -421,7 +421,7 @@ if (TRUE) {
     D_hab_rf <- exp(logPShab1[match(ch2soil$rf, rownames(logPShab1)),j])
     if (any(ch2soil$rf_zero))
         D_hab_rf[ch2soil$rf_zero] <- 0
-    ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption)
+    ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption) --- ?????
     if (any(ch2soil$CutLine))
         D_hab_cr[ch2soil$CutLine] <- D_hab_rf[ch2soil$CutLine]
     AD_cr <- t(D_hab_cr * t(Asoil1)) * exp(logPSclim1[,j])
