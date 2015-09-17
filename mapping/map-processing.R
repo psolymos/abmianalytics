@@ -64,8 +64,8 @@ dir_out <- "e:/peter/sppweb-ftp-content/species/mammals"
 lt <- read.csv("~/repos/abmispecies/_data/mammals.csv")
 
 ## mites
-dir_in <- "e:/peter/sppweb2015/Mites/Km2 summaries"
-dir_out <- "e:/peter/sppweb-ftp-content/species/mites"
+dir_in <- "c:/Users/Peter/www/Mites"
+dir_out <- "c:/Users/Peter/www/species/mites"
 lt <- read.csv("~/repos/abmispecies/_data/mites.csv")
 
 ## vplants
