@@ -1,48 +1,48 @@
-SOILHF,HF,SOIL,Levels1,Levels2,Levels3,Levels4,Category,Type,UseInAnalysis,SuccAlien,NonlinLin,UseInReporting,Sector,Description,SOIL1,SOIL1v
-BlO,BlO,NA,BlO,Saline,Saline,Saline,SalineAndClay,NA,NA,NA,NA,NA,NA,NA,NA,SalineAndClay,NonProductive
-LenA,LenA,NA,LenA,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX
-Water,Water,NA,Water,SoilWater,SoilWater,SoilWater,SoilWater,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX
-Li,Li,NA,Li,Productive,Productive,ProductiveAndClay,Productive,NA,NA,NA,NA,NA,NA,NA,NA,Productive,Productive
-Lo,Lo,NA,Lo,Productive,Productive,ProductiveAndClay,Productive,NA,NA,NA,NA,NA,NA,NA,NA,Productive,Productive
-TB,TB,NA,TB,RapidDrain,RapidDrain,RapidDrain,RapidDrain,NA,NA,NA,NA,NA,NA,NA,NA,RapidDrain,NonProductive
-UNK,UNK,NA,UNK,SoilUnknown,SoilUnknown,SoilUnknown,SoilUnknown,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX
-BdL,BdL,NA,BdL,RapidDrain,RapidDrain,RapidDrain,RapidDrain,NA,NA,NA,NA,NA,NA,NA,NA,RapidDrain,NonProductive
-CS,CS,NA,CS,RapidDrain,RapidDrain,RapidDrain,RapidDrain,NA,NA,NA,NA,NA,NA,NA,NA,RapidDrain,NonProductive
-Cy,Cy,NA,Cy,Clay,Clay,ProductiveAndClay,SalineAndClay,NA,NA,NA,NA,NA,NA,NA,NA,SalineAndClay,NonProductive
-Gr,Gr,NA,Gr,RapidDrain,RapidDrain,RapidDrain,RapidDrain,NA,NA,NA,NA,NA,NA,NA,NA,RapidDrain,NonProductive
-LenSP,LenSP,NA,LenSP,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX
-LenT,LenT,NA,LenT,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX
-LenS,LenS,NA,LenS,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX
-LtcC,LtcC,NA,LtcC,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX
-LtcD,LtcD,NA,LtcD,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX
-LtcH,LtcH,NA,LtcH,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX
-LtcS,LtcS,NA,LtcS,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX
-Ov,Ov,NA,Ov,Saline,Saline,Saline,SalineAndClay,NA,NA,NA,NA,NA,NA,NA,NA,SalineAndClay,NonProductive
-Sa,Sa,NA,Sa,RapidDrain,RapidDrain,RapidDrain,RapidDrain,NA,NA,NA,NA,NA,NA,NA,NA,RapidDrain,NonProductive
-Sb,Sb,NA,Sb,Productive,Productive,ProductiveAndClay,Productive,NA,NA,NA,NA,NA,NA,NA,NA,Productive,Productive
-SL,SL,NA,SL,Saline,Saline,Saline,SalineAndClay,NA,NA,NA,NA,NA,NA,NA,NA,SalineAndClay,NonProductive
-SwG,SwG,NA,SwG,RapidDrain,RapidDrain,RapidDrain,RapidDrain,NA,NA,NA,NA,NA,NA,NA,NA,RapidDrain,NonProductive
-Sy,Sy,NA,Sy,Productive,Productive,ProductiveAndClay,Productive,NA,NA,NA,NA,NA,NA,NA,NA,Productive,Productive
-BorrowpitsDugoutsSumps,BorrowpitsDugoutsSumps,BorrowpitsDugoutsSumps,NA,NA,NA,NA,NA,Human-created Water Bodies ,"Borrow-Pits, Dug-outs, Sumps ",HWater,Alien,Nonlin,Human-created Water Bodies,Misc,"Created to extract fill, or for livestock watering ",XXX,XXX
-Canals,Canals,Canals,NA,NA,NA,NA,NA,Human-created Water Bodies ,Canals ,HWater,Alien,Nonlin,Human-created Water Bodies,Misc,Created to transport water ,XXX,XXX
-CultivationCropPastureBareground,CultivationCropPastureBareground,CultivationCropPastureBareground,NA,NA,NA,NA,NA,Agriculture,Cultivation (Crop/Pasture/Bare Ground) ,Cult,Alien,Nonlin,Agriculture,Agriculture,Any area where evidence of cultivation is visible during the photo interpretation ,Cult,Cult
-CutBlocks,CutBlocks,CutBlocks,NA,NA,NA,NA,NA,Managed Forest ,Cut Blocks ,HFor,Succ,Nonlin,Forest Harvest,Forestry,Area with trees harvested for industrial purposes ,XXX,XXX
-HighDensityLivestockOperation,HighDensityLivestockOperation,HighDensityLivestockOperation,NA,NA,NA,NA,NA,Agriculture,High Density Livestock Operation ,Cult,Alien,Nonlin,Agriculture,Agriculture,Confined feeding operation and other high density livestock area ,Cult,Cult
-IndustrialSiteRural,IndustrialSiteRural,IndustrialSiteRural,NA,NA,NA,NA,NA,Urban & Rural & Industrial,Industrial Site Rural ,UrbInd,Alien,Nonlin,"Urban, Rural & Industrial",RuralUrban,Rural area developed for industrial use ,UrbInd,UrbInd
-MineSite,MineSite,MineSite,NA,NA,NA,NA,NA,Mines ,Mine Site ,UrbInd,Alien,Nonlin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed ,UrbInd,UrbInd
-MunicipalWaterSewage,MunicipalWaterSewage,MunicipalWaterSewage,NA,NA,NA,NA,NA,Human-created Water Bodies ,Municipal (Water and Sewage) ,HWater,Alien,Nonlin,Human-created Water Bodies,Misc,Created for municipal purposes (some/many of these may be mislabelled),XXX,XXX
-OtherDisturbedVegetation,OtherDisturbedVegetation,OtherDisturbedVegetation,NA,NA,NA,NA,NA,Urban & Rural & Industrial,Other Disturbed Vegetation ,UrbInd,Alien,Nonlin,"Urban, Rural & Industrial",Misc,"Recreation areas and other vegetated areas created for human use, including golf courses, grave yards, vegetated edges of airports, sometimes along roads and any other disturbed areas that have recovered vegetation ",UrbInd,UrbInd
-PeatMine,PeatMine,PeatMine,NA,NA,NA,NA,NA,Mines ,Peat Mine ,UrbInd,Alien,Nonlin,"Mines, Wells & Other Energy Features",Misc,Area where vegetation is disturbed ,UrbInd,UrbInd
-Pipeline,Pipeline,Pipeline,NA,NA,NA,NA,NA,Vegetated Linear Industrial Features,Pipeline ,SoftLin,Succ,Lin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed ,XXX,XXX
-RailHardSurface,RailHardSurface,RailHardSurface,NA,NA,NA,NA,NA,Transportation ,Rail – Hard Surface ,HardLin,Alien,Lin,Transportation,Transportation,Usually gravel ,XXX,XXX
-RailVegetatedVerge,RailVegetatedVerge,RailVegetatedVerge,NA,NA,NA,NA,NA,Transportation ,Rail – Vegetated Verge ,SoftLin,Succ,Lin,Transportation,Transportation,Vegetated strips along railways ,XXX,XXX
-Reservoirs,Reservoirs,Reservoirs,NA,NA,NA,NA,NA,Human-created Water Bodies ,Reservoirs ,HWater,Alien,Nonlin,Human-created Water Bodies,Misc,Man-made lake ,XXX,XXX
-RoadHardSurface,RoadHardSurface,RoadHardSurface,NA,NA,NA,NA,NA,Transportation ,Road – Hard Surface ,HardLin,Alien,Lin,Transportation,Transportation,Paved or gravel ,XXX,XXX
-RoadTrailVegetated,RoadTrailVegetated,RoadTrailVegetated,NA,NA,NA,NA,NA,Transportation ,Road/Trail (Vegetated) ,SoftLin,Succ,Lin,Transportation,Transportation,Road/Trail without gravel or pavement ,XXX,XXX
-RoadVegetatedVerge,RoadVegetatedVerge,RoadVegetatedVerge,NA,NA,NA,NA,NA,Transportation ,Road – Vegetated Verge ,SoftLin,Succ,Lin,Transportation,Transportation,Vegetated strips along paved/gravel roads ,XXX,XXX
-RuralResidentialIndustrial,RuralResidentialIndustrial,RuralResidentialIndustrial,NA,NA,NA,NA,NA,Urban & Rural & Industrial,Rural (Residential/Industrial) ,UrbInd,Alien,Nonlin,"Urban, Rural & Industrial",RuralUrban,Small rural development (confounded with rural industrial development) ,UrbInd,UrbInd
-SeismicLine,SeismicLine,SeismicLine,NA,NA,NA,NA,NA,Vegetated Linear Industrial Features,Seismic Line ,SoftLin,Succ,Lin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed ,XXX,XXX
-TransmissionLine,TransmissionLine,TransmissionLine,NA,NA,NA,NA,NA,Vegetated Linear Industrial Features,Transmission Line ,SoftLin,Succ,Lin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed ,XXX,XXX
-Urban,Urban,Urban,NA,NA,NA,NA,NA,Urban & Rural & Industrial,Urban ,UrbInd,Alien,Nonlin,"Urban, Rural & Industrial",RuralUrban,Cities and towns ,UrbInd,UrbInd
-WellSite,WellSite,WellSite,NA,NA,NA,NA,NA,Wells ,Well Site ,UrbInd,Alien,Nonlin,"Mines, Wells & Other Energy Features",Energy,Well pads created by the energy industry ,UrbInd,UrbInd
-WindGenerationFacility,WindGenerationFacility,WindGenerationFacility,NA,NA,NA,NA,NA,Urban & Rural & Industrial,Wind Generation Facility,UrbInd,Alien,Nonlin,"Mines, Wells & Other Energy Features",Energy,Area around the windmill ,UrbInd,UrbInd
+SOILHF,HF,SOIL,Levels1,Levels2,Levels3,Levels4,Category,Type,UseInAnalysis,SuccAlien,NonlinLin,UseInReporting,Sector,Description,SOIL1,SOIL1v,Sector2
+BlO,BlO,NA,BlO,Saline,Saline,Saline,SalineAndClay,NA,NA,NA,NA,NA,NA,NA,NA,SalineAndClay,NonProductive,Saline
+LenA,LenA,NA,LenA,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX,SoilWetland
+Water,Water,NA,Water,SoilWater,SoilWater,SoilWater,SoilWater,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX,SoilWater
+Li,Li,NA,Li,Productive,Productive,ProductiveAndClay,Productive,NA,NA,NA,NA,NA,NA,NA,NA,Productive,Productive,Productive
+Lo,Lo,NA,Lo,Productive,Productive,ProductiveAndClay,Productive,NA,NA,NA,NA,NA,NA,NA,NA,Productive,Productive,Productive
+TB,TB,NA,TB,RapidDrain,RapidDrain,RapidDrain,RapidDrain,NA,NA,NA,NA,NA,NA,NA,NA,RapidDrain,NonProductive,RapidDrain
+UNK,UNK,NA,UNK,SoilUnknown,SoilUnknown,SoilUnknown,SoilUnknown,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX,SoilUnknown
+BdL,BdL,NA,BdL,RapidDrain,RapidDrain,RapidDrain,RapidDrain,NA,NA,NA,NA,NA,NA,NA,NA,RapidDrain,NonProductive,RapidDrain
+CS,CS,NA,CS,RapidDrain,RapidDrain,RapidDrain,RapidDrain,NA,NA,NA,NA,NA,NA,NA,NA,RapidDrain,NonProductive,RapidDrain
+Cy,Cy,NA,Cy,Clay,Clay,ProductiveAndClay,SalineAndClay,NA,NA,NA,NA,NA,NA,NA,NA,SalineAndClay,NonProductive,Clay
+Gr,Gr,NA,Gr,RapidDrain,RapidDrain,RapidDrain,RapidDrain,NA,NA,NA,NA,NA,NA,NA,NA,RapidDrain,NonProductive,RapidDrain
+LenSP,LenSP,NA,LenSP,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX,SoilWetland
+LenT,LenT,NA,LenT,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX,SoilWetland
+LenS,LenS,NA,LenS,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX,SoilWetland
+LtcC,LtcC,NA,LtcC,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX,SoilWetland
+LtcD,LtcD,NA,LtcD,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX,SoilWetland
+LtcH,LtcH,NA,LtcH,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX,SoilWetland
+LtcS,LtcS,NA,LtcS,SoilWetland,SoilWetland,SoilWetland,SoilWetland,NA,NA,NA,NA,NA,NA,NA,NA,XXX,XXX,SoilWetland
+Ov,Ov,NA,Ov,Saline,Saline,Saline,SalineAndClay,NA,NA,NA,NA,NA,NA,NA,NA,SalineAndClay,NonProductive,Saline
+Sa,Sa,NA,Sa,RapidDrain,RapidDrain,RapidDrain,RapidDrain,NA,NA,NA,NA,NA,NA,NA,NA,RapidDrain,NonProductive,RapidDrain
+Sb,Sb,NA,Sb,Productive,Productive,ProductiveAndClay,Productive,NA,NA,NA,NA,NA,NA,NA,NA,Productive,Productive,Productive
+SL,SL,NA,SL,Saline,Saline,Saline,SalineAndClay,NA,NA,NA,NA,NA,NA,NA,NA,SalineAndClay,NonProductive,Saline
+SwG,SwG,NA,SwG,RapidDrain,RapidDrain,RapidDrain,RapidDrain,NA,NA,NA,NA,NA,NA,NA,NA,RapidDrain,NonProductive,RapidDrain
+Sy,Sy,NA,Sy,Productive,Productive,ProductiveAndClay,Productive,NA,NA,NA,NA,NA,NA,NA,NA,Productive,Productive,Productive
+BorrowpitsDugoutsSumps,BorrowpitsDugoutsSumps,BorrowpitsDugoutsSumps,NA,NA,NA,NA,NA,Human-created Water Bodies ,"Borrow-Pits, Dug-outs, Sumps ",HWater,Alien,Nonlin,Human-created Water Bodies,Misc,"Created to extract fill, or for livestock watering ",XXX,XXX,MiscHF
+Canals,Canals,Canals,NA,NA,NA,NA,NA,Human-created Water Bodies ,Canals ,HWater,Alien,Nonlin,Human-created Water Bodies,Misc,Created to transport water ,XXX,XXX,MiscHF
+CultivationCropPastureBareground,CultivationCropPastureBareground,CultivationCropPastureBareground,NA,NA,NA,NA,NA,Agriculture,Cultivation (Crop/Pasture/Bare Ground) ,Cult,Alien,Nonlin,Agriculture,Agriculture,Any area where evidence of cultivation is visible during the photo interpretation ,Cult,Cult,Agriculture
+CutBlocks,CutBlocks,CutBlocks,NA,NA,NA,NA,NA,Managed Forest ,Cut Blocks ,HFor,Succ,Nonlin,Forest Harvest,Forestry,Area with trees harvested for industrial purposes ,XXX,XXX,Forestry
+HighDensityLivestockOperation,HighDensityLivestockOperation,HighDensityLivestockOperation,NA,NA,NA,NA,NA,Agriculture,High Density Livestock Operation ,Cult,Alien,Nonlin,Agriculture,Agriculture,Confined feeding operation and other high density livestock area ,Cult,Cult,Agriculture
+IndustrialSiteRural,IndustrialSiteRural,IndustrialSiteRural,NA,NA,NA,NA,NA,Urban & Rural & Industrial,Industrial Site Rural ,UrbInd,Alien,Nonlin,"Urban, Rural & Industrial",RuralUrban,Rural area developed for industrial use ,UrbInd,UrbInd,RuralUrban
+MineSite,MineSite,MineSite,NA,NA,NA,NA,NA,Mines ,Mine Site ,UrbInd,Alien,Nonlin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed ,UrbInd,UrbInd,MineWell
+MunicipalWaterSewage,MunicipalWaterSewage,MunicipalWaterSewage,NA,NA,NA,NA,NA,Human-created Water Bodies ,Municipal (Water and Sewage) ,HWater,Alien,Nonlin,Human-created Water Bodies,Misc,Created for municipal purposes (some/many of these may be mislabelled),XXX,XXX,RuralUrban
+OtherDisturbedVegetation,OtherDisturbedVegetation,OtherDisturbedVegetation,NA,NA,NA,NA,NA,Urban & Rural & Industrial,Other Disturbed Vegetation ,UrbInd,Alien,Nonlin,"Urban, Rural & Industrial",Misc,"Recreation areas and other vegetated areas created for human use, including golf courses, grave yards, vegetated edges of airports, sometimes along roads and any other disturbed areas that have recovered vegetation ",UrbInd,UrbInd,MiscHF
+PeatMine,PeatMine,PeatMine,NA,NA,NA,NA,NA,Mines ,Peat Mine ,UrbInd,Alien,Nonlin,"Mines, Wells & Other Energy Features",Misc,Area where vegetation is disturbed ,UrbInd,UrbInd,MineWell
+Pipeline,Pipeline,Pipeline,NA,NA,NA,NA,NA,Vegetated Linear Industrial Features,Pipeline ,SoftLin,Succ,Lin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed ,XXX,XXX,EnergySoftLin
+RailHardSurface,RailHardSurface,RailHardSurface,NA,NA,NA,NA,NA,Transportation ,Rail – Hard Surface ,HardLin,Alien,Lin,Transportation,Transportation,Usually gravel ,XXX,XXX,Transportation
+RailVegetatedVerge,RailVegetatedVerge,RailVegetatedVerge,NA,NA,NA,NA,NA,Transportation ,Rail – Vegetated Verge ,SoftLin,Succ,Lin,Transportation,Transportation,Vegetated strips along railways ,XXX,XXX,Transportation
+Reservoirs,Reservoirs,Reservoirs,NA,NA,NA,NA,NA,Human-created Water Bodies ,Reservoirs ,HWater,Alien,Nonlin,Human-created Water Bodies,Misc,Man-made lake ,XXX,XXX,MiscHF
+RoadHardSurface,RoadHardSurface,RoadHardSurface,NA,NA,NA,NA,NA,Transportation ,Road – Hard Surface ,HardLin,Alien,Lin,Transportation,Transportation,Paved or gravel ,XXX,XXX,Transportation
+RoadTrailVegetated,RoadTrailVegetated,RoadTrailVegetated,NA,NA,NA,NA,NA,Transportation ,Road/Trail (Vegetated) ,SoftLin,Succ,Lin,Transportation,Transportation,Road/Trail without gravel or pavement ,XXX,XXX,Transportation
+RoadVegetatedVerge,RoadVegetatedVerge,RoadVegetatedVerge,NA,NA,NA,NA,NA,Transportation ,Road – Vegetated Verge ,SoftLin,Succ,Lin,Transportation,Transportation,Vegetated strips along paved/gravel roads ,XXX,XXX,Transportation
+RuralResidentialIndustrial,RuralResidentialIndustrial,RuralResidentialIndustrial,NA,NA,NA,NA,NA,Urban & Rural & Industrial,Rural (Residential/Industrial) ,UrbInd,Alien,Nonlin,"Urban, Rural & Industrial",RuralUrban,Small rural development (confounded with rural industrial development) ,UrbInd,UrbInd,RuralUrban
+SeismicLine,SeismicLine,SeismicLine,NA,NA,NA,NA,NA,Vegetated Linear Industrial Features,Seismic Line ,SoftLin,Succ,Lin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed ,XXX,XXX,EnergySoftLin
+TransmissionLine,TransmissionLine,TransmissionLine,NA,NA,NA,NA,NA,Vegetated Linear Industrial Features,Transmission Line ,SoftLin,Succ,Lin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed ,XXX,XXX,EnergySoftLin
+Urban,Urban,Urban,NA,NA,NA,NA,NA,Urban & Rural & Industrial,Urban ,UrbInd,Alien,Nonlin,"Urban, Rural & Industrial",RuralUrban,Cities and towns ,UrbInd,UrbInd,RuralUrban
+WellSite,WellSite,WellSite,NA,NA,NA,NA,NA,Wells ,Well Site ,UrbInd,Alien,Nonlin,"Mines, Wells & Other Energy Features",Energy,Well pads created by the energy industry ,UrbInd,UrbInd,MineWell
+WindGenerationFacility,WindGenerationFacility,WindGenerationFacility,NA,NA,NA,NA,NA,Urban & Rural & Industrial,Wind Generation Facility,UrbInd,Alien,Nonlin,"Mines, Wells & Other Energy Features",Energy,Area around the windmill ,UrbInd,UrbInd,MineWell

@@ -429,20 +429,28 @@ ThbNrf <- colSums(hbNrf[lxn$N,])
 df <- (ThbNcr - ThbNrf) / sum(ThbNrf)
 dA <- Xtab(AvegN ~ rf + cr, ch2veg)
 dN <- Xtab(df ~ rf + cr, ch2veg)
+#dA <- colSums(as.matrix(groupSums(dA[,rownames(tv)], 2, tv$Sector2)))
+#dN <- colSums(as.matrix(groupSums(dN[,rownames(tv)], 2, tv$Sector2)))
 dA <- colSums(as.matrix(groupSums(dA[,rownames(tv)], 2, tv$Sector)))
 dN <- colSums(as.matrix(groupSums(dN[,rownames(tv)], 2, tv$Sector)))
 U <- dN/dA
-seffN <- cbind(dA=dA, dN=dN, U=U)[-1,]
+seffN <- cbind(dA=dA, dN=dN, U=U)[c("Agriculture","Forestry",
+    "Energy",#"EnergySoftLin","MineWell",
+    "RuralUrban","Transportation"),]
 
 ThbScr <- colSums(hbScr[lxn$S,])
 ThbSrf <- colSums(hbSrf[lxn$S,])
 df <- (ThbScr - ThbSrf) / sum(ThbSrf)
 dA <- Xtab(AsoilS ~ rf + cr, ch2soil)
 dN <- Xtab(df ~ rf + cr, ch2soil)
+#dA <- colSums(as.matrix(groupSums(dA[,rownames(ts)], 2, ts$Sector2)))
+#dN <- colSums(as.matrix(groupSums(dN[,rownames(ts)], 2, ts$Sector2)))
 dA <- colSums(as.matrix(groupSums(dA[,rownames(ts)], 2, ts$Sector)))
 dN <- colSums(as.matrix(groupSums(dN[,rownames(ts)], 2, ts$Sector)))
 U <- dN/dA
-seffS <- cbind(dA=dA, dN=dN, U=U)[-1,]
+seffS <- cbind(dA=dA, dN=dN, U=U)[c("Agriculture","Forestry",
+    "Energy",#"EnergySoftLin","MineWell",
+    "RuralUrban","Transportation"),]
 seff_res[[spp]] <- list(N=seffN, S=seffS)
 
 #(sum(hbNcr)-sum(hbNrf))/sum(hbNrf)
@@ -451,7 +459,8 @@ seff_res[[spp]] <- list(N=seffN, S=seffS)
 
 }
 
-save(slt, seff_res, file=file.path(ROOT, "out", "birds", "kgrid_table.Rdata"))
+#save(slt, seff_res, file=file.path(ROOT, "out", "birds", "sector-effects-e2.Rdata"))
+save(slt, seff_res, file=file.path(ROOT, "out", "birds", "sector-effects.Rdata"))
 
 nres <- list()
 sres <- list()
@@ -480,11 +489,16 @@ SEFF <- seff_res[[spp]][[WHERE]]
 
 ## Sector effect plot from Dave
 ## Sectors to plot and their order
-sectors <- c("Agriculture","Forestry","Energy","RuralUrban","Transportation")
+sectors <- c("Agriculture","Forestry",
+    "Energy",#"EnergySoftLin","MineWell",
+    "RuralUrban","Transportation")
 ## Names that will fit without overlap  
-sector.names <- c("Agriculture","Forestry","Energy","RuralUrban","Transport")  
+sector.names <- c("Agriculture","Forestry",
+    "Energy",#"EnergySL","EnergyEX",
+    "RuralUrban","Transport")
 ## The colours for each sector above
-c1 <- c("tan3","palegreen4","indianred3","skyblue3","slateblue2")  
+c1 <- c("tan3","palegreen4","indianred3",#"hotpink4",
+    "skyblue3","slateblue2")  
 total.effect <- 100 * SEFF[sectors,"dN"]
 unit.effect <- 100 * SEFF[sectors,"U"]
 ## Max y-axis at 20%, 50% or 100% increments 
@@ -544,6 +558,8 @@ if (abs(y[3]-y[4])<0.05*(ymax-ymin))
 ## that are close together on x-axis
 if (abs(y[4]-y[5])<0.05*(ymax-ymin))  
     y[4:5]<-mean(y[4:5])+(c(-0.015,0.015)*(ymax-ymin))[rank(y[4:5])]   
+#if (abs(y[5]-y[6])<0.05*(ymax-ymin))  
+#    y[5:6]<-mean(y[5:6])+(c(-0.015,0.015)*(ymax-ymin))[rank(y[5:6])]   
 text(q,y,paste(ifelse(total.effect>0,"+",""),
     sprintf("%.1f",total.effect),"%",sep=""),col="darkblue",cex=1.4)
 mtext(side=3,line=1,at=0,adj=0, 
