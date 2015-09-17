@@ -59,29 +59,29 @@ city <- spTransform(city, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=5
 BIRDS <- FALSE
 
 ## mammals
-dir_in <- "e:/peter/sppweb2015/Mammals/Km2 summaries"
+dir_in <- "e:/peter/sppweb2015-round2/Mammals/Km2 summaries"
 dir_out <- "e:/peter/sppweb-ftp-content/species/mammals"
-lt <- read.csv("e:/peter/sppweb2015/Mammals/mammals-lookup.csv")
+lt <- read.csv("~/repos/abmispecies/_data/mammals.csv")
 
 ## mites
 dir_in <- "e:/peter/sppweb2015/Mites/Km2 summaries"
 dir_out <- "e:/peter/sppweb-ftp-content/species/mites"
-lt <- read.csv("e:/peter/sppweb2015/Mites/mites-lookup.csv")
+lt <- read.csv("~/repos/abmispecies/_data/mites.csv")
 
 ## vplants
 dir_in <- "c:/Users/Peter/www/Plants/Km2 summaries"
 dir_out <- "c:/Users/Peter/www/species/vplants"
-lt <- read.csv("c:/Users/Peter/www/vplants-lookup.csv")
+lt <- read.csv("~/repos/abmispecies/_data/vplants.csv")
 
 ## mosses
 dir_in <- "c:/Users/Peter/www/Moss/Km2 summaries"
 dir_out <- "c:/Users/Peter/www/species/mosses"
-lt <- read.csv("c:/Users/Peter/www/mosses-lookup.csv")
+lt <- read.csv("~/repos/abmispecies/_data/mosses.csv")
 
 ## lichens
 dir_in <- "c:/Users/Peter/www/Lichens/Km2 summaries"
 dir_out <- "c:/Users/Peter/www/species/lichens"
-lt <- read.csv("c:/Users/Peter/www/lichens-lookup.csv")
+lt <- read.csv("~/repos/abmispecies/_data/lichens.csv")
 
 ## birds
 dir_in <- "e:/peter/sppweb2015/birds-pred/"
