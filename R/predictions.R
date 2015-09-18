@@ -484,7 +484,7 @@ sres <- data.frame(Species=slt[rownames(sres), "species"], sres)
 uplow <- do.call(rbind, uplow)
 uplow <- data.frame(Species=slt[rownames(uplow), "species"], uplow)
 
-
+excl <- 
 
 summary(uplow$Cur.total)
 sum(uplow$Cur.total >= 10^7)
@@ -498,6 +498,15 @@ write.csv(nres, row.names=FALSE,
     file="e:/peter/sppweb-html-content/species/birds/Birds_SectorEffects_North.csv")
 write.csv(sres, row.names=FALSE,
     file="e:/peter/sppweb-html-content/species/birds/Birds_SectorEffects_South.csv")
+
+siLUF <- data.frame(Species=NA, LUF=rownames(uplow_luf[[1]]), do.call(rbind, uplow_luf))
+siLUF$Species <- slt$species[match(siLUF$ID, slt$AOU)]
+ta <- aggregate(siLUF$Cur.total, list(ID=siLUF$ID), sum)
+keep <- as.character(ta$ID[ta$x < 10^7 & ta$x > 0.5])
+siLUF <- siLUF[siLUF$ID %in% keep,]
+siLUF$ID <- NULL
+write.csv(siLUF, row.names=FALSE,
+    file="e:/peter/sppweb-html-content/species/birds/Birds_UplandLowlandIntactness-by-LUF.csv")
 
 
 
