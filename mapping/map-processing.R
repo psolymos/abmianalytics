@@ -217,7 +217,13 @@ for (taxon in taxa) {
             tab$Curr <- wS * tab$CurrS + (1-wS) * tab$CurrN
             tab$Ref <- wS * tab$RefS + (1-wS) * tab$RefN
         }
-        x <- groupSums(as.matrix(tab[,c("Curr","Ref")]), 1, BY)
+        tab$Curr[is.na(tab$Curr)] <- 0
+        tab$Ref[is.na(tab$Ref)] <- 0
+        x <- as.matrix(tab[,c("Curr","Ref")])
+        q <- quantile(x, 0.99)
+        x[x > q] <- q
+        x <- groupSums(x, 1, BY)
+        
         si <- 100 * pmin(x[,"Curr"], x[,"Ref"]) / pmax(x[,"Curr"], x[,"Ref"])
         si2 <- ifelse(x[,"Curr"] > x[,"Ref"], 200-si, si)
       
