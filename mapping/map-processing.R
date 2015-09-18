@@ -7,8 +7,8 @@ library(mefa4)
 library(utils)
 source("~/repos/abmianalytics/R/maps_functions.R")
 
-ROOT <- "c:/p"
-VER <- "AB_data_v2015"
+#ROOT <- "c:/p"
+#VER <- "AB_data_v2015"
 ROOT <- "c:/Users/Peter"
 VER <- "www"
 
@@ -174,3 +174,55 @@ for (spp in spplist) {
 }
 
 
+## WPAC
+
+wp <- read.csv("c:/Users/Peter/www/data/kgrid_xy_WPAC_2015-09-18.csv")
+kgrid$wp <- wp$NAME[match(rownames(kgrid), wp$Row_Col)]
+levels(kgrid$wp)[levels(kgrid$wp) == ""] <- "NONE"
+
+BY <- kgrid$wp
+
+res <- list()
+
+taxa <- c("birds","mammals","mosses","mites","lichens","vplants")
+for (taxon in taxa) {
+
+    lt <- read.csv(paste0("~/repos/abmispecies/_data/", taxon, ".csv"))
+    rownames(lt) <- lt$sppid
+    dir_in <- paste0("c:/Users/Peter/www/csv/", taxon)
+    SPP <- as.character(lt$sppid[lt$map.pred])
+    res[[taxon]] <- list()
+    for (spp in SPP){
+        cat(taxon, spp, "\n");flush.console()
+
+        f_in <- file.path(dir_in, paste0(spp, ".csv"))
+        tab <- read.csv(f_in)
+        tab <- tab[match(rownames(kgrid), tab$LinkID),]
+
+        if (taxon == "birds") {
+            TYPE <- "C" # combo
+            if (!lt[spp, "veghf.north"])
+                TYPE <- "S"
+            if (!lt[spp, "soilhf.south"])
+                TYPE <- "N"
+
+            wS <- 1-kgrid$pAspen
+            if (TYPE == "S")
+                wS[] <- 1
+            if (TYPE == "N")
+                wS[] <- 0
+            wS[kgrid$useS] <- 1
+            wS[kgrid$useN] <- 0
+
+            tab$Curr <- wS * tab$CurrS + (1-wS) * tab$CurrN
+            tab$Ref <- wS * tab$RefS + (1-wS) * tab$RefN
+        }
+        x <- groupSums(as.matrix(tab[,c("Curr","Ref")]), 1, BY)
+        si <- 100 * pmin(x[,"Curr"], x[,"Ref"]) / pmax(x[,"Curr"], x[,"Ref"])
+        si2 <- ifelse(x[,"Curr"] > x[,"Ref"], 200-si, si)
+      
+        res[[taxon]][[spp]] <- cbind(x, SI=si, SI200=si2)
+    }
+}
+
+save(res, file="c:/Users/Peter/www/wpac.Rdata")
