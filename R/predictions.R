@@ -96,6 +96,11 @@ ch2veg <- t(sapply(strsplit(colnames(trVeg), "->"),
 ch2veg <- data.frame(ch2veg)
 colnames(ch2veg) <- c("rf","cr")
 rownames(ch2veg) <- colnames(Aveg)
+ch2veg$uplow <- as.factor(ifelse(ch2veg$rf %in% c("BSpr0", "BSpr1", "BSpr2", "BSpr3", 
+    "BSpr4", "BSpr5", "BSpr6", 
+    "BSpr7", "BSpr8", "BSpr9", "BSprR", "Larch0", "Larch1", "Larch2", "Larch3",
+    "Larch4", "Larch5", "Larch6", "Larch7", "Larch8", "Larch9", "LarchR",
+    "WetGrassHerb", "WetShrub"), "lowland", "upland"))
 
 ch2soil <- t(sapply(strsplit(colnames(trSoil), "->"), 
     function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
@@ -371,8 +376,10 @@ write.csv(NSR, row.names=FALSE,
 
 ## sector effects
 seff_res <- list()
-seff_luf <- list()
-seff_ns <- list()
+#seff_luf <- list()
+#seff_ns <- list()
+uplow <- list()
+uplow_luf <- list()
 
 for (spp in as.character(slt$AOU[slt$map.pred])) {
 
@@ -404,26 +411,26 @@ hbSrf[is.na(hbSrf)] <- 0
 hbScr <- hbScr * Asoil
 hbSrf <- hbSrf * Asoil
 
-if (FALSE) {
+## upland/lowland
+cr <- colSums(groupSums(hbNcr, 2, ch2veg$uplow))
+rf <- colSums(groupSums(hbNrf, 2, ch2veg$uplow))
+cr <- c(total=sum(cr), cr)
+rf <- c(total=sum(rf), rf)
+si <- 100 * pmin(cr, rf) / pmax(cr, rf)
+si2 <- ifelse(cr > rf, 200-si, si)
+uplow[[spp]] <- c(Ref=rf, Cur=cr, SI=si, SI200=si2)
 
-cr <- list()
-rf <- list()
-aa <- list()
-for (i in rownames(lxn)) {
-    cr[[i]] <- if (lxn[i,"NRNAME"] == "Grassland")
-        hbScr[i,] else hbNcr[i,]
-    rf[[i]] <- if (lxn[i,"NRNAME"] == "Grassland")
-        hbSrf[i,] else hbNrf[i,]
-    aa[[i]] <- if (lxn[i,"NRNAME"] == "Grassland")
-        Asoil[i,] else Aveg[i,]
-}
+cr <- groupSums(groupSums(hbNcr, 2, ch2veg$uplow), 1, lxn$LUF_NAME)
+rf <- groupSums(groupSums(hbNrf, 2, ch2veg$uplow), 1, lxn$LUF_NAME)
+cr <- cbind(total=rowSums(cr), cr)
+rf <- cbind(total=rowSums(rf), rf)
+si <- sapply(1:3, function(i) 100 * pmin(cr[,i], rf[,i]) / pmax(cr[,i], rf[,i]))
+colnames(si) <- colnames(cr)
+si2 <- ifelse(cr > rf, 200-si, si)
 
-LUF2 <- list()
-for (i in levels(lxn$NRNAME)) {
+uplow_luf[[spp]] <- data.frame(ID=spp, Ref=round(rf), Cur=round(cr), 
+    SI=round(si, 2), SI200=round(si2, 2))
 
-}
-
-}
 ThbNcr <- colSums(hbNcr[lxn$N,])
 ThbNrf <- colSums(hbNrf[lxn$N,])
 df <- (ThbNcr - ThbNrf) / sum(ThbNrf)
@@ -460,7 +467,8 @@ seff_res[[spp]] <- list(N=seffN, S=seffS)
 }
 
 #save(slt, seff_res, file=file.path(ROOT, "out", "birds", "sector-effects-e2.Rdata"))
-save(slt, seff_res, file=file.path(ROOT, "out", "birds", "sector-effects.Rdata"))
+save(slt, seff_res, uplow, uplow_luf, file=file.path(ROOT, "out", "birds", "sector-effects.Rdata"))
+#load(file.path(ROOT, "out", "birds", "sector-effects.Rdata"))
 
 nres <- list()
 sres <- list()
@@ -473,6 +481,19 @@ sres <- do.call(rbind, sres)
 nres <- data.frame(Species=slt[rownames(nres), "species"], nres)
 sres <- data.frame(Species=slt[rownames(sres), "species"], sres)
 
+uplow <- do.call(rbind, uplow)
+uplow <- data.frame(Species=slt[rownames(uplow), "species"], uplow)
+
+
+
+summary(uplow$Cur.total)
+sum(uplow$Cur.total >= 10^7)
+uplow2 <- uplow[uplow$Cur.total < 10^7,]
+#sum(uplow$Cur.total <= 1)
+#uplow2 <- uplow2[uplow$Cur.total > 0,]
+
+write.csv(uplow2, row.names=FALSE,
+    file="e:/peter/sppweb-html-content/species/birds/Birds_UplandLowlandIntactness.csv")
 write.csv(nres, row.names=FALSE,
     file="e:/peter/sppweb-html-content/species/birds/Birds_SectorEffects_North.csv")
 write.csv(sres, row.names=FALSE,

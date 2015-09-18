@@ -14,6 +14,9 @@ VER <- "www"
 
 ## cell x veg/soil matrices and xy lookup table (climate, region, etc)
 load(file.path(ROOT, VER, "out", "kgrid", "kgrid_table.Rdata"))
+#kg <- kgrid[,c("Row_Col", "POINT_X", "POINT_Y")]
+#write.csv(kg, row.names=FALSE,
+#    file=file.path(ROOT, VER, "out", "kgrid", "kgrid_xy_2015-09-18.csv"))
 
 ## raster template to use
 rt <- raster(file.path(ROOT, VER, "data", "kgrid", "AHM1k.asc"))
