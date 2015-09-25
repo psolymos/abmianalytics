@@ -648,8 +648,16 @@ if (tax[spp, "veghf_north"]) {
 softlin <- data.frame(Species=tax[names(res_soft), "English_Name"], do.call(rbind, res_soft))
 hardlin <- do.call(rbind, res_hard)
 hardlin$Species <- tax[as.character(hardlin$Species), "English_Name"]
+
 write.csv(softlin, row.names=FALSE, 
     file=file.path(ROOT, "figs", "soft-linear-coefs-2015.csv"))
 write.csv(hardlin, row.names=FALSE, 
     file=file.path(ROOT, "figs", "hard-linear-EXPcoefs-2015.csv"))
+softlin2 <- softlin[c("BTNW","BBWA","OVEN","BRCR","CAWA"),]
+hardlin2 <- do.call(rbind, res_hard[c("BTNW","BBWA","OVEN","BRCR","CAWA")])
+hardlin2$Species <- tax[as.character(hardlin2$Species), "English_Name"]
 
+write.csv(softlin2, row.names=FALSE, 
+    file=file.path(ROOT, "figs", "soft-linear-coefs-2015-5spp.csv"))
+write.csv(hardlin2, row.names=FALSE, 
+    file=file.path(ROOT, "figs", "hard-linear-EXPcoefs-2015-5spp.csv"))
