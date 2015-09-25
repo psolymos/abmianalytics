@@ -232,3 +232,10 @@ for (taxon in taxa) {
 }
 
 save(res, file="c:/Users/Peter/www/wpac.Rdata")
+
+out <- lapply(res, function(z) 
+    data.frame(t(sapply(z, function(zz) zz["Beaver River Watershed Alliance",]))))
+round(t(sapply(out, colMeans))[,c("SI"),drop=FALSE], 2)
+#for (i in names(out))
+#    out[[i]]$Taxon <- i
+

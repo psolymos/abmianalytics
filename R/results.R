@@ -601,3 +601,55 @@ tmp[tmp == 0] <- NA
 rowMeans(exp(tmp), na.rm=TRUE)
 
 
+## Linear features coefficients
+
+spp <- "BTNW"
+xlin <- nonDuplicated(xnn[,c("ROAD01","hab1","hab_lcc","hab_lcc2","hab_lcc3")],
+    hab1, TRUE)
+xlin <- xlin[c("Decid", "Mixwood", "Conif", "Pine", "BSpr", "Larch", 
+    "Decid", "Mixwood", "Conif", "Pine", "BSpr", "Larch", 
+    "GrassHerb", "Shrub", "Wetland", "Cult", "UrbInd"),]
+rownames(xlin)[1:12] <- paste0(rep(rownames(xlin)[1:6], 2), 
+    rep(c("0-40","40+"), each=6))
+xlin$ROAD01 <- 1
+xlin$SoftLin_PC <- 0
+xlin$hab_lcc[] <- c(4,4, 3,3,3,3, 2,2, 1,1,1,1, 5,5,5,5,5)
+xlin$hab_lcc3 <- xlin$hab_lcc
+levels(xlin$hab_lcc3) <- c("1", "1", "2", "2", "3")
+xlin$hab_lcc2 <- xlin$hab_lcc
+levels(xlin$hab_lcc2) <- c("1", "1", "1", "1", "2")
+
+
+Xlin <- model.matrix(getTerms(modsn["Contrast"], "formula", intercept=TRUE), xlin)
+colnames(Xlin) <- fixNames(colnames(Xlin))
+Xlin <- Xlin[,-1]
+
+
+res_soft <- list()
+res_hard <- list()
+for (spp in rownames(tax)) {
+    cat(spp, "\n");flush.console()
+    NAM <- as.character(tax[spp, "English_Name"])
+if (tax[spp, "veghf_north"]) {
+    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-north_", spp, ".Rdata")))
+    estn_lin <- getEst(resn, stage=stage_hab_n, na.out=FALSE, Xnn)
+    colnames(estn_lin) <- fixNames(colnames(estn_lin))
+    estn_lin2 <- estn_lin[,colnames(Xlin)]
+    pr <- apply(estn_lin2, 1, function(z) Xlin %*% z)
+    rownames(pr) <- rownames(xlin)
+    tab <- t(apply(exp(pr), 1, quantile, c(0.5, 0.05, 0.95)))
+    res_hard[[spp]] <- data.frame(Species=spp, Habitat=rownames(tab), tab)
+    res_soft[[spp]] <- quantile(estn_lin[,"SoftLin_PC"], c(0.5, 0.05, 0.95))
+}
+}
+## note: roadside stuff is exponentiated, but soft lin is not,
+## because it is exp(x * est)
+
+softlin <- data.frame(Species=tax[names(res_soft), "English_Name"], do.call(rbind, res_soft))
+hardlin <- do.call(rbind, res_hard)
+hardlin$Species <- tax[as.character(hardlin$Species), "English_Name"]
+write.csv(softlin, row.names=FALSE, 
+    file=file.path(ROOT, "figs", "soft-linear-coefs-2015.csv"))
+write.csv(hardlin, row.names=FALSE, 
+    file=file.path(ROOT, "figs", "hard-linear-EXPcoefs-2015.csv"))
+
