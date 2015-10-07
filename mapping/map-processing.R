@@ -7,10 +7,10 @@ library(mefa4)
 library(utils)
 source("~/repos/abmianalytics/R/maps_functions.R")
 
-#ROOT <- "c:/p"
-#VER <- "AB_data_v2015"
-ROOT <- "c:/Users/Peter"
-VER <- "www"
+ROOT <- "c:/p"
+VER <- "AB_data_v2015"
+#ROOT <- "c:/Users/Peter"
+#VER <- "www"
 
 ## cell x veg/soil matrices and xy lookup table (climate, region, etc)
 load(file.path(ROOT, VER, "out", "kgrid", "kgrid_table.Rdata"))
@@ -62,7 +62,7 @@ city <- spTransform(city, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=5
 BIRDS <- FALSE
 
 ## mammals
-dir_in <- "e:/peter/sppweb2015-round2/Mammals/Km2 summaries"
+dir_in <- "e:/peter/sppweb2015-round2/Mammals-age0-fixed/Mammals revised Oct 2015/Km2 summaries"
 dir_out <- "e:/peter/sppweb-ftp-content/species/mammals"
 lt <- read.csv("~/repos/abmispecies/_data/mammals.csv")
 

@@ -435,6 +435,17 @@ ThbNcr <- colSums(hbNcr[lxn$N,])
 ThbNrf <- colSums(hbNrf[lxn$N,])
 df <- (ThbNcr - ThbNrf) / sum(ThbNrf)
 dA <- Xtab(AvegN ~ rf + cr, ch2veg)
+if (FALSE) {
+    tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
+    tv2 <- nonDuplicated(tv,Combined,TRUE)
+    dA2 <- as.matrix(groupSums(dA[,rownames(tv2)], 2, tv2$Sector3))
+    tv3 <- tv2[rownames(dA2),]
+    dA2 <- as.matrix(groupSums(dA2, 1, tv3$Sector3))
+    dA3 <- dA2[,c(c("Agriculture","Forestry","Energy","RuralUrban","Transportation"))]
+    dA3 <- round(100*t(t(dA3) / colSums(dA3)), 1)
+    dA3[c("Decid", "Mixwood", "UpConif", "LoConif", "Wet", "OpenOther"),]
+}
+
 dN <- Xtab(df ~ rf + cr, ch2veg)
 #dA <- colSums(as.matrix(groupSums(dA[,rownames(tv)], 2, tv$Sector2)))
 #dN <- colSums(as.matrix(groupSums(dN[,rownames(tv)], 2, tv$Sector2)))
@@ -483,8 +494,6 @@ sres <- data.frame(Species=slt[rownames(sres), "species"], sres)
 
 uplow <- do.call(rbind, uplow)
 uplow <- data.frame(Species=slt[rownames(uplow), "species"], uplow)
-
-excl <- 
 
 summary(uplow$Cur.total)
 sum(uplow$Cur.total >= 10^7)
