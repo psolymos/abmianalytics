@@ -137,7 +137,7 @@ slt[setdiff(rownames(slt), gl$AOU.Code),1:3]
 slt$oldforest <- gl$Forest.Types.Old[match(rownames(slt), gl$AOU.Code)]
 slt$oldforest[is.na(slt$oldforest)] <- 0
 slt$oldforest[slt$oldforest > 0] <- 1
-write.csv(slt, row.names=FALSE, file="~/repos/abmispecies/_data/birds.csv")    
+#write.csv(slt, row.names=FALSE, file="~/repos/abmispecies/_data/birds.csv")    
 
 
 ## spp specific output
@@ -309,7 +309,7 @@ f1 <- function(x) {
 vhf <- t(sapply(res_veghf, f1))
 vhf2 <- data.frame(tax[rownames(vhf), c("English_Name","Scientific_Name")],
     vhf)
-write.csv(vhf2, file=file.path(ROOT, "figs", "veghf-north.csv"))
+write.csv(vhf2, file=file.path(ROOT, "figs", "birds-veghf-north.csv"))
 
 SPP <- rownames(slt)[slt$veghf.north]
 
@@ -373,7 +373,7 @@ f2 <- function(x) {
 soil <- t(sapply(res_soilhf, f2))
 soil2 <- data.frame(tax[rownames(soil), c("English_Name","Scientific_Name")],
     soil)
-write.csv(soil2, file=file.path(ROOT, "figs", "soilhf-south.csv"))
+write.csv(soil2, file=file.path(ROOT, "figs", "birds-soilhf-south.csv"))
 
 ## climate & surrounding hf tables, climate surface maps
 

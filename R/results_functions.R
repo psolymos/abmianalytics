@@ -135,8 +135,10 @@ function(est, Xn)
     out <- pr[,c(1,2,5,6)]
     ## Linear features
     MEAN <- mean(out[,"Median"])
-    Soft <- quantile(MEAN * exp(0.1*est[,"SoftLin_PC"]), c(0.5, (1-level)/2, 1-(1-level)/2))
-    Hard <- quantile(MEAN * exp(est[,"ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
+#    Soft <- quantile(MEAN * exp(0.1*est[,"SoftLin_PC"]), c(0.5, (1-level)/2, 1-(1-level)/2))
+#    Hard <- quantile(MEAN * exp(est[,"ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
+    Soft <- quantile(exp(est[,"SoftLin_PC"]), c(0.5, (1-level)/2, 1-(1-level)/2))
+    Hard <- quantile(exp(est[,"ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
     attr(out, "linear") <- c(Baseline=MEAN, Soft=Soft, Hard=Hard)
     ## burn should not be shown when it is not selected (i.e. when sum == 0)
     ## REALLY: burn should be just part of young age class, and not being on its own
@@ -519,8 +521,10 @@ fig_linear <-
 function(pr, LAB)
 {
 		p.mean <- pr[1]
-		p.softlin10 <- pr[2]
-		p.hardlin10 <- pr[5]
+		#p.softlin10 <- 0.9*pr[1] + 0.1*pr[2]
+		p.softlin10 <- pr[1] * exp(0.1*log(pr[2]))
+		p.hardlin10 <- pr[1]*pr[5]
+		#p.hardlin10 <- 0.9*pr[1] + 0.1*pr[5]
 		ymax1<-max(p.softlin10,p.hardlin10,2*p.mean)*1.03
 		plot(c(1,1.95,2.05),c(p.mean,p.softlin10,p.hardlin10),pch=c(1,16,15),col=c("grey30","blue3","red4"),xlab="Human footprint",ylab="Relative abundance",xlim=c(0.8,2.8),ylim=c(0,ymax1),tck=0.01,yaxs="i",xaxt="n",yaxt="n",bty="l",cex=2,lwd=2,cex.lab=1.4,cex.axis=1.3,col.lab="grey40") 
 		axis(side=2,at=pretty(c(0,ymax1),n=5),cex.axis=1.3,tck=0.01,cex.axis=1.3,col.axis="grey40",col.ticks="grey40")
