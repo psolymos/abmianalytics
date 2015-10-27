@@ -379,7 +379,13 @@ seff_res <- list()
 #seff_luf <- list()
 #seff_ns <- list()
 uplow <- list()
+uplow_full <- list()
 uplow_luf <- list()
+
+## stuff to exclude
+## add col to lxn
+## subset counter for loop
+
 
 for (spp in as.character(slt$AOU[slt$map.pred])) {
 
@@ -411,9 +417,26 @@ hbSrf[is.na(hbSrf)] <- 0
 hbScr <- hbScr * Asoil
 hbSrf <- hbSrf * Asoil
 
+
+## combined upland/lowland N/S
+crN <- groupSums(hbNcr, 2, ch2veg$uplow)
+rfN <- groupSums(hbNrf, 2, ch2veg$uplow)
+crN[lxn$NRNAME=="Grassland","lowland"] <- 0 
+crN[lxn$NRNAME=="Grassland","upland"] <- rowSums(hbScr[lxn$NRNAME=="Grassland",])
+rfN[lxn$NRNAME=="Grassland","lowland"] <- 0 
+rfN[lxn$NRNAME=="Grassland","upland"] <- rowSums(hbSrf[lxn$NRNAME=="Grassland",])
+uplo <- data.frame(Current=crN, Reference=rfN)
+uplow_full[[spp]] <- data.frame(sppid=spp, lxn[,1:3], uplo)
+
+## Exclude stuff here
+r0 <- lxn$NSRNAME %in% c("Alpine","Lower Foothills",
+    "Montane","Subalpine","Upper Foothills")
+crN[r0,] <- 0
+rfN[r0,] <- 0
+
 ## upland/lowland
-cr <- colSums(groupSums(hbNcr, 2, ch2veg$uplow))
-rf <- colSums(groupSums(hbNrf, 2, ch2veg$uplow))
+cr <- colSums(crN)
+rf <- colSums(rfN)
 cr <- c(total=sum(cr), cr)
 rf <- c(total=sum(rf), rf)
 si <- 100 * pmin(cr, rf) / pmax(cr, rf)
@@ -478,7 +501,7 @@ seff_res[[spp]] <- list(N=seffN, S=seffS)
 }
 
 #save(slt, seff_res, file=file.path(ROOT, "out", "birds", "sector-effects-e2.Rdata"))
-save(slt, seff_res, uplow, uplow_luf, file=file.path(ROOT, "out", "birds", "sector-effects.Rdata"))
+save(slt, seff_res, uplow, uplow_luf, uplow_full, file=file.path(ROOT, "out", "birds", "sector-effects.Rdata"))
 #load(file.path(ROOT, "out", "birds", "sector-effects.Rdata"))
 
 nres <- list()
@@ -503,6 +526,7 @@ uplow2 <- uplow[uplow$Cur.total < 10^7,]
 
 write.csv(uplow2, row.names=FALSE,
     file="e:/peter/sppweb-html-content/species/birds/Birds_UplandLowlandIntactness.csv")
+
 write.csv(nres, row.names=FALSE,
     file="e:/peter/sppweb-html-content/species/birds/Birds_SectorEffects_North.csv")
 write.csv(sres, row.names=FALSE,
@@ -517,6 +541,11 @@ siLUF$ID <- NULL
 write.csv(siLUF, row.names=FALSE,
     file="e:/peter/sppweb-html-content/species/birds/Birds_UplandLowlandIntactness-by-LUF.csv")
 
+allluf <- do.call(rbind, uplow_full)
+allluf <- data.frame(slt[match(allluf$sppid, slt$AOU),c("species","scinam")], 
+    LUF_NSR=interaction(allluf$LUF_NAME, allluf$NSRNAME, drop=TRUE, sep="_"), allluf)
+write.csv(allluf, row.names=FALSE,
+    file="e:/peter/sppweb-html-content/species/birds/Birds_UplandLowland-by-LUF-NSR.csv")
 
 
 for (spp in as.character(slt$AOU[slt$map.pred])) {
