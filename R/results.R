@@ -255,6 +255,7 @@ if (tax[spp, "map_det"]) {
     plot(kgrid$X, kgrid$Y, pch=15, cex=0.2, col=col1, axes=FALSE, ann=FALSE)
     points(xyw, pch=15, cex=0.2, col=rgb(0.3,0.45,0.9))
     points(xy0, pch="+", cex=0.5, col="red3")
+    #points(xy0, pch=19, cex=0.5, col="red3")
     points(xy1, pch=16, cex=1.6, col="red4")
     mtext(paste0(NAM, " (n = ", NDAT, " detections)"), line=2,
         side=3, adj=0.5, cex=1.4, col="grey40")
