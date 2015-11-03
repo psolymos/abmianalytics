@@ -266,10 +266,41 @@ if (tax[spp, "map_det"]) {
 }
 }
 
+## calculating # occurrences
+xnn$lxn <- interaction(xnn$LUF_NAME, xnn$NSRNAME, drop=TRUE, sep="_")
+xns$lxn <- interaction(xns$LUF_NAME, xns$NSRNAME, drop=TRUE, sep="_")
+y01 <- list()
+for (spp in rownames(tax)) {
+if (tax[spp, "map_det"]) {
+    cat(spp, "\n");flush.console()
+    y01[[spp]] <- table(lxn=c(as.character(xnn$lxn), as.character(xns$lxn)),
+        det=c(ifelse(yyn[,spp]>0, 1, 0), ifelse(yys[,spp]>0, 1, 0)))[,"1"]
+}
+}
+y01 <- do.call(cbind, y01)
+colnames(y01) <- slt[colnames(y01), "sppid"]
+tmp <- strsplit(rownames(y01), "_")
+y01d <- data.frame(LUFxNSR=rownames(y01), 
+    LUF=sapply(tmp, "[[", 1),
+    NSR=sapply(tmp, "[[", 2),
+    y01)
+write.csv(y01d, row.names=FALSE, file=file.path(ROOT, "birds-number-of-occurrences.csv"))
 
 ## veghf-north
 ## linear-north
 ## table: veghf-north
+
+for (spp in rownames(tax)) {
+    cat(spp, "\n");flush.console()
+    NAM <- as.character(tax[spp, "English_Name"])
+if (tax[spp, "veghf_north"]) {
+    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-north_", spp, ".Rdata")))
+    estn6 <- getEst(resn, stage=6, na.out=FALSE, Xnn)
+    fname <- file.path(ROOT, "coefs",
+        paste0(as.character(tax[spp, "file"]), "_Stage6_coefs.csv"))
+    write.csv(estn6, row.names=FALSE, file=fname)
+}
+}
 
 res_veghf <- list()
 for (spp in rownames(tax)) {
