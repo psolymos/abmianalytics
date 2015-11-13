@@ -689,3 +689,18 @@ save(DAT, YY, OFF, OFFmean, mods, BB,
 
 save(tv, ts,
     file=file.path(ROOT2, "out", "birds", "data", "lookup-veg-soil.Rdata"))
+
+## 3x7 summaries
+
+library(mefa4)
+load("c:/p/AB_data_v2015/out/3x7/veg-hf_3x7_fix-fire_fix-age0.Rdata")
+
+for (yr in names(yearly_vhf)) {
+    for (i in 1:4) {
+        tmp <- as.matrix(yearly_vhf[[yr]][[i]])
+        write.csv(tmp,
+            file=paste0("c:/p/AB_data_v2015/out/3x7/csv/veg-hf_3x7_", 
+            yr, "_", names(yearly_vhf[[yr]])[i], ".csv"))
+    }
+}
+
