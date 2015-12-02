@@ -189,7 +189,7 @@ ABNNM10020,Bird,CHARADRIIFORMES,LARIDAE,Chlidonias niger,Black Tern,BLTE,BLTE,17
 ABNNN05010,Bird,CHARADRIIFORMES,ALCIDAE,Cepphus grylle,Black Guillemot,BLGU,BLGU,176985,FALSE,FALSE,Accidental/Vagrant NAmer,No,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 ABNNN06030,Bird,CHARADRIIFORMES,ALCIDAE,Brachyramphus perdix,Long-billed Murrelet,LBMU,LBMU,554143,FALSE,FALSE,Accidental/Vagrant NAmer,No,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 ABNNN07030,Bird,CHARADRIIFORMES,ALCIDAE,Synthliboramphus antiquus,Ancient Murrelet,ANMU,ANMU,177008,FALSE,FALSE,Accidental/Vagrant NAmer,No,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-ABNPB01010,Bird,COLUMBIFORMES,COLUMBIDAE,Columba livia,Rock Dove,RODO,RODO,177071,TRUE,TRUE,Exotic/Alien EurAsia,Yes,,,,,,,,,,,,,1,,,,,,,,,,,,1,,,1,,,,1,,
+ABNPB01010,Bird,COLUMBIFORMES,COLUMBIDAE,Columba livia,Rock Dove,RODO,ROPI,177071,TRUE,TRUE,Exotic/Alien EurAsia,Yes,,,,,,,,,,,,,1,,,,,,,,,,,,1,,,1,,,,1,,
 ABNPB01080,Bird,COLUMBIFORMES,COLUMBIDAE,Columba fasciata,Band-tailed Pigeon,BTPI,BTPI,177065,FALSE,FALSE,Accidental/Vagrant NAmer,No,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 ABNPB04010,Bird,COLUMBIFORMES,COLUMBIDAE,Zenaida asiatica,White-winged Dove,WWDO,WWDO,177121,FALSE,FALSE,Accidental/Vagrant NAmer,No,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 ABNPB04040,Bird,COLUMBIFORMES,COLUMBIDAE,Zenaida macroura,Mourning Dove,MODO,MODO,177125,TRUE,TRUE,Secure,Yes,,1,9,9,1,1,,,,,,1,,,,,,,1,,,,,1,,,,1,,,,,,
