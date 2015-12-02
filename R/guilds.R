@@ -99,6 +99,7 @@ setdiff(tax2$AOU[tax2$map.pred], tax$Species_ID)
 SPP <- intersect(tax2$AOU[tax2$map.pred], tax3$AOU.Code)
 
 res_pocc <- list()
+res_poccN <- list()
 res_si <- list()
 res_pmax <- list()
 for (spp in SPP) {
@@ -118,8 +119,8 @@ for (spp in SPP) {
         wS[] <- 1
     if (TYPE == "N")
         wS[] <- 0
-    wS[kgrid$useS] <- 1
-    wS[kgrid$useN] <- 0
+#    wS[kgrid$useS] <- 1
+#    wS[kgrid$useN] <- 0
 
     cr <- wS * km$CurrS + (1-wS) * km$CurrN
     rf <- wS * km$RefS + (1-wS) * km$RefN
@@ -133,13 +134,102 @@ for (spp in SPP) {
     rf[rf>qrf] <- qrf
 
     res_pocc[[spp]] <- 1 - exp(-cr * (pi*1.5^2)) # 150m
+    #res_poccN[[spp]] <- 1 - exp(-km$CurrN * (pi*1.5^2)) # 150m
     res_si[[spp]] <- 100 * pmin(cr, rf) / pmax(cr, rf)
     res_pmax[[spp]] <- max(cr, rf, na.rm=TRUE)
     ## NA means no prediction (rf=0 & cr=0)
 }
 
-save(res_si, res_pocc, res_pmax, SPP, tax, tax2, tax3,
-    file=file.path(ROOT, "out", "birds", "si-and-richness-summaries.Rdata"))
+#save(res_si, res_pocc, res_pmax, SPP, tax, tax2, tax3,
+#    file=file.path(ROOT, "out", "birds", "si-and-richness-summaries.Rdata"))
 
+SR <- do.call(cbind, res_pocc)
+SI <- do.call(cbind, res_si)
+#rownames(SR) <- rownames(SI) <- km$LinkID
+SR <- SR[,SPP]
+SI <- SI[,SPP]
+tax2 <- tax2[SPP,]
 
+meanSI_allbirds <- rowMeans(SI, na.rm=TRUE)
+meanSI_oldforestbirds <- rowMeans(SI[,tax2$oldforest==1], na.rm=TRUE)
+SR_allbirds <- rowSums(SR)
+SR_oldforestbirds <- rowSums(SR[,tax2$oldforest==1])
 
+out <- data.frame(
+    SI_allbirds=meanSI_allbirds,
+    SI_oldforestbirds=meanSI_oldforestbirds,
+    SR_allbirds=SR_allbirds,
+    SR_oldforestbirds=SR_oldforestbirds)
+rownames(out) <- km$LinkID
+save(out, file=file.path(ROOT, "out", "birds", "si-and-richness-summaries.Rdata"))
+
+    colSI <- colorRampPalette(c("red","yellow","darkgreen"))(100)
+    colSR <- colorRampPalette(c("blue","red"))(100)
+
+    val <- SR_allbirds
+    #val <- pmin(100, ceiling(99 * val / max(val,na.rm=TRUE))+1)
+    val <- pmin(100, ceiling(99*val/max(val,na.rm=TRUE))+1)
+    png(paste0("e:/peter/sppweb-html-content/birds-richness-all.png"),
+        width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=colSR[val], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+        points(X, Y, col=CE, pch=15, cex=cex))
+    mtext(side=3,"Richness, Birds",col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
+    par(op)
+    dev.off()
+
+    val <- SR_oldforestbirds
+    #val <- pmin(100, ceiling(99 * val / max(val,na.rm=TRUE))+1)
+    val <- pmin(100, ceiling(99*val/max(val,na.rm=TRUE))+1)
+    png(paste0("e:/peter/sppweb-html-content/birds-richness-oldforest.png"),
+        width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=colSR[val], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+        points(X, Y, col=CE, pch=15, cex=cex))
+    mtext(side=3,"Richness, Old Forest Birds",col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
+    par(op)
+    dev.off()
+
+    val <- meanSI_oldforestbirds
+    #val <- pmin(100, ceiling(99 * val / max(val,na.rm=TRUE))+1)
+    val <- pmin(100, ceiling(0.99*val)+1)
+    png(paste0("e:/peter/sppweb-html-content/birds-intactness-oldforest.png"),
+        width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=colSI[val], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+        points(X, Y, col=CE, pch=15, cex=cex))
+    mtext(side=3,"Intactness, Old Forest Birds",col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
+    par(op)
+    dev.off()
+
+    val <- meanSI_allbirds
+    #val <- pmin(100, ceiling(99 * val / max(val,na.rm=TRUE))+1)
+    val <- pmin(100, ceiling(0.99*val)+1)
+    png(paste0("e:/peter/sppweb-html-content/birds-intactness-all.png"),
+        width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=colSI[val], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+        points(X, Y, col=CE, pch=15, cex=cex))
+    mtext(side=3,"Intactness, Birds",col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
+    par(op)
+    dev.off()
