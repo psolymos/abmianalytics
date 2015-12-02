@@ -693,3 +693,79 @@ write.csv(softlin2, row.names=FALSE,
     file=file.path(ROOT, "figs", "soft-linear-coefs-2015-5spp.csv"))
 write.csv(hardlin2, row.names=FALSE, 
     file=file.path(ROOT, "figs", "hard-linear-EXPcoefs-2015-5spp.csv"))
+
+## upland/lowland classification of species
+
+tax2 <- read.csv("~/repos/abmispecies/_data/birds.csv")
+rownames(tax2) <- tax2$AOU
+tax3 <- read.csv("~/repos/abmianalytics/lookup/vertebrate-guilds.csv")
+rownames(tax3) <- tax3$AOU.Code
+setdiff(tax2$AOU[tax2$map.pred], tax3$AOU.Code)
+setdiff(tax2$AOU[tax2$map.pred], tax$Species_ID)
+SPP <- intersect(tax2$AOU[tax2$map.pred], tax3$AOU.Code)
+tax2 <- droplevels(tax2[SPP,])
+tax3 <- droplevels(tax3[SPP,])
+native <- tax3[,grep("Native.to.", colnames(tax3))]
+native[is.na(native)] <- 0
+native[native > 0] <- 1
+wet <- tax3[,c("General.Habitat.Category.Bog", "General.Habitat.Category.WetAq",
+    "Wetland.Types.Wet_NestTerrOrWet", "Wetland.Types.Aq_NestTerrOrWet")]
+wet[is.na(wet)] <- 0
+
+tax2$native <- ifelse(rowSums(native)>0, 1, 0)
+tax2 <- cbind(tax2, wet)
+
+dat2 <- dat[dat$useOK & dat$keep,]
+wetcl <- c("BSpr","Larch","Wetland")
+dat2$strat <- as.factor(ifelse(dat2$hab1 %in% wetcl, "lowland", "upland"))
+yy2 <- as.matrix(yy[rownames(dat2), SPP])
+off2 <- e$OFFmean[rownames(dat2)]
+
+table(dat2$strat, dat2$pWater >0.5)
+dat2$strat[dat2$pWater >0.5] <- "lowland"
+
+library(opticut)
+
+XXX <- model.matrix(~ ROAD01 + SoftLin_PC, dat2)
+oc1 <- opticut1(yy2[,1], XXX, dat2$strat, dist="poisson")
+
+oc <- opticut(yy2 ~ ROAD01 + SoftLin_PC, dat2, strata=dat2$strat, 
+    offset=off2, dist="poisson", comb="rank")
+os <- summary(oc)$summary
+os <- os[SPP,]
+
+tax2v <- data.frame(tax2[SPP,], os[SPP,])
+tax2v$w <- NULL
+tax2v$ndet_n <- NULL
+tax2v$ndet_s <- NULL
+tax2v$ndet_ns <- NULL
+tax2v$map.det <- NULL
+tax2v$veghf.north <- NULL
+tax2v$soilhf.south <- NULL
+tax2v$map.pred <- NULL
+tax2v$useavail.north <- NULL
+tax2v$useavail.south <- NULL
+tax2v$lablo <- NULL
+tax2v$labhi <- NULL
+
+#levels(tax2v$split) <- c("lowland", "upland", "nopref")
+#tax2v$split[tax2v$logLR < 2] <- "nopref"
+table(tax2v$split)
+
+tax2v$order <- tax3[SPP, "Order"]
+tax2v$split2 <- as.character(tax2v$split)
+tax2v$split2[] <- ""
+tax2v$split2[tax2v$General.Habitat.Category.Bog + 
+    tax2v$General.Habitat.Category.WetAq > 0 & tax2v$split == "lowland"] <- "lowland"
+tax2v$split2[tax2v$General.Habitat.Category.Bog + 
+    tax2v$General.Habitat.Category.WetAq == 0 & tax2v$split == "upland"] <- "upland"
+tax2v$split2[tax2v$order %in% c("ANSERIFORMES","CHARADRIIFORMES","CICONIIFORMES",
+    "PODICIPEDIFORMES","PELECANIFORMES","GAVIIFORMES","GRUIFORMES")] <- "lowland"
+tax2v$split2[tax2v$order %in% c("COLUMBIFORMES","FALCONIFORMES",
+    "GALLIFORMES","PICIFORMES","STRIGIFORMES")] <- "upland"
+tax2v$split2[tax2v$native == 0] <- "nonnative"
+
+table(tax2v$order,tax2v$split)
+table(tax2v$split2)
+write.csv(tax2v, file="~/birds-upland-lowland-classification.csv", row.names=FALSE)
+
