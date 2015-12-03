@@ -136,19 +136,20 @@ for (spp in SPP) {
     res_pocc[[spp]] <- 1 - exp(-cr * (pi*1.5^2)) # 150m
     #res_poccN[[spp]] <- 1 - exp(-km$CurrN * (pi*1.5^2)) # 150m
     res_si[[spp]] <- 100 * pmin(cr, rf) / pmax(cr, rf)
+    res_si[[spp]][is.na(res_si[[spp]])] <- 100
     res_pmax[[spp]] <- max(cr, rf, na.rm=TRUE)
     ## NA means no prediction (rf=0 & cr=0)
 }
 
-#save(res_si, res_pocc, res_pmax, SPP, tax, tax2, tax3,
-#    file=file.path(ROOT, "out", "birds", "si-and-richness-summaries.Rdata"))
-
 SR <- do.call(cbind, res_pocc)
 SI <- do.call(cbind, res_si)
-#rownames(SR) <- rownames(SI) <- km$LinkID
+rownames(SR) <- rownames(SI) <- km$LinkID
 SR <- SR[,SPP]
 SI <- SI[,SPP]
 tax2 <- tax2[SPP,]
+
+save(SR, tax,
+    file=file.path(ROOT, "out", "birds", "pocc-summaries.Rdata"))
 
 meanSI_allbirds <- rowMeans(SI, na.rm=TRUE)
 meanSI_oldforestbirds <- rowMeans(SI[,tax2$oldforest==1], na.rm=TRUE)
