@@ -1,0 +1,175 @@
+sppid,species,scinam,ndet,modelN,modelS,AOU,oldforest,native,General.Habitat.Category.Bog,General.Habitat.Category.WetAq,Wetland.Types.Wet_NestTerrOrWet,Wetland.Types.Aq_NestTerrOrWet,order,FINAL
+AlderFlycatcher,Alder Flycatcher,Empidonax alnorum,6929,TRUE,TRUE,ALFL,0,1,0,0,0,0,PASSERIFORMES,Upland & Riparian
+AmericanAvocet,American Avocet,Recurvirostra americana,407,TRUE,TRUE,AMAV,0,1,0,1,1,0,CHARADRIIFORMES,Lowland
+AmericanBittern,American Bittern,Botaurus lentiginosus,351,TRUE,TRUE,AMBI,0,1,0,1,1,0,CICONIIFORMES,Lowland
+AmericanCoot,American Coot,Fulica americana,2164,TRUE,TRUE,AMCO,0,1,0,1,1,0,GRUIFORMES,Lowland
+AmericanCrow,American Crow,Corvus brachyrhynchos,20225,TRUE,TRUE,AMCR,0,1,0,0,0,0,PASSERIFORMES,Upland
+AmericanGoldfinch,American Goldfinch,Spinus tristis,3298,TRUE,TRUE,AMGO,0,1,0,0,0,0,PASSERIFORMES,Upland
+AmericanKestrel,American Kestrel,Falco sparverius,617,TRUE,TRUE,AMKE,0,1,0,0,0,0,FALCONIFORMES,Upland
+AmericanRedstart,American Redstart,Setophaga ruticilla,3269,TRUE,TRUE,AMRE,0,1,0,0,0,0,PASSERIFORMES,Upland
+AmericanRobin,American Robin,Turdus migratorius,22881,TRUE,TRUE,AMRO,0,1,0,0,0,0,PASSERIFORMES,Upland
+AmericanWigeon,American Wigeon,Anas americana,1305,TRUE,TRUE,AMWI,0,1,0,1,1,0,ANSERIFORMES,Open water
+AmericanThreetoedWoodpecker,American Three-toed Woodpecker,Picoides dorsalis,200,TRUE,FALSE,ATTW,0,1,0,0,0,0,PICIFORMES,Upland
+AmericanWhitePelican,American White Pelican,Pelecanus erythrorhynchos,192,TRUE,TRUE,AWPE,0,1,0,1,0,1,PELECANIFORMES,Open water
+BairdsSparrow,Baird's Sparrow,Ammodramus bairdii,2196,TRUE,TRUE,BAIS,0,1,0,0,0,0,PASSERIFORMES,Upland
+BankSwallow,Bank Swallow,Riparia riparia,355,TRUE,TRUE,BANS,0,1,0,1,0,1,PASSERIFORMES,Lowland
+BaltimoreOriole,Baltimore Oriole,Icterus galbula,2282,TRUE,TRUE,BAOR,1,1,0,0,0,0,PASSERIFORMES,Upland & Lowland
+BarnSwallow,Barn Swallow,Hirundo rustica,3470,TRUE,TRUE,BARS,0,1,0,0,0,0,PASSERIFORMES,Upland & Lowland
+BlackandwhiteWarbler,Black-and-white Warbler,Mniotilta varia,2184,TRUE,TRUE,BAWW,0,1,0,0,0,0,PASSERIFORMES,Upland & Lowland
+BlackbilledMagpie,Black-billed Magpie,Pica hudsonia,12342,TRUE,TRUE,BBMA,0,1,0,0,0,0,PASSERIFORMES,Upland
+BaybreastedWarbler,Bay-breasted Warbler,Setophaga castanea,1237,TRUE,FALSE,BBWA,1,1,0,0,0,0,PASSERIFORMES,Upland
+BlackbackedWoodpecker,Black-backed Woodpecker,Picoides arcticus,117,TRUE,FALSE,BBWO,0,1,0,0,0,0,PICIFORMES,Upland
+BlackcappedChickadee,Black-capped Chickadee,Poecile atricapillus,4211,TRUE,TRUE,BCCH,0,1,0,0,0,0,PASSERIFORMES,Upland
+BrownheadedCowbird,Brown-headed Cowbird,Molothrus ater,12442,TRUE,TRUE,BHCO,0,1,0,0,0,0,PASSERIFORMES,Upland
+BlueheadedVireo,Blue-headed Vireo,Vireo solitarius,2574,TRUE,TRUE,BHVI,1,1,0,0,0,0,PASSERIFORMES,Upland
+BlueJay,Blue Jay,Cyanocitta cristata,773,TRUE,TRUE,BLJA,0,1,0,0,0,0,PASSERIFORMES,Upland
+BlackpollWarbler,Blackpoll Warbler,Setophaga striata,346,TRUE,FALSE,BLPW,1,1,0,0,0,0,PASSERIFORMES,Upland & Lowland
+BlackTern,Black Tern,Chlidonias niger,1502,TRUE,TRUE,BLTE,0,1,0,1,1,0,CHARADRIIFORMES,Lowland
+BorealChickadee,Boreal Chickadee,Poecile hudsonicus,1425,TRUE,TRUE,BOCH,1,1,0,0,0,0,PASSERIFORMES,Upland
+BonapartesGull,Bonaparte's Gull,Chroicocephalus philadelphia,381,TRUE,TRUE,BOGU,0,1,0,1,1,0,CHARADRIIFORMES,Lowland
+BorealOwl,Boreal Owl,Aegolius funereus,295,TRUE,FALSE,BOOW,1,1,0,0,0,0,STRIGIFORMES,Upland
+BrewersBlackbird,Brewer's Blackbird,Euphagus cyanocephalus,7910,TRUE,TRUE,BRBL,0,1,0,1,1,0,PASSERIFORMES,Lowland
+BrownCreeper,Brown Creeper,Certhia americana,1331,TRUE,FALSE,BRCR,1,1,0,0,0,0,PASSERIFORMES,Upland
+BrewersSparrow,Brewer's Sparrow,Spizella breweri,180,FALSE,TRUE,BRSP,0,1,0,0,0,0,PASSERIFORMES,Upland
+BrownThrasher,Brown Thrasher,Toxostoma rufum,261,FALSE,TRUE,BRTH,0,1,0,0,0,0,PASSERIFORMES,Upland
+BlackthroatedGreenWarbler,Black-throated Green Warbler,Setophaga virens,1872,TRUE,FALSE,BTNW,1,1,0,0,0,0,PASSERIFORMES,Upland
+Bufflehead,Bufflehead,Bucephala albeola,497,TRUE,TRUE,BUFF,0,1,0,1,0,1,ANSERIFORMES,Open water
+BluewingedTeal,Blue-winged Teal,Anas discors,2538,TRUE,TRUE,BWTE,0,1,0,1,1,0,ANSERIFORMES,Open water
+CaliforniaGull,California Gull,Larus californicus,970,TRUE,TRUE,CAGU,0,1,0,0,0,0,CHARADRIIFORMES,Lowland
+CanadaGoose,Canada Goose,Branta canadensis,5200,TRUE,TRUE,CANG,0,1,0,1,1,0,ANSERIFORMES,Lowland
+Canvasback,Canvasback,Aythya valisineria,230,TRUE,TRUE,CANV,0,1,0,1,1,0,ANSERIFORMES,Open water
+CanadaWarbler,Canada Warbler,Cardellina canadensis,1163,TRUE,TRUE,CAWA,0,1,0,0,0,0,PASSERIFORMES,Upland
+ChestnutcollaredLongspur,Chestnut-collared Longspur,Calcarius ornatus,2780,FALSE,TRUE,CCLO,0,1,0,0,0,0,PASSERIFORMES,Upland
+ClaycoloredSparrow,Clay-colored Sparrow,Spizella pallida,24601,TRUE,TRUE,CCSP,0,1,0,0,0,0,PASSERIFORMES,Upland
+CedarWaxwing,Cedar Waxwing,Bombycilla cedrorum,2333,TRUE,TRUE,CEDW,0,1,0,0,0,0,PASSERIFORMES,Upland
+ChippingSparrow,Chipping Sparrow,Spizella passerina,18172,TRUE,TRUE,CHSP,0,1,0,0,0,0,PASSERIFORMES,Upland
+CinnamonTeal,Cinnamon Teal,Anas cyanoptera,152,TRUE,TRUE,CITE,0,1,0,1,1,0,ANSERIFORMES,Open water
+CliffSwallow,Cliff Swallow,Petrochelidon pyrrhonota,1048,TRUE,TRUE,CLSW,0,1,0,1,0,1,PASSERIFORMES,Lowland
+CapeMayWarbler,Cape May Warbler,Setophaga tigrina,1178,TRUE,FALSE,CMWA,1,1,0,0,0,0,PASSERIFORMES,Upland
+CommonGoldeneye,Common Goldeneye,Bucephala clangula,289,TRUE,TRUE,COGO,0,1,0,1,0,1,ANSERIFORMES,Open water
+CommonGrackle,Common Grackle,Quiscalus quiscula,411,TRUE,TRUE,COGR,0,1,0,0,0,0,PASSERIFORMES,Lowland
+CommonLoon,Common Loon,Gavia immer,1615,TRUE,TRUE,COLO,0,1,0,1,0,1,GAVIIFORMES,Open water
+CommonNighthawk,Common Nighthawk,Chordeiles minor,511,TRUE,TRUE,CONI,0,1,0,0,0,0,CAPRIMULGIFORMES,Upland & Lowland
+ConnecticutWarbler,Connecticut Warbler,Oporornis agilis,2475,TRUE,TRUE,CONW,0,1,0,0,0,0,PASSERIFORMES,Upland
+CommonRaven,Common Raven,Corvus corax,7444,TRUE,TRUE,CORA,0,1,0,0,0,0,PASSERIFORMES,Upland
+CommonYellowthroat,Common Yellowthroat,Geothlypis trichas,4558,TRUE,TRUE,COYE,0,1,0,1,1,0,PASSERIFORMES,Lowland
+DoublecrestedCormorant,Double-crested Cormorant,Phalacrocorax auritus,254,TRUE,TRUE,DCCO,0,1,0,1,0,1,PELECANIFORMES,Open water
+DarkeyedJunco,Dark-eyed Junco,Junco hyemalis,4066,TRUE,TRUE,DEJU,0,1,0,0,0,0,PASSERIFORMES,Upland
+DownyWoodpecker,Downy Woodpecker,Picoides pubescens,408,TRUE,TRUE,DOWO,0,1,0,0,0,0,PICIFORMES,Upland
+DuskyFlycatcher,Dusky Flycatcher,Empidonax oberholseri,216,TRUE,FALSE,DUFL,0,1,0,0,0,0,PASSERIFORMES,Upland
+EaredGrebe,Eared Grebe,Podiceps nigricollis,179,TRUE,TRUE,EAGR,0,1,0,1,1,0,PODICIPEDIFORMES,Open water
+EasternKingbird,Eastern Kingbird,Tyrannus tyrannus,2407,TRUE,TRUE,EAKI,0,1,0,0,0,0,PASSERIFORMES,Lowland
+EasternPhoebe,Eastern Phoebe,Sayornis phoebe,640,TRUE,TRUE,EAPH,0,1,0,0,0,0,PASSERIFORMES,Upland
+EuropeanStarling,European Starling,Sturnus vulgaris,6412,TRUE,TRUE,EUST,0,0,0,0,0,0,PASSERIFORMES,nonnative
+EveningGrosbeak,Evening Grosbeak,Coccothraustes vespertinus,283,TRUE,FALSE,EVGR,1,1,0,0,0,0,PASSERIFORMES,Upland
+FerruginousHawk,Ferruginous Hawk,Buteo regalis,331,FALSE,TRUE,FEHA,0,1,0,0,0,0,FALCONIFORMES,Upland
+FoxSparrow,Fox Sparrow,Passerella iliaca,586,TRUE,TRUE,FOSP,0,1,0,0,0,0,PASSERIFORMES,Upland
+FranklinsGull,Franklin's Gull,Leucophaeus pipixcan,2262,TRUE,TRUE,FRGU,0,1,0,1,1,0,CHARADRIIFORMES,Lowland
+Gadwall,Gadwall,Anas strepera,2322,TRUE,TRUE,GADW,0,1,0,1,1,0,ANSERIFORMES,Open water
+GreatBlueHeron,Great Blue Heron,Ardea herodias,311,TRUE,TRUE,GBHE,0,1,0,1,1,0,CICONIIFORMES,Lowland
+GoldencrownedKinglet,Golden-crowned Kinglet,Regulus satrapa,1417,TRUE,FALSE,GCKI,1,1,0,0,0,0,PASSERIFORMES,Upland
+GreatHornedOwl,Great Horned Owl,Bubo virginianus,430,TRUE,TRUE,GHOW,1,1,0,0,0,0,STRIGIFORMES,Upland
+GrayJay,Gray Jay,Perisoreus canadensis,6933,TRUE,TRUE,GRAJ,0,1,0,0,0,0,PASSERIFORMES,Upland
+GrayPartridge,Gray Partridge,Perdix perdix,514,TRUE,TRUE,GRAP,0,0,0,0,0,0,GALLIFORMES,nonnative
+GrayCatbird,Gray Catbird,Dumetella carolinensis,543,TRUE,TRUE,GRCA,0,1,0,0,0,0,PASSERIFORMES,Upland
+GrasshopperSparrow,Grasshopper Sparrow,Ammodramus savannarum,564,FALSE,TRUE,GRSP,0,1,0,0,0,0,PASSERIFORMES,Upland
+GreaterYellowlegs,Greater Yellowlegs,Tringa melanoleuca,1100,TRUE,TRUE,GRYE,0,1,0,1,1,0,CHARADRIIFORMES,Lowland
+GreenwingedTeal,Green-winged Teal,Anas crecca,708,TRUE,TRUE,GWTE,0,1,0,1,1,0,ANSERIFORMES,Open water
+HammondsFlycatcher,Hammond's Flycatcher,Empidonax hammondii,102,TRUE,FALSE,HAFL,1,1,0,0,0,0,PASSERIFORMES,Upland
+HairyWoodpecker,Hairy Woodpecker,Picoides villosus,1009,TRUE,TRUE,HAWO,1,1,0,0,0,0,PICIFORMES,Upland
+HermitThrush,Hermit Thrush,Catharus guttatus,8664,TRUE,TRUE,HETH,0,1,0,0,0,0,PASSERIFORMES,Upland
+HornedGrebe,Horned Grebe,Podiceps auritus,175,TRUE,TRUE,HOGR,0,1,0,1,1,0,PODICIPEDIFORMES,Open water
+HornedLark,Horned Lark,Eremophila alpestris,11812,TRUE,TRUE,HOLA,0,1,0,0,0,0,PASSERIFORMES,Upland
+HouseSparrow,House Sparrow,Passer domesticus,4766,TRUE,TRUE,HOSP,0,0,0,0,0,0,PASSERIFORMES,nonnative
+HouseWren,House Wren,Troglodytes aedon,12424,TRUE,TRUE,HOWR,0,1,0,0,0,0,PASSERIFORMES,Upland
+Killdeer,Killdeer,Charadrius vociferus,4131,TRUE,TRUE,KILL,0,1,0,0,0,0,CHARADRIIFORMES,Lowland
+LarkBunting,Lark Bunting,Calamospiza melanocorys,448,FALSE,TRUE,LARB,0,1,0,0,0,0,PASSERIFORMES,Upland
+LarkSparrow,Lark Sparrow,Chondestes grammacus,135,FALSE,TRUE,LASP,0,1,0,0,0,0,PASSERIFORMES,Upland
+LongbilledCurlew,Long-billed Curlew,Numenius americanus,2425,FALSE,TRUE,LBCU,0,1,0,0,0,0,CHARADRIIFORMES,Lowland
+LeContesSparrow,Le Conte's Sparrow,Ammodramus leconteii,3505,TRUE,TRUE,LCSP,0,1,0,0,0,0,PASSERIFORMES,Lowland
+LeastFlycatcher,Least Flycatcher,Empidonax minimus,9875,TRUE,TRUE,LEFL,1,1,0,0,0,0,PASSERIFORMES,Upland
+LesserScaup,Lesser Scaup,Aythya affinis,1145,TRUE,TRUE,LESC,0,1,0,1,1,0,ANSERIFORMES,Open water
+LesserYellowlegs,Lesser Yellowlegs,Tringa flavipes,598,TRUE,TRUE,LEYE,0,1,0,1,1,0,CHARADRIIFORMES,Lowland
+LincolnsSparrow,Lincoln's Sparrow,Melospiza lincolnii,9107,TRUE,TRUE,LISP,0,1,0,1,1,0,PASSERIFORMES,Upland & Lowland
+MarbledGodwit,Marbled Godwit,Limosa fedoa,4021,TRUE,TRUE,MAGO,0,1,0,1,1,0,CHARADRIIFORMES,Lowland
+Mallard,Mallard,Anas platyrhynchos,6561,TRUE,TRUE,MALL,0,1,0,1,1,0,ANSERIFORMES,Open water
+MagnoliaWarbler,Magnolia Warbler,Setophaga magnolia,2735,TRUE,TRUE,MAWA,1,1,0,0,0,0,PASSERIFORMES,Upland
+MarshWren,Marsh Wren,Cistothorus palustris,461,TRUE,TRUE,MAWR,0,1,0,1,1,0,PASSERIFORMES,Lowland
+McCownsLongspur,McCown's Longspur,Rhynchophanes mccownii,647,FALSE,TRUE,MCLO,0,1,0,0,0,0,PASSERIFORMES,Upland
+Merlin,Merlin,Falco columbarius,206,TRUE,TRUE,MERL,0,1,0,0,0,0,FALCONIFORMES,Upland
+MountainBluebird,Mountain Bluebird,Sialia currucoides,882,TRUE,TRUE,MOBL,0,1,0,0,0,0,PASSERIFORMES,Upland
+MountainChickadee,Mountain Chickadee,Poecile gambeli,212,TRUE,FALSE,MOCH,0,1,0,0,0,0,PASSERIFORMES,Upland
+MourningDove,Mourning Dove,Zenaida macroura,2066,TRUE,TRUE,MODO,0,1,0,0,0,0,COLUMBIFORMES,Upland
+MourningWarbler,Mourning Warbler,Geothlypis philadelphia,3778,TRUE,TRUE,MOWA,0,1,0,0,0,0,PASSERIFORMES,Upland
+NelsonsSparrow,Nelson's Sparrow,Ammodramus nelsoni,358,TRUE,TRUE,NESP,0,1,0,1,1,0,PASSERIFORMES,Lowland
+NorthernFlicker,Northern Flicker,Colaptes auratus,1066,TRUE,TRUE,NOFL,0,1,0,0,0,0,PICIFORMES,Upland
+NorthernHarrier,Northern Harrier,Circus cyaneus,820,TRUE,TRUE,NOHA,0,1,0,0,0,0,FALCONIFORMES,Upland
+NorthernPintail,Northern Pintail,Anas acuta,1362,TRUE,TRUE,NOPI,0,1,0,1,1,0,ANSERIFORMES,Open water
+NorthernWaterthrush,Northern Waterthrush,Parkesia noveboracensis,1640,TRUE,TRUE,NOWA,1,1,0,0,0,0,PASSERIFORMES,Lowland
+NorthernShoveler,Northern Shoveler,Anas clypeata,2049,TRUE,TRUE,NSHO,0,1,0,1,1,0,ANSERIFORMES,Open water
+OrangecrownedWarbler,Orange-crowned Warbler,Oreothlypis celata,2092,TRUE,TRUE,OCWA,0,1,0,0,0,0,PASSERIFORMES,Upland
+OlivesidedFlycatcher,Olive-sided Flycatcher,Contopus cooperi,800,TRUE,TRUE,OSFL,0,1,0,0,0,0,PASSERIFORMES,Upland & Lowland
+Osprey,Osprey,Pandion haliaetus,111,TRUE,TRUE,OSPR,0,1,0,1,0,1,FALCONIFORMES,Lowland
+Ovenbird,Ovenbird,Seiurus aurocapilla,15284,TRUE,TRUE,OVEN,0,1,0,0,0,0,PASSERIFORMES,Upland
+PalmWarbler,Palm Warbler,Setophaga palmarum,2225,TRUE,TRUE,PAWA,0,1,1,0,0,0,PASSERIFORMES,Lowland
+PiedbilledGrebe,Pied-billed Grebe,Podilymbus podiceps,563,TRUE,TRUE,PBGR,0,1,0,1,1,0,PODICIPEDIFORMES,Open water
+PhiladelphiaVireo,Philadelphia Vireo,Vireo philadelphicus,1624,TRUE,TRUE,PHVI,1,1,0,0,0,0,PASSERIFORMES,Upland
+PineSiskin,Pine Siskin,Spinus pinus,5440,TRUE,TRUE,PISI,1,1,0,0,0,0,PASSERIFORMES,Upland
+PileatedWoodpecker,Pileated Woodpecker,Dryocopus pileatus,928,TRUE,TRUE,PIWO,1,1,0,0,0,0,PICIFORMES,Upland
+PurpleFinch,Purple Finch,Carpodacus purpureus,461,TRUE,TRUE,PUFI,1,1,0,0,0,0,PASSERIFORMES,Upland
+PurpleMartin,Purple Martin,Progne subis,135,TRUE,TRUE,PUMA,1,1,0,0,0,0,PASSERIFORMES,Lowland
+RosebreastedGrosbeak,Rose-breasted Grosbeak,Pheucticus ludovicianus,6152,TRUE,TRUE,RBGR,1,1,0,0,0,0,PASSERIFORMES,Upland
+RingbilledGull,Ring-billed Gull,Larus delawarensis,3269,TRUE,TRUE,RBGU,0,1,0,0,0,0,CHARADRIIFORMES,Lowland
+RedbreastedNuthatch,Red-breasted Nuthatch,Sitta canadensis,4341,TRUE,TRUE,RBNU,1,1,0,0,0,0,PASSERIFORMES,Upland
+RubycrownedKinglet,Ruby-crowned Kinglet,Regulus calendula,11447,TRUE,TRUE,RCKI,1,1,0,0,0,0,PASSERIFORMES,Upland
+RedCrossbill,Red Crossbill,Loxia curvirostra,159,TRUE,FALSE,RECR,1,1,0,0,0,0,PASSERIFORMES,Upland
+Redhead,Redhead,Aythya americana,520,TRUE,TRUE,REDH,0,1,0,1,1,0,ANSERIFORMES,Open water
+RedeyedVireo,Red-eyed Vireo,Vireo olivaceus,16182,TRUE,TRUE,REVI,0,1,0,0,0,0,PASSERIFORMES,Upland
+RingneckedDuck,Ring-necked Duck,Aythya collaris,209,TRUE,TRUE,RNDU,0,1,0,1,1,0,ANSERIFORMES,Open water
+RingneckedPheasant,Ring-necked Pheasant,Phasianus colchicus,1158,TRUE,TRUE,RNEP,0,0,0,0,0,0,GALLIFORMES,nonnative
+RedneckedGrebe,Red-necked Grebe,Podiceps grisegena,1116,TRUE,TRUE,RNGR,0,1,0,1,1,0,PODICIPEDIFORMES,Open water
+RockPigeon,Rock Pigeon,Columba livia,2164,TRUE,TRUE,ROPI,0,0,0,0,0,0,COLUMBIFORMES,nonnative
+RedtailedHawk,Red-tailed Hawk,Buteo jamaicensis,3457,TRUE,TRUE,RTHA,0,1,0,0,0,0,FALCONIFORMES,Upland
+RustyBlackbird,Rusty Blackbird,Euphagus carolinus,278,TRUE,TRUE,RUBL,0,1,0,1,1,0,PASSERIFORMES,Lowland
+RuddyDuck,Ruddy Duck,Oxyura jamaicensis,476,TRUE,TRUE,RUDU,0,1,0,1,1,0,ANSERIFORMES,Open water
+RuffedGrouse,Ruffed Grouse,Bonasa umbellus,1739,TRUE,TRUE,RUGR,0,1,0,0,0,0,GALLIFORMES,Upland
+RedwingedBlackbird,Red-winged Blackbird,Agelaius phoeniceus,19507,TRUE,TRUE,RWBL,0,1,0,1,1,0,PASSERIFORMES,Lowland
+SandhillCrane,Sandhill Crane,Grus canadensis,854,TRUE,TRUE,SACR,0,1,0,1,1,0,GRUIFORMES,Lowland
+SavannahSparrow,Savannah Sparrow,Passerculus sandwichensis,25845,TRUE,TRUE,SAVS,0,1,0,0,0,0,PASSERIFORMES,Upland
+ShortearedOwl,Short-eared Owl,Asio flammeus,180,TRUE,TRUE,SEOW,0,1,0,0,0,0,STRIGIFORMES,Upland & Lowland
+Sora,Sora,Porzana carolina,4359,TRUE,TRUE,SORA,0,1,0,1,1,0,GRUIFORMES,Lowland
+SolitarySandpiper,Solitary Sandpiper,Tringa solitaria,624,TRUE,TRUE,SOSA,0,1,0,1,1,0,CHARADRIIFORMES,Lowland
+SongSparrow,Song Sparrow,Melospiza melodia,9461,TRUE,TRUE,SOSP,0,1,0,0,0,0,PASSERIFORMES,Upland & Lowland
+SpraguesPipit,Sprague's Pipit,Anthus spragueii,4348,TRUE,TRUE,SPPI,0,1,0,1,1,0,PASSERIFORMES,Upland
+SpottedSandpiper,Spotted Sandpiper,Actitis macularius,1289,TRUE,TRUE,SPSA,0,1,0,1,1,0,CHARADRIIFORMES,Lowland
+SharptailedGrouse,Sharp-tailed Grouse,Tympanuchus phasianellus,256,FALSE,TRUE,STGR,0,1,0,0,0,0,GALLIFORMES,Upland
+SwainsonsHawk,Swainson's Hawk,Buteo swainsoni,1871,TRUE,TRUE,SWHA,0,1,0,0,0,0,FALCONIFORMES,Upland
+SwampSparrow,Swamp Sparrow,Melospiza georgiana,1789,TRUE,TRUE,SWSP,0,1,0,1,1,0,PASSERIFORMES,Lowland
+SwainsonsThrush,Swainson's Thrush,Catharus ustulatus,17208,TRUE,TRUE,SWTH,1,1,0,0,0,0,PASSERIFORMES,Upland
+TennesseeWarbler,Tennessee Warbler,Oreothlypis peregrina,18271,TRUE,TRUE,TEWA,0,1,0,0,0,0,PASSERIFORMES,Upland
+TownsendsSolitaire,Townsend's Solitaire,Myadestes townsendi,141,TRUE,FALSE,TOSO,0,1,0,0,0,0,PASSERIFORMES,Upland
+TreeSwallow,Tree Swallow,Tachycineta bicolor,6485,TRUE,TRUE,TRES,0,1,0,0,0,0,PASSERIFORMES,Upland & Lowland
+UplandSandpiper,Upland Sandpiper,Bartramia longicauda,692,TRUE,TRUE,UPSA,0,1,0,0,0,0,CHARADRIIFORMES,Upland
+VariedThrush,Varied Thrush,Ixoreus naevius,2034,TRUE,FALSE,VATH,1,1,0,0,0,0,PASSERIFORMES,Upland
+Veery,Veery,Catharus fuscescens,169,TRUE,TRUE,VEER,0,1,0,0,0,0,PASSERIFORMES,Upland
+VesperSparrow,Vesper Sparrow,Pooecetes gramineus,18264,TRUE,TRUE,VESP,0,1,0,0,0,0,PASSERIFORMES,Upland
+WarblingVireo,Warbling Vireo,Vireo gilvus,5964,TRUE,TRUE,WAVI,1,1,0,0,0,0,PASSERIFORMES,Upland
+WhitebreastedNuthatch,White-breasted Nuthatch,Sitta carolinensis,232,TRUE,TRUE,WBNU,1,1,0,0,0,0,PASSERIFORMES,Upland
+WhitecrownedSparrow,White-crowned Sparrow,Zonotrichia leucophrys,1350,TRUE,TRUE,WCSP,0,1,0,0,0,0,PASSERIFORMES,Upland
+WesternKingbird,Western Kingbird,Tyrannus verticalis,826,FALSE,TRUE,WEKI,0,1,0,0,0,0,PASSERIFORMES,Upland
+WesternMeadowlark,Western Meadowlark,Sturnella neglecta,20584,TRUE,TRUE,WEME,0,1,0,0,0,0,PASSERIFORMES,Upland
+WesternTanager,Western Tanager,Piranga ludoviciana,3112,TRUE,TRUE,WETA,1,1,0,0,0,0,PASSERIFORMES,Upland
+WesternWoodPewee,Western Wood-Pewee,Contopus sordidulus,2152,TRUE,TRUE,WEWP,1,1,0,0,0,0,PASSERIFORMES,Upland
+WillowFlycatcher,Willow Flycatcher,Empidonax traillii,117,TRUE,TRUE,WIFL,0,1,0,0,0,0,PASSERIFORMES,Upland
+Willet,Willet,Tringa semipalmata,3020,TRUE,TRUE,WILL,0,1,0,1,1,0,CHARADRIIFORMES,Lowland
+WilsonsPhalarope,Wilson's Phalarope,Phalaropus tricolor,601,TRUE,TRUE,WIPH,0,1,0,1,1,0,CHARADRIIFORMES,Lowland
+WilsonsSnipe,Wilson's Snipe,Gallinago delicata,12172,TRUE,TRUE,WISN,0,1,0,1,1,0,CHARADRIIFORMES,Lowland
+WilsonsWarbler,Wilson's Warbler,Cardellina pusilla,1142,TRUE,FALSE,WIWA,0,1,0,0,0,0,PASSERIFORMES,Upland
+WinterWren,Winter Wren,Troglodytes hiemalis,3585,TRUE,FALSE,WIWR,1,1,0,0,0,0,PASSERIFORMES,Upland
+WhitethroatedSparrow,White-throated Sparrow,Zonotrichia albicollis,23366,TRUE,TRUE,WTSP,0,1,0,0,0,0,PASSERIFORMES,Upland
+WhitewingedCrossbill,White-winged Crossbill,Loxia leucoptera,1426,TRUE,TRUE,WWCR,1,1,0,0,0,0,PASSERIFORMES,Upland
+YellowbelliedFlycatcher,Yellow-bellied Flycatcher,Empidonax flaviventris,749,TRUE,FALSE,YBFL,0,1,1,0,0,0,PASSERIFORMES,Lowland
+YellowbelliedSapsucker,Yellow-bellied Sapsucker,Sphyrapicus varius,4280,TRUE,TRUE,YBSA,1,1,0,0,0,0,PICIFORMES,Upland
+YellowWarbler,Yellow Warbler,Setophaga petechia,3357,TRUE,TRUE,YEWA,0,1,0,0,0,0,PASSERIFORMES,Upland & Lowland
+YellowheadedBlackbird,Yellow-headed Blackbird,Xanthocephalus xanthocephalus,1992,TRUE,TRUE,YHBL,0,1,0,1,1,0,PASSERIFORMES,Lowland
+YellowrumpedWarbler,Yellow-rumped Warbler,Setophaga coronata,14559,TRUE,TRUE,YRWA,1,1,0,0,0,0,PASSERIFORMES,Upland
