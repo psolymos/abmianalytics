@@ -54,16 +54,30 @@ colnames(ddd2)[colnames(ddd2) == "GrassHerb"] <- "Grassland"
 ddd1x <- ddd1[,intersect(colnames(ddd1), colnames(ddd2))]
 ddd2x <- ddd2[,intersect(colnames(ddd1), colnames(ddd2))]
 
-m1 <- cbind(v14=100*colSums(ddd1x)/sum(ddd1), 
+m1 <- cbind(v14=100*colSums(ddd1x)/sum(ddd1),
     v15=100*colSums(ddd2x)/sum(ddd2))
 barplot(m1, beside=TRUE)
 
-m2 <- cbind(v14=100*colSums(ddd1[,setdiff(colnames(ddd1), colnames(ddd2))])/sum(ddd1), 
+m2 <- cbind(v14=100*colSums(ddd1[,setdiff(colnames(ddd1), colnames(ddd2))])/sum(ddd1),
     v15=NA)
-m3 <- cbind(v14=NA, 
+m3 <- cbind(v14=NA,
     v15=100*colSums(ddd2[,setdiff(colnames(ddd2), colnames(ddd1))])/sum(ddd2))
 
 m4 <- rbind(m1, m2, m3)
+
+mm <- data.frame(
+    up15=rowSums(ddd2[,c("WhiteSpruce", "Deciduous", "Mixedwood", "Pine")]),
+    twet15=rowSums(ddd2[,c("BlackSpruce", "LarchFen")]),
+    wet15=rowSums(ddd2[,c("WetBare", "WetGrassHerb", "WetShrub")]),
+    up14=rowSums(ddd1[,c("WhiteSpruce", "Deciduous", "Mixedwood", "Pine")]),
+    twet14=rowSums(ddd1[,c("BlackSpruce", "LarchFen")]),
+    wet14=rowSums(ddd1[,c("Bog", "Fen", "Swamp", "Marsh")]))
+summary(mm)
+plot(mm)
+plot(mm[mm$wet15==0,])
+
+
+
 
 write.csv(m4, file="abmi-1ha-comparison-v2014-2015.csv")
 write.csv(ddd1, file="v2014.csv")
