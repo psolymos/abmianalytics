@@ -815,7 +815,14 @@ library(opticut)
 yyy <- as.matrix(yy[,colSums(yy) > 10])
 oc0p <- opticut(yyy ~ 1, strata=hf$HFpc, dist="poisson")
 oc0b <- opticut(ifelse(yyy>0,1,0) ~ 1, strata=hf$HFpc, dist="binomial")
-oc1p <- opticut(yyy ~ pForest + pWet + xMAT, strata=hf$HFpc, dist="poisson")
-oc1b <- opticut(ifelse(yyy>0,1,0) ~ pForest + pWet + xMAT, strata=hf$HFpc, dist="binomial")
+oc1p <- opticut(yyy ~ pForest + pWet + xMAT, hf, strata=hf$HFpc, dist="poisson")
+oc1b <- opticut(ifelse(yyy>0,1,0) ~ pForest + pWet + xMAT, hf, strata=hf$HFpc, dist="binomial")
 
+os0p <- summary(oc0p)$summary
+os0b <- summary(oc0b)$summary
+os1p <- summary(oc1p)$summary
+os1b <- summary(oc1b)$summary
+
+data.frame(spp=rownames(os0b), o0=os0b$split, o1=os1b$split)
+data.frame(spp=rownames(os0b), b=os1b$split, p=os1p$split)
 }
