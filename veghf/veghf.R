@@ -1128,3 +1128,72 @@ lapply(yearly_vhf, function(zz) sum(zz[[1]][,Target0]))
 save(yearly_vhf,
     file=file.path(ROOT, VER, "out/3x7", 
     "veg-hf_3x7_fix-fire_fix-age0.Rdata"))
+
+
+## JOSM addition for Lionel, Dec 17 2015
+
+x1 <- read.csv(file.path(ROOT, VER, "data/veghf/josm", "XY_justAMandY.collapsed.csv"))
+x2 <- read.csv(file.path(ROOT, VER, "data/veghf/josm", "LionelData_EMCLA_PKEY_Dec7.collapsed.csv"))
+unique(x2$Year)
+
+f <- file.path(ROOT, VER, "data/veghf/josm", "Buf150m_int_bkfV5.csv")
+d <- read.csv(f)
+d$survey_year <- 2012
+dd12 <- make_vegHF_wide(d, col.label = "SS", 
+    col.year="survey_year", col.HFyear="CutYear")
+dd12$scale <- "150 m radius circle around bird points"
+d$survey_year <- 2013
+dd13 <- make_vegHF_wide(d, col.label = "SS", 
+    col.year="survey_year", col.HFyear="CutYear")
+dd13$scale <- "150 m radius circle around bird points"
+d$survey_year <- 2014
+dd14 <- make_vegHF_wide(d, col.label = "SS", 
+    col.year="survey_year", col.HFyear="CutYear")
+dd14$scale <- "150 m radius circle around bird points"
+
+load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
+Target0 <- c("Conif0", "Decid0", "Mixwood0", "Pine0", 
+    "Swamp-Conif0", "Swamp-Decid0", "Swamp-Mixwood0", "Swamp-Pine0", 
+    "Wetland-BSpr0", "Wetland-Decid0", "Wetland-Larch0")
+SS <- nonDuplicated(d, SS, TRUE)
+SS <- SS[rownames(dd12$veg_current),]
+
+sum(dd12[[1]][,Target0])
+sum(dd12[[1]])
+dd12 <- fill_in_0ages(dd12, SS$NSRNAME)
+sum(dd12[[1]][,Target0])
+sum(dd12[[1]])
+
+sum(dd13[[1]][,Target0])
+sum(dd13[[1]])
+dd13 <- fill_in_0ages(dd13, SS$NSRNAME)
+sum(dd13[[1]][,Target0])
+sum(dd13[[1]])
+
+sum(dd14[[1]][,Target0])
+sum(dd14[[1]])
+dd14 <- fill_in_0ages(dd14, SS$NSRNAME)
+sum(dd14[[1]][,Target0])
+sum(dd14[[1]])
+
+x2$SS_YEAR <- interaction(x2$SS, x2$Year, sep="_", drop=TRUE)
+x3 <- nonDuplicated(x2, SS_YEAR, TRUE)
+x3 <- x3[,c("ProjectID","SS","Year", "SS_YEAR","Latitude","Longitude")]
+
+for (i in 1:4) {
+    rownames(dd12[[i]]) <- paste0(rownames(dd12[[i]]), "_2012")
+    rownames(dd14[[i]]) <- paste0(rownames(dd13[[i]]), "_2013")
+    rownames(dd13[[i]]) <- paste0(rownames(dd14[[i]]), "_2014")
+}
+
+SSYR <- rbind(data.frame(SS=SS$SS, Year=2012), data.frame(SS=SS$SS, Year=2013), 
+    data.frame(SS=SS$SS, Year=2014))
+cr <- rbind(as.matrix(dd12[[1]]), as.matrix(dd13[[1]]), as.matrix(dd14[[1]]))
+rf <- rbind(as.matrix(dd12[[2]]), as.matrix(dd13[[2]]), as.matrix(dd14[[2]]))
+cr <- data.frame(SSYR, cr)
+rf <- data.frame(SSYR, rf)
+
+write.csv(cr, file=file.path(ROOT, VER, "out/josm", 
+    "current_josm_Lionel_fix-fire_fix-age0.csv"), row.names=FALSE)
+write.csv(rf, file=file.path(ROOT, VER, "out/josm", 
+    "reference_josm_Lionel_fix-fire_fix-age0.csv"), row.names=FALSE)
