@@ -432,7 +432,8 @@ DAT$PKEY.1 <- NULL
 
 ## surrounding HF at 1km scale
 
-DAT$THF_KM <- rowSums(VegKmCr[,setdiff(colnames(VegKmCr), colnames(VegKmRf))])
+#DAT$THF_KM <- rowSums(VegKmCr[,setdiff(colnames(VegKmCr), colnames(VegKmRf))])
+DAT$THF_KM <- rowSums(dd1km$veg_current[,setdiff(colnames(dd1km$veg_current), colnames(dd1km$veg_reference))]) / rowSums(dd1km$veg_current)
 DAT$Lin_KM <- rowSums(dd1km$veg_current[,c("SeismicLine","TransmissionLine","Pipeline",
     "RailHardSurface", "RailVegetatedVerge","RoadHardSurface","RoadTrailVegetated",
     "RoadVegetatedVerge")]) / rowSums(dd1km$veg_current)
@@ -451,6 +452,33 @@ DAT$Succ2_KM <- DAT$Succ_KM^2
 DAT$Alien2_KM <- DAT$Alien_KM^2
 DAT$Noncult2_KM <- DAT$Noncult_KM^2
 DAT$Nonlin2_KM <- DAT$Nonlin_KM^2
+
+if (FALSE) {
+
+## PC level HF summaries following that of 1km above
+#DAT$THF_PC <- rowSums(VegPcCr[,setdiff(colnames(VegPcCr), colnames(VegPcRf))])
+DAT$THF_PC <- rowSums(dd150m$veg_current[,setdiff(colnames(dd150m$veg_current), colnames(dd150m$veg_reference))]) / rowSums(dd150m$veg_current)
+DAT$Lin_PC <- rowSums(dd150m$veg_current[,c("SeismicLine","TransmissionLine","Pipeline",
+    "RailHardSurface", "RailVegetatedVerge","RoadHardSurface","RoadTrailVegetated",
+    "RoadVegetatedVerge")]) / rowSums(dd150m$veg_current)
+DAT$Nonlin_PC <- DAT$THF_PC - DAT$Lin_PC
+DAT$Cult_PC <- rowSums(dd150m$veg_current[,c("CultivationCropPastureBareground",
+    "HighDensityLivestockOperation")]) / rowSums(dd150m$veg_current)
+DAT$Noncult_PC <- DAT$THF_PC - DAT$Cult_PC
+CClabs <- colnames(dd150m$veg_current)[grep("CC", colnames(dd1km$veg_current))]
+DAT$Succ_PC <- rowSums(dd150m$veg_current[,c("SeismicLine","TransmissionLine","Pipeline",
+    "RailVegetatedVerge","RoadTrailVegetated","RoadVegetatedVerge", 
+    CClabs)]) / rowSums(dd150m$veg_current)
+DAT$Alien_PC <- DAT$THF_PC - DAT$Succ_PC
+
+DAT$THF2_PC <- DAT$THF_PC^2
+DAT$Succ2_PC <- DAT$Succ_PC^2
+DAT$Alien2_PC <- DAT$Alien_PC^2
+DAT$Noncult2_PC <- DAT$Noncult_PC^2
+DAT$Nonlin2_PC <- DAT$Nonlin_PC^2
+
+
+}
 
 ## restricted data use
 
@@ -704,3 +732,90 @@ for (yr in names(yearly_vhf)) {
     }
 }
 
+if (FALSE) {
+
+dat <- droplevels(DAT[DAT$PCODE == "ABMI",])
+yy <- YY[rownames(dat),]
+yy <- yy[,colSums(yy) > 0]
+tax <- TAX[colnames(yy),]
+
+ClosedCalopyForest <- c("Conif1", "Conif2", "Conif3", "Conif4", 
+    "Conif5", "Conif6", "Conif7", "Conif8", "Conif9", 
+    "Decid1", "Decid2", "Decid3", "Decid4", "Decid5", "Decid6", "Decid7", 
+    "Decid8", "Decid9", "Mixwood1", "Mixwood2", 
+    "Mixwood3", "Mixwood4", "Mixwood5", "Mixwood6", "Mixwood7", "Mixwood8", 
+    "Mixwood9", "Pine1", "Pine2", "Pine3", "Pine4", 
+    "Pine5", "Pine6", "Pine7", "Pine8", "Pine9", "Swamp-Conif1", 
+    "Swamp-Conif2", "Swamp-Conif3", "Swamp-Conif4", "Swamp-Conif5", 
+    "Swamp-Conif6", "Swamp-Conif7", "Swamp-Conif8", "Swamp-Conif9", 
+    "Swamp-Decid1", "Swamp-Decid2", 
+    "Swamp-Decid3", "Swamp-Decid4", "Swamp-Decid5", "Swamp-Decid6", 
+    "Swamp-Decid7", "Swamp-Decid8", "Swamp-Decid9", 
+    "Swamp-Mixwood1", "Swamp-Mixwood2", "Swamp-Mixwood3", 
+    "Swamp-Mixwood4", "Swamp-Mixwood5", "Swamp-Mixwood6", "Swamp-Mixwood7", 
+    "Swamp-Mixwood8", "Swamp-Mixwood9", 
+    "Swamp-Pine1", "Swamp-Pine2", "Swamp-Pine3", "Swamp-Pine4", "Swamp-Pine5", 
+    "Swamp-Pine6", "Swamp-Pine7", "Swamp-Pine8", "Swamp-Pine9", 
+    "CCDecid1", "CCDecid2", "CCDecid3", "CCDecid4", 
+    "CCMixwood1", "CCMixwood2", "CCMixwood3", "CCMixwood4", 
+    "CCConif1", "CCConif2", "CCConif3", "CCConif4", 
+    "CCPine1", "CCPine2", "CCPine3", "CCPine4")
+MixedDecidForest <- c(
+    "Decid1", "Decid2", "Decid3", "Decid4", "Decid5", "Decid6", "Decid7", 
+    "Decid8", "Decid9", "Mixwood1", "Mixwood2", 
+    "Mixwood3", "Mixwood4", "Mixwood5", "Mixwood6", "Mixwood7", "Mixwood8", 
+    "Mixwood9", 
+    "Swamp-Decid1", "Swamp-Decid2", 
+    "Swamp-Decid3", "Swamp-Decid4", "Swamp-Decid5", "Swamp-Decid6", 
+    "Swamp-Decid7", "Swamp-Decid8", "Swamp-Decid9", 
+    "Swamp-Mixwood1", "Swamp-Mixwood2", "Swamp-Mixwood3", 
+    "Swamp-Mixwood4", "Swamp-Mixwood5", "Swamp-Mixwood6", "Swamp-Mixwood7", 
+    "Swamp-Mixwood8", "Swamp-Mixwood9", 
+    "CCDecid1", "CCDecid2", "CCDecid3", "CCDecid4", 
+    "CCMixwood1", "CCMixwood2", "CCMixwood3", "CCMixwood4")
+Wetland <- c("Swamp-Conif0", "Swamp-ConifR", "Swamp-Conif1", 
+    "Swamp-Conif2", "Swamp-Conif3", "Swamp-Conif4", "Swamp-Conif5", 
+    "Swamp-Conif6", "Swamp-Conif7", "Swamp-Conif8", "Swamp-Conif9", 
+    "Swamp-Decid0", "Swamp-DecidR", "Swamp-Decid1", "Swamp-Decid2", 
+    "Swamp-Decid3", "Swamp-Decid4", "Swamp-Decid5", "Swamp-Decid6", 
+    "Swamp-Decid7", "Swamp-Decid8", "Swamp-Decid9", "Swamp-Mixwood0", 
+    "Swamp-MixwoodR", "Swamp-Mixwood1", "Swamp-Mixwood2", "Swamp-Mixwood3", 
+    "Swamp-Mixwood4", "Swamp-Mixwood5", "Swamp-Mixwood6", "Swamp-Mixwood7", 
+    "Swamp-Mixwood8", "Swamp-Mixwood9", "Swamp-Pine0", "Swamp-PineR", 
+    "Swamp-Pine1", "Swamp-Pine2", "Swamp-Pine3", "Swamp-Pine4", "Swamp-Pine5", 
+    "Swamp-Pine6", "Swamp-Pine7", "Swamp-Pine8", "Swamp-Pine9", "Wetland-Bare", 
+    "Wetland-GrassHerb", "Wetland-Shrub", "Wetland-BSpr0", "Wetland-BSprR", 
+    "Wetland-BSpr1", "Wetland-BSpr2", "Wetland-BSpr3", "Wetland-BSpr4", 
+    "Wetland-BSpr5", "Wetland-BSpr6", "Wetland-BSpr7", "Wetland-BSpr8", 
+    "Wetland-BSpr9", "Wetland-Decid0", "Wetland-DecidR", "Wetland-Decid1", 
+    "Wetland-Decid2", "Wetland-Decid3", "Wetland-Decid4", "Wetland-Decid5", 
+    "Wetland-Decid6", "Wetland-Decid7", "Wetland-Decid8", "Wetland-Decid9", 
+    "Wetland-Larch0", "Wetland-LarchR", "Wetland-Larch1", "Wetland-Larch2", 
+    "Wetland-Larch3", "Wetland-Larch4", "Wetland-Larch5", "Wetland-Larch6", 
+    "Wetland-Larch7", "Wetland-Larch8", "Wetland-Larch9")
+
+
+hf <- dat[,c("PKEY","SS","YEAR","NSRNAME","NRNAME","POINT_X","POINT_Y",
+    "xAHM","xPET","xFFP","xMAP","xMAT","xMCMT","xMWMT","xlong","xlat",
+    "THF_KM", "Succ_KM", "Alien_KM", "THF_PC", "Succ_PC", "Alien_PC")]
+hf$pDecMix <- rowSums(dd150m$veg_current[rownames(hf),MixedDecidForest])
+hf$pForest <- rowSums(dd150m$veg_current[rownames(hf),ClosedCalopyForest])
+hf$pWet <- rowSums(dd150m$veg_current[rownames(hf),Wetland])
+hf$HFpc <- factor("Nv", c("Nv", "Am", "Ah", "Sm", "Sh"))
+hf$HFpc[hf$Alien_PC >= 0.5 & hf$Succ_PC < 0.5] <- "Am"
+hf$HFpc[hf$Succ_PC >= 0.5 & hf$Alien_PC < 0.5] <- "Sm"
+hf$HFpc[hf$Alien_PC >= 0.75 & hf$Succ_PC < 0.5] <- "Ah"
+hf$HFpc[hf$Succ_PC >= 0.75 & hf$Alien_PC < 0.5] <- "Sh"
+table(succ=cut(hf$Succ_PC, c(-1, 0.5, 0.75, 2)), alien=cut(hf$Alien_PC, c(-1, 0.5, 0.75, 2)))
+table(hf$HFpc)
+
+save(hf, yy, tax, file="~/Dropbox/collaborations/opticut/R/abmi-birds-for-opticut.Rdata")
+
+library(opticut)
+yyy <- as.matrix(yy[,colSums(yy) > 10])
+oc0p <- opticut(yyy ~ 1, strata=hf$HFpc, dist="poisson")
+oc0b <- opticut(ifelse(yyy>0,1,0) ~ 1, strata=hf$HFpc, dist="binomial")
+oc1p <- opticut(yyy ~ pForest + pWet + xMAT, strata=hf$HFpc, dist="poisson")
+oc1b <- opticut(ifelse(yyy>0,1,0) ~ pForest + pWet + xMAT, strata=hf$HFpc, dist="binomial")
+
+}
