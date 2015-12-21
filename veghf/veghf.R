@@ -1190,10 +1190,83 @@ SSYR <- rbind(data.frame(SS=SS$SS, Year=2012), data.frame(SS=SS$SS, Year=2013),
     data.frame(SS=SS$SS, Year=2014))
 cr <- rbind(as.matrix(dd12[[1]]), as.matrix(dd13[[1]]), as.matrix(dd14[[1]]))
 rf <- rbind(as.matrix(dd12[[2]]), as.matrix(dd13[[2]]), as.matrix(dd14[[2]]))
-cr <- data.frame(SSYR, cr)
-rf <- data.frame(SSYR, rf)
 
-write.csv(cr, file=file.path(ROOT, VER, "out/josm", 
-    "current_josm_Lionel_fix-fire_fix-age0.csv"), row.names=FALSE)
-write.csv(rf, file=file.path(ROOT, VER, "out/josm", 
-    "reference_josm_Lionel_fix-fire_fix-age0.csv"), row.names=FALSE)
+cr2 <- data.frame(SSYR, cr)
+rf2 <- data.frame(SSYR, rf)
+
+#write.csv(cr2, file=file.path(ROOT, VER, "out/josm", 
+#    "current_josm_Lionel_fix-fire_fix-age0.csv"), row.names=FALSE)
+#write.csv(rf2, file=file.path(ROOT, VER, "out/josm", 
+#    "reference_josm_Lionel_fix-fire_fix-age0.csv"), row.names=FALSE)
+
+
+## calculating offsets for this JOSM data
+
+
+library(mefa4)
+library(raster)
+library(sp)
+library(rgdal)
+library(maptools)
+
+## Date/time components
+PKEY <- x2
+MM <- ifelse(PKEY$MONTH < 10, paste0("0", PKEY$MONTH), as.character(PKEY$MONTH))
+HH <- ifelse(PKEY$HOUR < 10, paste0("0", PKEY$HOUR), as.character(PKEY$HOUR))
+DD <- with(PKEY, paste0(Year, "-", MM, "-", DAY, " ", HH, ":00:00"))
+DD <- strptime(DD, "%Y-%m-%e %H:%M:%S")
+PKEY$DATE <- DD
+## Julian day
+PKEY$JULIAN <- DD$yday # this is kept as original
+PKEY$JDAY <- DD$yday / 365
+summary(PKEY$JDAY)
+## TSSR = time since sunrise
+Coor <- as.matrix(cbind(as.numeric(PKEY$Longitude),as.numeric(PKEY$Latitude)))
+JL <- as.POSIXct(DD)
+subset <- rowSums(is.na(Coor))==0 & !is.na(JL)
+sr <- sunriset(Coor[subset,], JL[subset], direction="sunrise", POSIXct.out=FALSE) * 24
+PKEY$srise <- NA
+PKEY$srise[subset] <- sr
+PKEY$start_time <- PKEY$HOUR + 0/60
+PKEY$TSSR <- (PKEY$start_time - PKEY$srise + 0) / 24
+summary(PKEY$TSSR)
+summary(PKEY$start_time)
+
+#PKEY$SS_YEAR <- paste0(PKEY$SS, "_", PKEY$YEAR)
+#cr3 <- cr[PKEY$SS_YEAR,]
+
+compare.sets(x1$SS, x2$SS)
+
+## calculate time only offsets (p)
+
+PKEY$MAXDUR <- ???
+offdat <- PKEY[,c("JDAY","TSSR","MAXDUR","MAXDIS")]
+
+library(detect)
+load_BAM_QPAD(version=1)
+BAMspp <- getBAMspecieslist()
+load("~/Dropbox/abmi/intactness/dataproc/BAMCOEFS25.Rdata")
+source("~/repos/bamanalytics/R/dataprocessing_functions.R")
+
+(sppp <- union(BAMspp, BAMCOEFS25$spp))
+
+OFF <- matrix(NA, nrow(offdat), length(sppp))
+rownames(OFF) <- rownames(offdat)
+colnames(OFF) <- sppp
+for (i in sppp) {
+    cat(i, date(), "\n");flush.console()
+    tmp <- try(offset_fun(j=1, i, offdat))
+    if (!inherits(tmp, "try-error"))
+        OFF[,i] <- tmp
+}
+## 99-100 percentile can be crazy high (~10^5), thus reset
+for (i in sppp) {
+    q <- quantile(OFF[,i], 0.99, na.rm=TRUE)
+    OFF[!is.na(OFF[,i]) & OFF[,i] > q, i] <- q
+}
+colSums(is.na(OFF))/nrow(OFF)
+apply(exp(OFF), 2, range, na.rm=TRUE)
+
+OFFmean <- log(rowMeans(exp(OFF)))
+
+compare.sets(rownames(OFF),rownames(DAT))
