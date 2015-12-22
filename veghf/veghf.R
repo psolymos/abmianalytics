@@ -1239,8 +1239,11 @@ compare.sets(x1$SS, x2$SS)
 
 ## calculate time only offsets (p)
 
-PKEY$MAXDUR <- ???
+PKEY$MAXDUR <- 3
+PKEY$MAXDIS <- Inf
 offdat <- PKEY[,c("JDAY","TSSR","MAXDUR","MAXDIS")]
+offdat$LCC_combo <- NA
+offdat$TREE <- NA
 
 library(detect)
 load_BAM_QPAD(version=1)
@@ -1253,12 +1256,36 @@ source("~/repos/bamanalytics/R/dataprocessing_functions.R")
 OFF <- matrix(NA, nrow(offdat), length(sppp))
 rownames(OFF) <- rownames(offdat)
 colnames(OFF) <- sppp
+OFFp <- OFF
 for (i in sppp) {
-    cat(i, date(), "\n");flush.console()
-    tmp <- try(offset_fun(j=1, i, offdat))
-    if (!inherits(tmp, "try-error"))
-        OFF[,i] <- tmp
+    if (i %in% BAMspp) { ## spp with offsets (>=75 obs)
+        best <- bestmodelBAMspecies(i, model.edr=0, type="BIC")
+        out <- with(offdat, localBAMcorrections(i,
+            r=MAXDIS,
+            t=MAXDUR,
+            jday=JDAY, 
+            tssr=TSSR, 
+            #tree=TREE, 
+            #lcc=LCC_combo,
+            model.sra=best$sra, 
+            model.edr=best$edr,
+            boot=FALSE, ## MVN approach of j != 1
+            ver=1))
+    } else {
+        PHI <- exp(BAMCOEFS25$sra_estimates[[i]][["0"]]$coef[1])
+        TAU <- exp(BAMCOEFS25$edr_estimates[[i]][["0"]]$coef[1])
+        out <- with(offdat, customBAMcorrections(r=MAXDIS,
+            t=MAXDUR,
+            phi=PHI,
+            tau=TAU))
+    }
+    if (!inherits(out, "try-error")) {
+        OFF[,i] <- rowSums(log(as.matrix(out)))
+        OFFp[,i] <- log(out$p)
+    }
+    
 }
+
 ## 99-100 percentile can be crazy high (~10^5), thus reset
 for (i in sppp) {
     q <- quantile(OFF[,i], 0.99, na.rm=TRUE)
@@ -1267,6 +1294,9 @@ for (i in sppp) {
 colSums(is.na(OFF))/nrow(OFF)
 apply(exp(OFF), 2, range, na.rm=TRUE)
 
-OFFmean <- log(rowMeans(exp(OFF)))
+colnames(OFF) <- paste0(colnames(OFF), "_Ap")
+colnames(OFFp) <- paste0(colnames(OFFp), "_p")
+TAB <- data.frame(PKEY, OFF, OFFp)
+write.csv(TAB, file=file.path(ROOT, VER, "out/josm", 
+    "offsets_josm_Lionel.csv"), row.names=FALSE)
 
-compare.sets(rownames(OFF),rownames(DAT))
