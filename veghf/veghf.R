@@ -1258,6 +1258,8 @@ rownames(OFF) <- rownames(offdat)
 colnames(OFF) <- sppp
 OFFp <- OFF
 for (i in sppp) {
+    cat(i, "\n")
+    flush.console()
     if (i %in% BAMspp) { ## spp with offsets (>=75 obs)
         best <- bestmodelBAMspecies(i, model.edr=0, type="BIC")
         out <- with(offdat, localBAMcorrections(i,
@@ -1300,3 +1302,18 @@ TAB <- data.frame(PKEY, OFF, OFFp)
 write.csv(TAB, file=file.path(ROOT, VER, "out/josm", 
     "offsets_josm_Lionel.csv"), row.names=FALSE)
 
+## ECJOSM
+
+ROOT <- "c:/bam/May2015"
+load(file.path(ROOT, "out", "data_package_2015-08-14.Rdata"))
+
+PKEY0 <- PKEY
+PKEY <- PKEY0[PKEY0$PCODE %in% c("ECJOSM","ECJOSM_JRB"),]
+
+## ...
+ROOT <- "c:/p"
+## version (structure is still in change, so not really useful)
+VER <- "AB_data_v2015"
+
+write.csv(TAB, file=file.path(ROOT, VER, "out/josm", 
+    "offsets_ecjosm_Lionel.csv"), row.names=FALSE)
