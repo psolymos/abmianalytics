@@ -639,6 +639,8 @@ dev.off()
 }
 
 ## CoV
+results10km_list <- list()
+
 SPP <- as.character(slt$AOU[slt$map.pred])
 for (spp in SPP) {
 
@@ -689,6 +691,12 @@ wS[ks$useN] <- 0
     cr <- wS * pxScr + (1-wS) * pxNcr
 
     crveg <- groupMeans(cr, 1, ks$Row10_Col10, na.rm=TRUE)
+
+#results10km_list[[as.character(slt[spp,"sppid"])]] <- crveg
+#}
+#xy10km <- ks[,c("POINT_X","POINT_Y","Row10_Col10")]
+#save(xy10km, results10km_list, file="w:/species/birds-provincial-10x10km-summary.Rdata")
+
     crvegm <- rowMeans(crveg)
     crvegsd <- apply(crveg, 1, sd)
     #crvegm <- apply(crveg, 1, median)
