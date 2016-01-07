@@ -261,14 +261,14 @@ km <- data.frame(LinkID=kgrid$Row_Col,
     qrf <- quantile(rf, q)
     rf[rf>qrf] <- qrf
 
-if (TRUE) {
+if (FALSE) {
     mat <- 100 * cbind(Ncurrent=cr, Nreference=rf) # ha to km^2
     rownames(mat) <- rownames(kgrid)
     res_luf[[spp]] <- groupSums(mat, 1, kgrid$LUF_NAME)
     res_nsr[[spp]] <- groupSums(mat, 1, kgrid$NSRNAME)
 }
 
-if (FALSE) {
+if (TRUE) {
     Max <- max(qcr, qrf)
     df <- (cr-rf) / Max
     df <- sign(df) * abs(df)^0.5
@@ -292,8 +292,8 @@ if (FALSE) {
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=C1[rf], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
-    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
-        points(X, Y, col=CE, pch=15, cex=cex))
+#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+#        points(X, Y, col=CE, pch=15, cex=cex))
     if (TYPE == "N")
         with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
     if (TYPE == "S")
@@ -301,7 +301,7 @@ if (FALSE) {
     mtext(side=3,paste(NAM, "\nReference abundance"),col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
-	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
+#	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
     par(op)
     dev.off()
 
@@ -312,8 +312,8 @@ if (FALSE) {
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=C1[cr], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
-    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
-        points(X, Y, col=CE, pch=15, cex=cex))
+#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+#        points(X, Y, col=CE, pch=15, cex=cex))
     if (TYPE == "N")
         with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
     if (TYPE == "S")
@@ -321,7 +321,7 @@ if (FALSE) {
     mtext(side=3,paste(NAM, "\nCurrent abundance"),col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
-	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
+#	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
     par(op)
     dev.off()
 
@@ -332,8 +332,8 @@ if (FALSE) {
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=C2[df], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
-    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
-        points(X, Y, col=CE, pch=15, cex=cex))
+#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+#        points(X, Y, col=CE, pch=15, cex=cex))
     if (TYPE == "N")
         with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
     if (TYPE == "S")
@@ -341,7 +341,7 @@ if (FALSE) {
     mtext(side=3,paste(NAM, "\nDifference"),col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
-	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
+#	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
     par(op)
     dev.off()
 }
