@@ -692,10 +692,7 @@ wS[ks$useN] <- 0
 
     crveg <- groupMeans(cr, 1, ks$Row10_Col10, na.rm=TRUE)
 
-#results10km_list[[as.character(slt[spp,"sppid"])]] <- crveg
-#}
-#xy10km <- ks[,c("POINT_X","POINT_Y","Row10_Col10")]
-#save(xy10km, results10km_list, file="w:/species/birds-provincial-10x10km-summary.Rdata")
+results10km_list[[as.character(slt[spp,"sppid"])]] <- crveg
 
     crvegm <- rowMeans(crveg)
     crvegsd <- apply(crveg, 1, sd)
@@ -728,8 +725,8 @@ wS[ks$useN] <- 0
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=Col[zval], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
-    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
-        points(X, Y, col=CE, pch=15, cex=cex))
+#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+#        points(X, Y, col=CE, pch=15, cex=cex))
     if (TYPE == "N")
         with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
     if (TYPE == "S")
@@ -737,7 +734,7 @@ wS[ks$useN] <- 0
     mtext(side=3,paste(NAM, "CoV"),col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
-	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
+#	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
 
     TEXT <- paste0(100*br[-length(br)], "-", 100*br[-1])
     INF <- grepl("Inf", TEXT)
@@ -753,5 +750,7 @@ wS[ks$useN] <- 0
 
 }
 
+xy10km <- ks[,c("POINT_X","POINT_Y","Row10_Col10")]
+save(xy10km, results10km_list, file="w:/species/birds-provincial-10x10km-summary.Rdata")
 
 
