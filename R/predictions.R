@@ -139,9 +139,9 @@ Col <- rev(brewer.pal(10, "RdYlGn"))
 
 ## csv
 
-spp <- "ALFL"
+#spp <- "ALFL"
 SPP <- union(fln, fls)
-SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL")
+#SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL")
 
 for (spp in SPP) {
 
@@ -261,7 +261,7 @@ km <- data.frame(LinkID=kgrid$Row_Col,
     qrf <- quantile(rf, q)
     rf[rf>qrf] <- qrf
 
-if (FALSE) {
+if (TRUE) {
     mat <- 100 * cbind(Ncurrent=cr, Nreference=rf) # ha to km^2
     rownames(mat) <- rownames(kgrid)
     res_luf[[spp]] <- groupSums(mat, 1, kgrid$LUF_NAME)
