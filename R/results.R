@@ -139,6 +139,8 @@ slt$oldforest[is.na(slt$oldforest)] <- 0
 slt$oldforest[slt$oldforest > 0] <- 1
 #write.csv(slt, row.names=FALSE, file="~/repos/abmispecies/_data/birds.csv")    
 
+slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
+rownames(slt) <- slt$AOU
 
 ## spp specific output
 
@@ -341,6 +343,7 @@ f1 <- function(x) {
 vhf <- t(sapply(res_veghf, f1))
 vhf2 <- data.frame(tax[rownames(vhf), c("English_Name","Scientific_Name")],
     vhf)
+vhf2 <- vhf[rownames(slt)[slt$veghf.north],]
 write.csv(vhf2, file=file.path(ROOT, "figs", "birds-veghf-north.csv"))
 
 SPP <- rownames(slt)[slt$veghf.north]
@@ -405,6 +408,7 @@ f2 <- function(x) {
 soil <- t(sapply(res_soilhf, f2))
 soil2 <- data.frame(tax[rownames(soil), c("English_Name","Scientific_Name")],
     soil)
+soil2 <- soil2[rownames(slt)[slt$soilhf.south],]
 write.csv(soil2, file=file.path(ROOT, "figs", "birds-soilhf-south.csv"))
 
 ## climate & surrounding hf tables, climate surface maps
@@ -510,9 +514,12 @@ if (tax[spp, "surroundinghf_south"]) {
 
 clim_N <- data.frame(tax[names(clim_n), c("English_Name","Scientific_Name")], 
     do.call(rbind, clim_n))
-write.csv(clim_N, file=file.path(ROOT, "figs", "climatehf-north.csv"))
 clim_S <- data.frame(tax[names(clim_s), c("English_Name","Scientific_Name")], 
     do.call(rbind, clim_s))
+clim_N <- clim_N[rownames(slt)[slt$modelN],]
+clim_S <- clim_S[rownames(slt)[slt$modelS],]
+
+write.csv(clim_N, file=file.path(ROOT, "figs", "climatehf-north.csv"))
 write.csv(clim_S, file=file.path(ROOT, "figs", "climatehf-south.csv"))
 
 
@@ -681,10 +688,14 @@ softlin <- data.frame(Species=tax[names(res_soft), "English_Name"], do.call(rbin
 hardlin <- do.call(rbind, res_hard)
 hardlin$Species <- tax[as.character(hardlin$Species), "English_Name"]
 
+softlin <- droplevels(softlin[rownames(slt)[slt$veghf.north],])
+hardlin <- droplevels(hardlin[hardlin$Species %in% softlin$Species,])
+
 write.csv(softlin, row.names=FALSE, 
     file=file.path(ROOT, "figs", "soft-linear-coefs-2015.csv"))
 write.csv(hardlin, row.names=FALSE, 
     file=file.path(ROOT, "figs", "hard-linear-EXPcoefs-2015.csv"))
+    
 softlin2 <- softlin[c("BTNW","BBWA","OVEN","BRCR","CAWA"),]
 hardlin2 <- do.call(rbind, res_hard[c("BTNW","BBWA","OVEN","BRCR","CAWA")])
 hardlin2$Species <- tax[as.character(hardlin2$Species), "English_Name"]
