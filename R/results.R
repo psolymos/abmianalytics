@@ -373,17 +373,20 @@ if (tax[spp, "soilhf_treed_south"] | tax[spp, "soilhf_nontreed_south"]) {
     prs <- pred_soilhf(ests_hab, Xns)
     res_soilhf[[spp]] <- prs
     NDAT <- sum(yys[,spp] > 0)
+    YMAX <- max(fig_soilhf_ymax(prs$treed), fig_soilhf_ymax(prs$nontreed))
     ## treed
     fname <- file.path(ROOT, "figs", "soilhf-treed-south", 
         paste0(as.character(tax[spp, "file"]), ".png"))
     png(file=fname,width=500,height=450)
-	fig_soilhf(prs$treed, paste0(NAM, ", South, Treed (n = ", NDAT, " detections)"))
+	fig_soilhf(prs$treed, paste0(NAM, ", South, Treed (n = ", NDAT, " detections)"),
+        ymax=YMAX)
 	dev.off()
     ## nontreed
     fname <- file.path(ROOT, "figs", "soilhf-nontreed-south", 
         paste0(as.character(tax[spp, "file"]), ".png"))
     png(file=fname,width=500,height=450)
-	fig_soilhf(prs$nontreed, paste0(NAM, ", South, Non-treed (n = ", NDAT, " detections)"))
+	fig_soilhf(prs$nontreed, paste0(NAM, ", South, Non-treed (n = ", NDAT, " detections)"),
+        ymax=YMAX)
 	dev.off()
 	## linear
     fname <- file.path(ROOT, "figs", "linear-south", 

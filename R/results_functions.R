@@ -173,8 +173,22 @@ function(est, Xn)
         linear=c(Baseline=MEAN, Soft=Soft, Hard=Hard))
 }
 
+## this is required for getting the axes right across figures
+fig_soilhf_ymax <-
+function(pr) 
+{
+        labs <- c("Productive", "Clay", "Saline", "RapidDrain", 
+            "Cult", "UrbInd")
+        pr2 <- pr[labs,]
+        lci <- pr2[,3]
+        uci <- pr2[,4]
+        y1 <- pr2[,2]
+        x <- 1:6
+        ymax <- max(min(max(uci[x]),2*max(y1)),y1*1.02)
+        ymax
+}
 fig_soilhf <-
-function(pr, LAB="") 
+function(pr, LAB="", ymax=NULL) 
 {
         labs <- c("Productive", "Clay", "Saline", "RapidDrain", 
             "Cult", "UrbInd")
@@ -184,7 +198,8 @@ function(pr, LAB="")
         uci <- pr2[,4]
         y1 <- pr2[,2]
         x <- 1:6
-        ymax <- max(min(max(uci[x]),2*max(y1)),y1*1.02)
+        if (is.null(ymax))
+            ymax <- max(min(max(uci[x]),2*max(y1)),y1*1.02)
         space <- c(1,x[-1]-x[-length(x)])-0.9
         col.r <- c(0,0.3,0.5,1,rep(0.2,2))  # The red part of the rgb
         col.g<-c(0.8,0.5,0,0.2,rep(0.2,2))  # The green part
