@@ -100,8 +100,15 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
         THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
         d$SampleYear <- THIS_YEAR
     } else {
-        THIS_YEAR <- NA
-        d$SampleYear <- d[,col.year]
+        if (is.numeric(col.year)) {
+            if (length(col.year) > 1)
+                stop("length of col.yeat > 1")
+            THIS_YEAR <- col.year
+            d$SampleYear <- THIS_YEAR
+        } else {
+            THIS_YEAR <- NA
+            d$SampleYear <- d[,col.year]
+        }
     }
     ## use upper-case labels for FEATURE_TY
     levels(d$FEATURE_TY) <- toupper(levels(d$FEATURE_TY))

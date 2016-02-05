@@ -1,15 +1,16 @@
 ##% Processing backfilled veg + HF (cutblock ages incorporated)
 ##% P Solymos
-##% April 28, 2015
+##% Feb 5, 2016
 
 SAVE <- TRUE
 
 ## root directory
-ROOT <- "c:/p"
+ROOT <- "e:/peter"
 ## version (structure is still in change, so not really useful)
-VER <- "AB_data_v2015"
+VER <- "AB_data_v2016"
 ## current year
 THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
+HF_YEAR <- 2012 # HF inventory update year
 
 library(mefa4)
 source("~/repos/abmianalytics/R/veghf_functions.R")
@@ -509,8 +510,9 @@ for (s in 1:(length(Start)-1)) {
     cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
     f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
     d <- read.csv(f)
+    ## HF year is used as base year for prediction purposes
     dd <- make_vegHF_wide(d, col.label="Row_Col", 
-        col.year=NULL, col.HFyear="CutYear", sparse=TRUE)
+        col.year=HF_YEAR, col.HFyear="CutYear", sparse=TRUE)
     veg_current <- dd$veg_current
     veg_reference <- dd$veg_reference
     soil_current <- dd$soil_current
@@ -526,7 +528,7 @@ for (s in 1:(length(Start)-1)) {
         f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
         d <- read.csv(f)
         dd <- make_vegHF_wide(d, col.label="Row_Col", 
-            col.year=NULL, col.HFyear="CutYear", sparse=TRUE)
+            col.year=HF_YEAR, col.HFyear="CutYear", sparse=TRUE)
         veg_current <- bind_fun2(veg_current, dd$veg_current)
         veg_reference <- bind_fun2(veg_reference, dd$veg_reference)
         soil_current <- bind_fun2(soil_current, dd$soil_current)
