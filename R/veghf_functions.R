@@ -283,8 +283,8 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
     levels(d$VEGHFAGEclass) <- c(levels(d$VEGHFAGEclass), setdiff(AllLabels, levels(d$VEGHFAGEclass)))
 
     #### soils:
-    SoilLab <- c("UNK", "Water", "BdL", "BlO", "CS", "Cy", "Gr", "Len", "LenA", "LenSP", 
-        "LenT", "LenS", "LenW", "Li", "Lo", "Ltc", "LtcC", "LtcD", "LtcH", "LtcS", "LtcR", "Ov", 
+    SoilLab <- c("UNK", "Water", "BdL", "BlO", "CS", "Cy", "Gr", "LenA", "LenSP", 
+        "LenT", "LenS", "Li", "Lo", "LtcC", "LtcD", "LtcH", "LtcS", "Ov", 
         "Sa", "Sb", "SL", "SwG", "Sy", "TB")
 
     d$SOILclass <- d$SOIL_TYPE
@@ -303,9 +303,7 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
     ## add in Water label
     levels(d$SOILclass) <- c(levels(d$SOILclass), "Water")
     ## treat these as Water
-    ## -- note: only LenW and LtcR are safe to treat as water
-    ##          these calsses are not merged with water but left untouched
-    #levels(d$SOILclass)[levels(d$SOILclass) %in% c("Len", "LenW","Ltc","LtcR")] <- "Water"
+    levels(d$SOILclass)[levels(d$SOILclass) %in% c("Len","LenW","Ltc","LtcR")] <- "Water"
     ## DEM/EC based Water class overrides soil
     d$SOILclass[d$VEGclass == "Water"] <- "Water"
     levels(d$SOILclass) <- c(levels(d$SOILclass), setdiff(SoilLab, levels(d$SOILclass)))
