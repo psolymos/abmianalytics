@@ -1,4 +1,4 @@
-,SOILHF,HF,SOIL,Levels1,Levels2,Levels3,Levels4,Category,Type,UseInAnalysis,SuccAlien,NonlinLin,UseInReporting,Sector,Description,SOIL1,SOIL1v,Sector2
+SOILHF,HF,SOIL,Levels1,Levels2,Levels3,Levels4,Category,Type,UseInAnalysis,SuccAlien,NonlinLin,UseInReporting,Sector,Description,SOIL1,SOIL1v,Sector2
 BdL,BdL,NA,BdL,RapidDrain,RapidDrain,RapidDrain,RapidDrain,NA,NA,NA,NA,NA,NA,NA,NA,RapidDrain,NonProductive,RapidDrain
 BlO,BlO,NA,BlO,Saline,Saline,Saline,SalineAndClay,NA,NA,NA,NA,NA,NA,NA,NA,SalineAndClay,NonProductive,Saline
 CS,CS,NA,CS,RapidDrain,RapidDrain,RapidDrain,RapidDrain,NA,NA,NA,NA,NA,NA,NA,NA,RapidDrain,NonProductive,RapidDrain
