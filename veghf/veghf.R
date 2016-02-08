@@ -566,12 +566,38 @@ dd1km_pred <- list(
     sample_year = tmplist[[1]]$sample_year,
     scale = "1 km x 1 km prediction grid cells")
 
+## this has the climate stuff
 kgrid <- read.csv(
     file.path(ROOT, VER, "data", "kgrid", 
     "Grid1km_template_final_clippedBy_ABBound_with_atts_to_Peter.csv"))
 rownames(kgrid) <- kgrid$Row_Col
+## this is the correct lat/long (i.e. more decimal places)
+kgrid2 <- read.csv(
+    file.path(ROOT, VER, "data", "kgrid", 
+    "Grid1km_template_latLong.csv"))
+rownames(kgrid2) <- kgrid2$Row_Col
+kgrid2 <- kgrid2[rownames(kgrid),]
+stopifnot(all(rownames(kgrid) == rownames(kgrid2)))
+kgrid$POINT_X <- kgrid2$POINT_X
+kgrid$POINT_Y <- kgrid2$POINT_Y
+rm(kgrid2)
+
+## this is has Brandt boreal and BCR
+kgrid2 <- read.csv(
+    file.path(ROOT, VER, "data", "kgrid", 
+    "Grid1km_template_final_clippedBy_ABBound_with_atts_to_Peter_BCR_BRANDT_Done.csv"))
+kgrid2 <- nonDuplicated(kgrid2, Row_Col, TRUE)
+#rownames(kgrid2) <- kgrid2$Row_Col
+kgrid2 <- kgrid2[rownames(kgrid),]
+stopifnot(all(rownames(kgrid) == rownames(kgrid2)))
+kgrid$TYPE_BRANDT <- kgrid2$TYPE_BRANDT
+#kgrid$BCR <- kgrid2$BCR      
+#kgrid$BCR_NAME <- kgrid2$BCR_NAME
+kgrid$BCRCODE <- kgrid2$BCRCODE 
+rm(kgrid2)
 
 compare.sets(rownames(dd1km_pred$veg_current), rownames(kgrid))
+#stopifnot(all(rownames(dd1km_pred$veg_current) == rownames(kgrid)))
 
 ## NSR x LUF regions used as prediction regions in sector effects etc.
 kgrid$nsr_luf <- with(kgrid, paste(as.integer(NSRNAME), as.integer(LUF_NAME), sep="_"))
@@ -602,10 +628,14 @@ dd1km_pred$soil_reference <- dd1km_pred$soil_reference[rownames(kgrid),]
 range(sapply(dd1km_pred[1:4], sum) / 10^6)
 
 ## proportion of water -- for mapping purposes
-kgrid$pWater <- dd1km_pred$veg_current[,"Water"] / 10^6
+kgrid$pWater <- dd1km_pred$veg_current[,"Water"] / rowSums(dd1km_pred$veg_current)
+
+kgrid$pSoil <- 1 - rowSums(dd1km_pred$soil_reference[,c("UNK","Water")]) / rowSums(dd1km_pred$soil_reference)
 
 ## veg based area < soil based area, thus using the max
-kgrid$Area_km2 <- rowSums(dd1km_pred$soil_reference) / 10^6
+kgrid$Area_km2 <- rowSums(dd1km_pred$veg_current) / 10^6
+
+kgrid$NEAR_DIST <- NULL
 
 ## UTM projection for fake maps
 library(raster)
@@ -618,7 +648,6 @@ XY <- as.data.frame(spTransform(XYlatlon, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 
 kgrid$X <- XY$POINT_X
 kgrid$Y <- XY$POINT_Y
 
-kgrid$NEAR_DIST <- NULL
 
 ## fill-in NA values with nearest
 
@@ -643,6 +672,28 @@ sum(is.na(kgrid))
 
 kgrid$LUFxNSR <- interaction(kgrid$LUF_NAME, kgrid$NSRNAME, drop=TRUE, sep="_")
 levels(kgrid$LUFxNSR) <- gsub(" ", "", levels(kgrid$LUFxNSR))
+
+## topo variables
+kgrid2 <- read.csv(
+    file.path(ROOT, VER, "data", "kgrid", 
+    "Grid1kmCenter_topo.csv"))
+rownames(kgrid2) <- kgrid2$Row_Col
+kgrid2 <- kgrid2[rownames(kgrid),]
+cvs <- c("slope","slpasp","tri","cti")
+lnas <- is.na(kgrid2[,cvs[3]])
+wnas <- which(!lnas)
+for (i in which(lnas)) {
+    j <- wnas[which.min(sqrt((kgrid$X[!lnas] - kgrid$X[i])^2 +
+        (kgrid$Y[!lnas] - kgrid$Y[i])^2))]
+    kgrid2[i,cvs] <- kgrid2[j,cvs]
+}
+sum(is.na(kgrid2))
+
+kgrid$SLP <- kgrid2$slope
+kgrid$ASP <- kgrid2$slpasp
+kgrid$TRI <- kgrid2$tri
+kgrid$CTI <- kgrid2$cti
+
 
 if (SAVE) {
 save(dd1km_pred, 
