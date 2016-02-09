@@ -1,27 +1,4 @@
-##% Processing backfilled veg + HF (cutblock ages incorporated)
-##% P Solymos
-##% Feb 5, 2016
-
-SAVE <- TRUE
-
-## root directory
-ROOT <- "e:/peter"
-## version (structure is still in change, so not really useful)
-VER <- "AB_data_v2016"
-## current year
-THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
-HF_YEAR <- 2012 # HF inventory update year
-
-library(mefa4)
-source("~/repos/abmianalytics/R/veghf_functions.R")
-source("~/repos/bamanalytics/R/dataprocessing_functions.R")
-
-hftypes <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-type.csv")
-hfgroups <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-class.csv")
-hflt <- hfgroups[match(hftypes$HF_GROUP, hfgroups$HF_GROUP),]
-rownames(hflt) <- hftypes$FEATURE_TY
-
-#### Vegetation and HF processing
+source("~/repos/abmianalytics/veghf/veghf-setup.csv")
 
 ### ABMI on+off grid sites --------------------------------------------------
 
@@ -30,6 +7,14 @@ f1ha <- file.path(ROOT, VER, "data/veghf", "Center1haFixFire.csv")
 d1ha <- read.csv(f1ha)
 d1ha$Site_YEAR <- with(d1ha, interaction(ABMI_Assigned_Site_ID, survey_year, sep="_", drop=TRUE))
 head(d1ha)
+## 2014 site updates
+f1hax <- file.path(ROOT, VER, "data/veghf/update2014", "Center1ha_2014.csv")
+d1hax <- read.csv(f1hax)
+d1hax$Site_YEAR <- with(d1hax, interaction(ABMI_Assigned_Site_ID, survey_year, sep="_", drop=TRUE))
+head(d1hax[,colnames(d1ha)])
+d1ha <- d1ha[d1ha$survey_year != 2014,]
+d1ha <- rbind(d1ha, d1hax[,colnames(d1ha)])
+
 dd1ha <- make_vegHF_wide(d1ha, col.label = "Site_YEAR", 
     col.year="survey_year", col.HFyear="year_")
 dd1ha$scale <- "1 ha square around site centre"
@@ -40,6 +25,15 @@ d150m <- read.csv(f150m)
 d150m$Site_YEAR_bird <- with(d150m, 
     interaction(Site_ID, Bird, sep="_", drop=TRUE))
 head(d150m)
+## 2014 site updates
+f150mx <- file.path(ROOT, VER, "data/veghf/update2014", "Bird150m_2014.csv")
+d150mx <- read.csv(f150mx)
+d150mx$Site_YEAR_bird <- with(d150mx, 
+    interaction(Site_ID, Bird, sep="_", drop=TRUE))
+head(d150mx[,colnames(d150m)])
+d150m <- d150m[d150m$survey_year != 2014,]
+d150m <- rbind(d150m, d150mx[,colnames(d150m)])
+
 dd150m <- make_vegHF_wide(d150m, col.label = "Site_YEAR_bird", 
     col.year="survey_year", col.HFyear="year_")
 dd150m$scale <- "150 m radius circle around bird points"
@@ -50,6 +44,15 @@ d1km <- read.csv(f1km)
 d1km$Site_YEAR_bird <- with(d1km, 
     interaction(Site_ID, Bird, sep="_", drop=TRUE))
 head(d1km)
+## 2014 site updates
+f1kmx <- file.path(ROOT, VER, "data/veghf/update2014", "Bird564m_2014.csv")
+d1kmx <- read.csv(f1kmx)
+d1kmx$Site_YEAR_bird <- with(d1kmx, 
+    interaction(Site_ID, Bird, sep="_", drop=TRUE))
+head(d1kmx[,colnames(d1km)])
+d1km <- d1km[d1km$survey_year != 2014,]
+d1km <- rbind(d1km, d1kmx[,colnames(d1km)])
+
 dd1km <- make_vegHF_wide(d1km, col.label = "Site_YEAR_bird", 
     col.year="survey_year", col.HFyear="year_")
 dd1km$scale <- "564 m radius circle around bird points"
@@ -1127,8 +1130,9 @@ fl <- c("veg_hf_3x7_1999.csv","veg_hf_3x7_2001.csv",
     "veg_hf_3x7_2002.csv","veg_hf_3x7_2003.csv","veg_hf_3x7_2004.csv",
     "veg_hf_3x7_2005.csv","veg_hf_3x7_2006.csv","veg_hf_3x7_2007.csv",
     "veg_hf_3x7_2008.csv","veg_hf_3x7_2009.csv","veg_hf_3x7_2010.csv",
-    "veg_hf_3x7_2011.csv","veg_hf_3x7_2012.csv","veg_hf_3x7_2013.csv")
-yr <- c(1999, 2001, 2002:2013)
+    "veg_hf_3x7_2011.csv","veg_hf_3x7_2012.csv","veg_hf_3x7_2013.csv",
+    "veg_hf_3x7_2014.csv")
+yr <- c(1999, 2001, 2002:2014)
 
 yearly_vhf0 <- list()
 
@@ -1182,191 +1186,3 @@ save(yearly_vhf,
     file=file.path(ROOT, VER, "out/3x7", 
     "veg-hf_3x7_fix-fire_fix-age0.Rdata"))
 
-
-## JOSM addition for Lionel, Dec 17 2015
-
-x1 <- read.csv(file.path(ROOT, VER, "data/veghf/josm", "XY_justAMandY.collapsed.csv"))
-x2 <- read.csv(file.path(ROOT, VER, "data/veghf/josm", "LionelData_EMCLA_PKEY_Dec7.collapsed.csv"))
-unique(x2$Year)
-
-f <- file.path(ROOT, VER, "data/veghf/josm", "Buf150m_int_bkfV5.csv")
-d <- read.csv(f)
-d$survey_year <- 2012
-dd12 <- make_vegHF_wide(d, col.label = "SS", 
-    col.year="survey_year", col.HFyear="CutYear")
-dd12$scale <- "150 m radius circle around bird points"
-d$survey_year <- 2013
-dd13 <- make_vegHF_wide(d, col.label = "SS", 
-    col.year="survey_year", col.HFyear="CutYear")
-dd13$scale <- "150 m radius circle around bird points"
-d$survey_year <- 2014
-dd14 <- make_vegHF_wide(d, col.label = "SS", 
-    col.year="survey_year", col.HFyear="CutYear")
-dd14$scale <- "150 m radius circle around bird points"
-
-load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
-Target0 <- c("Conif0", "Decid0", "Mixwood0", "Pine0", 
-    "Swamp-Conif0", "Swamp-Decid0", "Swamp-Mixwood0", "Swamp-Pine0", 
-    "Wetland-BSpr0", "Wetland-Decid0", "Wetland-Larch0")
-SS <- nonDuplicated(d, SS, TRUE)
-SS <- SS[rownames(dd12$veg_current),]
-
-sum(dd12[[1]][,Target0])
-sum(dd12[[1]])
-dd12 <- fill_in_0ages(dd12, SS$NSRNAME)
-sum(dd12[[1]][,Target0])
-sum(dd12[[1]])
-
-sum(dd13[[1]][,Target0])
-sum(dd13[[1]])
-dd13 <- fill_in_0ages(dd13, SS$NSRNAME)
-sum(dd13[[1]][,Target0])
-sum(dd13[[1]])
-
-sum(dd14[[1]][,Target0])
-sum(dd14[[1]])
-dd14 <- fill_in_0ages(dd14, SS$NSRNAME)
-sum(dd14[[1]][,Target0])
-sum(dd14[[1]])
-
-x2$SS_YEAR <- interaction(x2$SS, x2$Year, sep="_", drop=TRUE)
-x3 <- nonDuplicated(x2, SS_YEAR, TRUE)
-x3 <- x3[,c("ProjectID","SS","Year", "SS_YEAR","Latitude","Longitude")]
-
-for (i in 1:4) {
-    rownames(dd12[[i]]) <- paste0(rownames(dd12[[i]]), "_2012")
-    rownames(dd14[[i]]) <- paste0(rownames(dd13[[i]]), "_2013")
-    rownames(dd13[[i]]) <- paste0(rownames(dd14[[i]]), "_2014")
-}
-
-SSYR <- rbind(data.frame(SS=SS$SS, Year=2012), data.frame(SS=SS$SS, Year=2013), 
-    data.frame(SS=SS$SS, Year=2014))
-cr <- rbind(as.matrix(dd12[[1]]), as.matrix(dd13[[1]]), as.matrix(dd14[[1]]))
-rf <- rbind(as.matrix(dd12[[2]]), as.matrix(dd13[[2]]), as.matrix(dd14[[2]]))
-
-cr2 <- data.frame(SSYR, cr)
-rf2 <- data.frame(SSYR, rf)
-
-#write.csv(cr2, file=file.path(ROOT, VER, "out/josm", 
-#    "current_josm_Lionel_fix-fire_fix-age0.csv"), row.names=FALSE)
-#write.csv(rf2, file=file.path(ROOT, VER, "out/josm", 
-#    "reference_josm_Lionel_fix-fire_fix-age0.csv"), row.names=FALSE)
-
-
-## calculating offsets for this JOSM data
-
-
-library(mefa4)
-library(raster)
-library(sp)
-library(rgdal)
-library(maptools)
-
-## Date/time components
-PKEY <- x2
-MM <- ifelse(PKEY$MONTH < 10, paste0("0", PKEY$MONTH), as.character(PKEY$MONTH))
-HH <- ifelse(PKEY$HOUR < 10, paste0("0", PKEY$HOUR), as.character(PKEY$HOUR))
-DD <- with(PKEY, paste0(Year, "-", MM, "-", DAY, " ", HH, ":00:00"))
-DD <- strptime(DD, "%Y-%m-%e %H:%M:%S")
-PKEY$DATE <- DD
-## Julian day
-PKEY$JULIAN <- DD$yday # this is kept as original
-PKEY$JDAY <- DD$yday / 365
-summary(PKEY$JDAY)
-## TSSR = time since sunrise
-Coor <- as.matrix(cbind(as.numeric(PKEY$Longitude),as.numeric(PKEY$Latitude)))
-JL <- as.POSIXct(DD)
-subset <- rowSums(is.na(Coor))==0 & !is.na(JL)
-sr <- sunriset(Coor[subset,], JL[subset], direction="sunrise", POSIXct.out=FALSE) * 24
-PKEY$srise <- NA
-PKEY$srise[subset] <- sr
-PKEY$start_time <- PKEY$HOUR + 0/60
-PKEY$TSSR <- (PKEY$start_time - PKEY$srise + 0) / 24
-summary(PKEY$TSSR)
-summary(PKEY$start_time)
-
-#PKEY$SS_YEAR <- paste0(PKEY$SS, "_", PKEY$YEAR)
-#cr3 <- cr[PKEY$SS_YEAR,]
-
-compare.sets(x1$SS, x2$SS)
-
-## calculate time only offsets (p)
-
-PKEY$MAXDUR <- 3
-PKEY$MAXDIS <- Inf
-offdat <- PKEY[,c("JDAY","TSSR","MAXDUR","MAXDIS")]
-offdat$LCC_combo <- NA
-offdat$TREE <- NA
-
-library(detect)
-load_BAM_QPAD(version=1)
-BAMspp <- getBAMspecieslist()
-load("~/Dropbox/abmi/intactness/dataproc/BAMCOEFS25.Rdata")
-source("~/repos/bamanalytics/R/dataprocessing_functions.R")
-
-(sppp <- union(BAMspp, BAMCOEFS25$spp))
-
-OFF <- matrix(NA, nrow(offdat), length(sppp))
-rownames(OFF) <- rownames(offdat)
-colnames(OFF) <- sppp
-OFFp <- OFF
-for (i in sppp) {
-    cat(i, "\n")
-    flush.console()
-    if (i %in% BAMspp) { ## spp with offsets (>=75 obs)
-        best <- bestmodelBAMspecies(i, model.edr=0, type="BIC")
-        out <- with(offdat, localBAMcorrections(i,
-            r=MAXDIS,
-            t=MAXDUR,
-            jday=JDAY, 
-            tssr=TSSR, 
-            #tree=TREE, 
-            #lcc=LCC_combo,
-            model.sra=best$sra, 
-            model.edr=best$edr,
-            boot=FALSE, ## MVN approach of j != 1
-            ver=1))
-    } else {
-        PHI <- exp(BAMCOEFS25$sra_estimates[[i]][["0"]]$coef[1])
-        TAU <- exp(BAMCOEFS25$edr_estimates[[i]][["0"]]$coef[1])
-        out <- with(offdat, customBAMcorrections(r=MAXDIS,
-            t=MAXDUR,
-            phi=PHI,
-            tau=TAU))
-    }
-    if (!inherits(out, "try-error")) {
-        OFF[,i] <- rowSums(log(as.matrix(out)))
-        OFFp[,i] <- log(out$p)
-    }
-    
-}
-
-## 99-100 percentile can be crazy high (~10^5), thus reset
-for (i in sppp) {
-    q <- quantile(OFF[,i], 0.99, na.rm=TRUE)
-    OFF[!is.na(OFF[,i]) & OFF[,i] > q, i] <- q
-}
-colSums(is.na(OFF))/nrow(OFF)
-apply(exp(OFF), 2, range, na.rm=TRUE)
-
-colnames(OFF) <- paste0(colnames(OFF), "_Ap")
-colnames(OFFp) <- paste0(colnames(OFFp), "_p")
-TAB <- data.frame(PKEY, OFF, OFFp)
-write.csv(TAB, file=file.path(ROOT, VER, "out/josm", 
-    "offsets_josm_Lionel.csv"), row.names=FALSE)
-
-## ECJOSM
-
-ROOT <- "c:/bam/May2015"
-load(file.path(ROOT, "out", "data_package_2015-08-14.Rdata"))
-
-PKEY0 <- PKEY
-PKEY <- PKEY0[PKEY0$PCODE %in% c("ECJOSM","ECJOSM_JRB"),]
-
-## ...
-ROOT <- "c:/p"
-## version (structure is still in change, so not really useful)
-VER <- "AB_data_v2015"
-
-write.csv(TAB, file=file.path(ROOT, VER, "out/josm", 
-    "offsets_ecjosm_Lionel.csv"), row.names=FALSE)
