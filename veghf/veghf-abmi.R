@@ -60,7 +60,7 @@ dd1km$scale <- "564 m radius circle around bird points"
 #### Climate and regions
 
 ## Public coordinates
-gis <- read.csv(file.path("y:/Oracle_access_2015", "data", "sitemetadata.csv"))
+gis <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 rownames(gis) <- gis$SITE_ID
 
 ## climate for all bird pts (pt=1 centre for 1ha)
@@ -134,6 +134,27 @@ setdiff(as.character(birds$Label2), rownames(climSite))
 compare.sets(rownames(climSite), rownames(mites))
 setdiff(rownames(climSite), rownames(mites))
 setdiff(rownames(mites), rownames(climSite))
+
+## topo variables
+topo <- read.csv(file.path(ROOT, VER, "data/topo", "ABMIBirdsCamARU_topo.csv"))
+topo$Site_YEAR_bird <- with(topo, interaction(Site_ID, Cam_ARU_Bird_Location, sep="_", drop=TRUE))
+compare.sets(climPoint$Site_YEAR_bird, topo$Site_YEAR_bird)
+
+topo1 <- topo[match(climPoint$Site_YEAR_bird, topo$Site_YEAR_bird),]
+topo2 <- topo[topo$Cam_ARU_Bird_Location == "1",]
+compare.sets(climSite$Site_ID, topo$Site_ID)
+topo2 <- topo2[match(climSite$Site_ID, topo2$Site_ID),]
+
+
+climPoint$SLP <- topo1$slope
+climPoint$ASP <- topo1$slpasp
+climPoint$TRI <- topo1$tri
+climPoint$CTI <- topo1$cti
+
+climSite$SLP <- topo2$slope
+climSite$ASP <- topo2$slpasp
+climSite$TRI <- topo2$tri
+climSite$CTI <- topo2$cti
 
 ## fix age 0 in saved files -----------------------------
 
