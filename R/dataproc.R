@@ -1,6 +1,6 @@
 ##% Processing data for intactness, all-in-one, website things
 ##% P Solymos
-##% Aug 18, 2015
+##% Feb 9, 2016
 
 library(RODBC)
 library(mefa4)
@@ -8,6 +8,7 @@ library(raster)
 library(sp)
 library(rgdal)
 library(maptools)
+library(pbapply)
 
 ## use preprocessed national data set for BAM & BBS
 
@@ -72,7 +73,7 @@ compare.sets <- function(x, y) {
     rbind(labels=lab, unique=act)
 }
 
-ROOT2 <- "c:/p/AB_data_v2015"
+ROOT2 <- "e:/peter/AB_data_v2016"
 
 load(file.path(ROOT2, "out", "abmi_onoff", 
     "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0.Rdata"))
@@ -155,19 +156,15 @@ DAT <- droplevels(DAT)
 ## lookup tables & reclassed tables
 
 ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
-ts$UseInAnalysis <- as.character(ts$UseInAnalysis)
-ts$UseInAnalysis[is.na(ts$UseInAnalysis)] <- as.character(ts$Levels4)[is.na(ts$UseInAnalysis)]
-ts$Levels1 <- as.character(ts$Levels1)
-ts$Levels1[is.na(ts$Levels1)] <- ts$UseInAnalysis[is.na(ts$Levels1)]
 
 SoilKmCr <- groupSums(dd1km$soil_current, 2, ts[colnames(dd1km$soil_current), "UseInAnalysis"])
 SoilKmRf <- groupSums(dd1km$soil_reference, 2, ts[colnames(dd1km$soil_reference), "UseInAnalysis"])
 SoilPcCr <- groupSums(dd150m$soil_current, 2, ts[colnames(dd150m$soil_current), "UseInAnalysis"])
 SoilPcRf <- groupSums(dd150m$soil_reference, 2, ts[colnames(dd150m$soil_reference), "UseInAnalysis"])
 
-psoilhf <- groupSums(dd150m$soil_current, 2, ts[colnames(dd150m$soil_current), "Levels1"])
+psoilhf <- groupSums(dd150m$soil_current, 2, ts[colnames(dd150m$soil_current), "UseInAnalysis"])
 psoilhf <- psoilhf[,!(colnames(psoilhf) %in% c("SoilUnknown", "SoilWater",
-    "SoilWetland", "HWater", "HFor", "SoftLin", "HardLin"))]
+    "HWater", "HFor", "SoftLin", "HardLin"))]
 psoilhf <- as.matrix(psoilhf / rowSums(psoilhf))
 
 #SoilKmCr <- SoilKmCr[,colnames(SoilKmCr) != "HFor"] # exclude forestry
@@ -178,11 +175,36 @@ SoilPcCr <- as.matrix(SoilPcCr / rowSums(SoilPcCr))
 SoilPcRf <- as.matrix(SoilPcRf / rowSums(SoilPcRf))
 
 tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
-tv$UseInAnalysis <- as.character(tv$UseInAnalysis)
-ii <- is.na(tv$UseInAnalysis) | tv$UseInAnalysis == "HFor"
-tv$UseInAnalysis[ii] <- as.character(tv$VEGAGE_use)[ii]
-tv$UseInAnalysis[tv$UseInAnalysis == "WetBare"] <- "NonVeg"
-tv$UseInAnalysis[tv$UseInAnalysis %in% c("WetGrassHerb", "WetShrub")] <- "Wetland"
+
+find_max <- function(x) {
+    tmp <- pbapply(x, 1, which.max)
+    tmp <- factor(tmp, levels=seq_len(ncol(x)))
+    levels(tmp) <- colnames(x)
+    tmp
+}
+find_max_value <- function(x) {
+    pbapply(x, 1, function(z) z[which.max(z)])
+}
+
+tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "Type"])
+#tmp <- tmp[,!(colnames(tmp) %in% c("NonVeg", "Water", "HWater"))]
+tmp <- as.matrix(tmp / rowSums(tmp))
+OK <- tmp[,"XXX"] <= 0.8
+table(OK)
+tmp <- tmp[OK,colnames(tmp) != "XXX"]
+any(is.na(tmp))
+#tmp[is.na(tmp)] <- 0
+h <- find_max(tmp)
+v <- find_max_value(tmp)
+data.frame(table(h))
+print(aggregate(data.frame(v=v), list(h=h), quantile, c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1)), 
+    digits=3)
+
+## ---------- I am here !!!!!!!!!!!!!!!
+
+## need to exclude bare/OW sites based on v=0
+## use WET and WETWATER columns to calculate % wet and wetwater in buffers
+
 
 VegKmCr <- groupSums(dd1km$veg_current, 2, tv[colnames(dd1km$veg_current), "UseInAnalysis"])
 VegKmRf <- groupSums(dd1km$veg_reference, 2, tv[colnames(dd1km$veg_reference), "UseInAnalysis"])
@@ -194,12 +216,6 @@ VegKmRf <- as.matrix(VegKmRf / rowSums(VegKmRf))
 VegPcCr <- as.matrix(VegPcCr / rowSums(VegPcCr))
 VegPcRf <- as.matrix(VegPcRf / rowSums(VegPcRf))
 
-find_max <- function(x) {
-    tmp <- apply(x, 1, which.max)
-    tmp <- factor(tmp, levels=seq_len(ncol(x)))
-    levels(tmp) <- colnames(x)
-    tmp
-}
 
 ## hab & CC in north
 
@@ -213,18 +229,6 @@ ii <- !is.na(tv$HF) & tv$HF == "CutBlocks"
 tv$UseInAnalysis3[ii] <- "CC" #paste0("CC", tv$UseInAnalysis3[ii])
 tv$UseAge <- as.character(tv$AGE)
 tv$UseAge[is.na(tv$UseAge)] <- ""
-tv$EC_AGE <- as.character(tv$EC_AGE)
-tv$EC_AGE[is.na(tv$EC_AGE)] <- ""
-tv$LCC5 <- tv$EC_AGE
-tv$LCC5[tv$EC_AGE == ""] <- "5"
-tv$LCC5[tv$EC_AGE %in% c("A","B","R") & tv$UseInAnalysis2 %in% 
-    c("Decid","Mixwood")] <- "4"
-tv$LCC5[tv$EC_AGE %in% c("A","B","R") & tv$UseInAnalysis2 %in% 
-    c("Conif","Pine","BSpr", "Larch")] <- "3"
-tv$LCC5[tv$EC_AGE %in% c("C","D") & tv$UseInAnalysis2 %in% 
-    c("Decid","Mixwood")] <- "2"
-tv$LCC5[tv$EC_AGE %in% c("C","D") & tv$UseInAnalysis2 %in% 
-    c("Conif","Pine","BSpr", "Larch")] <- "1"
 
 
 tmp <- groupSums(dd150m$veg_reference, 2, tv[colnames(dd150m$veg_reference), "UseInAnalysis2"])
