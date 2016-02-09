@@ -1,4 +1,4 @@
-source("~/repos/abmianalytics/veghf/veghf-setup.csv")
+source("~/repos/abmianalytics/veghf/veghf-setup.R")
 
 ### ABMI on+off grid sites --------------------------------------------------
 

@@ -1,4 +1,4 @@
-source("~/repos/abmianalytics/veghf/veghf-setup.csv")
+source("~/repos/abmianalytics/veghf/veghf-setup.R")
 
 ### BAM+BBS bird points, 150 m radius buffer --------------------------------
 

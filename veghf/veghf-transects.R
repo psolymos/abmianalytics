@@ -1,4 +1,4 @@
-source("~/repos/abmianalytics/veghf/veghf-setup.csv")
+source("~/repos/abmianalytics/veghf/veghf-setup.R")
 
 ### Snow transects -------------------------------------------------------
 

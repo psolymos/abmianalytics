@@ -1,4 +1,4 @@
-source("~/repos/abmianalytics/veghf/veghf-setup.csv")
+source("~/repos/abmianalytics/veghf/veghf-setup.R")
 
 ### 1K grid --------------------------------------------------------
 
