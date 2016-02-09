@@ -122,12 +122,8 @@ rownames(ddmt[[3]]) <- rownames(ddmt[[4]]) <- rownames(climTr)
 all(rownames(climInter) == rownames(ddmi[[1]]))
 all(rownames(climTr) == rownames(ddmt[[1]]))
 
-if (SAVE)
-    save(ddmi, ddmt, climInter, climTr,
-        file=file.path(ROOT, VER, "out/abmi_onoff", 
-        "veg-hf-clim-reg_mammals-onoff_fix-fire.Rdata"))
-
 ## fix age 0 in saved files -----------------------------
+load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
 
 ## ddmi, ddmt, climInter, climTr
 load(file.path(ROOT, VER, "out/abmi_onoff", 
@@ -141,7 +137,8 @@ sum(ddmt[[1]][,Target0])
 ddmt <- fill_in_0ages(ddmt, climTr$NSRNAME)
 sum(ddmt[[1]][,Target0])
 
-save(ddmi, ddmt, climInter, climTr,
-    file=file.path(ROOT, VER, "out/abmi_onoff", 
-    "veg-hf-clim-reg_mammals-onoff_fix-fire_fix-age0.Rdata"))
+if (SAVE)
+    save(ddmi, ddmt, climInter, climTr,
+        file=file.path(ROOT, VER, "out/abmi_onoff", 
+        "veg-hf-clim-reg_mammals-onoff_fix-fire_fix-age0.Rdata"))
 

@@ -94,11 +94,8 @@ all(rownames(dd150m_bambbs[[1]]) == rownames(dd1km_bambbs[[1]]))
 climPoint_bambbs <- climPoint_bambbs[rownames(dd150m_bambbs[[1]]),]
 all(rownames(dd150m_bambbs[[1]]) == rownames(climPoint_bambbs))
 
-if (SAVE)
-    save(dd150m_bambbs, dd1km_bambbs, climPoint_bambbs,
-        file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire.Rdata"))
-
 ## fix age 0 in saved files -----------------------------
+load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
 
 ## dd150m_bambbs, dd1km_bambbs -- need NSR from previous climate table
 
@@ -112,6 +109,7 @@ sum(dd1km_bambbs[[1]][,Target0])
 dd1km_bambbs <- fill_in_0ages(dd1km_bambbs, climPoint_bambbs$NSRNAME)
 sum(dd1km_bambbs[[1]][,Target0])
 
-save(dd150m_bambbs, dd1km_bambbs, climPoint_bambbs,
-    file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire_fix-age0.Rdata"))
+if (SAVE)
+    save(dd150m_bambbs, dd1km_bambbs, climPoint_bambbs,
+        file=file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire_fix-age0.Rdata"))
 

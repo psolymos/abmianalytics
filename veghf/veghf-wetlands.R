@@ -70,13 +70,8 @@ dsw <- read.csv(fsw)
 dsw$Site_YEAR <- with(dw250m, 
     interaction(Pin_Wetland_ID, Year_survey, sep="_", drop=TRUE))
 
-if (SAVE)
-    save(ddw20m, ddw100m, ddw250m, climWet,
-        file=file.path(ROOT, VER, "out/wetlands", "veg-hf_wetlands_fix-fire.Rdata"))
-
 ## fix age 0 in saved files -----------------------------
-
-## Wetlands
+load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
 
 sum(ddw20m[[1]][,Target0])
 ddw20m <- fill_in_0ages(ddw20m, climWet$NSRNAME)
@@ -90,7 +85,8 @@ sum(ddw250m[[1]][,Target0])
 ddw250m <- fill_in_0ages(ddw250m, climWet$NSRNAME)
 sum(ddw250m[[1]][,Target0])
 
-save(ddw20m, ddw100m, ddw250m, climWet,
-    file=file.path(ROOT, VER, "out/wetlands", 
-    "veg-hf_wetlands_fix-fire_fix-age0.Rdata"))
+if (SAVE)
+    save(ddw20m, ddw100m, ddw250m, climWet,
+        file=file.path(ROOT, VER, "out/wetlands", 
+        "veg-hf_wetlands_fix-fire_fix-age0.Rdata"))
 

@@ -135,21 +135,10 @@ compare.sets(rownames(climSite), rownames(mites))
 setdiff(rownames(climSite), rownames(mites))
 setdiff(rownames(mites), rownames(climSite))
 
-if (SAVE)
-    save(dd1ha, dd150m, dd1km, climSite, climPoint,
-        file=file.path(ROOT, VER, "out/abmi_onoff", 
-        "veg-hf-clim-reg_abmi-onoff_fix-fire.Rdata"))
-
 ## fix age 0 in saved files -----------------------------
 
 load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
 
-## dd1ha, dd150m, dd1km, climSite, climPoint
-load(file.path(ROOT, VER, "out/abmi_onoff", 
-    "veg-hf-clim-reg_abmi-onoff_fix-fire.Rdata"))
-#dd1hav <- fill_in_0ages(dd1ha, climSite$NSRNAME)
-#round(data.frame(w0=100*colSums(dd1ha$veg_current)/sum(dd1ha$veg_current), 
-#    wo0=100*colSums(dd1hav$veg_current)/sum(dd1hav$veg_current)), 4)
 sum(dd1ha[[1]][,Target0])
 sum(dd1ha[[1]])
 dd1ha <- fill_in_0ages(dd1ha, climSite$NSRNAME)
@@ -164,7 +153,8 @@ sum(dd1km[[1]][,Target0])
 dd1km <- fill_in_0ages(dd1km, climPoint$NSRNAME)
 sum(dd1km[[1]][,Target0])
 
-save(dd1ha, dd150m, dd1km, climSite, climPoint,
-    file=file.path(ROOT, VER, "out/abmi_onoff", 
-    "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0.Rdata"))
+if (SAVE)
+    save(dd1ha, dd150m, dd1km, climSite, climPoint,
+        file=file.path(ROOT, VER, "out/abmi_onoff", 
+        "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0.Rdata"))
 
