@@ -67,8 +67,8 @@ climWet <- droplevels(climWet[ii,])
 fsw <- file.path(ROOT, VER, "data/veghf/wetlands", 
     "sketch_inter_BufRings_allYearMerged.csv")
 dsw <- read.csv(fsw)
-dsw$Site_YEAR <- with(dw250m, 
-    interaction(Pin_Wetland_ID, Year_survey, sep="_", drop=TRUE))
+dsw$Site_YEAR <- with(dsw, 
+    interaction(Pin_Wetland_ID, Year_, sep="_", drop=TRUE))
 
 ## fix age 0 in saved files -----------------------------
 load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
