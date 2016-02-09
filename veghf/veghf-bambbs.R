@@ -94,12 +94,20 @@ all(rownames(dd150m_bambbs[[1]]) == rownames(dd1km_bambbs[[1]]))
 climPoint_bambbs <- climPoint_bambbs[rownames(dd150m_bambbs[[1]]),]
 all(rownames(dd150m_bambbs[[1]]) == rownames(climPoint_bambbs))
 
-## fix age 0 in saved files -----------------------------
-load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
+## topo variables
+topo <- read.csv(file.path(ROOT, VER, "data/topo", "AllBird_April2015_topo.csv"))
+compare.sets(climPoint_bambbs$PKEY, topo$PKEY)
+topo <- topo[match(climPoint_bambbs$PKEY, topo$PKEY),]
+
+climPoint_bambbs$SLP <- topo$slope
+climPoint_bambbs$ASP <- topo$slpasp
+climPoint_bambbs$TRI <- topo$tri
+climPoint_bambbs$CTI <- topo$cti
 
 ## dd150m_bambbs, dd1km_bambbs -- need NSR from previous climate table
 
-load(file.path(ROOT, VER, "out/bambbs", "veg-hf_bambbs_fix-fire.Rdata"))
+## fix age 0 in saved files -----------------------------
+load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
 
 sum(dd150m_bambbs[[1]][,Target0])
 dd150m_bambbs <- fill_in_0ages(dd150m_bambbs, climPoint_bambbs$NSRNAME)
