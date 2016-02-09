@@ -1,4 +1,4 @@
-source("~/repos/abmianalytics/veghf/veghf-setup.csv")
+source("~/repos/abmianalytics/veghf/veghf-setup.R")
 
 
 ## 3 x 7 yearly veg+HF
@@ -41,7 +41,7 @@ rownames(gis) <- gis$SITE_ID
 Sites <- rownames(gis)
 NSR <- gis$NATURAL_SUBREGIONS
 
-yearly_vhf0 <- yearly_vhf
+yearly_vhf <- yearly_vhf0
 
 for (i in 1:length(fl)) {
     yearly_vhf0[[i]][[1]] <- yearly_vhf0[[i]][[1]][Sites,]
@@ -60,3 +60,14 @@ save(yearly_vhf,
     file=file.path(ROOT, VER, "out/3x7", 
     "veg-hf_3x7_fix-fire_fix-age0.Rdata"))
 
+for (i in yr) {
+cat(i, "\n");flush.console()
+a1 <- data.frame(as.matrix(yearly_vhf[[as.character(i)]][[1]]))
+a2 <- data.frame(as.matrix(yearly_vhf[[as.character(i)]][[2]]))
+a3 <- data.frame(as.matrix(yearly_vhf[[as.character(i)]][[3]]))
+a4 <- data.frame(as.matrix(yearly_vhf[[as.character(i)]][[4]]))
+write.csv(a1, file=file.path(ROOT, VER, "out/3x7", paste0("veg-hf_3x7_", i, "_veg_current.csv")))
+write.csv(a2, file=file.path(ROOT, VER, "out/3x7", paste0("veg-hf_3x7_", i, "_veg_reference.csv")))
+write.csv(a3, file=file.path(ROOT, VER, "out/3x7", paste0("veg-hf_3x7_", i, "_soil_current.csv")))
+write.csv(a4, file=file.path(ROOT, VER, "out/3x7", paste0("veg-hf_3x7_", i, "_soil_reference.csv")))
+}
