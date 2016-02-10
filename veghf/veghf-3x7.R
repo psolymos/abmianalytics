@@ -71,3 +71,68 @@ write.csv(a2, file=file.path(ROOT, VER, "out/3x7", paste0("veg-hf_3x7_", i, "_ve
 write.csv(a3, file=file.path(ROOT, VER, "out/3x7", paste0("veg-hf_3x7_", i, "_soil_current.csv")))
 write.csv(a4, file=file.path(ROOT, VER, "out/3x7", paste0("veg-hf_3x7_", i, "_soil_reference.csv")))
 }
+
+## summaries
+
+source("~/repos/abmianalytics/veghf/veghf-setup.R")
+load(file.path(ROOT, VER, "out/3x7", 
+    "veg-hf_3x7_fix-fire_fix-age0.Rdata"))
+
+gis <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+rownames(gis) <- gis$SITE_ID
+
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
+
+yr <- c(1999, 2001, 2002:2014)
+REG <- gis$NATURAL_REGIONS
+hf <- array(NA, c(nlevels(REG)+1, 7+1, length(yr)))
+dimnames(hf)[[3]] <- yr
+for (i in as.character(yr)) {
+    x <- as.matrix(yearly_vhf[[i]][[1]])[,rownames(tv)]
+    x <- 100 * x / rowSums(x)
+    x <- x[,!is.na(tv$HF)]
+    x <- groupSums(x, 2, tv$UseInHFReporting[!is.na(tv$HF)])
+    x <- cbind(x, "Total"=rowSums(x))
+    x2 <- rbind(groupMeans(x, 1, REG), "Alberta"=colMeans(x))
+    hf[,,i] <- x2
+}
+dimnames(hf)[[1]] <- rownames(x2)
+dimnames(hf)[[2]] <- colnames(x2)
+
+save(hf, file="~/Dropbox/www/opencpu/footprintchange/data/hf.rda")
+
+
+load("~/Dropbox/www/opencpu/footprintchange/data/hf.rda")
+
+dput(table(gis$NATURAL_REGIONS)/nrow(gis))
+
+hfplot <- function (
+    region = c("Alberta", 
+        "Canadian Shield", 
+        "Boreal", 
+        "Foothills", 
+        "Rocky Mountain", 
+        "Parkland", 
+        "Grassland"),
+    type = c("Total", 
+        "Human-created Water Bodies", 
+        "Agriculture", 
+        "Urban, Rural & Industrial", 
+        "Mines, Wells & Other Energy Features", 
+        "Vegetated Linear Industrial Features", 
+        "Transportation", 
+        "Forest Harvest")) {
+    region <- match.arg(region)
+    type <- match.arg(type)
+    Year <- c(1999, 2001, 2002:2014)
+    Footprint <- hf[region,type,]
+    Rate <- diff(range(Footprint)) / diff(range(Year))
+    p <- ggplot2::qplot(Year, Footprint, 
+        ylab=paste(type, "Footprint (%)"), 
+        main=paste0(region, " (", round(Rate,2), "%/yr)"),
+        geom=c("point","line")) + theme_grey(base_size = 18)
+	print(p)  
+	invisible()
+}
+hfplot("Boreal", "Forest Harvest")
+hfplot("Grassland", "Vegetated Linear Industrial Features")
