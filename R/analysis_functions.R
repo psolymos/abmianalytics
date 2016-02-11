@@ -1,13 +1,14 @@
 do_1spec1run_noW <- function(j, i, mods, 
-silent=FALSE, hsh_name=NA, CAICalpha=1) 
+silent=FALSE, hsh_name=NA, CAICalpha=1, method=c("oc","lt"))
 {
+    method <- match.arg(method)
     select_hsh <- !is.na(hsh_name)
     x <- DAT[BB[,j],]
     y <- as.numeric(YY[BB[,j], i])
-    if (select_hsh)
-        hsh <- HSH[BB[,j],]
     off <- if (i %in% colnames(OFF))
         OFF[BB[,j], i] else OFFmean[BB[,j]]
+    if (select_hsh)
+        hsh <- HSH[BB[,j],]
     ## empty objects for storing results
     nmods <- length(mods)
     nnmods <- sapply(mods, length)
@@ -22,31 +23,46 @@ silent=FALSE, hsh_name=NA, CAICalpha=1)
         #weights=w,
         x=FALSE, y=FALSE, model=FALSE), CAICalpha=CAICalpha)
     best <- null
-    ## Lorenz-tangent approach for core habitat delineation
     if (select_hsh) {
         HABV <- x[,hsh_name]
-        habmod <- glm_skeleton(try(glm(y ~ HABV + ROAD,
-            x,
-            family=poisson(), 
-            offset=off, 
-            #weights=w,
-            x=FALSE, y=FALSE, model=FALSE), silent=silent), CAICalpha=CAICalpha)
-        ## need to correct for linear effects
-        ## so that we estimate potential pop in habitats (and not realized)
-        XHSH <- model.matrix(~ HABV + ROAD, x)
-        XHSH[,"ROAD"] <- 0 # not predicting edge effects
-        ## some levels might be dropped (e.g. Marsh)
-        XHSH <- XHSH[,names(habmod$coef)]
-        lam <- exp(drop(XHSH %*% habmod$coef))
-        cv <- Lc_cut(lam, transform=FALSE) # $lam is threshold
-        Freq <- table(hab=HABV, lc=ifelse(lam >= cv$lam, 1, 0))
-        Prob <- Freq[,"1"] / rowSums(Freq)
-        ## missing/dropped levels are NaN=0/0
-        Prob[is.na(Prob)] <- 0
-        Hi <- names(Prob)[Prob > 0.5]
-        #tb <- ifelse(Freq > 0, 1, 0)
-        #Hi <- rownames(tb)[tb[,"1"] > 0]
-        #Lo <- rownames(tb)[tb[,"1"] == 0]
+        ## opticut based approach for core habitat delineation
+        if (method="lt") {
+            require(opticut)
+            oc <- opticut(y ~ ROAD01, data=x, strata=HABV, dist="poisson",
+                offset=off, comb="rank")
+            part <- drop(bestpart(oc))
+            habmod <- glm_skeleton(bestmodel(oc)[[1]], CAICalpha=CAICalpha)
+            cv <- NULL
+            lam <- NULL
+            ocres <- drop(as.matrix(summary(oc)$summary[,c("I","beta0","beta1","logLR","w")]))
+            Prob <- table(HABV, part)[,"1"]
+            ## missing/dropped levels are NaN=0/0
+            Prob[is.na(Prob)] <- 0
+            Hi <- names(Prob)[Prob > 0]
+        }
+        ## Lorenz-tangent approach for core habitat delineation
+        if (method="lt") {
+            habmod <- glm_skeleton(try(glm(y ~ HABV + ROAD01,
+                x,
+                family=poisson(), 
+                offset=off, 
+                #weights=w,
+                x=FALSE, y=FALSE, model=FALSE), silent=silent), CAICalpha=CAICalpha)
+            ## need to correct for linear effects
+            ## so that we estimate potential pop in habitats (and not realized)
+            XHSH <- model.matrix(~ HABV + ROAD, x)
+            XHSH[,"ROAD"] <- 0 # not predicting edge effects
+            ## some levels might be dropped (e.g. Marsh)
+            XHSH <- XHSH[,names(habmod$coef)]
+            lam <- exp(drop(XHSH %*% habmod$coef))
+            cv <- Lc_cut(lam, transform=FALSE) # $lam is threshold
+            Freq <- table(hab=HABV, lc=ifelse(lam >= cv$lam, 1, 0))
+            Prob <- Freq[,"1"] / rowSums(Freq)
+            ## missing/dropped levels are NaN=0/0
+            Prob[is.na(Prob)] <- 0
+            Hi <- names(Prob)[Prob > 0.5]
+            ocres <- NULL
+        }
         x$HSH <- unname(rowSums(hsh[, Hi, drop=FALSE]))
         x$HSH2 <- x$HSH^2
     } else {
@@ -54,6 +70,7 @@ silent=FALSE, hsh_name=NA, CAICalpha=1)
         lam <- NULL
         cv <- NULL
         habmod <- NULL
+        ocres <- NULL
     }
     ## looping through models list
     for (l1 in 1:nmods) {
@@ -91,6 +108,7 @@ silent=FALSE, hsh_name=NA, CAICalpha=1)
         hi=Hi,
         lc=cv,
         alpha=CAICalpha,
+        method=method,
         #nmax=nmax,
         #w_id=w_id,
         habmod=habmod$coef,
