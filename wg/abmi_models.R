@@ -36,7 +36,7 @@ ncl <- if (TEST) 2 else nodes*12
 #### load all object on the master ####
 
 if (interactive())
-    setwd("c:/p/AB_data_v2015/out/birds")
+    setwd("e:/peter/AB_data_v2016/out/birds")
 fid <- if (interactive())
     "north" else as.character(args[2])
 fn <- paste0("data-useok-", fid, ".Rdata")
@@ -83,6 +83,11 @@ SPP <- setdiff(SPP, DONE)
 if (TEST)
     SPP <- SPP[1:2]
 
+## restrict to 2 species
+SPP <- c("WEWP","RWBL")
+
+#system.time(aaa <- do_1spec1run_noW(1, i="RWBL", mods=mods,  hsh_name=NA, CAICalpha=1))
+#system.time(aaa <- do_1spec1run_noW(1, i="WEWP", mods=mods,  hsh_name=NA, CAICalpha=1))
 #system.time(aaa <- do_1spec1run_noW(1, i="ALFL", mods=mods,  hsh_name=NA, CAICalpha=1))
 #system.time(aaa <- do_1spec1run_noW(1, i=SPP1, mods=mods,  hsh_name=NA, CAICalpha=1))
 # j=2
