@@ -24,8 +24,6 @@ if (!interactive())
 
 TEST <- interactive()
 
-ROOT <- "~/abmi"
-
 #### setup ####
 
 nodes <- if (interactive())
@@ -38,7 +36,7 @@ ncl <- if (TEST) 2 else nodes*12
 if (interactive())
     setwd("e:/peter/AB_data_v2016/out/birds")
 fid <- if (interactive())
-    "north" else as.character(args[2])
+    "south" else as.character(args[2])
 fn <- paste0("data-useok-", fid, ".Rdata")
 load(file.path("data", fn))
 

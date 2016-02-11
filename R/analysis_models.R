@@ -29,7 +29,8 @@ modsVeg <- list(
         .~. + ROAD01 + ROAD01:habCl,
         .~. + ROAD01 + SoftLin_PC + ROAD01:habCl),
     "ARU"=list( # 5
-        .~. + ARU),
+        .~. + ARU2,
+        .~. + ARU3),
     "Topo"=list( # 6
         .~. + xASP,
         .~. + xCTI,
@@ -100,12 +101,14 @@ modsSoil <- list(
         .~. + ROAD01 + SoftLin_PC,
         .~. + ROAD01 + ROAD01:habCl,
         .~. + ROAD01 + SoftLin_PC + ROAD01:habCl),
-    "Topo"=list( # 3
+    "ARU"=list( # 3
+        .~. + ARU2), # no SM for now --> will change in future
+    "Topo"=list( # 4
         .~. + xASP,
         .~. + xCTI,
         .~. + xASP + xCTI,
         .~. + xASP + xCTI + xASP:xCTI),
-    "Space"=list( # 4
+    "Space"=list( # 5
         .~.+ xPET,## climate only
         .~.+ xMAT,
         .~.+ xAHM,
@@ -139,10 +142,10 @@ modsSoil <- list(
         .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT + xMAP,
         .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMWMT + xMCMT,
         .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xAHM + xPET),
-    "Wet"=list( # 5
+    "Wet"=list( # 6
         .~. + WetKM,
         .~. + WetWaterKM),
-    "HF"=list( # 6
+    "HF"=list( # 7
         .~.+ THF_KM,## HF only
         .~.+ Lin_KM + Nonlin_KM,
         .~.+ Succ_KM + Alien_KM,
@@ -155,5 +158,5 @@ modsSoil <- list(
         .~.+ Succ_KM + Noncult_KM + Cult_KM + Noncult2_KM,
         .~.+ Succ_KM + Alien_KM + Succ2_KM + Alien2_KM,
         .~.+ Succ_KM + Noncult_KM + Cult_KM + Succ2_KM + Noncult2_KM),
-    "Year"=list( # 7
+    "Year"=list( # 8
         .~.+ YR))

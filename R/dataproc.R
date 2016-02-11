@@ -382,10 +382,15 @@ DAT$SoftLin_PC <- rowSums(dd150m$veg_current[,c("SeismicLine","TransmissionLine"
 
 ## ARU
 
-DAT$ARU <- factor("TRAD", c("TRAD","SM","RF"))
-DAT$ARU[DAT$PCODE %in% c("EMCLA","EMCLA2014")] <- "SM"
-DAT$ARU[DAT$PCODE %in% c("ABMI")] <- "RF"
-table(DAT$PCODE, DAT$ARU)
+DAT$ARU2 <- factor("TRAD", c("TRAD","ARU"))
+DAT$ARU2[DAT$PCODE %in% c("ABMI","EMCLA","EMCLA2014")] <- "ARU"
+DAT$ARU2[DAT$PCODE %in% c()] <- "RF"
+table(DAT$PCODE, DAT$ARU2)
+
+DAT$ARU3 <- factor("TRAD", c("TRAD","SM","RF"))
+DAT$ARU3[DAT$PCODE %in% c("EMCLA","EMCLA2014")] <- "SM"
+DAT$ARU3[DAT$PCODE %in% c("ABMI")] <- "RF"
+table(DAT$PCODE, DAT$ARU3)
 
 ## transformations
 
