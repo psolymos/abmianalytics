@@ -320,6 +320,9 @@ DAT$TREE[is.na(DAT$TREE)] <- DAT$ClosedCanopy[is.na(DAT$TREE)]
 
 DAT$LCC_combo[is.na(DAT$LCC_combo)] <- DAT$hab_lcc[is.na(DAT$LCC_combo)] 
 
+## ROAD x habitat interaction based on forest cover
+DAT$habCl <- ifelse(DAT$ClosedCanopy > 0.5, 1L, 0L) # EC age is C or D
+
 ## soil in south
 
 round(100*colMeans(SoilPcRf[SoilPcRf[,"SoilUnknown"]==0,]),2)
@@ -576,8 +579,10 @@ source("~/repos/abmianalytics/R/analysis_models.R")
 source("~/repos/bragging/R/glm_skeleton.R")
 compare_sets(getTerms(modsSoil, "list"), colnames(DAT))
 setdiff(getTerms(modsSoil, "list"), colnames(DAT))
+stopifnot(length(setdiff(getTerms(modsSoil, "list"), colnames(DAT)))==0)
 compare_sets(getTerms(modsVeg, "list"), colnames(DAT))
 setdiff(getTerms(modsVeg, "list"), colnames(DAT))
+stopifnot(length(setdiff(getTerms(modsVeg, "list"), colnames(DAT)))==0)
 
 ## offsets
 
@@ -615,8 +620,11 @@ compare_sets(rownames(OFF),rownames(DAT))
 ## subsets
 
 keep <- DAT$YEAR >= 1997 & !is.na(DAT$hab1) & !DAT$Revisit & DAT$pWater <= 0.5
+#keep <- !is.na(DAT$hab1) & !DAT$Revisit & DAT$pWater <= 0.5
 
 DAT$keep <- keep
+plot(DAT$X, DAT$Y, col=ifelse(DAT$keep, 1, 2), pch=19, cex=0.2)
+
 YY <- YY[rownames(DAT),]
 pveghf <- pveghf[rownames(DAT),]
 psoilhf <- psoilhf[rownames(DAT),]
