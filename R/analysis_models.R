@@ -1,11 +1,10 @@
 modsVeg <- list(
     "Hab"=list( # 1
-        .~. + hab1,
-        .~. + hab1b),
+        .~. + hab1),
     "Age"=list( # 2
         .~. + wtAge,
         .~. + wtAge + wtAge2,
-        ## here dec+mix is both as intercept
+        ## here dec+mix are both intercepts
         .~. + wtAge + wtAge2 + wtAge:isCon + wtAge2:isCon,
         .~. + wtAge + wtAge2 + wtAge:isUpCon + wtAge:isBSLarch +
             wtAge2:isUpCon + wtAge2:isBSLarch,
@@ -27,63 +26,67 @@ modsVeg <- list(
         .~. + ROAD01,
         .~. + SoftLin_PC,
         .~. + ROAD01 + SoftLin_PC,
-        .~. + ROAD01 + ROAD01:hab_lcc2,
-        .~. + ROAD01 + SoftLin_PC + ROAD01:hab_lcc2,
-        .~. + ROAD01 + ROAD01:hab_lcc3,
-        .~. + ROAD01 + SoftLin_PC + ROAD01:hab_lcc3,
-        .~. + ROAD01 + ROAD01:hab_lcc, # 5 levels
-        .~. + ROAD01 + SoftLin_PC + ROAD01:hab_lcc),
+        .~. + ROAD01 + ROAD01:habCl,
+        .~. + ROAD01 + SoftLin_PC + ROAD01:habCl),
     "ARU"=list( # 5
         .~. + ARU),
-    "Space"=list( # 6
-        .~.+ xPET,## climate only
-        .~.+ xMAT,
-        .~.+ xAHM,
-        .~.+ xFFP,
-        .~.+ xMAP + xFFP,
-        .~.+ xMAP + xFFP + xMAP:xFFP,
-        .~.+ xMAT + xMAP + xPET + xAHM,
-        .~.+ xMAT + xMAP + xPET + xAHM + xPET:xMAP + xMAT:xAHM,
-        .~.+ xMAT + xMAP,
-        .~.+ xMWMT + xMCMT,
-        .~.+ xAHM + xPET,
-        .~.+ xlat + xlong + xlat:xlong + xPET,## linear lat-long and climate
-        .~.+ xlat + xlong + xlat:xlong + xMAT,
-        .~.+ xlat + xlong + xlat:xlong + xAHM,
-        .~.+ xlat + xlong + xlat:xlong + xFFP,
-        .~.+ xlat + xlong + xlat:xlong + xMAP + xFFP,
-        .~.+ xlat + xlong + xlat:xlong + xMAP + xFFP + xMAP:xFFP,
-        .~.+ xlat + xlong + xlat:xlong + xMAT + xMAP + xPET + xAHM,
-        .~.+ xlat + xlong + xlat:xlong + xMAT + xMAP + xPET + xAHM + xPET:xMAP + xMAT:xAHM,
-        .~.+ xlat + xlong + xlat:xlong + xMAT + xMAP,
-        .~.+ xlat + xlong + xlat:xlong + xMWMT + xMCMT,
-        .~.+ xlat + xlong + xlat:xlong + xAHM + xPET,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xPET,## quadratic lat-long and climate
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xAHM,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xFFP,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAP + xFFP,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAP + xFFP + xMAP:xFFP,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT + xMAP + xPET + xAHM,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT + xMAP + xPET + xAHM + xPET:xMAP + xMAT:xAHM,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT + xMAP,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMWMT + xMCMT,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xAHM + xPET),
-    "HF"=list( # 7
-        .~.+ THF_KM,## HF only
-        .~.+ Lin_KM + Nonlin_KM,
-        .~.+ Succ_KM + Alien_KM,
-        .~.+ Succ_KM + Noncult_KM + Cult_KM,
-        .~.+ THF_KM + THF2_KM,
-        .~.+ Lin_KM + Nonlin_KM + Nonlin2_KM,
-        .~.+ Succ_KM + Alien_KM + Succ2_KM,
-        .~.+ Succ_KM + Noncult_KM + Cult_KM + Succ2_KM,
-        .~.+ Succ_KM + Alien_KM + Alien2_KM,
-        .~.+ Succ_KM + Noncult_KM + Cult_KM + Noncult2_KM,
-        .~.+ Succ_KM + Alien_KM + Succ2_KM + Alien2_KM,
-        .~.+ Succ_KM + Noncult_KM + Cult_KM + Succ2_KM + Noncult2_KM),
-    "Year"=list( # 8
-        .~.+ YR))
+    "Topo"=list( # 6
+        .~. + xASP,
+        .~. + xCTI,
+        .~. + xASP + xCTI,
+        .~. + xASP + xCTI + xASP:xCTI),
+    "Space"=list( # 7
+        .~. + xPET,## climate only
+        .~. + xMAT,
+        .~. + xAHM,
+        .~. + xFFP,
+        .~. + xMAP + xFFP,
+        .~. + xMAP + xFFP + xMAP:xFFP,
+        .~. + xMAT + xMAP + xPET + xAHM,
+        .~. + xMAT + xMAP + xPET + xAHM + xPET:xMAP + xMAT:xAHM,
+        .~. + xMAT + xMAP,
+        .~. + xMWMT + xMCMT,
+        .~. + xAHM + xPET,
+        .~. + xlat + xlong + xlat:xlong + xPET,## linear lat-long and climate
+        .~. + xlat + xlong + xlat:xlong + xMAT,
+        .~. + xlat + xlong + xlat:xlong + xAHM,
+        .~. + xlat + xlong + xlat:xlong + xFFP,
+        .~. + xlat + xlong + xlat:xlong + xMAP + xFFP,
+        .~. + xlat + xlong + xlat:xlong + xMAP + xFFP + xMAP:xFFP,
+        .~. + xlat + xlong + xlat:xlong + xMAT + xMAP + xPET + xAHM,
+        .~. + xlat + xlong + xlat:xlong + xMAT + xMAP + xPET + xAHM + xPET:xMAP + xMAT:xAHM,
+        .~. + xlat + xlong + xlat:xlong + xMAT + xMAP,
+        .~. + xlat + xlong + xlat:xlong + xMWMT + xMCMT,
+        .~. + xlat + xlong + xlat:xlong + xAHM + xPET,
+        .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xPET,## quadratic lat-long and climate
+        .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT,
+        .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xAHM,
+        .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xFFP,
+        .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAP + xFFP,
+        .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAP + xFFP + xMAP:xFFP,
+        .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT + xMAP + xPET + xAHM,
+        .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT + xMAP + xPET + xAHM + xPET:xMAP + xMAT:xAHM,
+        .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT + xMAP,
+        .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMWMT + xMCMT,
+        .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xAHM + xPET),
+    "Wet"=list( # 8
+        .~. + WetKM,
+        .~. + WetWaterKM),
+    "HF"=list( # 9
+        .~. + THF_KM,## HF only
+        .~. + Lin_KM + Nonlin_KM,
+        .~. + Succ_KM + Alien_KM,
+        .~. + Succ_KM + Noncult_KM + Cult_KM,
+        .~. + THF_KM + THF2_KM,
+        .~. + Lin_KM + Nonlin_KM + Nonlin2_KM,
+        .~. + Succ_KM + Alien_KM + Succ2_KM,
+        .~. + Succ_KM + Noncult_KM + Cult_KM + Succ2_KM,
+        .~. + Succ_KM + Alien_KM + Alien2_KM,
+        .~. + Succ_KM + Noncult_KM + Cult_KM + Noncult2_KM,
+        .~. + Succ_KM + Alien_KM + Succ2_KM + Alien2_KM,
+        .~. + Succ_KM + Noncult_KM + Cult_KM + Succ2_KM + Noncult2_KM),
+    "Year"=list( # 10
+        .~. + YR))
 
 modsSoil <- list(
     "Hab"=list( # 1
@@ -95,9 +98,14 @@ modsSoil <- list(
         .~. + ROAD01,
         .~. + SoftLin_PC,
         .~. + ROAD01 + SoftLin_PC,
-        .~. + ROAD01 + ROAD01:hab_lcc2,
-        .~. + ROAD01 + SoftLin_PC + ROAD01:hab_lcc2),
-    "Space"=list( # 3
+        .~. + ROAD01 + ROAD01:habCl,
+        .~. + ROAD01 + SoftLin_PC + ROAD01:habCl),
+    "Topo"=list( # 3
+        .~. + xASP,
+        .~. + xCTI,
+        .~. + xASP + xCTI,
+        .~. + xASP + xCTI + xASP:xCTI),
+    "Space"=list( # 4
         .~.+ xPET,## climate only
         .~.+ xMAT,
         .~.+ xAHM,
@@ -131,7 +139,10 @@ modsSoil <- list(
         .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT + xMAP,
         .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMWMT + xMCMT,
         .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xAHM + xPET),
-    "HF"=list( # 4
+    "Wet"=list( # 5
+        .~. + WetKM,
+        .~. + WetWaterKM),
+    "HF"=list( # 6
         .~.+ THF_KM,## HF only
         .~.+ Lin_KM + Nonlin_KM,
         .~.+ Succ_KM + Alien_KM,
@@ -144,5 +155,5 @@ modsSoil <- list(
         .~.+ Succ_KM + Noncult_KM + Cult_KM + Noncult2_KM,
         .~.+ Succ_KM + Alien_KM + Succ2_KM + Alien2_KM,
         .~.+ Succ_KM + Noncult_KM + Cult_KM + Succ2_KM + Noncult2_KM),
-    "Year"=list( # 5
+    "Year"=list( # 7
         .~.+ YR))
