@@ -26,7 +26,7 @@ silent=FALSE, hsh_name=NA, CAICalpha=1, method=c("oc","lt"))
     if (select_hsh) {
         HABV <- x[,hsh_name]
         ## opticut based approach for core habitat delineation
-        if (method="lt") {
+        if (method=="oc") {
             require(opticut)
             oc <- opticut(y ~ ROAD01, data=x, strata=HABV, dist="poisson",
                 offset=off, comb="rank")
@@ -41,7 +41,7 @@ silent=FALSE, hsh_name=NA, CAICalpha=1, method=c("oc","lt"))
             Hi <- names(Prob)[Prob > 0]
         }
         ## Lorenz-tangent approach for core habitat delineation
-        if (method="lt") {
+        if (method=="lt") {
             habmod <- glm_skeleton(try(glm(y ~ HABV + ROAD01,
                 x,
                 family=poisson(), 
@@ -109,6 +109,7 @@ silent=FALSE, hsh_name=NA, CAICalpha=1, method=c("oc","lt"))
         lc=cv,
         alpha=CAICalpha,
         method=method,
+        ocres=ocres,
         #nmax=nmax,
         #w_id=w_id,
         habmod=habmod$coef,

@@ -37,8 +37,24 @@ if (interactive())
     setwd("e:/peter/AB_data_v2016/out/birds")
 fid <- if (interactive())
     "north" else as.character(args[2])
-fn <- paste0("data-useok-", fid, ".Rdata")
+subset <- "full"
+fn <- paste0("data-", subset, "-", fid, ".Rdata")
 load(file.path("data", fn))
+
+CAICalpha <- 1
+
+USE_HSH <- args[3] == "do_hsh"
+if (fid == "south")
+    USE_HSH <- FALSE
+
+if (USE_HSH) {
+    hsh_name <- "hab1ec"
+    mods <- mods2
+    hshid <- "dohsh"
+} else {
+    hsh_name <- NA
+    hshid <- "nohsh"
+}
 
 if (TEST)
     mods <- mods[1:2]
@@ -68,7 +84,7 @@ tmpcl <- clusterEvalQ(cl, load(file.path("data", fn)))
 #### project identifier ####
 
 PROJECT <- if (TEST)
-    paste0("abmi-", fid, "-test") else paste0("abmi-", fid) 
+    paste0("abmi-", hshid, "-", fid, "-test") else paste0("abmi-", hshid, "-", fid) 
 
 
 #### checkpoint ####
@@ -84,14 +100,13 @@ if (TEST)
 ## restrict to 2 species
 SPP <- c("WEWP","RWBL")
 
+#system.time(aaa <- do_1spec1run_noW(1, i="WEWP", mods=mods2, hsh_name="hab1ec", CAICalpha=1, method="oc"))
 #system.time(aaa <- do_1spec1run_noW(1, i="RWBL", mods=mods,  hsh_name=NA, CAICalpha=1))
 #system.time(aaa <- do_1spec1run_noW(1, i="WEWP", mods=mods,  hsh_name=NA, CAICalpha=1))
 #system.time(aaa <- do_1spec1run_noW(1, i="ALFL", mods=mods,  hsh_name=NA, CAICalpha=1))
 #system.time(aaa <- do_1spec1run_noW(1, i=SPP1, mods=mods,  hsh_name=NA, CAICalpha=1))
 # j=2
 # i="AMBI"
-hsh_name <- NA
-CAICalpha <- 1
 
 ## catch errors that cannot be dealt with internally in glm_skeleton
 wg_fun <- function(...) try(do_1spec1run_noW(...))
@@ -110,7 +125,7 @@ for (SPP1 in SPP) {
     attr(res, "CAICalpha") <- CAICalpha
     attr(res, "date") <- as.character(Sys.Date())
     attr(res, "ncl") <- ncl
-    save(res, file=paste("results/birds_", PROJECT, "_", SPP1, ".Rdata", sep=""))
+    save(res, file=paste0("results/birds_", PROJECT, "_", SPP1, ".Rdata"))
 }
 
 #### shutting down ####

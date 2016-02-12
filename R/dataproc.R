@@ -730,7 +730,8 @@ HSH <- HSH0[rownames(DAT),]
 OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
 OFFmean <- OFFmean0[rownames(DAT)]
 mods <- modsVeg
-save(DAT, YY, OFF, OFFmean, mods, BB, HSH,
+mods2 <- modsVegHSH
+save(DAT, YY, OFF, OFFmean, mods, mods2, BB, HSH,
     file=file.path(ROOT2, "out", "birds", "data", "data-useok-north.Rdata"))
 
 DAT <- DATSfull
@@ -751,7 +752,8 @@ HSH <- HSH0[rownames(DAT),]
 OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
 OFFmean <- OFFmean0[rownames(DAT)]
 mods <- modsVeg
-save(DAT, YY, OFF, OFFmean, mods, BB, HSH,
+mods2 <- modsVegHSH
+save(DAT, YY, OFF, OFFmean, mods, mods2, BB, HSH,
     file=file.path(ROOT2, "out", "birds", "data", "data-full-north.Rdata"))
 
 #save(tv, ts,
