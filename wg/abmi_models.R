@@ -37,13 +37,15 @@ if (interactive())
     setwd("e:/peter/AB_data_v2016/out/birds")
 fid <- if (interactive())
     "north" else as.character(args[2])
-subset <- "full"
+
+subset <- as.character(args[3]) # full or useok
+
 fn <- paste0("data-", subset, "-", fid, ".Rdata")
 load(file.path("data", fn))
 
 CAICalpha <- 1
 
-USE_HSH <- args[3] == "do_hsh"
+USE_HSH <- as.character(args[4]) == "do_hsh"
 if (fid == "south")
     USE_HSH <- FALSE
 
