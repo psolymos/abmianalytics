@@ -14,21 +14,20 @@ cc <- c("Row_Col","VEGAGEclass","VEGHFAGEclass","SOILclass","SOILHFclass","Shape
 
 Start <- c(0:79*10+1, 802)
 
-
 d <- read.csv(file.path(ROOT, VER, "data", "kgrid", "tiles", fl[1]))
 dd <- make_vegHF_wide(d, col.label="Row_Col", 
-    col.year=NULL, col.HFyear="CutYear", wide=FALSE)
+    col.year=HF_YEAR, col.HFyear="CutYear", wide=FALSE)
 ddd0 <- dd[character(0),cc]
 xddd0 <- ddd0
 
 for (s in 1:(length(Start)-1)) {
-    cat("----------------------\nStarting block", s, "\n")
+    cat("\n----------------------\n\nStarting block", s, "\n")
     for (i in Start[s]:(Start[s+1]-1)) {
         cat(i, "of", length(fl), "-", fl[i], "\t")
         flush.console()
         d <- read.csv(file.path(ROOT, VER, "data", "kgrid", "tiles", fl[i]))
         dd <- make_vegHF_wide(d, col.label="Row_Col", 
-            col.year=NULL, col.HFyear="CutYear", wide=FALSE)
+            col.year=HF_YEAR, col.HFyear="CutYear", wide=FALSE)
         if (i == Start[s]) {
             dd0 <- dd[,cc]
         } else {
@@ -54,7 +53,6 @@ su <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
 
 lu$use_tr <- as.character(lu$VEGAGE_use)
 lu$use_tr[!is.na(lu$HF)] <- as.character(lu$VEGHFAGE[!is.na(lu$HF)])
-lu$use_tr[lu$use_tr == "WetBare"] <- "NonVeg"
 allVegTr <- unique(c(lu$use_tr[is.na(lu$HF)], 
     paste0(rep(lu$use_tr[is.na(lu$HF)], sum(!is.na(lu$HF))), "->",
     rep(lu$use_tr[!is.na(lu$HF)], each=sum(is.na(lu$HF))))))
@@ -77,8 +75,8 @@ recl <- list(
         "Swamp-Mixwood", "Swamp-Pine", "Wetland-BSpr", "Wetland-Decid", "Wetland-Larch"),
     target=c("Conif0", "Decid0", "Mixwood0", "Pine0", "Swamp-Conif0", "Swamp-Decid0", 
         "Swamp-Mixwood0", "Swamp-Pine0", "Wetland-BSpr0", "Wetland-Decid0", "Wetland-Larch0"),
-    reclass=c("Conif0", "Decid0", "Mixwood0", "Pine0", "Conif0", "Decid0", 
-        "Mixwood0", "Pine0", "BSpr0", "Decid0", "Larch0"))
+    reclass=c("Conif0", "Decid0", "Mixwood0", "Pine0", "Swamp", "Swamp", 
+        "Swamp", "Swamp", "BSpr0", "Larch0", "Larch0"))
     
 fl3 <- list.files(file.path(ROOT, VER, "data", "kgrid", "long"))
 
