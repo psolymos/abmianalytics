@@ -15,7 +15,7 @@ yearly_vhf0 <- list()
 
 #i <- 1
 for (i in 1:length(fl)) {
-    cat(i, "\n");flush.console()
+    cat(i, "of", length(fl), "---", fl[i], "\n");flush.console()
     f <- file.path(ROOT, VER, "data/veghf/3x7", fl[i])
     d <- read.csv(f)
 
