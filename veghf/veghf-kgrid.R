@@ -254,10 +254,17 @@ kgrid$ASP <- kgrid2$slpasp
 kgrid$TRI <- kgrid2$tri
 kgrid$CTI <- kgrid2$cti
 
-## fix age 0 in saved files -----------------------------
-if (SAVE) ## needed for recalculating average ages
+if (SAVE) { ## needed for recalculating average ages
     save(dd1km_pred, 
         file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
+    save(kgrid,
+        file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
+}
+
+## fix age 0 in saved files -----------------------------
+
+source("~/repos/abmianalytics/veghf/veghf-setup.R")
+load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
 
 ## 1 km grid
 load(file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
@@ -277,6 +284,16 @@ sum(dd1km_pred[[2]])
 if (SAVE) {
 save(dd1km_pred, 
     file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata"))
-save(kgrid,
-    file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
+}
+
+## summaries
+
+if (FALSE) {
+    x <- as.matrix(groupSums(dd1km_pred[[1]]/10^6, 1, kgrid$NRNAME))
+    xx <- x[,"WindGenerationFacility"]
+    xxx <- rowSums(x)
+    data.frame(Wind=xx,Area=xxx,Perc=100*xx/xxx)
+    
+    x <- as.matrix(groupSums(dd1km_pred[[1]]/10^6, 1, kgrid$LUFxNSR))
+    write.csv(x, file=file.path(ROOT, VER, "out/kgrid", "current-veghf-area-km2.csv"))
 }
