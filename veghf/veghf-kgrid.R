@@ -254,15 +254,10 @@ kgrid$ASP <- kgrid2$slpasp
 kgrid$TRI <- kgrid2$tri
 kgrid$CTI <- kgrid2$cti
 
-
-if (SAVE) {
-save(dd1km_pred, 
-    file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
-save(kgrid,
-    file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
-}
-
 ## fix age 0 in saved files -----------------------------
+if (SAVE) ## needed for recalculating average ages
+    save(dd1km_pred, 
+        file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
 
 ## 1 km grid
 load(file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
@@ -278,6 +273,10 @@ sum(dd1km_pred[[2]][,Target0])
 sum(dd1km_pred[[1]])
 sum(dd1km_pred[[2]])
 
+
+if (SAVE) {
 save(dd1km_pred, 
     file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata"))
-
+save(kgrid,
+    file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
+}
