@@ -173,8 +173,9 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
     trSoil <- trSoil[rownames(trVeg),allSoilTr]
     range(rowSums(trVeg)/10^6)
     range(rowSums(trSoil)/10^6)
-    
+
+    cat("\nSaving", i, "\n\n")
+    flush.console()
     save(trVeg, trSoil, file=file.path(ROOT, VER, "out", "transitions", 
         paste0(i, ".Rdata")))
 }
-
