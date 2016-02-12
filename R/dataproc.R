@@ -488,6 +488,13 @@ DAT$WetKM <- rowSums(dd1km$veg_current[,tv[colnames(dd1km$veg_current), "WET"]==
 DAT$WaterKM <- rowSums(dd1km$veg_current[,tv[colnames(dd1km$veg_current), "WATER"]==1]) / rowSums(dd1km$veg_current)
 DAT$WetWaterKM <- rowSums(dd1km$veg_current[,tv[colnames(dd1km$veg_current), "WETWATER"]==1]) / rowSums(dd1km$veg_current)
 
+## HSH matrix using hab1ec (EC classes)
+cn <- colnames(dd1km$veg_current)
+HSH <- groupSums(dd1km$veg_current, 2, paste0(tv[cn,"Type"], tv[cn,"EC_AGE"]))
+HSH <- as.matrix(HSH / rowSums(HSH))
+HSH <- HSH[,levels(DAT$hab1ec)]
+DAT$HSH <- 0
+DAT$HSH2 <- 0
 
 ## restricted data use
 
@@ -631,9 +638,10 @@ DAT$keep <- keep
 plot(DAT$X, DAT$Y, col=ifelse(DAT$keep, 1, 2), pch=19, cex=0.2)
 
 YY <- YY[rownames(DAT),]
-pveghf <- pveghf[rownames(DAT),]
-psoilhf <- psoilhf[rownames(DAT),]
-save(DAT, YY, OFF, OFFmean, TAX, pveghf, psoilhf,
+HSH <- HSH[rownames(DAT),]
+#pveghf <- pveghf[rownames(DAT),]
+#psoilhf <- psoilhf[rownames(DAT),]
+save(DAT, YY, OFF, OFFmean, TAX, HSH, # pveghf, psoilhf, 
     file=file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
 
 DAT <- droplevels(DAT[keep,])
@@ -645,7 +653,7 @@ OFF <- OFF[rownames(DAT),]
 OFFmean <- OFFmean[rownames(DAT)]
 
 compare_sets(rownames(OFF),rownames(DAT))
-pveghf <- pveghf[rownames(DAT),]
+#pveghf <- pveghf[rownames(DAT),]
 #save(DAT, YY, OFF, OFFmean, TAX, pveghf,
 #    file=file.path(ROOT2, "out", "birds", "data", "data-full.Rdata"))
 
@@ -662,11 +670,6 @@ DATS <- DATSfull[DATSfull$useOK,]
 DATN <- DATNfull[DATNfull$useOK,]
 
 sapply(list(DATSfull,DATNfull,DATS,DATN), nrow)
-
-YYS <- YY[rownames(DATS),]
-YYN <- YY[rownames(DATN),]
-YYSfull <- YY[rownames(DATSfull),]
-YYNfull <- YY[rownames(DATNfull),]
 
 ## bootids
 
@@ -694,8 +697,8 @@ bbfun <- function(DAT1, B) {
 }
 BBS <- bbfun(DATS, B)
 BBN <- bbfun(DATN, B)
-#BBSfull <- bbfun(DATSfull, B)
-#BBNfull <- bbfun(DATNfull, B)
+BBSfull <- bbfun(DATSfull, B)
+BBNfull <- bbfun(DATNfull, B)
 
 ## figure out sets of species to analyze
 
@@ -703,33 +706,56 @@ BBN <- bbfun(DATN, B)
 ## S/N: nmin=25
 ## look at taxonomy???
 
-
+YY0 <- YY
 OFF0 <- OFF
 OFFmean0 <- OFFmean
+HSH0 <- HSH
 nmin <- 25
 
 DAT <- DATS
-YY <- YYS
+YY <- YY0[rownames(DAT),]
 YY <- YY[,colSums(YY>0) >= nmin]
 BB <- BBS
 OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
 OFFmean <- OFFmean0[rownames(DAT)]
 mods <- modsSoil
-save(DAT, YY, OFF, OFFmean, mods, BB,
+save(DAT, YY, OFF, OFFmean, mods, BB, # no HSH in the south
     file=file.path(ROOT2, "out", "birds", "data", "data-useok-south.Rdata"))
 
 DAT <- DATN
-YY <- YYN[rownames(DAT),]
+YY <- YY0[rownames(DAT),]
 YY <- YY[,colSums(YY>0) >= nmin]
 BB <- BBN
+HSH <- HSH0[rownames(DAT),]
 OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
 OFFmean <- OFFmean0[rownames(DAT)]
 mods <- modsVeg
-save(DAT, YY, OFF, OFFmean, mods, BB,
+save(DAT, YY, OFF, OFFmean, mods, BB, HSH,
     file=file.path(ROOT2, "out", "birds", "data", "data-useok-north.Rdata"))
 
-save(tv, ts,
-    file=file.path(ROOT2, "out", "birds", "data", "lookup-veg-soil.Rdata"))
+DAT <- DATSfull
+YY <- YY0[rownames(DAT),]
+YY <- YY[,colSums(YY>0) >= nmin]
+BB <- BBSfull
+OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
+OFFmean <- OFFmean0[rownames(DAT)]
+mods <- modsSoil
+save(DAT, YY, OFF, OFFmean, mods, BB, # no HSH in the south
+    file=file.path(ROOT2, "out", "birds", "data", "data-full-south.Rdata"))
+
+DAT <- DATNfull
+YY <- YY0[rownames(DAT),]
+YY <- YY[,colSums(YY>0) >= nmin]
+BB <- BBNfull
+HSH <- HSH0[rownames(DAT),]
+OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
+OFFmean <- OFFmean0[rownames(DAT)]
+mods <- modsVeg
+save(DAT, YY, OFF, OFFmean, mods, BB, HSH,
+    file=file.path(ROOT2, "out", "birds", "data", "data-full-north.Rdata"))
+
+#save(tv, ts,
+#    file=file.path(ROOT2, "out", "birds", "data", "lookup-veg-soil.Rdata"))
 
 
 ## opticut stuff
