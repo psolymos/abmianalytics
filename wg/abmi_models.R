@@ -41,7 +41,8 @@ if (interactive())
 fid <- if (interactive())
     "north" else as.character(args[2])
 
-subset <- as.character(args[3]) # full or useok
+subset <- if (interactive())
+    "full" else as.character(args[3]) # full or useok
 
 cat("load data on master\n")
 fn <- paste0("data-", subset, "-", fid, ".Rdata")
@@ -49,7 +50,8 @@ load(file.path("data", fn))
 
 CAICalpha <- 1
 
-USE_HSH <- as.character(args[4]) == "do_hsh"
+USE_HSH <- if (interactive())
+    TRUE else as.character(args[4]) == "do_hsh"
 if (fid == "south")
     USE_HSH <- FALSE
 
@@ -95,7 +97,7 @@ tmpcl <- clusterEvalQ(cl, load(file.path("data", fn)))
 #### project identifier ####
 
 PROJECT <- if (TEST)
-    paste0("abmi-", hshid, "-", fid, "-test") else paste0("abmi-", hshid, "-", fid) 
+    paste0("abmi-", hshid, "-", fid, "-test") else paste0("abmi-", hshid, "-", fid)
 
 
 #### checkpoint ####
@@ -126,9 +128,9 @@ cat("running stuff\n")
 for (SPP1 in SPP) {
     cat(SPP1, date(), "\n");flush.console()
     t0 <- proc.time()
-    res <- parLapply(cl, 1:BBB, wg_fun, i=SPP1, mods=mods, 
+    res <- parLapply(cl, 1:BBB, wg_fun, i=SPP1, mods=mods,
         hsh_name=hsh_name, CAICalpha=CAICalpha)
-#    res <- lapply(1:BBB, wg_fun, i=SPP1, mods=mods, 
+#    res <- lapply(1:BBB, wg_fun, i=SPP1, mods=mods,
 #        hsh_name=hsh_name, CAICalpha=CAICalpha)
     attr(res, "timing") <- t0 - proc.time()
     attr(res, "fid") <- fid
@@ -141,7 +143,7 @@ for (SPP1 in SPP) {
 }
 
 #### shutting down ####
-cat("shutting down\n")
+print(cat("shutting down\n"))
 stopCluster(cl)
 if (!interactive()) {
     options("CLUSTER_ACTIVE" = FALSE)
