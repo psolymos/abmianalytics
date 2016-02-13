@@ -11,7 +11,7 @@ if (!interactive()) {
 }
 options("CLUSTER_ACTIVE" = FALSE)
 }
-cat("loading packages\n")
+cat("loading packages...")
 library(snow)
 if (!interactive())
     library(Rmpi)
@@ -21,7 +21,7 @@ library(mefa4)
 source("~/repos/bragging/R/glm_skeleton.R")
 source("~/repos/abmianalytics/R/analysis_functions.R")
 
-cat("getting args and setup\n")
+cat("OK\ngetting args and setup...")
 if (!interactive())
     (args <- commandArgs(trailingOnly = TRUE))
 
@@ -44,7 +44,7 @@ fid <- if (interactive())
 subset <- if (interactive())
     "full" else as.character(args[3]) # full or useok
 
-cat("load data on master\n")
+cat("OK\nload data on master...")
 fn <- paste0("data-", subset, "-", fid, ".Rdata")
 load(file.path("data", fn))
 
@@ -68,14 +68,14 @@ if (TEST)
     mods <- mods[1:2]
 
 #### spawning the slaves ####
-cat("spawning slaves\n")
+cat("OK\nspawning slaves...")
 cl <- if (interactive())
     makeCluster(ncl) else makeMPIcluster(ncl)
 if (!interactive())
     options("CLUSTER_ACTIVE" = TRUE)
 
 #### loading packages on slaves ####
-cat("load packages on slaves\n")
+cat("OK\nload packages on slaves...")
 tmpcl <- clusterEvalQ(cl, library(ResourceSelection))
 tmpcl <- clusterEvalQ(cl, library(MASS))
 tmpcl <- clusterEvalQ(cl, library(mefa4))
@@ -88,7 +88,7 @@ tmpcl <- clusterEvalQ(cl, source("~/repos/abmianalytics/R/analysis_functions.R")
 
 #### load all the objects on the slaves ####
 
-cat("exporting and data loading on slaves\n")
+cat("OK\nexporting and data loading on slaves...")
 tmpcl <- clusterExport(cl, "fn")
 if (interactive())
     tmpcl <- clusterEvalQ(cl, setwd("c:/p/AB_data_v2015/out/birds"))
@@ -101,7 +101,7 @@ PROJECT <- if (TEST)
 
 
 #### checkpoint ####
-cat("setting checkpoint\n")
+cat("OK\nsetting checkpoint...")
 SPP <- colnames(YY)
 done_fl <- list.files("results")
 done_fl <- done_fl[grepl(fid, done_fl)]
@@ -124,9 +124,11 @@ SPP <- c("WEWP","RWBL")
 ## catch errors that cannot be dealt with internally in glm_skeleton
 wg_fun <- function(...) try(do_1spec1run_noW(...))
 
-cat("running stuff\n")
+cat("OK\nstart running models:")
 for (SPP1 in SPP) {
-    cat(SPP1, date(), "\n");flush.console()
+    cat("\t", SPP1, date(), "...")
+    if (interactive())
+        flush.console()
     t0 <- proc.time()
     res <- parLapply(cl, 1:BBB, wg_fun, i=SPP1, mods=mods,
         hsh_name=hsh_name, CAICalpha=CAICalpha)
@@ -140,10 +142,11 @@ for (SPP1 in SPP) {
     attr(res, "date") <- as.character(Sys.Date())
     attr(res, "ncl") <- ncl
     save(res, file=paste0("results/birds_", PROJECT, "_", SPP1, ".Rdata"))
+    cat("OK\n")
 }
 
 #### shutting down ####
-print(cat("shutting down\n"))
+cat("shutting down\n")
 stopCluster(cl)
 if (!interactive()) {
     options("CLUSTER_ACTIVE" = FALSE)
