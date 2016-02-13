@@ -11,6 +11,7 @@ if (!interactive()) {
 }
 options("CLUSTER_ACTIVE" = FALSE)
 }
+cat("loading packages\n")
 library(snow)
 if (!interactive())
     library(Rmpi)
@@ -19,6 +20,8 @@ library(ResourceSelection)
 library(mefa4)
 source("~/repos/bragging/R/glm_skeleton.R")
 source("~/repos/abmianalytics/R/analysis_functions.R")
+
+cat("getting args and setup\n")
 if (!interactive())
     (args <- commandArgs(trailingOnly = TRUE))
 
@@ -40,6 +43,7 @@ fid <- if (interactive())
 
 subset <- as.character(args[3]) # full or useok
 
+cat("load data on master\n")
 fn <- paste0("data-", subset, "-", fid, ".Rdata")
 load(file.path("data", fn))
 
@@ -62,14 +66,14 @@ if (TEST)
     mods <- mods[1:2]
 
 #### spawning the slaves ####
-
+cat("spawning slaves\n")
 cl <- if (interactive())
     makeCluster(ncl) else makeMPIcluster(ncl)
 if (!interactive())
     options("CLUSTER_ACTIVE" = TRUE)
 
 #### loading packages on slaves ####
-
+cat("load packages on slaves\n")
 tmpcl <- clusterEvalQ(cl, library(ResourceSelection))
 tmpcl <- clusterEvalQ(cl, library(MASS))
 tmpcl <- clusterEvalQ(cl, library(mefa4))
@@ -82,6 +86,7 @@ tmpcl <- clusterEvalQ(cl, source("~/repos/abmianalytics/R/analysis_functions.R")
 
 #### load all the objects on the slaves ####
 
+cat("exporting and data loading on slaves\n")
 tmpcl <- clusterExport(cl, "fn")
 if (interactive())
     tmpcl <- clusterEvalQ(cl, setwd("c:/p/AB_data_v2015/out/birds"))
@@ -94,7 +99,7 @@ PROJECT <- if (TEST)
 
 
 #### checkpoint ####
-
+cat("setting checkpoint\n")
 SPP <- colnames(YY)
 done_fl <- list.files("results")
 done_fl <- done_fl[grepl(fid, done_fl)]
@@ -117,6 +122,7 @@ SPP <- c("WEWP","RWBL")
 ## catch errors that cannot be dealt with internally in glm_skeleton
 wg_fun <- function(...) try(do_1spec1run_noW(...))
 
+cat("running stuff\n")
 for (SPP1 in SPP) {
     cat(SPP1, date(), "\n");flush.console()
     t0 <- proc.time()
@@ -135,7 +141,7 @@ for (SPP1 in SPP) {
 }
 
 #### shutting down ####
-
+cat("shutting down\n")
 stopCluster(cl)
 if (!interactive()) {
     options("CLUSTER_ACTIVE" = FALSE)
