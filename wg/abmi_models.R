@@ -112,7 +112,7 @@ if (TEST)
 
 ## restrict to 2 species
 #SPP <- c("WEWP","RWBL")
-SPP <- c("OSFL","OVEN","CAWA","ALFL","BOCH")
+SPP <- c("AMCO","SORA","OSFL","OVEN","CAWA","ALFL")
 
 #system.time(aaa <- do_1spec1run_noW(1, i="WEWP", mods=mods2, hsh_name="hab1ec", CAICalpha=1, method="oc"))
 #system.time(aaa <- do_1spec1run_noW(1, i="RWBL", mods=mods,  hsh_name=NA, CAICalpha=1))
