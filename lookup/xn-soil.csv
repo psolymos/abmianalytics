@@ -1,6 +1,5 @@
 (Intercept),soil1RapidDrain,soil1SalineAndClay,soil1Cult,soil1UrbInd,soil1vNonProductive,soil1vCult,soil1vUrbInd
 Saline,1,0,1,0,0,1,0,0
-SoilWetland,0,0,0,0,0,0,0,0
 SoilWater,0,0,0,0,0,0,0,0
 Productive,1,0,0,0,0,0,0,0
 RapidDrain,1,1,0,0,0,1,0,0
