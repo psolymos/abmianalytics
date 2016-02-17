@@ -95,17 +95,19 @@ ages=c(0,10,20,40,60,80,100,120,140), CC=FALSE, Xn)
 }
 
 pred_veghf <- 
-function(est, Xn)
+function(est, Xn, burn_included=TRUE)
 {
-    X <- Xn[1:11,colnames(est)]
+    X <- Xn[1:13,colnames(est)]
     X[,-1] <- 0
     diag(X) <- 1
     rownames(X) <- c("Decid","Mixwood", "Conif", "Pine", "BSpr", "Larch",  
-    "Wetland", "Shrub", "GrassHerb", "Cult", "UrbInd")
+    "Swamp", "WetGrass", "WetShrub", "Shrub", "GrassHerb", "Cult", "UrbInd")
 
-    X3 <- X[1,,drop=FALSE]
-    rownames(X3) <- "Burn"
-    X3[1,"hab1bBurn"] <- 1
+    if (burn_included) {
+        X3 <- X[1,,drop=FALSE]
+        rownames(X3) <- "Burn"
+        X3[1,"hab1bBurn"] <- 1
+    }
 
     X <- rbind(
         predX_age_cc("Conif", CC=FALSE, Xn=Xn),
@@ -118,18 +120,20 @@ function(est, Xn)
         predX_age_cc("Pine", CC=TRUE, Xn=Xn),
         predX_age_cc("Decid", CC=TRUE, Xn=Xn),
         predX_age_cc("Mixwood", CC=TRUE, Xn=Xn),
-        X[7:11,])
-    X[,"hab1bMixwood"] <- X[,"hab1Mixwood"]
-    X[,"hab1bConif"] <- X[,"hab1Conif"]
-    X[,"hab1bPine"] <- X[,"hab1Pine"]
-    X[,"hab1bBSpr"] <- X[,"hab1BSpr"]
-    X[,"hab1bLarch"] <- X[,"hab1Larch"]
-    X[,"hab1bWetland"] <- X[,"hab1Wetland"]
-    X[,"hab1bShrub"] <- X[,"hab1Shrub"]
-    X[,"hab1bGrassHerb"] <- X[,"hab1GrassHerb"]
-    X[,"hab1bCult"] <- X[,"hab1Cult"]
-    X[,"hab1bUrbInd"] <- X[,"hab1UrbInd"]
-    X <- rbind(X, X3)
+        X[7:13,])
+    if (burn_included) {
+        X[,"hab1bMixwood"] <- X[,"hab1Mixwood"]
+        X[,"hab1bConif"] <- X[,"hab1Conif"]
+        X[,"hab1bPine"] <- X[,"hab1Pine"]
+        X[,"hab1bBSpr"] <- X[,"hab1BSpr"]
+        X[,"hab1bLarch"] <- X[,"hab1Larch"]
+        X[,"hab1bWetland"] <- X[,"hab1Wetland"]
+        X[,"hab1bShrub"] <- X[,"hab1Shrub"]
+        X[,"hab1bGrassHerb"] <- X[,"hab1GrassHerb"]
+        X[,"hab1bCult"] <- X[,"hab1Cult"]
+        X[,"hab1bUrbInd"] <- X[,"hab1UrbInd"]
+        X <- rbind(X, X3)
+    }
 
     pr <- predStat(X, est, level, n=0, ci=TRUE, raw=FALSE)
     out <- pr[,c(1,2,5,6)]
@@ -142,7 +146,8 @@ function(est, Xn)
     attr(out, "linear") <- c(Baseline=MEAN, Soft=Soft, Hard=Hard)
     ## burn should not be shown when it is not selected (i.e. when sum == 0)
     ## REALLY: burn should be just part of young age class, and not being on its own
-    attr(out, "burn") <- sum(abs(est[,"hab1bBurn"]))
+    if (burn_included)
+        attr(out, "burn") <- sum(abs(est[,"hab1bBurn"]))
     rownames(out) <- gsub("Conif", "WhiteSpruce", rownames(out))
     rownames(out) <- gsub("Decid", "Deciduous", rownames(out))
     rownames(out) <- gsub("BSpr", "BlackSpruce", rownames(out))
@@ -254,7 +259,7 @@ function(pr, LAB="")
             "Larch  0", "Larch  10", "Larch  20", "Larch  40", "Larch  60", 
             "Larch  80", "Larch  100", "Larch  120", "Larch  140", 
 
-            "GrassHerb", "Shrub", "Wetland", 
+            "GrassHerb", "Shrub", "Swamp", "WetGrass", "WetShrub", 
             "Cult", "UrbInd", 
 
             "WhiteSpruce CC 0", "WhiteSpruce CC 10", "WhiteSpruce CC 20", "WhiteSpruce CC 40", "WhiteSpruce CC 60", 
@@ -267,25 +272,26 @@ function(pr, LAB="")
         uci <- pr2[,4]
         y1 <- pr2[,2]
         ymax <- min(max(uci),2*max(y1))
-        x <- c(rep(1:9,6)+rep(seq(0,50,10),each=9), 61,63,65, 68,70)
+        #x <- c(rep(1:9,6)+rep(seq(0,50,10),each=9), 61,63,65, 68,70)
+        x <- c(rep(1:9,6)+rep(seq(0,50,10),each=9), 61,63,65,67,69, 72,74)
         space <- c(1,x[-1]-x[-length(x)])-0.99  # The spacing between bars
         col.r <- c(rep(0,9),seq(0.3,0.6,length.out=9),seq(0.5,1,length.out=9),
             seq(0.8,0.9,length.out=9),rep(0,9),rep(0,9),
-            0.8,0.2,0,rep(0.2,2))  # The red part
+            0.8,0.2,0,0,0, rep(0.2,2))  # The red part
         col.g <- c(seq(0.5,1,length.out=9),seq(0.4,0.8,length.out=9),seq(0.1,0.2,length.out=9),
             seq(0.4,0.8,length.out=9),seq(0.4,0.7,length.out=9),seq(0.15,0.5,length.out=9),
-            0.8,0.8,0,rep(0.2,2))  # The green part
+            0.8,0.8,0,0,0, rep(0.2,2))  # The green part
         col.b <- c(rep(0,9),rep(0,9),rep(0,9),seq(0.2,0.4,length.out=9),
             seq(0.2,0.6,length.out=9),seq(0.4,0.7,length.out=9),
-            0,0,1,rep(0.2,2))  # The blue part
-        idx <- 1:59
+            0,0,1,1,1, rep(0.2,2))  # The blue part
+        idx <- 1:length(x)
         x1 <- barplot(y1[idx],
             space=space,
             border="white",
             col=rgb(col.r,col.g,col.b),
             ylim=c(0,ymax),
             #xlim=c(-0.5,81.5),
-            xlim=c(-0.5,72.5),
+            xlim=c(-0.5,75.5),
             xaxs="i", yaxt="n",
             ylab="Relative abundance",
             col.lab="grey50",
@@ -312,13 +318,14 @@ function(pr, LAB="")
             line=0.2,adj=0.5,cex=0.8,col=rgb(col.r[at1],col.g[at1],col.b[at1]))
         mtext(side=1,at=-0.25,adj=1,line=0.2,"Age:",col="grey40",cex=0.8)
         mtext(side=3,at=0,adj=0,LAB,col="grey30")
-        mtext(side=1,at=x1[c(55,56,57)],
-            c("Grass","Shrub","Wetland"),
-            col=rgb(col.r[c(55,56,57)],col.g[c(55,56,57)],
-            col.b[c(55,56,57)]),
+        mtext(side=1,at=x1[c(55,56,57,58,59)],
+            #c("Grass","Shrub","Wetland"),
+            c("GrassHerb", "Shrub", "Swamp", "WetGrass", "WetShrub"), 
+            col=rgb(col.r[c(55,56,57,58,59)],col.g[c(55,56,57,58,59)],
+            col.b[c(55,56,57,58,59)]),
             las=2,adj=1.1)
-        mtext(side=1,at=x1[c(58,59)],c("Cultivated HF","Urban/Industry HF"),
-            col=rgb(col.r[c(58,59)],col.g[c(58,59)],col.b[c(58,59)]),las=2,adj=1.1)
+        mtext(side=1,at=x1[c(60,61)],c("Cultivated HF","Urban/Industry HF"),
+            col=rgb(col.r[c(60,61)],col.g[c(60,61)],col.b[c(60,61)]),las=2,adj=1.1)
     
         ## Add cutblock trajectories - upland conifer
         i1<-which(names(y1)=="WhiteSpruce CC 0"):which(names(y1)=="WhiteSpruce CC 60")
@@ -492,6 +499,28 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
     pr
 }
 
+pred_any <- 
+function(what="WetWaterKM", est, Xn, n=200) 
+{
+
+    ehf <- est
+    ehf[] <- 0
+    ehf[,what] <- est[,what]
+
+    hf <- seq(0, 1, len=n)
+    Xhf <- Xn[1:n,] # matrix(0, n, length(cc))
+    Xhf[] <- 0
+    rownames(Xhf) <- NULL
+    Xhf[,what] <- hf
+
+    prst <- t(exp(predStat(Xhf, ehf, raw=TRUE)))
+    Mean <- colMeans(prst)
+    prst <- t(apply(t(prst / prst[,1]), 1, quantile, c(0.5, 0.05, 0.95), na.rm=TRUE))
+    colnames(prst) <- c("Median", "CL1q","CL2q")
+
+    data.frame(hf=hf*100, prst, Mean=Mean)
+}
+
 fig_hf_noremn <- 
 function(est, Xn, fillin=0,LAB="") 
 {
@@ -514,7 +543,7 @@ function(est, Xn, fillin=0,LAB="")
     axis(side=2,at=seq(0,ymax,0.5),tck=1,cex.axis=1,col.axis="grey60",col.ticks="grey80",las=2)
     axis(side=1,at=seq(0,100,25),tck=0.01,cex.axis=1,col.axis="grey60",col.ticks="grey60")
     axis(side=2,at=seq(0,ymax,0.5),tck=0.01,cex.axis=1,col.axis="grey60",col.ticks="grey60",las=2)
-    mtext(side=1,at=50,adj=0.5,"Surrounding suitable habitat (%)",line=2,col="grey50",cex=1.2)
+    mtext(side=1,at=50,adj=0.5,"Surrounding footprint (%)",line=2,col="grey50",cex=1.2)
     box(col="grey60")
     mtext(side=3,at=0,adj=0,LAB,col="grey30")
 
@@ -526,6 +555,42 @@ function(est, Xn, fillin=0,LAB="")
     for (i in 1:length(pr))
         lines(pr[[i]]$hf, pr[[i]][,"Median"], col=Coll[i],lwd=2)
     text(rep(0.1, 5), c(0.9, 0.75, 0.6, 0.45, 0.3), names(pr), pos=4, col=Coll)
+    
+    par(op)
+    
+    invisible(NULL)
+}
+
+fig_any <- 
+function(what, est, Xn, LAB="") 
+{
+    pr <- pred_any(what, est, Xn)
+    ymax <- max(pr[,-1])
+    mmax <- min(max(max(max(pr[,2])), 5), 10)
+    ymax <- min(mmax, ymax)
+    
+    Colb <- c("#00FF0015", "#DD000010", "#D0D00025", "#80008015", "#0000DD10")[1]
+    Coll <- c(rgb(0.2,0.6,0.2), "red3", "orange3", "#A000A0", "blue3")[1]
+
+    op <- par(mfrow=c(1,1))
+
+    plot(pr$hf, pr$Median,
+        xlab="", ylim=c(0,ymax),
+        cex.axis=1.3,xaxs="i",yaxs="i",xaxt="n",yaxt="n",typ="n",bty="n",
+        ylab="Relative abundance",col.lab="grey50",cex.lab=1.2)
+    axis(side=1,at=seq(0,100,25),tck=1,cex.axis=1,col.axis="grey60",col.ticks="grey80")
+    axis(side=2,at=seq(0,ymax,0.5),tck=1,cex.axis=1,col.axis="grey60",col.ticks="grey80",las=2)
+    axis(side=1,at=seq(0,100,25),tck=0.01,cex.axis=1,col.axis="grey60",col.ticks="grey60")
+    axis(side=2,at=seq(0,ymax,0.5),tck=0.01,cex.axis=1,col.axis="grey60",col.ticks="grey60",las=2)
+    mtext(side=1,at=50,adj=0.5,"Surrounding suitable habitat (%)",line=2,col="grey50",cex=1.2)
+    box(col="grey60")
+    mtext(side=3,at=0,adj=0,LAB,col="grey30")
+
+    polygon(c(pr$hf, rev(pr$hf)),
+        c(pr[,"CL1q"], rev(pr[,"CL2q"])),
+        col=Colb, border=NA)  # Transparent colours so they overlap
+    lines(pr$hf, pr[,"Median"], col=Coll,lwd=2)
+    #text(rep(0.1, 5), c(0.9, 0.75, 0.6, 0.45, 0.3), names(pr), pos=4, col=Coll)
     
     par(op)
     
