@@ -14,8 +14,9 @@ fstat <- function(x) {
 fstatv <- function(x, level=0.95) {
     out <- data.frame(rowMeans(x), 
         apply(x, 1, sd),
+        x[,1],
         t(apply(x, 1, quantile, c(0.5, (1-level)/2, 1 - (1-level)/2))))
-    colnames(out) <- c("Mean","SD","Median","LCL","UCL")
+    colnames(out) <- c("Mean","SD","Run1","Median","LCL","UCL")
     out
 }
 

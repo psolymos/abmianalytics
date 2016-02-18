@@ -3,7 +3,7 @@ library(mefa4)
 shf <- TRUE
 doB <- TRUE
 
-PROP <- 10
+PROP <- 100
 BMAX <- 240
 if (!doB)
     BMAX <- 1
