@@ -11,6 +11,13 @@ loadSPP <- function(path) {
 fstat <- function(x) {
     c(Mean=mean(x), Median=median(x), quantile(x, c((1-level)/2, 1 - (1-level)/2)))
 }
+fstatv <- function(x, level=0.95) {
+    out <- data.frame(rowMeans(x), 
+        apply(x, 1, sd),
+        t(apply(x, 1, quantile, c(0.5, (1-level)/2, 1 - (1-level)/2))))
+    colnames(out) <- c("Mean","SD","Median","LCL","UCL")
+    out
+}
 
 ## predict coefficients
 predX_age_cc <- 

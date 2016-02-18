@@ -1,17 +1,12 @@
 library(mefa4)
 
-shf <- FALSE
+shf <- TRUE
 
-ROOT <- "c:/p/AB_data_v2015"
+ROOT <- "e:/peter/AB_data_v2016"
+ROOT2 <- "~/Dropbox/josm/2016/wewp"
 
-## surrounding hf
-if (shf) {
-    OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-shf-1/"
-    OUTDIRB <- "e:/peter/sppweb2015/birds-pred-shf-B/"
-} else {
-    OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-1/"
-    OUTDIRB <- "e:/peter/sppweb2015/birds-pred-B/"
-}
+OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/wewp/pred1"
+OUTDIRB <- "e:/peter/AB_data_v2016/out/birds/wewp/predB"
 
 load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
 #source("~/repos/bragging/R/glm_skeleton.R")
@@ -140,12 +135,14 @@ Col <- rev(brewer.pal(10, "RdYlGn"))
 ## csv
 
 #spp <- "ALFL"
-SPP <- union(fln, fls)
+#SPP <- union(fln, fls)
+SPP <- "WEWP"
+spp <- SPP
 #SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL")
 
 for (spp in SPP) {
 
-cat(spp, "\n");flush.console()
+cat("1km^2 pixel level", spp, "\n");flush.console()
 
 load(file.path(OUTDIR1, spp, paste0(regs[1], ".Rdata")))
 rownames(pxNcr1) <- rownames(pxNrf1) <- names(Cells)
@@ -182,8 +179,46 @@ if (any(is.na(km)))
     km[is.na(km)] <- 0
 #NAM <- as.character(tax[spp, "English_Name"])
 write.csv(km, row.names=FALSE,
-    paste0("e:/peter/sppweb2015/birds-pred/", 
+    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
     paste0(as.character(tax[spp, "file"]), ".csv")))
+}
+
+## bootstrap results, only for veg
+PROP <- 10
+for (spp in SPP) {
+
+cat("boot", spp, "\n");flush.console()
+
+load(file.path(OUTDIRB, spp, paste0(regs[1], ".Rdata")))
+rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells[Cells==1])
+pxNcr <- pxNcrB
+pxNrf <- pxNrfB
+for (i in 2:length(regs)) {
+    cat(spp, regs[i], "\n");flush.console()
+    load(file.path(OUTDIRB, spp, paste0(regs[i], ".Rdata")))
+    rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells[Cells==1])
+    pxNcr <- rbind(pxNcr, pxNcrB)
+    pxNrf <- rbind(pxNrf, pxNrfB)
+}
+
+pxNcr <- pxNcr[rownames(kgrid[kgrid$Rnd10 <= PROP,]),]
+pxNrf <- pxNrf[rownames(kgrid[kgrid$Rnd10 <= PROP,]),]
+
+cr <- fstatv(pxNcr)
+rf <- fstatv(pxNrf)
+## check how to get mean density to multiply with Area of region
+## get total N in NR & CIs
+
+km <- data.frame(LinkID=kgrid$Row_Col[kgrid$Rnd10 <= PROP],
+    RefN=rf,
+    CurrN=cr)
+
+if (any(is.na(km)))
+    km[is.na(km)] <- 0
+#NAM <- as.character(tax[spp, "English_Name"])
+write.csv(km, row.names=FALSE,
+    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0("BOOT_", as.character(tax[spp, "file"]), ".csv")))
 }
 
 ## plots
@@ -194,11 +229,12 @@ write.csv(km, row.names=FALSE,
 #spp <- "CAWA"
 res_luf <- list()
 res_nsr <- list()
+res_nr <- list()
 SPP <- as.character(slt$AOU[slt$map.pred])
 for (spp in SPP) {
 
     cat(spp, "\n");flush.console()
-    km <- read.csv(paste0("e:/peter/sppweb2015/birds-pred/", 
+    km <- read.csv(paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
         paste0(as.character(tax[spp, "file"]), ".csv")))
 
 if (FALSE) {
@@ -266,6 +302,7 @@ if (TRUE) {
     rownames(mat) <- rownames(kgrid)
     res_luf[[spp]] <- groupSums(mat, 1, kgrid$LUF_NAME)
     res_nsr[[spp]] <- groupSums(mat, 1, kgrid$NSRNAME)
+    res_nr[[spp]] <- groupSums(mat, 1, kgrid$NRNAME)
 }
 
 if (TRUE) {
