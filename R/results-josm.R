@@ -173,6 +173,8 @@ coordinates(XYlatlon) <- ~ Longitude + Latitude
 proj4string(XYlatlon) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 XY <- as.data.frame(spTransform(XYlatlon, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")))
 
+colnames(XY) <- colnames(xy1)
+
 fw$UTM.Northing[fw$UTM.Northing == ""] <- NA
 fw$UTM.Northing <- as.numeric(as.character(fw$UTM.Northing))
 fwxy <- fw[,c("UTM.Easting","UTM.Northing")]
@@ -180,6 +182,7 @@ fwxy <- fw[,c("UTM.Easting","UTM.Northing")]
     xy0 <- as.matrix(dat[yy[,spp] == 0,c("X","Y")])
     xy1 <- as.matrix(dat[yy[,spp] > 0,c("X","Y")])
     NAM <- as.character(tax[spp, "English_Name"])
+
     fname <- file.path("e:/peter/AB_data_v2016/out/birds/wewp",
         paste0("detections-", as.character(tax[spp, "Species_ID"]), ".png"))
 	png(file=fname, width=600, height=1000)
@@ -233,7 +236,6 @@ projection(rt) <- crs
 mat0 <- as.matrix(rt)
 
 library(dismo)
-colnames(XY) <- colnames(xy1)
 dd <- rbind(XY,xy1)
 ch <- convHull(dd)
 
@@ -246,8 +248,30 @@ points(xy0, col="white", pch=20, cex=0.5)
 points(dd, col=1, pch=20, cex=1)
 plot(ch@polygons, border=4, lwd=2, add=TRUE)
 	dev.off()
+## area in kn^2
+sapply(slot(ch@polygons, "polygons"), slot, "area") / 10^6
 
+## number of grid cells occupied
+source("~/repos/abmianalytics/R/maps_functions.R")
 
+kgrid$det <- 0L
+kgrid$surv <- 0L
+for (i in 1:nrow(dd)) {
+    d <- sqrt((kgrid$X - dd$X[i])^2 + (kgrid$Y - dd$Y[i])^2)
+    j <- which.min(d)
+    kgrid$det[j] <- 1L
+    kgrid$surv[j] <- 1L
+}
+for (i in 1:nrow(xy0)) {
+    d <- sqrt((kgrid$X - xy0[i,"X"])^2 + (kgrid$Y - xy0[i,"Y"])^2)
+    kgrid$surv[which.min(d)] <- 1L
+}
+## make a factor with level: unsurveyed, surveyed, detected
+kgrid$aoo <- kgrid$surv + kgrid$det + 1
+kgrid$faoo <- factor(kgrid$aoo, 1:3)
+levels(kgrid$aoo) <- c("unsurveyed", "surveyed", "detected")
+
+r_hf <- as_Raster0(kgrid$Row, kgrid$Col, kgrid$CTI, rt)
 
 
 

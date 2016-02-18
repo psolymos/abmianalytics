@@ -1,5 +1,5 @@
 ## takes xy coordinates and a corresponding vector z
-## and torns it into a raster using raster template r
+## and turns it into a raster using raster template r
 as_Raster0 <- 
 function(x, y, z, r) 
 {
