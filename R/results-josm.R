@@ -77,10 +77,73 @@ spp <- "WEWP"
 do_hsh <- FALSE
 do_veg <- TRUE
 
+    NAM <- as.character(tax[spp, "English_Name"])
+    f <- file.path(ROOT2, "results", paste0("birds_abmi-",
+        ifelse(do_hsh, "dohsh", "nohsh"), ifelse(do_veg, "-north_", "-south_"), spp, ".Rdata"))
+    resn <- loadSPP(f)
+
+## habitat assoc
+    estn_hab <- getEst(resn, stage=stage_hab_n, na.out=FALSE, Xnn)
+    prn <- pred_veghf(estn_hab, Xnn, burn_included=FALSE)
+    ## veghf
+    fname <- file.path("e:/peter/AB_data_v2016/out/birds/wewp",
+        paste0("habitat-", as.character(tax[spp, "Species_ID"]), ".png"))
+    png(file=fname,width=1500,height=700)
+	fig_veghf(prn, NAM)
+	dev.off()
+
+## surrounding hf
+    estn_sp <- getEst(resn, stage=9, na.out=FALSE, Xnn)
+    fname <- file.path("e:/peter/AB_data_v2016/out/birds/wewp",
+        paste0("surroundingHF-", as.character(tax[spp, "Species_ID"]), ".png"))
+    png(file=fname, width=7.5, height=5.7, units="in", res=300)
+    op <- par(mai=c(0.9,1,0.2,0.3))
+    fig_hf_noremn(estn_sp, Xnn, LAB=NAM)
+    par(op)
+    dev.off()
+## surrounding Wet
+    fname <- file.path("e:/peter/AB_data_v2016/out/birds/wewp",
+        paste0("surroundingWet-", as.character(tax[spp, "Species_ID"]), ".png"))
+    png(file=fname, width=7.5, height=5.7, units="in", res=300)
+    op <- par(mai=c(0.9,1,0.2,0.3))
+    fig_any("WetWaterKM", estn_sp, Xnn, xlab="Surrounding Wet/Water (%)", LAB=NAM)
+    par(op)
+    dev.off()
+
+## ASP CTI
+## CTI: high when it is flat, low when it is higher slope
+## SLPASP (ASP): negative when exposed (warmer) and positive when north facing (colder)
+cf <- estn_sp[,c("xASP","xCTI","xASP:xCTI")]
+range(dat$xASP)
+range(dat$xCTI)
+z <- expand.grid(xASP=seq(-0.25, 0.25, by=0.1),
+    xCTI=seq(-0.5, 0.5, by=0.1))
+z$ASP <- z$xASP
+z$CTI <- exp(z$xCTI)*10 - 1
+X <- model.matrix(~xASP+xCTI+xASP:xCTI-1, z)
+pr <- apply(cf, 1, function(i) drop(X %*% i))
+z$pr <- rowMeans(pr)
+
+x <- seq(-0.25, 0.25, by=0.1)
+y <- exp(seq(-0.5, 0.5, by=0.1))*10 - 1
+
+    fname <- file.path("e:/peter/AB_data_v2016/out/birds/wewp",
+        paste0("topo-", as.character(tax[spp, "Species_ID"]), ".png"))
+    png(file=fname, width=7.5, height=5.7, units="in", res=300)
+    op <- par(mai=c(0.9,1,0.2,0.3))
+plot(dat$ASP[yy[,"WEWP"] == 0], dat$CTI[yy[,"WEWP"] == 0], pch=19, cex=0.5, 
+    xlab="Slope / aspect solar radiation index",ylab="Compound topographic index",
+    xlim=c(-0.25,0.25), ylim=c(5, 15), col="grey")
+points(dat$ASP[yy[,"WEWP"] > 0], dat$CTI[yy[,"WEWP"] > 0], pch=19, cex=0.5, col=1)
+contour(x, y, matrix(z$pr, length(x), length(y)), add=TRUE, col=4)
+    par(op)
+    dev.off()
+
+
 
 ## map-det
 
-load(file.path("c:/p/AB_data_v2015/out", "kgrid", "kgrid_table.Rdata"))
+load(file.path("e:/peter/AB_data_v2016/out", "kgrid", "kgrid_table.Rdata"))
 col1 <- c("#C8FBC8","#C8E6FA","#F5E6F5","#FFDCEC","#FFE6CD","#FFF1D2")[match(kgrid$NRNAME,
     c("Boreal","Foothills","Rocky Mountain","Canadian Shield","Parkland","Grassland"))]
 library(raster)
@@ -97,29 +160,28 @@ city <- as.data.frame(spTransform(city, CRS(paste0("+proj=tmerc +lat_0=0 +lon_0=
     "+x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))))
 xyw <- as.matrix(kgrid[kgrid$pWater >= 0.99,c("X","Y")])
 blank <- matrix(0, 0, 2)
-for (spp in rownames(tax)) {
-if (tax[spp, "map_det"]) {
-    cat(spp, "\n");flush.console()
-    if (spp %in% colnames(yyn)) {
-        xy0n <- as.matrix(xnn[yyn[,spp] == 0,c("X","Y")])
-        xy1n <- as.matrix(xnn[yyn[,spp] > 0,c("X","Y")])
-    } else {
-        xy0n <- blank
-        xy1n <- blank
-    }
-    if (spp %in% colnames(yys)) {
-        xy0s <- as.matrix(xns[yys[,spp] == 0,c("X","Y")])
-        xy1s <- as.matrix(xns[yys[,spp] > 0,c("X","Y")])
-    } else {
-        xy0s <- blank
-        xy1s <- blank
-    }
-    xy0 <- rbind(xy0n, xy0s)
-    xy1 <- rbind(xy1n, xy1s)
+
+fw <- read.csv("c:/Users/Peter/Dropbox/josm/2016/wewp/FWMIS_data_WEWP.csv")
+
+
+library(raster)
+library(sp)
+library(rgdal)
+XYlatlon <- fw[,c("Longitude","Latitude")]
+XYlatlon <- XYlatlon[rowSums(is.na(XYlatlon))==0,]
+coordinates(XYlatlon) <- ~ Longitude + Latitude 
+proj4string(XYlatlon) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+XY <- as.data.frame(spTransform(XYlatlon, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")))
+
+fw$UTM.Northing[fw$UTM.Northing == ""] <- NA
+fw$UTM.Northing <- as.numeric(as.character(fw$UTM.Northing))
+fwxy <- fw[,c("UTM.Easting","UTM.Northing")]
+
+    xy0 <- as.matrix(dat[yy[,spp] == 0,c("X","Y")])
+    xy1 <- as.matrix(dat[yy[,spp] > 0,c("X","Y")])
     NAM <- as.character(tax[spp, "English_Name"])
-    NDAT <- length(unique(rownames(xy1)))
-    fname <- file.path(ROOT, "figs", "map-det", 
-        paste0(as.character(tax[spp, "file"]), ".png"))
+    fname <- file.path("e:/peter/AB_data_v2016/out/birds/wewp",
+        paste0("detections-", as.character(tax[spp, "Species_ID"]), ".png"))
 	png(file=fname, width=600, height=1000)
 
     plot(kgrid$X, kgrid$Y, pch=15, cex=0.2, col=col1, axes=FALSE, ann=FALSE)
@@ -127,14 +189,67 @@ if (tax[spp, "map_det"]) {
     points(xy0, pch="+", cex=0.5, col="red3")
     #points(xy0, pch=19, cex=0.5, col="red3")
     points(xy1, pch=16, cex=1.6, col="red4")
-    mtext(paste0(NAM, " (n = ", NDAT, " detections)"), line=2,
-        side=3, adj=0.5, cex=1.4, col="grey40")
+    points(XY, pch=16, cex=1.6, col="blue")
+
+    mtext(NAM, line=2, side=3, adj=0.5, cex=1.4, col="grey40")
     points(city, pch=18, col="grey10")
     text(city, rownames(city), cex=0.8, adj=-0.1, col="grey10")
 
 	dev.off()
-}
-}
+
+    fname <- file.path("e:/peter/AB_data_v2016/out/birds/wewp",
+        paste0("detectionsWithFWMIS-", as.character(tax[spp, "Species_ID"]), ".png"))
+	png(file=fname, width=600, height=1000)
+
+    plot(kgrid$X, kgrid$Y, pch=15, cex=0.2, col=col1, axes=FALSE, ann=FALSE)
+    points(xyw, pch=15, cex=0.2, col=rgb(0.3,0.45,0.9))
+    points(xy0, pch="+", cex=0.5, col="red3")
+    #points(xy0, pch=19, cex=0.5, col="red3")
+    points(xy1, pch=16, cex=1.6, col="red4")
+    points(XY, pch=16, cex=1.6, col="blue")
+
+    mtext(NAM, line=2, side=3, adj=0.5, cex=1.4, col="grey40")
+    points(city, pch=18, col="grey10")
+    text(city, rownames(city), cex=0.8, adj=-0.1, col="grey10")
+
+	dev.off()
+
+yyyy <- ifelse(yy[,spp] == 0, 0, 1)
+aa <- Xtab(~ dat$YEAR + yyyy + dat$NRNAME)
+aa <- lapply(1:length(aa), function(i) {
+    z <- as.matrix(aa[[i]])
+    rownames(z) <- paste(names(aa)[i], rownames(z))
+    z
+    })
+aa <- do.call(rbind, aa)
+write.csv(aa, file=file.path("e:/peter/AB_data_v2016/out/birds/wewp",
+    paste0("detectionsBAM-", as.character(tax[spp, "Species_ID"]), ".csv")))
+
+## convex hull
+
+rt <- raster(file.path("e:/peter/AB_data_v2016", "data", "kgrid", "AHM1k.asc"))
+crs <- CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+projection(rt) <- crs
+mat0 <- as.matrix(rt)
+
+library(dismo)
+colnames(XY) <- colnames(xy1)
+dd <- rbind(XY,xy1)
+ch <- convHull(dd)
+
+    fname <- file.path("e:/peter/AB_data_v2016/out/birds/wewp",
+        paste0("chull-", as.character(tax[spp, "Species_ID"]), ".png"))
+	png(file=fname, width=600, height=1000)
+plot(rt, axes=FALSE, box=FALSE, legend=FALSE, col="grey",
+    main="Western Wood-Pewee", maxpixels=10^6, interpolate=FALSE)
+points(xy0, col="white", pch=20, cex=0.5)
+points(dd, col=1, pch=20, cex=1)
+plot(ch@polygons, border=4, lwd=2, add=TRUE)
+	dev.off()
+
+
+
+
 
 ## calculating # occurrences
 xnn$lxn <- interaction(xnn$LUF_NAME, xnn$NSRNAME, drop=TRUE, sep="_")

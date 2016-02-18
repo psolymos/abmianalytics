@@ -570,7 +570,7 @@ function(est, Xn, fillin=0,LAB="")
 }
 
 fig_any <- 
-function(what, est, Xn, LAB="") 
+function(what, est, Xn, LAB="", xlab="Percent") 
 {
     pr <- pred_any(what, est, Xn)
     ymax <- max(pr[,-1])
@@ -590,7 +590,7 @@ function(what, est, Xn, LAB="")
     axis(side=2,at=seq(0,ymax,0.5),tck=1,cex.axis=1,col.axis="grey60",col.ticks="grey80",las=2)
     axis(side=1,at=seq(0,100,25),tck=0.01,cex.axis=1,col.axis="grey60",col.ticks="grey60")
     axis(side=2,at=seq(0,ymax,0.5),tck=0.01,cex.axis=1,col.axis="grey60",col.ticks="grey60",las=2)
-    mtext(side=1,at=50,adj=0.5,"Surrounding suitable habitat (%)",line=2,col="grey50",cex=1.2)
+    mtext(side=1,at=50,adj=0.5,xlab,line=2,col="grey50",cex=1.2)
     box(col="grey60")
     mtext(side=3,at=0,adj=0,LAB,col="grey30")
 
