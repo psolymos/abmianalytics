@@ -267,6 +267,7 @@ for (i in 1:nrow(xy0)) {
     kgrid$surv[which.min(d)] <- 1L
 }
 ## make a factor with level: unsurveyed, surveyed, detected
+## check the scale !!!!
 kgrid$aoo <- kgrid$surv + kgrid$det + 1
 kgrid$faoo <- factor(kgrid$aoo, 1:3)
 levels(kgrid$aoo) <- c("unsurveyed", "surveyed", "detected")
