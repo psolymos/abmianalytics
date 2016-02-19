@@ -277,6 +277,28 @@ r2 <- as_Raster0(kgrid$Row, kgrid$Col, kgrid$aoo, rt)
 k <- kgrid[,c("det","surv")]
 save(k, file="e:/peter/AB_data_v2016/out/birds/wewp/aoo.Rdata")
 
+k$Row <- kgrid$Row
+k$Col <- kgrid$Col
+k$Row2 <- 1 + kgrid$Row %/% 2
+k$Col2 <- 1 + kgrid$Col %/% 2
+k$Row2_Col2 <- interaction(k$Row2, k$Col2, sep="_", drop=TRUE)
+
+k2det <- as.matrix(Xtab(~Row2_Col2 + det, k))
+k2surv <- as.matrix(Xtab(~Row2_Col2 + surv, k))
+k2det[k2det>0] <- 1
+k2surv <- k2surv + k2det
+k2surv[k2surv>0] <- 1
+dim(k2det)
+table(k2det[,2] > 0)
+table(k2surv[,2] > 0)
+
+
+
+k$aoo <- k$surv + k$det + 1
+k$faoo <- factor(k$aoo, 1:3)
+levels(k$faoo) <- c("unsurveyed", "surveyed", "detected")
+
+
 ## calculating # occurrences
 xnn$lxn <- interaction(xnn$LUF_NAME, xnn$NSRNAME, drop=TRUE, sep="_")
 xns$lxn <- interaction(xns$LUF_NAME, xns$NSRNAME, drop=TRUE, sep="_")
