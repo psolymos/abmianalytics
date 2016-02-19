@@ -18,8 +18,9 @@ if (!interactive())
 library(MASS)
 library(ResourceSelection)
 library(mefa4)
+library(opticut)
 source("~/repos/bragging/R/glm_skeleton.R")
-source("~/repos/abmianalytics/R/analysis_functions.R")
+source("analysis_functions.R")
 
 cat("OK\ngetting args and setup...")
 if (!interactive())
@@ -48,6 +49,8 @@ CAICalpha <- 1
 if (TEST)
     mods <- mods[1:2]
 
+hsh_name <- "hab1ec"
+
 #### spawning the slaves ####
 cat("OK\nspawning slaves...")
 cl <- if (interactive())
@@ -60,12 +63,9 @@ cat("OK\nload packages on slaves...")
 tmpcl <- clusterEvalQ(cl, library(ResourceSelection))
 tmpcl <- clusterEvalQ(cl, library(MASS))
 tmpcl <- clusterEvalQ(cl, library(mefa4))
-if (hshid == "dohsh") {
-    library(opticut)
-    tmpcl <- clusterEvalQ(cl, library(opticut))
-}
+tmpcl <- clusterEvalQ(cl, library(opticut))
 tmpcl <- clusterEvalQ(cl, source("~/repos/bragging/R/glm_skeleton.R"))
-tmpcl <- clusterEvalQ(cl, source("~/repos/abmianalytics/R/analysis_functions.R"))
+tmpcl <- clusterEvalQ(cl, source("analysis_functions.R"))
 
 #### load all the objects on the slaves ####
 
@@ -117,7 +117,7 @@ for (SPP1 in SPPnext) {
     attr(res, "date") <- as.character(Sys.Date())
     attr(res, "ncl") <- ncl
     save(res, file=paste0("results/birds_", PROJECT, "_", SPP1, ".Rdata"))
-    cat("OK\n")
+    cat(" OK\n")
 }
 
 #### shutting down ####
