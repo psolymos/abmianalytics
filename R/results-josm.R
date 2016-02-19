@@ -270,11 +270,12 @@ for (i in 1:nrow(xy0)) {
 ## check the scale !!!!
 kgrid$aoo <- kgrid$surv + kgrid$det + 1
 kgrid$faoo <- factor(kgrid$aoo, 1:3)
-levels(kgrid$aoo) <- c("unsurveyed", "surveyed", "detected")
+levels(kgrid$faoo) <- c("unsurveyed", "surveyed", "detected")
 
-r_hf <- as_Raster0(kgrid$Row, kgrid$Col, kgrid$CTI, rt)
+r2 <- as_Raster0(kgrid$Row, kgrid$Col, kgrid$aoo, rt)
 
-
+k <- kgrid[,c("det","surv")]
+save(k, file="e:/peter/AB_data_v2016/out/birds/wewp/aoo.Rdata")
 
 ## calculating # occurrences
 xnn$lxn <- interaction(xnn$LUF_NAME, xnn$NSRNAME, drop=TRUE, sep="_")
