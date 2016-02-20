@@ -28,8 +28,7 @@ silent=FALSE, hsh_name=NA, CAICalpha=1, method=c("oc","lt"))
         ## opticut based approach for core habitat delineation
         if (method=="oc") {
             require(opticut)
-            oc <- opticut(y ~ ARU3 + ROAD01 + SoftLin_PC + ROAD01:habCl, 
-                data=x, strata=HABV, dist="poisson",
+            oc <- opticut(y ~ ROAD01, data=x, strata=HABV, dist="poisson",
                 offset=off, comb="rank")
             part <- drop(bestpart(oc))
             habmod <- glm_skeleton(bestmodel(oc)[[1]], CAICalpha=CAICalpha)
@@ -51,7 +50,7 @@ silent=FALSE, hsh_name=NA, CAICalpha=1, method=c("oc","lt"))
                 x=FALSE, y=FALSE, model=FALSE), silent=silent), CAICalpha=CAICalpha)
             ## need to correct for linear effects
             ## so that we estimate potential pop in habitats (and not realized)
-            XHSH <- model.matrix(~ HABV + ROAD, x) # some modifiers are missing !!!
+            XHSH <- model.matrix(~ HABV + ROAD, x)
             XHSH[,"ROAD"] <- 0 # not predicting edge effects
             ## some levels might be dropped (e.g. Marsh)
             XHSH <- XHSH[,names(habmod$coef)]
