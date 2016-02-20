@@ -29,9 +29,10 @@ mods <- list(
         .~. + ROAD01 + ROAD01:habCl,
         .~. + ROAD01 + SoftLin_PC + ROAD01:habCl),
     "ARU"=list( # 5
+        .~. + ARU1,
         .~. + ARU2,
         .~. + ARU3),
-    "Space"=list( # 7
+    "Space"=list( # 6
         .~. + xPET,## climate only
         .~. + xMAT,
         .~. + xAHM,
@@ -65,7 +66,7 @@ mods <- list(
         .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT + xMAP,
         .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMWMT + xMCMT,
         .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xAHM + xPET),
-    "KM"=list( # 6
+    "KM"=list( # 7
         .~. + HSH,
         .~. + HSH + HSH2,
 
@@ -123,6 +124,6 @@ mods <- list(
 #        .~. + Succ_KM + Noncult_KM + Cult_KM + Noncult2_KM,
 #        .~. + Succ_KM + Alien_KM + Succ2_KM + Alien2_KM,
 #        .~. + Succ_KM + Noncult_KM + Cult_KM + Succ2_KM + Noncult2_KM),
-    "Year"=list( # 10
+    "Year"=list( # 8
         .~. + YR))
 
