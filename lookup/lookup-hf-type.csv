@@ -34,9 +34,9 @@ LANDFILL,RuralResidentialIndustrial,,
 MAJ-MILL,IndustrialSiteRural,,
 MINES,MineSite,,
 MINES-DISTURBED-NO-VEG,MineSite,,
-MINES-DISTURBED-VEG,MineSite,,
+MINES-DISTURBED-VEG,OtherDisturbedVegetation,,was MineSite
 MINES-PITLAKE,MineSite,,
-MINES-UNDISTURBED,MineSite,,
+MINES-UNDISTURBED,OtherDisturbedVegetation,,was MineSite
 OIL-GAS-PLANT,IndustrialSiteRural,,
 OPEN-PIT-MINE,MineSite,,
 PAVED ROAD,RoadHardSurface,,

@@ -4,8 +4,8 @@ RuralResidentialIndustrial,Urban & Rural & Industrial,Rural (Residential/Industr
 IndustrialSiteRural,Urban & Rural & Industrial,Industrial Site Rural ,UrbInd,Alien,Nonlin,"Urban, Rural & Industrial",RuralUrban,Rural area developed for industrial use 
 WindGenerationFacility,Urban & Rural & Industrial,Wind Generation Facility,UrbInd,Alien,Nonlin,"Mines, Wells & Other Energy Features",Energy,Area around the windmill 
 OtherDisturbedVegetation,Urban & Rural & Industrial,Other Disturbed Vegetation ,UrbInd,Alien,Nonlin,"Urban, Rural & Industrial",Misc,"Recreation areas and other vegetated areas created for human use, including golf courses, grave yards, vegetated edges of airports, sometimes along roads and any other disturbed areas that have recovered vegetation "
-MineSite,Mines ,Mine Site ,UrbInd,Alien,Nonlin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed 
-PeatMine,Mines ,Peat Mine ,UrbInd,Alien,Nonlin,"Mines, Wells & Other Energy Features",Misc,Area where vegetation is disturbed 
+MineSite,Mines ,Mine Site ,Mines,Alien,Nonlin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed 
+PeatMine,Mines ,Peat Mine ,Mines,Alien,Nonlin,"Mines, Wells & Other Energy Features",Misc,Area where vegetation is disturbed 
 WellSite,Wells ,Well Site ,UrbInd,Alien,Nonlin,"Mines, Wells & Other Energy Features",Energy,Well pads created by the energy industry 
 Pipeline,Vegetated Linear Industrial Features,Pipeline ,SoftLin,Succ,Lin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed 
 TransmissionLine,Vegetated Linear Industrial Features,Transmission Line ,SoftLin,Succ,Lin,"Mines, Wells & Other Energy Features",Energy,Area where vegetation is disturbed 
