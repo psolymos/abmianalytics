@@ -179,3 +179,94 @@ if (SAVE)
         file=file.path(ROOT, VER, "out/abmi_onoff", 
         "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0.Rdata"))
 
+## 2015 locations
+
+#e:/peter/AB_data_v2016/data/veghf/update2015/BirdCamARU150m.csv
+#e:/peter/AB_data_v2016/data/veghf/update2015/BirdCamARU564m.csv
+#e:/peter/AB_data_v2016/data/veghf/update2015/BirdCamARUPoints.csv
+#e:/peter/AB_data_v2016/data/veghf/update2015/Site150m.csv
+#e:/peter/AB_data_v2016/data/veghf/update2015/Site1ha.csv
+#e:/peter/AB_data_v2016/data/veghf/update2015/Site564m.csv
+#e:/peter/AB_data_v2016/data/veghf/update2015/SitePoints.csv
+
+## ABMI sites (on+off) cetre 1 ha
+f1ha <- file.path(ROOT, VER, "data/veghf", "update2015", "Site1ha.csv")
+d1ha <- read.csv(f1ha)
+d1ha$Site_YEAR <- with(d1ha, interaction(ABMI_Assigned_Site_ID, survey_year, sep="_", drop=TRUE))
+head(d1ha)
+dd1ha <- make_vegHF_wide(d1ha, col.label = "Site_YEAR", 
+    col.year="survey_year", col.HFyear="year_")
+dd1ha$scale <- "1 ha square around site centre"
+dd1ha_2015 <- dd1ha
+
+## ABMI sites (on+off) 9 bird points / site, 150 m radius buffer, site center only
+f150m <- file.path(ROOT, VER, "data/veghf", "update2015", "Site150m.csv")
+d150m <- read.csv(f150m)
+d150m$Site_YEAR <- with(d150m, interaction(ABMI_Assigned_Site_ID, survey_year, sep="_", drop=TRUE))
+head(d150m)
+dd150m <- make_vegHF_wide(d150m, col.label = "Site_YEAR", 
+    col.year="survey_year", col.HFyear="year_")
+dd150m$scale <- "150 m radius circle around site centre"
+dd150mCenter_2015 <- dd150m
+
+## ABMI sites (on+off) 9 bird points / site, 1 km^2 buffer, site center only
+f1km <- file.path(ROOT, VER, "data/veghf", "update2015", "Site564m.csv")
+d1km <- read.csv(f1km)
+d1km$Site_YEAR <- with(d1km, interaction(ABMI_Assigned_Site_ID, survey_year, sep="_", drop=TRUE))
+head(d1km)
+dd1km <- make_vegHF_wide(d1km, col.label = "Site_YEAR", 
+    col.year="survey_year", col.HFyear="year_")
+dd1km$scale <- "564 m radius circle around site centre"
+dd1kmCenter_2015 <- dd1km
+
+## ABMI bird/camera/ARU points, 150 m radius buffer
+f150m <- file.path(ROOT, VER, "data/veghf", "update2015", "BirdCamARU150m.csv")
+d150m <- read.csv(f150m)
+d150m$survey_year <- 2015
+d150m$Site_YEAR_PT <- with(d150m, interaction(
+    ABMI_Assigned_Site_ID, 
+    survey_year, 
+    deployment,
+    Cam_ARU_Bird_Location, sep="_", drop=TRUE))
+head(d150m)
+dd150m <- make_vegHF_wide(d150m, col.label = "Site_YEAR_PT", 
+    col.year="survey_year", col.HFyear="year_")
+dd150m$scale <- "150 m radius circle around bird/Camera/ARU points"
+dd150mPT_2015 <- dd150m
+
+## ABMI bird/camera/ARU points, 1 km^2 buffer
+f1km <- file.path(ROOT, VER, "data/veghf", "update2015", "BirdCamARU564m.csv")
+d1km <- read.csv(f1km)
+d1km$survey_year <- 2015
+d1km$Site_YEAR_PT <- with(d1km, interaction(
+    ABMI_Assigned_Site_ID, 
+    survey_year, 
+    deployment,
+    Cam_ARU_Bird_Location, sep="_", drop=TRUE))
+head(d1km)
+dd1km <- make_vegHF_wide(d1km, col.label = "Site_YEAR_PT", 
+    col.year="survey_year", col.HFyear="year_")
+dd1km$scale <- "564 m radius circle around bird/Camera/ARU points"
+dd1kmPT_2015 <- dd1km
+
+rm(dd1ha, dd150m, dd1km)
+
+load(file.path(ROOT, VER, "out/abmi_onoff", 
+    "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0.Rdata"))
+
+## clim/nsr table
+## fix age0
+## merge
+## save
+
+if (SAVE)
+    save(dd1ha, dd150m, dd1km, climSite, climPoint,
+        dd1ha_2015, dd150mCenter_2015, dd1kmCenter_2015,
+        dd150mPT_2015, dd1kmPT_2015,
+        file=file.path(ROOT, VER, "out/abmi_onoff", 
+        "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015.Rdata"))
+
+
+
+
+
