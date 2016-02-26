@@ -254,10 +254,12 @@ rm(dd1ha, dd150m, dd1km)
 load(file.path(ROOT, VER, "out/abmi_onoff", 
     "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0.Rdata"))
 
-## clim/nsr table
+## clim/topo/nsr table
 ## fix age0
 ## merge
 ## save
+
+cl <- read.csv("e:/peter/AB_data_v2016/data/topo/ABMIBirdsCamARU_topo.csv")
 
 if (SAVE)
     save(dd1ha, dd150m, dd1km, climSite, climPoint,
