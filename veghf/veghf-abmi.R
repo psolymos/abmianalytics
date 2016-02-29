@@ -104,8 +104,6 @@ clim1$Label <- with(clim1, paste0("T_", OnOffGrid, "_", DataProvider,
     "_", Site, "_", Year, "_1_PT_", Bird))
 clim1$Label2 <- with(clim1, paste0("T_", OnOffGrid, "_", DataProvider, 
     "_", Site, "_", Year, "_1"))
-clim2$Label2 <- with(clim2, paste0("T_", OnOffGrid, "_", DataProvider, 
-    "_", Site, "_", Year, "_1"))
 
 clim1 <- clim1[rownames(dd150m$veg_current),]
 clim2 <- clim2[rownames(dd1ha$veg_current),]
@@ -286,15 +284,22 @@ clim1$Label2 <- with(clim1, paste0("T_", OnOffGrid, "_", DataProvider,
     "_", Site, "_", Year, "_1"))
 climCenter_2015 <- clim1
 
-topo <- read.csv(file.path(ROOT, VER, "data/topo/ABMIBirdsCamARU_topo.csv"))
+compare_sets(rownames(dd1ha_2015[[1]]), rownames(climCenter_2015))
+climCenter_2015 <- climCenter_2015[rownames(dd1ha_2015[[1]]),]
+
+## CAM/ARU
 clim1 <- read.csv(file.path(ROOT, VER, "data/climate/BirdCamARUPoints_climate-2015.csv"))
 
 colnames(clim1)[colnames(clim1) == "Eref"] <- "PET"
 colnames(clim1)[colnames(clim1) == "Populus_tremuloides_brtpred_nofp"] <- "pAspen"
-clim1$Site_YEAR <- with(clim1, interaction(ABMI_Assigned_Site_ID, survey_year, sep="_", drop=TRUE))
-rownames(clim1) <- clim1$Site_YEAR
+clim1$Site_YEAR_CAMARU <- with(clim1, interaction(ABMI_ID_WithB, 
+    2015, deployment, Cam_ARU_Location, sep="_", drop=TRUE))
+clim1 <- nonDuplicated(clim1, Site_YEAR_CAMARU, TRUE)
+compare_sets(rownames(dd150mPT_2015[[1]]), rownames(clim1))
+clim1 <- clim1[rownames(dd150mPT_2015[[1]]),]
 
-tmp <- strsplit(as.character(clim1$Site_YEAR), "_")
+
+tmp <- strsplit(as.character(clim1$Site_YEAR_CAMARU), "_")
 clim1$Site <- as.factor(sapply(tmp, "[[", 1))
 clim1$Year <- as.integer(sapply(tmp, "[[", 2))
 tmp <- strsplit(as.character(clim1$Site), "-")
@@ -305,60 +310,25 @@ clim1$POINT_X <- gis$PUBLIC_LONGITUDE[match(clim1$Nearest, rownames(gis))]
 clim1$POINT_Y <- gis$PUBLIC_LATTITUDE[match(clim1$Nearest, rownames(gis))]
 
 clim1$Label <- with(clim1, paste0("T_", OnOffGrid, "_", DataProvider, 
-    "_", Site, "_", Year, "_1_PT_", Bird))
+    "_", Site, "_", Year, "_1_", deployment, "_", Cam_ARU_Location))
 clim1$Label2 <- with(clim1, paste0("T_", OnOffGrid, "_", DataProvider, 
     "_", Site, "_", Year, "_1"))
-clim2$Label2 <- with(clim2, paste0("T_", OnOffGrid, "_", DataProvider, 
-    "_", Site, "_", Year, "_1"))
+climPT_2015 <- clim1
 
-clim1 <- clim1[rownames(dd150m$veg_current),]
-clim2 <- clim2[rownames(dd1ha$veg_current),]
-stopifnot(all(rownames(clim1) == rownames(dd150m$veg_current)))
-stopifnot(all(rownames(clim2) == rownames(dd1ha$veg_current)))
-
-rownames(clim1) <- clim1$Label
-rownames(clim2) <- clim2$Label2
-rownames(dd150m[[1]]) <- rownames(dd150m[[2]]) <- rownames(clim1)
-rownames(dd150m[[3]]) <- rownames(dd150m[[4]]) <- rownames(clim1)
-rownames(dd1km[[1]]) <- rownames(dd1km[[2]]) <- rownames(clim1)
-rownames(dd1km[[3]]) <- rownames(dd1km[[4]]) <- rownames(clim1)
-rownames(dd1ha[[1]]) <- rownames(dd1ha[[2]]) <- rownames(clim2)
-rownames(dd1ha[[3]]) <- rownames(dd1ha[[4]]) <- rownames(clim2)
-
-climPoint <- clim1
-climSite <- clim2
-
-compare.sets(rownames(climPoint), rownames(birds))
-setdiff(rownames(climPoint), rownames(birds))
-setdiff(rownames(birds), rownames(climPoint))
-compare.sets(rownames(climSite), as.character(birds$Label2))
-setdiff(rownames(climSite), as.character(birds$Label2))
-setdiff(as.character(birds$Label2), rownames(climSite))
-
-compare.sets(rownames(climSite), rownames(mites))
-setdiff(rownames(climSite), rownames(mites))
-setdiff(rownames(mites), rownames(climSite))
-
+if (FALSE) {
 ## topo variables
-topo <- read.csv(file.path(ROOT, VER, "data/topo", "ABMIBirdsCamARU_topo.csv"))
-topo$Site_YEAR_bird <- with(topo, interaction(Site_ID, Cam_ARU_Bird_Location, sep="_", drop=TRUE))
+topo1 <- read.csv(file.path(ROOT, VER, "data/topo/ABMIBirdsCamARU_topo.csv"))
+topo1$Site_YEAR_CAMARU <- with(topo, 
+    interaction(Site_ID, deployment, Cam_ARU_Bird_Location, sep="_", drop=TRUE))
 compare.sets(climPoint$Site_YEAR_bird, topo$Site_YEAR_bird)
 
-topo1 <- topo[match(climPoint$Site_YEAR_bird, topo$Site_YEAR_bird),]
-topo2 <- topo[topo$Cam_ARU_Bird_Location == "1",]
-compare.sets(climSite$Site_ID, topo$Site_ID)
-topo2 <- topo2[match(climSite$Site_ID, topo2$Site_ID),]
+topo1 <- topo[match(clim1$Site_YEAR_CAMARU, topo$Site_YEAR_CAMARU),]
 
-
-climPoint$SLP <- topo1$slope
-climPoint$ASP <- topo1$slpasp
-climPoint$TRI <- topo1$tri
-climPoint$CTI <- topo1$cti
-
-climSite$SLP <- topo2$slope
-climSite$ASP <- topo2$slpasp
-climSite$TRI <- topo2$tri
-climSite$CTI <- topo2$cti
+clim1$SLP <- topo1$slope
+clim1$ASP <- topo1$slpasp
+clim1$TRI <- topo1$tri
+clim1$CTI <- topo1$cti
+}
 
 
 ## clim/topo/nsr table
@@ -370,7 +340,7 @@ climSite$CTI <- topo2$cti
 if (SAVE)
     save(dd1ha, dd150m, dd1km, climSite, climPoint,
         dd1ha_2015, dd150mCenter_2015, dd1kmCenter_2015,
-        dd150mPT_2015, dd1kmPT_2015,
+        dd150mPT_2015, dd1kmPT_2015, climCenter_2015, climPT_2015,
         file=file.path(ROOT, VER, "out/abmi_onoff", 
         "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015.Rdata"))
 
