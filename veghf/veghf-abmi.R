@@ -272,6 +272,8 @@ clim1$Site <- as.factor(sapply(tmp, "[[", 1))
 clim1$Year <- as.integer(sapply(tmp, "[[", 2))
 tmp <- strsplit(as.character(clim1$Site), "-")
 clim1$Nearest <- sapply(tmp, function(z) if (length(z)>1) z[3] else z)
+clim1$Nearest <- gsub("B", "", clim1$Nearest, fixed=TRUE) # B sites
+
 clim1$DataProvider <- sapply(tmp, function(z) if (length(z)>1) z[2] else "ABMI")
 clim1$OnOffGrid <- sapply(tmp, function(z) if (length(z)>1) z[1] else "IG")
 clim1$POINT_X <- gis$PUBLIC_LONGITUDE[match(clim1$Nearest, rownames(gis))]
@@ -304,6 +306,8 @@ clim1$Site <- as.factor(sapply(tmp, "[[", 1))
 clim1$Year <- as.integer(sapply(tmp, "[[", 2))
 tmp <- strsplit(as.character(clim1$Site), "-")
 clim1$Nearest <- sapply(tmp, function(z) if (length(z)>1) z[3] else z)
+clim1$Nearest <- gsub("B", "", clim1$Nearest, fixed=TRUE) # B sites
+
 clim1$DataProvider <- sapply(tmp, function(z) if (length(z)>1) z[2] else "ABMI")
 clim1$OnOffGrid <- sapply(tmp, function(z) if (length(z)>1) z[1] else "IG")
 clim1$POINT_X <- gis$PUBLIC_LONGITUDE[match(clim1$Nearest, rownames(gis))]
@@ -336,6 +340,8 @@ clim1$CTI <- topo1$cti
 ## merge
 ## save
 
+sum(is.na(climCenter_2015))
+sum(is.na(climPT_2015))
 
 if (SAVE)
     save(dd1ha, dd150m, dd1km, climSite, climPoint,
