@@ -7,31 +7,64 @@ int <- read.csv(file.path(ROOT, "data", "aru-coni",
     "2015_CONI_DetectionsByRecording_1minInterval.csv"))
 tms <- read.csv(file.path(ROOT, "data", "aru-coni",
     "2015_CONIPeent3.4_30_70_truepositives_details.csv"))
+tms$file.path <- NULL
 sit <- read.csv(file.path(ROOT, "data", "aru-coni",
     "CONImodel_ARU_sitesv2.csv"))
 loc <- read.csv(file.path(ROOT, "data", "aru-coni",
     "CONImodel_ARU_locations-proper-ID.csv"))
-compare_sets(sit$ID, loc$ID)
-setdiff(sit$ID, loc$ID)
-setdiff(loc$ID, sit$ID)
 
 ## dd150m, dd1km, points
 load(file.path(ROOT, "out", "aru", 
-        "veg-hf-clim-reg_aru-coni_fix-fire_fix-age0.Rdata"))
+    "veg-hf-clim-reg_aru-coni_fix-fire_fix-age0.Rdata"))
+e <- new.env()
+load(file=file.path(ROOT, "out/abmi_onoff", 
+        "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015.Rdata"), envir=e)
+dd150mPT_2015 <- e$dd150mPT_2015
+dd1kmPT_2015 <- e$dd1kmPT_2015
+climPT_2015 <- e$climPT_2015
+rm(e)
 
-hist(int$Size)
-abline(v=30000000)
+points$oldID <- rownames(dd150m[[1]])
+climPT_2015$oldID <- rownames(dd150mPT_2015[[1]])
 
+compare_sets(points$POINT_ID, loc$POINT_ID)
+points$ID <- loc$ID[match(points$POINT_ID, loc$POINT_ID)]
+rownames(points) <- points$ID
 
-compare_sets(points$POINT_ID, sit$ID)
-compare_sets(points$POINT_ID, int$ID)
-
+## setdiff must be due to faulty units
 compare_sets(sit$ID, int$ID)
-## these must be the problem sites???
-setdiff(sit$ID, int$ID)
+compare_sets(sit$ID, tms$ID)
+compare_sets(sit$ID, points$ID)
+setdiff(sit$ID, points$ID) # ABMI + some stuff??
+setdiff(points$ID, sit$ID) # faulty units
 
-tail(sort(setdiff(points$POINT_ID, sit$ID)))
-tail(sort(setdiff(sit$ID, points$POINT_ID)))
+climPT_2015$SITE000 <- sapply(climPT_2015$Nearest, function(z) {
+    ch <- as.character(z)
+    paste0(paste(rep(0, 4-nchar(ch)), collapse=""), ch)
+})
+climPT_2015$ID <- with(climPT_2015, paste("ABMI", SITE000, Cam_ARU_Location, sep="-"))
+compare_sets(sit$ID, climPT_2015$ID)
+i <- intersect(sit$ID, climPT_2015$ID)
+climPT <- climPT_2015[climPT_2015$ID %in% i,]
+climPT <- nonDuplicated(climPT, ID, TRUE)
 
-## need to process ABMI 2015 list and combine that with the rest of the CONI pts
-## 150m and 1km
+compare_sets(colnames(points), colnames(climPT))
+cn <- intersect(colnames(points), colnames(climPT_2015))
+pt <- rbind(data.frame(points[,cn], part=1), data.frame(climPT[,cn], part=2))
+compare_sets(sit$ID, pt$ID)
+
+veghfpc <- rBind(dd150m[[1]], dd150mPT_2015[[1]])
+vegpc <- rBind(dd150m[[2]], dd150mPT_2015[[2]])
+veghfkm <- rBind(dd1km[[1]], dd1kmPT_2015[[1]])
+vegkm <- rBind(dd1km[[2]], dd1kmPT_2015[[2]])
+
+veghfpc <- veghfpc[match(pt$oldID, rownames(veghfpc)),]
+rownames(veghfpc) <- pt$ID
+vegpc <- vegpc[match(pt$oldID, rownames(vegpc)),]
+rownames(vegpc) <- pt$ID
+veghfkm <- veghfkm[match(pt$oldID, rownames(veghfkm)),]
+rownames(veghfkm) <- pt$ID
+vegkm <- vegkm[match(pt$oldID, rownames(vegkm)),]
+rownames(vegkm) <- pt$ID
+
+
