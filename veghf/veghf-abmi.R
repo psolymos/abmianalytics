@@ -335,13 +335,31 @@ clim1$CTI <- topo1$cti
 }
 
 
-## clim/topo/nsr table
-## fix age0
-## merge
-## save
-
 sum(is.na(climCenter_2015))
 sum(is.na(climPT_2015))
+
+load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
+
+sum(dd1ha_2015[[1]][,Target0])
+dd1ha_2015 <- fill_in_0ages(dd1ha_2015, climCenter_2015$NSRNAME)
+sum(dd1ha_2015[[1]][,Target0])
+
+sum(dd150mCenter_2015[[1]][,Target0])
+dd150mCenter_2015 <- fill_in_0ages(dd150mCenter_2015, climCenter_2015$NSRNAME)
+sum(dd150mCenter_2015[[1]][,Target0])
+
+sum(dd1kmCenter_2015[[1]][,Target0])
+dd1kmCenter_2015 <- fill_in_0ages(dd1kmCenter_2015, climCenter_2015$NSRNAME)
+sum(dd1kmCenter_2015[[1]][,Target0])
+
+sum(dd150mPT_2015[[1]][,Target0])
+dd150mPT_2015 <- fill_in_0ages(dd150mPT_2015, climPT_2015$NSRNAME)
+sum(dd150mPT_2015[[1]][,Target0])
+
+sum(dd1kmPT_2015[[1]][,Target0])
+dd1kmPT_2015 <- fill_in_0ages(dd1kmPT_2015, climPT_2015$NSRNAME)
+sum(dd1kmPT_2015[[1]][,Target0])
+
 
 if (SAVE)
     save(dd1ha, dd150m, dd1km, climSite, climPoint,
