@@ -261,6 +261,14 @@ km <- data.frame(LinkID=kgrid$Row_Col,
     qrf <- quantile(rf, q)
     rf[rf>qrf] <- qrf
 
+    si <- pmin(cr, rf) / pmax(cr, rf)
+    si[pmax(cr, rf)==0] <- 1
+
+    kmsi <- data.frame(LinkID=km$LinkID, Ref=rf, Curr=cr, SI=si)
+    kmsi <- write.csv(kmsi, row.names=FALSE, 
+        paste0("e:/peter/sppweb2015/birds-si/", 
+        paste0(as.character(tax[spp, "file"]), ".csv")))
+
 if (TRUE) {
     mat <- 100 * cbind(Ncurrent=cr, Nreference=rf) # ha to km^2
     rownames(mat) <- rownames(kgrid)
