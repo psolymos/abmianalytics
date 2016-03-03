@@ -1,5 +1,4 @@
 library(mefa4)
-library(pbapply)
 
 ROOT <- "e:/peter/AB_data_v2016"
 
@@ -7,7 +6,7 @@ int <- read.csv(file.path(ROOT, "data", "aru-coni",
     "2015_CONI_DetectionsByRecording_1minInterval.csv"))
 tms <- read.csv(file.path(ROOT, "data", "aru-coni",
     "2015_CONIPeent3.4_30_70_truepositives_details.csv"))
-tms$file.path <- NULL
+tms$file.path <- NULL # same levels
 sit <- read.csv(file.path(ROOT, "data", "aru-coni",
     "CONImodel_ARU_sitesv2.csv"))
 loc <- read.csv(file.path(ROOT, "data", "aru-coni",

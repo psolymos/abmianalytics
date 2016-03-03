@@ -1,11 +1,10 @@
 library(mefa4)
-library(pbapply)
 library(maptools)
 
 ROOT <- "e:/peter/AB_data_v2016"
 
-tms <- read.csv(file.path(ROOT, "data", "aru-coni",
-    "2015_CONIPeent3.4_30_70_truepositives_details.csv"))
+load(file.path(ROOT, "data", "aru-coni", 
+    "coni-compiled-all.Rdata"))
 
 tmp <- with(tms, paste0("2015-", month, "-", day, " ", hour, ":", minute, ":", second))
 tms$FileStart <- strptime(tmp, format="%Y-%m-%e %H:%M:%S")
@@ -18,14 +17,14 @@ summary(OffSec)
 ## start of event relative to FileStart, in minutes
 tms$EventStart <- OffMin + OffSec / 60
 
-fls <- nonDuplicated(tms, file.path, FALSE)
+fls <- nonDuplicated(tms, file.name, FALSE)
 
 ## events list for files
 evt <- list()
 for (j in seq_len(nrow(fls))) {
-    i <- as.character(fls$file.path[j])
+    i <- as.character(fls$file.name[j])
     #cat(i, "of", nrow(fls));flush.console()
-    ss <- tms[tms$file.path == i,]
+    ss <- tms[tms$file.name == i,]
     ss <- nonDuplicated(ss, offset, FALSE)
     ss <- ss[order(ss$EventStart),]
     if (nrow(ss) < 2) {
