@@ -67,4 +67,38 @@ rownames(veghfkm) <- pt$ID
 vegkm <- vegkm[match(pt$oldID, rownames(vegkm)),]
 rownames(vegkm) <- pt$ID
 
+summary(rowSums(veghfpc))
+summary(rowSums(veghfkm))
+table(rowSums(veghfpc) > 151^2*pi)
+table(rowSums(veghfkm) > 10^6)
+
+sit2 <- nonDuplicated(sit, ID, TRUE)
+sit2 <- sit2[rownames(pt),]
+sit2$ID <- NULL
+pt <- data.frame(pt, sit2)
+
+## wrapping up covariates
+save(pt, veghfpc, vegpc, veghfkm, vegkm,
+    file=file.path(ROOT, "data", "aru-coni", 
+    "coni-compiled-covariates.Rdata"))
+
+## wrapping up detections
+
+compare_sets(pt$ID, int$ID)
+ii <- intersect(pt$ID, int$ID)
+pt <- droplevels(pt[ii,])
+veghfpc <- veghfpc[ii,]
+vegpc <- vegpc[ii,]
+veghfkm <- veghfkm[ii,]
+vegkm <- vegkm[ii,]
+int <- droplevels(int[int$ID %in% ii,])
+## times are only positives
+compare_sets(pt$ID, tms$ID)
+tms <- droplevels(tms[tms$ID %in% ii,])
+
+save(pt, veghfpc, vegpc, veghfkm, vegkm, tms, int,
+    file=file.path(ROOT, "data", "aru-coni", 
+    "coni-compiled-all.Rdata"))
+
+
 
