@@ -124,18 +124,32 @@ m2 <- survreg(sv ~ JDAY + JDAY2, fls2, dist="exponential")
 m3 <- survreg(sv ~ sin + cos + sin2 + cos2, fls2, dist="exponential")
 m4 <- survreg(sv ~ JDAY + sin + cos + sin2 + cos2, fls2, dist="exponential")
 m5 <- survreg(sv ~ JDAY + JDAY2 + sin + cos + sin2 + cos2, fls2, dist="exponential")
+m6 <- survreg(sv ~ JDAY + sin + cos + sin2 + cos2 +
+    JDAY:sin + JDAY:sin2 + JDAY:cos + JDAY:cos2, fls2, dist="exponential")
+m7 <- survreg(sv ~ JDAY + JDAY2 + sin + cos + sin2 + cos2 +
+    JDAY:sin + JDAY:sin2 + JDAY:cos + JDAY:cos2 +
+    JDAY:sin + JDAY:sin2 + JDAY:cos + JDAY:cos2, fls2, dist="exponential")
+
 m0w <- survreg(sv ~ 1, fls2, dist="weibull")
 m1w <- survreg(sv ~ JDAY, fls2, dist="weibull")
 m2w <- survreg(sv ~ JDAY + JDAY2, fls2, dist="weibull")
 m3w <- survreg(sv ~ sin + cos + sin2 + cos2, fls2, dist="weibull")
 m4w <- survreg(sv ~ JDAY + sin + cos + sin2 + cos2, fls2, dist="weibull")
 m5w <- survreg(sv ~ JDAY + JDAY2 + sin + cos + sin2 + cos2, fls2, dist="weibull")
+m6w <- survreg(sv ~ JDAY + sin + cos + sin2 + cos2 +
+    JDAY:sin + JDAY:sin2 + JDAY:cos + JDAY:cos2, fls2, dist="weibull")
+m7w <- survreg(sv ~ JDAY + JDAY2 + sin + cos + sin2 + cos2 +
+    JDAY:sin + JDAY:sin2 + JDAY:cos + JDAY:cos2 +
+    JDAY:sin + JDAY:sin2 + JDAY:cos + JDAY:cos2, fls2, dist="weibull")
 
-aic <- AIC(m0, m1, m2, m3, m4, m5, m0w, m1w, m2w, m3w, m4w, m5w)
+aic <- AIC(m0, m1, m2, m3, m4, m5, m6, m7, m0w, m1w, m2w, m3w, m4w, m5w, m6w, m7w)
 aic$dAIC <- aic$AIC - min(aic$AIC)
 
-vjd <- seq(min(fls2$JDAY), max(fls2$JDAY), len=51)
-vtd <- seq(0, 23/24, len=24)
+mb <- m7
+mbw <- m7w
+
+vjd <- seq(min(fls2$JDAY), max(fls2$JDAY), len=51*10)
+vtd <- seq(0, 23/24, len=24*10)
 pr <- expand.grid(JDAY=vjd, TOD=vtd)
 pr$JDAY2 <- pr$JDAY^2
 pr$sin <- sin(pr$TOD * 2 * pi)
@@ -143,20 +157,29 @@ pr$cos <- cos(pr$TOD * 2 * pi)
 pr$sin2 <- sin(pr$TOD * 2 * pi)^2
 pr$cos2 <- cos(pr$TOD * 2 * pi)^2
 
-fit <- predict(m5, newdata=pr)
-z <- matrix(fit, 51, 24)
-fitw <- predict(m5w, newdata=pr)
-zw <- matrix(fitw, 51, 24)
+fit <- predict(mb, newdata=pr)
+z <- matrix(fit, length(vjd), length(vtd))
+fitw <- predict(mbw, newdata=pr)
+zw <- matrix(fitw, length(vjd), length(vtd))
 
-par(mfrow=c(1,2))
-plot(TOD*24 ~ JULIAN, int2, pch=21, cex=0.6, col="grey", main="Exponential",
+par(mfrow=c(2,2))
+plot(TOD*24 ~ JULIAN, int2, pch=21, cex=0.6, col="grey", main="Exp, rate",
     xlab="Julian day", ylab="Hour")
 points(TOD*24 ~ JULIAN, int2[rowSums(xt)>0,], pch=19, cex=0.6, col=1)
 contour(vjd*365, vtd*24, 1/z, add=TRUE, col=2)
-plot(TOD*24 ~ JULIAN, int2, pch=21, cex=0.6, col="grey", main="Weibull",
+plot(TOD*24 ~ JULIAN, int2, pch=21, cex=0.6, col="grey", main="Weibull, rate",
     xlab="Julian day", ylab="Hour")
 points(TOD*24 ~ JULIAN, int2[rowSums(xt)>0,], pch=19, cex=0.6, col=1)
 contour(vjd*365, vtd*24, 1/zw, add=TRUE, col=2)
+
+plot(TOD*24 ~ JULIAN, int2, pch=21, cex=0.6, col="grey", main="Exp, p10",
+    xlab="Julian day", ylab="Hour")
+points(TOD*24 ~ JULIAN, int2[rowSums(xt)>0,], pch=19, cex=0.6, col=1)
+contour(vjd*365, vtd*24, 1-exp(-10*1/z), add=TRUE, col=2)
+plot(TOD*24 ~ JULIAN, int2, pch=21, cex=0.6, col="grey", main="Weibull, p10",
+    xlab="Julian day", ylab="Hour")
+points(TOD*24 ~ JULIAN, int2[rowSums(xt)>0,], pch=19, cex=0.6, col=1)
+contour(vjd*365, vtd*24, 1-exp(-(10*1/zw)^(1/mbw$scale)), add=TRUE, col=2)
 
 ## offsets for files (int2)
 int2$JDAY2 <- int2$JDAY^2
@@ -164,13 +187,21 @@ int2$sin <- sin(int2$TOD * 2 * pi)
 int2$cos <- cos(int2$TOD * 2 * pi)
 int2$sin2 <- sin(int2$TOD * 2 * pi)^2
 int2$cos2 <- cos(int2$TOD * 2 * pi)^2
-int2$Rate <- 1 / predict(m5, newdata=int2)
 int2$Duration <- ifelse(int2$Size < 30*10^6, 3, 10)
+
+int2$Rate <- 1 / predict(mb, newdata=int2)
 int2$p <- 1-exp(-int2$Duration * int2$Rate)
+
+#int2$Ratew <- 1 / predict(mbw, newdata=int2)
+#int2$pw <- 1-exp(-(int2$Duration * int2$Ratew)^(1/mbw$scale))
+
 int3 <- int2[,c("file.name","ID","JULIAN","TOD","Rate","Duration","p")]
 int3$Nhits <- rowSums(xt)
 int3$hit01 <- ifelse(int3$Nhits > 0, 1, 0)
 boxplot(p ~ hit01, int3)
+
+plot(p ~ pw, int2, ylim=c(0,1), xlim=c(0,1))
+abline(0,1)
 
 write.csv(int3, row.names=FALSE, 
     file=file.path(ROOT, "data", "aru-coni", "offsets.csv"))
