@@ -56,9 +56,9 @@ city <- spTransform(city, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=5
 H <- 1000 
 W <- 600
 
-## birds
+## non birds
 
-xx <- c(birds="Birds_Species Intactness",
+xx <- c(#birds="Birds_Species Intactness",
     lichens="Lichens_Species Intactness",
     mosses="Mosses_Species Intactness",
     mammals="Mammals_Species Intactness",
@@ -77,23 +77,69 @@ if (is.null(tab$nonnative))
     tab$nonnative <- FALSE
 use <- rownames(tab)[!tab$nonnative & tab$map.pred]
 
-res <- list()
+res <- matrix(NA, nrow(kgrid), length(use))
+rownames(res) <- rownames(kgrid)
+colnames(res) <- use
 for (i in 1:length(use)) {
     cat(i, "/", length(use), "-", TAXA, use[i], "\n")
     flush.console()
     e <- new.env()
     load(file.path(ROOT2, DIR, fl[i]), envir=e)
     SI <- e$SI
-    res[[use[i]]] <- SI$SI[match(rownames(kgrid), SI$LinkID)]
+    res[,i] <- SI$SI[match(rownames(kgrid), SI$LinkID)]
 }
 
-SI <- as.matrix(do.call(cbind, res))
-SInona <- SI
-SInona[is.na(SI)] <- 0
+SI <- res
+meanSI <- rowMeans(SI, na.rm=TRUE)
+meanSI[is.na(meanSI)] <- 100
+
+## make raster
+png(file.path(ROOT2, "out", paste0("intactness-", TAXA, ".png")), width=W, height=H)
+op <- par(mar=c(0, 0, 4, 0) + 0.1)
+r <- map_fun(meanSI, q=1, main="", colScale="intactness",
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    legend=TRUE,
+    mask=NULL)
+xxx <- switch(TAXA,
+    birds="Birds",
+    lichens="Lichens",
+    mosses="Btyophytes",
+    mammals="Mammals",
+    mites="Mites",
+    vplants="Vascular Plants (Native)")
+title(main=paste0("Intactness - ", xxx))
+par(op)
+dev.off()
+writeRaster(r, file.path(ROOT2, "out", paste0("intactness-", TAXA, ".asc")),
+    overwrite=TRUE)
+
+}
+
+
+## birds
+TAXA <- "birds"
+fl <- list.files("e:/peter/sppweb2015/birds-si")
+names(fl) <- sapply(strsplit(fl, "."), "[[", 1)
+tab <- read.csv(paste0("c:/Users/Peter/repos/abmispecies/_data/", TAXA, ".csv"))
+rownames(tab) <- tab$sppid
+if (is.null(tab$nonnative))
+    tab$nonnative <- FALSE
+use <- rownames(tab)[!tab$nonnative & tab$map.pred]
+
+res <- matrix(NA, nrow(kgrid), length(use))
+rownames(res) <- rownames(kgrid)
+colnames(res) <- use
+for (i in 1:length(use)) {
+    cat(i, "/", length(use), "-", TAXA, use[i], "\n")
+    flush.console()
+    SI <- read.csv(file.path("e:/peter/sppweb2015/birds-si", fl[i]))
+    res[,i] <- SI$SI[match(rownames(kgrid), SI$LinkID)]
+}
+
+SI <- res
 meanSI <- rowMeans(SI, na.rm=TRUE)
 #meanSI <- rowMeans(SI)
 meanSI[is.na(meanSI)] <- 0
-#meanSI <- ifelse(is.na(meanSI), 0, 100)
 
 ## make raster
 png(file.path(ROOT2, "out", paste0("intactness-", TAXA, ".png")), width=W, height=H)
@@ -102,12 +148,11 @@ r <- map_fun(meanSI, q=1, main="", colScale="intactness",
     plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
     legend=TRUE,
     mask=NULL)
+title(main="Intactness - Birds")
 #par(op)
 dev.off()
 writeRaster(r, file.path(ROOT2, "out", paste0("intactness-", TAXA, ".asc")),
     overwrite=TRUE)
-
-}
 
 
 
