@@ -47,6 +47,7 @@ mask=NULL)
             "topo" = rev(topo.colors(255)),
             "grey" = grey(seq(1,0,len=255)),
             "hf" = colorRampPalette(brewer.pal("YlOrRd", n=9)[1:6])(255),
+            "intactness" = colorRampPalette(c("red","green"))(255),
             "soil" = colorRampPalette(brewer.pal("Oranges", n=9)[1:6])(255),
             "abund" = colorRampPalette(rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8",
                 "#91BFDB","#4575B4")))(255),
