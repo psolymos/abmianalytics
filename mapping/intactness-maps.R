@@ -55,6 +55,8 @@ city <- spTransform(city, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=5
 
 H <- 1000 
 W <- 600
+kgrid$Row <- as.factor(kgrid$Row)
+kgrid$Col <- as.factor(kgrid$Col)
 
 ## non birds
 
@@ -197,68 +199,70 @@ dev.off()
 writeRaster(r, file.path(ROOT2, "out", paste0("intactness-birds.asc")),
     overwrite=TRUE)
 
+## uniqueness -----------------------
 
+ROOT3 <- "e:/peter/sppweb2015-round3/fromJim/Uniqueness Maps Peter"
+fl <- c("Bird uniqueness probability based_Only native habitat February 2016.Rdata",
+    "Lichens uniqueness_native habitat based February 2016.Rdata",
+    "Mammals uniqueness_native habitat based February 2016.Rdata",
+    "Mites uniqueness February 2016_native habitat based February 2016.Rdata",
+    "Moss uniqueness_native habitat based February 2016.Rdata",
+    "Vascular plants uniqueness_native habitat based February 2016.Rdata")
 
+i <- 1
+for (i in 1:6) {
+lab <- c("birds", "lichens", "mammals", "mites", "mosses", "vplants")[i]
+Lab <- c("Birds", "Lichens", "Mammals", "Mites", "Bryophytes", "Vascular plants")[i]
+load(file.path(ROOT3, fl[i]))
+xx <- Alberta_Uniq[,2][match(rownames(kgrid), Alberta_Uniq[,1])]
 
-
-#source("~/repos/bragging/R/glm_skeleton.R")
-source("~/repos/abmianalytics/R/results_functions.R")
-#source("~/repos/bamanalytics/R/makingsense_functions.R")
-regs <- levels(kgrid$LUFxNSR)
-kgrid$useN <- !(kgrid$NRNAME %in% c("Grassland", "Parkland") | kgrid$NSRNAME == "Dry Mixedwood")
-kgrid$useS <- kgrid$NRNAME == "Grassland"
-
-e <- new.env()
-load(file.path(ROOT, "out", "birds", "data", "data-full-withrevisit.Rdata"), envir=e)
-tax <- e$TAX
-rm(e)
-tax$file <- nameAlnum(as.character(tax$English_Name), "mixed", "")
-
-load(file.path(ROOT, "out", "transitions", paste0(regs[1], ".Rdata")))
-Aveg <- rbind(colSums(trVeg))
-rownames(Aveg) <- regs[1]
-colnames(Aveg) <- colnames(trVeg)
-Asoil <- rbind(colSums(trSoil))
-rownames(Asoil) <- regs[1]
-colnames(Asoil) <- colnames(trSoil)
-
-for (i in 2:length(regs)) {
-    cat(regs[i], "\n");flush.console()
-    load(file.path(ROOT, "out", "transitions", paste0(regs[i], ".Rdata")))
-    Aveg <- rbind(Aveg, colSums(trVeg))
-    rownames(Aveg) <- regs[1:i]
-    Asoil <- rbind(Asoil, colSums(trSoil))
-    rownames(Asoil) <- regs[1:i]
+png(file.path(ROOT3, "out", paste0("uniqueness-PSversion-", lab, ".png")), width=W, height=H)
+#op <- par(mar=c(0, 0, 4, 0) + 0.1)
+r <- map_fun(xx, q=1, main="", colScale="intactness",
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    legend=TRUE,
+    mask=NULL)
+title(main=paste0("Uniqueness - ", Lab))
+#par(op)
+dev.off()
+writeRaster(r, file.path(ROOT3, paste0("uniqueness-", lab, ".asc")),
+    overwrite=TRUE)
 }
-## m^2 to ha
-Aveg <- Aveg / 10^4
-Asoil <- Asoil / 10^4
+
+x1 <- raster(file.path(ROOT3, "uniqueness-birds.asc"))
+x2 <- raster(file.path(ROOT3, "uniqueness-mammals.asc"))
+x3 <- raster(file.path(ROOT3, "uniqueness-mites.asc"))
+x4 <- raster(file.path(ROOT3, "uniqueness-mosses.asc"))
+x5 <- raster(file.path(ROOT3, "uniqueness-vplants.asc"))
+x6 <- raster(file.path(ROOT3, "uniqueness-lichens.asc"))
+
+x <- (x1 + x2 + x3 + x4 + x5 + x6) / 6
+png(file.path(ROOT3, paste0("uniqueness-PSversion-all.png")), width=W, height=H)
+#op <- par(mar=c(0, 0, 4, 0) + 0.1)
+r <- map_fun(x, q=1, main="", colScale="intactness",
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    legend=TRUE,
+    mask=NULL)
+title(main=paste0("Uniqueness - All species"))
+#par(op)
+dev.off()
+writeRaster(r, file.path(ROOT3, paste0("uniqueness-all.asc")),
+    overwrite=TRUE)
 
 
-city <-data.frame(x = -c(114,113,112,111,117,118)-c(5,30,49,23,8,48)/60,
-    y = c(51,53,49,56,58,55)+c(3,33,42,44,31,10)/60)
-rownames(city) <- c("Calgary","Edmonton","Lethbridge","Fort McMurray",
-    "High Level","Grande Prairie")
-coordinates(city) <- ~ x + y
-proj4string(city) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-city <- spTransform(city, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))
-city <- as.data.frame(city)
+## richness rasters
 
-cex <- 0.25
-legcex <- 1.5
+x <- read.csv(file.path(ROOT3, "Relative Species richness for all taxa March 2016.csv"))
 
-Col1 <- rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8","#91BFDB","#4575B4"))  # Colour gradient for reference and current
-Col1fun <- colorRampPalette(Col1, space = "rgb") # Function to interpolate among these colours for reference and current
-C1 <- Col1fun(100)
-Col2 <- c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0","#A1D76A","#4D9221")  # Colour gradient for difference map
-Col2fun <- colorRampPalette(Col2, space = "rgb") # Function to interpolate among these colours for difference map
-C2 <- Col2fun(200)
-CW <- rgb(0.4,0.3,0.8) # water
-CE <- "lightcyan4" # exclude
+xx <- x[match(rownames(kgrid), x$LinkID),]
 
-q <- 0.99
-H <- 1000 
-W <- 600
-
-
-
+for (i in 1:7) {
+    lab <- c("mammals", "birds", "mites", "vplants", "mosses", "lichens", "all")[i]
+    z <- xx[,i+1]
+    r <- map_fun(z, q=1, main="", colScale="intactness",
+        plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+        legend=TRUE,
+        mask=NULL)
+    writeRaster(r, file.path(ROOT3, paste0("richness-", lab, ".asc")),
+        overwrite=TRUE)
+}
