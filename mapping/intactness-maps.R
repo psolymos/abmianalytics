@@ -157,6 +157,46 @@ writeRaster(r, file.path(ROOT2, "out", paste0("intactness-", TAXA, ".asc")),
 
 
 
+## All species: average of taxa (no weighting)
+
+ROOT2 <- "e:/peter/sppweb2015-round3/Species Intactness"
+
+x1 <- raster(file.path(ROOT2, "out", "intactness-birds.asc"))
+x1 <- x1*100
+x2 <- raster(file.path(ROOT2, "out", "intactness-mammals.asc"))
+x3 <- raster(file.path(ROOT2, "out", "intactness-mites.asc"))
+x4 <- raster(file.path(ROOT2, "out", "intactness-mosses.asc"))
+x5 <- raster(file.path(ROOT2, "out", "intactness-vplants.asc"))
+x6 <- raster(file.path(ROOT2, "out", "intactness-lichens.asc"))
+
+x <- (x1 + x2 + x3 + x4 + x5 + x6) / 6
+#plot(x)
+
+## make raster
+png(file.path(ROOT2, "out", paste0("intactness-all.png")), width=W, height=H)
+#op <- par(mar=c(0, 0, 4, 0) + 0.1)
+r <- map_fun(x, q=1, main="", colScale="intactness",
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    legend=TRUE,
+    mask=NULL)
+title(main="Intactness - All species")
+#par(op)
+dev.off()
+writeRaster(r, file.path(ROOT2, "out", paste0("intactness-all.asc")),
+    overwrite=TRUE)
+
+png(file.path(ROOT2, "out", paste0("intactness-birds.png")), width=W, height=H)
+#op <- par(mar=c(0, 0, 4, 0) + 0.1)
+r <- map_fun(x1, q=1, main="", colScale="intactness",
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    legend=TRUE,
+    mask=NULL)
+title(main="Intactness - Birds")
+#par(op)
+dev.off()
+writeRaster(r, file.path(ROOT2, "out", paste0("intactness-birds.asc")),
+    overwrite=TRUE)
+
 
 
 

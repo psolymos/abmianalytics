@@ -57,7 +57,8 @@ mask=NULL)
         col <- colScale(255)
     }
 
-    r <- as_Raster(kgrid$Row, kgrid$Col, x, rt)
+    r <- if (inherits(x, "RasterLayer"))
+        x else as_Raster(kgrid$Row, kgrid$Col, x, rt)
     r[r > quantile(r, q)] <- quantile(r, q)
     ## output raster should be masked as well
     if (maskRockies)
