@@ -1,16 +1,7 @@
 library(mefa4)
-library(pbapply)
 library(RColorBrewer)
 
 ROOT <- "e:/peter/AB_data_v2016/out/birds"
-ROOT2 <- "~/Dropbox/josm/2016/wewp"
-
-#setwd("c:/p/AB_data_v2015/out/birds/results")
-#fl <- list.files()
-#fl2 <- gsub("birds_bam-", "birds_abmi-", fl)
-#for (i in 1:length(fl))
-#    if (fl[i] != fl2[i])
-#        file.rename(fl[i], fl2[i])
 
 level <- 0.9
 
@@ -26,89 +17,380 @@ up <- function() {
 up()
 
 e <- new.env()
-load(file.path(ROOT, "data", "data-full-withrevisit.Rdata"), envir=e)
-dat <- e$DAT
-dat <- dat[dat$useOK,]
-yy <- e$YY[rownames(dat),]
+load(file.path(ROOT, "data", "data-full-north-josm.Rdata"), envir=e)
+xn <- e$DAT
+yy <- e$YY[rownames(xn),]
 tax <- droplevels(e$TAX[colnames(yy),])
-#pveghf <- e$pveghf[rownames(dat),]
-#pveghf <- data.frame(as.matrix(pveghf))
-#pveghf$Open <- pveghf$GrassHerb + pveghf$Shrub
-#pveghf <- as.matrix(pveghf[,c("Decid", "Mixwood", "Conif", "Pine", "BSpr", "Larch", 
-#    "Open", "Wetland", "Cult", "UrbInd", "HardLin", "SoftLin")])
-#colnames(pveghf) <- c("Deciduous", "Mixedwood", "White Spruce", "Pine", 
-#    "Black Spruce", "Larch", 
-#    "Open", "Wet", "Cultivated", "Urban/Industrial", "Hard Linear", "Soft Linear")
-#psoilhf <- as.matrix(e$psoilhf[rownames(dat),c("Productive", "Clay", 
-#    "Saline", "RapidDrain", "Cult", "UrbInd")])
-#colnames(psoilhf) <- c("Productive", "Clay", 
-#    "Saline", "Rapid Drain", "Cultivated", "Urban/Industrial")
+mods <- e$mods
+OFF <- e$OFF
+BB <- e$BB
 
-en <- new.env()
-load(file.path(ROOT, "data", "data-full-north.Rdata"), envir=en)
-xnn <- en$DAT
-modsn <- en$mods
-yyn0 <- en$YY
-
-es <- new.env()
-load(file.path(ROOT, "data", "data-full-south.Rdata"), envir=es)
-xns <- es$DAT
-modss <- es$mods
-yys0 <- es$YY
-rm(e, en, es)
-
-yyn <- yy[rownames(yyn0),]
-yys <- yy[rownames(yys0),]
+## BBS issue
+ii <- xn$PCODE == "BBSAB"
+yg <- as.matrix(t(groupMeans(yy[ii,], 1, xn$YEAR[ii])))
 
 
 ## terms and design matrices
-nTerms <- getTerms(modsn, "list")
-sTerms <- getTerms(modss, "list")
-Xnn <- model.matrix(getTerms(modsn, "formula"), xnn)
-colnames(Xnn) <- fixNames(colnames(Xnn))
-Xns <- model.matrix(getTerms(modss, "formula"), xns)
-colnames(Xns) <- fixNames(colnames(Xns))
+Terms <- getTerms(mods, "list")
+Xn <- model.matrix(getTerms(mods, "formula"), xn)
+colnames(Xn) <- fixNames(colnames(Xn))
 
-stage_hab_n <- 5
-stage_hab_s <- 3
+stage_hab <- 5
+stage_sp <- 7
 
+SPP <- colnames(yy)
+SPP <- c(SPP, "CONI")
 
-spp <- "WEWP"
-do_hsh <- FALSE
-do_veg <- TRUE
+## -- species specific results --
 
-    NAM <- as.character(tax[spp, "English_Name"])
-    f <- file.path(ROOT2, "results", paste0("birds_abmi-",
-        ifelse(do_hsh, "dohsh", "nohsh"), ifelse(do_veg, "-north_", "-south_"), spp, ".Rdata"))
-    resn <- loadSPP(f)
+spp <- "CAWA"
+
+allres <- list()
+estall <- list()
+for (spp in SPP) {
+cat(spp, "\n");flush.console()
+f <- file.path(ROOT, "josm", "results", paste0("birds_josm_", spp, ".Rdata"))
+allres[[spp]] <- loadSPP(f)
+estall[[spp]] <- getEst(allres[[spp]], na.out=FALSE, X=Xn)
+}
+
+for (spp in SPP) {
+
+cat(spp, "\n");flush.console()
+NAM <- as.character(tax[spp, "English_Name"])
+f <- file.path(ROOT, "josm", "results", paste0("birds_josm_", spp, ".Rdata"))
+#res <- loadSPP(f)
+res <- allres[[spp]]
 
 ## habitat assoc
-    estn_hab <- getEst(resn, stage=stage_hab_n, na.out=FALSE, Xnn)
-    prn <- pred_veghf(estn_hab, Xnn, burn_included=FALSE)
-    ## veghf
-    fname <- file.path("e:/peter/AB_data_v2016/out/birds/wewp",
-        paste0("habitat-", as.character(tax[spp, "Species_ID"]), ".png"))
-    png(file=fname,width=1500,height=700)
-	fig_veghf(prn, NAM)
-	dev.off()
+est_hab <- getEst(res, stage=stage_hab, na.out=FALSE, Xn)
+pr <- pred_veghf(est_hab, Xn, burn_included=FALSE)
+## veghf
+fname <- file.path(ROOT, "josm", "fig-veghf", paste0("fig-veghf-", spp, ".png"))
+png(file=fname,width=1500,height=700)
+fig_veghf(pr, NAM)
+dev.off()
 
-## surrounding hf
-    estn_sp <- getEst(resn, stage=9, na.out=FALSE, Xnn)
-    fname <- file.path("e:/peter/AB_data_v2016/out/birds/wewp",
-        paste0("surroundingHF-", as.character(tax[spp, "Species_ID"]), ".png"))
-    png(file=fname, width=7.5, height=5.7, units="in", res=300)
-    op <- par(mai=c(0.9,1,0.2,0.3))
-    fig_hf_noremn(estn_sp, Xnn, LAB=NAM)
-    par(op)
-    dev.off()
-## surrounding Wet
-    fname <- file.path("e:/peter/AB_data_v2016/out/birds/wewp",
-        paste0("surroundingWet-", as.character(tax[spp, "Species_ID"]), ".png"))
-    png(file=fname, width=7.5, height=5.7, units="in", res=300)
-    op <- par(mai=c(0.9,1,0.2,0.3))
-    fig_any("WetWaterKM", estn_sp, Xnn, xlab="Surrounding Wet/Water (%)", LAB=NAM)
-    par(op)
-    dev.off()
+## surrounding hf and hsh
+
+est_sp <- getEst(res, stage=stage_sp, na.out=FALSE, Xn)
+fname <- file.path(ROOT, "josm", "fig-km", paste0("fig-km-", spp, ".png"))
+png(file=fname, width=7.5*2.5, height=5.7, units="in", res=300)
+op <- par(mai=c(0.9,1,0.2,0.3), mfrow=c(1,3))
+
+## surrounding HSH
+fig_hsh(est_sp, Xn, xlab="Surrounding HSH (%)", LAB=NAM)
+## hsh=0%
+fig_hf_noremn(est_sp, Xn, LAB=NAM, fillin=0)
+## hsh=100%
+fig_hf_noremn(est_sp, Xn, LAB=NAM, fillin=1)
+
+par(op)
+dev.off()
+
+}
+
+
+## model selection results
+
+
+Bs <- sapply(estall, nrow)
+Bs[Bs < max(Bs)]
+
+allmid <- list()
+for (spp in SPP) {
+allmid[[spp]] <- getMidPure(allres[[spp]], mods)
+}
+
+aru <- t(sapply(allmid, function(z) {
+    id <- z[,"ARU"]
+    sapply(0:length(mods$ARU), function(i) sum(id==i))
+    }))
+colnames(aru) <- 0:length(mods$ARU)
+lin <- t(sapply(allmid, function(z) {
+    id <- z[,"Contrast"]
+    sapply(0:length(mods$Contrast), function(i) sum(id==i))
+    }))
+colnames(lin) <- 0:length(mods$Contrast)
+mkm <- t(sapply(allmid, function(z) {
+    id <- z[,"KM"]
+    sapply(0:length(mods$KM), function(i) sum(id==i))
+    }))
+colnames(mkm) <- 0:length(mods$KM)
+mkm2 <- groupSums(mkm, 2, c("0", rep("s", length(1:2)), 
+    rep("hf", length(3:14)), #rep("shf", length(15:26)), rep("shf2", length(27:38))))
+    rep("shf2", length(15:38))))
+
+xaru <- find_max(aru)
+xlin <- find_max(lin)
+xkm <- find_max(mkm2)
+
+par(mfrow=c(1,3))
+hist(xaru$value / rowSums(aru))
+hist(xlin$value / rowSums(lin))
+hist(xkm$value / rowSums(mkm))
+round(100*table(xaru$index)/length(SPP), 2)
+round(100*table(xlin$index)/length(SPP), 2)
+round(100*table(xkm$index)/length(SPP), 2)
+
+## ARUs
+cfARU <- exp(t(sapply(estall, function(z) {
+    zz <- z[,c("ARU1RFSM", "ARU2SM", "ARU3SM", "ARU3RF")]
+    zz[zz==0] <- NA
+    colMeans(zz, na.rm=TRUE)
+    })))
+plot(density(sqrt(cfARU[,"ARU3SM"])), col=4, xlim=c(0, 4), ylim=c(0, 1.5),
+    main="EDR contrast relative to human based PCs")
+lines(density(sqrt(cfARU[,"ARU3RF"])), col=2)
+abline(v=1)
+legend("topright", bty="n", lty=1, col=c(1, 2, 4), legend=c("Human","RF","SM"))
+## look at AIC differences between models: support for TRAD-RF difference
+
+
+
+spp <- "CONI"
+## opticut results
+#midtab <- getFancyMid(res, mods)
+#mid <- getMidPure(res, mods)
+
+mods$Contrast
+table(mid[,"Contrast"])
+
+mods$ARU
+table(mid[,"ARU"])
+
+table(mid[,"KM"])
+
+## opticut
+
+spp <- "ALFL"
+res <- allres[[spp]]
+
+cn <- c(
+        "ConifR", "ConifA", "ConifB", "ConifC", "ConifD", 
+        "PineR", "PineA", "PineB", "PineC", "PineD", 
+        "DecidR", "DecidA", "DecidB", "DecidC", "DecidD", 
+        "MixwoodR", "MixwoodA", "MixwoodB", "MixwoodC", "MixwoodD", 
+        "BSprR", "BSprA", "BSprB", "BSprC", "BSprD", 
+        "LarchR", "LarchA", "LarchB", "LarchC", "LarchD", 
+        "GrassHerb", "Shrub", 
+        "Swamp", "WetGrass", "WetShrub",
+        "Cult", "UrbInd")
+oc_fun <- function(res) {
+    res <- res[!sapply(res, inherits, "try-error")]
+    hi <- lapply(res, "[[", "hi")
+    mhi <- matrix(0, nlevels(xn[[res[[1]]$hsh_name]]), length(hi))
+    rownames(mhi) <- levels(xn[[res[[1]]$hsh_name]])
+    for (i in 1:length(hi))
+        mhi[hi[[i]],i] <- 1
+    rowSums(mhi) / ncol(mhi)
+}
+Hi <- t(sapply(allres, oc_fun))
+Hi <- Hi[,cn]
+
+oc_plot <- function(res) {
+    hi <- oc_fun(res)
+    hi <- hi[cn]
+    op <- par(las=1, mar=c(4,8,2,2))
+    on.exit(par(op))
+    barplot(rev(hi), horiz=TRUE, space=0, col=grey(1-rev(hi)))
+#    box()
+    invisible(hi)
+}
+
+for (spp in SPP) {
+fname <- file.path(ROOT, "josm", "fig-oc", paste0("fig-oc-", spp, ".png"))
+png(file=fname,width=700,height=700)
+oc_plot(allres[[spp]])
+dev.off()
+}
+
+
+library(vegan)
+fit <- rda(t(Hi))
+plot(scores(fit)$sites, type="n", xlim=c(-2,2), ylim=c(-2,2))
+text(scores(fit)$sites, labels=rownames(scores(fit)$sites), cex=0.8, col=2)
+text(scores(fit)$species*3, labels=rownames(scores(fit)$species), cex=0.8, col=4)
+
+## trend
+
+## years with overlap between BBS and other data
+table(xn$YEAR, xn[, "PCODE"] == "BBSAB")
+rn <- rownames(xn)[xn$YEAR %in% 1997:2013 & rownames(xn) %in% rownames(yy)]
+
+ai_plot <- function(ai, ...) {
+    plot(ai,type="b", ...)
+    abline(lm(x ~ Year, ai), col=2)
+    lines(lowess(ai), col=4)
+    invisible(NULL)
+}
+resid_yr <- function(i) {
+    id <- BB[,i]
+    d <- data.frame(count=as.numeric(yy[id,spp]),
+        pred=logpr[id], YR=xn[id,"YR"])
+    m <- glm(count ~ offset(pred) + YR, d, family=poisson)
+    100 * (exp(0.1*coef(m)["YR"]) - 1)
+}
+
+spp <- "CAWA"
+
+for (spp in SPP[SPP !="CONI"]) {
+
+cat(spp, "\n");flush.console()
+y <- as.numeric(yy[, spp])
+is_bbs <- xn[, "PCODE"] == "BBSAB"
+yr <- xn[, "YEAR"]
+
+Beta <- estall[[spp]][,"YR"]
+Test <- 100 * (exp(0.1 * Beta) - 1)
+summary(Test)
+quantile(Test, c(0.05, 0.95))
+
+est_sp <- getEst(allres[[spp]], stage=stage_sp, na.out=TRUE, Xn)
+
+pr0 <- pbapply(est_sp, 1, function(z) Xn %*% z)
+off <- OFF[,spp]
+
+pr <- pr0 + off
+prmean <- rowMeans(exp(pr0), na.rm=TRUE)
+logpr <- log(prmean * exp(off))
+r <- (y - (prmean * exp(off))) / sqrt(y+ 0.5)
+
+#ryr <- pbsapply(1:240, resid_yr)
+
+d <- data.frame(count=as.numeric(yy[,spp]),
+    pred=logpr, YR=xn[,"YR"])
+m <- glm(count ~ offset(pred) + YR, d, family=poisson)
+Tres <- 100 * (exp(0.1*coef(m)["YR"]) - 1)
+
+ai_all <- aggregate(y, list(Year=yr), mean)
+ai_all <- ai_all[ai_all$Year < 2014,]
+ai_bbs <- aggregate(y[is_bbs], list(Year=yr[is_bbs]), mean)
+ai_bbs <- ai_bbs[ai_bbs$Year < 2014,]
+ai_bam <- aggregate(y[!is_bbs], list(Year=yr[!is_bbs]), mean)
+ai_bam <- ai_bam[ai_bam$Year < 2014,]
+
+ri_all <- aggregate(r, list(Year=yr), mean)
+ri_all <- ri_all[ri_all$Year < 2014,]
+ri_bbs <- aggregate(r[is_bbs], list(Year=yr[is_bbs]), mean)
+ri_bbs <- ri_bbs[ri_bbs$Year < 2014,]
+ri_bam <- aggregate(r[!is_bbs], list(Year=yr[!is_bbs]), mean)
+ri_bam <- ri_bam[ri_bam$Year < 2014,]
+
+
+NAM <- as.character(tax[spp, "English_Name"])
+fname <- file.path(ROOT, "josm", "fig-trend", paste0("fig-trend-", spp, ".png"))
+png(file=fname,width=600,height=800)
+op <- par(mfrow=c(4,2))
+hist(Test, col="grey", xlim=range(c(Test, Tres, 0)), xlab="Modeled Annual Trend (%)", main=NAM)
+abline(v=0, col=1, lwd=2, lty=2)
+abline(v=median(Test), col=2, lwd=2)
+abline(v=median(Tres), col=4, lwd=2)
+plot.new()
+ai_plot(ai_bam, main=paste("BAM+EC+ABMI"), ylab="Annual Mean Abundance Index")
+ai_plot(ri_bam, main=paste("BAM+EC+ABMI"), ylab="Std. Residuals")
+ai_plot(ai_bbs, main=paste("BBS"), ylab="Annual Mean Abundance Index")
+ai_plot(ri_bbs, main=paste("BBS"), ylab="Std. Residuals")
+ai_plot(ai_all, main=paste("BAM+EC+ABMI+BBS"), ylab="Annual Mean Abundance Index")
+ai_plot(ri_all, main=paste("BAM+EC+ABMI+BBS"), ylab="Std. Residuals")
+par(op)
+dev.off()
+}
+
+
+
+
+
+
+
+
+
+est <- getEst(res, stage=6)
+est_yr <- getEst(res, stage=7)
+## decadal
+#tw <- 100 * (exp(est_yr[,"YR"]) - 1)
+#te <- 100 * (exp(est_yr[,"YR"] + est_yr[,"EWE:YR"]) - 1)
+## yearly
+tw <- 100 * (exp(0.1*est_yr[,"YR"]) - 1)
+te <- 100 * (exp(0.1*(est_yr[,"YR"] + est_yr[,"EWE:YR"])) - 1)
+
+summary(tw)
+summary(te)
+fstat <- round(cbind(West=c(Median=median(tw), quantile(tw, c(0.05, 0.95))),
+    East=c(Median=median(te), quantile(te, c(0.05, 0.95)))),2)
+
+stopifnot(all(colnames(Xn) == colnames(est)))
+lam <- exp(pbapply(est, 1, function(z) Xn %*% z))
+lam_hat <- pbapply(lam, 1, median)
+pr <- log(lam_hat) + off[,spp]
+y <- yy[,spp]
+if (spp == "CAWA")
+    y[y>5] <- 6
+r <- (y - exp(pr)) / sqrt(y + 0.5)
+
+NN <- aggregate(y, list(YR=10*xn$YR+2001,EW=xn$EW), mean)
+RR <- aggregate(r, list(YR=10*xn$YR+2001,EW=xn$EW), mean)
+NN <- NN[NN$YR >= 2002 & NN$YR <= 2012,]
+RR <- RR[RR$YR >= 2002 & RR$YR <= 2012,]
+
+dd <- data.frame(y=y, pr=pr, YR=xn$YR, EW=xn$EW)
+
+resid_yr <- function(i) {
+    m <- glm(y ~ offset(pr) + YR + EW:YR, dd[bb[,i],], family=poisson)
+    c(mtw = 100 * (exp(0.1*coef(m)["YR"]) - 1),
+        mte = 100 * (exp(0.1*(coef(m)["YR"] + coef(m)["YR:EWE"])) - 1))
+}
+#resid_yr(1)
+yr_res <- t(pbsapply(1:ncol(bb), resid_yr))
+fstatm <- round(cbind(West=c(Median=median(yr_res[,"mtw.YR"]), 
+    quantile(yr_res[,"mtw.YR"], c(0.05, 0.95))),
+    East=c(Median=median(yr_res[,"mte.YR"]), 
+    quantile(yr_res[,"mte.YR"], c(0.05, 0.95)))),2)
+
+pdf(file.path(ROOT2, "species", "cawa-nmbca-trend", paste0("trend-", fo, ".pdf")),
+    width=7, height=10)
+op <- par(mfrow=c(4,2))
+
+plot(x ~ YR, NN[NN$EW=="W",], ylab="Annual Mean Abundance Index", xlab="Year", 
+    type="b", col=1, pch=19, main="CAWA, West", ylim=c(0, max(NN$x)))
+abline(lm(x ~ YR, NN[NN$EW=="W",]), col="red4")
+plot(x ~ YR, NN[NN$EW=="E",], ylab="Annual Mean Abundance Index", xlab="Year", 
+    type="b", col=1, pch=19, main="CAWA, East", ylim=c(0, max(NN$x)))
+abline(lm(x ~ YR, NN[NN$EW=="E",]), col="red4")
+
+plot(x ~ YR, RR[RR$EW=="W",], ylab="Std. Residuals", xlab="Year", 
+    type="b", col=1, pch=19, main="", ylim=range(RR$x))
+abline(lm(x ~ YR, RR[RR$EW=="W",]), col="red4")
+plot(x ~ YR, RR[RR$EW=="E",], ylab="Std. Residuals", xlab="Year", 
+    type="b", col=1, pch=19, main="", ylim=range(RR$x))
+abline(lm(x ~ YR, RR[RR$EW=="E",]), col="red4")
+
+hist(tw, col="gold", xlab="Modeled Annual Trend (%)", main="", 
+    xlim=range(c(yr_res,tw,te)), freq=FALSE)
+abline(v=fstat[1,"West"], col="red4", lty=1, lwd=2)
+abline(v=fstat[2:3,"West"], col="red4", lty=2, lwd=1)
+hist(te, col="gold", xlab="Modeled Annual Trend (%)", main="", 
+    xlim=range(c(yr_res,tw,te)), freq=FALSE)
+abline(v=fstat[1,"East"], col="red4", lty=1, lwd=2)
+abline(v=fstat[2:3,"East"], col="red4", lty=2, lwd=1)
+
+hist(yr_res[,"mtw.YR"], col="gold", xlab="Residual Annual Trend (%)", 
+    main="", xlim=range(c(yr_res,tw,te)), freq=FALSE)
+abline(v=fstatm[1,"West"], col="red4", lty=1, lwd=2)
+abline(v=fstatm[2:3,"West"], col="red4", lty=2, lwd=1)
+hist(yr_res[,"mte.YR"], col="gold", xlab="Residual Annual Trend (%)", 
+    main="", xlim=range(c(yr_res,tw,te)), freq=FALSE)
+abline(v=fstatm[1,"East"], col="red4", lty=1, lwd=2)
+abline(v=fstatm[2:3,"East"], col="red4", lty=2, lwd=1)
+
+par(op)
+dev.off()
+
+
+
+
+
+## --- old
 
 ## ASP CTI
 ## CTI: high when it is flat, low when it is higher slope

@@ -406,8 +406,8 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
     cc <- paste(c("THF", "Lin", "Nonlin", "Succ", "Alien", "Noncult", "Cult", 
         "THF2", "Nonlin2", "Succ2", "Alien2", "Noncult2"),
         "KM", sep="_")
-    if (remn)
-        cc <- c(cc, paste(c("Remn", "Remn2"), "KM", sep="_"))
+#    if (remn)
+    cc <- c(cc, "HSH", "HSH2")
     ehf <- est
     ehf[] <- 0
     ehf[,cc] <- est[,cc]
@@ -424,8 +424,8 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
             Xhf[] <- 0
             rownames(Xhf) <- NULL
             if (remn & type == "Remn") {
-                Xhf[,"Remn_KM"] <- hf
-                Xhf[,"Remn2_KM"] <- hf^2
+                Xhf[,"HSH"] <- hf
+                Xhf[,"HSH2"] <- hf^2
             }
             if (type == "Cult") {
                 Xhf[,"THF_KM"] <- hf
@@ -435,9 +435,9 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
                 Xhf[,"Cult_KM"] <- hf
                 Xhf[,"Nonlin_KM"] <- hf
                 Xhf[,"Nonlin2_KM"] <- hf^2
-                if (fillin) {
-                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
+                if (fillin > 0) {
+                    Xhf[,"HSH"] <- pmin(fillin, 1-hf)
+                    Xhf[,"HSH2"] <- Xhf[,"HSH"]^2
                 }
             }
             if (type == "UrbInd") {
@@ -449,9 +449,9 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
                 Xhf[,"Noncult2_KM"] <- hf^2
                 Xhf[,"Nonlin_KM"] <- hf
                 Xhf[,"Nonlin2_KM"] <- hf^2
-                if (fillin) {
-                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
+                if (fillin > 0) {
+                    Xhf[,"HSH"] <- pmin(fillin, 1-hf)
+                    Xhf[,"HSH2"] <- Xhf[,"HSH"]^2
                 }
             }
             if (type == "HFor") {
@@ -463,9 +463,9 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
                 Xhf[,"Noncult2_KM"] <- hf^2
                 Xhf[,"Nonlin_KM"] <- hf
                 Xhf[,"Nonlin2_KM"] <- hf^2
-                if (fillin) {
-                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
+                if (fillin > 0) {
+                    Xhf[,"HSH"] <- pmin(fillin, 1-hf)
+                    Xhf[,"HSH2"] <- Xhf[,"HSH"]^2
                 }
             }
             if (type == "SoftLin") {
@@ -476,9 +476,9 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
                 Xhf[,"Noncult_KM"] <- hf
                 Xhf[,"Noncult2_KM"] <- hf^2
                 Xhf[,"Lin_KM"] <- hf
-                if (fillin) {
-                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
+                if (fillin > 0) {
+                    Xhf[,"HSH"] <- pmin(fillin, 1-hf)
+                    Xhf[,"HSH2"] <- Xhf[,"HSH"]^2
                 }
             }
             if (type == "HardLin") {
@@ -489,15 +489,11 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
                 Xhf[,"Noncult_KM"] <- hf
                 Xhf[,"Noncult2_KM"] <- hf^2
                 Xhf[,"Lin_KM"] <- hf
-                if (fillin) {
-                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
+                if (fillin > 0) {
+                    Xhf[,"HSH"] <- pmin(fillin, 1-hf)
+                    Xhf[,"HSH2"] <- Xhf[,"HSH"]^2
                 }
             }
-        #prst <- predStat(Xhf, ehf, level, n=0, ci=TRUE, raw=FALSE)[,c("Median", "CL1q","CL2q")]
-        #prst[,1] <- prst[,1] / prst[1,1]
-        #prst[,2] <- prst[,2] / prst[1,1]
-        #prst[,2] <- prst[,2] / prst[1,1]
         prst <- t(exp(predStat(Xhf, ehf, raw=TRUE)))
         Mean <- colMeans(prst)
         prst <- t(apply(t(prst / prst[,1]), 1, quantile, c(0.5, 0.05, 0.95), na.rm=TRUE))
@@ -510,7 +506,6 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
 pred_any <- 
 function(what="WetWaterKM", est, Xn, n=200) 
 {
-
     ehf <- est
     ehf[] <- 0
     ehf[,what] <- est[,what]
@@ -529,8 +524,31 @@ function(what="WetWaterKM", est, Xn, n=200)
     data.frame(hf=hf*100, prst, Mean=Mean)
 }
 
+pred_hsh <- 
+function(est, Xn, n=200) 
+{
+    ehf <- est
+    ehf[] <- 0
+    ehf[,"HSH"] <- est[,"HSH"]
+    ehf[,"HSH2"] <- est[,"HSH2"]
+
+    hf <- seq(0, 1, len=n)
+    Xhf <- Xn[1:n,] # matrix(0, n, length(cc))
+    Xhf[] <- 0
+    rownames(Xhf) <- NULL
+    Xhf[,"HSH"] <- hf
+    Xhf[,"HSH2"] <- hf^2
+
+    prst <- t(exp(predStat(Xhf, ehf, raw=TRUE)))
+    Mean <- colMeans(prst)
+    prst <- t(apply(t(prst / prst[,1]), 1, quantile, c(0.5, 0.05, 0.95), na.rm=TRUE))
+    colnames(prst) <- c("Median", "CL1q","CL2q")
+
+    data.frame(hf=hf*100, prst, Mean=Mean)
+}
+
 fig_hf_noremn <- 
-function(est, Xn, fillin=0,LAB="") 
+function(est, Xn, fillin=0, LAB="") 
 {
     pr <- pred_hf(est, Xn, fillin=fillin)
     pr <- pr[c("HFor", "Cult", "UrbInd", "SoftLin", "HardLin")]
@@ -541,7 +559,7 @@ function(est, Xn, fillin=0,LAB="")
     Colb <- c("#00FF0015", "#DD000010", "#D0D00025", "#80008015", "#0000DD10")
     Coll <- c(rgb(0.2,0.6,0.2), "red3", "orange3", "#A000A0", "blue3")
 
-    op <- par(mfrow=c(1,1))
+#    op <- par(mfrow=c(1,1))
 
     plot(pr[["Cult"]]$hf, pr[["Cult"]]$Median,
         xlab="", ylim=c(0,ymax),
@@ -564,7 +582,7 @@ function(est, Xn, fillin=0,LAB="")
         lines(pr[[i]]$hf, pr[[i]][,"Median"], col=Coll[i],lwd=2)
     text(rep(0.1, 5), c(0.9, 0.75, 0.6, 0.45, 0.3), names(pr), pos=4, col=Coll)
     
-    par(op)
+#    par(op)
     
     invisible(NULL)
 }
@@ -580,7 +598,7 @@ function(what, est, Xn, LAB="", xlab="Percent")
     Colb <- c("#00FF0015", "#DD000010", "#D0D00025", "#80008015", "#0000DD10")[1]
     Coll <- c(rgb(0.2,0.6,0.2), "red3", "orange3", "#A000A0", "blue3")[1]
 
-    op <- par(mfrow=c(1,1))
+#    op <- par(mfrow=c(1,1))
 
     plot(pr$hf, pr$Median,
         xlab="", ylim=c(0,ymax),
@@ -600,7 +618,43 @@ function(what, est, Xn, LAB="", xlab="Percent")
     lines(pr$hf, pr[,"Median"], col=Coll,lwd=2)
     #text(rep(0.1, 5), c(0.9, 0.75, 0.6, 0.45, 0.3), names(pr), pos=4, col=Coll)
     
-    par(op)
+#    par(op)
+    
+    invisible(NULL)
+}
+
+fig_hsh <- 
+function(est, Xn, LAB="", xlab="Percent") 
+{
+    pr <- pred_hsh(est, Xn)
+    ymax <- max(pr[,-1])
+    mmax <- min(max(max(max(pr[,2])), 5), 10)
+    ymax <- min(mmax, ymax)
+    
+    Colb <- c("#00FF0015", "#DD000010", "#D0D00025", "#80008015", "#0000DD10")[1]
+    Coll <- c(rgb(0.2,0.6,0.2), "red3", "orange3", "#A000A0", "blue3")[1]
+
+#    op <- par(mfrow=c(1,1))
+
+    plot(pr$hf, pr$Median,
+        xlab="", ylim=c(0,ymax),
+        cex.axis=1.3,xaxs="i",yaxs="i",xaxt="n",yaxt="n",typ="n",bty="n",
+        ylab="Relative abundance",col.lab="grey50",cex.lab=1.2)
+    axis(side=1,at=seq(0,100,25),tck=1,cex.axis=1,col.axis="grey60",col.ticks="grey80")
+    axis(side=2,at=seq(0,ymax,0.5),tck=1,cex.axis=1,col.axis="grey60",col.ticks="grey80",las=2)
+    axis(side=1,at=seq(0,100,25),tck=0.01,cex.axis=1,col.axis="grey60",col.ticks="grey60")
+    axis(side=2,at=seq(0,ymax,0.5),tck=0.01,cex.axis=1,col.axis="grey60",col.ticks="grey60",las=2)
+    mtext(side=1,at=50,adj=0.5,xlab,line=2,col="grey50",cex=1.2)
+    box(col="grey60")
+    mtext(side=3,at=0,adj=0,LAB,col="grey30")
+
+    polygon(c(pr$hf, rev(pr$hf)),
+        c(pr[,"CL1q"], rev(pr[,"CL2q"])),
+        col=Colb, border=NA)  # Transparent colours so they overlap
+    lines(pr$hf, pr[,"Median"], col=Coll,lwd=2)
+    #text(rep(0.1, 5), c(0.9, 0.75, 0.6, 0.45, 0.3), names(pr), pos=4, col=Coll)
+    
+#    par(op)
     
     invisible(NULL)
 }
