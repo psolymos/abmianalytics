@@ -41,6 +41,8 @@ stage_sp <- 7
 SPP <- colnames(yy)
 SPP <- c(SPP, "CONI")
 
+res_dir <- "results-bbsproblem"
+
 ## -- species specific results --
 
 spp <- "CAWA"
@@ -49,7 +51,7 @@ allres <- list()
 estall <- list()
 for (spp in SPP) {
 cat(spp, "\n");flush.console()
-f <- file.path(ROOT, "josm", "results", paste0("birds_josm_", spp, ".Rdata"))
+f <- file.path(ROOT, "josm", res_dir, paste0("birds_josm_", spp, ".Rdata"))
 allres[[spp]] <- loadSPP(f)
 estall[[spp]] <- getEst(allres[[spp]], na.out=FALSE, X=Xn)
 }
@@ -58,7 +60,7 @@ for (spp in SPP) {
 
 cat(spp, "\n");flush.console()
 NAM <- as.character(tax[spp, "English_Name"])
-f <- file.path(ROOT, "josm", "results", paste0("birds_josm_", spp, ".Rdata"))
+f <- file.path(ROOT, "josm", res_dir, paste0("birds_josm_", spp, ".Rdata"))
 #res <- loadSPP(f)
 res <- allres[[spp]]
 
@@ -216,7 +218,7 @@ text(scores(fit)$species*3, labels=rownames(scores(fit)$species), cex=0.8, col=4
 
 ## years with overlap between BBS and other data
 table(xn$YEAR, xn[, "PCODE"] == "BBSAB")
-rn <- rownames(xn)[xn$YEAR %in% 1997:2013 & rownames(xn) %in% rownames(yy)]
+#rn <- rownames(xn)[xn$YEAR %in% 1997:2013 & rownames(xn) %in% rownames(yy)]
 
 ai_plot <- function(ai, ...) {
     plot(ai,type="b", ...)
@@ -260,8 +262,14 @@ r <- (y - (prmean * exp(off))) / sqrt(y+ 0.5)
 
 d <- data.frame(count=as.numeric(yy[,spp]),
     pred=logpr, YR=xn[,"YR"])
-m <- glm(count ~ offset(pred) + YR, d, family=poisson)
-Tres <- 100 * (exp(0.1*coef(m)["YR"]) - 1)
+m1 <- glm(count ~ offset(pred) + YR, d, family=poisson)
+Tres_all <- 100 * (exp(0.1*coef(m1)["YR"]) - 1)
+
+m2 <- glm(count ~ offset(pred) + YR, d[is_bbs,], family=poisson)
+Tres_bbs <- 100 * (exp(0.1*coef(m2)["YR"]) - 1)
+
+m3 <- glm(count ~ offset(pred) + YR, d[!is_bbs,], family=poisson)
+Tres_bam <- 100 * (exp(0.1*coef(m3)["YR"]) - 1)
 
 ai_all <- aggregate(y, list(Year=yr), mean)
 ai_all <- ai_all[ai_all$Year < 2014,]
@@ -282,11 +290,17 @@ NAM <- as.character(tax[spp, "English_Name"])
 fname <- file.path(ROOT, "josm", "fig-trend", paste0("fig-trend-", spp, ".png"))
 png(file=fname,width=600,height=800)
 op <- par(mfrow=c(4,2))
-hist(Test, col="grey", xlim=range(c(Test, Tres, 0)), xlab="Modeled Annual Trend (%)", main=NAM)
+hist(Test, col="grey", xlim=range(c(Test, Tres_all,Tres_bbs, Tres_bam, 0)), 
+    xlab="Modeled Annual Trend (%)", main=NAM)
 abline(v=0, col=1, lwd=2, lty=2)
-abline(v=median(Test), col=2, lwd=2)
-abline(v=median(Tres), col=4, lwd=2)
+abline(v=median(Test), col=1, lwd=2)
+abline(v=median(Tres_all), col=4, lwd=2)
+abline(v=median(Tres_bbs), col=2, lwd=2)
+abline(v=median(Tres_bam), col=3, lwd=2)
+
 plot.new()
+legend("bottomright", col=1:4, lty=1, bty="n", lwd=2, 
+    legend=c("Estimate", "BBS", "BAM", "BAM+BBS"))
 ai_plot(ai_bam, main=paste("BAM+EC+ABMI"), ylab="Annual Mean Abundance Index")
 ai_plot(ri_bam, main=paste("BAM+EC+ABMI"), ylab="Std. Residuals")
 ai_plot(ai_bbs, main=paste("BBS"), ylab="Annual Mean Abundance Index")
