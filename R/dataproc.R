@@ -13,10 +13,10 @@ library(pbapply)
 ## use preprocessed national data set for BAM & BBS
 
 ROOT <- "c:/bam/May2015"
-load(file.path(ROOT, "out", "data_package_2015-08-14.Rdata"))
-load(file.path(ROOT, "out", "offsets_allspp_BAMBBS_2015-07-24.Rdata"))
-colnames(OFF)[colnames(OFF) == "YWAR"] <- "YEWA"
-rownames(TAX) <- TAX$Species_ID
+load(file.path(ROOT, "out", "data_package_2016-03-17.Rdata"))
+#load(file.path(ROOT, "out", "offsets_allspp_BAMBBS_2015-07-24.Rdata"))
+#colnames(OFF)[colnames(OFF) == "YWAR"] <- "YEWA"
+TAX <- nonDuplicated(TAX, Species_ID, TRUE)
 DAT <- data.frame(PKEY, SS[match(PKEY$SS, SS$SS),])
 DAT$SS.1 <- NULL
 DAT$PCODE.1 <- NULL
@@ -28,7 +28,7 @@ rownames(DAT) <- DAT$PKEY
 
 ## ABMI data
 load(file=file.path(ROOT, "out",
-    paste0("abmi_data_package_2015-08-18.Rdata")))
+    paste0("abmi_data_package_2016-03-17.Rdata")))
 
 YY <- Xtab(ABUND ~ PKEY + SPECIES, PCTBL)
 ii <- sort(intersect(rownames(DAT), rownames(YY)))
@@ -604,8 +604,8 @@ stopifnot(length(setdiff(getTerms(mods, "list"), colnames(DAT)))==0)
 
 offdat <- DAT[,c("JDAY","TSSR","TREE","LCC_combo","MAXDUR","MAXDIS")]
 
-library(detect)
-load_BAM_QPAD(version=1)
+library(QPAD)
+load_BAM_QPAD(2)
 BAMspp <- getBAMspecieslist()
 load("~/Dropbox/abmi/intactness/dataproc/BAMCOEFS25.Rdata")
 source("~/repos/bamanalytics/R/dataprocessing_functions.R")
@@ -678,7 +678,8 @@ sapply(list(DATSfull,DATNfull,DATS,DATN), nrow)
 ## bootids
 
 #DAT1 <- DAT
-source("~/repos/detect/R/hbootindex.R")
+library(detect)
+#source("~/repos/detect/R/hbootindex.R")
 B <- 239
 
 bbfun <- function(DAT1, B) {
