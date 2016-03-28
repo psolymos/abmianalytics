@@ -229,11 +229,13 @@ lt$ec[lt$ec == "XXX"] <- "Bare"
 
 
 vpt <- as.matrix(veghfpc)
+vpt <- vpt / rowSums(vpt)
 vpt <- groupSums(vpt, 2, lt[colnames(vpt), "ec"])
 vpt <- vpt[match(coni_data$ID, rownames(vpt)),]
 colnames(vpt) <- paste0(colnames(vpt), "_pt")
 
 vkm <- as.matrix(veghfkm)
+vkm <- vkm / rowSums(vkm)
 vkm <- groupSums(vkm, 2, lt[colnames(vkm), "ec"])
 vkm <- vpt[match(coni_data$ID, rownames(vkm)),]
 colnames(vkm) <- paste0(colnames(vkm), "_km")
@@ -249,6 +251,8 @@ save(coni_data,
 
 ## modeling starts here ---------------------------------------------------
 
+ROOT <- "e:/peter/AB_data_v2016"
+load(file.path(ROOT, "data", "aru-coni", "coni-analysis.Rdata"))
 coni_use <- coni_data
 coni_use$hit01 <- NULL
 
@@ -256,7 +260,7 @@ coni_use$file.name <- NULL
 coni_use$ID <- NULL
 coni_use$JULIAN <- NULL
 coni_use$TOD <- NULL
-coni_use$RATE <- NULL
+coni_use$Rate <- NULL
 coni_use$Duration <- NULL
 coni_use$NRNAME <- NULL
 coni_use$NSRNAME <- NULL
@@ -265,12 +269,21 @@ coni_use$Cluster <- NULL
 coni_use$SITE <- NULL
 coni_use$STATION <- NULL
 coni_use$ARU <- NULL
-coni_use$YEAR <- NULL
+coni_use$Year <- NULL
 coni_use$DEPLOY_DATE <- NULL
 coni_use$RETRIEVE_DATE <- NULL
 coni_use$UTM_Zone <- NULL
 coni_use$EASTING <- NULL
 coni_use$NORTHING <- NULL
+
+## resample here if necessary
+coni_use <- coni_use[sample.int(nrow(coni_data), 10^4),]
+
+## Data:
+## Nhits is the count response
+## p is the availability (takes into account date/time/duration (log of this is the offset)
+## vegetation and footprint follows the lookup table naming
+## _pt: 150 m radius, _km: 1 km^2 buffer
 
 library(dismo)
 
@@ -280,9 +293,9 @@ mod1 <- glm(Nhits ~ MAT, data=coni_use, offset=log(coni_use$p), family=poisson)
 ## BRT
 
 mod2 <- gbm.step(data=coni_use, 
-    gbm.x=colnames(coni_use)[c(colnames(coni_use) %in% c("p","Nhits"))],
+    gbm.x=colnames(coni_use)[!(c(colnames(coni_use) %in% c("p","Nhits")))],
     gbm.y="Nhits",
-    offset=coni_data$p,
+    offset=log(coni_use$p),
     family="poisson")
 ## follow these steps:
 ## https://cran.r-project.org/web/packages/dismo/vignettes/brt.pdf
@@ -293,5 +306,11 @@ mod2 <- gbm.step(data=coni_use,
 ## * maybe take a random sample matching that sample size to eliminate 
 ##   sample size related differences in model.
 ## * this can give you something for pitching for ARUs
+
+## relative influence
+summary(mod2)
+
+## plot
+gbm.plot(mod2, n.plots=10)
 
 
