@@ -191,6 +191,20 @@ plot(TOD*24 ~ JULIAN, int2, pch=21, cex=0.6, col="grey", main="Weibull, p10",
 points(TOD*24 ~ JULIAN, int2[rowSums(xt)>0,], pch=19, cex=0.6, col=1)
 contour(vjd*365, vtd*24, 1-exp(-(10*1/zw)^(1/mbw$scale)), add=TRUE, col=2)
 
+
+## figure for report
+par(las=1)
+plot(TOD*24 ~ JULIAN, int2, pch=21, cex=0.6, col="grey", 
+    main="Probability of singing (10 min)",
+    xlab="Julian day", ylab="Hour")
+points(TOD*24 ~ JULIAN, int2[rowSums(xt)>0,], pch=19, cex=0.6, col=1)
+for (i in 1:5) {
+    p <- seq(0.2, 1, by=0.2)[i]
+    col <- colorRampPalette(c("blue", "red"))( 5 )[i]
+    contour(vjd*365, vtd*24, 1-exp(-10*1/z), add=TRUE, col=col, levels=p,
+        labcex=0.8, lwd=2)
+}
+
 ## offsets for files (int2)
 int2$JDAY2 <- int2$JDAY^2
 int2$sin <- sin(int2$TOD * 2 * pi)
