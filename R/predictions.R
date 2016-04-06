@@ -294,6 +294,9 @@ if (TRUE) {
     cat("\n")
     cat(spp, "\t");flush.console()
     cat("rf\t");flush.console()
+#    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), TAG, "-current.eps"), 
+#        horizontal = FALSE, onefile = FALSE, paper = "special",
+#        width=W/100, height=H/100)
     png(paste0("e:/peter/sppweb-html-content/species/birds/map-rf/",
         as.character(tax[spp, "file"]), TAG, ".png"),
         width=W, height=H)
@@ -314,6 +317,9 @@ if (TRUE) {
     dev.off()
 
     cat("cr\t");flush.console()
+#    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), TAG, "-reference.eps"), 
+#        horizontal = FALSE, onefile = FALSE, paper = "special",
+#        width=W/100, height=H/100)
     png(paste0("e:/peter/sppweb-html-content/species/birds/map-cr/",
         as.character(tax[spp, "file"]), TAG, ".png"),
         width=W, height=H)
@@ -334,6 +340,9 @@ if (TRUE) {
     dev.off()
 
     cat("df\n");flush.console()
+#    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), TAG, "-difference.eps"), 
+#        horizontal = FALSE, onefile = FALSE, paper = "special",
+#        width=W/100, height=H/100)
     png(paste0("e:/peter/sppweb-html-content/species/birds/map-df/",
         as.character(tax[spp, "file"]), TAG, ".png"),
         width=W, height=H)
@@ -727,6 +736,9 @@ results10km_list[[as.character(slt[spp,"sppid"])]] <- crveg
     zval <- zval[match(kgrid$Row10_Col10, rownames(crveg))]
 
     cat(spp, "saving CoV map\n\n");flush.console()
+#    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), TAG, "-CoV.eps"), 
+#        horizontal = FALSE, onefile = FALSE, paper = "special",
+#        width=W/100, height=H/100)
     png(paste0("e:/peter/sppweb-html-content/species/birds/map-cov-cr/",
         as.character(tax[spp, "file"]), ".png"),
         width=W, height=H)

@@ -253,6 +253,9 @@ if (tax[spp, "map_det"]) {
     fname <- file.path(ROOT, "figs", "map-det", 
         paste0(as.character(tax[spp, "file"]), ".png"))
 	png(file=fname, width=600, height=1000)
+    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), "-detections.eps"), 
+        horizontal = FALSE, onefile = FALSE, paper = "special",
+        width=6, height=10)
 
     plot(kgrid$X, kgrid$Y, pch=15, cex=0.2, col=col1, axes=FALSE, ann=FALSE)
     points(xyw, pch=15, cex=0.2, col=rgb(0.3,0.45,0.9))
