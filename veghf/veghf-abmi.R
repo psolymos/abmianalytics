@@ -368,7 +368,101 @@ if (SAVE)
         file=file.path(ROOT, VER, "out/abmi_onoff", 
         "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015.Rdata"))
 
+## 2003-2013 revisit updates
 
+load(file.path(ROOT, VER, "out/abmi_onoff", 
+    "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015.Rdata"))
 
+## revisited ABMI sites (on+off) cetre 1 ha
+f1ha <- file.path(ROOT, VER, "data/veghf/revisits", "Center1Ha_reDoYear2003_2013For2015RevisitedSites_tbl.csv")
+d1ha <- read.csv(f1ha)
+d1ha$Site_YEAR <- with(d1ha, interaction(ABMI_ID, survey_year, sep="_", drop=TRUE))
+d1ha$Site_YEAR2 <- rownames(climSite)[match(d1ha$Site_YEAR, climSite$Site_ID)]
+head(d1ha)
+ddr1ha <- make_vegHF_wide(d1ha, col.label = "Site_YEAR2", 
+    col.year="survey_year", col.HFyear="year_")
+ddr1ha$scale <- "1 ha square around site centre"
+compare_sets(rownames(dd1ha[[1]]), rownames(ddr1ha[[1]]))
+
+## revisited ABMI sites (on+off) 9 bird points / site, 150 m radius buffer
+f150m <- file.path(ROOT, VER, "data/veghf/revisits", 
+    "birds150m_reDoYear2003_2013For2015RevisitedSites_tbl.csv")
+d150m <- read.csv(f150m)
+levels(d150m$Site_ID) <- gsub("-", "_", levels(d150m$Site_ID), fixed=TRUE)
+d150m$Site_YEAR_bird <- with(d150m, 
+    interaction(Site_ID, Bird, sep="_", drop=TRUE))
+d150m$Site_YEAR_bird2 <- rownames(climPoint)[match(d150m$Site_YEAR_bird, 
+    climPoint$Site_YEAR_bird)]
+head(d150m)
+ddr150m <- make_vegHF_wide(d150m, col.label = "Site_YEAR_bird2", 
+    col.year="survey_year", col.HFyear="year_")
+ddr150m$scale <- "150 m radius circle around bird points"
+compare_sets(rownames(dd150m[[1]]), rownames(ddr150m[[1]]))
+
+## revisited ABMI sites (on+off) 9 bird points / site, 1 km^2 buffer
+f1km <- file.path(ROOT, VER, "data/veghf/revisits", 
+    "birds564m_reDoYear2003_2013For2015RevisitedSites_tbl.csv")
+d1km <- read.csv(f1km)
+levels(d1km$Site_ID) <- gsub("-", "_", levels(d1km$Site_ID), fixed=TRUE)
+d1km$Site_YEAR_bird <- with(d1km, 
+    interaction(Site_ID, Bird, sep="_", drop=TRUE))
+d1km$Site_YEAR_bird2 <- rownames(climPoint)[match(d1km$Site_YEAR_bird, 
+    climPoint$Site_YEAR_bird)]
+head(d1km)
+ddr1km <- make_vegHF_wide(d1km, col.label = "Site_YEAR_bird2", 
+    col.year="survey_year", col.HFyear="year_")
+ddr1km$scale <- "564 m radius circle around bird points"
+compare_sets(rownames(dd1km[[1]]), rownames(ddr1km[[1]]))
+
+## fix fire
+
+load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
+
+sum(ddr1ha[[1]][,Target0])
+sum(ddr1ha[[1]])
+ddr1ha <- fill_in_0ages(ddr1ha, climSite[rownames(ddr1ha[[1]]), "NSRNAME"])
+sum(ddr1ha[[1]][,Target0])
+sum(ddr1ha[[1]])
+
+sum(ddr150m[[1]][,Target0])
+ddr150m <- fill_in_0ages(ddr150m, climPoint[rownames(ddr150m[[1]]), "NSRNAME"])
+sum(ddr150m[[1]][,Target0])
+
+sum(ddr1km[[1]][,Target0])
+ddr1km <- fill_in_0ages(ddr1km, climPoint[rownames(ddr1km[[1]]), "NSRNAME"])
+sum(ddr1km[[1]][,Target0])
+
+for (i in 1:4) {
+    cat("1ha", i, "\n")
+    print(summary(colMeans(abs(dd1ha[[i]][rownames(ddr1ha[[i]]),] - ddr1ha[[i]]))))
+    cat("150m", i, "\n")
+    print(summary(colMeans(abs(dd150m[[i]][rownames(ddr150m[[i]]),] - ddr150m[[i]]))))
+    cat("1km", i, "\n")
+    print(summary(colMeans(abs(dd1km[[i]][rownames(ddr1km[[i]]),] - ddr1km[[i]]))))
+}
+
+for (i in 1:4) {
+    dd1ha[[i]][rownames(ddr1ha[[i]]),] <- ddr1ha[[i]]
+    dd150m[[i]][rownames(ddr150m[[i]]),] <- ddr150m[[i]]
+    dd1km[[i]][rownames(ddr1km[[i]]),] <- ddr1km[[i]]
+}
+
+for (i in 1:4) {
+    cat("1ha", i, "\n")
+    print(summary(colMeans(abs(dd1ha[[i]][rownames(ddr1ha[[i]]),] - ddr1ha[[i]]))))
+    cat("150m", i, "\n")
+    print(summary(colMeans(abs(dd150m[[i]][rownames(ddr150m[[i]]),] - ddr150m[[i]]))))
+    cat("1km", i, "\n")
+    print(summary(colMeans(abs(dd1km[[i]][rownames(ddr1km[[i]]),] - ddr1km[[i]]))))
+}
+
+## might want to add point level intersection here?
+
+if (SAVE)
+    save(dd1ha, dd150m, dd1km, climSite, climPoint,
+        dd1ha_2015, dd150mCenter_2015, dd1kmCenter_2015,
+        dd150mPT_2015, dd1kmPT_2015, climCenter_2015, climPT_2015,
+        file=file.path(ROOT, VER, "out/abmi_onoff", 
+        "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015-revisits.Rdata"))
 
 
