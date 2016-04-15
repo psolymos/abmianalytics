@@ -45,6 +45,9 @@ $W_{ij}$ is a binary random variable ($W_{ij} = I(Y_{ij}>0)$):
 $$ P(W_{ij}=0) = (1-\gamma_{ij}) + \gamma_{ij} e^{-\lambda_{ij} t_{ij}} $$
 $$ P(W_{ij}=1) = \gamma_{ij} (1 - e^{-\lambda_{ij} t_{ij}}) $$
 
+We can simply fit a ZIP or ZINB model to the total counts, using $log(t)$
+as offset.
+
 ```{r}
 method="Nelder-Mead"
 inits, control=list()
