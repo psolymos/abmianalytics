@@ -154,4 +154,81 @@ aa$MeanPercent <- round(100*colMeans(sss[,as.character(aa$SoilType)]), 2)
 aa
 
 
-do 150 m, include HF
+### check UrbInd reclass
+load(file.path("c:/p", "AB_data_v2015", "out/abmi_onoff", "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0.Rdata"))
+
+hf <- hfgroups
+rownames(hf) <- hf$HF_GROUP
+x1 <- 100*as.matrix(dd1ha[[1]]) / rowSums(dd1ha[[1]])
+x2 <- 100*as.matrix(dd150m[[1]]) / rowSums(dd150m[[1]])
+N1 <- climSite$NRNAME != "Grassland"
+S1 <- climSite$NRNAME %in% c("Grassland", "Parkland") | climSite$NSRNAME == "Dry Mixedwood"
+N2 <- climPoint$NRNAME != "Grassland"
+S2 <- climPoint$NRNAME %in% c("Grassland", "Parkland") | climPoint$NSRNAME == "Dry Mixedwood"
+
+x1 <- cbind(x1, CutBlocks=rowSums(x1[,grepl("CC", colnames(x1))]))
+x1 <- x1[,rownames(hf)]
+x2 <- cbind(x2, CutBlocks=rowSums(x2[,grepl("CC", colnames(x2))]))
+x2 <- x2[,rownames(hf)]
+
+x1 <- groupSums(x1, 2, hf$UseInAnalysisFine)
+x2 <- groupSums(x2, 2, hf$UseInAnalysisFine)
+
+x1n <- x1[N1,]
+x1s <- x1[S1,]
+x2n <- x2[N2,]
+x2s <- x2[S2,]
+
+pdf("urbind-reclass.pdf", onefile=TRUE)
+x <- x1n
+lab <- "1ha North"
+op <- par(mfrow=c(2,2))
+hist(rowSums(x[,1:3]), main=paste0("UrbInd (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(rowSums(x[,1:3]))
+hist(x[,"Urban"], main=paste0("Urban (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(x[,"Urban"])
+hist(x[,"Rural"], main=paste0("Rural (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(x[,"Rural"])
+hist(x[,"Industrial"], main=paste0("Industrial (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(x[,"Industrial"])
+par(op)
+
+x <- x1s
+lab <- "1ha South"
+op <- par(mfrow=c(2,2))
+hist(rowSums(x[,1:3]), main=paste0("UrbInd (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(rowSums(x[,1:3]))
+hist(x[,"Urban"], main=paste0("Urban (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(x[,"Urban"])
+hist(x[,"Rural"], main=paste0("Rural (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(x[,"Rural"])
+hist(x[,"Industrial"], main=paste0("Industrial (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(x[,"Industrial"])
+par(op)
+
+x <- x2n
+lab <- "150m North"
+op <- par(mfrow=c(2,2))
+hist(rowSums(x[,1:3]), main=paste0("UrbInd (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(rowSums(x[,1:3]))
+hist(x[,"Urban"], main=paste0("Urban (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(x[,"Urban"])
+hist(x[,"Rural"], main=paste0("Rural (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(x[,"Rural"])
+hist(x[,"Industrial"], main=paste0("Industrial (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(x[,"Industrial"])
+par(op)
+
+x <- x2n
+lab <- "150m South"
+op <- par(mfrow=c(2,2))
+hist(rowSums(x[,1:3]), main=paste0("UrbInd (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(rowSums(x[,1:3]))
+hist(x[,"Urban"], main=paste0("Urban (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(x[,"Urban"])
+hist(x[,"Rural"], main=paste0("Rural (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(x[,"Rural"])
+hist(x[,"Industrial"], main=paste0("Industrial (", lab, ")"), xlim=c(0,100), col="grey", xlab="")
+rug(x[,"Industrial"])
+par(op)
+dev.off()

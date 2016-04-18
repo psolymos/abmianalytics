@@ -297,6 +297,14 @@ km <- data.frame(LinkID=kgrid$Row_Col,
     qrf <- quantile(rf, q)
     rf[rf>qrf] <- qrf
 
+    si <- pmin(cr, rf) / pmax(cr, rf)
+    si[pmax(cr, rf)==0] <- 1
+
+    kmsi <- data.frame(LinkID=km$LinkID, Ref=rf, Curr=cr, SI=si)
+    kmsi <- write.csv(kmsi, row.names=FALSE, 
+        paste0("e:/peter/sppweb2015/birds-si/", 
+        paste0(as.character(tax[spp, "file"]), ".csv")))
+
 if (TRUE) {
     mat <- 100 * cbind(Ncurrent=cr, Nreference=rf) # ha to km^2
     rownames(mat) <- rownames(kgrid)
@@ -323,6 +331,9 @@ if (TRUE) {
     cat("\n")
     cat(spp, "\t");flush.console()
     cat("rf\t");flush.console()
+#    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), TAG, "-current.eps"), 
+#        horizontal = FALSE, onefile = FALSE, paper = "special",
+#        width=W/100, height=H/100)
     png(paste0("e:/peter/sppweb-html-content/species/birds/map-rf/",
         as.character(tax[spp, "file"]), TAG, ".png"),
         width=W, height=H)
@@ -343,6 +354,9 @@ if (TRUE) {
     dev.off()
 
     cat("cr\t");flush.console()
+#    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), TAG, "-reference.eps"), 
+#        horizontal = FALSE, onefile = FALSE, paper = "special",
+#        width=W/100, height=H/100)
     png(paste0("e:/peter/sppweb-html-content/species/birds/map-cr/",
         as.character(tax[spp, "file"]), TAG, ".png"),
         width=W, height=H)
@@ -363,6 +377,9 @@ if (TRUE) {
     dev.off()
 
     cat("df\n");flush.console()
+#    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), TAG, "-difference.eps"), 
+#        horizontal = FALSE, onefile = FALSE, paper = "special",
+#        width=W/100, height=H/100)
     png(paste0("e:/peter/sppweb-html-content/species/birds/map-df/",
         as.character(tax[spp, "file"]), TAG, ".png"),
         width=W, height=H)
@@ -756,6 +773,9 @@ results10km_list[[as.character(slt[spp,"sppid"])]] <- crveg
     zval <- zval[match(kgrid$Row10_Col10, rownames(crveg))]
 
     cat(spp, "saving CoV map\n\n");flush.console()
+#    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), TAG, "-CoV.eps"), 
+#        horizontal = FALSE, onefile = FALSE, paper = "special",
+#        width=W/100, height=H/100)
     png(paste0("e:/peter/sppweb-html-content/species/birds/map-cov-cr/",
         as.character(tax[spp, "file"]), ".png"),
         width=W, height=H)

@@ -221,6 +221,27 @@ write.csv(pxNrfSum, row.names=TRUE,
     paste0("boot-sums-rf_", as.character(tax[spp, "file"]), ".csv")))
 
 
+x <- read.csv(
+    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0("boot-long_", as.character(tax[spp, "file"]), ".csv")))
+
+library(raster)
+source("~/repos/abmianalytics/R/maps_functions.R")
+rt <- raster(file.path(ROOT, "data", "kgrid", "AHM1k.asc"))
+x_cr_mean <- as_Raster(kgrid$Row, kgrid$Col, x$CurrN.Mean, rt)
+x_rf_mean <- as_Raster(kgrid$Row, kgrid$Col, x$RefN.Mean, rt)
+x_cr_cov <- as_Raster(kgrid$Row, kgrid$Col, x$CurrN.SD / x$CurrN.Mean, rt)
+writeRaster(x_cr_mean, 
+    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0("Mean-current_", as.character(tax[spp, "file"]), ".asc")))
+writeRaster(x_rf_mean, 
+    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0("Mean-reference_", as.character(tax[spp, "file"]), ".asc")))
+writeRaster(x_cr_cov, 
+    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0("CoV-current_", as.character(tax[spp, "file"]), ".asc")))
+
+
 ## plots
 
 km1 <- read.csv(paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
