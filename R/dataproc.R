@@ -382,15 +382,22 @@ DAT$SoftLin_PC <- rowSums(dd150m$veg_current[,c("SeismicLine","TransmissionLine"
 
 ## ARU
 
-DAT$ARU2 <- factor("TRAD", c("TRAD","ARU"))
-DAT$ARU2[DAT$PCODE %in% c("ABMI","EMCLA","EMCLA2014")] <- "ARU"
-DAT$ARU2[DAT$PCODE %in% c()] <- "RF"
+DAT$ARU1 <- factor("TRAD", c("TRAD","RFSM"))
+DAT$ARU1[DAT$PCODE %in% c("ABMI","EMCLA","EMCLA2014")] <- "RFSM"
+table(DAT$PCODE, DAT$ARU1)
+
+DAT$ARU2 <- factor("TRADRF", c("TRADRF","SM"))
+DAT$ARU2[DAT$PCODE %in% c("EMCLA","EMCLA2014")] <- "SM"
 table(DAT$PCODE, DAT$ARU2)
 
 DAT$ARU3 <- factor("TRAD", c("TRAD","SM","RF"))
 DAT$ARU3[DAT$PCODE %in% c("EMCLA","EMCLA2014")] <- "SM"
 DAT$ARU3[DAT$PCODE %in% c("ABMI")] <- "RF"
 table(DAT$PCODE, DAT$ARU3)
+
+table(DAT$ARU1, DAT$ARU2)
+table(DAT$ARU1, DAT$ARU3)
+table(DAT$ARU2, DAT$ARU3)
 
 ## transformations
 
@@ -589,12 +596,9 @@ DAT$isCon <- ifelse(DAT$hab1 %in% c("BSpr", "Larch",
 
 source("~/repos/abmianalytics/R/analysis_models.R")
 source("~/repos/bragging/R/glm_skeleton.R")
-compare_sets(getTerms(modsSoil, "list"), colnames(DAT))
-setdiff(getTerms(modsSoil, "list"), colnames(DAT))
-stopifnot(length(setdiff(getTerms(modsSoil, "list"), colnames(DAT)))==0)
-compare_sets(getTerms(modsVeg, "list"), colnames(DAT))
-setdiff(getTerms(modsVeg, "list"), colnames(DAT))
-stopifnot(length(setdiff(getTerms(modsVeg, "list"), colnames(DAT)))==0)
+compare_sets(getTerms(mods, "list"), colnames(DAT))
+setdiff(getTerms(mods, "list"), colnames(DAT))
+stopifnot(length(setdiff(getTerms(mods, "list"), colnames(DAT)))==0)
 
 ## offsets
 
@@ -696,9 +700,9 @@ bbfun <- function(DAT1, B) {
     BB1 <- hbootindex(DAT1k$SITE, DAT1k$bootid, B=B)
     BB1
 }
-BBS <- bbfun(DATS, B)
+#BBS <- bbfun(DATS, B)
 BBN <- bbfun(DATN, B)
-BBSfull <- bbfun(DATSfull, B)
+#BBSfull <- bbfun(DATSfull, B)
 BBNfull <- bbfun(DATNfull, B)
 
 ## figure out sets of species to analyze
@@ -713,6 +717,7 @@ OFFmean0 <- OFFmean
 HSH0 <- HSH
 nmin <- 25
 
+if (FALSE) {
 DAT <- DATS
 YY <- YY0[rownames(DAT),]
 YY <- YY[,colSums(YY>0) >= nmin]
@@ -720,7 +725,7 @@ BB <- BBS
 OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
 OFFmean <- OFFmean0[rownames(DAT)]
 mods <- modsSoil
-save(DAT, YY, OFF, OFFmean, mods, BB, # no HSH in the south
+save(DAT, YY, OFF, OFFmean, mods, BB, TAX, # no HSH in the south
     file=file.path(ROOT2, "out", "birds", "data", "data-useok-south.Rdata"))
 
 DAT <- DATN
@@ -732,7 +737,7 @@ OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
 OFFmean <- OFFmean0[rownames(DAT)]
 mods <- modsVeg
 mods2 <- modsVegHSH
-save(DAT, YY, OFF, OFFmean, mods, mods2, BB, HSH,
+save(DAT, YY, OFF, OFFmean, mods, mods2, BB, HSH, TAX, 
     file=file.path(ROOT2, "out", "birds", "data", "data-useok-north.Rdata"))
 
 DAT <- DATSfull
@@ -742,20 +747,21 @@ BB <- BBSfull
 OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
 OFFmean <- OFFmean0[rownames(DAT)]
 mods <- modsSoil
-save(DAT, YY, OFF, OFFmean, mods, BB, # no HSH in the south
+save(DAT, YY, OFF, OFFmean, mods, BB, TAX, # no HSH in the south
     file=file.path(ROOT2, "out", "birds", "data", "data-full-south.Rdata"))
+}
 
+SPP <- colnames(YY0)[colSums(YY0[rownames(DAT),] > 0) >= nmin &
+    colnames(YY0) %in% colnames(OFF0)]
 DAT <- DATNfull
-YY <- YY0[rownames(DAT),]
-YY <- YY[,colSums(YY>0) >= nmin]
+YY <- YY0[rownames(DAT),SPP]
 BB <- BBNfull
 HSH <- HSH0[rownames(DAT),]
-OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
-OFFmean <- OFFmean0[rownames(DAT)]
-mods <- modsVeg
-mods2 <- modsVegHSH
-save(DAT, YY, OFF, OFFmean, mods, mods2, BB, HSH,
-    file=file.path(ROOT2, "out", "birds", "data", "data-full-north.Rdata"))
+OFF <- OFF0[rownames(DAT),SPP]
+mods <- mods
+TAX <- droplevels(TAX[SPP,])
+save(DAT, YY, OFF, mods, BB, HSH, TAX, SPP,
+    file=file.path(ROOT2, "out", "birds", "data", "data-full-north-josm.Rdata"))
 
 #save(tv, ts,
 #    file=file.path(ROOT2, "out", "birds", "data", "lookup-veg-soil.Rdata"))
