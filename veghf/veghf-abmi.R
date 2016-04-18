@@ -466,3 +466,70 @@ if (SAVE)
         "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015-revisits.Rdata"))
 
 
+## merging objects at site center
+
+e <- new.env()
+load(file.path(ROOT, VER, "out/abmi_onoff", 
+    "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015-revisits.Rdata"),
+    envir=e)
+
+climSite <- e$climSite
+climCenter_2015 <- e$climCenter_2015
+compare_sets(colnames(climSite), colnames(climCenter_2015))
+setdiff(colnames(climSite), colnames(climCenter_2015))
+setdiff(colnames(climCenter_2015), colnames(climSite))
+
+climSite$Site_ID <- NULL
+climSite$Bird <- NULL
+climSite$Site_YEAR_bird <- NULL
+climSite$SLP <- NULL
+climSite$ASP <- NULL
+climSite$TRI <- NULL
+climSite$CTI <- NULL
+
+climCenter_2015$Site_YEAR <- NULL
+climCenter_2015$On_Off <- NULL
+climCenter_2015$survey_year <- NULL
+climCenter_2015$ABMI_Assigned_Site_ID <- NULL
+
+climCenter_2015 <- climCenter_2015[,colnames(climSite)]
+
+dd1ha <- e$dd1ha
+dd1ha_2015 <- e$dd1ha_2015
+all(rownames(climCenter_2015) == rownames(dd1ha_2015[[1]]))
+
+dd1km <- e$dd1km
+dd1kmCenter_2015 <- e$dd1kmCenter_2015
+all(rownames(climCenter_2015) == rownames(dd1kmCenter_2015[[1]]))
+
+dd1kmCenter <- dd1km
+climPoint <- e$climPoint
+for (i in 1:4) {
+    dd1kmCenter[[i]] <- dd1km[[i]][match(rownames(climSite), climPoint$Label2),]
+    rownames(dd1kmCenter[[i]]) <- rownames(climSite)
+}
+
+for (i in 1:4) {
+    rownames(dd1ha_2015[[i]]) <- climCenter_2015$Label2
+    rownames(dd1kmCenter_2015[[i]]) <- climCenter_2015$Label2
+}
+rownames(climCenter_2015) <- climCenter_2015$Label2
+all(rownames(climCenter_2015) == rownames(dd1ha_2015[[1]]))
+all(rownames(climCenter_2015) == rownames(dd1kmCenter_2015[[1]]))
+
+climSite$Site <- as.character(climSite$Site)
+climCenter_2015$Site <- as.character(climCenter_2015$Site)
+climSite$MAP <- as.numeric(gsub(",", "", as.character(climSite$MAP)))
+
+for (i in 1:4) {
+    dd1ha[[i]] <- rBind(dd1ha[[i]], dd1ha_2015[[i]])
+    dd1kmCenter[[i]] <- rBind(dd1kmCenter[[i]], dd1kmCenter_2015[[i]])
+}
+climSite <- rbind(climSite, climCenter_2015)
+all(rownames(climSite) == rownames(dd1ha[[1]]))
+all(rownames(climSite) == rownames(dd1kmCenter[[1]]))
+
+save(dd1ha, dd1kmCenter, climSite, 
+    file=file.path(ROOT, VER, "out/abmi_onoff", 
+    "veg-hf-clim-reg_abmi-onoff_siteCentre_incl2015.Rdata"))
+
