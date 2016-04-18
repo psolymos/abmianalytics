@@ -3,11 +3,11 @@ title: "Modeling linear feature effects"
 author: "P. Solymos"
 date: '2015-07-15'
 output:
-  html_document:
-    toc: no
   pdf_document:
     toc: no
     toc_depth: 2
+  html_document:
+    toc: no
 ---
 
 # The model

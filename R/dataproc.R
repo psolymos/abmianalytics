@@ -1,6 +1,6 @@
 ##% Processing data for intactness, all-in-one, website things
 ##% P Solymos
-##% Aug 18, 2015
+##% Feb 9, 2016
 
 library(RODBC)
 library(mefa4)
@@ -8,6 +8,7 @@ library(raster)
 library(sp)
 library(rgdal)
 library(maptools)
+library(pbapply)
 
 ## use preprocessed national data set for BAM & BBS
 
@@ -51,28 +52,7 @@ rownames(YY2) <- rn
 
 ## habitat info
 
-## Function to compare sets (factors are left untouched)
-compare.sets <- function(x, y) {
-    x <- as.factor(x)
-    y <- as.factor(y)
-    xl <- levels(x)
-    yl <- levels(y)
-    xa <- levels(droplevels(x))
-    ya <- levels(droplevels(y))
-    lab <- c(xlength=length(xl), ylength=length(yl),
-        intersect=length(intersect(xl, yl)),
-        union=length(union(xl, yl)),
-        xbutnoty=length(setdiff(xl, yl)),
-        ybutnotx=length(setdiff(yl, xl)))
-    act <- c(xlength=length(xa), ylength=length(ya),
-        intersect=length(intersect(xa, ya)),
-        union=length(union(xa, ya)),
-        xbutnoty=length(setdiff(xa, ya)),
-        ybutnotx=length(setdiff(ya, xa)))
-    rbind(labels=lab, unique=act)
-}
-
-ROOT2 <- "c:/p/AB_data_v2015"
+ROOT2 <- "e:/peter/AB_data_v2016"
 
 load(file.path(ROOT2, "out", "abmi_onoff", 
     "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0.Rdata"))
@@ -80,15 +60,15 @@ rm(dd1ha)
 load(file.path(ROOT2, "out", "bambbs", 
     "veg-hf_bambbs_fix-fire_fix-age0.Rdata"))
 
-compare.sets(rownames(YY), rownames(climPoint_bambbs))
-compare.sets(rownames(YY2), rownames(climPoint))
+compare_sets(rownames(YY), rownames(climPoint_bambbs))
+compare_sets(rownames(YY2), rownames(climPoint))
 
 grep("-11_", rownames(climPoint))
 rn <- gsub("-11_", "-2_", rownames(climPoint))
-compare.sets(rownames(YY2), rownames(climPoint))
-compare.sets(rownames(YY2), rn)
-compare.sets(rownames(dd150m[[1]]), rownames(climPoint))
-compare.sets(rownames(dd1km[[1]]), rownames(climPoint))
+compare_sets(rownames(YY2), rownames(climPoint))
+compare_sets(rownames(YY2), rn)
+compare_sets(rownames(dd150m[[1]]), rownames(climPoint))
+compare_sets(rownames(dd1km[[1]]), rownames(climPoint))
 rownames(climPoint) <- rn
 rownames(dd150m[[1]]) <- rownames(dd150m[[2]]) <- rn
 rownames(dd150m[[3]]) <- rownames(dd150m[[4]]) <- rn
@@ -155,19 +135,15 @@ DAT <- droplevels(DAT)
 ## lookup tables & reclassed tables
 
 ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
-ts$UseInAnalysis <- as.character(ts$UseInAnalysis)
-ts$UseInAnalysis[is.na(ts$UseInAnalysis)] <- as.character(ts$Levels4)[is.na(ts$UseInAnalysis)]
-ts$Levels1 <- as.character(ts$Levels1)
-ts$Levels1[is.na(ts$Levels1)] <- ts$UseInAnalysis[is.na(ts$Levels1)]
 
 SoilKmCr <- groupSums(dd1km$soil_current, 2, ts[colnames(dd1km$soil_current), "UseInAnalysis"])
 SoilKmRf <- groupSums(dd1km$soil_reference, 2, ts[colnames(dd1km$soil_reference), "UseInAnalysis"])
 SoilPcCr <- groupSums(dd150m$soil_current, 2, ts[colnames(dd150m$soil_current), "UseInAnalysis"])
 SoilPcRf <- groupSums(dd150m$soil_reference, 2, ts[colnames(dd150m$soil_reference), "UseInAnalysis"])
 
-psoilhf <- groupSums(dd150m$soil_current, 2, ts[colnames(dd150m$soil_current), "Levels1"])
+psoilhf <- groupSums(dd150m$soil_current, 2, ts[colnames(dd150m$soil_current), "UseInAnalysis"])
 psoilhf <- psoilhf[,!(colnames(psoilhf) %in% c("SoilUnknown", "SoilWater",
-    "SoilWetland", "HWater", "HFor", "SoftLin", "HardLin"))]
+    "HWater", "HFor", "SoftLin", "HardLin"))]
 psoilhf <- as.matrix(psoilhf / rowSums(psoilhf))
 
 #SoilKmCr <- SoilKmCr[,colnames(SoilKmCr) != "HFor"] # exclude forestry
@@ -178,11 +154,23 @@ SoilPcCr <- as.matrix(SoilPcCr / rowSums(SoilPcCr))
 SoilPcRf <- as.matrix(SoilPcRf / rowSums(SoilPcRf))
 
 tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
-tv$UseInAnalysis <- as.character(tv$UseInAnalysis)
-ii <- is.na(tv$UseInAnalysis) | tv$UseInAnalysis == "HFor"
-tv$UseInAnalysis[ii] <- as.character(tv$VEGAGE_use)[ii]
-tv$UseInAnalysis[tv$UseInAnalysis == "WetBare"] <- "NonVeg"
-tv$UseInAnalysis[tv$UseInAnalysis %in% c("WetGrassHerb", "WetShrub")] <- "Wetland"
+
+if (FALSE) {
+tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "Type"])
+#tmp <- tmp[,!(colnames(tmp) %in% c("NonVeg", "Water", "HWater"))]
+tmp <- as.matrix(tmp / rowSums(tmp))
+OK <- tmp[,"XXX"] <= 0.8
+table(OK)
+tmp <- tmp[OK,colnames(tmp) != "XXX"]
+any(is.na(tmp))
+#tmp[is.na(tmp)] <- 0
+iv <- find_max(tmp)
+h <- iv$index
+v <- iv$value
+data.frame(table(h))
+print(aggregate(data.frame(v=v), list(h=h), quantile, c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1)), 
+    digits=3)
+}
 
 VegKmCr <- groupSums(dd1km$veg_current, 2, tv[colnames(dd1km$veg_current), "UseInAnalysis"])
 VegKmRf <- groupSums(dd1km$veg_reference, 2, tv[colnames(dd1km$veg_reference), "UseInAnalysis"])
@@ -194,58 +182,35 @@ VegKmRf <- as.matrix(VegKmRf / rowSums(VegKmRf))
 VegPcCr <- as.matrix(VegPcCr / rowSums(VegPcCr))
 VegPcRf <- as.matrix(VegPcRf / rowSums(VegPcRf))
 
-find_max <- function(x) {
-    tmp <- apply(x, 1, which.max)
-    tmp <- factor(tmp, levels=seq_len(ncol(x)))
-    levels(tmp) <- colnames(x)
-    tmp
-}
 
 ## hab & CC in north
 
-tv$UseInAnalysis2 <- as.character(tv$Type)
-ii <- is.na(tv$UseInAnalysis2)
-tv$UseInAnalysis2[ii] <- as.character(tv$UseInAnalysis)[ii]
-tv$UseInAnalysis2[tv$UseInAnalysis2 == "WetBare"] <- "NonVeg"
-tv$UseInAnalysis2[tv$UseInAnalysis2 %in% c("WetGrassHerb", "WetShrub")] <- "Wetland"
-tv$UseInAnalysis3 <- tv$UseInAnalysis2
-ii <- !is.na(tv$HF) & tv$HF == "CutBlocks"
-tv$UseInAnalysis3[ii] <- "CC" #paste0("CC", tv$UseInAnalysis3[ii])
-tv$UseAge <- as.character(tv$AGE)
-tv$UseAge[is.na(tv$UseAge)] <- ""
-tv$EC_AGE <- as.character(tv$EC_AGE)
-tv$EC_AGE[is.na(tv$EC_AGE)] <- ""
-tv$LCC5 <- tv$EC_AGE
-tv$LCC5[tv$EC_AGE == ""] <- "5"
-tv$LCC5[tv$EC_AGE %in% c("A","B","R") & tv$UseInAnalysis2 %in% 
-    c("Decid","Mixwood")] <- "4"
-tv$LCC5[tv$EC_AGE %in% c("A","B","R") & tv$UseInAnalysis2 %in% 
-    c("Conif","Pine","BSpr", "Larch")] <- "3"
-tv$LCC5[tv$EC_AGE %in% c("C","D") & tv$UseInAnalysis2 %in% 
-    c("Decid","Mixwood")] <- "2"
-tv$LCC5[tv$EC_AGE %in% c("C","D") & tv$UseInAnalysis2 %in% 
-    c("Conif","Pine","BSpr", "Larch")] <- "1"
-
-
-tmp <- groupSums(dd150m$veg_reference, 2, tv[colnames(dd150m$veg_reference), "UseInAnalysis2"])
-tmp <- tmp[,!(colnames(tmp) %in% c("NonVeg", "Water"))]
+## 150m scale reference dominant habitat
+tmp <- groupSums(dd150m$veg_reference, 2, tv[colnames(dd150m$veg_reference), "Type"])
+tmp <- tmp[,!(colnames(tmp) %in% c("XXX"))]
 tmp <- as.matrix(tmp / rowSums(tmp))
-DAT$hab0 <- find_max(tmp)
+iv <- find_max(tmp)
+DAT$hab0 <- iv$index
+DAT$hab0_value <- iv$value
 
-tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "UseInAnalysis2"])
-pveghf <- tmp[,!(colnames(tmp) %in% c("NonVeg", "Water","HWater"))]
+tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "Type"])
+pveghf <- tmp[,!(colnames(tmp) %in% c("XXX"))]
 pveghf <- as.matrix(pveghf / rowSums(pveghf))
 
-tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "UseInAnalysis3"])
-tmp <- tmp[,!(colnames(tmp) %in% c("NonVeg", "Water","HWater","SoftLin","HardLin"))]
+## 150m scale current dominant habitat with CC
+tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "TypeCC"])
+tmp <- tmp[,!(colnames(tmp) %in% c("XXX","SoftLin","HardLin"))]
 tmp <- as.matrix(tmp / rowSums(tmp))
-DAT$hab1cc <- find_max(tmp)
+iv <- find_max(tmp)
+DAT$hab1cc <- iv$index
+DAT$hab1cc_value <- iv$value
 
 DAT$hab1 <- as.character(DAT$hab1cc)
 ii <- !is.na(DAT$hab1cc) & !is.na(DAT$hab0) &
     DAT$hab1cc == "CC" & DAT$hab0 %in% c("Conif","Decid","Mixwood","Pine")
 DAT$hab1[ii] <- as.character(DAT$hab0[ii])
 DAT$isCC <- ifelse(ii, 1L, 0L)
+## reset non-merdendizable CC classes to backfilled (isCC is 0)
 ii <- !is.na(DAT$hab1cc) & !is.na(DAT$hab0) & DAT$hab1 == "CC"
 DAT$hab1[ii] <- as.character(DAT$hab0[ii])
 
@@ -256,9 +221,10 @@ DAT$hab1cc <- relevel(DAT$hab1cc, "Decid")
 table(DAT$hab1, DAT$hab1cc, useNA="a")
 table(DAT$hab1,DAT$isCC)
 
+
 ## age 
 
-AgePtCr <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "UseAge"])
+AgePtCr <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "AGE"])
 AgePtCr <- as.matrix(AgePtCr / rowSums(AgePtCr))
 ## exclude unknown (0) and non-forest (blank)
 AgePtCr <- t(AgePtCr[,c("R", "1", "2", "3", "4", "5", "6", "7", "8", "9")])
@@ -329,7 +295,7 @@ table(DAT$isRR,DAT$isCC,useNA="a")
 
 tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "LCC5"])
 tmp <- as.matrix(tmp / rowSums(tmp))
-DAT$hab_lcc <- find_max(tmp)
+DAT$hab_lcc <- find_max(tmp)$index
 DAT$hab_lcc <- as.integer(as.character(DAT$hab_lcc))
 DAT$hab_lcc <- factor(DAT$hab_lcc, 1:5)
 
@@ -354,13 +320,18 @@ DAT$TREE[is.na(DAT$TREE)] <- DAT$ClosedCanopy[is.na(DAT$TREE)]
 
 DAT$LCC_combo[is.na(DAT$LCC_combo)] <- DAT$hab_lcc[is.na(DAT$LCC_combo)] 
 
+## ROAD x habitat interaction based on forest cover
+DAT$habCl <- ifelse(DAT$ClosedCanopy > 0.5, 1L, 0L) # EC age is C or D
+
 ## soil in south
 
 round(100*colMeans(SoilPcRf[SoilPcRf[,"SoilUnknown"]==0,]),2)
 round(100*colMeans(SoilPcCr[SoilPcRf[,"SoilUnknown"]==0,]),2)
 
 tmp <- SoilPcRf[,!(colnames(SoilPcRf) %in% c("SoilWater","SoilWetland"))]
-DAT$soil0 <- find_max(tmp / rowSums(tmp))
+iv <- find_max(tmp / rowSums(tmp))
+DAT$soil0 <- iv$index
+DAT$soil0_value <- iv$value
 DAT$soil0[DAT$soil0 == "SoilUnknown"] <- NA
 DAT$soil0 <- droplevels(DAT$soil0)
 DAT$soil0 <- relevel(DAT$soil0, "Productive")
@@ -368,20 +339,32 @@ table(DAT$soil0, useNA="a")
 
 tmp <- SoilPcCr[,!(colnames(SoilPcCr) %in% c("SoilWater","SoilWetland",
     "HWater","SoftLin", "HardLin", "HFor"))]
-DAT$soil1 <- find_max(tmp / rowSums(tmp))
+iv <- find_max(tmp / rowSums(tmp))
+DAT$soil1 <- iv$index
+DAT$soil1_value <- iv$value
 DAT$soil1[DAT$soil1 == "SoilUnknown"] <- NA
 DAT$soil1 <- droplevels(DAT$soil1)
 DAT$soil1 <- relevel(DAT$soil1, "Productive")
 table(DAT$soil1, useNA="a")
+DAT$soil1[!(DAT$soil1 %in% c("Cult","UrbInd"))] <- 
+ii <- !is.na(DAT$soil1) & !is.na(DAT$soil0) &
+    !(DAT$soil1 %in% c("Cult","UrbInd"))
+DAT$soil1[ii] <- as.character(DAT$soil0[ii])
 
 table(DAT$soil1, DAT$soil0, useNA="a")
 
 DAT$soil1v <- DAT$soil1
-levels(DAT$soil1v)[levels(DAT$soil1) %in% c("RapidDrain","SalineAndClay")] <- "NonProductive"
+levels(DAT$soil1v)[levels(DAT$soil1) %in% c("Saline", "Clay")] <- "SalineAndClay"
 table(DAT$soil1, DAT$soil1v, useNA="a")
+
+DAT$soil1vv <- DAT$soil1v
+levels(DAT$soil1vv)[levels(DAT$soil1v) %in% c("RapidDrain","SalineAndClay")] <- "NonProductive"
+table(DAT$soil1, DAT$soil1vv, useNA="a")
 
 ## Water
 
+## need to exclude bare/OW sites based on v=0
+## use WET and WETWATER columns to calculate % wet and wetwater in buffers
 DAT$pWater <- rowSums(dd150m$veg_current[,c("Water",
     "BorrowpitsDugoutsSumps","MunicipalWaterSewage","Reservoirs","Canals")]) /
     rowSums(dd150m$veg_current)
@@ -399,7 +382,15 @@ DAT$SoftLin_PC <- rowSums(dd150m$veg_current[,c("SeismicLine","TransmissionLine"
 
 ## ARU
 
-DAT$ARU <- ifelse(DAT$PCODE %in% c("EMCLA","EMCLA2014"), 1L, 0L)
+DAT$ARU2 <- factor("TRAD", c("TRAD","ARU"))
+DAT$ARU2[DAT$PCODE %in% c("ABMI","EMCLA","EMCLA2014")] <- "ARU"
+DAT$ARU2[DAT$PCODE %in% c()] <- "RF"
+table(DAT$PCODE, DAT$ARU2)
+
+DAT$ARU3 <- factor("TRAD", c("TRAD","SM","RF"))
+DAT$ARU3[DAT$PCODE %in% c("EMCLA","EMCLA2014")] <- "SM"
+DAT$ARU3[DAT$PCODE %in% c("ABMI")] <- "RF"
+table(DAT$PCODE, DAT$ARU3)
 
 ## transformations
 
@@ -410,6 +401,8 @@ proj4string(XYlatlon) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0
 XY <- as.data.frame(spTransform(XYlatlon, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")))
 DAT$X <- XY[,"POINT_X"]
 DAT$Y <- XY[,"POINT_Y"]
+
+tmp <- DAT[,c("SLP"  ,        "ASP"     ,     "TRI"     ,     "CTI" )]
 
 transform_CLIM <- function(x, ID="PKEY") {
     z <- x[,ID,drop=FALSE]
@@ -422,12 +415,22 @@ transform_CLIM <- function(x, ID="PKEY") {
     z$xMAT <- (x$MAT - 0) / 6
     z$xMCMT <- (x$MCMT - 0) / 25
     z$xMWMT <- (x$MWMT - 0) / 20
+    z$xSLP <- log(x$SLP)
+    z$xASP <- x$ASP
+    z$xSLP <- log(x$SLP + 1)
+    z$xTRI <- log(x$TRI / 5)
+    z$xCTI <- log((x$CTI + 1) / 10)
     z
 }
 DAT$MAP <- gsub(",", "", DAT$MAP)
 DAT$MAP <- as.numeric(DAT$MAP)
-DAT <- data.frame(DAT, transform_CLIM(DAT))
-DAT$PKEY.1 <- NULL
+tc <- transform_CLIM(DAT)
+DAT <- data.frame(DAT, tc[,-1])
+DAT$xSLP[is.na(DAT$xSLP)] <- mean(DAT$xSLP, na.rm=TRUE)
+DAT$xASP[is.na(DAT$xASP)] <- mean(DAT$xASP, na.rm=TRUE)
+DAT$xTRI[is.na(DAT$xTRI)] <- mean(DAT$xTRI, na.rm=TRUE)
+DAT$xCTI[is.na(DAT$xCTI)] <- mean(DAT$xCTI, na.rm=TRUE)
+#DAT$PKEY.1 <- NULL
 
 
 ## surrounding HF at 1km scale
@@ -480,6 +483,19 @@ DAT$Nonlin2_PC <- DAT$Nonlin_PC^2
 
 }
 
+## 1km scale wet/water
+DAT$WetKM <- rowSums(dd1km$veg_current[,tv[colnames(dd1km$veg_current), "WET"]==1]) / rowSums(dd1km$veg_current)
+DAT$WaterKM <- rowSums(dd1km$veg_current[,tv[colnames(dd1km$veg_current), "WATER"]==1]) / rowSums(dd1km$veg_current)
+DAT$WetWaterKM <- rowSums(dd1km$veg_current[,tv[colnames(dd1km$veg_current), "WETWATER"]==1]) / rowSums(dd1km$veg_current)
+
+## HSH matrix using hab1ec (EC classes)
+cn <- colnames(dd1km$veg_current)
+HSH <- groupSums(dd1km$veg_current, 2, paste0(tv[cn,"Type"], tv[cn,"EC_AGE"]))
+HSH <- as.matrix(HSH / rowSums(HSH))
+HSH <- HSH[,levels(DAT$hab1ec)]
+DAT$HSH <- 0
+DAT$HSH2 <- 0
+
 ## restricted data use
 
 PCODE_useOK <- c("ABCAWAWEST", "MGLE", "FTL", "THIN", 
@@ -519,7 +535,9 @@ DAT$useSouth[DAT$useSouth & SoilPcRf[,"SoilUnknown"] > 0] <- FALSE
 DAT$useSouth[DAT$useSouth & is.na(DAT$soil1)] <- FALSE
 
 ## use in north
-DAT$useNorth <- DAT$NRNAME != "Grassland"
+#DAT$useNorth <- DAT$NRNAME != "Grassland"
+DAT$useNorth <- !is.na(DAT$hab1) # veg info available
+DAT$useNorth[DAT$useNorth & DAT$pWater > 0.5] <- FALSE
 
 ## within year visits
 
@@ -571,13 +589,12 @@ DAT$isCon <- ifelse(DAT$hab1 %in% c("BSpr", "Larch",
 
 source("~/repos/abmianalytics/R/analysis_models.R")
 source("~/repos/bragging/R/glm_skeleton.R")
-compare.sets(getTerms(modsSoil, "list"), colnames(DAT))
+compare_sets(getTerms(modsSoil, "list"), colnames(DAT))
 setdiff(getTerms(modsSoil, "list"), colnames(DAT))
-compare.sets(getTerms(modsVeg, "list"), colnames(DAT))
+stopifnot(length(setdiff(getTerms(modsSoil, "list"), colnames(DAT)))==0)
+compare_sets(getTerms(modsVeg, "list"), colnames(DAT))
 setdiff(getTerms(modsVeg, "list"), colnames(DAT))
-
-
-
+stopifnot(length(setdiff(getTerms(modsVeg, "list"), colnames(DAT)))==0)
 
 ## offsets
 
@@ -610,17 +627,21 @@ apply(exp(OFF), 2, range, na.rm=TRUE)
 
 OFFmean <- log(rowMeans(exp(OFF)))
 
-compare.sets(rownames(OFF),rownames(DAT))
+compare_sets(rownames(OFF),rownames(DAT))
 
 ## subsets
 
-keep <- DAT$YEAR >= 1997 & !is.na(DAT$hab1) & !DAT$Revisit
+keep <- DAT$YEAR >= 1997 & !is.na(DAT$hab1) & !DAT$Revisit & DAT$pWater <= 0.5
+#keep <- !is.na(DAT$hab1) & !DAT$Revisit & DAT$pWater <= 0.5
 
 DAT$keep <- keep
+plot(DAT$X, DAT$Y, col=ifelse(DAT$keep, 1, 2), pch=19, cex=0.2)
+
 YY <- YY[rownames(DAT),]
-pveghf <- pveghf[rownames(DAT),]
-psoilhf <- psoilhf[rownames(DAT),]
-save(DAT, YY, OFF, OFFmean, TAX, pveghf, psoilhf,
+HSH <- HSH[rownames(DAT),]
+#pveghf <- pveghf[rownames(DAT),]
+#psoilhf <- psoilhf[rownames(DAT),]
+save(DAT, YY, OFF, OFFmean, TAX, HSH, # pveghf, psoilhf, 
     file=file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
 
 DAT <- droplevels(DAT[keep,])
@@ -631,8 +652,8 @@ plot(DAT$X, DAT$Y, col=ifelse(DAT$useOK, 1, 2), pch=19, cex=0.2)
 OFF <- OFF[rownames(DAT),]
 OFFmean <- OFFmean[rownames(DAT)]
 
-compare.sets(rownames(OFF),rownames(DAT))
-pveghf <- pveghf[rownames(DAT),]
+compare_sets(rownames(OFF),rownames(DAT))
+#pveghf <- pveghf[rownames(DAT),]
 #save(DAT, YY, OFF, OFFmean, TAX, pveghf,
 #    file=file.path(ROOT2, "out", "birds", "data", "data-full.Rdata"))
 
@@ -649,11 +670,6 @@ DATS <- DATSfull[DATSfull$useOK,]
 DATN <- DATNfull[DATNfull$useOK,]
 
 sapply(list(DATSfull,DATNfull,DATS,DATN), nrow)
-
-YYS <- YY[rownames(DATS),]
-YYN <- YY[rownames(DATN),]
-YYSfull <- YY[rownames(DATSfull),]
-YYNfull <- YY[rownames(DATNfull),]
 
 ## bootids
 
@@ -681,8 +697,8 @@ bbfun <- function(DAT1, B) {
 }
 BBS <- bbfun(DATS, B)
 BBN <- bbfun(DATN, B)
-#BBSfull <- bbfun(DATSfull, B)
-#BBNfull <- bbfun(DATNfull, B)
+BBSfull <- bbfun(DATSfull, B)
+BBNfull <- bbfun(DATNfull, B)
 
 ## figure out sets of species to analyze
 
@@ -690,48 +706,61 @@ BBN <- bbfun(DATN, B)
 ## S/N: nmin=25
 ## look at taxonomy???
 
-
+YY0 <- YY
 OFF0 <- OFF
 OFFmean0 <- OFFmean
+HSH0 <- HSH
 nmin <- 25
 
 DAT <- DATS
-YY <- YYS
+YY <- YY0[rownames(DAT),]
 YY <- YY[,colSums(YY>0) >= nmin]
 BB <- BBS
 OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
 OFFmean <- OFFmean0[rownames(DAT)]
 mods <- modsSoil
-save(DAT, YY, OFF, OFFmean, mods, BB,
+save(DAT, YY, OFF, OFFmean, mods, BB, # no HSH in the south
     file=file.path(ROOT2, "out", "birds", "data", "data-useok-south.Rdata"))
 
 DAT <- DATN
-YY <- YYN[rownames(DAT),]
+YY <- YY0[rownames(DAT),]
 YY <- YY[,colSums(YY>0) >= nmin]
 BB <- BBN
+HSH <- HSH0[rownames(DAT),]
 OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
 OFFmean <- OFFmean0[rownames(DAT)]
 mods <- modsVeg
-save(DAT, YY, OFF, OFFmean, mods, BB,
+mods2 <- modsVegHSH
+save(DAT, YY, OFF, OFFmean, mods, mods2, BB, HSH,
     file=file.path(ROOT2, "out", "birds", "data", "data-useok-north.Rdata"))
 
-save(tv, ts,
-    file=file.path(ROOT2, "out", "birds", "data", "lookup-veg-soil.Rdata"))
+DAT <- DATSfull
+YY <- YY0[rownames(DAT),]
+YY <- YY[,colSums(YY>0) >= nmin]
+BB <- BBSfull
+OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
+OFFmean <- OFFmean0[rownames(DAT)]
+mods <- modsSoil
+save(DAT, YY, OFF, OFFmean, mods, BB, # no HSH in the south
+    file=file.path(ROOT2, "out", "birds", "data", "data-full-south.Rdata"))
 
-## 3x7 summaries
+DAT <- DATNfull
+YY <- YY0[rownames(DAT),]
+YY <- YY[,colSums(YY>0) >= nmin]
+BB <- BBNfull
+HSH <- HSH0[rownames(DAT),]
+OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
+OFFmean <- OFFmean0[rownames(DAT)]
+mods <- modsVeg
+mods2 <- modsVegHSH
+save(DAT, YY, OFF, OFFmean, mods, mods2, BB, HSH,
+    file=file.path(ROOT2, "out", "birds", "data", "data-full-north.Rdata"))
 
-library(mefa4)
-load("c:/p/AB_data_v2015/out/3x7/veg-hf_3x7_fix-fire_fix-age0.Rdata")
+#save(tv, ts,
+#    file=file.path(ROOT2, "out", "birds", "data", "lookup-veg-soil.Rdata"))
 
-for (yr in names(yearly_vhf)) {
-    for (i in 1:4) {
-        tmp <- as.matrix(yearly_vhf[[yr]][[i]])
-        write.csv(tmp,
-            file=paste0("c:/p/AB_data_v2015/out/3x7/csv/veg-hf_3x7_", 
-            yr, "_", names(yearly_vhf[[yr]])[i], ".csv"))
-    }
-}
 
+## opticut stuff
 if (FALSE) {
 
 dat <- droplevels(DAT[DAT$PCODE == "ABMI",])

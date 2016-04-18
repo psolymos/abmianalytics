@@ -1,5 +1,5 @@
 ## takes xy coordinates and a corresponding vector z
-## and torns it into a raster using raster template r
+## and turns it into a raster using raster template r
 as_Raster0 <- 
 function(x, y, z, r) 
 {
@@ -47,6 +47,7 @@ mask=NULL)
             "topo" = rev(topo.colors(255)),
             "grey" = grey(seq(1,0,len=255)),
             "hf" = colorRampPalette(brewer.pal("YlOrRd", n=9)[1:6])(255),
+            "intactness" = colorRampPalette(c("red","green"))(255),
             "soil" = colorRampPalette(brewer.pal("Oranges", n=9)[1:6])(255),
             "abund" = colorRampPalette(rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8",
                 "#91BFDB","#4575B4")))(255),
@@ -56,7 +57,8 @@ mask=NULL)
         col <- colScale(255)
     }
 
-    r <- as_Raster(kgrid$Row, kgrid$Col, x, rt)
+    r <- if (inherits(x, "RasterLayer"))
+        x else as_Raster(kgrid$Row, kgrid$Col, x, rt)
     r[r > quantile(r, q)] <- quantile(r, q)
     ## output raster should be masked as well
     if (maskRockies)

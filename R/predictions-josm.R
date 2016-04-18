@@ -1,3 +1,5 @@
+## using veg based models only
+
 library(mefa4)
 
 shf <- TRUE
@@ -10,7 +12,7 @@ OUTDIRB <- "e:/peter/AB_data_v2016/out/birds/wewp/predB"
 
 load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
 #source("~/repos/bragging/R/glm_skeleton.R")
-#source("~/repos/abmianalytics/R/results_functions.R")
+source("~/repos/abmianalytics/R/results_functions.R")
 #source("~/repos/bamanalytics/R/makingsense_functions.R")
 regs <- levels(kgrid$LUFxNSR)
 kgrid$useN <- !(kgrid$NRNAME %in% c("Grassland", "Parkland") | kgrid$NSRNAME == "Dry Mixedwood")
@@ -21,19 +23,6 @@ load(file.path(ROOT, "out", "birds", "data", "data-full-withrevisit.Rdata"), env
 tax <- e$TAX
 rm(e)
 tax$file <- nameAlnum(as.character(tax$English_Name), "mixed", "")
-
-## model for species
-fl <- list.files(file.path(ROOT, "out", "birds", "results"))
-fln <- fl[grep("-north_", fl)]
-fln <- sub("birds_abmi-north_", "", fln)
-fln <- sub(".Rdata", "", fln)
-fls <- fl[grep("-south_", fl)]
-fls <- sub("birds_abmi-south_", "", fls)
-fls <- sub(".Rdata", "", fls)
-#SPP <- union(fln, fls)
-
-slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
-rownames(slt) <- slt$AOU
 
 load(file.path(ROOT, "out", "transitions", paste0(regs[1], ".Rdata")))
 Aveg <- rbind(colSums(trVeg))
@@ -51,6 +40,7 @@ for (i in 2:length(regs)) {
     Asoil <- rbind(Asoil, colSums(trSoil))
     rownames(Asoil) <- regs[1:i]
 }
+## m^2 to ha
 Aveg <- Aveg / 10^4
 Asoil <- Asoil / 10^4
 
@@ -124,118 +114,18 @@ ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
 ts <- droplevels(ts[!is.na(ts$Sector),])
 
 ## CoV
-
-ks <- kgrid[kgrid$Rnd10 <= 10,]
+PROP <- 100
+ks <- kgrid[kgrid$Rnd10 <= PROP,]
 xy10 <- groupMeans(as.matrix(kgrid[,c("X","Y")]), 1, kgrid$Row10_Col10)
 
 library(RColorBrewer)
-br <- c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, Inf)
+br <- c(-1, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, Inf)
 Col <- rev(brewer.pal(10, "RdYlGn"))
 
 ## csv
 
-#spp <- "ALFL"
-#SPP <- union(fln, fls)
 SPP <- "WEWP"
 spp <- SPP
-#SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL")
-
-for (spp in SPP) {
-
-cat("1km^2 pixel level", spp, "\n");flush.console()
-
-load(file.path(OUTDIR1, spp, paste0(regs[1], ".Rdata")))
-rownames(pxNcr1) <- rownames(pxNrf1) <- names(Cells)
-rownames(pxScr1) <- rownames(pxSrf1) <- names(Cells)
-pxNcr <- pxNcr1
-pxNrf <- pxNrf1
-pxScr <- pxScr1
-pxSrf <- pxSrf1
-pSoil <- pSoil1
-for (i in 2:length(regs)) {
-    cat(spp, regs[i], "\n");flush.console()
-    load(file.path(OUTDIR1, spp, paste0(regs[i], ".Rdata")))
-    rownames(pxNcr1) <- rownames(pxNrf1) <- names(Cells)
-    rownames(pxScr1) <- rownames(pxSrf1) <- names(Cells)
-    pxNcr <- rbind(pxNcr, pxNcr1)
-    pxNrf <- rbind(pxNrf, pxNrf1)
-    pxScr <- rbind(pxScr, pxScr1)
-    pxSrf <- rbind(pxSrf, pxSrf1)
-    pSoil <- c(pSoil, pSoil1)
-}
-
-pxNcr <- pxNcr[rownames(kgrid),]
-pxNrf <- pxNrf[rownames(kgrid),]
-pxScr <- pxScr[rownames(kgrid),]
-pxSrf <- pxSrf[rownames(kgrid),]
-pSoil <- pSoil[rownames(kgrid)]
-
-km <- data.frame(LinkID=kgrid$Row_Col,
-    RefN=pxNrf,
-    CurrN=pxNcr,
-    RefS=pxSrf,
-    CurrS=pxScr)
-if (any(is.na(km)))
-    km[is.na(km)] <- 0
-#NAM <- as.character(tax[spp, "English_Name"])
-write.csv(km, row.names=FALSE,
-    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
-    paste0(as.character(tax[spp, "file"]), ".csv")))
-}
-
-## bootstrap results, only for veg
-PROP <- 10
-for (spp in SPP) {
-
-cat("boot", spp, "\n");flush.console()
-
-load(file.path(OUTDIRB, spp, paste0(regs[1], ".Rdata")))
-rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells[Cells==1])
-pxNcr <- pxNcrB
-pxNrf <- pxNrfB
-for (i in 2:length(regs)) {
-    cat(spp, regs[i], "\n");flush.console()
-    load(file.path(OUTDIRB, spp, paste0(regs[i], ".Rdata")))
-    rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells[Cells==1])
-    pxNcr <- rbind(pxNcr, pxNcrB)
-    pxNrf <- rbind(pxNrf, pxNrfB)
-}
-
-pxNcr <- pxNcr[rownames(kgrid[kgrid$Rnd10 <= PROP,]),]
-pxNrf <- pxNrf[rownames(kgrid[kgrid$Rnd10 <= PROP,]),]
-
-cr <- fstatv(pxNcr)
-rf <- fstatv(pxNrf)
-## check how to get mean density to multiply with Area of region
-## get total N in NR & CIs
-
-km <- data.frame(LinkID=kgrid$Row_Col[kgrid$Rnd10 <= PROP],
-    RefN=rf,
-    CurrN=cr)
-
-if (any(is.na(km)))
-    km[is.na(km)] <- 0
-#NAM <- as.character(tax[spp, "English_Name"])
-write.csv(km, row.names=FALSE,
-    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
-    paste0("BOOT_", as.character(tax[spp, "file"]), ".csv")))
-}
-
-## plots
-
-#SPP <- union(fln, fls)
-#SPP <- fln
-
-#spp <- "CAWA"
-res_luf <- list()
-res_nsr <- list()
-res_nr <- list()
-SPP <- as.character(slt$AOU[slt$map.pred])
-for (spp in SPP) {
-
-    cat(spp, "\n");flush.console()
-    km <- read.csv(paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
-        paste0(as.character(tax[spp, "file"]), ".csv")))
 
 if (FALSE) {
 load(file.path(OUTDIR1, spp, paste0(regs[1], ".Rdata")))
@@ -264,56 +154,108 @@ pxScr <- pxScr[rownames(kgrid),]
 pxSrf <- pxSrf[rownames(kgrid),]
 pSoil <- pSoil[rownames(kgrid)]
 
-km <- data.frame(LinkID=kgrid$Row_Col,
+km1 <- data.frame(LinkID=kgrid$Row_Col,
     RefN=pxNrf,
     CurrN=pxNcr,
     RefS=pxSrf,
     CurrS=pxScr)
+if (any(is.na(km1)))
+    km1[is.na(km1)] <- 0
+#NAM <- as.character(tax[spp, "English_Name"])
+write.csv(km1, row.names=FALSE,
+    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0(as.character(tax[spp, "file"]), ".csv")))
 }
 
+## bootstrap results, only for veg
 
-    TYPE <- "C" # combo
-    if (!slt[spp, "veghf.north"])
-        TYPE <- "S"
-    if (!slt[spp, "soilhf.south"])
-        TYPE <- "N"
+load(file.path(OUTDIRB, spp, paste0(regs[1], ".Rdata")))
+rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells[Cells==1])
+qcr <- quantile(pxNcrB, q)
+pxNcrB[pxNcrB>qcr] <- qcr
+qrf <- quantile(pxNrfB, q)
+pxNrfB[pxNrfB>qrf] <- qrf
+pxNcr <- fstatv(pxNcrB)
+pxNrf <- fstatv(pxNrfB)
+pxNcrSum <- matrix(colSums(pxNcrB), nrow=1)
+pxNrfSum <- matrix(colSums(pxNrfB), nrow=1)
 
-    wS <- 1-kgrid$pAspen
-    if (TYPE == "S")
-        wS[] <- 1
-    if (TYPE == "N")
-        wS[] <- 0
-    wS[kgrid$useS] <- 1
-    wS[kgrid$useN] <- 0
+for (i in 2:length(regs)) {
+    cat(spp, regs[i], "\n");flush.console()
+    load(file.path(OUTDIRB, spp, paste0(regs[i], ".Rdata")))
+    rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells[Cells==1])
+    qcr <- quantile(pxNcrB, q)
+    pxNcrB[pxNcrB>qcr] <- qcr
+    qrf <- quantile(pxNrfB, q)
+    pxNrfB[pxNrfB>qrf] <- qrf
+    pxNcr <- rbind(pxNcr, fstatv(pxNcrB))
+    pxNrf <- rbind(pxNrf, fstatv(pxNrfB))
+    pxNcrSum <- rbind(pxNcrSum, matrix(colSums(pxNcrB), nrow=1))
+    pxNrfSum <- rbind(pxNrfSum, matrix(colSums(pxNrfB), nrow=1))
+}
 
-    cr <- wS * km$CurrS + (1-wS) * km$CurrN
-    rf <- wS * km$RefS + (1-wS) * km$RefN
-#    cr <- km$CurrN
-#    rf <- km$RefN
-#    cr <- km$CurrS
-#    rf <- km$RefS
+pxNcr <- pxNcr[rownames(kgrid[kgrid$Rnd10 <= PROP,]),]
+pxNrf <- pxNrf[rownames(kgrid[kgrid$Rnd10 <= PROP,]),]
+rownames(pxNcrSum) <- rownames(pxNrfSum) <- regs
+
+km <- data.frame(LinkID=kgrid$Row_Col[kgrid$Rnd10 <= PROP],
+    RefN=pxNrf,
+    CurrN=pxNcr)
+
+if (any(is.na(km)))
+    km[is.na(km)] <- 0
+if (any(is.na(pxNrfSum)))
+    pxNrfSum[is.na(pxNrfSum)] <- 0
+if (any(is.na(pxNcrSum)))
+    pxNcrSum[is.na(pxNcrSum)] <- 0
+
+#NAM <- as.character(tax[spp, "English_Name"])
+write.csv(km, row.names=FALSE,
+    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0("boot-long_", as.character(tax[spp, "file"]), ".csv")))
+write.csv(pxNcrSum, row.names=TRUE,
+    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0("boot-sums-cr_", as.character(tax[spp, "file"]), ".csv")))
+write.csv(pxNrfSum, row.names=TRUE,
+    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0("boot-sums-rf_", as.character(tax[spp, "file"]), ".csv")))
+
+
+x <- read.csv(
+    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0("boot-long_", as.character(tax[spp, "file"]), ".csv")))
+
+library(raster)
+source("~/repos/abmianalytics/R/maps_functions.R")
+rt <- raster(file.path(ROOT, "data", "kgrid", "AHM1k.asc"))
+x_cr_mean <- as_Raster(kgrid$Row, kgrid$Col, x$CurrN.Mean, rt)
+x_rf_mean <- as_Raster(kgrid$Row, kgrid$Col, x$RefN.Mean, rt)
+x_cr_cov <- as_Raster(kgrid$Row, kgrid$Col, x$CurrN.SD / x$CurrN.Mean, rt)
+writeRaster(x_cr_mean, 
+    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0("Mean-current_", as.character(tax[spp, "file"]), ".asc")))
+writeRaster(x_rf_mean, 
+    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0("Mean-reference_", as.character(tax[spp, "file"]), ".asc")))
+writeRaster(x_cr_cov, 
+    paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0("CoV-current_", as.character(tax[spp, "file"]), ".asc")))
+
+
+## plots
+
+km1 <- read.csv(paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0(as.character(tax[spp, "file"]), ".csv")))
+km <- read.csv(paste0("e:/peter/AB_data_v2016/out/birds/wewp/", 
+    paste0("boot-long_", as.character(tax[spp, "file"]), ".csv")))
+
+    cr <- km$CurrN.Mean
+    rf <- km$RefN.Mean
     qcr <- quantile(cr, q)
     cr[cr>qcr] <- qcr
     qrf <- quantile(rf, q)
     rf[rf>qrf] <- qrf
 
-    si <- pmin(cr, rf) / pmax(cr, rf)
-    si[pmax(cr, rf)==0] <- 1
-
-    kmsi <- data.frame(LinkID=km$LinkID, Ref=rf, Curr=cr, SI=si)
-    kmsi <- write.csv(kmsi, row.names=FALSE, 
-        paste0("e:/peter/sppweb2015/birds-si/", 
-        paste0(as.character(tax[spp, "file"]), ".csv")))
-
-if (TRUE) {
-    mat <- 100 * cbind(Ncurrent=cr, Nreference=rf) # ha to km^2
-    rownames(mat) <- rownames(kgrid)
-    res_luf[[spp]] <- groupSums(mat, 1, kgrid$LUF_NAME)
-    res_nsr[[spp]] <- groupSums(mat, 1, kgrid$NSRNAME)
-    res_nr[[spp]] <- groupSums(mat, 1, kgrid$NRNAME)
-}
-
-if (TRUE) {
     Max <- max(qcr, qrf)
     df <- (cr-rf) / Max
     df <- sign(df) * abs(df)^0.5
@@ -327,106 +269,94 @@ if (TRUE) {
 
     NAM <- as.character(tax[spp, "English_Name"])
     TAG <- ""
+    WPROP <- 0.8
     
-    cat("\n")
-    cat(spp, "\t");flush.console()
-    cat("rf\t");flush.console()
-#    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), TAG, "-current.eps"), 
-#        horizontal = FALSE, onefile = FALSE, paper = "special",
-#        width=W/100, height=H/100)
-    png(paste0("e:/peter/sppweb-html-content/species/birds/map-rf/",
+    png(paste0("e:/peter/AB_data_v2016/out/birds/wewp/reference-",
         as.character(tax[spp, "file"]), TAG, ".png"),
         width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=C1[rf], pch=15, cex=cex, ann=FALSE, axes=FALSE)
-    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
-#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
-#        points(X, Y, col=CE, pch=15, cex=cex))
-    if (TYPE == "N")
-        with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
-    if (TYPE == "S")
-        with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
+    with(kgrid[kgrid$pWater > WPROP,], points(X, Y, col=CW, pch=15, cex=cex))
     mtext(side=3,paste(NAM, "\nReference abundance"),col="grey30", cex=legcex)
-    points(city, pch=18, cex=cex*2)
+    points(city, pch=18, cex=cex*3)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
-#	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
     par(op)
     dev.off()
 
-    cat("cr\t");flush.console()
-#    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), TAG, "-reference.eps"), 
-#        horizontal = FALSE, onefile = FALSE, paper = "special",
-#        width=W/100, height=H/100)
-    png(paste0("e:/peter/sppweb-html-content/species/birds/map-cr/",
+    png(paste0("e:/peter/AB_data_v2016/out/birds/wewp/current-",
         as.character(tax[spp, "file"]), TAG, ".png"),
         width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=C1[cr], pch=15, cex=cex, ann=FALSE, axes=FALSE)
-    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
-#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
-#        points(X, Y, col=CE, pch=15, cex=cex))
-    if (TYPE == "N")
-        with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
-    if (TYPE == "S")
-        with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
+    with(kgrid[kgrid$pWater > WPROP,], points(X, Y, col=CW, pch=15, cex=cex))
     mtext(side=3,paste(NAM, "\nCurrent abundance"),col="grey30", cex=legcex)
-    points(city, pch=18, cex=cex*2)
+    points(city, pch=18, cex=cex*3)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
-#	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
     par(op)
     dev.off()
 
-    cat("df\n");flush.console()
-#    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), TAG, "-difference.eps"), 
-#        horizontal = FALSE, onefile = FALSE, paper = "special",
-#        width=W/100, height=H/100)
-    png(paste0("e:/peter/sppweb-html-content/species/birds/map-df/",
+    png(paste0("e:/peter/AB_data_v2016/out/birds/wewp/difference-",
         as.character(tax[spp, "file"]), TAG, ".png"),
         width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=C2[df], pch=15, cex=cex, ann=FALSE, axes=FALSE)
-    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
-#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
-#        points(X, Y, col=CE, pch=15, cex=cex))
-    if (TYPE == "N")
-        with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
-    if (TYPE == "S")
-        with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
+    with(kgrid[kgrid$pWater > WPROP,], points(X, Y, col=CW, pch=15, cex=cex))
     mtext(side=3,paste(NAM, "\nDifference"),col="grey30", cex=legcex)
-    points(city, pch=18, cex=cex*2)
+    points(city, pch=18, cex=cex*3)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
-#	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
     par(op)
     dev.off()
-}
-}
+
+    covC <- km$CurrN.SD / km$CurrN.Mean
+    sum(is.na(covC))
+    sum(is.na(covC)) / length(covC)
+    covC[is.na(covC)] <- 2
+    zval <- as.integer(cut(covC, breaks=br))
+
+    png(paste0("e:/peter/AB_data_v2016/out/birds/wewp/cov-",
+        as.character(tax[spp, "file"]), ".png"),
+        width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=Col[zval], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > WPROP,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, "CoV"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*3)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    TEXT <- paste0(100*br[-length(br)], "-", 100*br[-1])
+    INF <- grepl("Inf", TEXT)
+    if (any(INF))
+        TEXT[length(TEXT)] <- paste0(">", 100*br[length(br)-1])
+    TITLE <- "Coefficient of variation"
+    legend("bottomleft", border=rev(Col), fill=rev(Col), bty="n", legend=rev(TEXT),
+                title=TITLE, cex=legcex*0.8)
+    par(op)
+    dev.off()
 
 
-save(res_nsr, res_luf, file=file.path(ROOT, "out", "birds", "luf_Nsummaries.Rdata"))
+## Abundance by NR
 
-LUF <- list()
-for (spp in names(res_luf)) {
-    tmp <- res_luf[[spp]] / 10^6 # M males
-    tmp <- t(matrix(tmp, 2*nrow(tmp), 1))
-    colnames(tmp) <- paste(rep(colnames(res_luf[[1]]), each=ncol(tmp)/2), 
-        rep(rownames(res_luf[[1]]), 2))
-    LUF[[spp]] <- data.frame(Species=slt[spp, "species"], tmp)        
-}
-NSR <- list()
-for (spp in names(res_nsr)) {
-    tmp <- res_nsr[[spp]] / 10^6 # M males
-    tmp <- t(matrix(tmp, 2*nrow(tmp), 1))
-    colnames(tmp) <- paste(rep(colnames(res_nsr[[1]]), each=ncol(tmp)/2), 
-        rep(rownames(res_nsr[[1]]), 2))
-    NSR[[spp]] <- data.frame(Species=slt[spp, "species"], tmp)        
-}
-LUF <- do.call(rbind, LUF)
-NSR <- do.call(rbind, NSR)
-write.csv(LUF, row.names=FALSE,
-    file="e:/peter/sppweb-html-content/species/birds/Birds_Abundance_by_LUFregions.csv")
-write.csv(NSR, row.names=FALSE,
-    file="e:/peter/sppweb-html-content/species/birds/Birds_Abundance_by_NaturalSubregions.csv")
+sum(km1$RefN)
+sum(km$RefN.Mean)
+sum(km$RefN.Median)
+sum(pxNrfSum) / ncol(pxNrfSum)
 
+sum(km1$CurrN)
+sum(km$CurrN.Mean)
+sum(km$CurrN.Median)
+sum(pxNcrSum) / ncol(pxNcrSum)
+
+## values are D/ha, need to x100 to get N in 1km^2 pixel
+trf <- groupSums(pxNrfSum*100, 1, lxn$NRNAME)
+trf <- rbind(trf, Total=colSums(trf))
+tcr <- groupSums(pxNcrSum*100, 1, lxn$NRNAME)
+tcr <- rbind(tcr, Total=colSums(tcr))
+Tab <- data.frame(rbind(Reference=round(nrrf <- fstatv(trf, 0.9)),
+    Current=round(nrcr <- fstatv(tcr, 0.9)),
+    Change=round(fstatv(100 * (tcr - trf) / trf, 0.9), 2)))
+write.csv(Tab, file=paste0("e:/peter/AB_data_v2016/out/birds/wewp/pop-est-",
+        as.character(tax[spp, "file"]), ".csv"))
+
+## ---------------
 
 ## sector effects
 seff_res <- list()
@@ -773,9 +703,6 @@ results10km_list[[as.character(slt[spp,"sppid"])]] <- crveg
     zval <- zval[match(kgrid$Row10_Col10, rownames(crveg))]
 
     cat(spp, "saving CoV map\n\n");flush.console()
-#    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), TAG, "-CoV.eps"), 
-#        horizontal = FALSE, onefile = FALSE, paper = "special",
-#        width=W/100, height=H/100)
     png(paste0("e:/peter/sppweb-html-content/species/birds/map-cov-cr/",
         as.character(tax[spp, "file"]), ".png"),
         width=W, height=H)

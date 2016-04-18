@@ -1,0 +1,93 @@
+---
+title: "Predicting linear feature effects"
+author: "P. Solymos"
+date: '2016-02-12'
+output:
+  pdf_document:
+    toc: no
+    toc_depth: 2
+  html_document:
+    toc: no
+---
+
+## Estimating the effect of linear features
+
+### Roads and rails
+
+Effect of road is estimated using a binary variable indicating
+whether the survey was a roadside survey (1) or an off-road survey(0).
+When points are randomly located, the area of road (hard surface with verges:
+RailHardSurface, RailVegetatedVerge, RoadHardSurface, RoadTrailVegetated,
+RoadVegetatedVerge) is calculated within a 150 m radius circular buffer around 
+the point, and the values is 0 when the proportion is <0.1, and 1 otherwise.
+
+$$A_{buffer}=150^2 \pi m^{2} = 70686 m^{2}$$
+$$0.1 A_{buffer} = 7068.583 m^{2} = 7068.6 m^{2} / 300 m = 23.6 m$$
+
+This 23.6m width based on the 10 percent threshold is justified based on 
+land cover composition around Breeding Bird Survey points.
+
+The counts near roads are different from off-road counts in similar enviroments
+because:
+
+1. density of birds is different,
+2. behaviour of birds is different,
+3. detection distances on roads are different.
+
+A combination of these is responsible for the observed (and estimated) contrast 
+between on- and off-road counts. Evidence suggests that
+detection distances can be very different, and behavioural responses are
+part of the picture (but very species specific, plus foraging along verges etc).
+
+Numerical responses to roads come from multiple sources:
+(1) the effect of road (as a non-habitat: no nesting on paved/gravel roads,
+but some use might be possible, e.g. picking road kills etc),
+(2) the effect of the verge, (3) edge effect, (4) internal habitat that is still
+within the detection distance. So it is definitely a mix of everything.
+
+These responses (especially detectability) might vary as a function of the 
+surrounding habitat (forest cover, forest composition). So an interaction
+between the road indicator variable and habitat is considered as well.
+
+The rationale here is to estimate the density in the surrounding habitat
+and control for the roadside survey effect. So it is like correcting for the
+modifying effect, and not really estimating the road effect _per se_.
+
+### Vegetated linear features
+
+Vegetated linear features (SeismicLine, TransmissionLine, Pipeline,
+RailVegetatedVerge, RoadTrailVegetated, RoadVegetatedVerge)
+are summarized as proportion in the 150 m radius circular buffer
+as used as a continuous variable to estimate its modifying effect.
+
+Same issues as for roads apply here without the paved/gravel surface itself.
+We might observed behavioural response, detectability might change
+when the feature is wide (power line, pipeline, old seismic).
+Numerical response is more difficult to assess: some evidence indicates
+that numerical responses can occur if the habitats are saturated, but otherwise
+most territorial species is plastic enough to adjust.
+
+Some features are seemingly 'double counted', but the road indicator does not
+include amount, whereas here it is about the amount of vegetated linear features.
+
+## Predicting the effects of linear features
+
+Abundance on the hard (paved/gravel) surfece itself 
+(RailHardSurface, RoadHardSurface) is asumed to be 0.
+
+Vegetated linear features (including verges, as defined above)
+are treated as early seral vegetation. This means
+that we apply the backfilled vegetation class with age set to 0 (R: 0-10 yr
+category).
+
+Seismic lines are not necessarily justified to be included as part of the
+other vegetated features treated as early seral vegetation.
+An alternative option is to apply the backfilled vegetation *without*
+modifying the age. This implies no numerical response.
+
+To take into account indirect effects of landscape level 
+(fragmentation etc.) density of
+seismic lines can be done using the surrounding footprint density.
+The results (estimates etc) to support this kind of prediction are not
+currently published on the website.
+

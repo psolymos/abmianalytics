@@ -1,24 +1,19 @@
 library(mefa4)
 
-shf <- FALSE
+shf <- TRUE
 doB <- TRUE
 
-PROP <- 10
-BMAX <- 100
+PROP <- 100
+BMAX <- 240
 if (!doB)
     BMAX <- 1
 BMAX
 
-ROOT <- "c:/p/AB_data_v2015"
+ROOT <- "e:/peter/AB_data_v2016"
+ROOT2 <- "~/Dropbox/josm/2016/wewp"
 
-## surrounding hf
-if (shf) {
-    OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-shf-1/"
-    OUTDIRB <- "e:/peter/sppweb2015/birds-pred-shf-B/"
-} else {
-    OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-1/"
-    OUTDIRB <- "e:/peter/sppweb2015/birds-pred-B/"
-}
+OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/wewp/pred1"
+OUTDIRB <- "e:/peter/AB_data_v2016/out/birds/wewp/predB"
 
 load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
 load(file.path(ROOT, "out", "kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata"))
@@ -27,7 +22,7 @@ source("~/repos/abmianalytics/R/results_functions.R")
 source("~/repos/bamanalytics/R/makingsense_functions.R")
 
 ## climate
-transform_CLIM <- function(x, ID="Row_Col") {
+transform_CLIM <- function(x, ID="PKEY") {
     z <- x[,ID,drop=FALSE]
     z$xlong <- (x$POINT_X - (-113.7)) / 2.15
     z$xlat <- (x$POINT_Y - 53.8) / 2.28
@@ -38,9 +33,14 @@ transform_CLIM <- function(x, ID="Row_Col") {
     z$xMAT <- (x$MAT - 0) / 6
     z$xMCMT <- (x$MCMT - 0) / 25
     z$xMWMT <- (x$MWMT - 0) / 20
+    z$xSLP <- log(x$SLP)
+    z$xASP <- x$ASP
+    z$xSLP <- log(x$SLP + 1)
+    z$xTRI <- log(x$TRI / 5)
+    z$xCTI <- log((x$CTI + 1) / 10)
     z
 }
-kgrid <- data.frame(kgrid, transform_CLIM(kgrid))
+kgrid <- data.frame(kgrid, transform_CLIM(kgrid, "Row_Col"))
 kgrid$xlong2 <- kgrid$xlong^2
 kgrid$xlat2 <- kgrid$xlat^2
 
@@ -57,6 +57,10 @@ kgrid$MCMT <- NULL
 kgrid$MWMT <- NULL
 kgrid$Row10 <- NULL
 kgrid$Col10 <- NULL
+kgrid$ASP <- NULL
+kgrid$TRI <- NULL
+kgrid$SLP <- NULL
+kgrid$CTI <- NULL
 all(rownames(kgrid) == rownames(dd1km_pred$veg_current))
 
 ## surrounding HF at 1km scale
@@ -80,36 +84,43 @@ kgrid$Succ2_KM <- kgrid$Succ_KM^2
 kgrid$Alien2_KM <- kgrid$Alien_KM^2
 kgrid$Noncult2_KM <- kgrid$Noncult_KM^2
 kgrid$Nonlin2_KM <- kgrid$Nonlin_KM^2
+
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
+kgrid$WetKM <- rowSums(dd1km_pred$veg_current[,tv[colnames(dd1km_pred$veg_current), "WET"]==1]) / rowSums(dd1km_pred$veg_current)
+#kgrid$WaterKM <- rowSums(dd1km_pred$veg_current[,tv[colnames(dd1km_pred$veg_current), "WATER"]==1]) / rowSums(dd1km_pred$veg_current)
+kgrid$WetWaterKM <- rowSums(dd1km_pred$veg_current[,tv[colnames(dd1km_pred$veg_current), "WETWATER"]==1]) / rowSums(dd1km_pred$veg_current)
+kgrid$WetKM0 <- rowSums(dd1km_pred$veg_reference[,tv[colnames(dd1km_pred$veg_reference), "WET"]==1]) / rowSums(dd1km_pred$veg_reference)
+kgrid$WetWaterKM0 <- rowSums(dd1km_pred$veg_reference[,tv[colnames(dd1km_pred$veg_reference), "WETWATER"]==1]) / rowSums(dd1km_pred$veg_reference)
+
 rm(dd1km_pred)
 
 ## design matrices
 
 ## 0 out in North
-cnn0 <- c("ROAD01", "SoftLin_PC", "ARU", "YR", 
-    "hab_lcc22:ROAD01", "hab_lcc32:ROAD01", "hab_lcc33:ROAD01", 
-    "hab_lcc2:ROAD01", "hab_lcc3:ROAD01", "hab_lcc4:ROAD01", "hab_lcc5:ROAD01")
+cnn0 <- c("ROAD01", "SoftLin_PC", "ARU2ARU", "ARU3SM", "ARU3RF", "YR", "habCl:ROAD01")
 ## habitat in North
 cnnHab <- c("(Intercept)", "hab1BSpr", "hab1Conif", "hab1Cult", "hab1GrassHerb", 
-    "hab1Larch", "hab1Mixwood", "hab1Pine", "hab1Shrub", "hab1UrbInd", 
-    "hab1Wetland", "hab1bBSpr", "hab1bConif", "hab1bCult", "hab1bGrassHerb", 
-    "hab1bLarch", "hab1bMixwood", "hab1bPine", "hab1bShrub", "hab1bUrbInd", 
-    "hab1bWetland", "hab1bBurn", "wtAge", "wtAge2", "wtAge05", "fCC2", 
-    "isCon:wtAge", "isCon:wtAge2", "isUpCon:wtAge", 
-    "isBSLarch:wtAge", "isUpCon:wtAge2", "isBSLarch:wtAge2", "isMix:wtAge", 
-    "isPine:wtAge", "isWSpruce:wtAge", "isMix:wtAge2", "isPine:wtAge2", 
-    "isWSpruce:wtAge2", "isCon:wtAge05", "isUpCon:wtAge05", "isBSLarch:wtAge05", 
-    "isMix:wtAge05", "isPine:wtAge05", "isWSpruce:wtAge05")
+    "hab1Larch", "hab1Mixwood", "hab1Pine", "hab1Shrub", "hab1Swamp", 
+    "hab1UrbInd", "hab1WetGrass", "hab1WetShrub", "wtAge", "wtAge2", 
+    "wtAge05", "fCC2", 
+    "isCon:wtAge", "isCon:wtAge2", 
+    "isUpCon:wtAge", "isBSLarch:wtAge", "isUpCon:wtAge2", "isBSLarch:wtAge2", 
+    "isMix:wtAge", "isPine:wtAge", "isWSpruce:wtAge", "isMix:wtAge2", 
+    "isPine:wtAge2", "isWSpruce:wtAge2", "isCon:wtAge05", "isUpCon:wtAge05", 
+    "isBSLarch:wtAge05", "isMix:wtAge05", "isPine:wtAge05", "isWSpruce:wtAge05")
 ## 0 out in South
-cns0 <- c("pAspen", "ROAD01", "SoftLin_PC", "YR", "hab_lcc22:ROAD01")
+cns0 <- c("pAspen", "ROAD01", "SoftLin_PC", "ARU2ARU", "YR", "habCl:ROAD01")
 ## habitat in South
-cnsHab <- c("(Intercept)", "soil1RapidDrain", "soil1SalineAndClay", "soil1Cult", "soil1UrbInd", 
-    "soil1vNonProductive", "soil1vCult", "soil1vUrbInd")
+cnsHab <- c("(Intercept)", "soil1RapidDrain", "soil1Saline", "soil1Clay", 
+    "soil1Cult", "soil1UrbInd", "soil1vRapidDrain", "soil1vSalineAndClay", 
+    "soil1vCult", "soil1vUrbInd")
 ## climate (North & South)
-cnClim <- c("xPET", "xMAT", "xAHM", "xFFP", "xMAP", "xMWMT", "xMCMT", 
-    "xlat", "xlong", "xlat2", "xlong2", 
-    "xFFP:xMAP", "xMAP:xPET", "xAHM:xMAT", "xlat:xlong")
+cnClim <- c("xASP", "xCTI", "xPET", "xMAT", "xAHM", "xFFP", "xMAP", "xMWMT", 
+    "xMCMT", "xlat", "xlong", "xlat2", "xlong2", "xASP:xCTI", "xFFP:xMAP", 
+    "xMAP:xPET", "xAHM:xMAT", "xlat:xlong", "WetKM", "WetWaterKM")
 cnHF <- c("THF_KM", "Lin_KM", "Nonlin_KM", "Succ_KM", "Alien_KM", "Noncult_KM", 
-    "Cult_KM", "THF2_KM", "Nonlin2_KM", "Succ2_KM", "Alien2_KM", "Noncult2_KM")
+    "Cult_KM", "THF2_KM", "Nonlin2_KM", "Succ2_KM", "Alien2_KM", 
+    "Noncult2_KM")
 cnClimHF <- c(cnClim, cnHF)
 
 ## model matrix for Clim & SurroundingHF
@@ -117,26 +128,26 @@ fclim <- as.formula(paste("~ - 1 +", paste(cnClimHF, collapse=" + ")))
 
 
 en <- new.env()
-load(file.path(ROOT, "out", "birds", "data", "data-useok-north.Rdata"), envir=en)
+load(file.path(ROOT, "out", "birds", "data", "data-full-north.Rdata"), envir=en)
 xnn <- en$DAT[1:500,]
 modsn <- en$mods
 yyn <- en$YY
 
 es <- new.env()
-load(file.path(ROOT, "out", "birds", "data", "data-useok-south.Rdata"), envir=es)
+load(file.path(ROOT, "out", "birds", "data", "data-full-south.Rdata"), envir=es)
 xns <- es$DAT[1:500,]
 modss <- es$mods
 yys <- es$YY
 rm(en, es)
 
 ## model for species
-fl <- list.files(file.path(ROOT, "out", "birds", "results"))
-fln <- fl[grep("-north_", fl)]
-fln <- sub("birds_abmi-north_", "", fln)
-fln <- sub(".Rdata", "", fln)
-fls <- fl[grep("-south_", fl)]
-fls <- sub("birds_abmi-south_", "", fls)
-fls <- sub(".Rdata", "", fls)
+#fl <- list.files(file.path(ROOT, "out", "birds", "results"))
+#fln <- fl[grep("-north_", fl)]
+#fln <- sub("birds_abmi-north_", "", fln)
+#fln <- sub(".Rdata", "", fln)
+#fls <- fl[grep("-south_", fl)]
+#fls <- sub("birds_abmi-south_", "", fls)
+#fls <- sub(".Rdata", "", fls)
 
 ## terms and design matrices
 nTerms <- getTerms(modsn, "list")
@@ -165,7 +176,7 @@ ch2veg$cr_zero <- ch2veg$cr %in% c("NonVeg","Water",
 ## strata that do not count into mean density calculation
 ch2veg$HardLin <- ch2veg$cr %in% c("RailHardSurface","RailVegetatedVerge",
     "RoadHardSurface","RoadTrailVegetated","RoadVegetatedVerge")
-ch2veg$SoftLin <- ch2veg$cr %in% c("SeismicLine","TransmissionLine","Pipeline")
+#ch2veg$SoftLin <- ch2veg$cr %in% c("SeismicLine","TransmissionLine","Pipeline")
 ch2veg$VegetatedLinear <- ch2veg$cr %in% c("RailVegetatedVerge",
     "RoadTrailVegetated","RoadVegetatedVerge",
     "SeismicLine","TransmissionLine","Pipeline")
@@ -173,6 +184,8 @@ ch2veg$EarlySeralLinear <- ch2veg$cr %in% c("RailVegetatedVerge",
     "RoadTrailVegetated","RoadVegetatedVerge",
     "TransmissionLine","Pipeline")
 ch2veg$CutLine <- ch2veg$cr == "SeismicLine"
+## nonveg is terrestrial stratum, do not exclude here
+## water is not terrestrial, age0 is all redistributed (so =0)
 ch2veg$exclude <- ch2veg$cr %in% c("Water",
     "Conif0", "Decid0", "Mixwood0", "Pine0", "BSpr0", "Larch0", 
     "CCConif0", "CCDecid0", "CCMixwood0", "CCPine0")
@@ -196,7 +209,7 @@ ch2soil$cr_zero <- ch2soil$cr %in% c("NonVeg","Water",
 ## strata that do not count into mean density calculation
 ch2soil$HardLin <- ch2soil$cr %in% c("RailHardSurface","RailVegetatedVerge",
     "RoadHardSurface","RoadTrailVegetated","RoadVegetatedVerge")
-ch2soil$SoftLin <- ch2soil$cr %in% c("SeismicLine","TransmissionLine","Pipeline")
+#ch2soil$SoftLin <- ch2soil$cr %in% c("SeismicLine","TransmissionLine","Pipeline")
 ch2soil$VegetatedLinear <- ch2soil$cr %in% c("RailVegetatedVerge",
     "RoadTrailVegetated","RoadVegetatedVerge",
     "SeismicLine","TransmissionLine","Pipeline")
@@ -211,7 +224,7 @@ ch2soil$exclude[ch2soil$rf %in% c("SoilWater","SoilUnknown",
     "Conif0", "Decid0", "Mixwood0", "Pine0", "BSpr0", "Larch0", 
     "CCConif0", "CCDecid0", "CCMixwood0", "CCPine0")] <- TRUE
 
-XNhab <- as.matrix(read.csv("~/repos/abmianalytics/lookup/xn-veg.csv"))
+XNhab <- as.matrix(read.csv("~/repos/abmianalytics/lookup/xn-veg-noburn.csv"))
 colnames(XNhab) <- gsub("\\.", ":", colnames(XNhab))
 colnames(XNhab)[1] <- "(Intercept)"
 setdiff(rownames(XNhab), ch2veg$cr)
@@ -230,8 +243,12 @@ setdiff(ch2soil$cr, rownames(XShab))
 setdiff(cnsHab, colnames(XShab))
 
 
-#spp <- "BTNW"
-SPP <- union(fln, fls)
+SPP <- "WEWP"
+do_hsh <- FALSE
+do_veg <- TRUE
+spp <- SPP
+
+#SPP <- union(fln, fls)
 #SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL")
 for (spp in SPP) { # species START
 
@@ -241,10 +258,12 @@ STAGE <- list(
     veg =length(modsn) - ifelse(shf, 1, 2), 
     soil=length(modss) - ifelse(shf, 1, 2))
 
-resn <- loadSPP(file.path(ROOT, "out", "birds", "results", 
-    paste0("birds_abmi-north_", spp, ".Rdata")))
-ress <- loadSPP(file.path(ROOT, "out", "birds", "results", 
-    paste0("birds_abmi-south_", spp, ".Rdata")))
+fn <- file.path(ROOT2, "results", paste0("birds_abmi-",
+        ifelse(do_hsh, "dohsh", "nohsh"), "-north_", spp, ".Rdata"))
+resn <- loadSPP(fn)
+fs <- file.path(ROOT2, "results", paste0("birds_abmi-nohsh", 
+    "-south_", spp, ".Rdata"))
+ress <- loadSPP(fs)
 estn <- suppressWarnings(getEst(resn, stage=STAGE$veg, na.out=FALSE, Xnn))
 ests <- suppressWarnings(getEst(ress, stage=STAGE$soil, na.out=FALSE, Xns))
 
@@ -286,10 +305,15 @@ colnames(Xclim) <- fixNames(colnames(Xclim))
 XclimB <- model.matrix(fclim, kgrid[iib,,drop=FALSE])
 colnames(XclimB) <- fixNames(colnames(XclimB))
 ## reference has 0 surrounding HF
+## but not surrounding Wet etc, which needs to reflect backfilled
 Xclim0 <- Xclim
 Xclim0[,cnHF] <- 0
+Xclim0[,"WetKM"] <- kgrid$WetKM0[ii]
+Xclim0[,"WetWaterKM"] <- kgrid$WetWaterKM0[ii]
 XclimB0 <- XclimB
 XclimB0[,cnHF] <- 0
+XclimB0[,"WetKM"] <- kgrid$WetKM0[iib]
+XclimB0[,"WetWaterKM"] <- kgrid$WetWaterKM0[iib]
 estnClim <- estn[,colnames(Xclim),drop=FALSE]
 estsClim <- ests[,colnames(Xclim),drop=FALSE]
 
