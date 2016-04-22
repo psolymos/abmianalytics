@@ -190,23 +190,28 @@ oc_fun <- function(res) {
 Hi <- t(sapply(allres, oc_fun))
 Hi <- Hi[,cn]
 
-oc_plot <- function(res) {
+oc_plot <- function(res, ...) {
     hi <- oc_fun(res)
     hi <- hi[cn]
     op <- par(las=1, mar=c(4,8,2,2))
     on.exit(par(op))
-    barplot(rev(hi), horiz=TRUE, space=0, col=grey(1-rev(hi)))
+    barplot(rev(hi), horiz=TRUE, space=0, col=grey(1-rev(hi)), ...)
+    #abline(v=0.5, col=2)
 #    box()
     invisible(hi)
 }
 
+fname <- file.path(ROOT, "josm", "fig-oc.pdf")
+pdf(fname, onefile=TRUE)
 for (spp in SPP) {
-fname <- file.path(ROOT, "josm", "fig-oc", paste0("fig-oc-", spp, ".png"))
-png(file=fname,width=700,height=700)
-oc_plot(allres[[spp]])
-dev.off()
+#fname <- file.path(ROOT, "josm", "fig-oc", paste0("fig-oc-", spp, ".png"))
+#png(file=fname,width=700,height=700)
+oc_plot(allres[[spp]], main=spp)
+#dev.off()
 }
+dev.off()
 
+write.csv(Hi, file=file.path(ROOT, "josm", "tab-oc.csv"))
 
 library(vegan)
 fit <- rda(t(Hi))
