@@ -1,4 +1,5 @@
-ROOT <- "y:/Oracle_access_2015"
+ROOT <- "e:/peter/AB_data_v2016/oracle"
+OUTDIR <- "e:/peter/AB_data_v2016/data/species"
 getwd()
 if (interactive())
     source("~/repos/abmianalytics/species/00globalvars.R") else source("00globalvars.R")

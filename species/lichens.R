@@ -1,4 +1,5 @@
-ROOT <- "y:/Oracle_access_2015"
+ROOT <- "e:/peter/AB_data_v2016/oracle"
+OUTDIR <- "e:/peter/AB_data_v2016/data/species"
 getwd()
 if (interactive())
     source("~/repos/abmianalytics/species/00globalvars.R") else source("00globalvars.R")
@@ -21,10 +22,19 @@ taxo <- sqlQuery(con, paste("SELECT * FROM PUBLIC_ACCESS_PUBLIC_DETAIL_TAXONOMYS
 close(con)
 }
 
-resa0 <- read.csv(file.path(ROOT, "data/lichens0308.csv"))
-resb0 <- read.csv(file.path(ROOT, "data/lichens09.csv"))
-taxo <- read.csv(file.path(ROOT, "data/taxonomy.csv"))
-cs <- read.csv(file.path(ROOT, "data/moss-lichen-collstatus.csv"))
+gis <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+resa0 <- read.csv(file.path(ROOT, "lichens-0308.csv"))
+resb0 <- read.csv(file.path(ROOT, "lichens-09.csv"))
+taxo <- read.csv(file.path(ROOT, "taxonomy.csv"))
+#cs <- read.csv(file.path(ROOT, "data/moss-lichen-collstatus.csv"))
+
+#t1 <- read.csv(file.path(ROOT, "lichens-tbl-1.csv"))
+t2 <- read.csv(file.path(ROOT, "lichens-tbl-2.csv"))
+t3 <- read.csv(file.path(ROOT, "lichens-tbl-3.csv"))
+
+t2a <- t2[match(resa0$TSNID, t2$ORG_TSN),]
+t3a <- t3[match(t2a$FINAL_TSN, t3$ATU_TSNID),]
+
 
 ## Labels etc
 sum(grepl("ALPAC-SK", resa0$SITE_LABEL))

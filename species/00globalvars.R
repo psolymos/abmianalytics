@@ -9,7 +9,8 @@ use.date <- TRUE # use date as part of file names or not
 check.completeness <- TRUE # use site list to check for completeness
 combine.tables <- TRUE # combine site label info and spp matrix
 DBVERSION <- "" # "y:/Oracle_access/DatabaseCombined_Clean_2014-04-28.accdb"
-D <- file.path(ROOT, "out") # directory to save files into
+#D <- file.path(ROOT, "out") # directory to save files into
+D <- OUTDIR
 if (use.date) {
     #d <- paste(strsplit(date(), " ")[[1]][c(2,3,5)], collapse="-")
     d <- paste("_", Sys.Date(), sep="")

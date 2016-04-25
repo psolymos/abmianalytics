@@ -1,4 +1,5 @@
-ROOT <- "y:/Oracle_access_2015"
+ROOT <- "e:/peter/AB_data_v2016/oracle"
+OUTDIR <- "e:/peter/AB_data_v2016/data/species"
 getwd()
 if (interactive())
     source("~/repos/abmianalytics/species/00globalvars.R") else source("00globalvars.R")
@@ -24,9 +25,10 @@ close(con)
 
 #res <- read.csv(file.path(ROOT, "data", "plants2015",
 #    "A_T15_Vascular_Plants_AllYear_AB_689250437025811679.csv"), row.names=NULL)
-res <- read.csv(file.path(ROOT, "data", "vplants.csv"))
-gis <- read.csv(file.path(ROOT, "data/sitemetadata.csv"))
-taxo <- read.csv(file.path(ROOT, "data/taxonomy.csv"))
+res <- read.csv(file.path(ROOT, "vplants.csv"))
+#gis <- read.csv(file.path(ROOT, "data/sitemetadata.csv"))
+gis <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+taxo <- read.csv(file.path(ROOT, "taxonomy.csv"))
 
 ## Labels etc
 rr <- LabelFun(res)

@@ -1,9 +1,10 @@
-ROOT <- "y:/Oracle_access_2015"
+ROOT <- "e:/peter/AB_data_v2016/oracle"
+OUTDIR <- "e:/peter/AB_data_v2016/data/species"
 getwd()
 if (interactive())
     source("~/repos/abmianalytics/species/00globalvars.R") else source("00globalvars.R")
 
-T <- "Birds"
+T <- "BirdsRF"
 if (do.prof) {
     proffile <- paste(D, "/OUT_", tolower(T), d, ".Rprof",sep="")
     Rprof(proffile)
@@ -20,9 +21,10 @@ gis <- sqlFetch(con, "METADATA_GIS_SITE_SUMMARY")
 close(con)
 }
 
-res <- read.csv(file.path(ROOT, "data/birds.csv"))
-gis <- read.csv(file.path(ROOT, "data/sitemetadata.csv"))
-taxo <- read.csv(file.path(ROOT, "data/taxonomy.csv"))
+res <- read.csv(file.path(ROOT, "birds-rf.csv"))
+#gis <- read.csv(file.path(ROOT, "data/sitemetadata.csv"))
+gis <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+taxo <- read.csv(file.path(ROOT, "taxonomy.csv"))
 
 
 ## Labels etc
