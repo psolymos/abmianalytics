@@ -226,9 +226,11 @@ table(xn$YEAR, xn[, "PCODE"] == "BBSAB")
 #rn <- rownames(xn)[xn$YEAR %in% 1997:2013 & rownames(xn) %in% rownames(yy)]
 
 ai_plot <- function(ai, ...) {
-    plot(ai,type="b", ...)
-    abline(lm(x ~ Year, ai), col=2)
-    lines(lowess(ai), col=4)
+    plot(ai, type="l", lwd=2, col="lightblue", ...)
+    points(ai, pch=19, col="lightblue")
+    points(ai, pch=21, col=4)
+    abline(lm(x ~ Year, ai), col=1, lwd=2)
+    lines(lowess(ai), col=1, lwd=2, lty=2)
     invisible(NULL)
 }
 resid_yr <- function(i) {
@@ -240,6 +242,10 @@ resid_yr <- function(i) {
 }
 
 spp <- "CAWA"
+Tmat <- matrix(NA, length(SPP[SPP !="CONI"]), 4)
+colnames(Tmat) <- c("Mod", "All","BBS","BAM")
+rownames(Tmat) <- SPP[SPP !="CONI"]
+tres <- list()
 
 for (spp in SPP[SPP !="CONI"]) {
 
@@ -252,6 +258,7 @@ Beta <- estall[[spp]][,"YR"]
 Test <- 100 * (exp(0.1 * Beta) - 1)
 summary(Test)
 quantile(Test, c(0.05, 0.95))
+Tmat[spp, "Mod"] <- mean(Test)
 
 est_sp <- getEst(allres[[spp]], stage=stage_sp, na.out=TRUE, Xn)
 
@@ -269,12 +276,15 @@ d <- data.frame(count=as.numeric(yy[,spp]),
     pred=logpr, YR=xn[,"YR"])
 m1 <- glm(count ~ offset(pred) + YR, d, family=poisson)
 Tres_all <- 100 * (exp(0.1*coef(m1)["YR"]) - 1)
+Tmat[spp, "All"] <- Tres_all
 
 m2 <- glm(count ~ offset(pred) + YR, d[is_bbs,], family=poisson)
 Tres_bbs <- 100 * (exp(0.1*coef(m2)["YR"]) - 1)
+Tmat[spp, "BBS"] <- Tres_bbs
 
 m3 <- glm(count ~ offset(pred) + YR, d[!is_bbs,], family=poisson)
 Tres_bam <- 100 * (exp(0.1*coef(m3)["YR"]) - 1)
+Tmat[spp, "BAM"] <- Tres_bam
 
 ai_all <- aggregate(y, list(Year=yr), mean)
 ai_all <- ai_all[ai_all$Year < 2014,]
@@ -290,34 +300,70 @@ ri_bbs <- ri_bbs[ri_bbs$Year < 2014,]
 ri_bam <- aggregate(r[!is_bbs], list(Year=yr[!is_bbs]), mean)
 ri_bam <- ri_bam[ri_bam$Year < 2014,]
 
+if (FALSE) {
+## predict t0 and t1
+lmfun <- function(ai, use_mean=FALSE) {
+    m <- glm(x ~ Year, ai, family=gaussian("identity"))
+    ai$f <- fitted(m)
+    if (use_mean)
+        ai$f <- ai$f + mean(prmean)
+    100 * ((ai$f[nrow(ai)] / ai$f[1])^(1/(2013-1997)) - 1)
+}
+lmfun(ai_all)
+lmfun(ai_bbs)
+lmfun(ai_bam)
+lmfun(ri_all, TRUE)
+lmfun(ri_bbs, TRUE)
+lmfun(ri_bam, TRUE)
+}
 
 NAM <- as.character(tax[spp, "English_Name"])
 fname <- file.path(ROOT, "josm", "fig-trend", paste0("fig-trend-", spp, ".png"))
 png(file=fname,width=600,height=800)
-op <- par(mfrow=c(4,2))
-hist(Test, col="grey", xlim=range(c(Test, Tres_all,Tres_bbs, Tres_bam, 0)), 
-    xlab="Modeled Annual Trend (%)", main=NAM)
-abline(v=0, col=1, lwd=2, lty=2)
-abline(v=median(Test), col=1, lwd=2)
-abline(v=median(Tres_all), col=4, lwd=2)
-abline(v=median(Tres_bbs), col=2, lwd=2)
-abline(v=median(Tres_bam), col=3, lwd=2)
 
-plot.new()
-legend("bottomright", col=1:4, lty=1, bty="n", lwd=2, 
-    legend=c("Estimate", "BBS", "BAM", "BAM+BBS"))
+#op <- par(mfrow=c(4,2))
+#hist(Test, col="grey", xlim=range(c(Test, Tres_all,Tres_bbs, Tres_bam, 0)), 
+#    xlab="Modeled Annual Trend (%)", main=NAM)
+#abline(v=0, col=1, lwd=2, lty=2)
+#abline(v=median(Test), col=1, lwd=2)
+#abline(v=median(Tres_all), col=4, lwd=2)
+#abline(v=median(Tres_bbs), col=2, lwd=2)
+#abline(v=median(Tres_bam), col=3, lwd=2)
+#plot.new()
+#legend("bottomleft", col=1:4, lty=1, bty="n", lwd=2, 
+#    legend=c("Estimate", "BBS", "BAM", "BAM+BBS"))
+
+op <- par(mfrow=c(3,2))
 ai_plot(ai_bam, main=paste("BAM+EC+ABMI"), ylab="Annual Mean Abundance Index")
 ai_plot(ri_bam, main=paste("BAM+EC+ABMI"), ylab="Std. Residuals")
 ai_plot(ai_bbs, main=paste("BBS"), ylab="Annual Mean Abundance Index")
 ai_plot(ri_bbs, main=paste("BBS"), ylab="Std. Residuals")
 ai_plot(ai_all, main=paste("BAM+EC+ABMI+BBS"), ylab="Annual Mean Abundance Index")
-ai_plot(ri_all, main=paste("BAM+EC+ABMI+BBS"), ylab="Std. Residuals")
+ai_plot(ri_all, main=paste("BAM+EC+ABMI+BBS"), ylab="Std. Residuals", sub=NAM)
 par(op)
+
 dev.off()
 }
 
+Tmat0 <- Tmat
+Tmat[abs(Tmat) > 20] <- NA
 
+End <- 15
+par(mfrow=c(2,4))
+hist(Tmat[,"Mod"], xlim=2*c(-End,End))
+hist(Tmat[,"All"], xlim=2*c(-End,End))
+hist(Tmat[,"BBS"], xlim=2*c(-End,End))
+hist(Tmat[,"BAM"], xlim=2*c(-End,End))
+plot(Mod ~ All, Tmat, ylim=c(-End,End), xlim=c(-End,End))
+abline(0,1, lty=2)
+plot(BBS ~ All, Tmat, ylim=c(-End,End), xlim=c(-End,End))
+abline(0,1, lty=2)
+plot(BAM ~ All, Tmat, ylim=c(-End,End), xlim=c(-End,End))
+abline(0,1, lty=2)
+plot(BAM ~ BBS, Tmat, ylim=c(-End,End), xlim=c(-End,End))
+abline(0,1, lty=2)
 
+write.csv(Tmat0, file=file.path(ROOT, "josm", "trend.csv"))
 
 
 
