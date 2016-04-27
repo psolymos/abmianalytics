@@ -301,6 +301,7 @@ ri_bam <- aggregate(r[!is_bbs], list(Year=yr[!is_bbs]), mean)
 ri_bam <- ri_bam[ri_bam$Year < 2014,]
 
 if (FALSE) {
+
 ## predict t0 and t1
 lmfun <- function(ai, use_mean=FALSE) {
     m <- glm(x ~ Year, ai, family=gaussian("identity"))
@@ -346,7 +347,7 @@ dev.off()
 }
 
 Tmat0 <- Tmat
-Tmat[abs(Tmat) > 20] <- NA
+Tmat[abs(Tmat) > 15] <- NA
 
 End <- 15
 par(mfrow=c(2,4))
@@ -365,6 +366,24 @@ abline(0,1, lty=2)
 
 write.csv(Tmat0, file=file.path(ROOT, "josm", "trend.csv"))
 
+
+plot(Mod ~ All, Tmat, ylim=c(-End,End), xlim=c(-End,End), pch=19, cex=1.2, col="tomato",
+    ylab="Modeled yr effect",xlab="Residual yr effect")
+points(Mod ~ All, Tmat, cex=1.2)
+abline(0,1, lty=1)
+abline(lm(Mod ~ All, Tmat), col=4)
+
+par(mfrow=c(2,2))
+hist(Tmat[,"BBS"], xlim=2*c(-End,End), col="gold", main="BBS only", xlab="")
+hist(Tmat[,"BAM"], xlim=2*c(-End,End), col="gold", main="No BBS", xlab="")
+plot(BBS ~ All, Tmat, ylim=c(-End,End), xlim=c(-End,End), col="tomato", cex=1.2)
+abline(0,1, lty=1)
+abline(lm(BBS ~ All, Tmat), col=4)
+plot(BAM ~ All, Tmat, ylim=c(-End,End), xlim=c(-End,End), col="tomato", cex=1.2)
+abline(0,1, lty=1)
+abline(lm(BAM ~ All, Tmat), col=4)
+ 
+hist(Tmat[,"All"], xlim=2*c(-End,End), col="gold", main="BAM+BBS", xlab="")
 
 
 
