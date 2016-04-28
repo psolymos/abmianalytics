@@ -29,11 +29,11 @@ taxo <- read.csv(file.path(ROOT, "taxonomy.csv"))
 #cs <- read.csv(file.path(ROOT, "data/moss-lichen-collstatus.csv"))
 
 #t1 <- read.csv(file.path(ROOT, "lichens-tbl-1.csv"))
-t2 <- read.csv(file.path(ROOT, "lichens-tbl-2.csv"))
-t3 <- read.csv(file.path(ROOT, "lichens-tbl-3.csv"))
+#t2 <- read.csv(file.path(ROOT, "lichens-tbl-2.csv"))
+#t3 <- read.csv(file.path(ROOT, "lichens-tbl-3.csv"))
 
-t2a <- t2[match(resa0$TSNID, t2$ORG_TSN),]
-t3a <- t3[match(t2a$FINAL_TSN, t3$ATU_TSNID),]
+#t2a <- t2[match(resa0$TSNID, t2$ORG_TSN),]
+#t3a <- t3[match(t2a$FINAL_TSN, t3$ATU_TSNID),]
 
 
 ## Labels etc
@@ -192,9 +192,9 @@ samp(m2) <- nonDuplicated(samp(mmm), Label2, TRUE)
 #xtab(m2) <- as(xtab(m2) > 0, "dgCMatrix") # it might be 5 due to QU=DNC
 
 ## this is 0/1 at PC level
-m01 <- m
+m01 <- mmm
 xtab(m01)[xtab(m01)>0] <- 1
-m012 <- groupSums(m01, 1, m@samp$Label2)
+m012 <- groupSums(m01, 1, mmm@samp$Label2)
 samp(m012) <- nonDuplicated(samp(m01), Label2, TRUE)
 
 aa=apply(xtab(m012),1,max)
