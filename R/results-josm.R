@@ -141,14 +141,33 @@ cfARU <- exp(t(sapply(estall, function(z) {
     zz[zz==0] <- NA
     colMeans(zz, na.rm=TRUE)
     })))
-plot(density(sqrt(cfARU[,"ARU3SM"])), col=4, xlim=c(0, 4), ylim=c(0, 1.5),
-    main="EDR contrast relative to human based PCs")
-lines(density(sqrt(cfARU[,"ARU3RF"])), col=2)
-abline(v=1)
-legend("topright", bty="n", lty=1, col=c(1, 2, 4), legend=c("Human","RF","SM"))
+cfARU <- cfARU[apply(cfARU, 1, max, na.rm=TRUE) <= 5,]
+par(mfrow=c(1,2))
+plot(density(sqrt(cfARU[,"ARU3SM"]), bw=0.25), col=4, xlim=c(0, 4), ylim=c(0, 1.5),
+    main="EDR contrast relative to human based PCs", lwd=2)
+lines(density(sqrt(cfARU[,"ARU3RF"]), bw=0.25), col=2, lwd=2)
+abline(v=1, lwd=2)
+legend("topright", bty="n", lty=1, col=c(1, 2, 4), legend=c("Human","RF","SM"), lwd=2)
+
+plot(density((cfARU[,"ARU3SM"]), bw=0.25), col=4, xlim=c(0, 4), ylim=c(0, 1.5),
+    main="EDA contrast relative to human based PCs", lwd=2)
+lines(density((cfARU[,"ARU3RF"]), bw=0.25), col=2, lwd=2)
+abline(v=1, lwd=2)
+legend("topright", bty="n", lty=1, col=c(1, 2, 4), legend=c("Human","RF","SM"), lwd=2)
+
 ## look at AIC differences between models: support for TRAD-RF difference
-
-
+mods[5]
+levels(xn$ARU1)
+levels(xn$ARU2)
+levels(xn$ARU3)
+dAIC <- list()
+for (spp in rownames(cfARU)) {
+    dAIC[[spp]] <-  c(attr(allres[[spp]][[1]]$caic[[5]], "StartCAIC"), allres[[spp]][[1]]$caic[[5]])
+    dAIC[[spp]] <- dAIC[[spp]] - min(dAIC[[spp]])
+}
+dAIC <- do.call(rbind, dAIC)
+summary(ifelse(t(apply(dAIC, 1, rank)) == 1, 1, 0))
+colSums(ifelse(t(apply(dAIC, 1, rank)) == 1, 1, 0))
 
 spp <- "CONI"
 ## opticut results
