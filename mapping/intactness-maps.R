@@ -266,3 +266,17 @@ for (i in 1:7) {
     writeRaster(r, file.path(ROOT3, paste0("richness-", lab, ".asc")),
         overwrite=TRUE)
 }
+
+
+r1 <- map_fun(xx[,"Curr"], q=1, main="", colScale="abund",
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    legend=TRUE,
+    mask=NULL)
+r2 <- map_fun(xx[,"Ref"], q=1, main="", colScale="abund",
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    legend=TRUE,
+    mask=NULL)
+writeRaster(r1, "e:/peter/sppweb2015-round3/fromJim/NN plant/nNNSpp-Curr.asc",
+    overwrite=TRUE)
+writeRaster(r2, "e:/peter/sppweb2015-round3/fromJim/NN plant/nNNSpp-Ref.asc",
+    overwrite=TRUE)
