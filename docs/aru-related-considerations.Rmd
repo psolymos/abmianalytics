@@ -14,7 +14,7 @@ $Y_{ij}$ is number of call events at location $i$ ($i=1,...,n$) and
 time $j$ ($j=1,...,m$), and of a recording session duration $t_{ij}$
 (usually 3 or 10 minutes).
 
-Location (habitat, clinate), time (Julian day, time), 
+Location (habitat, climate), time (Julian day, time), 
 recording session (location and time) 
 specific predictor variables might be considered in modeling.
 
