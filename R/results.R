@@ -215,6 +215,16 @@ write.csv(wrsi_s, file=file.path(ROOT, "figs", "useavail-south.csv"))
 load(file.path("c:/p/AB_data_v2015/out", "kgrid", "kgrid_table.Rdata"))
 col1 <- c("#C8FBC8","#C8E6FA","#F5E6F5","#FFDCEC","#FFE6CD","#FFF1D2")[match(kgrid$NRNAME,
     c("Boreal","Foothills","Rocky Mountain","Canadian Shield","Parkland","Grassland"))]
+## analysis regions
+if (FALSE) {
+col1 <- c("green","green","grey","green","brown","yellow")[match(kgrid$NRNAME,
+    c("Boreal","Foothills","Rocky Mountain","Canadian Shield","Parkland","Grassland"))]
+col1[kgrid$NSRNAME == "Dry Mixedwood"] <- "brown"
+png(file="analysis-regions.png", width=600, height=1000)
+plot(kgrid$X, kgrid$Y, pch=15, cex=0.2, col=col1, axes=FALSE, ann=FALSE)
+dev.off()
+}
+
 library(raster)
 library(sp)
 library(rgdal)
