@@ -35,6 +35,8 @@ tmp2 <- find_min(tmp)
 tmp2$value[is.infinite(tmp2$value)] <- NA
 det$Det1 <- tmp2$value
 
+det$site_stn <- interaction(det$SITE, det$STATION, drop=TRUE)
+
 ## make sure not double counted: indiv_id # ~60 rows
 tmp <- paste(det$RecordingKey, det$Spp, det$INDIV_ID)
 tmp2 <- paste(det$RecordingKey, det$Spp)
@@ -76,3 +78,43 @@ table(det$SITE, det$Duration)
 
 table(rowSums(!is.na(det[det$Duration == 3,c("X0min", "X1min", "X2min")])))
 
+det$ToY <- det$Start$yday
+det$ToYc <- as.integer(cut(det$ToY, c(0, 105, 120, 140, 150, 160, 170, 180, 365)))
+det$visit <- interaction(det$site_stn, det$ToYc, drop=TRUE)
+
+det$ToD <- det$Start$hour + det$Start$min / 60
+det$ToDx <- round(det$ToD, 0)
+det$ToDc <- as.factor(ifelse(det$ToDx == 0, "Midnight", "Morning"))
+
+xt_stn <- as.matrix(Xtab(~ site_stn + Spp, det, cdrop="NONE"))
+xt_vis <- as.matrix(Xtab(~ visit + Spp, det, cdrop="NONE"))
+
+xt_tod <- data.frame(as.matrix(Xtab(~ Spp + ToDc, det, rdrop="NONE")))
+xt_tod$MidP <- round(xt_tod$Midnight / (xt_tod$Midnight + xt_tod$Morning), 4)
+xt_tod[order(xt_tod$MidP),]
+
+xt_toy <- as.matrix(Xtab(~ Spp + ToYc, det, rdrop="NONE"))
+
+Class <- nonDuplicated(det, visit, TRUE)
+Class <- Class[rownames(xt_vis),]
+Class$STR2 <- factor(NA, c("A", "B", "C"))
+Class$STR2[Class$ToYc %in% 1:3] <- "A"
+Class$STR2[Class$ToYc %in% 4:7] <- "B"
+Class$STR2[Class$ToYc %in% 8] <- "C"
+table(Class$STR2, Class$ToYc)
+
+
+library(opticut)
+#oc <- opticut(xt_vis ~ 1, strata=Class$ToYc, dist="poisson")
+xtv <- ifelse(xt_vis > 0, 1, 0)
+oc <- opticut(xt_vis ~ 1, strata=Class$STR2, dist="poisson")
+oc2 <- opticut(xtv ~ 1, strata=Class$STR2, dist="binomial")
+plot(oc2,sort=1)
+print(summary(oc2), cut=-Inf)
+
+oc3 <- opticut(xtv ~ 1, strata=Class$ToDc, dist="binomial")
+summary(oc3)
+
+## todo:
+## add common names to colnames
+## increase left margin
