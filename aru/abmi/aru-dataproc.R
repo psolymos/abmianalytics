@@ -27,23 +27,87 @@ tmp2 <- find_min(tmp)
 tmp2$value[is.infinite(tmp2$value)] <- NA
 det$Det1 <- tmp2$value
 
+f <- function(x)
+    ifelse(x == "VNA", NA, as.numeric(as.character(x)))
+det$RAIN <- f(det$RAIN)
+det$WIND <- f(det$WIND)
+det$INDUSTRY <- f(det$INDUSTRY)
+det$NOISE <- f(det$NOISE)
+det$MICROPHONE <- f(det$MICROPHONE)
+
+spp_keep <- unique(as.character(det$COMMON_NAME)[det$RANK_NAME == "Species"])
+spp_keep <- spp_keep[spp_keep != "VNA"]
+det$Spp <- det$COMMON_NAME
+levels(det$Spp)[!(levels(det$Spp) %in% spp_keep)] <- "NONE"
+
 ## make sure not double counted: indiv_id # ~60 rows
-tmp <- paste(det$RECORDING_KEY, det$COMMON_NAME, det$INDIVIDUAL_ID)
-tmp2 <- paste(det$RECORDING_KEY, det$COMMON_NAME)
+tmp <- paste(det$RECORDING_KEY, det$Spp, det$INDIVIDUAL_ID)
+tmp2 <- paste(det$RECORDING_KEY, det$Spp)
 dc <- names(table(tmp))[table(tmp) > 1]
 zz <- det[tmp %in% dc,]
-zz <- zz[!(zz$COMMON_NAME %in% c("NONE","SNI")),]
-zz[,c("RECORDING_KEY", "COMMON_NAME","INDIVIDUAL_ID", "int1", "int2", "int3")]
+zz <- zz[zz$Spp != "NONE",]
+zz[,c("RECORDING_KEY", "Spp","INDIVIDUAL_ID", "int1", "int2", "int3")]
+## leave it for now (until it is resolved at BU end)
 
-#rec <- nonDuplicated(det[det$Replicate == 1, ], RecordingKey, TRUE)
-rec <- nonDuplicated(det, RecordingKey, TRUE)
-rec <- rec[,c("RecordingKey", "ProjectID", "Cluster", "SITE", "STATION", 
-    "Year", "Round", "FileName", "RECORDING_DATE", "RECORD_TIME", 
-    "Replicate", "Observer", "Rain", "Wind", "Industry", "Noise", 
-    "Microphone", "ProsTime", "Method", "Comment.Recording", "Duration", "Start")]
-rec$ToY <- rec$Start$yday
-rec$ToD <- rec$Start$hour + rec$Start$min / 60
-rec$ToDx <- round(rec$ToD, 0)
+det$site_stn <- interaction(det$SITE, det$STATION, drop=TRUE)
+
+det$ToY <- det$Start$yday
+det$ToYc <- as.integer(cut(det$ToY, c(0, 105, 120, 140, 150, 160, 170, 180, 365)))
+det$visit <- interaction(det$site_stn, det$ToYc, drop=TRUE)
+
+det$ToD <- det$Start$hour + det$Start$min / 60
+det$ToDx <- round(det$ToD, 0)
+det$ToDc <- as.factor(ifelse(det$ToDx == 0, "Midnight", "Morning"))
+
+
+xt_stn <- as.matrix(Xtab(~ site_stn + Spp, det, cdrop="NONE"))
+xt_vis <- as.matrix(Xtab(~ visit + Spp, det, cdrop="NONE"))
+
+xt_tod <- data.frame(as.matrix(Xtab(~ Spp + ToDc, det, rdrop="NONE")))
+xt_tod$MidP <- round(xt_tod$Midnight / (xt_tod$Midnight + xt_tod$Morning), 4)
+xt_tod[order(xt_tod$MidP),]
+
+xt_toy <- as.matrix(Xtab(~ Spp + ToYc, det, rdrop="NONE"))
+
+Class <- nonDuplicated(det, visit, TRUE)
+Class <- Class[rownames(xt_vis),]
+Class$STR2 <- factor(NA, c("A", "B", "C"))
+Class$STR2[Class$ToYc %in% 1:3] <- "A"
+Class$STR2[Class$ToYc %in% 4:7] <- "B"
+Class$STR2[Class$ToYc %in% 8] <- "C"
+table(Class$STR2, Class$ToYc)
+
+
+library(opticut)
+xtv <- ifelse(xt_vis > 0, 1, 0)
+oc2 <- opticut(xtv ~ 1, strata=Class$STR2, dist="binomial")
+oc3 <- opticut(xtv ~ 1, strata=Class$ToDc, dist="binomial")
+
+plot(oc2,sort=1)
+summary(oc2)
+
+summary(oc3)
+
+table(det$ToYc, det$Duration)
+## crosstab for all-in-one models
+
+keep <- det$Duration == 3 & det$ToDc == "Morning"
+keep[is.na(keep)] <- FALSE
+det2 <- det[keep,]
+det2$PKEY <- interaction(det2$SITE_LABEL, "_", det2$ToY, ":", 
+    det2$Start$hour, ":", det2$Start$min, sep="", drop=TRUE)
+xt <- as.matrix(Xtab(~ PKEY + Spp, det2, cdrop="NONE"))
+x <- nonDuplicated(det2, PKEY, TRUE)
+x <- x[rownames(xt), c("PKEY", "SITE_LABEL", "ROTATION", 
+    "SITE", "YEAR", "STATION", "RAIN", "WIND", "INDUSTRY", "NOISE", "MICROPHONE", 
+    "Start", "ToY", "ToD")]
+
+OUTDIR <- "e:/peter/AB_data_v2016/data/species"
+T <- "BirdsSM"
+d <- paste("_", Sys.Date(), sep="")
+save(det, xt, x, file=paste(OUTDIR, "/OUT_", tolower(T), d, ".Rdata",sep=""))
+
+
 
 ## --
 library(mefa4)
