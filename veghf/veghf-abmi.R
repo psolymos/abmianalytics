@@ -300,7 +300,6 @@ clim1 <- nonDuplicated(clim1, Site_YEAR_CAMARU, TRUE)
 compare_sets(rownames(dd150mPT_2015[[1]]), rownames(clim1))
 clim1 <- clim1[rownames(dd150mPT_2015[[1]]),]
 
-
 tmp <- strsplit(as.character(clim1$Site_YEAR_CAMARU), "_")
 clim1$Site <- as.factor(sapply(tmp, "[[", 1))
 clim1$Year <- as.integer(sapply(tmp, "[[", 2))
@@ -465,9 +464,9 @@ if (SAVE)
         file=file.path(ROOT, VER, "out/abmi_onoff", 
         "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015-revisits.Rdata"))
 
-
 ## merging objects at site center
 
+source("~/repos/abmianalytics/veghf/veghf-setup.R")
 e <- new.env()
 load(file.path(ROOT, VER, "out/abmi_onoff", 
     "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015-revisits.Rdata"),
@@ -532,4 +531,78 @@ all(rownames(climSite) == rownames(dd1kmCenter[[1]]))
 save(dd1ha, dd1kmCenter, climSite, 
     file=file.path(ROOT, VER, "out/abmi_onoff", 
     "veg-hf-clim-reg_abmi-onoff_siteCentre_incl2015.Rdata"))
+
+## merging objects at bird points and ARU locations
+
+source("~/repos/abmianalytics/veghf/veghf-setup.R")
+e <- new.env()
+load(file.path(ROOT, VER, "out/abmi_onoff", 
+    "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015-revisits.Rdata"),
+    envir=e)
+climPT_2015 <- e$climPT_2015
+climPT_2015$Label0 <- climPT_2015$Label
+
+## RiverForks points
+climPT1 <- droplevels(climPT_2015[climPT_2015$deployment == "Bird",])
+climPT1$Label <- gsub("_Bird_", "_PT_", climPT1$Label)
+## ARU points
+climPT2 <- droplevels(climPT_2015[climPT_2015$deployment %in% c("AppCenter", "ARU", 
+    "BOTH", "SciCenter"),])
+climPT2$Label <- gsub("_AppCenter_", "_STATION_", climPT2$Label)
+climPT2$Label <- gsub("_ARU_", "_STATION_", climPT2$Label)
+climPT2$Label <- gsub("_BOTH_", "_STATION_", climPT2$Label)
+climPT2$Label <- gsub("_SciCenter_", "_STATION_", climPT2$Label)
+climPT2$Label <- gsub("T_IG_ABMI_388B_2015_1", "T_IG_ABMI_388_2015_1", climPT2$Label)
+## Camera points
+climPT3 <- droplevels(climPT_2015[climPT_2015$deployment %in% c("CAM", "BOTH"),])
+
+## climate etc for RiverForks
+e$climPoint$Label0 <- e$climPoint$Label
+compare_sets(colnames(e$climPoint), colnames(climPT1))
+setdiff(colnames(e$climPoint), colnames(climPT1))
+setdiff(colnames(climPT1), colnames(e$climPoint))
+(cn <- intersect(colnames(e$climPoint), colnames(climPT1)))
+climRF <- rbind(e$climPoint[,cn], climPT1[,cn])
+## climate etc for SM units
+climSM <- climPT2[,cn]
+
+dd150m_RF <- list()
+dd150m_SM <- list()
+dd1km_RF <- list()
+dd1km_SM <- list()
+
+for (i in 1:4) {
+    dd150m_RF[[i]] <- rbind(e$dd150m[[i]], e$dd150mPT_2015[[i]])
+    dd150m_RF[[i]] <- dd150m_RF[[i]][rownames(climRF), ]
+    rownames(dd150m_RF[[i]]) <- climRF$Label
+
+    dd150m_SM[[i]] <- e$dd150mPT_2015[[i]]
+    dd150m_SM[[i]] <- dd150m_SM[[i]][rownames(climSM), ]
+    rownames(dd150m_SM[[i]]) <- climSM$Label
+
+    dd1km_RF[[i]] <- rbind(e$dd1km[[i]], e$dd1kmPT_2015[[i]])
+    dd1km_RF[[i]] <- dd1km_RF[[i]][rownames(climRF), ]
+    rownames(dd1km_RF[[i]]) <- climRF$Label
+
+    dd1km_SM[[i]] <- e$dd1kmPT_2015[[i]]
+    dd1km_SM[[i]] <- dd1km_SM[[i]][rownames(climSM), ]
+    rownames(dd1km_SM[[i]]) <- climSM$Label
+}
+dd150m_RF$scale <- dd150m_SM$scale <- e$dd150m$scale
+dd1km_RF$scale <- dd1km_SM$scale <- e$dd1km$scale
+
+rownames(climRF) <- climRF$Label
+rownames(climSM) <- climSM$Label
+
+save(dd150m_RF, dd150m_SM, dd1km_RF, dd1km_SM, climRF, climSM, 
+    file=file.path(ROOT, VER, "out/abmi_onoff", 
+    "veg-hf-clim-reg_abmi-onoff_Birds-RF-SM_incl2015.Rdata"))
+
+load("e:/peter/AB_data_v2016/data/species/OUT_birdssm_2016-05-27.Rdata")
+
+zz <- rownames(climSM)
+zz <- gsub("_Center", "_1", zz)
+compare_sets(zz, x$SITE_LABEL)
+setdiff(zz, x$SITE_LABEL)
+setdiff(x$SITE_LABEL, zz)
 
