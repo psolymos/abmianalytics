@@ -1,5 +1,53 @@
 library(mefa4)
 
+ROOT <- "e:/peter/AB_data_v2016/oracle"
+
+det <- read.csv(file.path(ROOT, "birds-aru.csv"))
+
+det <- droplevels(det[det$REPLICATE == 1, ]) # ~40 rows
+
+## resolve duration
+det$Duration <- NA
+det$Duration[det$METHOD %in% c("11", "14")] <- 3
+det$Duration[det$METHOD %in% c("12", "13")] <- 1
+
+## format date/time
+tmp <- paste(det$RECORDING_DATE, det$RECORDING_TIME)
+det$Start <- strptime(tmp, "%d-%b-%y %H:%M:%S")
+
+#det <- det[det$Spp != "NONE", ]
+
+## first detection interval
+det$int1 <- ifelse(det$MIN_1 == "VNA", NA, as.integer(det$MIN_1))
+det$int2 <- ifelse(det$MIN_2 == "VNA", NA, as.integer(det$MIN_2))
+det$int3 <- ifelse(det$MIN_3 == "VNA", NA, as.integer(det$MIN_3))
+tmp <- col(det[,c("int1", "int2", "int3")])
+tmp[is.na(det[,c("int1", "int2", "int3")])] <- Inf
+tmp2 <- find_min(tmp)
+tmp2$value[is.infinite(tmp2$value)] <- NA
+det$Det1 <- tmp2$value
+
+## make sure not double counted: indiv_id # ~60 rows
+tmp <- paste(det$RECORDING_KEY, det$COMMON_NAME, det$INDIVIDUAL_ID)
+tmp2 <- paste(det$RECORDING_KEY, det$COMMON_NAME)
+dc <- names(table(tmp))[table(tmp) > 1]
+zz <- det[tmp %in% dc,]
+zz <- zz[!(zz$COMMON_NAME %in% c("NONE","SNI")),]
+zz[,c("RECORDING_KEY", "COMMON_NAME","INDIVIDUAL_ID", "int1", "int2", "int3")]
+
+#rec <- nonDuplicated(det[det$Replicate == 1, ], RecordingKey, TRUE)
+rec <- nonDuplicated(det, RecordingKey, TRUE)
+rec <- rec[,c("RecordingKey", "ProjectID", "Cluster", "SITE", "STATION", 
+    "Year", "Round", "FileName", "RECORDING_DATE", "RECORD_TIME", 
+    "Replicate", "Observer", "Rain", "Wind", "Industry", "Noise", 
+    "Microphone", "ProsTime", "Method", "Comment.Recording", "Duration", "Start")]
+rec$ToY <- rec$Start$yday
+rec$ToD <- rec$Start$hour + rec$Start$min / 60
+rec$ToDx <- round(rec$ToD, 0)
+
+## --
+library(mefa4)
+
 ROOT <- "e:/peter/AB_data_v2016/data/aru-raw"
 
 issu <- read.csv(file.path(ROOT, "2015-ABMI-MC-SC-AudioRecordingTranscription-issues.csv"))
