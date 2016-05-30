@@ -170,15 +170,18 @@ DAT <- DAT[!is.na(DAT$JURS) & DAT$JURS == "AB",]
 table(duplicated(DAT$PKEY))
 rownames(DAT) <- DAT$PKEY
 
-YY <- Xtab(ABUND ~ PKEY + SPECIES, PCTBL, cdrop="NONE")
+YY <- Xtab(ABUND ~ PKEY + SPECIES_ALL, PCTBL, cdrop="NONE")
 ii <- sort(intersect(rownames(DAT), rownames(YY)))
 DAT <- DAT[ii,]
 YY <- YY[ii,]
-OFF <- OFF[ii,]
+#OFF <- OFF[ii,]
 #YY <- YY[,colSums(YY) > 0]
 tax <- droplevels(TAX[colnames(YY),])
 tax$Spp <- tax$English_Name
 levels(tax$Spp) <- nameAlnum(levels(tax$Spp), capitalize="mixed", collapse="")
+
+levels(tax$Spp)[levels(tax$Spp)=="BlackandwhiteWarbler"] <- "BlackAndWhiteWarbler"
+levels(tax$Spp)[levels(tax$Spp)=="MacGillivraysWarbler"] <- "MacgillivrayWarbler"
 
 compare_sets(colnames(yy_abmi), levels(tax$Spp))
 setdiff(colnames(yy_abmi), levels(tax$Spp))
@@ -187,6 +190,15 @@ z1 <- data.frame(x=colSums(yy_abmi[,setdiff(colnames(yy_abmi), levels(tax$Spp))]
 z1[order(z1[,1]),,drop=FALSE]
 z2 <- data.frame(x=colSums(YY[,setdiff(levels(tax$Spp), colnames(yy_abmi))]>0))
 z2[order(z2[,1]),,drop=FALSE]
+
+## TODO
+#insert 0s into BAM+BBS:
+#    BarnOwl
+#    RedPhalarope
+#fix labels:
+#    MacgillivrayWarbler
+#    BlackAndWhiteWarbler"                    
+#join the 2 tables for intersecting names
 
 
 YY2 <- Xtab(ABUND ~ PKEY + SPECIES, pc2)
