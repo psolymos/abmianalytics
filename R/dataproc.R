@@ -150,6 +150,10 @@ xx_sm <- with(pcsm, data.frame(
 ))
 
 xx_abmi <- rbind(xx_rf, xx_sm)
+rownames(xx_abmi) <- xx_abmi$PKEY
+
+compare_sets(rownames(yy_abmi), rownames(xx_abmi))
+xx_abmi <- xx_abmi[rownames(yy_abmi),]
 
 ## use preprocessed national data set for BAM & BBS
 
@@ -166,15 +170,24 @@ DAT <- DAT[!is.na(DAT$JURS) & DAT$JURS == "AB",]
 table(duplicated(DAT$PKEY))
 rownames(DAT) <- DAT$PKEY
 
-## ABMI data
-load(file=file.path(ROOT, "out",
-    paste0("abmi_data_package_2015-08-18.Rdata")))
-
-YY <- Xtab(ABUND ~ PKEY + SPECIES, PCTBL)
+YY <- Xtab(ABUND ~ PKEY + SPECIES, PCTBL, cdrop="NONE")
 ii <- sort(intersect(rownames(DAT), rownames(YY)))
 DAT <- DAT[ii,]
 YY <- YY[ii,]
+OFF <- OFF[ii,]
 #YY <- YY[,colSums(YY) > 0]
+tax <- droplevels(TAX[colnames(YY),])
+tax$Spp <- tax$English_Name
+levels(tax$Spp) <- nameAlnum(levels(tax$Spp), capitalize="mixed", collapse="")
+
+compare_sets(colnames(yy_abmi), levels(tax$Spp))
+setdiff(colnames(yy_abmi), levels(tax$Spp))
+setdiff(levels(tax$Spp), colnames(yy_abmi))
+z1 <- data.frame(x=colSums(yy_abmi[,setdiff(colnames(yy_abmi), levels(tax$Spp))]>0))
+z1[order(z1[,1]),,drop=FALSE]
+z2 <- data.frame(x=colSums(YY[,setdiff(levels(tax$Spp), colnames(yy_abmi))]>0))
+z2[order(z2[,1]),,drop=FALSE]
+
 
 YY2 <- Xtab(ABUND ~ PKEY + SPECIES, pc2)
 ii <- sort(intersect(rownames(dat2), rownames(YY2)))
