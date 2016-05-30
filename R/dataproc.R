@@ -8,20 +8,160 @@ library(raster)
 library(sp)
 library(rgdal)
 library(maptools)
-library(pbapply)
+
+ROOT <- "e:/peter/bam/Apr2016"
+ROOT2 <- "e:/peter/AB_data_v2016"
+
+## proces ABMI data
+
+e1 <- new.env()
+e2 <- new.env()
+load(file.path(ROOT2, "data", "species", "OUT_birdsrf_2016-05-27.Rdata"), envir=e1)
+load(file.path(ROOT2, "data", "species", "OUT_birdssm_2016-05-30.Rdata"), envir=e2)
+
+(mrf <- e1$m)
+(msm <- Mefa(e2$xt, e2$x))
+compare_sets(colnames(mrf), colnames(msm))
+setdiff(colnames(mrf), colnames(msm))
+setdiff(colnames(msm), colnames(mrf))
+compare_sets(rownames(mrf), rownames(msm))
+yy_abmi <- mbind(xtab(mrf), xtab(msm), fill=0)
+
+pcabmi <- samp(mrf)
+ssabmi <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+
+tmp <- do.call(rbind, sapply(levels(pcabmi$Label), strsplit, "_"))
+colnames(tmp) <- c("Protocol", "OnOffGrid", "DataProvider", "SiteLabel", "YYYY", "Visit", "SubType", "BPC")
+tmp2 <- sapply(tmp[,"SiteLabel"], strsplit, "-")
+tmp3 <- sapply(tmp2, function(z) if (length(z)==1) "ABMI" else z[2])
+tmp4 <- sapply(tmp2, function(z) if (length(z)==1) z[1] else z[3])
+tmp <- data.frame(tmp, ClosestABMISite=tmp4)
+tmp$DataProvider <- as.factor(tmp3)
+tmp$Label <- with(tmp, paste(OnOffGrid, DataProvider, SiteLabel, YYYY, Visit, "PC", BPC, sep="_"))
+tmp$Label2 <- with(tmp, paste(OnOffGrid, DataProvider, SiteLabel, YYYY, Visit, sep="_"))
+tmp$ClosestABMISite <- as.integer(as.character(tmp$ClosestABMISite))
+tmp$lat <- ssabmi$PUBLIC_LATTITUDE[match(tmp$ClosestABMISite, ssabmi$SITE_ID)]
+tmp$long <- ssabmi$PUBLIC_LONGITUDE[match(tmp$ClosestABMISite, ssabmi$SITE_ID)]
+#tmp$NatReg <- ssabmi$NATURAL_REGIONS[match(tmp$ClosestABMISite, ssabmi$SITE_ID)]
+#tmp$boreal <- tmp$NatReg %in% c(c("Boreal", "Canadian Shield", "Foothills", "Rocky Mountain"))
+
+pcabmi <- data.frame(pcabmi, tmp[match(pcabmi$Label, rownames(tmp)),])
+
+## PKEY table and proper date format
+PKEY_abmi <- nonDuplicated(pcabmi, pcabmi$Label, TRUE)
+tmp <- PKEY_abmi$ADATE
+tmp <- sapply(as.character(tmp), strsplit, split="-")
+for (i in 1:length(tmp)) {
+    if (length(tmp[[i]])<3) {
+        tmp[[i]] <- rep("99", 3)
+    }
+}
+table(sapply(tmp, "[[", 2))
+for (i in 1:length(tmp)) {
+    tmp[[i]][2] <- switch(tmp[[i]][2],
+        "May"=5, "Jun"=6, "Jul"=7, "Aug"=8, "99"=99)
+}
+tmp <- sapply(tmp, function(z) paste("20",z[3],"-",z[2],"-",z[1], sep=""))
+tmp[tmp=="2099-99-99"] <- NA
+PKEY_abmi$Date <- as.POSIXct(tmp, tz="America/Edmonton")
+
+## TSSR
+Coor <- as.matrix(cbind(as.numeric(PKEY_abmi$long),as.numeric(PKEY_abmi$lat)))
+JL <- as.POSIXct(PKEY_abmi$Date, tz="America/Edmonton")
+subset <- rowSums(is.na(Coor))==0 & !is.na(JL)
+sr <- sunriset(Coor[subset,], JL[subset], direction="sunrise", POSIXct.out=FALSE) * 24
+PKEY_abmi$srise_MDT <- NA
+PKEY_abmi$srise_MDT[subset] <- sr
+
+tmp <- strsplit(as.character(PKEY_abmi$TBB_START_TIME), ":")
+id <- sapply(tmp,length)==2
+tmp <- tmp[id]
+tmp <- as.integer(sapply(tmp,"[[",1)) + as.integer(sapply(tmp,"[[",2))/60
+PKEY_abmi$start_time <- NA
+PKEY_abmi$start_time[id] <- tmp
+PKEY_abmi$srise <- PKEY_abmi$srise_MDT
+PKEY_abmi$TSSR <- (PKEY_abmi$start_time - PKEY_abmi$srise) / 24 # MDT offset is 0
+
+## Julian day
+PKEY_abmi$jan1 <- as.Date(paste(PKEY_abmi$YEAR, "-01-01", sep=""))
+PKEY_abmi$JULIAN <- as.numeric(as.Date(PKEY_abmi$Date)) - as.numeric(PKEY_abmi$jan1) + 1
+PKEY_abmi$JULIAN[PKEY_abmi$JULIAN > 365] <- NA
+PKEY_abmi$JDAY <- PKEY_abmi$JULIAN / 365
+
+pcsm <- samp(msm)
+
+tmp <- do.call(rbind, sapply(levels(pcsm$SITE_LABEL), strsplit, "_"))
+colnames(tmp) <- c("Protocol", "OnOffGrid", "DataProvider", "SiteLabel", "YYYY", "Visit", "SubType", "BPC")
+tmp2 <- sapply(tmp[,"SiteLabel"], strsplit, "-")
+tmp3 <- sapply(tmp2, function(z) if (length(z)==1) "ABMI" else z[2])
+tmp4 <- sapply(tmp2, function(z) if (length(z)==1) z[1] else z[3])
+tmp <- data.frame(tmp, ClosestABMISite=tmp4)
+tmp$DataProvider <- as.factor(tmp3)
+tmp$Label <- with(tmp, paste(OnOffGrid, DataProvider, SiteLabel, YYYY, Visit, 
+    "STATION", BPC, sep="_"))
+tmp$Label2 <- with(tmp, paste(OnOffGrid, DataProvider, SiteLabel, YYYY, Visit, sep="_"))
+tmp$ClosestABMISite <- as.integer(as.character(tmp$ClosestABMISite))
+tmp$lat <- ssabmi$PUBLIC_LATTITUDE[match(tmp$ClosestABMISite, ssabmi$SITE_ID)]
+tmp$long <- ssabmi$PUBLIC_LONGITUDE[match(tmp$ClosestABMISite, ssabmi$SITE_ID)]
+
+pcsm <- data.frame(pcsm, tmp[match(pcsm$SITE_LABEL, rownames(tmp)),])
+
+## TSSR
+Coor <- as.matrix(cbind(as.numeric(pcsm$long),as.numeric(pcsm$lat)))
+JL <- as.POSIXct(pcsm$Start, tz="America/Edmonton")
+subset <- rowSums(is.na(Coor))==0 & !is.na(JL)
+sr <- sunriset(Coor[subset,], JL[subset], direction="sunrise", POSIXct.out=FALSE) * 24
+pcsm$srise_MDT <- NA
+pcsm$srise_MDT[subset] <- sr
+
+tmp <- strsplit(as.character(pcsm$TBB_START_TIME), ":")
+id <- sapply(tmp,length)==2
+tmp <- tmp[id]
+tmp <- as.integer(sapply(tmp,"[[",1)) + as.integer(sapply(tmp,"[[",2))/60
+pcsm$start_time <- NA
+pcsm$start_time[id] <- tmp
+pcsm$srise <- pcsm$srise_MDT
+pcsm$TSSR <- (pcsm$start_time - pcsm$srise) / 24 # MDT offset is 0
+
+xx_rf <- with(PKEY_abmi, data.frame(
+    PCODE="ABMI",
+    PKEY=as.factor(Label),
+    SS=as.factor(Label2),
+    YEAR=YEAR,
+    TSSR=TSSR,
+    JDAY=JDAY,
+    MAXDUR=10,
+    MAXDIS=Inf,
+    TREE=NA,
+    LCC_combo=NA
+))
+
+xx_sm <- with(pcsm, data.frame(
+    PCODE="ABMI",
+    PKEY=as.factor(PKEY),
+    SS=as.factor(SITE_LABEL),
+    YEAR=YEAR,
+    TSSR=TSSR,
+    JDAY=ToY/365,
+    MAXDUR=3,
+    MAXDIS=Inf,
+    TREE=NA,
+    LCC_combo=NA
+))
+
+xx_abmi <- rbind(xx_rf, xx_sm)
 
 ## use preprocessed national data set for BAM & BBS
 
-ROOT <- "c:/bam/May2015"
-load(file.path(ROOT, "out", "data_package_2015-08-14.Rdata"))
-load(file.path(ROOT, "out", "offsets_allspp_BAMBBS_2015-07-24.Rdata"))
-colnames(OFF)[colnames(OFF) == "YWAR"] <- "YEWA"
-rownames(TAX) <- TAX$Species_ID
+load(file.path(ROOT, "out", "data_package_2016-04-18.Rdata"))
+load(file.path(ROOT, "out", "offsets-v3_2016-04-18.Rdata"))
+TAX <- nonDuplicated(TAX, Species_ID, TRUE)
 DAT <- data.frame(PKEY, SS[match(PKEY$SS, SS$SS),])
 DAT$SS.1 <- NULL
 DAT$PCODE.1 <- NULL
 #rm(PCTBL, PKEY, SS)
 table(duplicated(DAT$PKEY))
+table(DAT$JURS, useNA="a")
 DAT <- DAT[!is.na(DAT$JURS) & DAT$JURS == "AB",]
 table(duplicated(DAT$PKEY))
 rownames(DAT) <- DAT$PKEY
@@ -51,8 +191,6 @@ rownames(DAT2) <- rn
 rownames(YY2) <- rn
 
 ## habitat info
-
-ROOT2 <- "e:/peter/AB_data_v2016"
 
 load(file.path(ROOT2, "out", "abmi_onoff", 
     "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0.Rdata"))

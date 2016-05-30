@@ -40,6 +40,8 @@ spp_keep <- spp_keep[spp_keep != "VNA"]
 det$Spp <- det$COMMON_NAME
 levels(det$Spp)[!(levels(det$Spp) %in% spp_keep)] <- "NONE"
 
+levels(det$Spp) <- nameAlnum(levels(det$Spp), capitalize="mixed", collapse="")
+
 ## make sure not double counted: indiv_id # ~60 rows
 tmp <- paste(det$RECORDING_KEY, det$Spp, det$INDIVIDUAL_ID)
 tmp2 <- paste(det$RECORDING_KEY, det$Spp)
@@ -77,18 +79,8 @@ Class$STR2[Class$ToYc %in% 4:7] <- "B"
 Class$STR2[Class$ToYc %in% 8] <- "C"
 table(Class$STR2, Class$ToYc)
 
-
-library(opticut)
-xtv <- ifelse(xt_vis > 0, 1, 0)
-oc2 <- opticut(xtv ~ 1, strata=Class$STR2, dist="binomial")
-oc3 <- opticut(xtv ~ 1, strata=Class$ToDc, dist="binomial")
-
-plot(oc2,sort=1)
-summary(oc2)
-
-summary(oc3)
-
 table(det$ToYc, det$Duration)
+
 ## crosstab for all-in-one models
 
 keep <- det$Duration == 3 & det$ToDc == "Morning"
@@ -106,6 +98,19 @@ OUTDIR <- "e:/peter/AB_data_v2016/data/species"
 T <- "BirdsSM"
 d <- paste("_", Sys.Date(), sep="")
 save(det, xt, x, file=paste(OUTDIR, "/OUT_", tolower(T), d, ".Rdata",sep=""))
+
+
+## opticut
+
+library(opticut)
+xtv <- ifelse(xt_vis > 0, 1, 0)
+oc2 <- opticut(xtv ~ 1, strata=Class$STR2, dist="binomial")
+oc3 <- opticut(xtv ~ 1, strata=Class$ToDc, dist="binomial")
+
+plot(oc2,sort=1)
+summary(oc2)
+
+summary(oc3)
 
 
 
