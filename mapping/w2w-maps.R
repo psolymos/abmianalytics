@@ -3,11 +3,11 @@ library(raster)
 library(sp)
 library(rgdal)
 library(mefa4)
-library(rasterVis)
+library(RColorBrewer)
 
 ## root directory and version
-ROOT <- "c:/p"
-VER <- "AB_data_v2015"
+ROOT <- "e:/peter"
+VER <- "AB_data_v2016"
 
 ## source functions
 source("~/repos/abmianalytics/R/maps_functions.R")
@@ -68,15 +68,10 @@ city <- spTransform(city, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=5
 hf1 <- (dd1km_pred$veg_current[,!is.na(tveg$HF)]) / rowSums(dd1km_pred$veg_current)
 hft <- tveg[!is.na(tveg$HF),]
 hft <- hft[colnames(hf1),]
-hf2 <- cbind(TotalHF=rowSums(hf1), as.matrix(groupSums(hf1, 2, hft$UseInAnalysis)))
+#hf2 <- cbind(TotalHF=rowSums(hf1), as.matrix(groupSums(hf1, 2, hft$UseInWRSI)))
+#hf2 <- hf2[,colnames(hf2) != "HWater"]
+hf2 <- cbind(TotalHF=rowSums(hf1), as.matrix(groupSums(hf1, 2, hft$Sector2)))
 hf1 <- as.matrix(groupSums(hf1, 2, hft$HF))
-
-#r_hf <- as_Raster(kgrid$Row, kgrid$Col, hf2, rt, verbose=1)
-#pdf(file.path(ROOT, VER, "out", "figs", "hf", "hf-use-in-analysis.pdf"),
-#    width=10, height=8)
-#levelplot(r_hf, margin=FALSE, par.settings=BuRdTheme(), 
-#    scales=list(draw=FALSE), contour=FALSE, main="Human Footprint Types")
-#dev.off()
 
 #pdf(file.path(ROOT, VER, "out", "figs", "hf", "hf-1file.pdf"),
 #    width=8, height=12, onefile=TRUE)
@@ -85,10 +80,18 @@ for (i in 1:ncol(hf2)) {
         paste0(colnames(hf2)[i], ".png")),
         width=600, height=1000)
     cat(i, "/", ncol(hf2), "\n");flush.console()
-    x <- 100 * hf2[,i]
-    map_fun(x, q=0.999, main=colnames(hf2)[i], 
+    x <- round(100 * hf2[,i], 0)
+#    if (min(x) > 0)
+#        x[1] <- 0
+#    if (max(x) < 100)
+#        x[2] <- 100
+    r_out <- map_fun(x, q=1, main=colnames(hf2)[i], 
         colScale="hf", maskRockies=FALSE)
     dev.off()
+    writeRaster(r_out, 
+        file.path(ROOT, VER, "out", "figs", "hf",
+        paste0("ABMIw2wHF2012_", colnames(hf2)[i], ".asc")),
+        overwrite=TRUE)
 }
 #dev.off()
 
@@ -99,8 +102,6 @@ soil1 <- soil1 / ifelse(rowSums(soil1) <= 0, 1, rowSums(soil1))
 st <- tsoil[colnames(soil1),]
 soil1 <- as.matrix(groupSums(soil1, 2, st$Levels1))
 pSoil <- 1 - soil1[,"SoilUnknown"]
-#pSoil <- (rowSums(dd1km_pred$soil_reference) - dd1km_pred$soil_reference[,"UNK"]) /
-#    rowSums(dd1km_pred$soil_reference)
 soil1 <- soil1[,colnames(soil1) != "SoilUnknown"]
 
 ## mask soil=UNK
@@ -118,8 +119,6 @@ rat$levels <- c("Water", "NoSoilInfo")
 rat$code <- 1:2
 levels(r_overlay) <- rat
 
-source("~/repos/abmianalytics/R/maps_functions.R")
-
 #pdf(file.path(ROOT, VER, "out", "figs", "soil", "soil-1file.pdf"),
 #    width=8, height=12, onefile=TRUE)
 for (i in 1:ncol(soil1)) {
@@ -127,9 +126,18 @@ for (i in 1:ncol(soil1)) {
         paste0(colnames(soil1)[i], ".png")),
         width=600, height=1000)
     cat(i, "/", ncol(soil1), "\n");flush.console()
-    map_fun(100*soil1[,i], q=0.999, main=colnames(soil1)[i], 
+    x <- round(100 * soil1[,i], 0)
+#    if (min(x) > 0)
+#        x[1] <- 0
+#    if (max(x) < 100)
+#        x[2] <- 100
+    r_out <- map_fun(x, q=1, main=colnames(soil1)[i], 
         colScale="soil", maskRockies=TRUE, plotWater=TRUE)
     dev.off()
+    writeRaster(r_out, 
+        file.path(ROOT, VER, "out", "figs", "soil",
+        paste0("ABMIw2wHF2012_", colnames(soil1)[i], ".asc")),
+        overwrite=TRUE)
 }
 #dev.off()
 
@@ -139,26 +147,27 @@ veg1 <- (dd1km_pred$veg_reference) / rowSums(dd1km_pred$veg_reference)
 vt <- tveg[colnames(veg1),]
 veg2 <- as.matrix(groupSums(veg1, 2, vt$AGE))
 veg2 <- veg2[,colnames(veg2) != ""]
-colnames(veg2) <- paste0("Forest age: ", 
+colnames(veg2) <- paste0("Forest age ", 
     as.character(vt$AGE_Description)[match(colnames(veg2), vt$AGE)])
 veg2 <- veg2[,-1] # unknown ages are fixed
 
 veg4 <- as.matrix(groupSums(veg1, 2, vt$Type))
 
 vegAll <- cbind(veg4, veg2)
+vegAll <- vegAll[,colnames(vegAll) != "XXX"]
 
-pdf(file.path(ROOT, VER, "out", "figs", "veg", "veg-1file.pdf"),
-    width=8, height=12, onefile=TRUE)
+#pdf(file.path(ROOT, VER, "out", "figs", "veg", "veg-1file.pdf"),
+#    width=8, height=12, onefile=TRUE)
 for (i in 1:ncol(vegAll)) {
     png(file.path(ROOT, VER, "out", "figs", "veg", 
         paste0(colnames(vegAll)[i], ".png")),
         width=600, height=1000)
     cat(i, "/", ncol(vegAll), colnames(vegAll)[i], "\n");flush.console()
-    map_fun(100*vegAll[,i], q=0.999, main=colnames(vegAll)[i], 
+    map_fun(100*vegAll[,i], q=1, main=colnames(vegAll)[i], 
         colScale="terrain", maskRockies=FALSE, plotWater=TRUE)
     dev.off()
 }
-dev.off()
+#dev.off()
 
 climAll <- kgrid[,c("AHM","PET","FFP","MAP","MAT","MCMT","MWMT")]
 pdf(file.path(ROOT, VER, "out", "figs", "clim", "clim-1file.pdf"),
