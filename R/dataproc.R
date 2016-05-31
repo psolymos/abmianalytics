@@ -135,7 +135,7 @@ xx_rf <- with(PKEY_abmi, data.frame(
     MAXDIS=Inf,
     TREE=NA
 ))
-rownames(xx_rf) <- xx_rf$PKEY
+rownames(xx_rf) <- xx_rf$SS
 
 xx_sm <- with(pcsm, data.frame(
     PCODE="ABMI",
@@ -152,7 +152,7 @@ xx_sm <- with(pcsm, data.frame(
 rownames(xx_sm) <- xx_sm$PKEY
 
 xx_abmi <- rbind(xx_rf, xx_sm)
-rownames(xx_abmi) <- xx_abmi$PKEY
+#rownames(xx_abmi) <- xx_abmi$PKEY
 
 compare_sets(rownames(yy_abmi), rownames(xx_abmi))
 xx_abmi <- xx_abmi[rownames(yy_abmi),]
