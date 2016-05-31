@@ -1,6 +1,6 @@
 ##% Processing data for intactness, all-in-one, website things
 ##% P Solymos
-##% Feb 9, 2016
+##% May 31, 2016
 
 library(RODBC)
 library(mefa4)
@@ -125,29 +125,31 @@ pcsm$TSSR <- (pcsm$start_time - pcsm$srise) / 24 # MDT offset is 0
 
 xx_rf <- with(PKEY_abmi, data.frame(
     PCODE="ABMI",
-    PKEY=as.factor(Label),
-    SS=as.factor(Label2),
+    PKEY=as.factor(paste0(Label, ":1")),
+    SS=as.factor(Label),
+    SITE=as.factor(Label2),
     YEAR=YEAR,
     TSSR=TSSR,
     JDAY=JDAY,
     MAXDUR=10,
     MAXDIS=Inf,
-    TREE=NA,
-    LCC_combo=NA
+    TREE=NA
 ))
+rownames(xx_rf) <- xx_rf$PKEY
 
 xx_sm <- with(pcsm, data.frame(
     PCODE="ABMI",
     PKEY=as.factor(PKEY),
     SS=as.factor(SITE_LABEL),
+    SITE=as.factor(Label2),
     YEAR=YEAR,
     TSSR=TSSR,
     JDAY=ToY/365,
     MAXDUR=3,
     MAXDIS=Inf,
-    TREE=NA,
-    LCC_combo=NA
+    TREE=NA
 ))
+rownames(xx_sm) <- xx_sm$PKEY
 
 xx_abmi <- rbind(xx_rf, xx_sm)
 rownames(xx_abmi) <- xx_abmi$PKEY
@@ -158,7 +160,7 @@ xx_abmi <- xx_abmi[rownames(yy_abmi),]
 ## use preprocessed national data set for BAM & BBS
 
 load(file.path(ROOT, "out", "data_package_2016-04-18.Rdata"))
-load(file.path(ROOT, "out", "offsets-v3_2016-04-18.Rdata"))
+#load(file.path(ROOT, "out", "offsets-v3_2016-04-18.Rdata"))
 TAX <- nonDuplicated(TAX, Species_ID, TRUE)
 DAT <- data.frame(PKEY, SS[match(PKEY$SS, SS$SS),])
 DAT$SS.1 <- NULL
@@ -176,124 +178,151 @@ DAT <- DAT[ii,]
 YY <- YY[ii,]
 #OFF <- OFF[ii,]
 #YY <- YY[,colSums(YY) > 0]
+## insert 0s into BAM+BBS:
+#    BarnOwl
+#    RedPhalarope
+YY <- cBind(YY, BANO=0, REPH=0)
 tax <- droplevels(TAX[colnames(YY),])
 tax$Spp <- tax$English_Name
 levels(tax$Spp) <- nameAlnum(levels(tax$Spp), capitalize="mixed", collapse="")
-
+## fix labels:
+#    MacgillivrayWarbler
+#    BlackAndWhiteWarbler
 levels(tax$Spp)[levels(tax$Spp)=="BlackandwhiteWarbler"] <- "BlackAndWhiteWarbler"
 levels(tax$Spp)[levels(tax$Spp)=="MacGillivraysWarbler"] <- "MacgillivrayWarbler"
-
 compare_sets(colnames(yy_abmi), levels(tax$Spp))
-setdiff(colnames(yy_abmi), levels(tax$Spp))
-setdiff(levels(tax$Spp), colnames(yy_abmi))
-z1 <- data.frame(x=colSums(yy_abmi[,setdiff(colnames(yy_abmi), levels(tax$Spp))]>0))
-z1[order(z1[,1]),,drop=FALSE]
-z2 <- data.frame(x=colSums(YY[,setdiff(levels(tax$Spp), colnames(yy_abmi))]>0))
-z2[order(z2[,1]),,drop=FALSE]
+sort(setdiff(colnames(yy_abmi), levels(tax$Spp)))
+#sort(setdiff(levels(tax$Spp), colnames(yy_abmi)))
 
-## TODO
-#insert 0s into BAM+BBS:
-#    BarnOwl
-#    RedPhalarope
-#fix labels:
-#    MacgillivrayWarbler
-#    BlackAndWhiteWarbler"                    
-#join the 2 tables for intersecting names
+## join the 2 tables by intersecting names
+SPPx <- sort(intersect(colnames(yy_abmi), levels(tax$Spp)))
+SPPx <- SPPx[SPPx != "UnidentifiedTern"]
+TAX$Spp <- TAX$English_Name
+levels(TAX$Spp) <- nameAlnum(levels(TAX$Spp), capitalize="mixed", collapse="")
+levels(TAX$Spp)[levels(TAX$Spp)=="BlackandwhiteWarbler"] <- "BlackAndWhiteWarbler"
+levels(TAX$Spp)[levels(TAX$Spp)=="MacGillivraysWarbler"] <- "MacgillivrayWarbler"
+TAX <- TAX[TAX$Spp %in% SPPx,]
+setdiff(SPPx, TAX$Spp)
+TAX <- TAX[order(rownames(TAX)),]
 
+#OFF <- OFF[,colnames(OFF) %in% rownames(TAX)]
+YY <- YY[,rownames(TAX)]
+yy_abmi <- yy_abmi[,as.character(TAX$Spp)]
+colnames(yy_abmi) <- rownames(TAX)
+YYY <- rBind(YY, yy_abmi)
 
-YY2 <- Xtab(ABUND ~ PKEY + SPECIES, pc2)
-ii <- sort(intersect(rownames(dat2), rownames(YY2)))
-DAT2 <- dat2[ii, ]
-YY2 <- YY2[ii,]
+## exclude 0 sum columns?
+table(colSums(YYY))
 
-ii <- sort(intersect(colnames(YY), colnames(YY2)))
-YY <- YY[,ii]
-YY2 <- YY2[,ii]
-
-rn <- paste0("T_", rownames(DAT2))
-rn <- gsub("_PC_", "_PT_", rn)
-rownames(DAT2) <- rn
-rownames(YY2) <- rn
+xx_abmi$HAB_NALC1 <- NA
+xx_abmi$HAB_NALC2 <- NA
+compare_sets(colnames(DAT), colnames(xx_abmi))
+setdiff(colnames(DAT), colnames(xx_abmi))
+setdiff(colnames(xx_abmi), colnames(DAT))
+cn <- intersect(colnames(DAT), colnames(xx_abmi))
+DDAT <- rbind(DAT[,cn], xx_abmi[,cn])
+DDAT <- DDAT[rownames(YYY),]
 
 ## habitat info
 
 load(file.path(ROOT2, "out", "abmi_onoff", 
-    "veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0.Rdata"))
-rm(dd1ha)
+    "veg-hf-clim-reg_abmi-onoff_Birds-RF-SM_incl2015.Rdata"))
 load(file.path(ROOT2, "out", "bambbs", 
     "veg-hf_bambbs_fix-fire_fix-age0.Rdata"))
 
 compare_sets(rownames(YY), rownames(climPoint_bambbs))
-compare_sets(rownames(YY2), rownames(climPoint))
+compare_sets(rownames(yy_abmi), c(rownames(climRF), rownames(climSM)))
+compare_sets(rownames(xx_rf), rownames(climRF))
+compare_sets(rownames(xx_sm), rownames(climSM))
 
-grep("-11_", rownames(climPoint))
-rn <- gsub("-11_", "-2_", rownames(climPoint))
-compare_sets(rownames(YY2), rownames(climPoint))
-compare_sets(rownames(YY2), rn)
-compare_sets(rownames(dd150m[[1]]), rownames(climPoint))
-compare_sets(rownames(dd1km[[1]]), rownames(climPoint))
-rownames(climPoint) <- rn
-rownames(dd150m[[1]]) <- rownames(dd150m[[2]]) <- rn
-rownames(dd150m[[3]]) <- rownames(dd150m[[4]]) <- rn
-rownames(dd1km[[1]]) <- rownames(dd1km[[2]]) <- rn
-rownames(dd1km[[3]]) <- rownames(dd1km[[4]]) <- rn
+## RF: clean up issues
+compare_sets(xx_rf$SS, climRF$Label2)
+setdiff(xx_rf$SS, climRF$Label2)
+setdiff(climRF$Label2, xx_rf$SS)
+grep("-11_", rownames(climRF)) # this is hard stuff...
 
-rn <- sort(intersect(rownames(YY), rownames(climPoint_bambbs)))
-DAT <- DAT[rn,]
-YY <- YY[rn,]
-climPoint_bambbs <- climPoint_bambbs[rn,]
+setdiff(rownames(climRF), rownames(xx_rf))
+
+## SM: need to map SS to PKEY for rownames
+## Centre is the right label, crude fix follows
+climSM$Label <- gsub("_Center", "_1", climSM$Label)
+climSM$Label0 <- gsub("_Center", "_1", climSM$Label0)
+climSM$Label2 <- gsub("_Center", "_1", climSM$Label2)
 for (i in 1:4) {
-    dd150m_bambbs[[i]] <- dd150m_bambbs[[i]][rn,]
-    dd1km_bambbs[[i]] <- dd1km_bambbs[[i]][rn,]
+    rownames(dd150m_SM[[i]]) <- climSM$Label
+    rownames(dd1km_SM[[i]]) <- climSM$Label
 }
 
-rn <- sort(intersect(rownames(YY2), rownames(climPoint)))
-DAT2 <- DAT2[rn,]
-YY2 <- YY2[rn,]
-climPoint <- climPoint[rn,]
+
+## we have DDAT and YYY
+## now let us make CLIM
+compare_sets(xx_sm$SS, climSM$Label)
+
+climRF$YEAR <- climRF$Year
+climRF$Year <- NULL
+climSM$YEAR <- climSM$Year
+climSM$Year <- NULL
+
+climRF$PKEY <- climRF$Label
+
+climSM <- climSM[match(xx_sm$SS, climSM$Label),]
+climSM$PKEY <- rownames(xx_sm)
+rownames(climSM) <- rownames(xx_sm)
+climSM <- climSM[!is.na(climSM$Label),]
+
+climPoint_bambbs$POINT_X <- DAT$X[match(climPoint_bambbs$PKEY, DAT$PKEY)]
+climPoint_bambbs$POINT_Y <- DAT$Y[match(climPoint_bambbs$PKEY, DAT$PKEY)]
+
+setdiff(colnames(climPoint_bambbs), colnames(climRF))
+setdiff(colnames(climRF), colnames(climPoint_bambbs))
+
+climPoint_bambbs$Part <- "BAMBBS"
+climRF$Part <- "ABMIRF"
+climSM$Part <- "ABMISM"
+cn <- intersect(colnames(climPoint_bambbs), colnames(climRF))
+CLIM <- rbind(climPoint_bambbs[,cn], climRF[,cn], climSM[,cn])
+compare_sets(rownames(YYY), rownames(CLIM))
+rrn <- intersect(rownames(CLIM), rownames(DDAT))
+
+## now unify all habitat stuff into DD150m and DD1km
+dd150m <- dd1km <- list()
 for (i in 1:4) {
-    dd150m[[i]] <- dd150m[[i]][rn,]
-    dd1km[[i]] <- dd1km[[i]][rn,]
+    tmp <- dd150m_SM[[i]]
+    ii <- match(xx_sm$SS, rownames(tmp))
+    ii <- ii[!is.na(ii)]
+    tmp <- tmp[ii,]
+    rownames(tmp) <- rownames(climSM)
+    dd150m[[i]] <- rBind(dd150m_bambbs[[i]], dd150m_RF[[i]], tmp)
+    dd150m[[i]] <- dd150m[[i]][rrn,]
+
+    tmp <- dd1km_SM[[i]]
+    ii <- match(xx_sm$SS, rownames(tmp))
+    ii <- ii[!is.na(ii)]
+    tmp <- tmp[ii,]
+    rownames(tmp) <- rownames(climSM)
+    dd1km[[i]] <- rBind(dd1km_bambbs[[i]], dd1km_RF[[i]], tmp)
+    dd1km[[i]] <- dd1km[[i]][rrn,]
 }
 
-tmp <- strsplit(rownames(DAT2), "_")
-DAT2$SS <- as.factor(sapply(tmp, function(z) paste("ABMI", z[4], z[8], sep="_")))
-DAT2$SITE <- DAT2$SS
+CLIM <- CLIM[rrn,]
+YYY <- YYY[rrn,]
+DDAT <- DDAT[rrn,]
 
-## join
-YY <- rbind(YY, YY2)
-for (i in 1:4) {
-    dd150m[[i]] <- rbind(dd150m_bambbs[[i]], dd150m[[i]])
-    dd1km[[i]] <- rbind(dd1km_bambbs[[i]], dd1km[[i]])
-}
-climPoint$YEAR <- climPoint$Year
-climPoint$PKEY <- rownames(climPoint)
-climPoint_bambbs$POINT_X <- DAT$X[match(rownames(climPoint_bambbs), rownames(DAT))]
-climPoint_bambbs$POINT_Y <- DAT$Y[match(rownames(climPoint_bambbs), rownames(DAT))]
-cn <- intersect(colnames(climPoint_bambbs),colnames(climPoint))
-climPoint <- rbind(climPoint_bambbs[,cn], climPoint[,cn])
-cn <- intersect(colnames(DAT),colnames(DAT2))
-DAT <- rbind(DAT[,cn], DAT2[,cn])
+data.frame(x=colSums(is.na(DDAT)))
+data.frame(x=colSums(is.na(CLIM)))
+sum(colSums(YYY)==0)
 
-all(rownames(DAT) == rownames(YY))
-all(rownames(DAT) == rownames(climPoint))
-all(rownames(DAT) == rownames(dd150m[[1]]))
-all(rownames(DAT) == rownames(dd1km[[1]]))
+DAT <- cbind(droplevels(DDAT), droplevels(CLIM))
+DAT$Part <- as.factor(DAT$Part)
+DAT$MAP <- gsub(",", "", DAT$MAP)
+DAT$MAP <- as.numeric(DAT$MAP)
+YY <- YYY
+rm(DDAT, CLIM, YYY)
 
-DAT <- data.frame(DAT, climPoint)
-DAT$PKEY.1 <- NULL
-YY <- YY[,colSums(YY) > 0]
-TAX <- droplevels(TAX[colnames(YY),])
-## now we have a clean version of: YY, DAT, dd150m, dd1km
-DAT$HAB_NALC1 <- NULL
-DAT$HAB_NALC2 <- NULL
-DAT$TREE3 <- NULL
-## imputing
-DAT$JDAY[is.na(DAT$JDAY)] <- mean(DAT$JDAY, na.rm=TRUE)
-DAT$TSSR[is.na(DAT$TSSR)] <- mean(DAT$TSSR, na.rm=TRUE)
-data.frame(x=colSums(is.na(DAT)))
-
-DAT <- droplevels(DAT)
+dd150m[[5]] <- dd150m_RF[[5]]
+dd1km[[5]] <- dd1km_RF[[5]]
+names(dd150m) <- names(dd150m_bambbs)[c(1,2,3,4,6)]
+names(dd1km) <- names(dd1km_bambbs)[c(1,2,3,4,6)]
 
 ## lookup tables & reclassed tables
 
@@ -373,7 +402,7 @@ ii <- !is.na(DAT$hab1cc) & !is.na(DAT$hab0) &
     DAT$hab1cc == "CC" & DAT$hab0 %in% c("Conif","Decid","Mixwood","Pine")
 DAT$hab1[ii] <- as.character(DAT$hab0[ii])
 DAT$isCC <- ifelse(ii, 1L, 0L)
-## reset non-merdendizable CC classes to backfilled (isCC is 0)
+## reset non-merchendizable CC classes to backfilled (isCC is 0)
 ii <- !is.na(DAT$hab1cc) & !is.na(DAT$hab0) & DAT$hab1 == "CC"
 DAT$hab1[ii] <- as.character(DAT$hab0[ii])
 
@@ -456,12 +485,6 @@ table(DAT$hab1,DAT$isCC,useNA="a")
 table(DAT$hab1,DAT$isRR,useNA="a")
 table(DAT$isRR,DAT$isCC,useNA="a")
 
-tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "LCC5"])
-tmp <- as.matrix(tmp / rowSums(tmp))
-DAT$hab_lcc <- find_max(tmp)$index
-DAT$hab_lcc <- as.integer(as.character(DAT$hab_lcc))
-DAT$hab_lcc <- factor(DAT$hab_lcc, 1:5)
-
 DAT$ECage <- factor("", levels=c("", "R","A", "B", "C", "D"))
 DAT$ECage[DAT$isFor & DAT$wtAge >= 0] <- "R"
 DAT$ECage[DAT$wtAge >= 10/200] <- "A"
@@ -480,11 +503,120 @@ DAT$ClosedCanopy <- tmp[,"C"] + tmp[,"D"]
 
 DAT$TREE[is.na(DAT$TREE)] <- DAT$ClosedCanopy[is.na(DAT$TREE)]
 DAT$TREE[is.na(DAT$TREE)] <- DAT$ClosedCanopy[is.na(DAT$TREE)]
-
-DAT$LCC_combo[is.na(DAT$LCC_combo)] <- DAT$hab_lcc[is.na(DAT$LCC_combo)] 
+DAT$TREE3 <- factor(NA, levels=c("Open", "Sparse", "Dense"))
+DAT$TREE3[DAT$TREE < 0.25] <- "Open"
+DAT$TREE3[DAT$TREE >= 0.25 & DAT$TREE < 0.60] <- "Sparse"
+DAT$TREE3[DAT$TREE >= 0.60] <- "Dense"
 
 ## ROAD x habitat interaction based on forest cover
 DAT$habCl <- ifelse(DAT$ClosedCanopy > 0.5, 1L, 0L) # EC age is C or D
+
+## land cover for offsets
+if (FALSE) {
+tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "LCC5"])
+tmp <- as.matrix(tmp / rowSums(tmp))
+DAT$hab_lcc <- find_max(tmp)$index
+DAT$hab_lcc <- as.integer(as.character(DAT$hab_lcc))
+DAT$hab_lcc <- factor(DAT$hab_lcc, 1:5)
+}
+
+#DAT$LCC_combo[is.na(DAT$LCC_combo)] <- DAT$hab_lcc[is.na(DAT$LCC_combo)] 
+
+## offsets
+## QPADv3
+
+library(mefa4)
+library(QPAD)
+#source("~/repos/bamanalytics/R/dataprocessing_functions.R")
+#load(file.path(ROOT, "out", paste0("data_package_2016-04-18.Rdata")))
+
+load_BAM_QPAD(3)
+getBAMversion()
+sppp <- getBAMspecieslist()
+compare_sets(sppp, colnames(YY))
+sppp <- intersect(sppp, colnames(YY))
+
+offdat <- DAT[,c("PCODE","PKEY","SS","TSSR","JDAY","MAXDUR","MAXDIS",
+    "TREE","TREE3","HAB_NALC1","HAB_NALC2")]
+summary(offdat)
+
+offdat$TSSR[is.na(offdat$TSSR)] <- mean(offdat$TSSR, na.rm=TRUE)
+offdat$JDAY[is.na(offdat$JDAY)] <- mean(offdat$JDAY, na.rm=TRUE)
+offdat$JDAY2 <- offdat$JDAY^2
+offdat$TSSR2 <- offdat$TSSR^2
+#offdat$DSLS2 <- offdat$DSLS^2
+
+#table(DAT$hab1, DAT$HAB_NALC2)
+tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "LCC4"])
+tmp <- as.matrix(tmp / rowSums(tmp))
+tmp2 <- find_max(tmp[is.na(offdat$HAB_NALC2),])
+
+offdat$LCC4 <- as.character(offdat$HAB_NALC2)
+offdat$LCC4[offdat$LCC4 %in% c("Decid", "Mixed")] <- "DecidMixed"
+offdat$LCC4[offdat$LCC4 %in% c("Agr","Barren","Devel","Grass", "Shrub")] <- "Open"
+offdat$LCC4 <- factor(offdat$LCC4,
+        c("DecidMixed", "Conif", "Open", "Wet"))
+offdat$LCC4[is.na(offdat$LCC4)] <- tmp2$index
+offdat$LCC2 <- as.character(offdat$LCC4)
+offdat$LCC2[offdat$LCC2 %in% c("DecidMixed", "Conif")] <- "Forest"
+offdat$LCC2[offdat$LCC2 %in% c("Open", "Wet")] <- "OpenWet"
+offdat$LCC2 <- factor(offdat$LCC2, c("Forest", "OpenWet"))
+table(offdat$LCC4, offdat$LCC2, useNA="a")
+offdat$MAXDIS <- offdat$MAXDIS / 100
+
+Xp <- cbind("(Intercept)"=1, as.matrix(offdat[,c("TSSR","JDAY","TSSR2","JDAY2")]))
+Xq <- cbind("(Intercept)"=1, TREE=offdat$TREE,
+    LCC2OpenWet=ifelse(offdat$LCC2=="OpenWet", 1, 0),
+    LCC4Conif=ifelse(offdat$LCC4=="Conif", 1, 0),
+    LCC4Open=ifelse(offdat$LCC4=="Open", 1, 0),
+    LCC4Wet=ifelse(offdat$LCC4=="Wet", 1, 0))
+OFF <- matrix(NA, nrow(offdat), length(sppp))
+rownames(OFF) <- offdat$PKEY
+colnames(OFF) <- sppp
+
+#spp <- "OVEN"
+for (spp in sppp) {
+p <- rep(NA, nrow(offdat))
+A <- q <- p
+
+## constant for NA cases
+cf0 <- exp(unlist(coefBAMspecies(spp, 0, 0)))
+## best model
+mi <- bestmodelBAMspecies(spp, type="BIC", model.sra=0:8)
+cat(spp, unlist(mi), "\n");flush.console()
+cfi <- coefBAMspecies(spp, mi$sra, mi$edr)
+#vci <- vcovBAMspecies(spp, mi$sra, mi$edr)
+
+Xp2 <- Xp[,names(cfi$sra),drop=FALSE]
+OKp <- rowSums(is.na(Xp2)) == 0
+Xq2 <- Xq[,names(cfi$edr),drop=FALSE]
+OKq <- rowSums(is.na(Xq2)) == 0
+
+p[!OKp] <- sra_fun(offdat$MAXDUR[!OKp], cf0[1])
+unlim <- ifelse(offdat$MAXDIS[!OKq] == Inf, TRUE, FALSE)
+A[!OKq] <- ifelse(unlim, pi * cf0[2]^2, pi * offdat$MAXDIS[!OKq]^2)
+q[!OKq] <- ifelse(unlim, 1, edr_fun(offdat$MAXDIS[!OKq], cf0[2]))
+
+phi1 <- exp(drop(Xp2[OKp,,drop=FALSE] %*% cfi$sra))
+tau1 <- exp(drop(Xq2[OKq,,drop=FALSE] %*% cfi$edr))
+p[OKp] <- sra_fun(offdat$MAXDUR[OKp], phi1)
+unlim <- ifelse(offdat$MAXDIS[OKq] == Inf, TRUE, FALSE)
+A[OKq] <- ifelse(unlim, pi * tau1, pi * offdat$MAXDIS[OKq]^2)
+q[OKq] <- ifelse(unlim, 1, edr_fun(offdat$MAXDIS[OKq], tau1))
+
+ii <- which(p == 0)
+p[ii] <- sra_fun(offdat$MAXDUR[ii], cf0[1])
+
+OFF[,spp] <- log(p) + log(A) + log(q)
+
+}
+
+(Ra <- apply(OFF, 2, range))
+summary(t(Ra))
+which(!is.finite(Ra[1,]))
+which(!is.finite(Ra[2,]))
+
+OFFmean <- log(rowMeans(exp(OFF)))
 
 ## soil in south
 
@@ -509,7 +641,6 @@ DAT$soil1[DAT$soil1 == "SoilUnknown"] <- NA
 DAT$soil1 <- droplevels(DAT$soil1)
 DAT$soil1 <- relevel(DAT$soil1, "Productive")
 table(DAT$soil1, useNA="a")
-DAT$soil1[!(DAT$soil1 %in% c("Cult","UrbInd"))] <- 
 ii <- !is.na(DAT$soil1) & !is.na(DAT$soil0) &
     !(DAT$soil1 %in% c("Cult","UrbInd"))
 DAT$soil1[ii] <- as.character(DAT$soil0[ii])
@@ -553,6 +684,7 @@ table(DAT$PCODE, DAT$ARU2)
 DAT$ARU3 <- factor("TRAD", c("TRAD","SM","RF"))
 DAT$ARU3[DAT$PCODE %in% c("EMCLA","EMCLA2014")] <- "SM"
 DAT$ARU3[DAT$PCODE %in% c("ABMI")] <- "RF"
+DAT$ARU3[DAT$Part %in% c("ABMISM")] <- "SM"
 table(DAT$PCODE, DAT$ARU3)
 
 ## transformations
@@ -565,7 +697,7 @@ XY <- as.data.frame(spTransform(XYlatlon, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 
 DAT$X <- XY[,"POINT_X"]
 DAT$Y <- XY[,"POINT_Y"]
 
-tmp <- DAT[,c("SLP"  ,        "ASP"     ,     "TRI"     ,     "CTI" )]
+#tmp <- DAT[,c("SLP"  ,        "ASP"     ,     "TRI"     ,     "CTI" )]
 
 transform_CLIM <- function(x, ID="PKEY") {
     z <- x[,ID,drop=FALSE]
@@ -578,21 +710,20 @@ transform_CLIM <- function(x, ID="PKEY") {
     z$xMAT <- (x$MAT - 0) / 6
     z$xMCMT <- (x$MCMT - 0) / 25
     z$xMWMT <- (x$MWMT - 0) / 20
-    z$xSLP <- log(x$SLP)
-    z$xASP <- x$ASP
-    z$xSLP <- log(x$SLP + 1)
-    z$xTRI <- log(x$TRI / 5)
-    z$xCTI <- log((x$CTI + 1) / 10)
+#    z$xASP <- x$ASP
+#    z$xSLP <- log(x$SLP + 1)
+#    z$xTRI <- log(x$TRI / 5)
+#    z$xCTI <- log((x$CTI + 1) / 10)
     z
 }
-DAT$MAP <- gsub(",", "", DAT$MAP)
-DAT$MAP <- as.numeric(DAT$MAP)
+#DAT$MAP <- gsub(",", "", DAT$MAP)
+#DAT$MAP <- as.numeric(DAT$MAP)
 tc <- transform_CLIM(DAT)
 DAT <- data.frame(DAT, tc[,-1])
-DAT$xSLP[is.na(DAT$xSLP)] <- mean(DAT$xSLP, na.rm=TRUE)
-DAT$xASP[is.na(DAT$xASP)] <- mean(DAT$xASP, na.rm=TRUE)
-DAT$xTRI[is.na(DAT$xTRI)] <- mean(DAT$xTRI, na.rm=TRUE)
-DAT$xCTI[is.na(DAT$xCTI)] <- mean(DAT$xCTI, na.rm=TRUE)
+#DAT$xSLP[is.na(DAT$xSLP)] <- mean(DAT$xSLP, na.rm=TRUE)
+#DAT$xASP[is.na(DAT$xASP)] <- mean(DAT$xASP, na.rm=TRUE)
+#DAT$xTRI[is.na(DAT$xTRI)] <- mean(DAT$xTRI, na.rm=TRUE)
+#DAT$xCTI[is.na(DAT$xCTI)] <- mean(DAT$xCTI, na.rm=TRUE)
 #DAT$PKEY.1 <- NULL
 
 
@@ -673,8 +804,8 @@ DAT$useOK[DAT$YEAR > 2007 & DAT$PCODE == "CL"] <- TRUE # Calling Lake
 
 DAT$YR <- (DAT$YEAR - 1997) / 10
 DAT$YR5 <- cut(DAT$YEAR, c(1996, 2001, 2006, 2010, 2015))
-table(DAT$YEAR, DAT$YR5)
-table(DAT$YR5)
+table(DAT$YEAR, DAT$YR5, useNA="a")
+table(DAT$YR5, useNA="a")
 
 ## Bootstrap blocks
 
@@ -692,19 +823,32 @@ DAT$bootid <- interaction(DAT$bootid, as.integer(DAT$YR5))
 DAT$useSouth <- FALSE
 DAT$useSouth[DAT$NRNAME %in% c("Grassland", "Parkland")] <- TRUE
 DAT$useSouth[DAT$NSRNAME %in% c("Dry Mixedwood")] <- TRUE
-DAT$useSouth[DAT$useSouth & DAT$POINT_Y > 56.7] <- FALSE
+DAT$useSouth[DAT$useSouth & DAT$POINT_Y > 56.7] <- FALSE # ~80 points
 DAT$useSouth[DAT$useSouth & DAT$pWater > 0.5] <- FALSE
 DAT$useSouth[DAT$useSouth & SoilPcRf[,"SoilUnknown"] > 0] <- FALSE
 DAT$useSouth[DAT$useSouth & is.na(DAT$soil1)] <- FALSE
 
 ## use in north
-#DAT$useNorth <- DAT$NRNAME != "Grassland"
 DAT$useNorth <- !is.na(DAT$hab1) # veg info available
+DAT$useNorth[DAT$NRNAME == "Grassland"] <- FALSE
 DAT$useNorth[DAT$useNorth & DAT$pWater > 0.5] <- FALSE
+## this is not necessary, plenty of data
+#DAT$useNorth[DAT$useNorth & DAT$POINT_Y < 52.8] <- FALSE
+
+## use JOSM
+DAT$useJosm <- !is.na(DAT$hab1) # veg info available
+DAT$useJosm[DAT$useJosm & DAT$pWater > 0.5] <- FALSE
+
+## --------- here I am ------------
 
 ## within year visits
 
 DAT <- DAT[sample.int(nrow(DAT), nrow(DAT)),]
+## ABMI sites are used as SS, but only points are revisited 
+## (i.e. spatial replication should not count)
+#DAT$SS0 <- as.character(DAT$SS)
+#tmp <- DAT$SS0[DAT$PCODE=="ABMI"]
+
 DAT$SS_YR <- interaction(DAT$SS, DAT$YEAR, drop=TRUE)
 table(table(DAT$SS_YR))
 dup <- unique(DAT$SS_YR[duplicated(DAT$SS_YR)])
@@ -723,6 +867,7 @@ table(DAT$Revisit)
 table(DAT$PCODE,DAT$Revisit)
 DAT$SS_YR <- NULL
 
+## ??? check this
 DAT$SITE <- as.character(DAT$SITE)
 DAT$SITE[is.na(DAT$SITE)] <- as.character(DAT$SS)[is.na(DAT$SITE)]
 DAT$SITE <- as.factor(DAT$SITE)
@@ -758,39 +903,6 @@ stopifnot(length(setdiff(getTerms(modsSoil, "list"), colnames(DAT)))==0)
 compare_sets(getTerms(modsVeg, "list"), colnames(DAT))
 setdiff(getTerms(modsVeg, "list"), colnames(DAT))
 stopifnot(length(setdiff(getTerms(modsVeg, "list"), colnames(DAT)))==0)
-
-## offsets
-
-offdat <- DAT[,c("JDAY","TSSR","TREE","LCC_combo","MAXDUR","MAXDIS")]
-
-library(detect)
-load_BAM_QPAD(version=1)
-BAMspp <- getBAMspecieslist()
-load("~/Dropbox/abmi/intactness/dataproc/BAMCOEFS25.Rdata")
-source("~/repos/bamanalytics/R/dataprocessing_functions.R")
-
-(sppp <- union(BAMspp, BAMCOEFS25$spp))
-
-OFF <- matrix(NA, nrow(offdat), length(sppp))
-rownames(OFF) <- rownames(offdat)
-colnames(OFF) <- sppp
-for (i in sppp) {
-    cat(i, date(), "\n");flush.console()
-    tmp <- try(offset_fun(j=1, i, offdat))
-    if (!inherits(tmp, "try-error"))
-        OFF[,i] <- tmp
-}
-## 99-100 percentile can be crazy high (~10^5), thus reset
-for (i in sppp) {
-    q <- quantile(OFF[,i], 0.99, na.rm=TRUE)
-    OFF[!is.na(OFF[,i]) & OFF[,i] > q, i] <- q
-}
-colSums(is.na(OFF))/nrow(OFF)
-apply(exp(OFF), 2, range, na.rm=TRUE)
-
-OFFmean <- log(rowMeans(exp(OFF)))
-
-compare_sets(rownames(OFF),rownames(DAT))
 
 ## subsets
 
