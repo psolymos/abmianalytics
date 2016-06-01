@@ -70,7 +70,7 @@ modsVeg <- list(
         .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT + xMAP,
         .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMWMT + xMCMT,
         .~. + xlat + xlong + xlat:xlong + xlat2 + xlong2 + xAHM + xPET),
-    "Surr"=list( # 8
+    "Wet"=list( # 8
         .~. + WetKM,
         .~. + WetWaterKM),
     "HF"=list( # 9
@@ -142,7 +142,7 @@ modsSoil <- list(
         .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT + xMAP,
         .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMWMT + xMCMT,
         .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xAHM + xPET),
-    "Surr"=list( # 6
+    "Wet"=list( # 6
         .~. + WetKM,
         .~. + WetWaterKM),
     "HF"=list( # 7
