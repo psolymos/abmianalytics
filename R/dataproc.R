@@ -523,102 +523,6 @@ DAT$hab_lcc <- factor(DAT$hab_lcc, 1:5)
 
 #DAT$LCC_combo[is.na(DAT$LCC_combo)] <- DAT$hab_lcc[is.na(DAT$LCC_combo)] 
 
-## offsets
-## QPADv3
-
-library(mefa4)
-library(QPAD)
-#source("~/repos/bamanalytics/R/dataprocessing_functions.R")
-#load(file.path(ROOT, "out", paste0("data_package_2016-04-18.Rdata")))
-
-load_BAM_QPAD(3)
-getBAMversion()
-sppp <- getBAMspecieslist()
-compare_sets(sppp, colnames(YY))
-sppp <- intersect(sppp, colnames(YY))
-
-offdat <- DAT[,c("PCODE","PKEY","SS","TSSR","JDAY","MAXDUR","MAXDIS",
-    "TREE","TREE3","HAB_NALC1","HAB_NALC2")]
-summary(offdat)
-
-offdat$TSSR[is.na(offdat$TSSR)] <- mean(offdat$TSSR, na.rm=TRUE)
-offdat$JDAY[is.na(offdat$JDAY)] <- mean(offdat$JDAY, na.rm=TRUE)
-offdat$JDAY2 <- offdat$JDAY^2
-offdat$TSSR2 <- offdat$TSSR^2
-#offdat$DSLS2 <- offdat$DSLS^2
-
-#table(DAT$hab1, DAT$HAB_NALC2)
-tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "LCC4"])
-tmp <- as.matrix(tmp / rowSums(tmp))
-tmp2 <- find_max(tmp[is.na(offdat$HAB_NALC2),])
-
-offdat$LCC4 <- as.character(offdat$HAB_NALC2)
-offdat$LCC4[offdat$LCC4 %in% c("Decid", "Mixed")] <- "DecidMixed"
-offdat$LCC4[offdat$LCC4 %in% c("Agr","Barren","Devel","Grass", "Shrub")] <- "Open"
-offdat$LCC4 <- factor(offdat$LCC4,
-        c("DecidMixed", "Conif", "Open", "Wet"))
-offdat$LCC4[is.na(offdat$LCC4)] <- tmp2$index
-offdat$LCC2 <- as.character(offdat$LCC4)
-offdat$LCC2[offdat$LCC2 %in% c("DecidMixed", "Conif")] <- "Forest"
-offdat$LCC2[offdat$LCC2 %in% c("Open", "Wet")] <- "OpenWet"
-offdat$LCC2 <- factor(offdat$LCC2, c("Forest", "OpenWet"))
-table(offdat$LCC4, offdat$LCC2, useNA="a")
-offdat$MAXDIS <- offdat$MAXDIS / 100
-
-Xp <- cbind("(Intercept)"=1, as.matrix(offdat[,c("TSSR","JDAY","TSSR2","JDAY2")]))
-Xq <- cbind("(Intercept)"=1, TREE=offdat$TREE,
-    LCC2OpenWet=ifelse(offdat$LCC2=="OpenWet", 1, 0),
-    LCC4Conif=ifelse(offdat$LCC4=="Conif", 1, 0),
-    LCC4Open=ifelse(offdat$LCC4=="Open", 1, 0),
-    LCC4Wet=ifelse(offdat$LCC4=="Wet", 1, 0))
-OFF <- matrix(NA, nrow(offdat), length(sppp))
-rownames(OFF) <- offdat$PKEY
-colnames(OFF) <- sppp
-
-#spp <- "OVEN"
-for (spp in sppp) {
-p <- rep(NA, nrow(offdat))
-A <- q <- p
-
-## constant for NA cases
-cf0 <- exp(unlist(coefBAMspecies(spp, 0, 0)))
-## best model
-mi <- bestmodelBAMspecies(spp, type="BIC", model.sra=0:8)
-cat(spp, unlist(mi), "\n");flush.console()
-cfi <- coefBAMspecies(spp, mi$sra, mi$edr)
-#vci <- vcovBAMspecies(spp, mi$sra, mi$edr)
-
-Xp2 <- Xp[,names(cfi$sra),drop=FALSE]
-OKp <- rowSums(is.na(Xp2)) == 0
-Xq2 <- Xq[,names(cfi$edr),drop=FALSE]
-OKq <- rowSums(is.na(Xq2)) == 0
-
-p[!OKp] <- sra_fun(offdat$MAXDUR[!OKp], cf0[1])
-unlim <- ifelse(offdat$MAXDIS[!OKq] == Inf, TRUE, FALSE)
-A[!OKq] <- ifelse(unlim, pi * cf0[2]^2, pi * offdat$MAXDIS[!OKq]^2)
-q[!OKq] <- ifelse(unlim, 1, edr_fun(offdat$MAXDIS[!OKq], cf0[2]))
-
-phi1 <- exp(drop(Xp2[OKp,,drop=FALSE] %*% cfi$sra))
-tau1 <- exp(drop(Xq2[OKq,,drop=FALSE] %*% cfi$edr))
-p[OKp] <- sra_fun(offdat$MAXDUR[OKp], phi1)
-unlim <- ifelse(offdat$MAXDIS[OKq] == Inf, TRUE, FALSE)
-A[OKq] <- ifelse(unlim, pi * tau1, pi * offdat$MAXDIS[OKq]^2)
-q[OKq] <- ifelse(unlim, 1, edr_fun(offdat$MAXDIS[OKq], tau1))
-
-ii <- which(p == 0)
-p[ii] <- sra_fun(offdat$MAXDUR[ii], cf0[1])
-
-OFF[,spp] <- log(p) + log(A) + log(q)
-
-}
-
-(Ra <- apply(OFF, 2, range))
-summary(t(Ra))
-which(!is.finite(Ra[1,]))
-which(!is.finite(Ra[2,]))
-
-OFFmean <- log(rowMeans(exp(OFF)))
-
 ## soil in south
 
 round(100*colMeans(SoilPcRf[SoilPcRf[,"SoilUnknown"]==0,]),2)
@@ -913,6 +817,102 @@ data.frame(x=colSums(is.na(DAT)))
 DAT$PKEY.1 <- NULL
 DAT$YEAR.1 <- NULL
 
+## offsets
+## QPADv3
+
+library(mefa4)
+library(QPAD)
+#source("~/repos/bamanalytics/R/dataprocessing_functions.R")
+#load(file.path(ROOT, "out", paste0("data_package_2016-04-18.Rdata")))
+
+load_BAM_QPAD(3)
+getBAMversion()
+sppp <- getBAMspecieslist()
+compare_sets(sppp, colnames(YY))
+sppp <- intersect(sppp, colnames(YY))
+
+offdat <- DAT[,c("PCODE","PKEY","SS","TSSR","JDAY","MAXDUR","MAXDIS",
+    "TREE","TREE3","HAB_NALC1","HAB_NALC2")]
+summary(offdat)
+
+offdat$TSSR[is.na(offdat$TSSR)] <- mean(offdat$TSSR, na.rm=TRUE)
+offdat$JDAY[is.na(offdat$JDAY)] <- mean(offdat$JDAY, na.rm=TRUE)
+offdat$JDAY2 <- offdat$JDAY^2
+offdat$TSSR2 <- offdat$TSSR^2
+#offdat$DSLS2 <- offdat$DSLS^2
+
+#table(DAT$hab1, DAT$HAB_NALC2)
+tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "LCC4"])
+tmp <- as.matrix(tmp / rowSums(tmp))
+tmp2 <- find_max(tmp[is.na(offdat$HAB_NALC2),])
+
+offdat$LCC4 <- as.character(offdat$HAB_NALC2)
+offdat$LCC4[offdat$LCC4 %in% c("Decid", "Mixed")] <- "DecidMixed"
+offdat$LCC4[offdat$LCC4 %in% c("Agr","Barren","Devel","Grass", "Shrub")] <- "Open"
+offdat$LCC4 <- factor(offdat$LCC4,
+        c("DecidMixed", "Conif", "Open", "Wet"))
+offdat$LCC4[is.na(offdat$LCC4)] <- tmp2$index
+offdat$LCC2 <- as.character(offdat$LCC4)
+offdat$LCC2[offdat$LCC2 %in% c("DecidMixed", "Conif")] <- "Forest"
+offdat$LCC2[offdat$LCC2 %in% c("Open", "Wet")] <- "OpenWet"
+offdat$LCC2 <- factor(offdat$LCC2, c("Forest", "OpenWet"))
+table(offdat$LCC4, offdat$LCC2, useNA="a")
+offdat$MAXDIS <- offdat$MAXDIS / 100
+
+Xp <- cbind("(Intercept)"=1, as.matrix(offdat[,c("TSSR","JDAY","TSSR2","JDAY2")]))
+Xq <- cbind("(Intercept)"=1, TREE=offdat$TREE,
+    LCC2OpenWet=ifelse(offdat$LCC2=="OpenWet", 1, 0),
+    LCC4Conif=ifelse(offdat$LCC4=="Conif", 1, 0),
+    LCC4Open=ifelse(offdat$LCC4=="Open", 1, 0),
+    LCC4Wet=ifelse(offdat$LCC4=="Wet", 1, 0))
+OFF <- matrix(NA, nrow(offdat), length(sppp))
+rownames(OFF) <- rownames(offdat)
+colnames(OFF) <- sppp
+
+#spp <- "OVEN"
+for (spp in sppp) {
+p <- rep(NA, nrow(offdat))
+A <- q <- p
+
+## constant for NA cases
+cf0 <- exp(unlist(coefBAMspecies(spp, 0, 0)))
+## best model
+mi <- bestmodelBAMspecies(spp, type="BIC", model.sra=0:8)
+cat(spp, unlist(mi), "\n");flush.console()
+cfi <- coefBAMspecies(spp, mi$sra, mi$edr)
+#vci <- vcovBAMspecies(spp, mi$sra, mi$edr)
+
+Xp2 <- Xp[,names(cfi$sra),drop=FALSE]
+OKp <- rowSums(is.na(Xp2)) == 0
+Xq2 <- Xq[,names(cfi$edr),drop=FALSE]
+OKq <- rowSums(is.na(Xq2)) == 0
+
+p[!OKp] <- sra_fun(offdat$MAXDUR[!OKp], cf0[1])
+unlim <- ifelse(offdat$MAXDIS[!OKq] == Inf, TRUE, FALSE)
+A[!OKq] <- ifelse(unlim, pi * cf0[2]^2, pi * offdat$MAXDIS[!OKq]^2)
+q[!OKq] <- ifelse(unlim, 1, edr_fun(offdat$MAXDIS[!OKq], cf0[2]))
+
+phi1 <- exp(drop(Xp2[OKp,,drop=FALSE] %*% cfi$sra))
+tau1 <- exp(drop(Xq2[OKq,,drop=FALSE] %*% cfi$edr))
+p[OKp] <- sra_fun(offdat$MAXDUR[OKp], phi1)
+unlim <- ifelse(offdat$MAXDIS[OKq] == Inf, TRUE, FALSE)
+A[OKq] <- ifelse(unlim, pi * tau1, pi * offdat$MAXDIS[OKq]^2)
+q[OKq] <- ifelse(unlim, 1, edr_fun(offdat$MAXDIS[OKq], tau1))
+
+ii <- which(p == 0)
+p[ii] <- sra_fun(offdat$MAXDUR[ii], cf0[1])
+
+OFF[,spp] <- log(p) + log(A) + log(q)
+
+}
+
+(Ra <- apply(OFF, 2, range))
+summary(t(Ra))
+which(!is.finite(Ra[1,]))
+which(!is.finite(Ra[2,]))
+
+OFFmean <- log(rowMeans(exp(OFF)))
+
 #YY <- YY[rownames(DAT),]
 #HSH <- HSH[rownames(DAT),]
 #pveghf <- pveghf[rownames(DAT),]
@@ -923,53 +923,53 @@ save(DAT, YY, OFF, OFFmean, TAX, HSH, # pveghf, psoilhf,
 ## subsets -------------------------------------------------------------
 
 library(mefa4)
-ROOT <- "e:/peter/bam/Apr2016"
+#ROOT <- "e:/peter/bam/Apr2016"
 ROOT2 <- "e:/peter/AB_data_v2016"
 
 load(file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
 
 
-DAT <- droplevels(DAT[keep,])
+DAT <- droplevels(DAT[DAT$keep,])
 YY <- YY[rownames(DAT),]
-
-plot(DAT$X, DAT$Y, col=ifelse(DAT$useOK, 1, 2), pch=19, cex=0.2)
-
 OFF <- OFF[rownames(DAT),]
 OFFmean <- OFFmean[rownames(DAT)]
 
-compare_sets(rownames(OFF),rownames(DAT))
-#pveghf <- pveghf[rownames(DAT),]
-#save(DAT, YY, OFF, OFFmean, TAX, pveghf,
-#    file=file.path(ROOT2, "out", "birds", "data", "data-full.Rdata"))
+plot(DAT$X, DAT$Y, col=ifelse(DAT$useOK, 1, 2), pch=19, cex=0.2)
 
+DATs <- droplevels(DAT[DAT$useSouth & DAT$useOK,])
+DATn <- droplevels(DAT[DAT$useNorth & DAT$useOK,])
+DATj <- droplevels(DAT[DAT$useNorth,])
 
-DATSfull <- DAT[DAT$useSouth,]
-DATNfull <- DAT[DAT$useNorth,]
+aas <- colSums(is.na(DATs))
+aan <- colSums(is.na(DATn))
+aaj <- colSums(is.na(DATj))
+aas[aas>0]
+aan[aan>0]
+aaj[aaj>0]
 
-aaS <- colSums(is.na(DATSfull))
-aaN <- colSums(is.na(DATNfull))
-aaS[aaS>0]
-aaN[aaN>0]
-
-DATS <- DATSfull[DATSfull$useOK,]
-DATN <- DATNfull[DATNfull$useOK,]
-
-sapply(list(DATSfull,DATNfull,DATS,DATN), nrow)
+sapply(list(full=DAT, southOK=DATs, northOK=DATn, JOSM=DATj), nrow)
 
 ## bootids
 
-#DAT1 <- DAT
-source("~/repos/detect/R/hbootindex.R")
+library(detect)
 B <- 239
 
-bbfun <- function(DAT1, B) {
-    set.seed(1234)
+bbfun <- function(DAT1, B, out=0.1, seed=1234) {
+    set.seed(seed)
     ## make sure that time intervals are considered as blocks
     ## keep out 10% of the data for validation
     id2 <- list()
     for (l in levels(DAT1$bootid)) {
         sset <- which(DAT1$bootid == l)
-        id2[[l]] <- sample(sset, floor(length(sset) * 0.9), FALSE)
+        ## resample revisits
+        if (length(sset) > 1)
+            sset <- sample(sset)
+        dpl <- DAT1$Revisit[sset]
+        ## combine dpl=F with !duplicated dpl=T elements
+
+#-------------- I am here ----------------        
+
+        id2[[l]] <- sample(sset, floor(length(sset) * 1-out), FALSE)
     }
     KEEP_ID <- unname(unlist(id2))
     HOLDOUT_ID <- setdiff(seq_len(nrow(DAT1)), KEEP_ID)
@@ -980,10 +980,9 @@ bbfun <- function(DAT1, B) {
     BB1 <- hbootindex(DAT1k$SITE, DAT1k$bootid, B=B)
     BB1
 }
-BBS <- bbfun(DATS, B)
-BBN <- bbfun(DATN, B)
-BBSfull <- bbfun(DATSfull, B)
-BBNfull <- bbfun(DATNfull, B)
+BBs <- bbfun(DATs, B)
+BBn <- bbfun(DATn, B)
+BBj <- bbfun(DATj, B)
 
 ## figure out sets of species to analyze
 
