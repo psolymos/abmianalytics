@@ -281,6 +281,7 @@ climRF$Part <- "ABMIRF"
 climSM$Part <- "ABMISM"
 cn <- intersect(colnames(climPoint_bambbs), colnames(climRF))
 CLIM <- rbind(climPoint_bambbs[,cn], climRF[,cn], climSM[,cn])
+#CLIM <- CLIM[!is.na(CLIM$CTI),]
 compare_sets(rownames(YYY), rownames(CLIM))
 rrn <- intersect(rownames(CLIM), rownames(DDAT))
 
@@ -710,10 +711,10 @@ transform_CLIM <- function(x, ID="PKEY") {
     z$xMAT <- (x$MAT - 0) / 6
     z$xMCMT <- (x$MCMT - 0) / 25
     z$xMWMT <- (x$MWMT - 0) / 20
-#    z$xASP <- x$ASP
-#    z$xSLP <- log(x$SLP + 1)
-#    z$xTRI <- log(x$TRI / 5)
-#    z$xCTI <- log((x$CTI + 1) / 10)
+    z$xASP <- x$ASP
+    z$xSLP <- log(x$SLP + 1)
+    z$xTRI <- log(x$TRI / 5)
+    z$xCTI <- log((x$CTI + 1) / 10)
     z
 }
 #DAT$MAP <- gsub(",", "", DAT$MAP)
@@ -839,8 +840,6 @@ DAT$useNorth[DAT$useNorth & DAT$pWater > 0.5] <- FALSE
 DAT$useJosm <- !is.na(DAT$hab1) # veg info available
 DAT$useJosm[DAT$useJosm & DAT$pWater > 0.5] <- FALSE
 
-## --------- here I am ------------
-
 ## within year visits
 
 DAT <- DAT[sample.int(nrow(DAT), nrow(DAT)),]
@@ -867,7 +866,6 @@ table(DAT$Revisit)
 table(DAT$PCODE,DAT$Revisit)
 DAT$SS_YR <- NULL
 
-## ??? check this
 DAT$SITE <- as.character(DAT$SITE)
 DAT$SITE[is.na(DAT$SITE)] <- as.character(DAT$SS)[is.na(DAT$SITE)]
 DAT$SITE <- as.factor(DAT$SITE)
@@ -879,10 +877,10 @@ DAT$xlong2 <- DAT$xlong^2
 DAT$wtAge2 <- DAT$wtAge^2
 DAT$wtAge05 <- DAT$wtAge^0.5
 
-DAT$hab_lcc3 <- DAT$hab_lcc
-levels(DAT$hab_lcc3) <- c("1", "1", "2", "2", "3")
-DAT$hab_lcc2 <- DAT$hab_lcc
-levels(DAT$hab_lcc2) <- c("1", "1", "1", "1", "2")
+#DAT$hab_lcc3 <- DAT$hab_lcc
+#levels(DAT$hab_lcc3) <- c("1", "1", "2", "2", "3")
+#DAT$hab_lcc2 <- DAT$hab_lcc
+#levels(DAT$hab_lcc2) <- c("1", "1", "1", "1", "2")
 
 ## simply treat Mixed as intercept with Decid as reference
 DAT$isMix <- ifelse(DAT$hab1 == "Mixwood", 1L, 0L)
@@ -904,20 +902,32 @@ compare_sets(getTerms(modsVeg, "list"), colnames(DAT))
 setdiff(getTerms(modsVeg, "list"), colnames(DAT))
 stopifnot(length(setdiff(getTerms(modsVeg, "list"), colnames(DAT)))==0)
 
-## subsets
-
-keep <- DAT$YEAR >= 1997 & !is.na(DAT$hab1) & !DAT$Revisit & DAT$pWater <= 0.5
+## screen for CTI if that is part of the model!
+keep <- DAT$YEAR >= 1997 & !is.na(DAT$hab1) & DAT$pWater <= 0.5
+#keep <- DAT$YEAR >= 1997 & !is.na(DAT$hab1) & !DAT$Revisit & DAT$pWater <= 0.5
 #keep <- !is.na(DAT$hab1) & !DAT$Revisit & DAT$pWater <= 0.5
 
 DAT$keep <- keep
 plot(DAT$X, DAT$Y, col=ifelse(DAT$keep, 1, 2), pch=19, cex=0.2)
+data.frame(x=colSums(is.na(DAT)))
+DAT$PKEY.1 <- NULL
+DAT$YEAR.1 <- NULL
 
-YY <- YY[rownames(DAT),]
-HSH <- HSH[rownames(DAT),]
+#YY <- YY[rownames(DAT),]
+#HSH <- HSH[rownames(DAT),]
 #pveghf <- pveghf[rownames(DAT),]
 #psoilhf <- psoilhf[rownames(DAT),]
 save(DAT, YY, OFF, OFFmean, TAX, HSH, # pveghf, psoilhf, 
     file=file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
+
+## subsets -------------------------------------------------------------
+
+library(mefa4)
+ROOT <- "e:/peter/bam/Apr2016"
+ROOT2 <- "e:/peter/AB_data_v2016"
+
+load(file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
+
 
 DAT <- droplevels(DAT[keep,])
 YY <- YY[rownames(DAT),]
