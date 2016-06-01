@@ -542,6 +542,15 @@ load(file.path(ROOT, VER, "out/abmi_onoff",
 climPT_2015 <- e$climPT_2015
 climPT_2015$Label0 <- climPT_2015$Label
 
+topo1 <- read.csv(file.path(ROOT, VER, "data", "topo", "ABMIBirdsCamARU_topo.csv"))
+topo1$ID <- with(topo1, paste0(Site_ID, "_", deployment, "_", Cam_ARU_Bird_Location))
+compare_sets(topo1$ID, rownames(climPT_2015))
+topo1 <- topo1[match(rownames(climPT_2015), topo1$ID),]
+climPT_2015$SLP <- topo1$slope
+climPT_2015$ASP <- topo1$slpasp
+climPT_2015$TRI <- topo1$tri
+climPT_2015$CTI <- topo1$cti
+
 ## RiverForks points
 climPT1 <- droplevels(climPT_2015[climPT_2015$deployment == "Bird",])
 climPT1$Label <- gsub("_Bird_", "_PT_", climPT1$Label)
