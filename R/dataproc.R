@@ -927,6 +927,7 @@ library(mefa4)
 ROOT2 <- "e:/peter/AB_data_v2016"
 
 load(file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
+source("~/repos/abmianalytics/R/analysis_models.R")
 
 
 DAT <- droplevels(DAT[DAT$keep,])
@@ -937,8 +938,8 @@ OFFmean <- OFFmean[rownames(DAT)]
 plot(DAT$X, DAT$Y, col=ifelse(DAT$useOK, 1, 2), pch=19, cex=0.2)
 
 DATs <- droplevels(DAT[DAT$useSouth & DAT$useOK,])
-DATn <- droplevels(DAT[DAT$useNorth & DAT$useOK,])
-DATj <- droplevels(DAT[DAT$useNorth,])
+DATn <- droplevels(DAT[DAT$useNorth & DAT$useOK & DAT$POINT_Y>50,])
+DATj <- droplevels(DAT)
 
 aas <- colSums(is.na(DATs))
 aan <- colSums(is.na(DATn))
@@ -960,15 +961,14 @@ bbfun <- function(DAT1, B, out=0.1, seed=1234) {
     ## keep out 10% of the data for validation
     id2 <- list()
     for (l in levels(DAT1$bootid)) {
-        sset <- which(DAT1$bootid == l)
+        sset0 <- which(DAT1$bootid == l)
         ## resample revisits
-        if (length(sset) > 1)
-            sset <- sample(sset)
-        dpl <- DAT1$Revisit[sset]
+        if (length(sset0) > 1)
+            sset0 <- sample(sset0)
+        dpl <- DAT1$Revisit[sset0]
         ## combine dpl=F with !duplicated dpl=T elements
-
-#-------------- I am here ----------------        
-
+        tmp <- sset0[dpl]
+        sset <- c(sset0[!dpl], tmp[!duplicated(DAT1[tmp, "SS"])])
         id2[[l]] <- sample(sset, floor(length(sset) * 1-out), FALSE)
     }
     KEEP_ID <- unname(unlist(id2))
@@ -990,59 +990,63 @@ BBj <- bbfun(DATj, B)
 ## S/N: nmin=25
 ## look at taxonomy???
 
+DAT0 <- DAT
 YY0 <- YY
 OFF0 <- OFF
 OFFmean0 <- OFFmean
-HSH0 <- HSH
+#TAX0 <- TAX
+#HSH0 <- HSH
 nmin <- 25
 
-DAT <- DATS
+## south
+DAT <- DATs
 YY <- YY0[rownames(DAT),]
 YY <- YY[,colSums(YY>0) >= nmin]
-BB <- BBS
+BB <- BBs
 OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
 OFFmean <- OFFmean0[rownames(DAT)]
 mods <- modsSoil
+mods$Topo <- NULL
+names(mods)
+dim(YY)
 save(DAT, YY, OFF, OFFmean, mods, BB, # no HSH in the south
-    file=file.path(ROOT2, "out", "birds", "data", "data-useok-south.Rdata"))
+    file=file.path(ROOT2, "out", "birds", "data", "data-south.Rdata"))
 
-DAT <- DATN
+DAT <- DATn
 YY <- YY0[rownames(DAT),]
 YY <- YY[,colSums(YY>0) >= nmin]
-BB <- BBN
-HSH <- HSH0[rownames(DAT),]
+BB <- BBn
+#HSH <- HSH0[rownames(DAT),]
 OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
 OFFmean <- OFFmean0[rownames(DAT)]
 mods <- modsVeg
-mods2 <- modsVegHSH
-save(DAT, YY, OFF, OFFmean, mods, mods2, BB, HSH,
-    file=file.path(ROOT2, "out", "birds", "data", "data-useok-north.Rdata"))
+mods$Topo <- NULL
+names(mods)
+dim(YY)
+save(DAT, YY, OFF, OFFmean, mods, BB, # HSH,
+    file=file.path(ROOT2, "out", "birds", "data", "data-north.Rdata"))
 
-DAT <- DATSfull
+DAT <- DATj
 YY <- YY0[rownames(DAT),]
 YY <- YY[,colSums(YY>0) >= nmin]
-BB <- BBSfull
-OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
-OFFmean <- OFFmean0[rownames(DAT)]
-mods <- modsSoil
-save(DAT, YY, OFF, OFFmean, mods, BB, # no HSH in the south
-    file=file.path(ROOT2, "out", "birds", "data", "data-full-south.Rdata"))
-
-DAT <- DATNfull
-YY <- YY0[rownames(DAT),]
-YY <- YY[,colSums(YY>0) >= nmin]
-BB <- BBNfull
-HSH <- HSH0[rownames(DAT),]
+YY <- YY[,colnames(YY) %in% colnames(OFF0)]
+BB <- BBj
+#HSH <- HSH0[rownames(DAT),]
 OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
 OFFmean <- OFFmean0[rownames(DAT)]
 mods <- modsVeg
-mods2 <- modsVegHSH
-save(DAT, YY, OFF, OFFmean, mods, mods2, BB, HSH,
-    file=file.path(ROOT2, "out", "birds", "data", "data-full-north.Rdata"))
+mods$Topo <- NULL
+names(mods)
+dim(YY)
+save(DAT, YY, OFF, mods, BB, # HSH, OFFmean, 
+    file=file.path(ROOT2, "out", "birds", "data", "data-josm.Rdata"))
 
-#save(tv, ts,
-#    file=file.path(ROOT2, "out", "birds", "data", "lookup-veg-soil.Rdata"))
-
+## TODO
+## make data with all detections per location for useOK surveys
+## take the max and binarize for each SS (goupSums and nonDuplicated will do it)
+## use this for detection maps
+## use this for wrsi calculations
+## create all the relevant buffer percentage summaries (i.e. not only hab1!)
 
 ## opticut stuff
 if (FALSE) {
