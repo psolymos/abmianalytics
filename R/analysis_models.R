@@ -161,8 +161,6 @@ modsSoil <- list(
     "Year"=list( # 8
         .~.+ YR))
 
-
-
 modsVegHSH <- modsVeg
 modsVegHSH[["Surr"]] <- list(
     .~. + HSH,
