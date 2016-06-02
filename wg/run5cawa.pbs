@@ -1,0 +1,28 @@
+#!/bin/bash
+#PBS -S /bin/bash
+#PBS -N run5cawa
+#PBS -o run5cawa.out
+#PBS -e run5cawa.err
+#PBS -M solymos@ualberta.ca
+#PBS -m bea
+#PBS -l walltime=5:00:00
+#PBS -l nodes=5:ppn=12
+#PBS -l pmem=2000mb
+
+cd $PBS_O_WORKDIR
+echo "Current working directory is `pwd`"
+
+echo "Node file: $PBS_NODEFILE :"
+cat $PBS_NODEFILE
+
+echo "loading R module"
+module load application/R/3.1.2
+
+export OMPI_MCA_mpi_paffinity_alone=0
+
+echo "Starting run at: `date`"
+
+## arg1: nodes
+mpiexec -n 1 Rscript --vanilla ab_cawa.R 5
+
+echo "Program finished with exit code $? at: `date`"
