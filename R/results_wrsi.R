@@ -176,6 +176,11 @@ for (i in 1:length(colnames(YYw))) {
         side=3, adj=0.5, cex=1.4, col="grey40")
     points(city, pch=18, col="grey10")
     text(city, rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    legend("bottomleft", pch=c(15,15,15,15,15,15, NA, 3,19), 
+        col=c("#C8FBC8","#C8E6FA","#F5E6F5","#FFDCEC","#FFE6CD","#FFF1D2", NA, "red3", "red4"), 
+        legend=c(
+        "Boreal","Foothills","Rocky Mountain","Canadian Shield","Parkland","Grassland",
+        NA, "Survey location","Detection"), title="Natural Regions",
+        cex=1.2, pt.cex=c(4,4,4,4,4,4, NA, 1.5,2), bty="n")
 	dev.off()
 }
-
