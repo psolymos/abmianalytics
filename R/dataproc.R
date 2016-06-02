@@ -1024,7 +1024,7 @@ DAT0 <- DAT
 YY0 <- YY
 OFF0 <- OFF
 OFFmean0 <- OFFmean
-#TAX0 <- TAX
+TAX0 <- TAX
 #HSH0 <- HSH
 nmin <- 25
 
@@ -1097,6 +1097,7 @@ save(DAT, YY, OFF, mods, BB, # HSH, OFFmean,
 DAT <- DAT0[DAT0$useOK,]
 DAT$ID <- rownames(DAT)
 YY <- YY0[rownames(DAT),]
+YY[YY > 0] <- 1
 YYw <- groupSums(YY, 1, DAT$SS)
 YYw <- YYw[,colSums(YYw)>0]
 DATw <- nonDuplicated(DAT, SS, TRUE)
@@ -1122,7 +1123,9 @@ pSoil <- as.matrix(pSoil / rowSums(pSoil))
 pSoil <- pSoil[as.character(DATw$ID),]
 rownames(pSoil) <- rownames(DATw)
 
-save(DATw, YYw, pVeg, pSoil, 
+TAX <- TAX0[colnames(YYw),]
+
+save(DATw, YYw, pVeg, pSoil, TAX, 
     file=file.path(ROOT2, "out", "birds", "data", "data-wrsi.Rdata"))
 
 ## TODO

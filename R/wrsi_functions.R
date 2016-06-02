@@ -48,7 +48,7 @@ function(Y, X, south=FALSE, ...)
     if (south)
         col <- c(rep("brown",4), rep("grey30",2))
     if (!south)
-        col <- brewer.pal(8, "Accent")[c(1,1,1,1, 2,2, 3,5, 8,8, 8,8)]
+        col <- brewer.pal(8, "Accent")[c(1,1,1,1, 2,2, 3,5, 7, 8,8, 8,8)]
     ## adjust margins and text direction
     op <- par(mar=c(8,4,2,2)+0.1, las=2)
     ## produce a barplot without axes
