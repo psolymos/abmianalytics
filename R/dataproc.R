@@ -325,9 +325,13 @@ dd1km[[5]] <- dd1km_RF[[5]]
 names(dd150m) <- names(dd150m_bambbs)[c(1,2,3,4,6)]
 names(dd1km) <- names(dd1km_bambbs)[c(1,2,3,4,6)]
 
+save(dd150m, dd1km,
+    file=file.path(ROOT2, "out", "birds", "data", "data-full-veghf.Rdata"))
+
 ## lookup tables & reclassed tables
 
 ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
 
 SoilKmCr <- groupSums(dd1km$soil_current, 2, ts[colnames(dd1km$soil_current), "UseInAnalysis"])
 SoilKmRf <- groupSums(dd1km$soil_reference, 2, ts[colnames(dd1km$soil_reference), "UseInAnalysis"])
@@ -345,8 +349,6 @@ SoilKmRf <- as.matrix(SoilKmRf / rowSums(SoilKmRf))
 #SoilPcCr <- SoilPcCr[,colnames(SoilPcCr) != "HFor"] # exclude forestry
 SoilPcCr <- as.matrix(SoilPcCr / rowSums(SoilPcCr))
 SoilPcRf <- as.matrix(SoilPcRf / rowSums(SoilPcRf))
-
-tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
 
 if (FALSE) {
 tmp <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "Type"])
@@ -687,6 +689,10 @@ DAT$WetKM <- rowSums(dd1km$veg_current[,tv[colnames(dd1km$veg_current), "WET"]==
 DAT$WaterKM <- rowSums(dd1km$veg_current[,tv[colnames(dd1km$veg_current), "WATER"]==1]) / rowSums(dd1km$veg_current)
 DAT$WetWaterKM <- rowSums(dd1km$veg_current[,tv[colnames(dd1km$veg_current), "WETWATER"]==1]) / rowSums(dd1km$veg_current)
 
+## 1km Dec80 for CAWA
+cn_d80 <- paste0("Decid", 5:9)
+DAT$Dec80KM <- rowSums(dd1km$veg_current[,cn_d80]) / rowSums(dd1km$veg_current)
+
 ## HSH matrix using hab1ec (EC classes)
 cn <- colnames(dd1km$veg_current)
 HSH <- groupSums(dd1km$veg_current, 2, paste0(tv[cn,"Type"], tv[cn,"EC_AGE"]))
@@ -929,6 +935,28 @@ ROOT2 <- "e:/peter/AB_data_v2016"
 load(file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
 source("~/repos/abmianalytics/R/analysis_models.R")
 
+DAT$MAXDUR <- NULL
+DAT$MAXDIS <- NULL
+DAT$JDAY <- NULL
+DAT$TSSR <- NULL
+DAT$TREE <- NULL
+DAT$HAB_NALC2 <- NULL
+DAT$HAB_NALC1 <- NULL
+DAT$AHM <- NULL
+DAT$PET <- NULL
+DAT$FFP <- NULL
+DAT$MAP <- NULL
+DAT$MAT <- NULL
+DAT$MCMT <- NULL
+DAT$MWMT <- NULL
+DAT$SLP <- NULL
+DAT$ASP <- NULL
+DAT$TRI <- NULL
+DAT$CTI <- NULL
+DAT$fCC1 <- NULL
+DAT$HSH <- NULL
+DAT$HSH2 <- NULL
+DAT$useJosm <- NULL
 
 DAT <- droplevels(DAT[DAT$keep,])
 YY <- YY[rownames(DAT),]
@@ -940,6 +968,7 @@ plot(DAT$X, DAT$Y, col=ifelse(DAT$useOK, 1, 2), pch=19, cex=0.2)
 DATs <- droplevels(DAT[DAT$useSouth & DAT$useOK,])
 DATn <- droplevels(DAT[DAT$useNorth & DAT$useOK & DAT$POINT_Y>50,])
 DATj <- droplevels(DAT)
+DATcawa <- droplevels(DAT[DAT$useNorth & DAT$POINT_Y>50,])
 
 aas <- colSums(is.na(DATs))
 aan <- colSums(is.na(DATn))
@@ -983,6 +1012,7 @@ bbfun <- function(DAT1, B, out=0.1, seed=1234) {
 BBs <- bbfun(DATs, B)
 BBn <- bbfun(DATn, B)
 BBj <- bbfun(DATj, B)
+BBcawa <- bbfun(DATcawa, B)
 
 ## figure out sets of species to analyze
 
@@ -1041,12 +1071,65 @@ dim(YY)
 save(DAT, YY, OFF, mods, BB, # HSH, OFFmean, 
     file=file.path(ROOT2, "out", "birds", "data", "data-josm.Rdata"))
 
-## TODO
+DAT <- DATcawa
+YY <- YY0[rownames(DAT),]
+YY <- YY[,colSums(YY>0) >= nmin]
+YY <- YY[,colnames(YY) %in% colnames(OFF0)]
+BB <- BBcawa
+#HSH <- HSH0[rownames(DAT),]
+OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
+OFFmean <- OFFmean0[rownames(DAT)]
+mods <- c(modsVeg[c("Hab", "Age", "CC", "Contrast", "ARU", "Space")], 
+    modsCAWA[c("Wet", "Dec")], 
+    modsVeg[c("HF", "Year")]) 
+names(mods)
+dim(YY)
+save(DAT, YY, OFF, mods, BB, # HSH, OFFmean, 
+    file=file.path(ROOT2, "out", "birds", "data", "data-cawa.Rdata"))
+
+## WRSI
 ## make data with all detections per location for useOK surveys
 ## take the max and binarize for each SS (goupSums and nonDuplicated will do it)
 ## use this for detection maps
 ## use this for wrsi calculations
 ## create all the relevant buffer percentage summaries (i.e. not only hab1!)
+
+DAT <- DAT0[DAT0$useOK,]
+DAT$ID <- rownames(DAT)
+YY <- YY0[rownames(DAT),]
+YYw <- groupSums(YY, 1, DAT$SS)
+YYw <- YYw[,colSums(YYw)>0]
+DATw <- nonDuplicated(DAT, SS, TRUE)
+DATw <- DATw[,c("SS","ID","PCODE","LUF_NAME","NSRNAME","NRNAME",
+    "POINT_X","POINT_Y","X","Y","useNorth","useSouth")]
+
+load(file.path(ROOT2, "out", "birds", "data", "data-full-veghf.Rdata"))
+ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv") # UseInAnalysis
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv") # UseInWRSI
+
+pVeg <- dd150m$veg_current[rownames(DAT),]
+pVeg <- groupSums(pVeg, 2, tv[colnames(pVeg), "UseInWRSI"])
+pVeg <- pVeg[,colnames(pVeg) != "XXX"]
+pVeg <- as.matrix(pVeg / rowSums(pVeg))
+pVeg <- pVeg[as.character(DATw$ID),]
+rownames(pVeg) <- rownames(DATw)
+
+pSoil <- dd150m$soil_current[rownames(DAT),]
+pSoil <- groupSums(pSoil, 2, ts[colnames(pSoil), "UseInAnalysis"])
+pSoil <- pSoil[, c("RapidDrain", "Saline", "Clay", 
+    "Productive", "Cult", "UrbInd")]
+pSoil <- as.matrix(pSoil / rowSums(pSoil))
+pSoil <- pSoil[as.character(DATw$ID),]
+rownames(pSoil) <- rownames(DATw)
+
+save(DATw, YYw, pVeg, pSoil, 
+    file=file.path(ROOT2, "out", "birds", "data", "data-wrsi.Rdata"))
+
+## TODO
+## - det map
+## - north WRSI figs and tabs
+## - south WRSI figs and tabs
+
 
 ## opticut stuff
 if (FALSE) {

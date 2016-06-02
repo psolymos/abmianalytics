@@ -146,7 +146,7 @@ modsSoil <- list(
         .~. + WetKM,
         .~. + WetWaterKM),
     "HF"=list( # 7
-        .~.+ THF_KM,## HF only
+        .~.+ THF_KM,
         .~.+ Lin_KM + Nonlin_KM,
         .~.+ Succ_KM + Alien_KM,
         .~.+ Succ_KM + Noncult_KM + Cult_KM,
@@ -161,7 +161,12 @@ modsSoil <- list(
     "Year"=list( # 8
         .~.+ YR))
 
-modsVegHSH <- modsVeg
-modsVegHSH[["Surr"]] <- list(
-    .~. + HSH,
-    .~. + HSH2)
+modsCAWA <- list(
+    "Dec"=list(
+        .~. + Dec80KM),
+    "Wet"=list(
+        .~. + WetKM,
+        .~. + xCTI,
+        .~. + WetKM + xCTI,
+        .~. + WetKM + xCTI + WetKM:xCTI)
+    )
