@@ -67,10 +67,6 @@ cat("OK\nload packages on slaves...")
 tmpcl <- clusterEvalQ(cl, library(ResourceSelection))
 tmpcl <- clusterEvalQ(cl, library(MASS))
 tmpcl <- clusterEvalQ(cl, library(mefa4))
-if (hshid == "dohsh") {
-    library(opticut)
-    tmpcl <- clusterEvalQ(cl, library(opticut))
-}
 tmpcl <- clusterEvalQ(cl, source("~/repos/bragging/R/glm_skeleton.R"))
 tmpcl <- clusterEvalQ(cl, source("~/repos/abmianalytics/R/analysis_functions.R"))
 
