@@ -1,8 +1,8 @@
 #!/bin/bash
 #PBS -S /bin/bash
-#PBS -N run5cawa
-#PBS -o run5cawa.out
-#PBS -e run5cawa.err
+#PBS -N run5oc
+#PBS -o run5oc.out
+#PBS -e run5oc.err
 #PBS -M solymos@ualberta.ca
 #PBS -m bea
 #PBS -l walltime=10:00:00

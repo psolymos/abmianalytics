@@ -39,30 +39,18 @@ ncl <- if (TEST) 2 else nodes*12
 if (interactive())
     setwd("e:/peter/AB_data_v2016/out/birds")
 fid <- if (interactive())
-    "north" else as.character(args[2])
+    "north" else as.character(args[2]) # north, south, josm
 
-subset <- if (interactive())
-    "full" else as.character(args[3]) # full or useok
+REVERSE <- if (interactive())
+    FALSE else as.logical(args[3]) # FALSE or TRUE
 
 cat("OK\nload data on master...")
-fn <- paste0("data-", subset, "-", fid, ".Rdata")
+fn <- paste0("data-", fid, ".Rdata")
 load(file.path("data", fn))
 
+## CAIC = alpha * AIC + (1 - alpha) * BIC
+## 1: AIC, 0: BIC
 CAICalpha <- 1
-
-USE_HSH <- if (interactive())
-    TRUE else as.character(args[4]) == "do_hsh"
-if (fid == "south")
-    USE_HSH <- FALSE
-
-if (USE_HSH) {
-    hsh_name <- "hab1ec"
-    mods <- mods2
-    hshid <- "dohsh"
-} else {
-    hsh_name <- NA
-    hshid <- "nohsh"
-}
 
 if (TEST)
     mods <- mods[1:2]
@@ -91,19 +79,20 @@ tmpcl <- clusterEvalQ(cl, source("~/repos/abmianalytics/R/analysis_functions.R")
 cat("OK\nexporting and data loading on slaves...")
 tmpcl <- clusterExport(cl, "fn")
 if (interactive())
-    tmpcl <- clusterEvalQ(cl, setwd("c:/p/AB_data_v2015/out/birds"))
+    tmpcl <- clusterEvalQ(cl, setwd("e:/peter/AB_data_v2016/out/birds"))
 tmpcl <- clusterEvalQ(cl, load(file.path("data", fn)))
 
 #### project identifier ####
 
 PROJECT <- if (TEST)
-    paste0("abmi-", hshid, "-", fid, "-test") else paste0("abmi-", hshid, "-", fid)
-
+    paste0("abmi-", fid, "-test") else paste0("abmi-", fid)
 
 #### checkpoint ####
 cat("OK\nsetting checkpoint...")
 SPP <- colnames(YY)
-done_fl <- list.files("results")
+if (REVERSE)
+    SPP <- rev(SPP)
+done_fl <- list.files(paste0("results/", fid))
 done_fl <- done_fl[grepl(fid, done_fl)]
 DONE <- substr(sapply(strsplit(done_fl, "_"), "[[", 3), 1, 4)
 SPP <- setdiff(SPP, DONE)
@@ -112,7 +101,7 @@ if (TEST)
 
 ## restrict to 2 species
 #SPP <- c("WEWP","RWBL")
-SPP <- c("AMCO","SORA","OSFL","OVEN","CAWA","ALFL")
+#SPP <- c("AMCO","SORA","OSFL","OVEN","CAWA","ALFL")
 
 #system.time(aaa <- do_1spec1run_noW(1, i="WEWP", mods=mods2, hsh_name="hab1ec", CAICalpha=1, method="oc"))
 #system.time(aaa <- do_1spec1run_noW(1, i="RWBL", mods=mods,  hsh_name=NA, CAICalpha=1))
@@ -131,20 +120,19 @@ for (SPP1 in SPP) {
     if (interactive())
         flush.console()
     t0 <- proc.time()
-    res <- parLapply(cl, 1:BBB, wg_fun, i=SPP1, mods=mods,
-        hsh_name=hsh_name, CAICalpha=CAICalpha)
-#    res <- lapply(1:BBB, wg_fun, i=SPP1, mods=mods,
-#        hsh_name=hsh_name, CAICalpha=CAICalpha)
+    res <- parLapply(cl, 1:BBB, wg_fun, i=SPP1, mods=mods, CAICalpha=CAICalpha)
     attr(res, "timing") <- t0 - proc.time()
     attr(res, "fid") <- fid
     attr(res, "spp") <- SPP1
-    attr(res, "hsh_name") <- hsh_name
+    #attr(res, "hsh_name") <- hsh_name
     attr(res, "CAICalpha") <- CAICalpha
     attr(res, "date") <- as.character(Sys.Date())
     attr(res, "ncl") <- ncl
-    save(res, file=paste0("results/birds_", PROJECT, "_", SPP1, ".Rdata"))
+    save(res, file=paste0("results/", fid, "/birds_", PROJECT, "_", SPP1, ".Rdata"))
     cat("OK\n")
 }
+#    res <- lapply(1:BBB, wg_fun, i=SPP1, mods=mods,
+#        hsh_name=hsh_name, CAICalpha=CAICalpha)
 
 #### shutting down ####
 cat("shutting down\n")

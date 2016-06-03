@@ -23,6 +23,6 @@ export OMPI_MCA_mpi_paffinity_alone=0
 echo "Starting run at: `date`"
 
 ## arg1: nodes, arg2: south/north
-mpiexec -n 1 Rscript --vanilla abmi_models.R 10 north
+mpiexec -n 1 Rscript --vanilla abmi_models.R 10 north TRUE
 
 echo "Program finished with exit code $? at: `date`"
