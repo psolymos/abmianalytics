@@ -968,7 +968,7 @@ plot(DAT$X, DAT$Y, col=ifelse(DAT$useOK, 1, 2), pch=19, cex=0.2)
 DATs <- droplevels(DAT[DAT$useSouth & DAT$useOK,])
 DATn <- droplevels(DAT[DAT$useNorth & DAT$useOK & DAT$POINT_Y>50,])
 DATj <- droplevels(DAT)
-DATcawa <- droplevels(DAT[DAT$useNorth & DAT$POINT_Y>50,])
+DATcawa <- droplevels(DAT[DAT$useNorth & DAT$POINT_Y>50 & !is.na(DAT$xCTI),])
 
 aas <- colSums(is.na(DATs))
 aan <- colSums(is.na(DATn))
@@ -1042,6 +1042,7 @@ dim(YY)
 save(DAT, YY, OFF, OFFmean, mods, BB, # no HSH in the south
     file=file.path(ROOT2, "out", "birds", "data", "data-south.Rdata"))
 
+## north
 DAT <- DATn
 YY <- YY0[rownames(DAT),]
 YY <- YY[,colSums(YY>0) >= nmin]
@@ -1056,6 +1057,7 @@ dim(YY)
 save(DAT, YY, OFF, OFFmean, mods, BB, # HSH,
     file=file.path(ROOT2, "out", "birds", "data", "data-north.Rdata"))
 
+## JOSM
 DAT <- DATj
 YY <- YY0[rownames(DAT),]
 YY <- YY[,colSums(YY>0) >= nmin]
@@ -1071,6 +1073,7 @@ dim(YY)
 save(DAT, YY, OFF, mods, BB, # HSH, OFFmean, 
     file=file.path(ROOT2, "out", "birds", "data", "data-josm.Rdata"))
 
+## CAWA update
 DAT <- DATcawa
 YY <- YY0[rownames(DAT),]
 YY <- YY[,colSums(YY>0) >= nmin]
