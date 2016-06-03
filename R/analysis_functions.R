@@ -116,3 +116,57 @@ silent=FALSE, hsh_name=NA, CAICalpha=1, method=c("oc","lt"))
         hsh_name=hsh_name)
     out
 }
+
+## z: colname for strata
+cut_1spec1run_noW <- function(j, i, z)
+{
+    x <- DAT[BB[,j],]
+    y <- as.numeric(YY[BB[,j], i])
+    off <- if (i %in% colnames(OFF))
+        OFF[BB[,j], i] else OFFmean[BB[,j]]
+    HABV <- x[,z]
+    ## opticut based approach for core habitat delineation
+    require(opticut)
+    oc <- opticut(y ~ ROAD01, data=x, strata=HABV, dist="poisson",
+        offset=off, comb="rank")
+    part <- drop(bestpart(oc))
+    habmod_oc <- glm_skeleton(bestmodel(oc)[[1]])
+    ocres <- drop(as.matrix(summary(oc)$summary[,c("I","beta0","beta1","logLR","w")]))
+    Prob <- table(HABV, part)[,"1"]
+    ## missing/dropped levels are NaN=0/0
+    Prob[is.na(Prob)] <- 0
+    Hi_oc <- names(Prob)[Prob > 0]
+    ## Lorenz-tangent approach for core habitat delineation
+    habmod <- glm_skeleton(try(glm(y ~ HABV + ROAD01,
+        x,
+        family=poisson(), 
+        offset=off, 
+        #weights=w,
+        x=FALSE, y=FALSE, model=FALSE)), CAICalpha=CAICalpha)
+    ## need to correct for linear effects
+    ## so that we estimate potential pop in habitats (and not realized)
+    XHSH <- model.matrix(~ HABV + ROAD01, x)
+    XHSH[,"ROAD01"] <- 0 # not predicting edge effects
+    ## some levels might be dropped (e.g. Marsh)
+    XHSH <- XHSH[,names(habmod$coef)]
+    lam <- exp(drop(XHSH %*% habmod$coef))
+    cv <- Lc_cut(lam, transform=FALSE) # $lam is threshold
+    Freq <- table(hab=HABV, lc=ifelse(lam >= cv$lam, 1, 0))
+    Prob <- Freq[,"1"] / rowSums(Freq)
+    ## missing/dropped levels are NaN=0/0
+    Prob[is.na(Prob)] <- 0
+    Hi_lc <- names(Prob)[Prob > 0.5]
+    ## final assembly
+    out <- list(species=i, iteration=j,
+        hi_oc=Hi_oc,
+        hi_lc=Hi_lc,
+        lc=cv,
+        ocres=ocres,
+        #nmax=nmax,
+        #w_id=w_id,
+        habmod_oc=habmod_oc$coef,
+        habmod_lc=habmod$coef)
+    out
+}
+#system.time(x <- cut_1spec1run_noW(j=1, i="OVEN", z="hab1ec"))
+
