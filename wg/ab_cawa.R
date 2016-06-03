@@ -79,7 +79,6 @@ tmpcl <- clusterEvalQ(cl, load(file.path("data", fn)))
 PROJECT <- if (TEST)
     paste0("abmi-", fid, "-test") else paste0("abmi-", fid)
 
-
 SPP1 <- "CAWA"
 
 ## catch errors that cannot be dealt with internally in glm_skeleton
@@ -89,8 +88,6 @@ cat("OK\nstart running models for species:", SPP1)
 t0 <- proc.time()
 res <- parLapply(cl, 1:BBB, wg_fun, i=SPP1, mods=mods,
     hsh_name=NA, CAICalpha=CAICalpha)
-res <- lapply(1:BBB, wg_fun, i=SPP1, mods=mods,
-    hsh_name=NA, CAICalpha=CAICalpha)
 attr(res, "timing") <- t0 - proc.time()
 attr(res, "fid") <- fid
 attr(res, "spp") <- SPP1
@@ -99,6 +96,9 @@ attr(res, "CAICalpha") <- CAICalpha
 attr(res, "date") <- as.character(Sys.Date())
 attr(res, "ncl") <- ncl
 save(res, file=paste0("results/", fid, "/birds_", PROJECT, "_", SPP1, ".Rdata"))
+
+#res <- lapply(1:BBB, wg_fun, i=SPP1, mods=mods,
+#    hsh_name=NA, CAICalpha=CAICalpha)
 
 #### shutting down ####
 cat("shutting down\n")
