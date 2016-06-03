@@ -277,11 +277,16 @@ r2 <- as_Raster0(kgrid$Row, kgrid$Col, kgrid$aoo, rt)
 k <- kgrid[,c("det","surv")]
 save(k, file="e:/peter/AB_data_v2016/out/birds/wewp/aoo.Rdata")
 
+#load(file.path("e:/peter/AB_data_v2016/out", "kgrid", "kgrid_table.Rdata"))
+#load("e:/peter/AB_data_v2016/out/birds/wewp/aoo.Rdata")
 k$Row <- kgrid$Row
 k$Col <- kgrid$Col
 k$Row2 <- 1 + kgrid$Row %/% 2
 k$Col2 <- 1 + kgrid$Col %/% 2
 k$Row2_Col2 <- interaction(k$Row2, k$Col2, sep="_", drop=TRUE)
+#tmp <- Xtab(~ k$Row2_Col2 + kgrid$NRNAME)
+#vi <- find_max(tmp)
+k$NR <- kgrid$NRNAME
 
 k2det <- as.matrix(Xtab(~Row2_Col2 + det, k))
 k2surv <- as.matrix(Xtab(~Row2_Col2 + surv, k))
@@ -292,12 +297,26 @@ dim(k2det)
 table(k2det[,2] > 0)
 table(k2surv[,2] > 0)
 
-
-
 k$aoo <- k$surv + k$det + 1
 k$faoo <- factor(k$aoo, 1:3)
 levels(k$faoo) <- c("unsurveyed", "surveyed", "detected")
 
+byNR_2km <- list()
+for (i in levels(k$NR)) {
+    kk <- droplevels(k[k$NR == i,])
+    kk <- groupSums(as.matrix(kk[,c("det","surv")]), 1, kk$Row2_Col2)
+    kk[kk>0] <- 1
+    kk <- as.data.frame(kk)
+    kk$aoo <- kk$surv + kk$det + 1
+    kk$faoo <- factor(kk$aoo, 1:3)
+    levels(kk$faoo) <- c("unsurveyed", "surveyed", "detected")
+    tmp <- table(kk$faoo)[c("detected","surveyed","unsurveyed")]
+    tmp2 <- cumsum(tmp)
+    names(tmp2) <- c("detected", "surveyed", "available")
+    byNR_2km[[i]] <- tmp2
+}
+byNR_2km <- do.call(rbind, byNR_2km)
+write.csv(byNR_2km, file="e:/peter/AB_data_v2016/out/birds/wewp/aoo-2km-byNR.csv")
 
 ## calculating # occurrences
 xnn$lxn <- interaction(xnn$LUF_NAME, xnn$NSRNAME, drop=TRUE, sep="_")
