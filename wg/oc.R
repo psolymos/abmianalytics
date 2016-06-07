@@ -93,6 +93,18 @@ cut_1spec1run_noW <- function(j, i, z)
         habmod_lc=habmod$coef)
     out
 }
+level_1spec1run_noW <- function(j, i, z)
+{
+    x <- DAT[BB[,j],]
+    y <- as.numeric(YY[BB[,j], i])
+    off <- if (i %in% colnames(OFF))
+        OFF[BB[,j], i] else OFFmean[BB[,j]]
+    require(opticut)
+    Z <- model.matrix(~ ROAD01 - 1, x)
+    Z[,1] <- Z[,1] - mean(Z[,1], na.rm=TRUE)
+    optilevel(y=y, x=x[,z], z=Z, dist="poisson",
+        offset=off)
+}
 
 #### spawning the slaves ####
 cat("OK\nspawning slaves...")
@@ -142,6 +154,8 @@ for (SPP1 in SPP) {
         flush.console()
     res <- parLapply(cl, 1:BBB, cut_1spec1run_noW, i=SPP1, z="hab1ec")
     save(res, file=paste0("results/oc/birds_", PROJECT, "_", SPP1, ".Rdata"))
+#    res <- parLapply(cl, 1:BBB, level_1spec1run_noW, i=SPP1, z="hab1ec")
+#    save(res, file=paste0("results/ol/birds_", PROJECT, "_", SPP1, ".Rdata"))
     cat("OK\n")
 }
 

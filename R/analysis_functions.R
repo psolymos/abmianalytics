@@ -170,3 +170,17 @@ cut_1spec1run_noW <- function(j, i, z)
 }
 #system.time(x <- cut_1spec1run_noW(j=1, i="OVEN", z="hab1ec"))
 
+level_1spec1run_noW <- function(j, i, z)
+{
+    x <- DAT[BB[,j],]
+    y <- as.numeric(YY[BB[,j], i])
+    off <- if (i %in% colnames(OFF))
+        OFF[BB[,j], i] else OFFmean[BB[,j]]
+    require(opticut)
+    Z <- model.matrix(~ ROAD01 - 1, x)
+    Z[,1] <- Z[,1] - mean(Z[,1], na.rm=TRUE)
+    optilevel(y=y, x=x[,z], z=Z, dist="poisson",
+        offset=off)
+}
+#system.time(x <- level_1spec1run_noW(j=1, i="OVEN", z="hab1ec"))
+
