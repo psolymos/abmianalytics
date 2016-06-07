@@ -187,6 +187,15 @@ function(est, Xn)
 }
 
 ## this is required for getting the axes right across figures
+fig_veghf_ymax <-
+function(pr2) 
+{
+        lci <- pr2[,3]
+        uci <- pr2[,4]
+        y1 <- pr2[,2]
+        ymax <- max(min(max(uci),2*max(y1)),y1*1.02)
+        ymax
+}
 fig_soilhf_ymax <-
 function(pr) 
 {
@@ -240,7 +249,7 @@ function(pr, LAB="", ymax=NULL)
 }
 
 fig_veghf <- 
-function(pr, LAB="") 
+function(pr, LAB="", ymax) 
 {
 
         op <- par(mai=c(1.5,1,0.2,0.3))
@@ -279,7 +288,8 @@ function(pr, LAB="")
         lci <- pr2[,3]
         uci <- pr2[,4]
         y1 <- pr2[,2]
-        ymax <- min(max(uci),2*max(y1))
+        if (missing(ymax))
+            ymax <- min(max(uci),2*max(y1))
         #x <- c(rep(1:9,6)+rep(seq(0,50,10),each=9), 61,63,65, 68,70)
         x <- c(rep(1:9,6)+rep(seq(0,50,10),each=9), 61,63,65,67,69, 72,74)
         space <- c(1,x[-1]-x[-length(x)])-0.99  # The spacing between bars
