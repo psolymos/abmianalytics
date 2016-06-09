@@ -106,7 +106,7 @@ pred_veghf <-
 function(est, Xn, burn_included=TRUE)
 {
     X <- Xn[1:13,colnames(est)]
-    X[,-1] <- 0
+    X[,-1] <- 0 # this should take care of all the modifiers (soft/hard/ARU)
     diag(X) <- 1
     rownames(X) <- c("Decid","Mixwood", "Conif", "Pine", "BSpr", "Larch",  
     "Swamp", "WetGrass", "WetShrub", "Shrub", "GrassHerb", "Cult", "UrbInd")

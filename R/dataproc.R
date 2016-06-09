@@ -636,6 +636,7 @@ DAT <- data.frame(DAT, tc[,-1])
 
 ## surrounding HF at 1km scale
 
+all(rownames(DAT) == rownames(dd1km$veg_current))
 #DAT$THF_KM <- rowSums(VegKmCr[,setdiff(colnames(VegKmCr), colnames(VegKmRf))])
 DAT$THF_KM <- rowSums(dd1km$veg_current[,setdiff(colnames(dd1km$veg_current), colnames(dd1km$veg_reference))]) / rowSums(dd1km$veg_current)
 DAT$Lin_KM <- rowSums(dd1km$veg_current[,c("SeismicLine","TransmissionLine","Pipeline",
@@ -688,10 +689,21 @@ DAT$Nonlin2_PC <- DAT$Nonlin_PC^2
 DAT$WetKM <- rowSums(dd1km$veg_current[,tv[colnames(dd1km$veg_current), "WET"]==1]) / rowSums(dd1km$veg_current)
 DAT$WaterKM <- rowSums(dd1km$veg_current[,tv[colnames(dd1km$veg_current), "WATER"]==1]) / rowSums(dd1km$veg_current)
 DAT$WetWaterKM <- rowSums(dd1km$veg_current[,tv[colnames(dd1km$veg_current), "WETWATER"]==1]) / rowSums(dd1km$veg_current)
+## 150m scale wetness
+DAT$WetPT <- rowSums(dd150m$veg_current[,tv[colnames(dd1km$veg_current), "WET"]==1]) / rowSums(dd150m$veg_current)
+DAT$WaterPT <- rowSums(dd150m$veg_current[,tv[colnames(dd1km$veg_current), "WATER"]==1]) / rowSums(dd150m$veg_current)
+DAT$WetWaterPT <- rowSums(dd150m$veg_current[,tv[colnames(dd1km$veg_current), "WETWATER"]==1]) / rowSums(dd150m$veg_current)
+#plot(DAT$WetPT, DAT$WetKM)
 
 ## 1km Dec80 for CAWA
+cn_d <- c("DecidR", paste0("Decid", 1:9), "CCDecidR", paste0("CCDecid", 1:4))
+cn_dm <- c(cn_d, "MixwoodR", paste0("Mixwood", 1:9), "CCMixwoodR", paste0("CCMixwood", 1:4))
 cn_d80 <- paste0("Decid", 5:9)
+cn_dm80 <- c(cn_d80, paste0("Mixwood", 5:9))
+DAT$DecKM <- rowSums(dd1km$veg_current[,cn_d]) / rowSums(dd1km$veg_current)
+DAT$DecMixKM <- rowSums(dd1km$veg_current[,cn_dm]) / rowSums(dd1km$veg_current)
 DAT$Dec80KM <- rowSums(dd1km$veg_current[,cn_d80]) / rowSums(dd1km$veg_current)
+DAT$DecMix80KM <- rowSums(dd1km$veg_current[,cn_dm80]) / rowSums(dd1km$veg_current)
 
 ## HSH matrix using hab1ec (EC classes)
 cn <- colnames(dd1km$veg_current)
@@ -1075,16 +1087,18 @@ save(DAT, YY, OFF, mods, BB, # HSH, OFFmean,
 
 ## CAWA update
 DAT <- DATcawa
-YY <- YY0[rownames(DAT),]
-YY <- YY[,colSums(YY>0) >= nmin]
-YY <- YY[,colnames(YY) %in% colnames(OFF0)]
+YY <- YY0[rownames(DAT),"CAWA",drop=FALSE]
+YY <- YY[,colSums(YY>0) >= nmin,drop=FALSE]
+YY <- YY[,colnames(YY) %in% colnames(OFF0),drop=FALSE]
 BB <- BBcawa
 #HSH <- HSH0[rownames(DAT),]
-OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
-OFFmean <- OFFmean0[rownames(DAT)]
-mods <- c(modsVeg[c("Hab", "Age", "CC", "Contrast", "ARU", "Space")], 
-    modsCAWA[c("Wet", "Dec")], 
-    modsVeg[c("HF", "Year")]) 
+OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY),drop=FALSE]
+#OFFmean <- OFFmean0[rownames(DAT)]
+source("~/repos/abmianalytics/projects/cawa-ab/models.R")
+mods <- modsCAWA
+#mods <- c(modsVeg[c("Hab", "Age", "CC", "Contrast", "ARU", "Space")], 
+#    modsCAWA[c("Wet", "Dec")], 
+#    modsVeg[c("HF", "Year")]) 
 names(mods)
 dim(YY)
 save(DAT, YY, OFF, mods, BB, # HSH, OFFmean, 
