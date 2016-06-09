@@ -411,20 +411,21 @@ rank_fun <- function(x, l, u, n=1, col=NULL, lab=NULL) {
 }
 
 pred_hf <- 
-function(est, Xn, n=200, fillin=0, remn=FALSE) 
+function(est, Xn, n=200, fillin=0, remn=NULL) 
 {
     cc <- paste(c("THF", "Lin", "Nonlin", "Succ", "Alien", "Noncult", "Cult", 
         "THF2", "Nonlin2", "Succ2", "Alien2", "Noncult2"),
         "KM", sep="_")
-    if (remn)
-        cc <- c(cc, paste(c("Remn", "Remn2"), "KM", sep="_"))
+    if (!is.null(remn))
+        #cc <- c(cc, paste(c("Remn", "Remn2"), "KM", sep="_"))
+        cc <- c(cc, remn)
     ehf <- est
     ehf[] <- 0
     ehf[,cc] <- est[,cc]
 
         pr <- list()
         Types <- c("Cult", "UrbInd", "HFor", "SoftLin", "HardLin")
-        if (remn)
+        if (!is.null(remn))
             Types <- c("Remn", Types)
         for (type in Types) {
             Range <- if (type %in% c("SoftLin", "HardLin"))
@@ -433,9 +434,10 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
             Xhf <- Xn[1:n,] # matrix(0, n, length(cc))
             Xhf[] <- 0
             rownames(Xhf) <- NULL
-            if (remn & type == "Remn") {
-                Xhf[,"Remn_KM"] <- hf
-                Xhf[,"Remn2_KM"] <- hf^2
+            if (!is.null(remn) & type == "Remn") {
+                Xhf[,remn] <- hf
+                #Xhf[,"Remn_KM"] <- hf
+                #Xhf[,"Remn2_KM"] <- hf^2
             }
             if (type == "Cult") {
                 Xhf[,"THF_KM"] <- hf
@@ -446,8 +448,9 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
                 Xhf[,"Nonlin_KM"] <- hf
                 Xhf[,"Nonlin2_KM"] <- hf^2
                 if (fillin) {
-                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
+                    Xhf[,remn] <- pmin(fillin, 1-hf)
+                    #Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
+                    #Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
                 }
             }
             if (type == "UrbInd") {
@@ -460,8 +463,9 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
                 Xhf[,"Nonlin_KM"] <- hf
                 Xhf[,"Nonlin2_KM"] <- hf^2
                 if (fillin) {
-                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
+                    Xhf[,remn] <- pmin(fillin, 1-hf)
+                    #Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
+                    #Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
                 }
             }
             if (type == "HFor") {
@@ -474,8 +478,9 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
                 Xhf[,"Nonlin_KM"] <- hf
                 Xhf[,"Nonlin2_KM"] <- hf^2
                 if (fillin) {
-                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
+                    Xhf[,remn] <- pmin(fillin, 1-hf)
+                    #Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
+                    #Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
                 }
             }
             if (type == "SoftLin") {
@@ -487,8 +492,9 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
                 Xhf[,"Noncult2_KM"] <- hf^2
                 Xhf[,"Lin_KM"] <- hf
                 if (fillin) {
-                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
+                    Xhf[,remn] <- pmin(fillin, 1-hf)
+                    #Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
+                    #Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
                 }
             }
             if (type == "HardLin") {
@@ -500,8 +506,9 @@ function(est, Xn, n=200, fillin=0, remn=FALSE)
                 Xhf[,"Noncult2_KM"] <- hf^2
                 Xhf[,"Lin_KM"] <- hf
                 if (fillin) {
-                    Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
-                    Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
+                    Xhf[,remn] <- pmin(fillin, 1-hf)
+                    #Xhf[,"Remn_KM"] <- pmin(fillin, 1-hf)
+                    #Xhf[,"Remn2_KM"] <- Xhf[,"Remn_KM"]^2
                 }
             }
         #prst <- predStat(Xhf, ehf, level, n=0, ci=TRUE, raw=FALSE)[,c("Median", "CL1q","CL2q")]
@@ -540,9 +547,9 @@ function(what="WetWaterKM", est, Xn, n=200)
 }
 
 fig_hf_noremn <- 
-function(est, Xn, fillin=0,LAB="") 
+function(est, Xn, fillin=0,LAB="",remn=NULL) 
 {
-    pr <- pred_hf(est, Xn, fillin=fillin)
+    pr <- pred_hf(est, Xn, fillin=fillin,remn=remn)
     pr <- pr[c("HFor", "Cult", "UrbInd", "SoftLin", "HardLin")]
     ymax <- max(sapply(pr, function(z) max(z[,-1])))
     mmax <- min(max(max(sapply(pr, function(z) max(z[,2]))), 5), 10)
@@ -551,7 +558,7 @@ function(est, Xn, fillin=0,LAB="")
     Colb <- c("#00FF0015", "#DD000010", "#D0D00025", "#80008015", "#0000DD10")
     Coll <- c(rgb(0.2,0.6,0.2), "red3", "orange3", "#A000A0", "blue3")
 
-    op <- par(mfrow=c(1,1))
+    #op <- par(mfrow=c(1,1))
 
     plot(pr[["Cult"]]$hf, pr[["Cult"]]$Median,
         xlab="", ylim=c(0,ymax),
@@ -574,7 +581,7 @@ function(est, Xn, fillin=0,LAB="")
         lines(pr[[i]]$hf, pr[[i]][,"Median"], col=Coll[i],lwd=2)
     text(rep(0.1, 5), c(0.9, 0.75, 0.6, 0.45, 0.3), names(pr), pos=4, col=Coll)
     
-    par(op)
+    #par(op)
     
     invisible(NULL)
 }
@@ -590,7 +597,7 @@ function(what, est, Xn, LAB="", xlab="Percent")
     Colb <- c("#00FF0015", "#DD000010", "#D0D00025", "#80008015", "#0000DD10")[1]
     Coll <- c(rgb(0.2,0.6,0.2), "red3", "orange3", "#A000A0", "blue3")[1]
 
-    op <- par(mfrow=c(1,1))
+    #op <- par(mfrow=c(1,1))
 
     plot(pr$hf, pr$Median,
         xlab="", ylim=c(0,ymax),
@@ -610,7 +617,7 @@ function(what, est, Xn, LAB="", xlab="Percent")
     lines(pr$hf, pr[,"Median"], col=Coll,lwd=2)
     #text(rep(0.1, 5), c(0.9, 0.75, 0.6, 0.45, 0.3), names(pr), pos=4, col=Coll)
     
-    par(op)
+    #par(op)
     
     invisible(NULL)
 }
