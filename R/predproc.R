@@ -1,7 +1,8 @@
 library(mefa4)
 
 shf <- FALSE
-doB <- FALSE
+do1 <- FALSE
+doB <- TRUE
 
 PROP <- 10
 BMAX <- 100
@@ -407,7 +408,7 @@ Cells <- ifelse(iib, 1L, 0L)[ii]
 names(Cells) <- rownames(kgrid)[ii]
 
 ## 1st run
-if (TRUE) {
+if (do1) {
     j <- 1
     ## North
     D_hab_cr <- exp(logPNhab1[match(ch2veg$cr, rownames(logPNhab1)),j])
@@ -521,7 +522,7 @@ if (doB) {
 }
 
 TIME <- proc.time() - t0
-if (TRUE) {
+if (do1) {
     if (!dir.exists(file.path(OUTDIR1, spp)))
         dir.create(file.path(OUTDIR1, spp))
     save(TIME, NSest,
