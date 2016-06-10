@@ -1,7 +1,7 @@
 library(mefa4)
 
-shf <- TRUE
-doB <- TRUE
+shf <- FALSE
+doB <- FALSE
 
 PROP <- 100
 BMAX <- 240
@@ -10,10 +10,10 @@ if (!doB)
 BMAX
 
 ROOT <- "e:/peter/AB_data_v2016"
-ROOT2 <- "~/Dropbox/josm/2016/wewp"
+#ROOT2 <- "~/Dropbox/josm/2016/wewp"
 
-OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/wewp/pred1"
-OUTDIRB <- "e:/peter/AB_data_v2016/out/birds/wewp/predB"
+OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1"
+#OUTDIRB <- "e:/peter/AB_data_v2016/out/birds/wewp/predB"
 
 load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
 load(file.path(ROOT, "out", "kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata"))
@@ -33,7 +33,7 @@ transform_CLIM <- function(x, ID="PKEY") {
     z$xMAT <- (x$MAT - 0) / 6
     z$xMCMT <- (x$MCMT - 0) / 25
     z$xMWMT <- (x$MWMT - 0) / 20
-    z$xSLP <- log(x$SLP)
+
     z$xASP <- x$ASP
     z$xSLP <- log(x$SLP + 1)
     z$xTRI <- log(x$TRI / 5)
@@ -115,8 +115,13 @@ cnsHab <- c("(Intercept)", "soil1RapidDrain", "soil1Saline", "soil1Clay",
     "soil1Cult", "soil1UrbInd", "soil1vRapidDrain", "soil1vSalineAndClay", 
     "soil1vCult", "soil1vUrbInd")
 ## climate (North & South)
-cnClim <- c("xASP", "xCTI", "xPET", "xMAT", "xAHM", "xFFP", "xMAP", "xMWMT", 
-    "xMCMT", "xlat", "xlong", "xlat2", "xlong2", "xASP:xCTI", "xFFP:xMAP", 
+## ASP and CTI included here
+#cnClim <- c("xASP", "xCTI", "xPET", "xMAT", "xAHM", "xFFP", "xMAP", "xMWMT", 
+#    "xMCMT", "xlat", "xlong", "xlat2", "xlong2", "xASP:xCTI", "xFFP:xMAP", 
+#    "xMAP:xPET", "xAHM:xMAT", "xlat:xlong", "WetKM", "WetWaterKM")
+## ASP and CTI *not* included here
+cnClim <- c("xPET", "xMAT", "xAHM", "xFFP", "xMAP", "xMWMT", 
+    "xMCMT", "xlat", "xlong", "xlat2", "xlong2", "xFFP:xMAP", 
     "xMAP:xPET", "xAHM:xMAT", "xlat:xlong", "WetKM", "WetWaterKM")
 cnHF <- c("THF_KM", "Lin_KM", "Nonlin_KM", "Succ_KM", "Alien_KM", "Noncult_KM", 
     "Cult_KM", "THF2_KM", "Nonlin2_KM", "Succ2_KM", "Alien2_KM", 
@@ -128,26 +133,25 @@ fclim <- as.formula(paste("~ - 1 +", paste(cnClimHF, collapse=" + ")))
 
 
 en <- new.env()
-load(file.path(ROOT, "out", "birds", "data", "data-full-north.Rdata"), envir=en)
+load(file.path(ROOT, "out", "birds", "data", "data-north.Rdata"), envir=en)
 xnn <- en$DAT[1:500,]
 modsn <- en$mods
 yyn <- en$YY
 
 es <- new.env()
-load(file.path(ROOT, "out", "birds", "data", "data-full-south.Rdata"), envir=es)
+load(file.path(ROOT, "out", "birds", "data", "data-south.Rdata"), envir=es)
 xns <- es$DAT[1:500,]
 modss <- es$mods
 yys <- es$YY
 rm(en, es)
 
 ## model for species
-#fl <- list.files(file.path(ROOT, "out", "birds", "results"))
-#fln <- fl[grep("-north_", fl)]
-#fln <- sub("birds_abmi-north_", "", fln)
-#fln <- sub(".Rdata", "", fln)
-#fls <- fl[grep("-south_", fl)]
-#fls <- sub("birds_abmi-south_", "", fls)
-#fls <- sub(".Rdata", "", fls)
+fln <- list.files(file.path(ROOT, "out", "birds", "results", "north"))
+fln <- sub("birds_abmi-north_", "", fln)
+fln <- sub(".Rdata", "", fln)
+fls <- list.files(file.path(ROOT, "out", "birds", "results", "south"))
+fls <- sub("birds_abmi-south_", "", fls)
+fls <- sub(".Rdata", "", fls)
 
 ## terms and design matrices
 nTerms <- getTerms(modsn, "list")
@@ -243,26 +247,28 @@ setdiff(ch2soil$cr, rownames(XShab))
 setdiff(cnsHab, colnames(XShab))
 
 
-SPP <- "WEWP"
+#SPP <- "CAWA"
 do_hsh <- FALSE
-do_veg <- TRUE
-spp <- SPP
+#do_veg <- TRUE
+#spp <- SPP
 
-#SPP <- union(fln, fls)
-#SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL")
+SPP <- union(fln, fls)
+#SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL","RWBL")
+SPP <- SPP[!(SPP %in% c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL","RWBL"))]
+
 for (spp in SPP) { # species START
 
 cat("\n\n---", spp, which(spp==SPP), "/", length(SPP), "---\n")
 
 STAGE <- list(
-    veg =length(modsn) - ifelse(shf, 1, 2), 
-    soil=length(modss) - ifelse(shf, 1, 2))
+    veg =length(modsn) - ifelse(shf, 1, 3), 
+    soil=length(modss) - ifelse(shf, 1, 3))
 
-fn <- file.path(ROOT2, "results", paste0("birds_abmi-",
-        ifelse(do_hsh, "dohsh", "nohsh"), "-north_", spp, ".Rdata"))
+fn <- file.path(ROOT, "out", "birds", "results", "north", 
+    paste0("birds_abmi-north_", spp, ".Rdata"))
 resn <- loadSPP(fn)
-fs <- file.path(ROOT2, "results", paste0("birds_abmi-nohsh", 
-    "-south_", spp, ".Rdata"))
+fs <- file.path(ROOT, "out", "birds", "results", "south", 
+    paste0("birds_abmi-south_", spp, ".Rdata"))
 ress <- loadSPP(fs)
 estn <- suppressWarnings(getEst(resn, stage=STAGE$veg, na.out=FALSE, Xnn))
 ests <- suppressWarnings(getEst(ress, stage=STAGE$soil, na.out=FALSE, Xns))
