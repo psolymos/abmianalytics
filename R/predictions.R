@@ -1,12 +1,12 @@
 library(mefa4)
 
-shf <- TRUE
+shf <- FALSE
 
 ROOT <- "e:/peter/AB_data_v2016"
-ROOT2 <- "~/Dropbox/josm/2016/wewp"
+#ROOT2 <- "~/Dropbox/josm/2016/wewp"
 
-OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/wewp/pred1"
-OUTDIRB <- "e:/peter/AB_data_v2016/out/birds/wewp/predB"
+#OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/wewp/pred1"
+#OUTDIRB <- "e:/peter/AB_data_v2016/out/birds/wewp/predB"
 
 load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
 #source("~/repos/bragging/R/glm_skeleton.R")
@@ -15,6 +15,15 @@ load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
 regs <- levels(kgrid$LUFxNSR)
 kgrid$useN <- !(kgrid$NRNAME %in% c("Grassland", "Parkland") | kgrid$NSRNAME == "Dry Mixedwood")
 kgrid$useS <- kgrid$NRNAME == "Grassland"
+
+#DAT$useSouth <- FALSE
+#DAT$useSouth[DAT$NRNAME %in% c("Grassland", "Parkland")] <- TRUE
+#DAT$useSouth[DAT$NSRNAME %in% c("Dry Mixedwood")] <- TRUE
+#DAT$useSouth[DAT$useSouth & DAT$POINT_Y > 56.7] <- FALSE # ~80 points
+#DAT$useSouth[DAT$useSouth & DAT$pWater > 0.5] <- FALSE
+#DAT$useSouth[DAT$useSouth & SoilPcRf[,"SoilUnknown"] > 0] <- FALSE
+#DAT$useSouth[DAT$useSouth & is.na(DAT$soil1)] <- FALSE
+
 
 e <- new.env()
 load(file.path(ROOT, "out", "birds", "data", "data-full-withrevisit.Rdata"), envir=e)
