@@ -49,6 +49,7 @@ load(file.path(ROOT, "results", "cawa", "birds_abmi-cawa_CAWA.Rdata"))
 
 getFancyMidTab(res, mods)
 printCoefmat(getSummary(res))
+plotMid(res, mods)
 
 est_hab <- getEst(res, stage=stage_hab, na.out=FALSE, Xn)
 res_coef <- pred_veghf(est_hab, Xn, burn_included=FALSE)
@@ -69,9 +70,25 @@ fig_linear(attr(res_coef, "linear"), paste0(NAM, "\nNorth (n = ", NDAT, " det.)"
 ## climate & surrounding hf tables, climate surface maps
 
 est_hf <- getEst(res, stage=length(mods)-1, na.out=FALSE, Xn)
-fig_hf_noremn(est_hf, Xn, LAB=paste0(NAM, ", North"))
 
+par(mfrow=c(2,2))
+fig_hf_noremn(est_hf, Xn, LAB=paste0(NAM, ", North, 0% Dec/Mix"), 
+    fillin=0, remn=NULL)
+fig_hf_noremn(est_hf, Xn, LAB=paste0(NAM, ", North, 38% Dec/Mix"), 
+    fillin=0.38, remn="DecMixKM")
+fig_hf_noremn(est_hf, Xn, LAB=paste0(NAM, ", North, 100% Dec/Mix"), 
+    fillin=1, remn="DecMixKM")
+fig_any("DecMixKM", est_hf, Xn, "DecMixKM")
 
+est_yr <- getEst(res, stage=length(mods), na.out=FALSE, Xn)
+
+## annual % trend
+fstat(100*(exp(0.1*est_yr[,"YR"])-1))
+## roadside bias
+fstat(exp(est_yr[,"ROAD01"]))
+## EDR ratio
+fstat(sqrt(exp(est_yr[,"ARU3RF"])))
+fstat(sqrt(exp(est_yr[,"ARU3SM"])))
 
 ## -- old
 
