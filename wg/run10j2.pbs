@@ -1,0 +1,28 @@
+#!/bin/bash
+#PBS -S /bin/bash
+#PBS -N run10j2
+#PBS -o run10j2.out
+#PBS -e run10j2.err
+#PBS -M solymos@ualberta.ca
+#PBS -m bea
+#PBS -l walltime=10:00:00
+#PBS -l nodes=10:ppn=12
+#PBS -l pmem=2000mb
+
+cd $PBS_O_WORKDIR
+echo "Current working directory is `pwd`"
+
+echo "Node file: $PBS_NODEFILE :"
+cat $PBS_NODEFILE
+
+echo "loading R module"
+module load application/R/3.1.2
+
+export OMPI_MCA_mpi_paffinity_alone=0
+
+echo "Starting run at: `date`"
+
+## arg1: nodes, arg2: south/north
+mpiexec -n 1 Rscript --vanilla abmi_models.R 10 josm FALSE
+
+echo "Program finished with exit code $? at: `date`"
