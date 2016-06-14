@@ -2,7 +2,7 @@ library(mefa4)
 
 shf <- FALSE
 
-ROOT <- "c:/p/AB_data_v2015"
+ROOT <- "e:/peter/AB_data_v2016"
 
 ## surrounding hf
 if (shf) {
@@ -12,6 +12,7 @@ if (shf) {
     OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-1/"
     OUTDIRB <- "e:/peter/sppweb2015/birds-pred-B/"
 }
+#OUTDIR <- "e:/peter/AB_data_v2016/out/birds/figs"
 
 load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
 #source("~/repos/bragging/R/glm_skeleton.R")
@@ -19,26 +20,25 @@ load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
 #source("~/repos/bamanalytics/R/makingsense_functions.R")
 regs <- levels(kgrid$LUFxNSR)
 kgrid$useN <- !(kgrid$NRNAME %in% c("Grassland", "Parkland") | kgrid$NSRNAME == "Dry Mixedwood")
+kgrid$useN[kgrid$NSRNAME == "Dry Mixedwood" & kgrid$POINT_Y > 56.7] <- TRUE
 kgrid$useS <- kgrid$NRNAME == "Grassland"
 
 e <- new.env()
 load(file.path(ROOT, "out", "birds", "data", "data-full-withrevisit.Rdata"), envir=e)
-tax <- e$TAX
+dat <- e$DAT
+dat <- dat[dat$useOK,]
+yy <- e$YY[rownames(dat),]
+tax <- droplevels(e$TAX[colnames(yy),])
 rm(e)
-tax$file <- nameAlnum(as.character(tax$English_Name), "mixed", "")
 
 ## model for species
-fl <- list.files(file.path(ROOT, "out", "birds", "results"))
-fln <- fl[grep("-north_", fl)]
+fln <- list.files(file.path(ROOT, "out", "birds", "results", "north"))
 fln <- sub("birds_abmi-north_", "", fln)
 fln <- sub(".Rdata", "", fln)
-fls <- fl[grep("-south_", fl)]
+fls <- list.files(file.path(ROOT, "out", "birds", "results", "south"))
 fls <- sub("birds_abmi-south_", "", fls)
 fls <- sub(".Rdata", "", fls)
-#SPP <- union(fln, fls)
-
-slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
-rownames(slt) <- slt$AOU
+## need to update these once checking is done !!!!!!!!!!!!!!!!!!
 
 load(file.path(ROOT, "out", "transitions", paste0(regs[1], ".Rdata")))
 Aveg <- rbind(colSums(trVeg))
@@ -85,24 +85,24 @@ CW <- rgb(0.4,0.3,0.8) # water
 CE <- "lightcyan4" # exclude
 
 q <- 0.99
-H <- 1000 
+H <- 1000
 W <- 600
 
 
 ## sector effect
 
-ch2veg <- t(sapply(strsplit(colnames(trVeg), "->"), 
+ch2veg <- t(sapply(strsplit(colnames(trVeg), "->"),
     function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
 ch2veg <- data.frame(ch2veg)
 colnames(ch2veg) <- c("rf","cr")
 rownames(ch2veg) <- colnames(Aveg)
-ch2veg$uplow <- as.factor(ifelse(ch2veg$rf %in% c("BSpr0", "BSpr1", "BSpr2", "BSpr3", 
-    "BSpr4", "BSpr5", "BSpr6", 
+ch2veg$uplow <- as.factor(ifelse(ch2veg$rf %in% c("BSpr0", "BSpr1", "BSpr2", "BSpr3",
+    "BSpr4", "BSpr5", "BSpr6",
     "BSpr7", "BSpr8", "BSpr9", "BSprR", "Larch0", "Larch1", "Larch2", "Larch3",
     "Larch4", "Larch5", "Larch6", "Larch7", "Larch8", "Larch9", "LarchR",
     "WetGrassHerb", "WetShrub"), "lowland", "upland"))
 
-ch2soil <- t(sapply(strsplit(colnames(trSoil), "->"), 
+ch2soil <- t(sapply(strsplit(colnames(trSoil), "->"),
     function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
 ch2soil <- data.frame(ch2soil)
 colnames(ch2soil) <- c("rf","cr")
@@ -145,9 +145,9 @@ SPP <- union(fln, fls)
 
 for (spp in SPP) {
 
-cat(spp, "\n");flush.console()
+cat(spp, "--------------------------------------\n");flush.console()
 
-load(file.path(OUTDIR1, spp, paste0(regs[1], ".Rdata")))
+load(file.path(ROOT, "out", "birds", "pred1", spp, paste0(regs[1], ".Rdata")))
 rownames(pxNcr1) <- rownames(pxNrf1) <- names(Cells)
 rownames(pxScr1) <- rownames(pxSrf1) <- names(Cells)
 pxNcr <- pxNcr1
@@ -157,7 +157,7 @@ pxSrf <- pxSrf1
 pSoil <- pSoil1
 for (i in 2:length(regs)) {
     cat(spp, regs[i], "\n");flush.console()
-    load(file.path(OUTDIR1, spp, paste0(regs[i], ".Rdata")))
+    load(file.path(ROOT, "out", "birds", "pred1", spp, paste0(regs[i], ".Rdata")))
     rownames(pxNcr1) <- rownames(pxNrf1) <- names(Cells)
     rownames(pxScr1) <- rownames(pxSrf1) <- names(Cells)
     pxNcr <- rbind(pxNcr, pxNcr1)
@@ -173,73 +173,38 @@ pxScr <- pxScr[rownames(kgrid),]
 pxSrf <- pxSrf[rownames(kgrid),]
 pSoil <- pSoil[rownames(kgrid)]
 
-km <- data.frame(LinkID=kgrid$Row_Col,
-    RefN=pxNrf,
-    CurrN=pxNcr,
-    RefS=pxSrf,
-    CurrS=pxScr)
+ROUND <- 6
+km <- data.frame(#LinkID=kgrid$Row_Col,
+    RefN=round(pxNrf, ROUND),
+    CurrN=round(pxNcr, ROUND),
+    RefS=round(pxSrf, ROUND),
+    CurrS=round(pxScr, ROUND))
+rownames(km) <- kgrid$Row_Col
 if (any(is.na(km)))
     km[is.na(km)] <- 0
 #NAM <- as.character(tax[spp, "English_Name"])
-write.csv(km, row.names=FALSE,
-    paste0("e:/peter/sppweb2015/birds-pred/", 
-    paste0(as.character(tax[spp, "file"]), ".csv")))
+#write.csv(km, row.names=FALSE,
+#    paste0("e:/peter/sppweb2015/birds-pred/",
+#    paste0(as.character(tax[spp, "file"]), ".csv")))
+save(km, file=file.path(ROOT, "out", "birds", "pred1cmb", paste0(spp, ".Rdata")))
 }
 
 ## plots
 
-#SPP <- union(fln, fls)
-#SPP <- fln
-
-#spp <- "CAWA"
 res_luf <- list()
 res_nsr <- list()
-SPP <- as.character(slt$AOU[slt$map.pred])
+#SPP <- as.character(slt$AOU[slt$map.pred])
 for (spp in SPP) {
 
-    cat(spp, "\n");flush.console()
-    km <- read.csv(paste0("e:/peter/sppweb2015/birds-pred/", 
-        paste0(as.character(tax[spp, "file"]), ".csv")))
-
-if (FALSE) {
-load(file.path(OUTDIR1, spp, paste0(regs[1], ".Rdata")))
-rownames(pxNcr1) <- rownames(pxNrf1) <- names(Cells)
-rownames(pxScr1) <- rownames(pxSrf1) <- names(Cells)
-pxNcr <- pxNcr1
-pxNrf <- pxNrf1
-pxScr <- pxScr1
-pxSrf <- pxSrf1
-pSoil <- pSoil1
-for (i in 2:length(regs)) {
-    cat(spp, regs[i], "\n");flush.console()
-    load(file.path(OUTDIR1, spp, paste0(regs[i], ".Rdata")))
-    rownames(pxNcr1) <- rownames(pxNrf1) <- names(Cells)
-    rownames(pxScr1) <- rownames(pxSrf1) <- names(Cells)
-    pxNcr <- rbind(pxNcr, pxNcr1)
-    pxNrf <- rbind(pxNrf, pxNrf1)
-    pxScr <- rbind(pxScr, pxScr1)
-    pxSrf <- rbind(pxSrf, pxSrf1)
-    pSoil <- c(pSoil, pSoil1)
-}
-
-pxNcr <- pxNcr[rownames(kgrid),]
-pxNrf <- pxNrf[rownames(kgrid),]
-pxScr <- pxScr[rownames(kgrid),]
-pxSrf <- pxSrf[rownames(kgrid),]
-pSoil <- pSoil[rownames(kgrid)]
-
-km <- data.frame(LinkID=kgrid$Row_Col,
-    RefN=pxNrf,
-    CurrN=pxNcr,
-    RefS=pxSrf,
-    CurrS=pxScr)
-}
-
+    cat(spp, "\t");flush.console()
+    load(file.path(ROOT, "out", "birds", "pred1cmb", paste0(spp, ".Rdata")))
 
     TYPE <- "C" # combo
-    if (!slt[spp, "veghf.north"])
+    #if (!slt[spp, "veghf.north"])
+    if (!(spp %in% fln))
         TYPE <- "S"
-    if (!slt[spp, "soilhf.south"])
+    #if (!slt[spp, "soilhf.south"])
+    if (!(spp %in% fls))
         TYPE <- "N"
 
     wS <- 1-kgrid$pAspen
@@ -281,18 +246,18 @@ if (TRUE) {
     range(df)
 
     NAM <- as.character(tax[spp, "English_Name"])
-    TAG <- "-wLegend"
-    
-    cat("\n")
-    cat(spp, "\t");flush.console()
+    TAG <- ""
+
+#    cat("\n")
+#    cat(spp, "\t");flush.console()
     cat("rf\t");flush.console()
-    png(paste0("e:/peter/sppweb-html-content/species/birds/map-rf/",
-        as.character(tax[spp, "file"]), TAG, ".png"),
-        width=W, height=H)
+    fname <- file.path(ROOT, "out", "birds", "figs", "map-rf",
+        paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
+    png(fname, width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=C1[rf], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
-#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,],
 #        points(X, Y, col=CE, pch=15, cex=cex))
     if (TYPE == "N")
         with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
@@ -314,13 +279,13 @@ if (TRUE) {
     dev.off()
 
     cat("cr\t");flush.console()
-    png(paste0("e:/peter/sppweb-html-content/species/birds/map-cr/",
-        as.character(tax[spp, "file"]), TAG, ".png"),
-        width=W, height=H)
+    fname <- file.path(ROOT, "out", "birds", "figs", "map-cr",
+        paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
+    png(fname, width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=C1[cr], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
-#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,],
 #        points(X, Y, col=CE, pch=15, cex=cex))
     if (TYPE == "N")
         with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
@@ -342,13 +307,13 @@ if (TRUE) {
     dev.off()
 
     cat("df\n");flush.console()
-    png(paste0("e:/peter/sppweb-html-content/species/birds/map-df/",
-        as.character(tax[spp, "file"]), TAG, ".png"),
-        width=W, height=H)
+    fname <- file.path(ROOT, "out", "birds", "figs", "map-df",
+        paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
+    png(fname, width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=C2[df], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
-#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,],
 #        points(X, Y, col=CE, pch=15, cex=cex))
     if (TYPE == "N")
         with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
@@ -372,57 +337,60 @@ if (TRUE) {
 }
 
 
-save(res_nsr, res_luf, file=file.path(ROOT, "out", "birds", "luf_Nsummaries.Rdata"))
+#save(res_nsr, res_luf, file=file.path(ROOT, "out", "birds", "tables", "luf_Nsummaries.Rdata"))
+load(file.path(ROOT, "out", "birds", "tables", "luf_Nsummaries.Rdata"))
 
 LUF <- list()
 for (spp in names(res_luf)) {
     tmp <- res_luf[[spp]] / 10^6 # M males
     tmp <- t(matrix(tmp, 2*nrow(tmp), 1))
-    colnames(tmp) <- paste(rep(colnames(res_luf[[1]]), each=ncol(tmp)/2), 
+    colnames(tmp) <- paste(rep(colnames(res_luf[[1]]), each=ncol(tmp)/2),
         rep(rownames(res_luf[[1]]), 2))
-    LUF[[spp]] <- data.frame(Species=slt[spp, "species"], tmp)        
+    LUF[[spp]] <- data.frame(Species=tax[spp, "English_Name"], tmp)
 }
 NSR <- list()
 for (spp in names(res_nsr)) {
     tmp <- res_nsr[[spp]] / 10^6 # M males
     tmp <- t(matrix(tmp, 2*nrow(tmp), 1))
-    colnames(tmp) <- paste(rep(colnames(res_nsr[[1]]), each=ncol(tmp)/2), 
+    colnames(tmp) <- paste(rep(colnames(res_nsr[[1]]), each=ncol(tmp)/2),
         rep(rownames(res_nsr[[1]]), 2))
-    NSR[[spp]] <- data.frame(Species=slt[spp, "species"], tmp)        
+    NSR[[spp]] <- data.frame(Species=tax[spp, "English_Name"], tmp)
 }
 LUF <- do.call(rbind, LUF)
 NSR <- do.call(rbind, NSR)
 write.csv(LUF, row.names=FALSE,
-    file="e:/peter/sppweb-html-content/species/birds/Birds_Abundance_by_LUFregions.csv")
+    file=file.path(ROOT, "out", "birds", "tables", "Birds_Abundance_by_LUFregions.csv"))
 write.csv(NSR, row.names=FALSE,
-    file="e:/peter/sppweb-html-content/species/birds/Birds_Abundance_by_NaturalSubregions.csv")
+    file=file.path(ROOT, "out", "birds", "tables", "Birds_Abundance_by_NaturalSubregions.csv"))
 
 
 ## sector effects
 seff_res <- list()
 #seff_luf <- list()
 #seff_ns <- list()
-uplow <- list()
-uplow_full <- list()
-uplow_luf <- list()
+#uplow <- list()
+#uplow_full <- list()
+#uplow_luf <- list()
 
 ## stuff to exclude
 ## add col to lxn
 ## subset counter for loop
 
 
-for (spp in as.character(slt$AOU[slt$map.pred])) {
+for (spp in SPP) {
 
-cat(spp, "\n");flush.console()
+cat(spp, "------------------------\n");flush.console()
 
-load(file.path(OUTDIR1, spp, paste0(regs[1], ".Rdata")))
+#load(file.path(OUTDIR1, spp, paste0(regs[1], ".Rdata")))
+load(file.path(ROOT, "out", "birds", "pred1", spp, paste0(regs[1], ".Rdata")))
 hbNcr <- hbNcr1[,1]
 hbNrf <- hbNrf1[,1]
 hbScr <- hbScr1[,1]
 hbSrf <- hbSrf1[,1]
 for (i in 2:length(regs)) {
     cat(spp, regs[i], "\n");flush.console()
-    load(file.path(OUTDIR1, spp, paste0(regs[i], ".Rdata")))
+    #load(file.path(OUTDIR1, spp, paste0(regs[i], ".Rdata")))
+    load(file.path(ROOT, "out", "birds", "pred1", spp, paste0(regs[i], ".Rdata")))
     hbNcr <- rbind(hbNcr, hbNcr1[,1])
     hbNrf <- rbind(hbNrf, hbNrf1[,1])
     hbScr <- rbind(hbScr, hbScr1[,1])
@@ -443,11 +411,12 @@ hbSrf <- hbSrf * Asoil
 
 
 ## combined upland/lowland N/S
+if (FALSE) {
 crN <- groupSums(hbNcr, 2, ch2veg$uplow)
 rfN <- groupSums(hbNrf, 2, ch2veg$uplow)
-crN[lxn$NRNAME=="Grassland","lowland"] <- 0 
+crN[lxn$NRNAME=="Grassland","lowland"] <- 0
 crN[lxn$NRNAME=="Grassland","upland"] <- rowSums(hbScr[lxn$NRNAME=="Grassland",])
-rfN[lxn$NRNAME=="Grassland","lowland"] <- 0 
+rfN[lxn$NRNAME=="Grassland","lowland"] <- 0
 rfN[lxn$NRNAME=="Grassland","upland"] <- rowSums(hbSrf[lxn$NRNAME=="Grassland",])
 uplo <- data.frame(Current=crN, Reference=rfN)
 uplow_full[[spp]] <- data.frame(sppid=spp, lxn[,1:3], uplo)
@@ -475,8 +444,9 @@ si <- sapply(1:3, function(i) 100 * pmin(cr[,i], rf[,i]) / pmax(cr[,i], rf[,i]))
 colnames(si) <- colnames(cr)
 si2 <- ifelse(cr > rf, 200-si, si)
 
-uplow_luf[[spp]] <- data.frame(ID=spp, Ref=round(rf), Cur=round(cr), 
+uplow_luf[[spp]] <- data.frame(ID=spp, Ref=round(rf), Cur=round(cr),
     SI=round(si, 2), SI200=round(si2, 2))
+}
 
 ThbNcr <- colSums(hbNcr[lxn$N,])
 ThbNrf <- colSums(hbNrf[lxn$N,])
@@ -524,9 +494,8 @@ seff_res[[spp]] <- list(N=seffN, S=seffS)
 
 }
 
-#save(slt, seff_res, file=file.path(ROOT, "out", "birds", "sector-effects-e2.Rdata"))
-save(slt, seff_res, uplow, uplow_luf, uplow_full, file=file.path(ROOT, "out", "birds", "sector-effects.Rdata"))
-#load(file.path(ROOT, "out", "birds", "sector-effects.Rdata"))
+#save(seff_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects.Rdata"))
+load(file.path(ROOT, "out", "birds", "tables", "sector-effects.Rdata")
 
 nres <- list()
 sres <- list()
@@ -536,80 +505,50 @@ for (spp in names(seff_res)) {
 }
 nres <- do.call(rbind, nres)
 sres <- do.call(rbind, sres)
-nres <- data.frame(Species=slt[rownames(nres), "species"], nres)
-sres <- data.frame(Species=slt[rownames(sres), "species"], sres)
-
-uplow <- do.call(rbind, uplow)
-uplow <- data.frame(Species=slt[rownames(uplow), "species"], uplow)
-
-summary(uplow$Cur.total)
-sum(uplow$Cur.total >= 10^7)
-uplow2 <- uplow[uplow$Cur.total < 10^7,]
-#sum(uplow$Cur.total <= 1)
-#uplow2 <- uplow2[uplow$Cur.total > 0,]
-
-write.csv(uplow2, row.names=FALSE,
-    file="e:/peter/sppweb-html-content/species/birds/Birds_UplandLowlandIntactness.csv")
+nres <- data.frame(Species=tax[rownames(nres), "English_Name"], nres)
+sres <- data.frame(Species=tax[rownames(sres), "English_Name"], sres)
 
 write.csv(nres, row.names=FALSE,
-    file="e:/peter/sppweb-html-content/species/birds/Birds_SectorEffects_North.csv")
+    file=file.path(ROOT, "out", "birds", "tables", "Birds_SectorEffects_North.csv"))
 write.csv(sres, row.names=FALSE,
-    file="e:/peter/sppweb-html-content/species/birds/Birds_SectorEffects_South.csv")
+    file=file.path(ROOT, "out", "birds", "tables", "Birds_SectorEffects_South.csv"))
 
-siLUF <- data.frame(Species=NA, LUF=rownames(uplow_luf[[1]]), do.call(rbind, uplow_luf))
-siLUF$Species <- slt$species[match(siLUF$ID, slt$AOU)]
-ta <- aggregate(siLUF$Cur.total, list(ID=siLUF$ID), sum)
-keep <- as.character(ta$ID[ta$x < 10^7 & ta$x > 0.5])
-siLUF <- siLUF[siLUF$ID %in% keep,]
-siLUF$ID <- NULL
-write.csv(siLUF, row.names=FALSE,
-    file="e:/peter/sppweb-html-content/species/birds/Birds_UplandLowlandIntactness-by-LUF.csv")
-
-allluf <- do.call(rbind, uplow_full)
-allluf <- data.frame(slt[match(allluf$sppid, slt$AOU),c("species","scinam")], 
-    LUF_NSR=interaction(allluf$LUF_NAME, allluf$NSRNAME, drop=TRUE, sep="_"), allluf)
-write.csv(allluf, row.names=FALSE,
-    file="e:/peter/sppweb-html-content/species/birds/Birds_UplandLowland-by-LUF-NSR.csv")
-
-
-for (spp in as.character(slt$AOU[slt$map.pred])) {
+for (spp in SPP) {
 cat(spp, "\n");flush.console()
 
-for (WHERE in c("N", "S")) {
-if (slt[spp, ifelse(WHERE=="N","veghf.north", "soilhf.south")]) {
-SEFF <- seff_res[[spp]][[WHERE]]
+for (WHERE in c("north", "south")) {
+SEFF <- seff_res[[spp]][[ifelse(WHERE=="north", "N", "S")]]
 
 ## Sector effect plot from Dave
 ## Sectors to plot and their order
 sectors <- c("Agriculture","Forestry",
     "Energy",#"EnergySoftLin","MineWell",
     "RuralUrban","Transportation")
-## Names that will fit without overlap  
+## Names that will fit without overlap
 sector.names <- c("Agriculture","Forestry",
     "Energy",#"EnergySL","EnergyEX",
     "RuralUrban","Transport")
 ## The colours for each sector above
 c1 <- c("tan3","palegreen4","indianred3",#"hotpink4",
-    "skyblue3","slateblue2")  
+    "skyblue3","slateblue2")
 total.effect <- 100 * SEFF[sectors,"dN"]
 unit.effect <- 100 * SEFF[sectors,"U"]
-## Max y-axis at 20%, 50% or 100% increments 
+## Max y-axis at 20%, 50% or 100% increments
 ## (made to be symmetrical with y-min, except if y-max is >100
 ymax <- ifelse(max(abs(unit.effect))<20,20,
-    ifelse(max(abs(unit.effect))<50,50,round(max(abs(unit.effect))+50,-2)))  
+    ifelse(max(abs(unit.effect))<50,50,round(max(abs(unit.effect))+50,-2)))
 ymin <- ifelse(ymax>50,min(-100,round(min(unit.effect)-50,-2)),-ymax)
 ## This is to leave enough space at the top of bars for the text giving the % population change
-ymax <- max(ymax,max(unit.effect)+0.08*(max(unit.effect)-min(unit.effect,0))) 
-## This is to leave enough space at the bottom of negative bars for the 
+ymax <- max(ymax,max(unit.effect)+0.08*(max(unit.effect)-min(unit.effect,0)))
+## This is to leave enough space at the bottom of negative bars for the
 ## text giving the % population change
-ymin <- min(ymin,min(unit.effect)-0.08*(max(unit.effect,0)-min(unit.effect))) 
+ymin <- min(ymin,min(unit.effect)-0.08*(max(unit.effect,0)-min(unit.effect)))
 
 NAM <- as.character(tax[spp, "English_Name"])
 TAG <- ""
 
-png(paste0("e:/peter/sppweb-html-content/species/birds/sector-",
-    ifelse(WHERE=="N", "north/", "south/"),
-    as.character(tax[spp, "file"]), TAG, ".png"),
+png(file.path(ROOT, "out", "birds", "figs", paste0("sector-", WHERE),
+    paste0(as.character(tax[spp, "Spp"]), TAG, ".png")),
     width=600, height=600)
 
 q <- barplot(unit.effect,
@@ -639,36 +578,34 @@ axis(side=1,at=x.at,tcl=0.3,lab=rep("",length(x.at)),col="grey40",
 abline(h=0,lwd=2,col="grey40")
 ## Set the lines so that nearby labels don't overlap
 mtext(side=1,at=q+c(0,0,-1,0,+1),sector.names,col=c1,cex=1.3,
-    adj=0.5,line=c(0.1,0.1,1.1,0.1,1.1))  
+    adj=0.5,line=c(0.1,0.1,1.1,0.1,1.1))
 ## Just above positive bars, just below negative ones
-y <- unit.effect+0.025*(ymax-ymin)*sign(unit.effect)  
-## Make sure there is no y-axis overlap in % change labels of 
+y <- unit.effect+0.025*(ymax-ymin)*sign(unit.effect)
+## Make sure there is no y-axis overlap in % change labels of
 ## sectors that are close together on x-axis
-if (abs(y[3]-y[4])<0.05*(ymax-ymin))  
-    y[3:4]<-mean(y[3:4])+(c(-0.015,0.015)*(ymax-ymin))[rank(y[3:4])]   
-## Make sure there is no y-axis overlap in % change labels of sectors 
+if (abs(y[3]-y[4])<0.05*(ymax-ymin))
+    y[3:4]<-mean(y[3:4])+(c(-0.015,0.015)*(ymax-ymin))[rank(y[3:4])]
+## Make sure there is no y-axis overlap in % change labels of sectors
 ## that are close together on x-axis
-if (abs(y[4]-y[5])<0.05*(ymax-ymin))  
-    y[4:5]<-mean(y[4:5])+(c(-0.015,0.015)*(ymax-ymin))[rank(y[4:5])]   
-#if (abs(y[5]-y[6])<0.05*(ymax-ymin))  
-#    y[5:6]<-mean(y[5:6])+(c(-0.015,0.015)*(ymax-ymin))[rank(y[5:6])]   
+if (abs(y[4]-y[5])<0.05*(ymax-ymin))
+    y[4:5]<-mean(y[4:5])+(c(-0.015,0.015)*(ymax-ymin))[rank(y[4:5])]
+#if (abs(y[5]-y[6])<0.05*(ymax-ymin))
+#    y[5:6]<-mean(y[5:6])+(c(-0.015,0.015)*(ymax-ymin))[rank(y[5:6])]
 text(q,y,paste(ifelse(total.effect>0,"+",""),
     sprintf("%.1f",total.effect),"%",sep=""),col="darkblue",cex=1.4)
-mtext(side=3,line=1,at=0,adj=0, 
+mtext(side=3,line=1,at=0,adj=0,
     paste0(NAM, " - ", ifelse(WHERE=="N", "North", "South")),
     cex=1.4,col="grey40")
 dev.off()
-}
 }
 }
 
 ## CoV
 results10km_list <- list()
 
-SPP <- as.character(slt$AOU[slt$map.pred])
 for (spp in SPP) {
 
-    load(file.path(OUTDIRB, spp, paste0(regs[1], ".Rdata")))
+    load(file.path(ROOT, "out", "birds", "predB", spp, paste0(regs[1], ".Rdata")))
     rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells)[Cells == 1]
     rownames(pxScrB) <- rownames(pxSrfB) <- names(Cells)[Cells == 1]
     pxNcr0 <- pxNcrB
@@ -677,7 +614,7 @@ for (spp in SPP) {
     #pxSrf0 <- pxSrfB
     for (i in 2:length(regs)) {
         cat(spp, regs[i], "\n");flush.console()
-        load(file.path(OUTDIRB, spp, paste0(regs[i], ".Rdata")))
+        load(file.path(ROOT, "out", "birds", "predB", spp, paste0(regs[i], ".Rdata")))
         rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells)[Cells == 1]
         rownames(pxScrB) <- rownames(pxSrfB) <- names(Cells)[Cells == 1]
         pxNcr0 <- rbind(pxNcr0, pxNcrB)
@@ -687,6 +624,7 @@ for (spp in SPP) {
     }
 
     pxNcr <- pxNcr0[rownames(ks),]
+    pxNcr[is.na(pxNcr)] <- 0
     #pxNrf <- pxNrf0[rownames(ks),]
     pxScr <- pxScr0[rownames(ks),]
     pxScr[is.na(pxScr)] <- 0
@@ -698,11 +636,13 @@ for (spp in SPP) {
         pxScr[pxScr[,k] > qS,k] <- qS
     }
 
-TYPE <- "C" # combo
-if (!slt[spp, "veghf.north"])
-    TYPE <- "S"
-if (!slt[spp, "soilhf.south"])
-    TYPE <- "N"
+    TYPE <- "C" # combo
+    #if (!slt[spp, "veghf.north"])
+    if (!(spp %in% fln))
+        TYPE <- "S"
+    #if (!slt[spp, "soilhf.south"])
+    if (!(spp %in% fls))
+        TYPE <- "N"
 
 wS <- 1-ks$pAspen
 if (TYPE == "S")
@@ -716,7 +656,7 @@ wS[ks$useN] <- 0
 
     crveg <- groupMeans(cr, 1, ks$Row10_Col10, na.rm=TRUE)
 
-results10km_list[[as.character(slt[spp,"sppid"])]] <- crveg
+results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
 
     crvegm <- rowMeans(crveg)
     crvegsd <- apply(crveg, 1, sd)
@@ -739,17 +679,17 @@ results10km_list[[as.character(slt[spp,"sppid"])]] <- crveg
 
     NAM <- as.character(tax[spp, "English_Name"])
 
+    cat(spp, "\tCoV");flush.console()
+
     zval <- as.integer(cut(covC, breaks=br))
     zval <- zval[match(kgrid$Row10_Col10, rownames(crveg))]
-
-    cat(spp, "saving CoV map\n\n");flush.console()
-    png(paste0("e:/peter/sppweb-html-content/species/birds/map-cov-cr/",
-        as.character(tax[spp, "file"]), ".png"),
-        width=W, height=H)
+    fname <- file.path(ROOT, "out", "birds", "figs", "map-cov-cr",
+        paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
+    png(fname, width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=Col[zval], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
-#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,], 
+#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,],
 #        points(X, Y, col=CE, pch=15, cex=cex))
     if (TYPE == "N")
         with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
@@ -771,10 +711,41 @@ results10km_list[[as.character(slt[spp,"sppid"])]] <- crveg
     par(op)
     dev.off()
 
+    cat("\tSD\n");flush.console()
+    zval <- as.integer(cut(crvegsd/mean(crvegm,na.rm=TRUE), breaks=br))
+    zval <- zval[match(kgrid$Row10_Col10, rownames(crveg))]
+    fname <- file.path(ROOT, "out", "birds", "figs", "map-sd-cr",
+        paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
+    png(fname, width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=Col[zval], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,],
+#        points(X, Y, col=CE, pch=15, cex=cex))
+    if (TYPE == "N")
+        with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
+    if (TYPE == "S")
+        with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, "SE"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+#	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
+
+    br2 <- round(br * mean(crvegm,na.rm=TRUE), 3)
+    TEXT <- paste0(br2[-length(br2)], "-", br2[-1])
+    INF <- grepl("Inf", TEXT)
+    if (any(INF))
+        TEXT[length(TEXT)] <- paste0(">", br2[length(br2)-1])
+
+    TITLE <- paste0("Prediction Std. Error\n(mean = ", round(mean(crvegm,na.rm=TRUE), 3), ")")
+    legend("bottomleft", border=rev(Col), fill=rev(Col), bty="n", legend=rev(TEXT),
+                title=TITLE, cex=legcex*0.8)
+    par(op)
+    dev.off()
 
 }
 
 xy10km <- ks[,c("POINT_X","POINT_Y","Row10_Col10")]
-save(xy10km, results10km_list, file="w:/species/birds-provincial-10x10km-summary.Rdata")
+save(xy10km, results10km_list, file=file.path(ROOT, "out", "birds", "tables", "km10results.Rdata",))
 
 
