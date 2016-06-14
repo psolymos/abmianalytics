@@ -746,6 +746,6 @@ results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
 }
 
 xy10km <- ks[,c("POINT_X","POINT_Y","Row10_Col10")]
-save(xy10km, results10km_list, file=file.path(ROOT, "out", "birds", "tables", "km10results.Rdata",))
+save(xy10km, results10km_list, file=file.path(ROOT, "out", "birds", "tables", "km10results.Rdata"))
 
 
