@@ -154,7 +154,7 @@ pxNcr <- pxNcr1
 pxNrf <- pxNrf1
 pxScr <- pxScr1
 pxSrf <- pxSrf1
-pSoil <- pSoil1
+pSoil <- pSoil1 # this is actually not used
 for (i in 2:length(regs)) {
     cat(spp, regs[i], "\n");flush.console()
     load(file.path(ROOT, "out", "birds", "pred1", spp, paste0(regs[i], ".Rdata")))

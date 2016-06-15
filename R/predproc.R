@@ -413,11 +413,13 @@ rs[rs <= 0] <- 1
 AvegB <- AvegB / rs
 
 Asoil1 <- trSoil[rownames(kgrid)[ii],,drop=FALSE]
+pSoil1 <- 1-Asoil1[,"SoilUnknown"]
 Asoil1[,ch2soil$exclude] <- 0
 rs <- rowSums(Asoil1)
 rs[rs <= 0] <- 1
 Asoil1 <- Asoil1 / rs
 AsoilB <- trSoil[rownames(kgrid)[iib],,drop=FALSE]
+pSoilB <- 1-AsoilB[,"SoilUnknown"]
 AsoilB[,ch2soil$exclude] <- 0
 rs <- rowSums(AsoilB)
 rs[rs <= 0] <- 1
@@ -449,8 +451,6 @@ estAsp <- ests[,"pAspen"]
 ## pAspen and pSoil is needed for combo
 pAspen1 <- kgrid$pAspen[ii]
 pAspenB <- kgrid$pAspen[iib]
-pSoil1 <- 1-Asoil1[,"SoilUnknown"]
-pSoilB <- 1-AsoilB[,"SoilUnknown"]
 ## keeping track of cells
 Cells <- ifelse(iib, 1L, 0L)[ii]
 names(Cells) <- rownames(kgrid)[ii]

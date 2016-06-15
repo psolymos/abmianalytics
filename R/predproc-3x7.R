@@ -346,6 +346,8 @@ logPShab1 <- XShab %*% estsHab[1,]
 #Aveg1 <- trVeg[rownames(kgrid)[ii],,drop=FALSE]
 Aveg1 <- dd1km_pred$veg_current[rownames(kgrid)[ii],rownames(lu),drop=FALSE]
 Aveg1 <- groupSums(Aveg1, 2, lu$use_tr)
+all(colnames(Aveg1) == rownames(ch2veg))
+Aveg1 <- Aveg1[,rownames(ch2veg)]
 Aveg1[,ch2veg$exclude] <- 0
 rs <- rowSums(Aveg1)
 rs[rs <= 0] <- 1
@@ -354,6 +356,9 @@ Aveg1 <- Aveg1 / rs
 #Asoil1 <- trSoil[rownames(kgrid)[ii],,drop=FALSE]
 Asoil1 <- dd1km_pred$soil_current[rownames(kgrid)[ii],rownames(su),drop=FALSE]
 Asoil1 <- groupSums(Asoil1, 2, su$use_tr)
+all(colnames(Asoil1) == rownames(ch2soil))
+Asoil1 <- Asoil1[,rownames(ch2soil)]
+pSoil1 <- 1-Asoil1[,"SoilUnknown"]
 Asoil1[,ch2soil$exclude] <- 0
 rs <- rowSums(Asoil1)
 rs[rs <= 0] <- 1
@@ -375,7 +380,6 @@ hbSrf1 <- matrix(0, nrow(ch2soil), 1)
 estAsp <- ests[,"pAspen"]
 ## pAspen and pSoil is needed for combo
 pAspen1 <- kgrid$pAspen[ii]
-pSoil1 <- 1-Asoil1[,"SoilUnknown"]
 
 ## 1st run
 if (TRUE) {
