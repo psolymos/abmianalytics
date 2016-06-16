@@ -377,6 +377,7 @@ write.csv(NSR, row.names=FALSE,
 
 ## sector effects
 seff_res <- list()
+tr_res <- list()
 #seff_luf <- list()
 #seff_ns <- list()
 #uplow <- list()
@@ -406,6 +407,15 @@ for (i in 2:length(regs)) {
     hbNrf <- rbind(hbNrf, hbNrf1[,1])
     hbScr <- rbind(hbScr, hbScr1[,1])
     hbSrf <- rbind(hbSrf, hbSrf1[,1])
+}
+
+if (!NSest["north"]) {
+    hbNcr[] <- 0
+    hbNrf[] <- 0
+}
+if (!NSest["south"]) {
+    hbScr[] <- 0
+    hbSrf[] <- 0
 }
 
 dimnames(hbNcr) <- dimnames(hbNrf) <- list(regs, colnames(Aveg))
@@ -498,14 +508,15 @@ seffS <- cbind(dA=dA, dN=dN, U=U)[c("Agriculture","Forestry",
     "Energy",#"EnergySoftLin","MineWell",
     "RuralUrban","Transportation"),]
 seff_res[[spp]] <- list(N=seffN, S=seffS)
-
+tr_res[[spp]] <- list(N=cbind(rf=ThbNrf, cr=ThbNcr), S=cbind(rf=ThbSrf, cr=ThbScr),
+    NSest=NSest)
 #(sum(hbNcr)-sum(hbNrf))/sum(hbNrf)
 #(sum(km$CurrN)-sum(km$RefN))/sum(km$RefN)
 #100*seff
 
 }
 
-#save(seff_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects.Rdata"))
+#save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects.Rdata"))
 load(file.path(ROOT, "out", "birds", "tables", "sector-effects.Rdata")
 
 nres <- list()
