@@ -140,7 +140,7 @@ Col <- rev(brewer.pal(10, "RdYlGn"))
 ## csv
 
 #spp <- "ALFL"
-SPP <- union(fln, fls)
+SPP <- sort(union(fln, fls))
 #SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL")
 
 for (spp in SPP) {
@@ -154,7 +154,7 @@ pxNcr <- pxNcr1
 pxNrf <- pxNrf1
 pxScr <- pxScr1
 pxSrf <- pxSrf1
-pSoil <- pSoil1 # this is actually not used
+#pSoil <- pSoil1 # this is actually not used
 for (i in 2:length(regs)) {
     cat(spp, regs[i], "\n");flush.console()
     load(file.path(ROOT, "out", "birds", "pred1", spp, paste0(regs[i], ".Rdata")))
@@ -164,14 +164,23 @@ for (i in 2:length(regs)) {
     pxNrf <- rbind(pxNrf, pxNrf1)
     pxScr <- rbind(pxScr, pxScr1)
     pxSrf <- rbind(pxSrf, pxSrf1)
-    pSoil <- c(pSoil, pSoil1)
+#    pSoil <- c(pSoil, pSoil1)
+}
+
+if (!NSest["north"]) {
+    pxNcr[] <- 0
+    pxNrf[] <- 0
+}
+if (!NSest["south"]) {
+    pxScr[] <- 0
+    pxSrf[] <- 0
 }
 
 pxNcr <- pxNcr[rownames(kgrid),]
 pxNrf <- pxNrf[rownames(kgrid),]
 pxScr <- pxScr[rownames(kgrid),]
 pxSrf <- pxSrf[rownames(kgrid),]
-pSoil <- pSoil[rownames(kgrid)]
+#pSoil <- pSoil[rownames(kgrid)]
 
 ROUND <- 6
 km <- data.frame(#LinkID=kgrid$Row_Col,
@@ -186,6 +195,7 @@ if (any(is.na(km)))
 #write.csv(km, row.names=FALSE,
 #    paste0("e:/peter/sppweb2015/birds-pred/",
 #    paste0(as.character(tax[spp, "file"]), ".csv")))
+km <- as.matrix(km)
 save(km, file=file.path(ROOT, "out", "birds", "pred1cmb", paste0(spp, ".Rdata")))
 }
 
@@ -198,6 +208,7 @@ for (spp in SPP) {
 
     cat(spp, "\t");flush.console()
     load(file.path(ROOT, "out", "birds", "pred1cmb", paste0(spp, ".Rdata")))
+    km <- data.frame(km)
 
     TYPE <- "C" # combo
     #if (!slt[spp, "veghf.north"])
