@@ -65,12 +65,11 @@ recl <- list(
         "Swamp", "Swamp", "BSpr0", "Larch0", "Larch0"))
 
 
-## do one LUFxNSR class at a time and save it
-#i <- "UpperAthabasca_CentralMixedwood"
+#i <- "CentralMixedwood"
+#j <- ii <- 1
 for (j in 1:length(fl)) {
     cat(yr[j], "---------------------\n")
     flush.console()
-    #j <- 4
     d <- read.csv(file.path(ROOT, VER, "data", "veghf", "3x7", fl[j]))
     d$inventory_year <- yr[j]
     if (!("year" %in% colnames(d)))
@@ -145,8 +144,8 @@ for (j in 1:length(fl)) {
             xt <- Xtab(Shape_Area ~ Site_ID + vegTr, xxx)
             xxx <- Melt(xt)
             colnames(xxx) <- c("Site_ID", "vegTr", "Shape_Area")
-            units[[j]] <- xxx
-            sunits[[j]] <- sxxx
+            units[[ii]] <- xxx
+            sunits[[ii]] <- sxxx
         } else cat(" onto the next chunk")
     }
     units <- do.call(rbind, units)
@@ -162,6 +161,8 @@ for (j in 1:length(fl)) {
     trSoil <- trSoil[rownames(trVeg),allSoilTr]
     range(rowSums(trVeg)/10^6)
     range(rowSums(trSoil)/10^6)
+    dim(trVeg)
+    dim(trSoil)
 
     save(trVeg, trSoil, file=file.path(ROOT, VER, "out", "transitions3x7",
         paste0(yr[j], ".Rdata")))

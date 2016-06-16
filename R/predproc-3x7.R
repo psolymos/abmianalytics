@@ -22,6 +22,7 @@ source("~/repos/bamanalytics/R/makingsense_functions.R")
     #save(gis, file=file.path(ROOT, "out", "kgrid", "kgrid_forSites.Rdata"))
     load(file.path(ROOT, "out", "kgrid", "kgrid_forSites.Rdata"))
     kgrid0 <- kgrid[gis$closest_rowcol,]
+    kgrid0$Site_ID <- as.factor(gis$SITE_ID)
     rownames(kgrid0) <- gis$SITE_ID
     yrs <- names(yearly_vhf)
     kgrid <- kgrid0
@@ -192,14 +193,19 @@ colnames(Xns) <- fixNames(colnames(Xns))
 #regs <- levels(kgrid$LUFxNSR)
 
 ## example for structure (trSoil, trVeg)
-#load(file.path(ROOT, "out", "transitions", "LowerPeace_LowerBorealHighlands.Rdata"))
+load(file.path(ROOT, "out", "transitions3x7", "1999.Rdata"))
 
-lu <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
-lu$use_tr <- as.character(lu$VEGAGE_use)
-lu$use_tr[!is.na(lu$HF)] <- as.character(lu$VEGHFAGE[!is.na(lu$HF)])
-ch2veg <- data.frame(rf=lu$use_tr, cr=lu$use_tr)
-ch2veg <- nonDuplicated(ch2veg, cr, TRUE)
+#lu <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
+#lu$use_tr <- as.character(lu$VEGAGE_use)
+#lu$use_tr[!is.na(lu$HF)] <- as.character(lu$VEGHFAGE[!is.na(lu$HF)])
+#ch2veg <- data.frame(rf=lu$use_tr, cr=lu$use_tr)
+#ch2veg <- nonDuplicated(ch2veg, cr, TRUE)
 #rownames(ch2veg) <- ch2veg$cr
+ch2veg <- t(sapply(strsplit(colnames(trVeg), "->"),
+    function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
+ch2veg <- data.frame(ch2veg)
+colnames(ch2veg) <- c("rf","cr")
+rownames(ch2veg) <- colnames(trVeg)
 ## strata where abundance is assumed to be 0
 ch2veg$rf_zero <- ch2veg$rf %in% c("NonVeg","Water")
 ch2veg$cr_zero <- ch2veg$cr %in% c("NonVeg","Water",
@@ -226,12 +232,17 @@ ch2veg$exclude[ch2veg$rf %in% c("Water",
     "Conif0", "Decid0", "Mixwood0", "Pine0", "BSpr0", "Larch0",
     "CCConif0", "CCDecid0", "CCMixwood0", "CCPine0")] <- TRUE
 
-su <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
-su$use_tr <- as.character(su$Levels1)
-su$use_tr[!is.na(su$HF)] <- as.character(su$SOILHF[!is.na(su$HF)])
-ch2soil <- data.frame(rf=su$use_tr, cr=su$use_tr)
-ch2soil <- nonDuplicated(ch2soil, cr, TRUE)
+#su <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
+#su$use_tr <- as.character(su$Levels1)
+#su$use_tr[!is.na(su$HF)] <- as.character(su$SOILHF[!is.na(su$HF)])
+#ch2soil <- data.frame(rf=su$use_tr, cr=su$use_tr)
+#ch2soil <- nonDuplicated(ch2soil, cr, TRUE)
 #rownames(ch2soil) <- ch2soil$cr
+ch2soil <- t(sapply(strsplit(colnames(trSoil), "->"),
+    function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
+ch2soil <- data.frame(ch2soil)
+colnames(ch2soil) <- c("rf","cr")
+rownames(ch2soil) <- colnames(trSoil)
 ## strata where abundance is assumed to be 0
 ch2soil$rf_zero <- ch2soil$rf %in% c("NonVeg","Water",
     "SoilWater","SoilWetland","SoilUnknown")
@@ -278,7 +289,7 @@ setdiff(cnsHab, colnames(XShab))
 
 regs <- yrs
 
-SPP <- union(fln, fls)
+SPP <- sort(union(fln, fls))
 #SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL","RWBL")
 #SPP <- SPP[!(SPP %in% c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL","RWBL"))]
 
@@ -301,14 +312,14 @@ ests <- suppressWarnings(getEst(ress, stage=STAGE$soil, na.out=FALSE, Xns))
 
 NSest <- c(north=!is.null(resn), south=!is.null(ress))
 
-for (regi in regs) { # regions START
+for (regi in regs) { # regions START: regs=yrs
 
 t0 <- proc.time()
 cat(spp, regi, which(regs==regi), "/", length(regs), "\n")
 flush.console()
 gc()
 
-#load(file.path(ROOT, "out", "transitions", paste0(regi,".Rdata")))
+load(file.path(ROOT, "out", "transitions3x7", paste0(regi,".Rdata")))
 
 #ks <- kgrid[rownames(trVeg),]
 #with(ks, plot(X,Y))
@@ -343,9 +354,9 @@ logPNhab_es1 <- XNhab_es %*% estnHab[1,]
 ## south
 logPShab1 <- XShab %*% estsHab[1,]
 
-#Aveg1 <- trVeg[rownames(kgrid)[ii],,drop=FALSE]
-Aveg1 <- dd1km_pred$veg_current[rownames(kgrid)[ii],rownames(lu),drop=FALSE]
-Aveg1 <- groupSums(Aveg1, 2, lu$use_tr)
+Aveg1 <- trVeg[as.character(kgrid$Site_ID)[ii],,drop=FALSE]
+#Aveg1 <- dd1km_pred$veg_current[rownames(kgrid)[ii],rownames(lu),drop=FALSE]
+#Aveg1 <- groupSums(Aveg1, 2, lu$use_tr)
 all(colnames(Aveg1) == rownames(ch2veg))
 Aveg1 <- Aveg1[,rownames(ch2veg)]
 Aveg1[,ch2veg$exclude] <- 0
@@ -353,9 +364,10 @@ rs <- rowSums(Aveg1)
 rs[rs <= 0] <- 1
 Aveg1 <- Aveg1 / rs
 
+Asoil1 <- trSoil[as.character(kgrid$Site_ID)[ii],,drop=FALSE]
 #Asoil1 <- trSoil[rownames(kgrid)[ii],,drop=FALSE]
-Asoil1 <- dd1km_pred$soil_current[rownames(kgrid)[ii],rownames(su),drop=FALSE]
-Asoil1 <- groupSums(Asoil1, 2, su$use_tr)
+#Asoil1 <- dd1km_pred$soil_current[rownames(kgrid)[ii],rownames(su),drop=FALSE]
+#Asoil1 <- groupSums(Asoil1, 2, su$use_tr)
 all(colnames(Asoil1) == rownames(ch2soil))
 Asoil1 <- Asoil1[,rownames(ch2soil)]
 pSoil1 <- 1-Asoil1[,"SoilUnknown"]

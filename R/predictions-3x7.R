@@ -45,7 +45,7 @@ fls <- sub(".Rdata", "", fls)
 
 
 #spp <- "ALFL"
-SPP <- union(fln, fls)
+SPP <- sort(union(fln, fls))
 #SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL")
 
 res_yrs <- list()
@@ -71,38 +71,53 @@ res_yrs[[spp]] <- list(vegcr=pxNcr, soilcr=pxScr)
 
 save(res_yrs, file=file.path(ROOT, "out", "birds", "tables", "yearly3x7_changes.Rdata"))
 
-plot_yrs <- function(spp) {
-    x <- res_yrs[[spp]]
-    #iis <- kgrid$NRNAME %in% c("Grassland", "Parkland") | kgrid$NSRNAME == "Dry Mixedwood"
-    #iis[kgrid$NSRNAME == "Dry Mixedwood" & kgrid$POINT_Y > 56.7] <- FALSE
-    #iin <- kgrid$NRNAME != "Grassland"
-    xx <- (kgrid$pAspen) * x$veg + (1-kgrid$pAspen) * x$soil
-    xx <- groupSums(xx, 1, kgrid$NRNAME)
-    xx <- 100 * xx / sum(xx[,1])
-
-    matplot(as.integer(colnames(xx)), t(xx), type="b", pch=19, lwd=2, lty=1,
-        main=tax[spp,"English_Name"])
-    legend("topleft", col=1:6, lty=1, lwd=2, pch=19, legend=rownames(xx))
-    xx
-}
-
-plot_yrs2 <- function(spp) {
+plot_yrs <- function(spp, all=TRUE) {
     x <- res_yrs[[spp]]
     xx <- (kgrid$pAspen) * x$veg + (1-kgrid$pAspen) * x$soil
-    xx <- colSums(xx)
-    xx <- 100 * xx / sum(xx[1])
-
-    plot(as.integer(names(xx)), xx, type="b", pch=19, lwd=2, lty=1,
-        main=tax[spp,"English_Name"])
-    xx
+    if (all) {
+        xxx <- colSums(xx)
+        xxx <- 100 * xxx / sum(xxx[1])
+        LIM <- c(0, max(xxx)*1.2)
+        plot(as.integer(names(xxx)), xxx, type="b", pch=19, lwd=2, lty=1,
+            main=tax[spp,"English_Name"], ylim=LIM,
+            axes=FALSE, ylab="Rel. abundance compared to 1999", xlab="Years")
+    } else {
+        xxx <- groupSums(xx, 1, kgrid$NRNAME)
+        xxx <- 100 * xxx / sum(xxx[,1])
+        LIM <- c(0, max(xxx)*1.2)
+        matplot(as.integer(colnames(xxx)), t(xxx), type="b", pch=19, lwd=2, lty=1,
+            main=tax[spp,"English_Name"], ylim=LIM,
+            axes=FALSE, ylab="Rel. abundance compared to 1999", xlab="Years")
+        legend("topleft", col=1:6, lty=1, lwd=2, pch=19, legend=rownames(xxx))
+    }
+    axis(1, at=as.integer(yrs), labels=yrs)
+    axis(2)
+    box()
+    invisible(xxx)
 }
 
+ch_fun <- function(spp) {
+    x <- res_yrs[[spp]]
+    xx <- (kgrid$pAspen) * x$veg + (1-kgrid$pAspen) * x$soil
+    xxx <- colSums(xx)
+    xxx <- 100 * xxx / sum(xxx[1])
+    n <- length(xxx)
+    yr <- as.integer(names(xxx))
+    unname(100 * ((xxx[n]/xxx[1])^(1/(yr[n] - yr[1])) - 1))
+}
 
-zz <- groupMeans(dd1km_pred$veg_current, 1, kgrid$Year)
-zz <- 100 * zz / (21*10^6)
-pdf("habits.pdf", onefile=TRUE)
-for (i in 1:ncol(zz)){
-    plot(as.integer(rownames(zz)), zz[,i], type="l", main=colnames(zz)[i])
-    points(as.integer(rownames(zz)), zz[,i])
+pdf("birds-yrs.pdf", onefile=TRUE)
+for (spp in SPP) {
+op <- par(mfrow=c(2,1))
+try(plot_yrs(spp, TRUE))
+try(plot_yrs(spp, FALSE))
+par(op)
 }
 dev.off()
+
+ch <- sapply(SPP, ch_fun)
+ch <- ch[!is.na(ch) & ch < 10]
+data.frame(ch=round(sort(ch),2))
+## todo
+- exclude spp with bad models
+- calculate annual % change
