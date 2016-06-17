@@ -8,22 +8,22 @@ loadSPP <- function(path) {
     e$res
 }
 
-fstat <- function(x) {
+fstat <- function(x, level=0.95) {
     c(Mean=mean(x), Median=median(x), quantile(x, c((1-level)/2, 1 - (1-level)/2)))
 }
 fstatv <- function(x, level=0.95) {
-    out <- data.frame(rowMeans(x), 
+    out <- data.frame(rowMeans(x),
         apply(x, 1, sd),
         x[,1],
-        t(apply(x, 1, quantile, c(0.5, (1-level)/2, 1 - (1-level)/2))))
+        t(pbapply(x, 1, quantile, c(0.5, (1-level)/2, 1 - (1-level)/2))))
     colnames(out) <- c("Mean","SD","Run1","Median","LCL","UCL")
     out
 }
 
 ## predict coefficients
-predX_age_cc <- 
-function(ht=c("Decid", "Mixwood", "Conif", "Pine", "BSpr", "Larch"), 
-ages=c(0,10,20,40,60,80,100,120,140), CC=FALSE, Xn) 
+predX_age_cc <-
+function(ht=c("Decid", "Mixwood", "Conif", "Pine", "BSpr", "Larch"),
+ages=c(0,10,20,40,60,80,100,120,140), CC=FALSE, Xn)
 {
     ht <- match.arg(ht)
     if (CC)
@@ -40,9 +40,9 @@ ages=c(0,10,20,40,60,80,100,120,140), CC=FALSE, Xn)
     fCC1 <- if (CC) pmax(0, 1 - (wtage/MAXFOR)) else 0
     ## Dave`s recovery trajectories
     age <- c(0, 1:20*4) / 200
-    conif <- 1-c(0, 1.3, 4.7, 10, 17.3, 26, 35.5, 45.3, 54.6, 63.1, 70.7, 77.3, 
+    conif <- 1-c(0, 1.3, 4.7, 10, 17.3, 26, 35.5, 45.3, 54.6, 63.1, 70.7, 77.3,
         82.7, 87, 90.1, 92.3, 94, 95.3, 96.7, 98.2, 100)/100
-    decid <- 1-c(0, 6.5, 15.1, 25.2, 36.1, 47.2, 57.6, 66.7, 74.3, 80.4, 85, 
+    decid <- 1-c(0, 6.5, 15.1, 25.2, 36.1, 47.2, 57.6, 66.7, 74.3, 80.4, 85,
         88.3, 90.5, 92, 93, 94, 95.1, 96.4, 97.6, 98.8, 100)/100
 
     fCC2 <- if (ht %in% c("Decid", "Mixwood"))
@@ -102,13 +102,13 @@ ages=c(0,10,20,40,60,80,100,120,140), CC=FALSE, Xn)
     X
 }
 
-pred_veghf <- 
+pred_veghf <-
 function(est, Xn, burn_included=TRUE)
 {
     X <- Xn[1:13,colnames(est)]
     X[,-1] <- 0 # this should take care of all the modifiers (soft/hard/ARU)
     diag(X) <- 1
-    rownames(X) <- c("Decid","Mixwood", "Conif", "Pine", "BSpr", "Larch",  
+    rownames(X) <- c("Decid","Mixwood", "Conif", "Pine", "BSpr", "Larch",
     "Swamp", "WetGrass", "WetShrub", "Shrub", "GrassHerb", "Cult", "UrbInd")
 
     if (burn_included) {
@@ -164,7 +164,7 @@ function(est, Xn, burn_included=TRUE)
 }
 
 
-pred_soilhf <- 
+pred_soilhf <-
 function(est, Xn)
 {
     X <- Xn[1:5,colnames(est)]
@@ -188,7 +188,7 @@ function(est, Xn)
 
 ## this is required for getting the axes right across figures
 fig_veghf_ymax <-
-function(pr2) 
+function(pr2)
 {
         lci <- pr2[,3]
         uci <- pr2[,4]
@@ -197,9 +197,9 @@ function(pr2)
         ymax
 }
 fig_soilhf_ymax <-
-function(pr) 
+function(pr)
 {
-        labs <- c("Productive", "Clay", "Saline", "RapidDrain", 
+        labs <- c("Productive", "Clay", "Saline", "RapidDrain",
             "Cult", "UrbInd")
         pr2 <- pr[labs,]
         lci <- pr2[,3]
@@ -210,9 +210,9 @@ function(pr)
         ymax
 }
 fig_soilhf <-
-function(pr, LAB="", ymax=NULL) 
+function(pr, LAB="", ymax=NULL)
 {
-        labs <- c("Productive", "Clay", "Saline", "RapidDrain", 
+        labs <- c("Productive", "Clay", "Saline", "RapidDrain",
             "Cult", "UrbInd")
         op <- par(mai=c(1.5,1,0.2,0.3))
         pr2 <- pr[labs,]
@@ -248,40 +248,40 @@ function(pr, LAB="", ymax=NULL)
     invisible(NULL)
 }
 
-fig_veghf <- 
-function(pr, LAB="", ymax) 
+fig_veghf <-
+function(pr, LAB="", ymax)
 {
 
         op <- par(mai=c(1.5,1,0.2,0.3))
         labs <- c(
-            "WhiteSpruce  0", "WhiteSpruce  10", 
-            "WhiteSpruce  20", "WhiteSpruce  40", "WhiteSpruce  60", "WhiteSpruce  80", 
-            "WhiteSpruce  100", "WhiteSpruce  120", "WhiteSpruce  140", 
+            "WhiteSpruce  0", "WhiteSpruce  10",
+            "WhiteSpruce  20", "WhiteSpruce  40", "WhiteSpruce  60", "WhiteSpruce  80",
+            "WhiteSpruce  100", "WhiteSpruce  120", "WhiteSpruce  140",
 
-            "Pine  0", "Pine  10", "Pine  20", "Pine  40", "Pine  60", "Pine  80", "Pine  100", 
-            "Pine  120", "Pine  140", 
+            "Pine  0", "Pine  10", "Pine  20", "Pine  40", "Pine  60", "Pine  80", "Pine  100",
+            "Pine  120", "Pine  140",
 
-            "Deciduous  0", "Deciduous  10", "Deciduous  20", "Deciduous  40", 
-            "Deciduous  60", "Deciduous  80", "Deciduous  100", "Deciduous  120", 
-            "Deciduous  140", 
+            "Deciduous  0", "Deciduous  10", "Deciduous  20", "Deciduous  40",
+            "Deciduous  60", "Deciduous  80", "Deciduous  100", "Deciduous  120",
+            "Deciduous  140",
 
-            "Mixedwood  0", "Mixedwood  10", "Mixedwood  20", 
-            "Mixedwood  40", "Mixedwood  60", "Mixedwood  80", "Mixedwood  100", 
-            "Mixedwood  120", "Mixedwood  140", 
+            "Mixedwood  0", "Mixedwood  10", "Mixedwood  20",
+            "Mixedwood  40", "Mixedwood  60", "Mixedwood  80", "Mixedwood  100",
+            "Mixedwood  120", "Mixedwood  140",
 
-            "BlackSpruce  0", "BlackSpruce  10", 
-            "BlackSpruce  20", "BlackSpruce  40", "BlackSpruce  60", "BlackSpruce  80", 
-            "BlackSpruce  100", "BlackSpruce  120", "BlackSpruce  140", 
+            "BlackSpruce  0", "BlackSpruce  10",
+            "BlackSpruce  20", "BlackSpruce  40", "BlackSpruce  60", "BlackSpruce  80",
+            "BlackSpruce  100", "BlackSpruce  120", "BlackSpruce  140",
 
-            "Larch  0", "Larch  10", "Larch  20", "Larch  40", "Larch  60", 
-            "Larch  80", "Larch  100", "Larch  120", "Larch  140", 
+            "Larch  0", "Larch  10", "Larch  20", "Larch  40", "Larch  60",
+            "Larch  80", "Larch  100", "Larch  120", "Larch  140",
 
-            "GrassHerb", "Shrub", "Swamp", "WetGrass", "WetShrub", 
-            "Cult", "UrbInd", 
+            "GrassHerb", "Shrub", "Swamp", "WetGrass", "WetShrub",
+            "Cult", "UrbInd",
 
-            "WhiteSpruce CC 0", "WhiteSpruce CC 10", "WhiteSpruce CC 20", "WhiteSpruce CC 40", "WhiteSpruce CC 60", 
-            "Pine CC 0", "Pine CC 10", "Pine CC 20", "Pine CC 40", "Pine CC 60", 
-            "Deciduous CC 0", "Deciduous CC 10", "Deciduous CC 20", "Deciduous CC 40", "Deciduous CC 60", 
+            "WhiteSpruce CC 0", "WhiteSpruce CC 10", "WhiteSpruce CC 20", "WhiteSpruce CC 40", "WhiteSpruce CC 60",
+            "Pine CC 0", "Pine CC 10", "Pine CC 20", "Pine CC 40", "Pine CC 60",
+            "Deciduous CC 0", "Deciduous CC 10", "Deciduous CC 20", "Deciduous CC 40", "Deciduous CC 60",
             "Mixedwood CC 0", "Mixedwood CC 10", "Mixedwood CC 20", "Mixedwood CC 40", "Mixedwood CC 60")
 
         pr2 <- pr[labs,]
@@ -338,13 +338,13 @@ function(pr, LAB="", ymax)
         mtext(side=3,at=0,adj=0,LAB,col="grey30")
         mtext(side=1,at=x1[c(55,56,57,58,59)],
             #c("Grass","Shrub","Wetland"),
-            c("GrassHerb", "Shrub", "Swamp", "WetGrass", "WetShrub"), 
+            c("GrassHerb", "Shrub", "Swamp", "WetGrass", "WetShrub"),
             col=rgb(col.r[c(55,56,57,58,59)],col.g[c(55,56,57,58,59)],
             col.b[c(55,56,57,58,59)]),
             las=2,adj=1.1)
         mtext(side=1,at=x1[c(60,61)],c("Cultivated HF","Urban/Industry HF"),
             col=rgb(col.r[c(60,61)],col.g[c(60,61)],col.b[c(60,61)]),las=2,adj=1.1)
-    
+
         ## Add cutblock trajectories - upland conifer
         i1<-which(names(y1)=="WhiteSpruce CC 0"):which(names(y1)=="WhiteSpruce CC 60")
         x2<-x1[1:5]+0.15*(x1[2]-x1[1])
@@ -366,7 +366,7 @@ function(pr, LAB="", ymax)
         ## Deciduous
         i1<-which(names(y1)=="Deciduous CC 0"):which(names(y1)=="Deciduous CC 60")
         x2<-x1[19:24]+0.15*(x1[2]-x1[1])
-        for (j in 1:5) 
+        for (j in 1:5)
             lines(rep(x2[j],2),c(lci[i1[j]],uci[i1[j]]),col="grey60")
         x3 <- which(names(y1)=="Deciduous  80")
         lines(c(x2[1:5], x1[x3]),y1[c(i1, x3)],col="grey30", lty=2)
@@ -375,7 +375,7 @@ function(pr, LAB="", ymax)
         ## Mixed
         i1<-which(names(y1)=="Mixedwood CC 0"):which(names(y1)=="Mixedwood CC 60")
         x2<-x1[28:33]+0.15*(x1[2]-x1[1])
-        for (j in 1:5) 
+        for (j in 1:5)
             lines(rep(x2[j],2),c(lci[i1[j]],uci[i1[j]]),col="grey60")
         x3 <- which(names(y1)=="Mixedwood  80")
         lines(c(x2[1:5], x1[x3]),y1[c(i1, x3)],col="grey30", lty=2)
@@ -410,10 +410,10 @@ rank_fun <- function(x, l, u, n=1, col=NULL, lab=NULL) {
     invisible(NULL)
 }
 
-pred_hf <- 
-function(est, Xn, n=200, fillin=0, remn=NULL) 
+pred_hf <-
+function(est, Xn, n=200, fillin=0, remn=NULL)
 {
-    cc <- paste(c("THF", "Lin", "Nonlin", "Succ", "Alien", "Noncult", "Cult", 
+    cc <- paste(c("THF", "Lin", "Nonlin", "Succ", "Alien", "Noncult", "Cult",
         "THF2", "Nonlin2", "Succ2", "Alien2", "Noncult2"),
         "KM", sep="_")
     if (!is.null(remn))
@@ -524,8 +524,8 @@ function(est, Xn, n=200, fillin=0, remn=NULL)
     pr
 }
 
-pred_any <- 
-function(what="WetWaterKM", est, Xn, n=200) 
+pred_any <-
+function(what="WetWaterKM", est, Xn, n=200)
 {
 
     ehf <- est
@@ -546,15 +546,15 @@ function(what="WetWaterKM", est, Xn, n=200)
     data.frame(hf=hf*100, prst, Mean=Mean)
 }
 
-fig_hf_noremn <- 
-function(est, Xn, fillin=0,LAB="",remn=NULL) 
+fig_hf_noremn <-
+function(est, Xn, fillin=0,LAB="",remn=NULL)
 {
     pr <- pred_hf(est, Xn, fillin=fillin,remn=remn)
     pr <- pr[c("HFor", "Cult", "UrbInd", "SoftLin", "HardLin")]
     ymax <- max(sapply(pr, function(z) max(z[,-1])))
     mmax <- min(max(max(sapply(pr, function(z) max(z[,2]))), 5), 10)
     ymax <- min(mmax, ymax)
-    
+
     Colb <- c("#00FF0015", "#DD000010", "#D0D00025", "#80008015", "#0000DD10")
     Coll <- c(rgb(0.2,0.6,0.2), "red3", "orange3", "#A000A0", "blue3")
 
@@ -580,20 +580,20 @@ function(est, Xn, fillin=0,LAB="",remn=NULL)
     for (i in 1:length(pr))
         lines(pr[[i]]$hf, pr[[i]][,"Median"], col=Coll[i],lwd=2)
     text(rep(0.1, 5), c(0.9, 0.75, 0.6, 0.45, 0.3), names(pr), pos=4, col=Coll)
-    
+
     #par(op)
-    
+
     invisible(NULL)
 }
 
-fig_any <- 
-function(what, est, Xn, LAB="", xlab="Percent") 
+fig_any <-
+function(what, est, Xn, LAB="", xlab="Percent")
 {
     pr <- pred_any(what, est, Xn)
     ymax <- max(pr[,-1])
     mmax <- min(max(max(max(pr[,2])), 5), 10)
     ymax <- min(mmax, ymax)
-    
+
     Colb <- c("#00FF0015", "#DD000010", "#D0D00025", "#80008015", "#0000DD10")[1]
     Coll <- c(rgb(0.2,0.6,0.2), "red3", "orange3", "#A000A0", "blue3")[1]
 
@@ -616,9 +616,9 @@ function(what, est, Xn, LAB="", xlab="Percent")
         col=Colb, border=NA)  # Transparent colours so they overlap
     lines(pr$hf, pr[,"Median"], col=Coll,lwd=2)
     #text(rep(0.1, 5), c(0.9, 0.75, 0.6, 0.45, 0.3), names(pr), pos=4, col=Coll)
-    
+
     #par(op)
-    
+
     invisible(NULL)
 }
 
@@ -631,7 +631,7 @@ function(pr, LAB)
 		p.hardlin10 <- pr[1]*pr[5]
 		#p.hardlin10 <- 0.9*pr[1] + 0.1*pr[5]
 		ymax1<-max(p.softlin10,p.hardlin10,2*p.mean)*1.03
-		plot(c(1,1.95,2.05),c(p.mean,p.softlin10,p.hardlin10),pch=c(1,16,15),col=c("grey30","blue3","red4"),xlab="Human footprint",ylab="Relative abundance",xlim=c(0.8,2.8),ylim=c(0,ymax1),tck=0.01,yaxs="i",xaxt="n",yaxt="n",bty="l",cex=2,lwd=2,cex.lab=1.4,cex.axis=1.3,col.lab="grey40") 
+		plot(c(1,1.95,2.05),c(p.mean,p.softlin10,p.hardlin10),pch=c(1,16,15),col=c("grey30","blue3","red4"),xlab="Human footprint",ylab="Relative abundance",xlim=c(0.8,2.8),ylim=c(0,ymax1),tck=0.01,yaxs="i",xaxt="n",yaxt="n",bty="l",cex=2,lwd=2,cex.lab=1.4,cex.axis=1.3,col.lab="grey40")
 		axis(side=2,at=pretty(c(0,ymax1),n=5),cex.axis=1.3,tck=0.01,cex.axis=1.3,col.axis="grey40",col.ticks="grey40")
 		axis(side=1,at=c(1,2),lab=c("None","10% linear"),tck=0.01,cex.axis=1.3,col.axis="grey40",col.ticks="grey40")
 		box(bty="l",col="grey40")
