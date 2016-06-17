@@ -18,6 +18,7 @@ load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
 #source("~/repos/bragging/R/glm_skeleton.R")
 #source("~/repos/abmianalytics/R/results_functions.R")
 #source("~/repos/bamanalytics/R/makingsense_functions.R")
+source("~/repos/abmianalytics/R/maps_functions.R")
 regs <- levels(kgrid$LUFxNSR)
 kgrid$useN <- !(kgrid$NRNAME %in% c("Grassland", "Parkland") | kgrid$NSRNAME == "Dry Mixedwood")
 kgrid$useN[kgrid$NSRNAME == "Dry Mixedwood" & kgrid$POINT_Y > 56.7] <- TRUE
@@ -228,6 +229,9 @@ for (spp in SPP) {
 
     cr <- wS * km$CurrS + (1-wS) * km$CurrN
     rf <- wS * km$RefS + (1-wS) * km$RefN
+if (FALSE) {
+    ndat <- normalize_data(rf=rf, cr=cr)
+}
 #    cr <- km$CurrN
 #    rf <- km$RefN
 #    cr <- km$CurrS

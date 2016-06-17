@@ -1,7 +1,7 @@
 ## takes xy coordinates and a corresponding vector z
 ## and turns it into a raster using raster template r
-as_Raster0 <- 
-function(x, y, z, r) 
+as_Raster0 <-
+function(x, y, z, r)
 {
     mat0 <- as.matrix(r)
     mat <- as.matrix(Xtab(z ~ x + y))
@@ -9,8 +9,8 @@ function(x, y, z, r)
     raster(x=mat, template=r)
 }
 ## does the same but creates a raster stack when z is matrix
-as_Raster <- 
-function(x, y, z, r, verbose=0) 
+as_Raster <-
+function(x, y, z, r, verbose=0)
 {
     if (is.null(dim(z))) {
         out <- as_Raster0(x, y, z, r)
@@ -68,24 +68,24 @@ mask=NULL)
     ## mask >99% water cells
     r[r_water > 0.99] <- NA
 
-    plot(r, axes=FALSE, box=FALSE, legend=legend, 
+    plot(r, axes=FALSE, box=FALSE, legend=legend,
         main=main, maxpixels=10^6, col=col, interpolate=FALSE)
 
     if (plotWater && !maskRockies) {
-        plot(r_water, add=TRUE, 
-            alpha=1, legend=FALSE, 
+        plot(r_water, add=TRUE,
+            alpha=1, legend=FALSE,
             col="#664DCC")
     }
     if (maskRockies && !plotWater) {
-        plot(r_mask, add=TRUE, alpha=1, 
+        plot(r_mask, add=TRUE, alpha=1,
             col="#7A8B8B", legend=FALSE)
     }
     if (plotWater && maskRockies) {
-        plot(r_overlay, add=TRUE, 
-            alpha=1, legend=FALSE, 
+        plot(r_overlay, add=TRUE,
+            alpha=1, legend=FALSE,
             col=colorRampPalette(c("#664DCC", "#7A8B8B"))(255))
     }
-    
+
     if (plotCities) {
         points(city, pch=18, col="grey10")
         text(city, labels=rownames(city@coords), cex=0.8, pos=3, col="grey10")
@@ -94,7 +94,7 @@ mask=NULL)
 }
 
 xy_map <-
-function(xy, pa, plotWater=TRUE, legend=FALSE, main="", 
+function(xy, pa, plotWater=TRUE, legend=FALSE, main="",
 pch0=3, pch1=19, cex0=0.3, cex1=0.8, col0="red1", col1="red4")
 {
 
@@ -106,11 +106,39 @@ pch0=3, pch1=19, cex0=0.3, cex1=0.8, col0="red1", col1="red4")
     xy <- spTransform(xy, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))
 
     plot(nr, axes=FALSE, box=FALSE, legend=legend, main=main,
-        col=brewer.pal("Pastel1", n=6)[c(3,1,2,6,5,4)]) 
+        col=brewer.pal("Pastel1", n=6)[c(3,1,2,6,5,4)])
     if (plotWater)
         plot(r_water, add=TRUE, alpha=1, legend=FALSE, col="#664DCC")
-    points(xy, pch=ifelse(Found, pch1, pch0), 
-        cex=ifelse(Found, cex1, cex0), 
+    points(xy, pch=ifelse(Found, pch1, pch0),
+        cex=ifelse(Found, cex1, cex0),
         col=ifelse(Found, col1, col0))
     invisible(xy)
+}
+
+normalize_data <-
+function(rf, cr, q=1, transf=FALSE)
+{
+    if (transf) {
+        cr <- 1-exp(-cr)
+        rf <- 1-exp(-rf)
+    }
+    ## truncate if necessary
+    qcr <- quantile(cr, q)
+    cr[cr>qcr] <- qcr
+    qrf <- quantile(rf, q)
+    rf[rf>qrf] <- qrf
+    Max <- max(qcr, qrf)
+
+    #si <- pmin(cr, rf) / pmax(cr, rf)
+    #si <- pmin(100, ceiling(99 * si)+1)
+    #si2 <- ifelse(cr > rf, 200-si, si)
+    df <- (cr-rf) / Max
+    df <- sign(df) * abs(df)^0.5
+    df <- pmin(200, ceiling(99 * df)+100)
+    df[df==0] <- 1
+    cr <- pmin(100, ceiling(99 * sqrt(cr / Max))+1)
+    rf <- pmin(100, ceiling(99 * sqrt(rf / Max))+1)
+
+    #data.frame(Ref=rf, Curr=cr, Diff=df, si=si, si2=si2)
+    data.frame(Ref=rf, Curr=cr, Diff=df)
 }
