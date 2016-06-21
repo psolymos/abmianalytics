@@ -140,6 +140,17 @@ c_fun3 <- function(i, bbs=FALSE) {
 tr_coef3bbs <- pbsapply(1:240, c_fun3, bbs=TRUE)
 tr_coef3not <- pbsapply(1:240, c_fun3, bbs=FALSE)
 
+c_fun4 <- function(i, keep) {
+    keep <- keep[BB[,i]]
+    yy <- y_cawa[BB[,i]][keep]
+    offf <- lam_hf_mean[BB[,i]][keep]
+    yr <- DAT$YR[BB[,i]][keep]
+    m <- glm(yy ~ yr, offset=offf, family="poisson")
+    coef(m)
+}
+tr_coef4 <- pbsapply(1:240, c_fun4, keep=DAT$PCODE != "CL")
+tr_coef4cl <- pbsapply(1:240, c_fun4, keep=DAT$PCODE == "CL")
+
 hist(100*(exp(0.1*est_yr[,"YR"])-1))
 hist(100*(exp(0.1*tr_coef[2,])-1))
 hist(100*(exp(0.1*tr_coef2[2,])-1))
@@ -151,6 +162,8 @@ fstat(100*(exp(0.1*tr_coef[2,])-1))
 fstat(100*(exp(0.1*tr_coef2[2,])-1))
 fstat(100*(exp(0.1*tr_coef3bbs[2,])-1))
 fstat(100*(exp(0.1*tr_coef3not[2,])-1))
+fstat(100*(exp(0.1*tr_coef4[2,])-1))
+fstat(100*(exp(0.1*tr_coef4cl[2,])-1))
 
 100*sum(lam_hf_mean[DAT$isBBS])/sum(lam_hf_mean)
 
