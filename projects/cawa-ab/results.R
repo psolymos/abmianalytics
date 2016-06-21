@@ -31,7 +31,7 @@ yy01[yy01>0] <- 1
 load(file.path(ROOT, "data", "data-cawa.Rdata"))
 y_cawa <- YY[,"CAWA"]
 off_cawa <- OFF[,"CAWA"]
-rm(e, OFF, BB)
+rm(e, OFF)
 
 ## terms and design matrices
 Terms <- getTerms(mods, "list")
@@ -64,7 +64,7 @@ NDAT <- sum(y_cawa > 0)
 #    paste0(as.character(tax[spp, "Spp"]), ".png"))
 #png(file=fname,width=1500,height=700)
 pdf(file.path(OUTDIR, "cawa-fig-hab.pdf"), width=14)
-fig_veghf(res_coef, paste0(NAM, " (n = ", NDAT, " detections)"), ymax=MAX)
+fig_veghf(res_coef, "", ymax=MAX, "Density (males / ha)")
 dev.off()
 ## linear
 #fname <- file.path(ROOT, "figs", "linear-north",
@@ -89,6 +89,10 @@ fig_hf_noremn(est_hf, Xn, LAB=paste0(NAM, ", North, 100% Dec/Mix"),
 fig_any("DecMixKM", est_hf, Xn, "DecMixKM")
 dev.off()
 
+pdf(file.path(OUTDIR, "cawa-fig-dec.pdf"))
+fig_any("DecMixKM", est_hf, Xn, LAB="", xlab="% deciduous and mixed forest in 564m buffer")
+dev.off()
+
 est_yr <- getEst(res, stage=length(mods), na.out=FALSE, Xn)
 
 ## annual % trend
@@ -99,15 +103,74 @@ fstat(exp(est_yr[,"ROAD01"]))
 fstat(sqrt(exp(est_yr[,"ARU3RF"])))
 fstat(sqrt(exp(est_yr[,"ARU3SM"])))
 
+## residual trend
+
+
+pr_hf <- exp(apply(est_hf, 1, function(z) Xn %*% z))
+pr_hf_stat <- fstatv(pr_hf, level=level)
+
+
+
+
+## annual indices?
+
+## GoF AUC/ROC
+
+library(pROC)
+Y1 <- ifelse(y_cawa>0, 1, 0)
+
+## out-of-sample set
+ss1 <- which(!(1:nrow(DAT) %in% BB[,1]))
+#ss <- lapply(1:240, function(i) which(!(1:nrow(DAT) %in% BB[,i])))
+#ssd <- data.frame(id=unlist(ss), iter=unlist(lapply(1:240, function(i) rep(i, length(ss[[i]])))))
+#ssx <- Xtab(~iter + id, ssd)
+#ssi <- which(colSums(ssx) == 240)
+#ssc <- as.integer(colnames(ssx)[ssi])
+#compare_sets(ssc, ss1)
+
+pr_fun_for_gof <- function(stage, off=0) {
+    est0 <- getEst(res, stage=stage, na.out=FALSE, Xn)
+    mu0 <- apply(est0, 1, function(z) Xn %*% z)
+    lam0 <- exp(mu0 + off)
+    rowMeans(lam0)
+}
+prAll <- sapply(0:10, pr_fun_for_gof, off=off_cawa)
+#prNoOff <- pr_fun_for_gof(0, off=0)
+
+## external only
+rocAll1 <- pblapply(1:ncol(prAll), function(i) roc(Y1[ss1], prAll[ss1,i]))
+names(rocAll1) <- c("NULL", names(mods))
+auc <- sapply(rocAll1, function(z) as.numeric(z$auc))
+#rocNoOff <- roc(Y1[ss1], prNoOff[ss1])
+
+#Y2 <- ifelse(y_cawa>1, 1, 0)
+#rocAll2 <- lapply(1:10, function(i) roc(Y2, prAll[,i]))
+
+pdf(file.path(OUTDIR, "cawa-fig-roc.pdf"))
+#Show <- rocAll1[c("NULL","ARU","Wet","Space","Dec","HF","Year")]
+Show <- rocAll1
+Col <- rev(brewer.pal(length(Show), "RdBu"))
+op <- par(las=1)
+plot(Show[[1]], col=Col[1], lty=2)
+for (i in 2:length(Show))
+    lines(Show[[i]], col=Col[i], lty=1)
+aucx <- sapply(Show, function(z) as.numeric(z$auc))
+txt <- paste0(names(aucx), " (AUC = ", round(aucx, 3), ")")
+legend("bottomright", bty="n", col=Col,
+    lty=c(2,rep(1, length(Show)-1)), lwd=2, legend=txt)
+dev.off()
+
+
+
 ## CTI/Wet figure
 
 est_wet <- est_hf[,c("xCTI","WetPT","WetPT:xCTI")]
 
 #z$xCTI <- log((x$CTI + 1) / 10)
 summary(10 * exp(DAT$xCTI) - 1)
-vals1 <- seq(5, 25, len=100)
-vals2 <- seq(0, 1, len=100)
-dat_wet <- expand.grid(CTI=vals1, WetPT=vals2)
+vals1 <- seq(0, 1, len=100) # WetPT
+vals2 <- seq(7, 22, len=100) # CTI
+dat_wet <- expand.grid(WetPT=vals1, CTI=vals2)
 dat_wet$xCTI <- log((dat_wet$CTI + 1) / 10)
 X_wet <- model.matrix(~ xCTI*WetPT-1, dat_wet)
 
@@ -118,19 +181,72 @@ pr_mat <- matrix(pr_wet_stat$Mean, length(vals1), length(vals2))
 
 
 pdf(file.path(OUTDIR, "cawa-fig-wet.pdf"))
-image(vals1, vals2, pr_mat,
+op <- par(las=1)
+image(vals1*100, vals2, pr_mat,
       col = rev(grey(seq(0.2, 1, len=25))), axes=FALSE,
-      xlab="Compound topographic index", ylab="Point level wet %",
-      main="Density")
+      ylab="Compound topographic index", xlab="% wet habitats in 150m buffer",
+      main="")
 cti <- 10 * exp(DAT$xCTI) - 1
 ii <- sample(which(y_cawa==0), 10000)
-with(DAT[ii,], points(cti[ii], WetPT, pch=21, cex=0.6, col="lightblue"))
-with(DAT[y_cawa>0,], points(cti[y_cawa>0], WetPT, pch=19, cex=0.6, col="darkblue"))
-contour(vals1, vals2, pr_mat, add=TRUE, labcex = 0.8, levels=c(0.1, 0.25, 0.5, 1))
+with(DAT[ii,], points(100*WetPT, cti[ii], pch=21, cex=0.6, col="lightblue"))
+with(DAT[y_cawa>0,], points(100*WetPT, cti[y_cawa>0], pch=19, cex=0.6, col="darkblue"))
+contour(vals1*100, vals2, pr_mat, add=TRUE, labcex = 0.8, levels=c(0.1, 0.25, 0.5, 1))
+axis(1)
+axis(2)
 box()
+par(op)
 dev.off()
 
 ## SRA/EDR results
+
+load(file.path(ROOT, "data", "data-offset-covars.Rdata"))
+summary(offdat)
+
+Xp <- cbind("(Intercept)"=1, as.matrix(offdat[,c("TSSR","JDAY","TSSR2","JDAY2")]))
+Xq <- cbind("(Intercept)"=1, TREE=offdat$TREE,
+    LCC2OpenWet=ifelse(offdat$LCC2=="OpenWet", 1, 0),
+    LCC4Conif=ifelse(offdat$LCC4=="Conif", 1, 0),
+    LCC4Open=ifelse(offdat$LCC4=="Open", 1, 0),
+    LCC4Wet=ifelse(offdat$LCC4=="Wet", 1, 0))
+OFF <- matrix(NA, nrow(offdat), length(sppp))
+rownames(OFF) <- rownames(offdat)
+colnames(OFF) <- sppp
+
+spp <- "CAWA"
+p <- rep(NA, nrow(offdat))
+A <- q <- p
+
+## constant for NA cases
+cf0 <- exp(unlist(coefBAMspecies(spp, 0, 0)))
+## best model
+mi <- bestmodelBAMspecies(spp, type="BIC", model.sra=0:8)
+cat(spp, unlist(mi), "\n");flush.console()
+cfi <- coefBAMspecies(spp, mi$sra, mi$edr)
+#vci <- vcovBAMspecies(spp, mi$sra, mi$edr)
+
+Xp2 <- Xp[,names(cfi$sra),drop=FALSE]
+OKp <- rowSums(is.na(Xp2)) == 0
+Xq2 <- Xq[,names(cfi$edr),drop=FALSE]
+OKq <- rowSums(is.na(Xq2)) == 0
+
+p[!OKp] <- sra_fun(offdat$MAXDUR[!OKp], cf0[1])
+unlim <- ifelse(offdat$MAXDIS[!OKq] == Inf, TRUE, FALSE)
+A[!OKq] <- ifelse(unlim, pi * cf0[2]^2, pi * offdat$MAXDIS[!OKq]^2)
+q[!OKq] <- ifelse(unlim, 1, edr_fun(offdat$MAXDIS[!OKq], cf0[2]))
+
+phi1 <- exp(drop(Xp2[OKp,,drop=FALSE] %*% cfi$sra))
+tau1 <- exp(drop(Xq2[OKq,,drop=FALSE] %*% cfi$edr))
+p[OKp] <- sra_fun(offdat$MAXDUR[OKp], phi1)
+unlim <- ifelse(offdat$MAXDIS[OKq] == Inf, TRUE, FALSE)
+A[OKq] <- ifelse(unlim, pi * tau1, pi * offdat$MAXDIS[OKq]^2)
+q[OKq] <- ifelse(unlim, 1, edr_fun(offdat$MAXDIS[OKq], tau1))
+
+ii <- which(p == 0)
+p[ii] <- sra_fun(offdat$MAXDUR[ii], cf0[1])
+
+offdat$p <- p
+offdat$A <- A
+offdat$q <- q
 
 ROOT <- "c:/bam/May2015"
 
@@ -301,7 +417,10 @@ box()
 par(op)
 
 
-pdf(file.path(OUTDIR, "cawa-fig-qpad.pdf"), width=14)
+range(pmat)
+range(qmat)
+
+pdf(file.path(OUTDIR, "cawa-fig-qpad.pdf"), width=12)
 op <- par(las=1, mfrow=c(1,2))
 xval <- if (mi$sra %in% c("9","10","11","12","13","14"))
     ls*365 else jd*365
@@ -311,7 +430,7 @@ image(xval, ts*24, pmat,
     xlab=ifelse(mi$sra %in% c("9","10","11","12","13","14"),
         "Days since local springs", "Julian days"),
     ylab="Hours since sunrise",
-    main="Probability of availability")
+    main="A")#"Probability of availability")
 #contour(xval, ts*24, pmat, add=TRUE, labcex = 0.8)
 box()
 
@@ -319,7 +438,7 @@ image(1:nlevels(xq$LCC4), tr*100, qmat,
       #col = rev(grey(seq(1-max(qmat), 1-min(qmat), len=50))), axes=FALSE,
       col = rev(grey(seq(1-0.8, 1, len=25))), axes=FALSE,
       xlab="Land cover types", ylab="Percent tree cover",
-      main="Probability of detection")
+      main="B")#"Probability of detection")
 if (version < 3)
     axis(1, 1:5, c("DConif","DDecid","SConif","SDecid","Open"))
 if (version > 2)

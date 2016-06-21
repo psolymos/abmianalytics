@@ -249,7 +249,7 @@ function(pr, LAB="", ymax=NULL)
 }
 
 fig_veghf <-
-function(pr, LAB="", ymax)
+function(pr, LAB="", ymax, ylab="Relative abundance")
 {
 
         op <- par(mai=c(1.5,1,0.2,0.3))
@@ -311,7 +311,7 @@ function(pr, LAB="", ymax)
             #xlim=c(-0.5,81.5),
             xlim=c(-0.5,75.5),
             xaxs="i", yaxt="n",
-            ylab="Relative abundance",
+            ylab=ylab,
             col.lab="grey50",
             cex.lab=1.2,axisnames=FALSE)[,1]
         ax <- axis(side=2,cex.axis=0.9,col.axis="grey50",col.ticks="grey50",las=2)

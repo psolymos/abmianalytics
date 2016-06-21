@@ -97,7 +97,7 @@ tmp3 <- sapply(tmp2, function(z) if (length(z)==1) "ABMI" else z[2])
 tmp4 <- sapply(tmp2, function(z) if (length(z)==1) z[1] else z[3])
 tmp <- data.frame(tmp, ClosestABMISite=tmp4)
 tmp$DataProvider <- as.factor(tmp3)
-tmp$Label <- with(tmp, paste(OnOffGrid, DataProvider, SiteLabel, YYYY, Visit, 
+tmp$Label <- with(tmp, paste(OnOffGrid, DataProvider, SiteLabel, YYYY, Visit,
     "STATION", BPC, sep="_"))
 tmp$Label2 <- with(tmp, paste(OnOffGrid, DataProvider, SiteLabel, YYYY, Visit, sep="_"))
 tmp$ClosestABMISite <- as.integer(as.character(tmp$ClosestABMISite))
@@ -225,9 +225,9 @@ DDAT <- DDAT[rownames(YYY),]
 
 ## habitat info
 
-load(file.path(ROOT2, "out", "abmi_onoff", 
+load(file.path(ROOT2, "out", "abmi_onoff",
     "veg-hf-clim-reg_abmi-onoff_Birds-RF-SM_incl2015.Rdata"))
-load(file.path(ROOT2, "out", "bambbs", 
+load(file.path(ROOT2, "out", "bambbs",
     "veg-hf_bambbs_fix-fire_fix-age0.Rdata"))
 
 compare_sets(rownames(YY), rownames(climPoint_bambbs))
@@ -363,7 +363,7 @@ iv <- find_max(tmp)
 h <- iv$index
 v <- iv$value
 data.frame(table(h))
-print(aggregate(data.frame(v=v), list(h=h), quantile, c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1)), 
+print(aggregate(data.frame(v=v), list(h=h), quantile, c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1)),
     digits=3)
 }
 
@@ -417,7 +417,7 @@ table(DAT$hab1, DAT$hab1cc, useNA="a")
 table(DAT$hab1,DAT$isCC)
 
 
-## age 
+## age
 
 AgePtCr <- groupSums(dd150m$veg_current, 2, tv[colnames(dd150m$veg_current), "AGE"])
 AgePtCr <- as.matrix(AgePtCr / rowSums(AgePtCr))
@@ -449,9 +449,9 @@ DAT$fCC1[DAT$isCC==1] <- pmax(0, 1 - (DAT$isCC * DAT$wtAge/MAXFOR)[DAT$isCC==1])
 plot(fCC1 ~ wtAge, DAT[DAT$isCC==1,])
 ## Dave`s recovery trajectories
 age <- c(0, 1:20*4)/200
-conif <- 1-c(0, 1.3, 4.7, 10, 17.3, 26, 35.5, 45.3, 54.6, 63.1, 70.7, 77.3, 
+conif <- 1-c(0, 1.3, 4.7, 10, 17.3, 26, 35.5, 45.3, 54.6, 63.1, 70.7, 77.3,
     82.7, 87, 90.1, 92.3, 94, 95.3, 96.7, 98.2, 100)/100
-decid <- 1-c(0, 6.5, 15.1, 25.2, 36.1, 47.2, 57.6, 66.7, 74.3, 80.4, 85, 
+decid <- 1-c(0, 6.5, 15.1, 25.2, 36.1, 47.2, 57.6, 66.7, 74.3, 80.4, 85,
     88.3, 90.5, 92, 93, 94, 95.1, 96.4, 97.6, 98.8, 100)/100
 DAT$fCC2 <- 0
 tmp1 <- approxfun(age, decid)(DAT$wtAge)
@@ -469,17 +469,17 @@ sum(is.na(DAT$fCC2))
 if (FALSE) {
 ## Dave`s recovery trajectories
 age <- c(0, 1:20*4)/200
-conif <- 1-c(0, 1.3, 4.7, 10, 17.3, 26, 35.5, 45.3, 54.6, 63.1, 70.7, 77.3, 
+conif <- 1-c(0, 1.3, 4.7, 10, 17.3, 26, 35.5, 45.3, 54.6, 63.1, 70.7, 77.3,
     82.7, 87, 90.1, 92.3, 94, 95.3, 96.7, 98.2, 100)/100
-decid <- 1-c(0, 6.5, 15.1, 25.2, 36.1, 47.2, 57.6, 66.7, 74.3, 80.4, 85, 
+decid <- 1-c(0, 6.5, 15.1, 25.2, 36.1, 47.2, 57.6, 66.7, 74.3, 80.4, 85,
     88.3, 90.5, 92, 93, 94, 95.1, 96.4, 97.6, 98.8, 100)/100
 Age <- seq(0, 100, by=0.5) / 200
-plot(Age*200, approxfun(age, decid)(Age), type="l", col=2, lwd=2, 
+plot(Age*200, approxfun(age, decid)(Age), type="l", col=2, lwd=2,
     xlab="Years since disturbance", ylab="Transformed value")
 lines(Age*200, approxfun(age, conif)(Age), col=4, lwd=2)
 lines(Age*200, pmax(0, 1 - (Age * 200 / 50)), col=3, lwd=2)
 lines(Age*200, 1/((Age*200+1)^(1/3)), col=1, lwd=2)
-legend("topright", col=1:4, lty=1, lwd=2, 
+legend("topright", col=1:4, lty=1, lwd=2,
     legend=c("cubic-root","expert decid","linear","expert conif"))
 }
 
@@ -523,7 +523,7 @@ DAT$hab_lcc <- as.integer(as.character(DAT$hab_lcc))
 DAT$hab_lcc <- factor(DAT$hab_lcc, 1:5)
 }
 
-#DAT$LCC_combo[is.na(DAT$LCC_combo)] <- DAT$hab_lcc[is.na(DAT$LCC_combo)] 
+#DAT$LCC_combo[is.na(DAT$LCC_combo)] <- DAT$hab_lcc[is.na(DAT$LCC_combo)]
 
 ## soil in south
 
@@ -648,7 +648,7 @@ DAT$Cult_KM <- rowSums(dd1km$veg_current[,c("CultivationCropPastureBareground",
 DAT$Noncult_KM <- DAT$THF_KM - DAT$Cult_KM
 CClabs <- colnames(dd1km$veg_current)[grep("CC", colnames(dd1km$veg_current))]
 DAT$Succ_KM <- rowSums(dd1km$veg_current[,c("SeismicLine","TransmissionLine","Pipeline",
-    "RailVegetatedVerge","RoadTrailVegetated","RoadVegetatedVerge", 
+    "RailVegetatedVerge","RoadTrailVegetated","RoadVegetatedVerge",
     CClabs)]) / rowSums(dd1km$veg_current)
 DAT$Alien_KM <- DAT$THF_KM - DAT$Succ_KM
 
@@ -672,7 +672,7 @@ DAT$Cult_PC <- rowSums(dd150m$veg_current[,c("CultivationCropPastureBareground",
 DAT$Noncult_PC <- DAT$THF_PC - DAT$Cult_PC
 CClabs <- colnames(dd150m$veg_current)[grep("CC", colnames(dd1km$veg_current))]
 DAT$Succ_PC <- rowSums(dd150m$veg_current[,c("SeismicLine","TransmissionLine","Pipeline",
-    "RailVegetatedVerge","RoadTrailVegetated","RoadVegetatedVerge", 
+    "RailVegetatedVerge","RoadTrailVegetated","RoadVegetatedVerge",
     CClabs)]) / rowSums(dd150m$veg_current)
 DAT$Alien_PC <- DAT$THF_PC - DAT$Succ_PC
 
@@ -715,9 +715,9 @@ DAT$HSH2 <- 0
 
 ## restricted data use
 
-PCODE_useOK <- c("ABCAWAWEST", "MGLE", "FTL", "THIN", 
-    "LMWELL", "EMB-ASP", "EMB-BS", "EMB-NOISE", 
-    "ECJOSM", "ECJOSM_JRB", 
+PCODE_useOK <- c("ABCAWAWEST", "MGLE", "FTL", "THIN",
+    "LMWELL", "EMB-ASP", "EMB-BS", "EMB-NOISE",
+    "ECJOSM", "ECJOSM_JRB",
     "EMCLA", "EMCLA2014", "ABMI", "BBSAB")
 DAT$useOK <- DAT$PCODE %in% PCODE_useOK
 DAT$useOK[DAT$YEAR > 2007 & DAT$PCODE == "CL"] <- TRUE # Calling Lake
@@ -765,7 +765,7 @@ DAT$useJosm[DAT$useJosm & DAT$pWater > 0.5] <- FALSE
 ## within year visits
 
 DAT <- DAT[sample.int(nrow(DAT), nrow(DAT)),]
-## ABMI sites are used as SS, but only points are revisited 
+## ABMI sites are used as SS, but only points are revisited
 ## (i.e. spatial replication should not count)
 #DAT$SS0 <- as.character(DAT$SS)
 #tmp <- DAT$SS0[DAT$PCODE=="ABMI"]
@@ -935,7 +935,9 @@ OFFmean <- log(rowMeans(exp(OFF)))
 #HSH <- HSH[rownames(DAT),]
 #pveghf <- pveghf[rownames(DAT),]
 #psoilhf <- psoilhf[rownames(DAT),]
-save(DAT, YY, OFF, OFFmean, TAX, HSH, # pveghf, psoilhf, 
+save(offdat,
+    file=file.path(ROOT2, "out", "birds", "data", "data-offset-covars.Rdata"))
+save(DAT, YY, OFF, OFFmean, TAX, HSH, # pveghf, psoilhf,
     file=file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
 
 ## subsets -------------------------------------------------------------
@@ -1010,10 +1012,12 @@ bbfun <- function(DAT1, B, out=0.1, seed=1234) {
         ## combine dpl=F with !duplicated dpl=T elements
         tmp <- sset0[dpl]
         sset <- c(sset0[!dpl], tmp[!duplicated(DAT1[tmp, "SS"])])
-        id2[[l]] <- sample(sset, floor(length(sset) * 1-out), FALSE)
+        id2[[l]] <- sample(sset, floor(length(sset) * (1-out)), FALSE)
     }
     KEEP_ID <- unname(unlist(id2))
     HOLDOUT_ID <- setdiff(seq_len(nrow(DAT1)), KEEP_ID)
+
+    ll <- seq_len(nrow(DAT1)) %in% KEEP_ID
 
     DAT1k <- DAT1[KEEP_ID,]
     DAT1 <- DAT1[c(KEEP_ID, HOLDOUT_ID),]
@@ -1023,8 +1027,56 @@ bbfun <- function(DAT1, B, out=0.1, seed=1234) {
 }
 BBs <- bbfun(DATs, B)
 BBn <- bbfun(DATn, B)
-BBj <- bbfun(DATj, B)
-BBcawa <- bbfun(DATcawa, B)
+nrow(BBs)/nrow(DATs)
+nrow(BBn)/nrow(DATn)
+
+
+
+bbfun2 <- function(DAT1, B, out=0.1, seed=1234) {
+    set.seed(seed)
+    DAT1$SS_YR <- interaction(DAT1$SS, DAT1$YEAR, drop=TRUE)
+    DAT1$IDMAP <- seq_len(nrow(DAT1))
+    ## randomize input
+    DAT1 <- DAT1[sample.int(nrow(DAT1)),]
+#    kk <- floor(nrow(DAT1) * (1-out))
+#    DAT1k <- DAT1[1:kk,] # k as in *k*eep
+    kkk <- floor(nlevels(DAT1$SS_YR) * (1-out))
+    DAT1k <- DAT1[as.integer(DAT1$SS_YR) <= kkk,]
+    if (nlevels(droplevels(DAT1k$bootid)) != nlevels(droplevels(DAT1$bootid)))
+        stop("bootid problem: pick larger blocks for validation")
+    ## one run
+    r1fun <- function(DAT1k) {
+        ## get rid of resamples
+        DAT1k <- DAT1k[sample.int(nrow(DAT1k)),]
+        DAT1k <- nonDuplicated(DAT1k, SS_YR)
+        id2 <- list()
+        for (l in levels(DAT1k$bootid)) {
+            sset0 <- which(DAT1k$bootid == l)
+            id2[[l]] <- if (length(sset0) < 2)
+                sset0 else sample(sset0, length(sset0), replace=TRUE)
+        }
+        DAT1k$IDMAP[unname(unlist(id2))]
+    }
+    BB1 <- pbsapply(seq_len(B), function(i) r1fun(DAT1k))
+    BB1
+#aa <- unique(BB1)
+#table(selected=DAT1$IDMAP %in% aa)
+#table(selected=DAT1$IDMAP %in% aa, revisit=duplicated(DAT1$SS_YR))
+}
+
+
+BBj <- bbfun2(DATj, B)
+BBcawa <- bbfun2(DATcawa, B)
+
+nrow(BBj)/nrow(DATj)
+aa <- unique(BBj)
+bb <- table(selected=seq_len(nrow(DATj)) %in% aa)
+bb[2]/sum(bb)
+
+nrow(BBcawa)/nrow(DATcawa)
+aa <- unique(BBcawa)
+bb <- table(selected=seq_len(nrow(DATcawa)) %in% aa)
+bb[2]/sum(bb)
 
 ## figure out sets of species to analyze
 
@@ -1083,7 +1135,7 @@ mods$Topo <- NULL
 mods$Wet <- NULL
 names(mods)
 dim(YY)
-save(DAT, YY, OFF, mods, BB, # HSH, OFFmean, 
+save(DAT, YY, OFF, mods, BB, # HSH, OFFmean,
     file=file.path(ROOT2, "out", "birds", "data", "data-josm.Rdata"))
 
 ## CAWA update
@@ -1097,12 +1149,12 @@ OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY),drop=FALSE]
 #OFFmean <- OFFmean0[rownames(DAT)]
 source("~/repos/abmianalytics/projects/cawa-ab/models.R")
 mods <- modsCAWA
-#mods <- c(modsVeg[c("Hab", "Age", "CC", "Contrast", "ARU", "Space")], 
-#    modsCAWA[c("Wet", "Dec")], 
-#    modsVeg[c("HF", "Year")]) 
+#mods <- c(modsVeg[c("Hab", "Age", "CC", "Contrast", "ARU", "Space")],
+#    modsCAWA[c("Wet", "Dec")],
+#    modsVeg[c("HF", "Year")])
 names(mods)
 dim(YY)
-save(DAT, YY, OFF, mods, BB, # HSH, OFFmean, 
+save(DAT, YY, OFF, mods, BB, # HSH, OFFmean,
     file=file.path(ROOT2, "out", "birds", "data", "data-cawa.Rdata"))
 
 ## WRSI
@@ -1113,6 +1165,7 @@ save(DAT, YY, OFF, mods, BB, # HSH, OFFmean,
 ## create all the relevant buffer percentage summaries (i.e. not only hab1!)
 
 DAT <- DAT0[DAT0$useOK,]
+#DAT <- DAT0
 DAT$ID <- rownames(DAT)
 YY <- YY0[rownames(DAT),]
 YY[YY > 0] <- 1
@@ -1135,7 +1188,7 @@ rownames(pVeg) <- rownames(DATw)
 
 pSoil <- dd150m$soil_current[rownames(DAT),]
 pSoil <- groupSums(pSoil, 2, ts[colnames(pSoil), "UseInAnalysis"])
-pSoil <- pSoil[, c("RapidDrain", "Saline", "Clay", 
+pSoil <- pSoil[, c("RapidDrain", "Saline", "Clay",
     "Productive", "Cult", "UrbInd")]
 pSoil <- as.matrix(pSoil / rowSums(pSoil))
 pSoil <- pSoil[as.character(DATw$ID),]
@@ -1143,8 +1196,10 @@ rownames(pSoil) <- rownames(DATw)
 
 TAX <- TAX0[colnames(YYw),]
 
-save(DATw, YYw, pVeg, pSoil, TAX, 
+save(DATw, YYw, pVeg, pSoil, TAX,
     file=file.path(ROOT2, "out", "birds", "data", "data-wrsi.Rdata"))
+save(DATw, YYw, TAX, #pVeg, pSoil,
+    file=file.path(ROOT2, "out", "birds", "data", "data-wrsi-all.Rdata"))
 
 ## TODO
 ## - det map
@@ -1160,59 +1215,59 @@ yy <- YY[rownames(dat),]
 yy <- yy[,colSums(yy) > 0]
 tax <- TAX[colnames(yy),]
 
-ClosedCalopyForest <- c("Conif1", "Conif2", "Conif3", "Conif4", 
-    "Conif5", "Conif6", "Conif7", "Conif8", "Conif9", 
-    "Decid1", "Decid2", "Decid3", "Decid4", "Decid5", "Decid6", "Decid7", 
-    "Decid8", "Decid9", "Mixwood1", "Mixwood2", 
-    "Mixwood3", "Mixwood4", "Mixwood5", "Mixwood6", "Mixwood7", "Mixwood8", 
-    "Mixwood9", "Pine1", "Pine2", "Pine3", "Pine4", 
-    "Pine5", "Pine6", "Pine7", "Pine8", "Pine9", "Swamp-Conif1", 
-    "Swamp-Conif2", "Swamp-Conif3", "Swamp-Conif4", "Swamp-Conif5", 
-    "Swamp-Conif6", "Swamp-Conif7", "Swamp-Conif8", "Swamp-Conif9", 
-    "Swamp-Decid1", "Swamp-Decid2", 
-    "Swamp-Decid3", "Swamp-Decid4", "Swamp-Decid5", "Swamp-Decid6", 
-    "Swamp-Decid7", "Swamp-Decid8", "Swamp-Decid9", 
-    "Swamp-Mixwood1", "Swamp-Mixwood2", "Swamp-Mixwood3", 
-    "Swamp-Mixwood4", "Swamp-Mixwood5", "Swamp-Mixwood6", "Swamp-Mixwood7", 
-    "Swamp-Mixwood8", "Swamp-Mixwood9", 
-    "Swamp-Pine1", "Swamp-Pine2", "Swamp-Pine3", "Swamp-Pine4", "Swamp-Pine5", 
-    "Swamp-Pine6", "Swamp-Pine7", "Swamp-Pine8", "Swamp-Pine9", 
-    "CCDecid1", "CCDecid2", "CCDecid3", "CCDecid4", 
-    "CCMixwood1", "CCMixwood2", "CCMixwood3", "CCMixwood4", 
-    "CCConif1", "CCConif2", "CCConif3", "CCConif4", 
+ClosedCalopyForest <- c("Conif1", "Conif2", "Conif3", "Conif4",
+    "Conif5", "Conif6", "Conif7", "Conif8", "Conif9",
+    "Decid1", "Decid2", "Decid3", "Decid4", "Decid5", "Decid6", "Decid7",
+    "Decid8", "Decid9", "Mixwood1", "Mixwood2",
+    "Mixwood3", "Mixwood4", "Mixwood5", "Mixwood6", "Mixwood7", "Mixwood8",
+    "Mixwood9", "Pine1", "Pine2", "Pine3", "Pine4",
+    "Pine5", "Pine6", "Pine7", "Pine8", "Pine9", "Swamp-Conif1",
+    "Swamp-Conif2", "Swamp-Conif3", "Swamp-Conif4", "Swamp-Conif5",
+    "Swamp-Conif6", "Swamp-Conif7", "Swamp-Conif8", "Swamp-Conif9",
+    "Swamp-Decid1", "Swamp-Decid2",
+    "Swamp-Decid3", "Swamp-Decid4", "Swamp-Decid5", "Swamp-Decid6",
+    "Swamp-Decid7", "Swamp-Decid8", "Swamp-Decid9",
+    "Swamp-Mixwood1", "Swamp-Mixwood2", "Swamp-Mixwood3",
+    "Swamp-Mixwood4", "Swamp-Mixwood5", "Swamp-Mixwood6", "Swamp-Mixwood7",
+    "Swamp-Mixwood8", "Swamp-Mixwood9",
+    "Swamp-Pine1", "Swamp-Pine2", "Swamp-Pine3", "Swamp-Pine4", "Swamp-Pine5",
+    "Swamp-Pine6", "Swamp-Pine7", "Swamp-Pine8", "Swamp-Pine9",
+    "CCDecid1", "CCDecid2", "CCDecid3", "CCDecid4",
+    "CCMixwood1", "CCMixwood2", "CCMixwood3", "CCMixwood4",
+    "CCConif1", "CCConif2", "CCConif3", "CCConif4",
     "CCPine1", "CCPine2", "CCPine3", "CCPine4")
 MixedDecidForest <- c(
-    "Decid1", "Decid2", "Decid3", "Decid4", "Decid5", "Decid6", "Decid7", 
-    "Decid8", "Decid9", "Mixwood1", "Mixwood2", 
-    "Mixwood3", "Mixwood4", "Mixwood5", "Mixwood6", "Mixwood7", "Mixwood8", 
-    "Mixwood9", 
-    "Swamp-Decid1", "Swamp-Decid2", 
-    "Swamp-Decid3", "Swamp-Decid4", "Swamp-Decid5", "Swamp-Decid6", 
-    "Swamp-Decid7", "Swamp-Decid8", "Swamp-Decid9", 
-    "Swamp-Mixwood1", "Swamp-Mixwood2", "Swamp-Mixwood3", 
-    "Swamp-Mixwood4", "Swamp-Mixwood5", "Swamp-Mixwood6", "Swamp-Mixwood7", 
-    "Swamp-Mixwood8", "Swamp-Mixwood9", 
-    "CCDecid1", "CCDecid2", "CCDecid3", "CCDecid4", 
+    "Decid1", "Decid2", "Decid3", "Decid4", "Decid5", "Decid6", "Decid7",
+    "Decid8", "Decid9", "Mixwood1", "Mixwood2",
+    "Mixwood3", "Mixwood4", "Mixwood5", "Mixwood6", "Mixwood7", "Mixwood8",
+    "Mixwood9",
+    "Swamp-Decid1", "Swamp-Decid2",
+    "Swamp-Decid3", "Swamp-Decid4", "Swamp-Decid5", "Swamp-Decid6",
+    "Swamp-Decid7", "Swamp-Decid8", "Swamp-Decid9",
+    "Swamp-Mixwood1", "Swamp-Mixwood2", "Swamp-Mixwood3",
+    "Swamp-Mixwood4", "Swamp-Mixwood5", "Swamp-Mixwood6", "Swamp-Mixwood7",
+    "Swamp-Mixwood8", "Swamp-Mixwood9",
+    "CCDecid1", "CCDecid2", "CCDecid3", "CCDecid4",
     "CCMixwood1", "CCMixwood2", "CCMixwood3", "CCMixwood4")
-Wetland <- c("Swamp-Conif0", "Swamp-ConifR", "Swamp-Conif1", 
-    "Swamp-Conif2", "Swamp-Conif3", "Swamp-Conif4", "Swamp-Conif5", 
-    "Swamp-Conif6", "Swamp-Conif7", "Swamp-Conif8", "Swamp-Conif9", 
-    "Swamp-Decid0", "Swamp-DecidR", "Swamp-Decid1", "Swamp-Decid2", 
-    "Swamp-Decid3", "Swamp-Decid4", "Swamp-Decid5", "Swamp-Decid6", 
-    "Swamp-Decid7", "Swamp-Decid8", "Swamp-Decid9", "Swamp-Mixwood0", 
-    "Swamp-MixwoodR", "Swamp-Mixwood1", "Swamp-Mixwood2", "Swamp-Mixwood3", 
-    "Swamp-Mixwood4", "Swamp-Mixwood5", "Swamp-Mixwood6", "Swamp-Mixwood7", 
-    "Swamp-Mixwood8", "Swamp-Mixwood9", "Swamp-Pine0", "Swamp-PineR", 
-    "Swamp-Pine1", "Swamp-Pine2", "Swamp-Pine3", "Swamp-Pine4", "Swamp-Pine5", 
-    "Swamp-Pine6", "Swamp-Pine7", "Swamp-Pine8", "Swamp-Pine9", "Wetland-Bare", 
-    "Wetland-GrassHerb", "Wetland-Shrub", "Wetland-BSpr0", "Wetland-BSprR", 
-    "Wetland-BSpr1", "Wetland-BSpr2", "Wetland-BSpr3", "Wetland-BSpr4", 
-    "Wetland-BSpr5", "Wetland-BSpr6", "Wetland-BSpr7", "Wetland-BSpr8", 
-    "Wetland-BSpr9", "Wetland-Decid0", "Wetland-DecidR", "Wetland-Decid1", 
-    "Wetland-Decid2", "Wetland-Decid3", "Wetland-Decid4", "Wetland-Decid5", 
-    "Wetland-Decid6", "Wetland-Decid7", "Wetland-Decid8", "Wetland-Decid9", 
-    "Wetland-Larch0", "Wetland-LarchR", "Wetland-Larch1", "Wetland-Larch2", 
-    "Wetland-Larch3", "Wetland-Larch4", "Wetland-Larch5", "Wetland-Larch6", 
+Wetland <- c("Swamp-Conif0", "Swamp-ConifR", "Swamp-Conif1",
+    "Swamp-Conif2", "Swamp-Conif3", "Swamp-Conif4", "Swamp-Conif5",
+    "Swamp-Conif6", "Swamp-Conif7", "Swamp-Conif8", "Swamp-Conif9",
+    "Swamp-Decid0", "Swamp-DecidR", "Swamp-Decid1", "Swamp-Decid2",
+    "Swamp-Decid3", "Swamp-Decid4", "Swamp-Decid5", "Swamp-Decid6",
+    "Swamp-Decid7", "Swamp-Decid8", "Swamp-Decid9", "Swamp-Mixwood0",
+    "Swamp-MixwoodR", "Swamp-Mixwood1", "Swamp-Mixwood2", "Swamp-Mixwood3",
+    "Swamp-Mixwood4", "Swamp-Mixwood5", "Swamp-Mixwood6", "Swamp-Mixwood7",
+    "Swamp-Mixwood8", "Swamp-Mixwood9", "Swamp-Pine0", "Swamp-PineR",
+    "Swamp-Pine1", "Swamp-Pine2", "Swamp-Pine3", "Swamp-Pine4", "Swamp-Pine5",
+    "Swamp-Pine6", "Swamp-Pine7", "Swamp-Pine8", "Swamp-Pine9", "Wetland-Bare",
+    "Wetland-GrassHerb", "Wetland-Shrub", "Wetland-BSpr0", "Wetland-BSprR",
+    "Wetland-BSpr1", "Wetland-BSpr2", "Wetland-BSpr3", "Wetland-BSpr4",
+    "Wetland-BSpr5", "Wetland-BSpr6", "Wetland-BSpr7", "Wetland-BSpr8",
+    "Wetland-BSpr9", "Wetland-Decid0", "Wetland-DecidR", "Wetland-Decid1",
+    "Wetland-Decid2", "Wetland-Decid3", "Wetland-Decid4", "Wetland-Decid5",
+    "Wetland-Decid6", "Wetland-Decid7", "Wetland-Decid8", "Wetland-Decid9",
+    "Wetland-Larch0", "Wetland-LarchR", "Wetland-Larch1", "Wetland-Larch2",
+    "Wetland-Larch3", "Wetland-Larch4", "Wetland-Larch5", "Wetland-Larch6",
     "Wetland-Larch7", "Wetland-Larch8", "Wetland-Larch9")
 
 

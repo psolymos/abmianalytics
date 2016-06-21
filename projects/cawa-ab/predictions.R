@@ -134,6 +134,8 @@ ts <- droplevels(ts[!is.na(ts$Sector),])
 library(RColorBrewer)
 br <- c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, Inf)
 Col <- rev(brewer.pal(10, "RdYlGn"))
+Colxfun <- colorRampPalette(Col, space = "rgb")
+Col2 <- Colxfun(100)
 
 spp <- "CAWA"
 
@@ -160,6 +162,8 @@ for (i in 2:length(regs)) {
 level <- 0.9
 km <- fstatv(pxNcr0, level=level)
 save(km, file=file.path(ROOT, "out", "birds", "results", "cawa", "cawa-km-predB.Rdata"))
+
+load(file.path(ROOT, "out", "birds", "results", "cawa", "cawa-km-predB.Rdata"))
 km2 <- km[match(rownames(kgrid), rownames(km)),]
 
 
@@ -177,21 +181,26 @@ km2 <- km[match(rownames(kgrid), rownames(km)),]
     crmean <- mean(cr)
 
     Max <- max(qcr)
-    cr <- pmin(100, ceiling(99 * sqrt(cr / Max))+1)
+    cr0 <- cr
+    #cr <- pmin(100, ceiling(99 * sqrt(cr0 / Max))+1)
+    cr <- pmin(100, ceiling(99 * (cr0 / Max))+1)
+
+    iiii <- !(kgrid$POINT_Y > 50 & kgrid$NRNAME != "Grassland")
 
     fname <- file.path("c:/Users/Peter/Dropbox/josm/cawa-jeff/revision",
         "cawa-map-cr.png")
     png(fname, width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=C1[cr], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    points(kgrid$X[iiii], kgrid$Y[iiii], pch=15, cex=0.2, col="grey")
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
 #    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,],
 #        points(X, Y, col=CE, pch=15, cex=cex))
-    if (TYPE == "N")
-        with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
-    if (TYPE == "S")
-        with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
-    mtext(side=3,paste(NAM, "\nCurrent abundance"),col="grey30", cex=legcex)
+#    if (TYPE == "N")
+#        with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
+#    if (TYPE == "S")
+#        with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
+    mtext(side=3,"A",col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
 #	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
@@ -200,41 +209,54 @@ km2 <- km[match(rownames(kgrid), rownames(km)),]
         j <- i * abs(diff(c(5450000, 5700000)))/100
         segments(190000, 5450000+j, 220000, 5450000+j, col=C1[i], lwd=2, lend=2)
     }
-    text(240000, 5450000, "0%")
-    text(240000, 0.5*(5450000 + 5700000), "50%")
-    text(240000, 5700000, "100%")
+    pv <- as.character(round(c(0, 0.25, 0.5, 0.75, 1)*Max, 3))
+    zzz <- 10000
+    text(240000, 5730000, "Density (males / ha)")
+    text(240000+zzz, 5450000, "0.000")
+    text(240000+zzz, 5450000 + 0.25*(5700000-5450000), pv[2])
+    text(240000+zzz, 0.5*(5450000 + 5700000), pv[3])
+    text(240000+zzz, 5450000 + 0.75*(5700000-5450000), pv[4])
+    text(240000+zzz, 5700000, pv[5])
     par(op)
     dev.off()
 
 
     covC <- CoV
-    zval <- as.integer(cut(covC, breaks=br))
+    zval <- pmin(100, ceiling(99 * (covC / 2))+1)
+    #zval <- as.integer(cut(covC, breaks=br))
     fname <- file.path("c:/Users/Peter/Dropbox/josm/cawa-jeff/revision",
         "cawa-map-cov.png")
     png(fname, width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
-    plot(kgrid$X, kgrid$Y, col=Col[zval], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    plot(kgrid$X, kgrid$Y, col=Col2[zval], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    points(kgrid$X[is.na(zval) & !iiii], kgrid$Y[is.na(zval) & !iiii], col=Col[10], pch=15, cex=cex)
+    points(kgrid$X[iiii], kgrid$Y[iiii], pch=15, cex=0.2, col="grey")
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
 #    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,],
 #        points(X, Y, col=CE, pch=15, cex=cex))
-    if (TYPE == "N")
-        with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
-    if (TYPE == "S")
-        with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
-    mtext(side=3,paste(NAM, "CoV"),col="grey30", cex=legcex)
+#    if (TYPE == "N")
+#        with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
+#    if (TYPE == "S")
+#        with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
+    mtext(side=3,"B",col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
 #	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
-    TEXT <- paste0(100*br[-length(br)], "-", 100*br[-1])
-    INF <- grepl("Inf", TEXT)
-    if (any(INF))
-        TEXT[length(TEXT)] <- paste0(">", 100*br[length(br)-1])
-
-    TITLE <- "Coefficient of variation"
-    legend("bottomleft", border=rev(Col), fill=rev(Col), bty="n", legend=rev(TEXT),
-                title=TITLE, cex=legcex*0.8)
+    for (i in 1:100) {
+        #lines(c(190000, 220000), c(5450000, 5700000), col=Col2[i], lwd=2)
+        j <- i * abs(diff(c(5450000, 5700000)))/100
+        segments(190000, 5450000+j, 220000, 5450000+j, col=Col2[i], lwd=2, lend=2)
+    }
+    zzz <- 8000
+    text(240000, 5730000, "Coefficient of variation")
+    text(240000+zzz, 5450000, " 0.0")
+    text(240000+zzz, 5450000 + 0.25*(5700000-5450000), " 0.5")
+    text(240000+zzz, 0.5*(5450000 + 5700000), " 1.0")
+    text(240000+zzz, 5450000 + 0.75*(5700000-5450000), " 1.5")
+    text(240000+zzz, 5700000, ">2.0")
     par(op)
     dev.off()
+
 
 #    sdMax <- quantile(SD,q,na.rm=TRUE)
     #br2 <- seq(0, 0.02, len=length(Col))

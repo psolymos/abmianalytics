@@ -15,12 +15,13 @@ up <- function() {
 #up()
 source("~/repos/abmianalytics/R/wrsi_functions.R")
 
-load(file.path(ROOT, "data", "data-wrsi.Rdata"))
+load(file.path(ROOT, "data", "data-wrsi-all.Rdata"))
 
 TAX$Fn <- droplevels(TAX$English_Name)
 levels(TAX$Fn) <- nameAlnum(levels(TAX$Fn), capitalize="mixed", collapse="")
 DATw$NSRxLUF <- interaction(DATw$NSRNAME, DATw$LUF_NAME, sep="_", drop=TRUE)
 
+if (FALSE) {
 xn <- DATw[DATw$useNorth,]
 yn <- YYw[DATw$useNorth,]
 yn <- as.matrix(yn)
@@ -61,82 +62,17 @@ write.csv(tab_loc_a, file=file.path(ROOT, "tables", "birds-number-of-locations-a
 
 yn <- yn[,colSums(yn) > 0]
 ys <- ys[,colSums(ys) > 0]
+}
 
 ## spp specific output
 
-#spp <- "BTNW"
 spp <- "CAWA"
-
-## useavail-north
-## table: useavail-north
-
-res_useavail_north <- list()
-for (i in 1:length(colnames(yn))) {
-    spp <- colnames(yn)[i]
-    cat("useavail-north", spp, i, "/", ncol(yn), "\n");flush.console()
-    keep <- rowSums(pveghf) > 0
-    yyy <- yn[keep, spp]
-    hhh <- pveghf[keep,]
-    NAM <- as.character(TAX[spp, "English_Name"])
-    nsrv <- sum(yn[,spp])
-    nloc <- sum(yn[,spp] > 0)
-    fname <- file.path(ROOT, "figs", "useavail-north",
-        paste0(as.character(TAX[spp, "Fn"]), ".png"))
-    png(file=fname, width=600, height=480)
-    tmp <- plot_wrsi(yyy, hhh, south=FALSE)
-    mtext(paste0(NAM, " (detected at ", nloc, " locations, ", nsrv, " surveys)"), adj=0, line=2,
-        side=3, cex=1.2, col="grey40", las=1)
-    dev.off()
-    res_useavail_north[[spp]] <- tmp
-}
-
-wrsi_n <- t(sapply(res_useavail_north, "[[", "WRSI"))
-colnames(wrsi_n) <- rownames(res_useavail_north[[1]])
-rownames(wrsi_n) <- TAX[names(res_useavail_north), "English_Name"]
-write.csv(wrsi_n, file=file.path(ROOT, "tables", "useavail-north.csv"))
-
-## useavail-south
-## table: useavail-south
-
-res_useavail_south <- list()
-for (i in 1:length(colnames(ys))) {
-    spp <- colnames(ys)[i]
-    cat("useavail-south", spp, i, "/", ncol(ys), "\n");flush.console()
-    keep <- rowSums(psoilhf) > 0
-    yyy <- ys[keep, spp]
-    hhh <- psoilhf[keep,]
-    NAM <- as.character(TAX[spp, "English_Name"])
-    nsrv <- sum(ys[,spp])
-    nloc <- sum(ys[,spp] > 0)
-    fname <- file.path(ROOT, "figs", "useavail-south",
-        paste0(as.character(TAX[spp, "Fn"]), ".png"))
-    png(file=fname, width=600, height=480)
-    tmp <- plot_wrsi(yyy, hhh, south=TRUE)
-    mtext(paste0(NAM, " (detected at ", nloc, " locations, ", nsrv, " surveys)"), adj=0, line=2,
-        side=3, cex=1.2, col="grey40", las=1)
-    dev.off()
-    res_useavail_south[[spp]] <- tmp
-}
-
-wrsi_s <- t(sapply(res_useavail_south, "[[", "WRSI"))
-colnames(wrsi_s) <- rownames(res_useavail_south[[1]])
-rownames(wrsi_s) <- TAX[names(res_useavail_south), "English_Name"]
-write.csv(wrsi_s, file=file.path(ROOT, "tables", "useavail-south.csv"))
 
 ## map-det
 
 load(file.path("e:/peter/AB_data_v2016/out", "kgrid", "kgrid_table.Rdata"))
 col1 <- c("#C8FBC8","#C8E6FA","#F5E6F5","#FFDCEC","#FFE6CD","#FFF1D2")[match(kgrid$NRNAME,
     c("Boreal","Foothills","Rocky Mountain","Canadian Shield","Parkland","Grassland"))]
-## analysis regions
-if (FALSE) {
-col1 <- c("green","green","grey","green","brown","yellow")[match(kgrid$NRNAME,
-    c("Boreal","Foothills","Rocky Mountain","Canadian Shield","Parkland","Grassland"))]
-col1[kgrid$NSRNAME == "Dry Mixedwood"] <- "brown"
-png(file="analysis-regions.png", width=600, height=1000)
-plot(kgrid$X, kgrid$Y, pch=15, cex=0.2, col=col1, axes=FALSE, ann=FALSE)
-dev.off()
-}
 
 library(raster)
 library(sp)
@@ -153,45 +89,43 @@ city <- as.data.frame(spTransform(city, CRS(paste0("+proj=tmerc +lat_0=0 +lon_0=
 xyw <- as.matrix(kgrid[kgrid$pWater >= 0.99,c("X","Y")])
 blank <- matrix(0, 0, 2)
 
-for (i in 1:length(colnames(YYw))) {
-    spp <- colnames(YYw)[i]
+
 
     ## mask (e.g. for CAWA project)
-    iii <- rep(TRUE, nrow(DATw))
-    #iii <- DATw$POINT_Y > 50 & DATw$NRNAME != "Grassland"
+    #iii <- rep(TRUE, nrow(DATw))
+    iii <- DATw$POINT_Y > 50 & DATw$NRNAME != "Grassland"
 
-    cat("map-det", spp, i, "/", ncol(YYw), "\n");flush.console()
+#    cat("map-det", spp, i, "/", ncol(YYw), "\n");flush.console()
     xy0 <- as.matrix(DATw[YYw[,spp] == 0 & iii, c("X","Y")])
     xy1 <- as.matrix(DATw[YYw[,spp] > 0 & iii, c("X","Y")])
 
     NAM <- as.character(TAX[spp, "English_Name"])
-    nsrv <- sum(YYw[iii,spp])
-    nloc <- sum(YYw[iii,spp] > 0)
-    fname <- file.path(ROOT, "figs", "map-det",
-        paste0(as.character(TAX[spp, "Fn"]), ".png"))
-    #fname <- "c:/Users/Peter/Dropbox/josm/cawa-jeff/revision/cawa-map-det.png"
+    (nsrv <- sum(YYw[iii,spp]))
+    (nloc <- sum(YYw[iii,spp] > 0))
+    #fname <- file.path(ROOT, "figs", "map-det",
+    #    paste0(as.character(TAX[spp, "Fn"]), ".png"))
+    fname <- "c:/Users/Peter/Dropbox/josm/cawa-jeff/revision/cawa-map-det.png"
 	png(file=fname, width=600, height=1000)
 #    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), "-detections.eps"),
 #        horizontal = FALSE, onefile = FALSE, paper = "special",
 #        width=6, height=10)
     plot(kgrid$X, kgrid$Y, pch=15, cex=0.2, col=col1, axes=FALSE, ann=FALSE)
-    #iiii <- !(kgrid$POINT_Y > 50 & kgrid$NRNAME != "Grassland")
-    #points(kgrid$X[iiii], kgrid$Y[iiii], pch=15, cex=0.2, col="grey")
+    iiii <- !(kgrid$POINT_Y > 50 & kgrid$NRNAME != "Grassland")
+    points(kgrid$X[iiii], kgrid$Y[iiii], pch=15, cex=0.2, col="grey")
     points(xyw, pch=15, cex=0.2, col=rgb(0.3,0.45,0.9))
     #points(xy0, pch=19, cex=0.5, col="red3")
     points(xy0, pch=3, cex=0.6, col="red2")
     points(xy1, pch=19, cex=1.6, col="red4")
-    mtext(paste0(NAM, "\n(detected at ", nloc, " locations, ", nsrv, " surveys)"), line=1,
-        side=3, adj=0.5, cex=1.4, col="grey40")
+    #mtext(paste0(NAM, "\n(detected at ", nloc, " locations, ", nsrv, " surveys)"), line=1,
+    #    side=3, adj=0.5, cex=1.4, col="grey40")
     points(city, pch=18, col="grey10")
     text(city, rownames(city), cex=1, adj=-0.1, col="grey10")
-    legend("bottomleft", pch=c(15,15,15,15,15,15, NA, 3,19),
-        col=c("#C8FBC8","#C8E6FA","#F5E6F5","#FFDCEC","#FFE6CD","#FFF1D2", NA, "red2", "red4"),
-        #col=c("#C8FBC8","#C8E6FA","#F5E6F5","#FFDCEC","#FFE6CD",NA, "grey", NA, "red2", "red4"),
+    legend("bottomleft", pch=c(15,15,15,15,15,NA,15, NA, 3,19),
+        col=c("#C8FBC8","#C8E6FA","#F5E6F5","#FFDCEC","#FFE6CD",NA, "grey", NA, "red2", "red4"),
         legend=c(
-        "Boreal","Foothills","Rocky Mountain","Canadian Shield","Parkland","Grassland",
-        ## "Boreal","Foothills","Rocky Mountain","Canadian Shield","Parkland",NA,"Outside of study area",
+        "Boreal","Foothills","Rocky Mountain","Canadian Shield","Parkland",
+        NA,"Outside of study area",
         NA, "Survey location","Detection"), title="Natural Regions",
-        cex=1.2, pt.cex=c(4,4,4,4,4,4, NA, 1.5,2), bty="n")
+        cex=1.2, pt.cex=c(4,4,4,4,4,NA,4, NA, 1.5,2), bty="n")
 	dev.off()
-}
+
