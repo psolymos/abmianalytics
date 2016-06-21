@@ -48,7 +48,7 @@ NAM <- as.character(tax[spp, "English_Name"])
 load(file.path(ROOT, "results", "cawa", "birds_abmi-cawa_CAWA.Rdata"))
 #load(file.path(ROOT, "results", "north", "birds_abmi-north_CAWA.Rdata"))
 
-(mid_summary <- getFancyMidTab(res, mods))
+(mid_summary <- getFancyMidTab(res, mods, truncate=1000))
 write.csv(mid_summary, row.names=FALSE, file=file.path(OUTDIR, "cawa-tab-mid.csv"))
 printCoefmat(coef_summary <- getSummary(res))
 write.csv(coef_summary, row.names=TRUE, file=file.path(OUTDIR, "cawa-tab-coef.csv"))
@@ -105,12 +105,54 @@ fstat(sqrt(exp(est_yr[,"ARU3SM"])))
 
 ## residual trend
 
+mu_hf <- apply(est_hf, 1, function(z) Xn %*% z)
+lam_hf <- exp(mu_hf + off_cawa)
+lam_hf_mean <- rowMeans(lam_hf)
+#pr_hf_stat <- fstatv(pr_hf, level=level)
 
-pr_hf <- exp(apply(est_hf, 1, function(z) Xn %*% z))
-pr_hf_stat <- fstatv(pr_hf, level=level)
+c_fun <- function(i) {
+    yy <- y_cawa[BB[,i]]
+    offf <- lam_hf[BB[,i], i]
+    yr <- DAT$YR[BB[,i]]
+    m <- glm(yy ~ yr, offset=offf, family="poisson")
+    coef(m)
+}
+tr_coef <- pbsapply(1:240, c_fun)
+c_fun2 <- function(i) {
+    yy <- y_cawa[BB[,i]]
+    offf <- lam_hf_mean[BB[,i]]
+    yr <- DAT$YR[BB[,i]]
+    m <- glm(yy ~ yr, offset=offf, family="poisson")
+    coef(m)
+}
+tr_coef2 <- pbsapply(1:240, c_fun2)
 
+DAT$isBBS <- DAT$PCODE=="BBSAB"
+c_fun3 <- function(i, bbs=FALSE) {
+    isBBS <- if (bbs)
+        DAT$isBBS[BB[,i]] else !DAT$isBBS[BB[,i]]
+    yy <- y_cawa[BB[,i]][isBBS]
+    offf <- lam_hf_mean[BB[,i]][isBBS]
+    yr <- DAT$YR[BB[,i]][isBBS]
+    m <- glm(yy ~ yr, offset=offf, family="poisson")
+    coef(m)
+}
+tr_coef3bbs <- pbsapply(1:240, c_fun3, bbs=TRUE)
+tr_coef3not <- pbsapply(1:240, c_fun3, bbs=FALSE)
 
+hist(100*(exp(0.1*est_yr[,"YR"])-1))
+hist(100*(exp(0.1*tr_coef[2,])-1))
+hist(100*(exp(0.1*tr_coef2[2,])-1))
+hist(100*(exp(0.1*tr_coef3bbs[2,])-1))
+hist(100*(exp(0.1*tr_coef3not[2,])-1))
 
+fstat(100*(exp(0.1*est_yr[,"YR"])-1))
+fstat(100*(exp(0.1*tr_coef[2,])-1))
+fstat(100*(exp(0.1*tr_coef2[2,])-1))
+fstat(100*(exp(0.1*tr_coef3bbs[2,])-1))
+fstat(100*(exp(0.1*tr_coef3not[2,])-1))
+
+100*sum(lam_hf_mean[DAT$isBBS])/sum(lam_hf_mean)
 
 ## annual indices?
 
@@ -147,17 +189,19 @@ auc <- sapply(rocAll1, function(z) as.numeric(z$auc))
 #rocAll2 <- lapply(1:10, function(i) roc(Y2, prAll[,i]))
 
 pdf(file.path(OUTDIR, "cawa-fig-roc.pdf"))
-#Show <- rocAll1[c("NULL","ARU","Wet","Space","Dec","HF","Year")]
-Show <- rocAll1
-Col <- rev(brewer.pal(length(Show), "RdBu"))
+Show <- rocAll1[c("Wet","HF","Year")]
+#Show <- rocAll1
+#Col <- rev(brewer.pal(length(Show), "RdBu"))
+Col <- c("blue","lightblue","red")
 op <- par(las=1)
-plot(Show[[1]], col=Col[1], lty=2)
+plot(Show[[1]], col=Col[1], lty=1)
 for (i in 2:length(Show))
     lines(Show[[i]], col=Col[i], lty=1)
 aucx <- sapply(Show, function(z) as.numeric(z$auc))
-txt <- paste0(names(aucx), " (AUC = ", round(aucx, 3), ")")
-legend("bottomright", bty="n", col=Col,
-    lty=c(2,rep(1, length(Show)-1)), lwd=2, legend=txt)
+#txt <- paste0(names(aucx), " (AUC = ", round(aucx, 3), ")")
+txt <- paste0(c("Local","Spatial","Year"), " (AUC = ", round(aucx, 3), ")")
+legend("bottomright", bty="n", col=rev(Col),
+    lty=1, lwd=2, legend=rev(txt))
 dev.off()
 
 
@@ -199,6 +243,12 @@ dev.off()
 
 ## SRA/EDR results
 
+library(MASS)
+library(QPAD)
+ROOTx <- "c:/bam/May2015"
+load(file.path(ROOTx, "out", "BAMCOEFS_QPAD_v3.rda"))
+.BAMCOEFS$version
+
 load(file.path(ROOT, "data", "data-offset-covars.Rdata"))
 summary(offdat)
 
@@ -208,9 +258,6 @@ Xq <- cbind("(Intercept)"=1, TREE=offdat$TREE,
     LCC4Conif=ifelse(offdat$LCC4=="Conif", 1, 0),
     LCC4Open=ifelse(offdat$LCC4=="Open", 1, 0),
     LCC4Wet=ifelse(offdat$LCC4=="Wet", 1, 0))
-OFF <- matrix(NA, nrow(offdat), length(sppp))
-rownames(OFF) <- rownames(offdat)
-colnames(OFF) <- sppp
 
 spp <- "CAWA"
 p <- rep(NA, nrow(offdat))
@@ -247,19 +294,17 @@ p[ii] <- sra_fun(offdat$MAXDUR[ii], cf0[1])
 offdat$p <- p
 offdat$A <- A
 offdat$q <- q
-
-ROOT <- "c:/bam/May2015"
+offdat <- offdat[rownames(DAT),]
+summary(offdat)
+summary(offdat$p)
+summary(100*sqrt(offdat$A[offdat$MAXDIS==Inf]/pi))
+summary(offdat$A[offdat$MAXDIS<Inf])
 
 R <- 200
 #spp <- "OVEN"
 level <- 0.9
 version <- 3
 prob <- c(0, 1) + c(1, -1) * ((1-level)/2)
-
-library(MASS)
-library(QPAD)
-load(file.path(ROOT, "out", "BAMCOEFS_QPAD_v3.rda"))
-.BAMCOEFS$version
 
 jd <- seq(0.35, 0.55, 0.01) # TSSR
 ts <- seq(-0.25, 0.5, 0.01) # JDAY
@@ -422,6 +467,7 @@ range(qmat)
 
 pdf(file.path(OUTDIR, "cawa-fig-qpad.pdf"), width=12)
 op <- par(las=1, mfrow=c(1,2))
+
 xval <- if (mi$sra %in% c("9","10","11","12","13","14"))
     ls*365 else jd*365
 image(xval, ts*24, pmat,
@@ -433,6 +479,10 @@ image(xval, ts*24, pmat,
     main="A")#"Probability of availability")
 #contour(xval, ts*24, pmat, add=TRUE, labcex = 0.8)
 box()
+
+#ii <- sample(which(y_cawa==0), 1000)
+#with(offdat[ii,], points(365*JDAY, 24*TSSR, pch=21, cex=0.8, col="lightblue"))
+#with(offdat[y_cawa>0,], points(365*JDAY, 24*TSSR, pch=19, cex=0.8, col="darkblue"))
 
 image(1:nlevels(xq$LCC4), tr*100, qmat,
       #col = rev(grey(seq(1-max(qmat), 1-min(qmat), len=50))), axes=FALSE,

@@ -949,6 +949,8 @@ ROOT2 <- "e:/peter/AB_data_v2016"
 load(file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
 source("~/repos/abmianalytics/R/analysis_models.R")
 
+B <- 239
+
 DAT$MAXDUR <- NULL
 DAT$MAXDIS <- NULL
 DAT$JDAY <- NULL
@@ -996,7 +998,6 @@ sapply(list(full=DAT, southOK=DATs, northOK=DATn, JOSM=DATj), nrow)
 ## bootids
 
 library(detect)
-B <- 239
 
 bbfun <- function(DAT1, B, out=0.1, seed=1234) {
     set.seed(seed)
@@ -1045,7 +1046,7 @@ bbfun2 <- function(DAT1, B, out=0.1, seed=1234) {
     if (nlevels(droplevels(DAT1k$bootid)) != nlevels(droplevels(DAT1$bootid)))
         stop("bootid problem: pick larger blocks for validation")
     ## one run
-    r1fun <- function(DAT1k) {
+    r1fun <- function(DAT1k, replace=FALSE) {
         ## get rid of resamples
         DAT1k <- DAT1k[sample.int(nrow(DAT1k)),]
         DAT1k <- nonDuplicated(DAT1k, SS_YR)
@@ -1053,12 +1054,13 @@ bbfun2 <- function(DAT1, B, out=0.1, seed=1234) {
         for (l in levels(DAT1k$bootid)) {
             sset0 <- which(DAT1k$bootid == l)
             id2[[l]] <- if (length(sset0) < 2)
-                sset0 else sample(sset0, length(sset0), replace=TRUE)
+                sset0 else sample(sset0, length(sset0), replace=replace)
         }
         DAT1k$IDMAP[unname(unlist(id2))]
     }
-    BB1 <- pbsapply(seq_len(B), function(i) r1fun(DAT1k))
-    BB1
+    BB0 <- r1fun(DAT1k, replace=FALSE)
+    BB1 <- pbsapply(seq_len(B), function(i) r1fun(DAT1k, replace=TRUE))
+    cbind(BB0, BB1)
 #aa <- unique(BB1)
 #table(selected=DAT1$IDMAP %in% aa)
 #table(selected=DAT1$IDMAP %in% aa, revisit=duplicated(DAT1$SS_YR))

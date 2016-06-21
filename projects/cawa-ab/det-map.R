@@ -21,50 +21,6 @@ TAX$Fn <- droplevels(TAX$English_Name)
 levels(TAX$Fn) <- nameAlnum(levels(TAX$Fn), capitalize="mixed", collapse="")
 DATw$NSRxLUF <- interaction(DATw$NSRNAME, DATw$LUF_NAME, sep="_", drop=TRUE)
 
-if (FALSE) {
-xn <- DATw[DATw$useNorth,]
-yn <- YYw[DATw$useNorth,]
-yn <- as.matrix(yn)
-xs <- DATw[DATw$useSouth,]
-ys <- YYw[DATw$useSouth,]
-ys <- as.matrix(ys)
-
-pveghf <- pVeg[rownames(yn), c("Decid", "Mixwood", "Conif", "Pine",
-    "BSpr", "Larch", "Open", "Shrub", "Wet",
-    "HFor", "Cult", "UrbInd", "HardLin", "SoftLin")]
-pveghf[,"Open"] <- pveghf[,"Open"] + pveghf[,"Shrub"]
-pveghf <- pveghf[,colnames(pveghf) != "Shrub"]
-colnames(pveghf) <- c("Deciduous", "Mixedwood", "White Spruce", "Pine",
-    "Black Spruce", "Larch", "Open", "Wet",
-    "Forestry", "Cultivated", "Urban/Industrial", "Hard Linear", "Soft Linear")
-
-psoilhf <- pSoil[rownames(ys),]
-psoilhf <- psoilhf[,c("Productive", "Clay", "Saline", "RapidDrain", "Cult", "UrbInd")]
-colnames(psoilhf) <- c("Productive", "Clay", "Saline", "Rapid Drain",
-    "Cultivated", "Urban/Industrial")
-
-tab_srv_n <- as.matrix(groupSums(YYw[DATw$useNorth,], 1, DATw[DATw$useNorth,"NSRxLUF"]))
-tab_srv_s <- as.matrix(groupSums(YYw[DATw$useSouth,], 1, DATw[DATw$useSouth,"NSRxLUF"]))
-tab_srv_a <- as.matrix(groupSums(YYw, 1, DATw[,"NSRxLUF"]))
-colnames(tab_srv_n) <- colnames(tab_srv_s) <- colnames(tab_srv_a) <- TAX$English_Name
-
-tab_loc_n <- as.matrix(groupSums(ifelse(yn > 0, 1, 0), 1, DATw[DATw$useNorth,"NSRxLUF"]))
-tab_loc_s <- as.matrix(groupSums(ifelse(ys > 0, 1, 0), 1, DATw[DATw$useSouth,"NSRxLUF"]))
-tab_loc_a <- as.matrix(groupSums(ifelse(as.matrix(YYw) > 0, 1, 0), 1, DATw[,"NSRxLUF"]))
-colnames(tab_loc_n) <- colnames(tab_loc_s) <- colnames(tab_loc_a) <- TAX$English_Name
-
-write.csv(tab_srv_n, file=file.path(ROOT, "tables", "birds-number-of-surveys-north.csv"))
-write.csv(tab_srv_s, file=file.path(ROOT, "tables", "birds-number-of-surveys-south.csv"))
-write.csv(tab_srv_a, file=file.path(ROOT, "tables", "birds-number-of-surveys-all.csv"))
-write.csv(tab_loc_n, file=file.path(ROOT, "tables", "birds-number-of-locations-north.csv"))
-write.csv(tab_loc_s, file=file.path(ROOT, "tables", "birds-number-of-locations-south.csv"))
-write.csv(tab_loc_a, file=file.path(ROOT, "tables", "birds-number-of-locations-all.csv"))
-
-yn <- yn[,colSums(yn) > 0]
-ys <- ys[,colSums(ys) > 0]
-}
-
-## spp specific output
 
 spp <- "CAWA"
 
