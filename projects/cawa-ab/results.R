@@ -58,18 +58,15 @@ dev.off()
 
 est_hab <- getEst(res, stage=stage_hab, na.out=FALSE, Xn)
 res_coef <- pred_veghf(est_hab, Xn, burn_included=FALSE)
-MAX <- fig_veghf_ymax(res_coef)
+MAX <- 1.05*fig_veghf_ymax(res_coef)
 NDAT <- sum(y_cawa > 0)
-#fname <- file.path(ROOT, "figs", "veghf-north",
-#    paste0(as.character(tax[spp, "Spp"]), ".png"))
-#png(file=fname,width=1500,height=700)
 pdf(file.path(OUTDIR, "cawa-fig-hab.pdf"), width=14)
-fig_veghf(res_coef, "", ymax=MAX, "Density (males / ha)")
+fig_veghf_black(res_coef, "", ymax=MAX, "Density (males / ha)")
+dev.off()
+png(file.path(OUTDIR, "cawa-fig-hab.png"), width=480*2)
+fig_veghf_black(res_coef, "", ymax=MAX, "Density (males / ha)")
 dev.off()
 ## linear
-#fname <- file.path(ROOT, "figs", "linear-north",
-#    paste0(as.character(tax[spp, "Spp"]), ".png"))
-#png(file=fname,width=350,height=400)
 pdf(file.path(OUTDIR, "cawa-fig-lin.pdf"))
 fig_linear(attr(res_coef, "linear"), paste0(NAM, "\nNorth (n = ", NDAT, " det.)"))
 dev.off()
@@ -90,18 +87,21 @@ fig_any("DecMixKM", est_hf, Xn, "DecMixKM")
 dev.off()
 
 pdf(file.path(OUTDIR, "cawa-fig-dec.pdf"))
-fig_any("DecMixKM", est_hf, Xn, LAB="", xlab="% deciduous and mixed forest in 564m buffer")
+fig_any_black("DecMixKM", est_hf, Xn, LAB="", xlab="% deciduous and mixed forest in 564m buffer")
+dev.off()
+png(file.path(OUTDIR, "cawa-fig-dec.png"))
+fig_any_black("DecMixKM", est_hf, Xn, LAB="", xlab="% deciduous and mixed forest in 564m buffer")
 dev.off()
 
 est_yr <- getEst(res, stage=length(mods), na.out=FALSE, Xn)
 
 ## annual % trend
-fstat(100*(exp(0.1*est_yr[,"YR"])-1))
+fstat(100*(exp(0.1*est_yr[,"YR"])-1), level)
 ## roadside bias
-fstat(exp(est_yr[,"ROAD01"]))
+fstat(exp(est_yr[,"ROAD01"]), level)
 ## EDR ratio
-fstat(sqrt(exp(est_yr[,"ARU3RF"])))
-fstat(sqrt(exp(est_yr[,"ARU3SM"])))
+fstat(sqrt(exp(est_yr[,"ARU3RF"])), level)
+fstat(sqrt(exp(est_yr[,"ARU3SM"])), level)
 
 ## residual trend
 
@@ -148,26 +148,27 @@ c_fun4 <- function(i, keep) {
     m <- glm(yy ~ yr, offset=offf, family="poisson")
     coef(m)
 }
-tr_coef4 <- pbsapply(1:240, c_fun4, keep=DAT$PCODE != "CL")
+tr_coef4 <- pbsapply(1:240, c_fun4, keep=!(DAT$PCODE %in% c("CL","BBSAB")))
 tr_coef4cl <- pbsapply(1:240, c_fun4, keep=DAT$PCODE == "CL")
 
-hist(100*(exp(0.1*est_yr[,"YR"])-1))
-hist(100*(exp(0.1*tr_coef[2,])-1))
-hist(100*(exp(0.1*tr_coef2[2,])-1))
-hist(100*(exp(0.1*tr_coef3bbs[2,])-1))
-hist(100*(exp(0.1*tr_coef3not[2,])-1))
 
-fstat(100*(exp(0.1*est_yr[,"YR"])-1))
-fstat(100*(exp(0.1*tr_coef[2,])-1))
-fstat(100*(exp(0.1*tr_coef2[2,])-1))
-fstat(100*(exp(0.1*tr_coef3bbs[2,])-1))
-fstat(100*(exp(0.1*tr_coef3not[2,])-1))
-fstat(100*(exp(0.1*tr_coef4[2,])-1))
-fstat(100*(exp(0.1*tr_coef4cl[2,])-1))
+## year effect
+fstat(100*(exp(0.1*est_yr[,"YR"])-1), level)
+## 240x resid all
+fstat(100*(exp(0.1*tr_coef[2,])-1), level)
+## mean resid all
+fstat(100*(exp(0.1*tr_coef2[2,])-1), level)
+## mean resid BBS only
+fstat(100*(exp(0.1*tr_coef3bbs[2,])-1), level)
+## mean resid, non-BBS
+fstat(100*(exp(0.1*tr_coef3not[2,])-1), level)
+## mean resid, non -BBS and not CL
+fstat(100*(exp(0.1*tr_coef4[2,])-1), level)
+## mean resid, CL only
+fstat(100*(exp(0.1*tr_coef4cl[2,])-1), level)
 
 100*sum(lam_hf_mean[DAT$isBBS])/sum(lam_hf_mean)
 
-## annual indices?
 
 ## GoF AUC/ROC
 
@@ -175,7 +176,7 @@ library(pROC)
 Y1 <- ifelse(y_cawa>0, 1, 0)
 
 ## out-of-sample set
-ss1 <- which(!(1:nrow(DAT) %in% BB[,1]))
+ss1 <- which(!(1:nrow(DAT) %in% BB[,1]) & !DAT$Revisit)
 #ss <- lapply(1:240, function(i) which(!(1:nrow(DAT) %in% BB[,i])))
 #ssd <- data.frame(id=unlist(ss), iter=unlist(lapply(1:240, function(i) rep(i, length(ss[[i]])))))
 #ssx <- Xtab(~iter + id, ssd)
@@ -201,11 +202,23 @@ auc <- sapply(rocAll1, function(z) as.numeric(z$auc))
 #Y2 <- ifelse(y_cawa>1, 1, 0)
 #rocAll2 <- lapply(1:10, function(i) roc(Y2, prAll[,i]))
 
-pdf(file.path(OUTDIR, "cawa-fig-roc.pdf"))
 Show <- rocAll1[c("Wet","HF","Year")]
 #Show <- rocAll1
 #Col <- rev(brewer.pal(length(Show), "RdBu"))
-Col <- c("blue","lightblue","red")
+Col <- c("blue","darkgreen","red")
+
+pdf(file.path(OUTDIR, "cawa-fig-roc.pdf"))
+op <- par(las=1)
+plot(Show[[1]], col=Col[1], lty=1)
+for (i in 2:length(Show))
+    lines(Show[[i]], col=Col[i], lty=1)
+aucx <- sapply(Show, function(z) as.numeric(z$auc))
+#txt <- paste0(names(aucx), " (AUC = ", round(aucx, 3), ")")
+txt <- paste0(c("Local","Spatial","Year"), " (AUC = ", round(aucx, 3), ")")
+legend("bottomright", bty="n", col=rev(Col),
+    lty=1, lwd=2, legend=rev(txt))
+dev.off()
+png(file.path(OUTDIR, "cawa-fig-roc.png"))
 op <- par(las=1)
 plot(Show[[1]], col=Col[1], lty=1)
 for (i in 2:length(Show))
@@ -247,7 +260,23 @@ cti <- 10 * exp(DAT$xCTI) - 1
 ii <- sample(which(y_cawa==0), 10000)
 with(DAT[ii,], points(100*WetPT, cti[ii], pch=21, cex=0.6, col="lightblue"))
 with(DAT[y_cawa>0,], points(100*WetPT, cti[y_cawa>0], pch=19, cex=0.6, col="darkblue"))
-contour(vals1*100, vals2, pr_mat, add=TRUE, labcex = 0.8, levels=c(0.1, 0.25, 0.5, 1))
+contour(vals1*100, vals2, pr_mat, add=TRUE, labcex = 1, levels=c(0.2, 0.4, 0.6, 0.8, 1))
+axis(1)
+axis(2)
+box()
+par(op)
+dev.off()
+png(file.path(OUTDIR, "cawa-fig-wet.png"))
+op <- par(las=1)
+image(vals1*100, vals2, pr_mat,
+      col = rev(grey(seq(0.2, 1, len=25))), axes=FALSE,
+      ylab="Compound topographic index", xlab="% wet habitats in 150m buffer",
+      main="")
+cti <- 10 * exp(DAT$xCTI) - 1
+ii <- sample(which(y_cawa==0), 10000)
+with(DAT[ii,], points(100*WetPT, cti[ii], pch=21, cex=0.6, col="lightblue"))
+with(DAT[y_cawa>0,], points(100*WetPT, cti[y_cawa>0], pch=19, cex=0.6, col="darkblue"))
+contour(vals1*100, vals2, pr_mat, add=TRUE, labcex = 1, levels=c(0.2, 0.4, 0.6, 0.8, 1))
 axis(1)
 axis(2)
 box()
@@ -311,7 +340,7 @@ offdat <- offdat[rownames(DAT),]
 summary(offdat)
 summary(offdat$p)
 summary(100*sqrt(offdat$A[offdat$MAXDIS==Inf]/pi))
-summary(offdat$A[offdat$MAXDIS<Inf])
+summary(offdat$p[offdat$MAXDIS<Inf])
 
 R <- 200
 #spp <- "OVEN"

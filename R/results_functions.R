@@ -386,6 +386,145 @@ function(pr, LAB="", ymax, ylab="Relative abundance")
 
     invisible(pr2)
 }
+fig_veghf_black <-
+function(pr, LAB="", ymax, ylab="Relative abundance")
+{
+
+        op <- par(mai=c(1.5,1,0.2,0.3))
+        labs <- c(
+            "WhiteSpruce  0", "WhiteSpruce  10",
+            "WhiteSpruce  20", "WhiteSpruce  40", "WhiteSpruce  60", "WhiteSpruce  80",
+            "WhiteSpruce  100", "WhiteSpruce  120", "WhiteSpruce  140",
+
+            "Pine  0", "Pine  10", "Pine  20", "Pine  40", "Pine  60", "Pine  80", "Pine  100",
+            "Pine  120", "Pine  140",
+
+            "Deciduous  0", "Deciduous  10", "Deciduous  20", "Deciduous  40",
+            "Deciduous  60", "Deciduous  80", "Deciduous  100", "Deciduous  120",
+            "Deciduous  140",
+
+            "Mixedwood  0", "Mixedwood  10", "Mixedwood  20",
+            "Mixedwood  40", "Mixedwood  60", "Mixedwood  80", "Mixedwood  100",
+            "Mixedwood  120", "Mixedwood  140",
+
+            "BlackSpruce  0", "BlackSpruce  10",
+            "BlackSpruce  20", "BlackSpruce  40", "BlackSpruce  60", "BlackSpruce  80",
+            "BlackSpruce  100", "BlackSpruce  120", "BlackSpruce  140",
+
+            "Larch  0", "Larch  10", "Larch  20", "Larch  40", "Larch  60",
+            "Larch  80", "Larch  100", "Larch  120", "Larch  140",
+
+            "GrassHerb", "Shrub", "Swamp", "WetGrass", "WetShrub",
+            "Cult", "UrbInd",
+
+            "WhiteSpruce CC 0", "WhiteSpruce CC 10", "WhiteSpruce CC 20", "WhiteSpruce CC 40", "WhiteSpruce CC 60",
+            "Pine CC 0", "Pine CC 10", "Pine CC 20", "Pine CC 40", "Pine CC 60",
+            "Deciduous CC 0", "Deciduous CC 10", "Deciduous CC 20", "Deciduous CC 40", "Deciduous CC 60",
+            "Mixedwood CC 0", "Mixedwood CC 10", "Mixedwood CC 20", "Mixedwood CC 40", "Mixedwood CC 60")
+
+        lwd <- 1
+        pr2 <- pr[labs,]
+        lci <- pr2[,3]
+        uci <- pr2[,4]
+        y1 <- pr2[,2]
+        if (missing(ymax))
+            ymax <- min(max(uci),2*max(y1))
+        #x <- c(rep(1:9,6)+rep(seq(0,50,10),each=9), 61,63,65, 68,70)
+        x <- c(rep(1:9,6)+rep(seq(0,50,10),each=9), 61,63,65,67,69, 72,74)
+        space <- c(1,x[-1]-x[-length(x)])-0.99  # The spacing between bars
+        col.r <- c(rep(0,9),seq(0.3,0.6,length.out=9),seq(0.5,1,length.out=9),
+            seq(0.8,0.9,length.out=9),rep(0,9),rep(0,9),
+            0.8,0.2,0,0,0, rep(0.2,2))  # The red part
+        col.g <- c(seq(0.5,1,length.out=9),seq(0.4,0.8,length.out=9),seq(0.1,0.2,length.out=9),
+            seq(0.4,0.8,length.out=9),seq(0.4,0.7,length.out=9),seq(0.15,0.5,length.out=9),
+            0.8,0.8,0,0,0, rep(0.2,2))  # The green part
+        col.b <- c(rep(0,9),rep(0,9),rep(0,9),seq(0.2,0.4,length.out=9),
+            seq(0.2,0.6,length.out=9),seq(0.4,0.7,length.out=9),
+            0,0,1,1,1, rep(0.2,2))  # The blue part
+        idx <- 1:length(x)
+        x1 <- barplot(y1[idx],
+            space=space,
+            border="white",
+            col=rgb(col.r,col.g,col.b),
+            ylim=c(0,ymax),
+            #xlim=c(-0.5,81.5),
+            xlim=c(-0.5,75.5),
+            xaxs="i", yaxt="n",
+            ylab=ylab,
+            col.lab=1,
+            cex.lab=1.2,axisnames=FALSE)[,1]
+        ax <- axis(side=2,cex.axis=0.9,col.axis=1,col.ticks=1,las=2)
+        #abline(h=ax, col=1)
+        x1 <- barplot(y1[idx],
+            space=space,border="white",col=rgb(col.r,col.g,col.b),ylim=c(0,ymax),
+            xaxs="i",yaxt="n",
+            #ylab="Relative abundance",
+            col.lab=1,
+            cex.lab=1.2,axisnames=FALSE, add=TRUE)[,1]
+        box(bty="o",col=1)
+        for (i in 1:length(x1)) {
+            lines(rep(x1[i],2), c(lci[idx][i], y1[idx][i]),col="white", lwd=lwd)
+            lines(rep(x1[i],2), c(uci[idx][i], y1[idx][i]),col=rgb(col.r[i],col.g[i],col.b[i]), lwd=lwd)
+        }
+        mtext(side=1,at=x1[c(5,14,23,32,41,50)],line=1.4,
+            c("Upland Spruce","Pine","Deciduous","Mixedwood","Black Spruce","Larch"),
+            col=rgb(col.r[c(5,14,23,32,41,50)],col.g[c(5,14,23,32,41,50)],
+            col.b[c(5,14,23,32,41,50)]),las=1)
+        at1<-rep(seq(1,9,2),6)+rep(c(0,9,18,27,36,45),each=5)
+        mtext(side=1,at=x1[at1]-0.3,rep(c("0","20","60","100","140"),6),
+            line=0.2,adj=0.5,cex=0.8,col=rgb(col.r[at1],col.g[at1],col.b[at1]))
+        mtext(side=1,at=-0.25,adj=1,line=0.2,"Age:",col="grey10",cex=0.8)
+        mtext(side=3,at=0,adj=0,LAB,col=1)
+        mtext(side=1,at=x1[c(55,56,57,58,59)],
+            #c("Grass","Shrub","Wetland"),
+            c("GrassHerb", "Shrub", "Swamp", "WetGrass", "WetShrub"),
+            col=rgb(col.r[c(55,56,57,58,59)],col.g[c(55,56,57,58,59)],
+            col.b[c(55,56,57,58,59)]),
+            las=2,adj=1.1)
+        mtext(side=1,at=x1[c(60,61)],c("Cultivated HF","Urban/Industry HF"),
+            col=rgb(col.r[c(60,61)],col.g[c(60,61)],col.b[c(60,61)]),las=2,adj=1.1)
+
+        ## Add cutblock trajectories - upland conifer
+        i1<-which(names(y1)=="WhiteSpruce CC 0"):which(names(y1)=="WhiteSpruce CC 60")
+        x2<-x1[1:5]+0.15*(x1[2]-x1[1])
+        for (j in 1:5)
+            lines(rep(x2[j],2),c(lci[i1[j]],uci[i1[j]]),col="grey10", lwd=lwd)
+        x3 <- which(names(y1)=="WhiteSpruce  80")
+        lines(c(x2[1:5], x1[x3]),y1[c(i1, x3)],col="grey30", lty=1, lwd=lwd)
+        points(x2[1:5],y1[i1],pch=18,cex=1,col="grey30")
+        points(x2[1:5],y1[i1],pch=5,cex=0.7,col="grey10")
+        ## Pine
+        i1<-which(names(y1)=="Pine CC 0"):which(names(y1)=="Pine CC 60")
+        x2<-x1[10:15]+0.15*(x1[2]-x1[1])
+        for (j in 1:5)
+            lines(rep(x2[j],2),c(lci[i1[j]],uci[i1[j]]),col="grey10", lwd=lwd)
+        x3 <- which(names(y1)=="Pine  80")
+        lines(c(x2[1:5], x1[x3]),y1[c(i1, x3)],col="grey30", lty=1, lwd=lwd)
+        points(x2[1:5],y1[i1],pch=18,cex=1,col="grey30")
+        points(x2[1:5],y1[i1],pch=5,cex=0.7,col="grey10")
+        ## Deciduous
+        i1<-which(names(y1)=="Deciduous CC 0"):which(names(y1)=="Deciduous CC 60")
+        x2<-x1[19:24]+0.15*(x1[2]-x1[1])
+        for (j in 1:5)
+            lines(rep(x2[j],2),c(lci[i1[j]],uci[i1[j]]),col="grey10", lwd=lwd)
+        x3 <- which(names(y1)=="Deciduous  80")
+        lines(c(x2[1:5], x1[x3]),y1[c(i1, x3)],col="grey30", lty=1, lwd=lwd)
+        points(x2[1:5],y1[i1],pch=18,cex=1,col="grey30")
+        points(x2[1:5],y1[i1],pch=5,cex=0.7,col="grey10")
+        ## Mixed
+        i1<-which(names(y1)=="Mixedwood CC 0"):which(names(y1)=="Mixedwood CC 60")
+        x2<-x1[28:33]+0.15*(x1[2]-x1[1])
+        for (j in 1:5)
+            lines(rep(x2[j],2),c(lci[i1[j]],uci[i1[j]]),col="grey10", lwd=lwd)
+        x3 <- which(names(y1)=="Mixedwood  80")
+        lines(c(x2[1:5], x1[x3]),y1[c(i1, x3)],col="grey30", lty=1, lwd=lwd)
+        points(x2[1:5],y1[i1],pch=18,cex=1,col="grey30")
+        points(x2[1:5],y1[i1],pch=5,cex=0.7,col="grey10")
+
+        par(op)
+
+    invisible(pr2)
+}
 
 rank_fun <- function(x, l, u, n=1, col=NULL, lab=NULL) {
     p <- data.frame(x=x, l=l, u=u, n=n)
@@ -610,6 +749,42 @@ function(what, est, Xn, LAB="", xlab="Percent")
     mtext(side=1,at=50,adj=0.5,xlab,line=2,col="grey50",cex=1.2)
     box(col="grey60")
     mtext(side=3,at=0,adj=0,LAB,col="grey30")
+
+    polygon(c(pr$hf, rev(pr$hf)),
+        c(pr[,"CL1q"], rev(pr[,"CL2q"])),
+        col=Colb, border=NA)  # Transparent colours so they overlap
+    lines(pr$hf, pr[,"Median"], col=Coll,lwd=2)
+    #text(rep(0.1, 5), c(0.9, 0.75, 0.6, 0.45, 0.3), names(pr), pos=4, col=Coll)
+
+    #par(op)
+
+    invisible(NULL)
+}
+
+fig_any_black <-
+function(what, est, Xn, LAB="", xlab="Percent")
+{
+    pr <- pred_any(what, est, Xn)
+    ymax <- max(pr[,-1])
+    mmax <- min(max(max(max(pr[,2])), 5), 10)
+    ymax <- min(mmax, ymax)
+
+    Colb <- c("#00FF0015", "#DD000010", "#D0D00025", "#80008015", "#0000DD10")[1]
+    Coll <- c(rgb(0.2,0.6,0.2), "red3", "orange3", "#A000A0", "blue3")[1]
+
+    #op <- par(mfrow=c(1,1))
+
+    plot(pr$hf, pr$Median,
+        xlab="", ylim=c(0,ymax),typ="n",
+        #cex.axis=1.3,xaxs="i",yaxs="i",xaxt="n",yaxt="n",bty="n",
+        ylab="Relative abundance",col.lab=1,cex.lab=1.2)
+#    axis(side=1,at=seq(0,100,25),tck=1,cex.axis=1)
+#    axis(side=2,at=seq(0,ymax,0.5),tck=1,cex.axis=1,las=2)
+#    axis(side=1,at=seq(0,100,25),tck=0.01,cex.axis=1)
+#    axis(side=2,at=seq(0,ymax,0.5),tck=0.01,las=2)
+    mtext(side=1,at=50,adj=0.5,xlab,line=2,cex=1.2)
+    box()
+    mtext(side=3,at=0,adj=0,LAB,col=1)
 
     polygon(c(pr$hf, rev(pr$hf)),
         c(pr[,"CL1q"], rev(pr[,"CL2q"])),

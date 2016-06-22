@@ -161,10 +161,12 @@ for (i in 2:length(regs)) {
 
 level <- 0.9
 km <- fstatv(pxNcr0, level=level)
-save(km, file=file.path(ROOT, "out", "birds", "results", "cawa", "cawa-km-predB.Rdata"))
+km_tot <- colSums(100 * pxNcr0) # ha to km^2
+save(km, km_tot, file=file.path(ROOT, "out", "birds", "results", "cawa", "cawa-km-predB.Rdata"))
 
 load(file.path(ROOT, "out", "birds", "results", "cawa", "cawa-km-predB.Rdata"))
 km2 <- km[match(rownames(kgrid), rownames(km)),]
+fstat(km_tot, .9)
 
 
     TYPE <- "N"
@@ -188,9 +190,9 @@ km2 <- km[match(rownames(kgrid), rownames(km)),]
     iiii <- !(kgrid$POINT_Y > 50 & kgrid$NRNAME != "Grassland")
 
     fname <- file.path("c:/Users/Peter/Dropbox/josm/cawa-jeff/revision",
-        "cawa-map-cr.png")
-    png(fname, width=W, height=H)
-    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+        "cawa-map-cr-cov.png")
+    png(fname, width=W*2, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,2))
     plot(kgrid$X, kgrid$Y, col=C1[cr], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     points(kgrid$X[iiii], kgrid$Y[iiii], pch=15, cex=0.2, col="grey")
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
@@ -217,17 +219,17 @@ km2 <- km[match(rownames(kgrid), rownames(km)),]
     text(240000+zzz, 0.5*(5450000 + 5700000), pv[3])
     text(240000+zzz, 5450000 + 0.75*(5700000-5450000), pv[4])
     text(240000+zzz, 5700000, pv[5])
-    par(op)
-    dev.off()
+    #par(op)
+    #dev.off()
 
 
     covC <- CoV
     zval <- pmin(100, ceiling(99 * (covC / 2))+1)
     #zval <- as.integer(cut(covC, breaks=br))
-    fname <- file.path("c:/Users/Peter/Dropbox/josm/cawa-jeff/revision",
-        "cawa-map-cov.png")
-    png(fname, width=W, height=H)
-    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    #fname <- file.path("c:/Users/Peter/Dropbox/josm/cawa-jeff/revision",
+    #    "cawa-map-cov.png")
+    #png(fname, width=W, height=H)
+    #op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=Col2[zval], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     points(kgrid$X[is.na(zval) & !iiii], kgrid$Y[is.na(zval) & !iiii], col=Col[10], pch=15, cex=cex)
     points(kgrid$X[iiii], kgrid$Y[iiii], pch=15, cex=0.2, col="grey")
