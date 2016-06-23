@@ -627,6 +627,8 @@ dev.off()
 }
 
 ## CoV
+
+TAG <- "-probKM"
 results10km_list <- list()
 
 for (spp in SPP) {
@@ -662,6 +664,7 @@ for (spp in SPP) {
         pxScr[pxScr[,k] > qS,k] <- qS
     }
 
+    TR <- TRUE # transform to prob scale
     TYPE <- "C" # combo
     #if (!slt[spp, "veghf.north"])
     if (!(spp %in% fln))
@@ -679,6 +682,9 @@ wS[ks$useS] <- 1
 wS[ks$useN] <- 0
 
     cr <- wS * pxScr + (1-wS) * pxNcr
+    cr <- 100*cr
+    if (TR)
+        cr <- 1-exp(-cr)
 
     crveg <- groupMeans(cr, 1, ks$Row10_Col10, na.rm=TRUE)
 
@@ -705,13 +711,38 @@ results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
 
     NAM <- as.character(tax[spp, "English_Name"])
 
-    cat(spp, "\tCoV");flush.console()
+    cat(spp, "\tMean");flush.console()
+    zval <- as.integer(cut(covC, breaks=br))
+    zval <- pmin(100, ceiling(99 * (crvegm / max(crvegm, na.rm=TRUE)))+1)
+    zval <- zval[match(kgrid$Row10_Col10, rownames(crveg))]
+    fname <- file.path(ROOT, "out", "birds", "figs", "map-test",
+        paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
+    png(fname, width=W*3, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,3))
+    plot(kgrid$X, kgrid$Y, col=C1[zval], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,],
+#        points(X, Y, col=CE, pch=15, cex=cex))
+    if (TYPE == "N")
+        with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
+    if (TYPE == "S")
+        with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, TAG, "Mean"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+#	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
+    #par(op)
+    #dev.off()
 
+    cat("\tCoV");flush.console()
     zval <- as.integer(cut(covC, breaks=br))
     zval <- zval[match(kgrid$Row10_Col10, rownames(crveg))]
     fname <- file.path(ROOT, "out", "birds", "figs", "map-cov-cr",
         paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
-    png(fname, width=W, height=H)
+    if (TR)
+        fname <- file.path(ROOT, "out", "birds", "figs", "map-test",
+            paste0(as.character(tax[spp, "Spp"]), TAG, "-CoV", ".png"))
+    #png(fname, width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=Col[zval], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
@@ -721,7 +752,7 @@ results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
         with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
     if (TYPE == "S")
         with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
-    mtext(side=3,paste(NAM, "CoV"),col="grey30", cex=legcex)
+    mtext(side=3,paste(NAM, TAG, "CoV"),col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
 #	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
@@ -734,15 +765,18 @@ results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
     TITLE <- "Coefficient of variation"
     legend("bottomleft", border=rev(Col), fill=rev(Col), bty="n", legend=rev(TEXT),
                 title=TITLE, cex=legcex*0.8)
-    par(op)
-    dev.off()
+    #par(op)
+    #dev.off()
 
     cat("\tSD\n");flush.console()
     zval <- as.integer(cut(crvegsd/mean(crvegm,na.rm=TRUE), breaks=br))
     zval <- zval[match(kgrid$Row10_Col10, rownames(crveg))]
     fname <- file.path(ROOT, "out", "birds", "figs", "map-sd-cr",
         paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
-    png(fname, width=W, height=H)
+    if (TR)
+        fname <- file.path(ROOT, "out", "birds", "figs", "map-test",
+            paste0(as.character(tax[spp, "Spp"]), TAG, "-SD", ".png"))
+    #png(fname, width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=Col[zval], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
@@ -752,7 +786,7 @@ results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
         with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
     if (TYPE == "S")
         with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
-    mtext(side=3,paste(NAM, "SE"),col="grey30", cex=legcex)
+    mtext(side=3,paste(NAM, TAG, "SE"),col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
 #	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
