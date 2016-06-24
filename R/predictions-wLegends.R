@@ -135,7 +135,7 @@ ks <- kgrid[kgrid$Rnd10 <= 10,]
 xy10 <- groupMeans(as.matrix(kgrid[,c("X","Y")]), 1, kgrid$Row10_Col10)
 
 library(RColorBrewer)
-br <- c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, Inf)
+br <- c(-0.001, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, Inf)
 Col <- rev(brewer.pal(10, "RdYlGn"))
 
 ## csv
@@ -628,7 +628,7 @@ dev.off()
 
 ## CoV
 
-TAG <- "-probKM"
+TAG <- ""
 results10km_list <- list()
 
 for (spp in SPP) {
@@ -664,7 +664,7 @@ for (spp in SPP) {
         pxScr[pxScr[,k] > qS,k] <- qS
     }
 
-    TR <- TRUE # transform to prob scale
+    TR <- FALSE # transform to prob scale
     TYPE <- "C" # combo
     #if (!slt[spp, "veghf.north"])
     if (!(spp %in% fln))
@@ -683,8 +683,8 @@ wS[ks$useN] <- 0
 
     cr <- wS * pxScr + (1-wS) * pxNcr
     cr <- 100*cr
-    if (TR)
-        cr <- 1-exp(-cr)
+#    if (TR)
+#        cr <- 1-exp(-cr)
 
     crveg <- groupMeans(cr, 1, ks$Row10_Col10, na.rm=TRUE)
 
@@ -711,6 +711,7 @@ results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
 
     NAM <- as.character(tax[spp, "English_Name"])
 
+if (FALSE) {
     cat(spp, "\tMean");flush.console()
     zval <- as.integer(cut(covC, breaks=br))
     zval <- pmin(100, ceiling(99 * (crvegm / max(crvegm, na.rm=TRUE)))+1)
@@ -733,6 +734,7 @@ results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
 #	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
     #par(op)
     #dev.off()
+}
 
     cat("\tCoV");flush.console()
     zval <- as.integer(cut(covC, breaks=br))
@@ -742,7 +744,7 @@ results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
     if (TR)
         fname <- file.path(ROOT, "out", "birds", "figs", "map-test",
             paste0(as.character(tax[spp, "Spp"]), TAG, "-CoV", ".png"))
-    #png(fname, width=W, height=H)
+    png(fname, width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=Col[zval], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
@@ -757,7 +759,7 @@ results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
 #	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
 
-    TEXT <- paste0(100*br[-length(br)], "-", 100*br[-1])
+    TEXT <- paste0(100*round(br,1)[-length(br)], "-", 100*br[-1])
     INF <- grepl("Inf", TEXT)
     if (any(INF))
         TEXT[length(TEXT)] <- paste0(">", 100*br[length(br)-1])
@@ -765,8 +767,8 @@ results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
     TITLE <- "Coefficient of variation"
     legend("bottomleft", border=rev(Col), fill=rev(Col), bty="n", legend=rev(TEXT),
                 title=TITLE, cex=legcex*0.8)
-    #par(op)
-    #dev.off()
+    par(op)
+    dev.off()
 
     cat("\tSD\n");flush.console()
     zval <- as.integer(cut(crvegsd/mean(crvegm,na.rm=TRUE), breaks=br))
@@ -776,7 +778,7 @@ results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
     if (TR)
         fname <- file.path(ROOT, "out", "birds", "figs", "map-test",
             paste0(as.character(tax[spp, "Spp"]), TAG, "-SD", ".png"))
-    #png(fname, width=W, height=H)
+    png(fname, width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
     plot(kgrid$X, kgrid$Y, col=Col[zval], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
@@ -791,7 +793,7 @@ results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
 #	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
 
-    br2 <- round(br * mean(crvegm,na.rm=TRUE), 3)
+    br2 <- round(round(br,1) * mean(crvegm,na.rm=TRUE), 3)
     TEXT <- paste0(br2[-length(br2)], "-", br2[-1])
     INF <- grepl("Inf", TEXT)
     if (any(INF))
