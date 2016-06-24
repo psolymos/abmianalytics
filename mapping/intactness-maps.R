@@ -23,7 +23,7 @@ mat0 <- as.matrix(rt)
 r_water <- as_Raster(kgrid$Row, kgrid$Col, kgrid$pWater, rt)
 r_water[r_water <= 0.99] <- NA
 ## Rockies to mask out
-r_mask <- as_Raster(kgrid$Row, kgrid$Col, 
+r_mask <- as_Raster(kgrid$Row, kgrid$Col,
     ifelse(kgrid$NRNAME == "Rocky Mountain" & kgrid$X < 800000, 1, 0), rt)
 r_mask[r_mask < 1] <- NA
 ## combine the 2 (this is necessary due to a bug in raster plotting
@@ -53,12 +53,12 @@ coordinates(city) <- ~ x + y
 proj4string(city) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 city <- spTransform(city, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))
 
-H <- 1000 
+H <- 1000
 W <- 600
 kgrid$Row <- as.factor(kgrid$Row)
 kgrid$Col <- as.factor(kgrid$Col)
 
-## non birds
+## intactness non birds
 
 xx <- c(#birds="Birds_Species Intactness",
     lichens="Lichens_Species Intactness",
@@ -66,6 +66,8 @@ xx <- c(#birds="Birds_Species Intactness",
     mammals="Mammals_Species Intactness",
     mites="Mites_Species Intactness",
     vplants="VPlants_Species Intactness")
+
+nval_list <- list()
 
 for (zz in 1:length(xx)) {
 DIR <- xx[zz] # "Birds_Species Intactness"
@@ -95,11 +97,15 @@ SI <- res
 meanSI <- rowMeans(SI, na.rm=TRUE)
 meanSI[is.na(meanSI)] <- 100
 
+nval <- pmin(100, ceiling(99 * meanSI/100)+1)
+nval_list[[zz]] <- nval
+
+if (FALSE) {
 ## make raster
 png(file.path(ROOT2, "out", paste0("intactness-", TAXA, ".png")), width=W, height=H)
 op <- par(mar=c(0, 0, 4, 0) + 0.1)
 r <- map_fun(meanSI, q=1, main="", colScale="intactness",
-    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE,
     legend=TRUE,
     mask=NULL)
 xxx <- switch(TAXA,
@@ -114,11 +120,12 @@ par(op)
 dev.off()
 writeRaster(r, file.path(ROOT2, "out", paste0("intactness-", TAXA, ".asc")),
     overwrite=TRUE)
-
 }
 
+}
+names(nval_list) <- names(xx)
 
-## birds
+## intactness birds
 TAXA <- "birds"
 fl <- list.files("e:/peter/sppweb2015/birds-si")
 names(fl) <- sapply(strsplit(fl, "."), "[[", 1)
@@ -143,11 +150,19 @@ meanSI <- rowMeans(SI, na.rm=TRUE)
 #meanSI <- rowMeans(SI)
 meanSI[is.na(meanSI)] <- 0
 
+nval <- pmin(100, ceiling(99 * meanSI)+1)
+nval_list[["birds"]] <- nval
+
+OF_si <- rowMeans(res[,tab[use,"oldforest"]==1], na.rm=TRUE)
+OF_si[is.na(OF_si)] <- 0
+OF_si <- pmin(100, ceiling(99 * OF_si)+1)
+
+
 ## make raster
 png(file.path(ROOT2, "out", paste0("intactness-", TAXA, ".png")), width=W, height=H)
 #op <- par(mar=c(0, 0, 4, 0) + 0.1)
 r <- map_fun(meanSI, q=1, main="", colScale="intactness",
-    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE,
     legend=TRUE,
     mask=NULL)
 title(main="Intactness - Birds")
@@ -156,10 +171,14 @@ dev.off()
 writeRaster(r, file.path(ROOT2, "out", paste0("intactness-", TAXA, ".asc")),
     overwrite=TRUE)
 
+## intactness, all species: average of taxa (no weighting)
 
+cnval <- do.call(cbind, nval_list)
+AllSI <- rowMeans(cnval)
+AllSI <- pmin(100, ceiling(99 * AllSI/100)+1)
+out <- data.frame(LinkID=kgrid$Row_Col, cnval, all=AllSI, oldforestbirds=OF_si)
+write.csv(out, row.names=FALSE, file="w:/normalized_data/intactness-normalized.csv")
 
-
-## All species: average of taxa (no weighting)
 
 ROOT2 <- "e:/peter/sppweb2015-round3/Species Intactness"
 
@@ -178,7 +197,7 @@ x <- (x1 + x2 + x3 + x4 + x5 + x6) / 6
 png(file.path(ROOT2, "out", paste0("intactness-all.png")), width=W, height=H)
 #op <- par(mar=c(0, 0, 4, 0) + 0.1)
 r <- map_fun(x, q=1, main="", colScale="intactness",
-    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE,
     legend=TRUE,
     mask=NULL)
 title(main="Intactness - All species")
@@ -190,7 +209,7 @@ writeRaster(r, file.path(ROOT2, "out", paste0("intactness-all.asc")),
 png(file.path(ROOT2, "out", paste0("intactness-birds.png")), width=W, height=H)
 #op <- par(mar=c(0, 0, 4, 0) + 0.1)
 r <- map_fun(x1, q=1, main="", colScale="intactness",
-    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE,
     legend=TRUE,
     mask=NULL)
 title(main="Intactness - Birds")
@@ -219,7 +238,7 @@ xx <- Alberta_Uniq[,2][match(rownames(kgrid), Alberta_Uniq[,1])]
 png(file.path(ROOT3, "out", paste0("uniqueness-PSversion-", lab, ".png")), width=W, height=H)
 #op <- par(mar=c(0, 0, 4, 0) + 0.1)
 r <- map_fun(xx, q=1, main="", colScale="intactness",
-    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE,
     legend=TRUE,
     mask=NULL)
 title(main=paste0("Uniqueness - ", Lab))
@@ -240,7 +259,7 @@ x <- (x1 + x2 + x3 + x4 + x5 + x6) / 6
 png(file.path(ROOT3, paste0("uniqueness-PSversion-all.png")), width=W, height=H)
 #op <- par(mar=c(0, 0, 4, 0) + 0.1)
 r <- map_fun(x, q=1, main="", colScale="intactness",
-    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE,
     legend=TRUE,
     mask=NULL)
 title(main=paste0("Uniqueness - All species"))
@@ -256,11 +275,16 @@ x <- read.csv(file.path(ROOT3, "Relative Species richness for all taxa March 201
 
 xx <- x[match(rownames(kgrid), x$LinkID),]
 
+xxx <- xx
+for (i in 2:8)
+    xxx[,i] <- pmin(100, ceiling(99 * xxx[,i])+1)
+write.csv(xxx, row.names=FALSE, file="w:/normalized_data/richness-normalized.csv")
+
 for (i in 1:7) {
     lab <- c("mammals", "birds", "mites", "vplants", "mosses", "lichens", "all")[i]
     z <- xx[,i+1]
     r <- map_fun(z, q=1, main="", colScale="intactness",
-        plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+        plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE,
         legend=TRUE,
         mask=NULL)
     writeRaster(r, file.path(ROOT3, paste0("richness-", lab, ".asc")),
@@ -269,14 +293,41 @@ for (i in 1:7) {
 
 
 r1 <- map_fun(xx[,"Curr"], q=1, main="", colScale="abund",
-    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE,
     legend=TRUE,
     mask=NULL)
 r2 <- map_fun(xx[,"Ref"], q=1, main="", colScale="abund",
-    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE, 
+    plotWater=TRUE, maskRockies=TRUE, plotCities=TRUE,
     legend=TRUE,
     mask=NULL)
 writeRaster(r1, "e:/peter/sppweb2015-round3/fromJim/NN plant/nNNSpp-Curr.asc",
     overwrite=TRUE)
 writeRaster(r2, "e:/peter/sppweb2015-round3/fromJim/NN plant/nNNSpp-Ref.asc",
     overwrite=TRUE)
+
+## normalize uniqueness
+
+
+xx <- list(all="e:/peter/sppweb2015-round3/uniqueness/All Taxa Uniqueness Maps and Figures/All Taxa uniqueness North and South_native habitat based April 2016.Rdata",
+birds="e:/peter/sppweb2015-round3/uniqueness/Birds Uniqueness Maps and Figures/Birds uniqueness North and South_native habitat based April 2016.Rdata",
+habitats="e:/peter/sppweb2015-round3/uniqueness/Habitat Uniqueness Maps and Figures/Habitat uniqueness North and South_April 2016.Rdata",
+lichens="e:/peter/sppweb2015-round3/uniqueness/Lichen Uniqueness Maps and Figures/Lichens uniqueness North and South_native habitat based April 2016.Rdata",
+mammals="e:/peter/sppweb2015-round3/uniqueness/Mammals Uniqueness Maps and Figures/Mammals uniqueness North and South_native habitat based April 2016.Rdata",
+mites="e:/peter/sppweb2015-round3/uniqueness/Mites Uniqueness Maps and Figures/Mites uniqueness North and South_native habitat based April 2016.Rdata",
+mosses="e:/peter/sppweb2015-round3/uniqueness/Moss Uniqueness Maps and Figures/Moss uniqueness North and South_native habitat based April 2016.Rdata",
+vplants="e:/peter/sppweb2015-round3/uniqueness/VPlants Uniqueness Maps and Figures/Vascular plants uniqueness North and South_native habitat based April 2016.Rdata")
+
+
+out <- data.frame(LinkID=kgrid$Row_Col)
+fff <- function(x) pmin(100, ceiling(99 * x)+1)
+for (i in 1:8) {
+
+load(xx[[i]])
+North_out <- North_out[match(rownames(kgrid), North_out$LinkID),]
+South_out <- South_out[match(rownames(kgrid), South_out$LinkID),]
+out[[paste0(names(xx)[i], "_uniq_north")]] <- fff(North_out[,2])
+out[[paste0(names(xx)[i], "_uniq_south")]] <- fff(South_out[,2])
+
+}
+
+write.csv(out, row.names=FALSE, file="w:/normalized_data/uniqueness-normalized.csv")
