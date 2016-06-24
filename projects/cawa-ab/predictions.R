@@ -57,6 +57,7 @@ for (i in 2:length(regs)) {
     Asoil <- rbind(Asoil, colSums(trSoil))
     rownames(Asoil) <- regs[1:i]
 }
+## area in ha
 Aveg <- Aveg / 10^4
 Asoil <- Asoil / 10^4
 
@@ -85,7 +86,7 @@ C2 <- Col2fun(200)
 CW <- rgb(0.4,0.3,0.8) # water
 CE <- "lightcyan4" # exclude
 
-q <- 0.99
+q <- 1
 H <- 1000
 W <- 600
 
@@ -124,48 +125,38 @@ AvegN <- AvegN / sum(AvegN)
 AsoilS <- colSums(Asoil[lxn$S,])
 AsoilS <- AsoilS / sum(AsoilS)
 
-tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
-tv <- droplevels(tv[!is.na(tv$Sector),])
-ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
-ts <- droplevels(ts[!is.na(ts$Sector),])
-
-
-
 library(RColorBrewer)
 br <- c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, Inf)
 Col <- rev(brewer.pal(10, "RdYlGn"))
 Colxfun <- colorRampPalette(Col, space = "rgb")
 Col2 <- Colxfun(100)
+level <- 0.9
 
 spp <- "CAWA"
 
 load(file.path(ROOT, "out", "birds", "results", "cawa", "predB", paste0(regs[1], ".Rdata")))
 rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells)[Cells == 1]
 pxNcr0 <- pxNcrB
+#reg_veg_B <- array(NA, c(nrow(ch2veg), 240))
+hbNcrB[is.na(hbNcrB)] <- 0 # reason: area=0 div by 0
+veg_B <- hbNcrB * Aveg[1,]
 for (i in 2:length(regs)) {
     cat(spp, regs[i], "\n");flush.console()
     load(file.path(ROOT, "out", "birds", "results", "cawa", "predB", paste0(regs[i], ".Rdata")))
     rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells)[Cells == 1]
     pxNcr0 <- rbind(pxNcr0, pxNcrB)
+    hbNcrB[is.na(hbNcrB)] <- 0 # reason: area=0 div by 0
+    veg_B <- veg_B + (hbNcrB * Aveg[i,])
 }
-#pxNcr <- pxNcr0[match(rownames(kgrid), rownames(pxNcr0)),]
-#sum(is.na(pxNcr))
-#sum(is.na(pxNcr0))
-#pxNcr[is.na(pxNcr)] <- 0
-#for (k in 1:ncol(pxNcr)) {
-#    qN <- quantile(pxNcr[is.finite(pxNcr[,k]),k], q, na.rm=TRUE)
-#    pxNcr[pxNcr[,k] > qN,k] <- qN
-#    qS <- quantile(pxScr[is.finite(pxScr[,k]),k], q, na.rm=TRUE)
-#    pxScr[pxScr[,k] > qS,k] <- qS
-#}
 
-level <- 0.9
 km <- fstatv(pxNcr0, level=level)
 km_tot <- colSums(100 * pxNcr0) # ha to km^2
-save(km, km_tot, file=file.path(ROOT, "out", "birds", "results", "cawa", "cawa-km-predB.Rdata"))
+save(km, km_tot, veg_B,
+    file=file.path(ROOT, "out", "birds", "results", "cawa", "cawa-km-predB.Rdata"))
 
 load(file.path(ROOT, "out", "birds", "results", "cawa", "cawa-km-predB.Rdata"))
 km2 <- km[match(rownames(kgrid), rownames(km)),]
+fstat(colSums(veg_B), .9)
 fstat(km_tot, .9)
 
 
@@ -177,6 +168,12 @@ fstat(km_tot, .9)
     CoV <- SD / cr
 
     cr[is.na(cr)] <- 0
+    SD[is.na(SD)] <- 0
+    SD[SD==0] <- 0.000001
+
+    summary(cr)
+    summary(SD)
+    summary(CoV)
 
     qcr <- quantile(cr, q)
     cr[cr>qcr] <- qcr
@@ -184,8 +181,32 @@ fstat(km_tot, .9)
 
     Max <- max(qcr)
     cr0 <- cr
-    #cr <- pmin(100, ceiling(99 * sqrt(cr0 / Max))+1)
-    cr <- pmin(100, ceiling(99 * (cr0 / Max))+1)
+    cr <- pmin(100, ceiling(99 * sqrt(cr0 / Max))+1)
+    #cr <- pmin(100, ceiling(99 * (cr0 / Max))+1)
+
+Lc_quantile <- function (xx, probs=seq(0, 1, 0.1), type=c("L","p")) {
+    xx <- xx[!is.na(xx)]
+    o <- order(xx)
+    x <- cumsum(xx[o]) / sum(xx)
+    if (type=="L")
+        q <- probs
+    if (type=="p")
+        q <- quantile(x, probs=probs, na.rm=TRUE)
+    xxo <- xx[o]
+    i <- sapply(q, function(z) min(xxo[x >= z]))
+    i
+}
+#probs <- c(0, 0.05, 0.1, 0.25, 0.5, 1)
+probs <- 0:100/100
+TEXT <- paste0(100*probs[-length(probs)], "-", 100*probs[-1], "%")
+Col <- rev(brewer.pal(5, "RdYlBu"))
+
+br <- Lc_quantile(cr0, probs=probs, type="L")
+br <- unique(br)
+C1x <- Col1fun(length(br))
+zval <- if (length(unique(round(br,10))) < 5)
+    rep(1, length(cr0)) else as.integer(cut(cr0, breaks=br))
+zval[is.na(zval)] <- 1
 
     iiii <- !(kgrid$POINT_Y > 50 & kgrid$NRNAME != "Grassland")
 
@@ -193,7 +214,8 @@ fstat(km_tot, .9)
         "cawa-map-cr-cov.png")
     png(fname, width=W*2, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,2))
-    plot(kgrid$X, kgrid$Y, col=C1[cr], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+#    plot(kgrid$X, kgrid$Y, col=C1[cr], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    plot(kgrid$X, kgrid$Y, col=C1x[zval], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     points(kgrid$X[iiii], kgrid$Y[iiii], pch=15, cex=0.2, col="grey")
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
 #    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,],
@@ -211,17 +233,19 @@ fstat(km_tot, .9)
         j <- i * abs(diff(c(5450000, 5700000)))/100
         segments(190000, 5450000+j, 220000, 5450000+j, col=C1[i], lwd=2, lend=2)
     }
-    pv <- as.character(round(c(0, 0.25, 0.5, 0.75, 1)*Max, 3))
+    #pv <- as.character(round((c(0, 0.25, 0.5, 0.75, 1)*Max)^2, 3))
+    pv <- round(c(0, br[round(seq(0.1, 1, 0.1)*length(br))]), 3)
+    pv <- format(pv, nsmall = 3)
     zzz <- 10000
     text(240000, 5730000, "Density (males / ha)")
-    text(240000+zzz, 5450000, "0.000")
-    text(240000+zzz, 5450000 + 0.25*(5700000-5450000), pv[2])
-    text(240000+zzz, 0.5*(5450000 + 5700000), pv[3])
-    text(240000+zzz, 5450000 + 0.75*(5700000-5450000), pv[4])
-    text(240000+zzz, 5700000, pv[5])
+    for (i in 1:length(pv))
+        text(240000+zzz, 5450000 + seq(0, 1, 0.1)[i]*(5700000-5450000), pv[i], cex=1)
     #par(op)
     #dev.off()
 
+    tmp <- aggregate(CoV, list(kgrid$NSRNAME), mean, na.rm=TRUE)
+    tmp <- tmp$x[match(kgrid$NSRNAME, tmp[,1])]
+    CoV[is.na(CoV)] <- tmp[is.na(CoV)]
 
     covC <- CoV
     zval <- pmin(100, ceiling(99 * (covC / 2))+1)
@@ -262,7 +286,9 @@ fstat(km_tot, .9)
 
 #    sdMax <- quantile(SD,q,na.rm=TRUE)
     #br2 <- seq(0, 0.02, len=length(Col))
-    zval <- as.integer(cut(SD/crmean, breaks=br))
+br <- seq(0, sqrt(max(SD)), len=9)^2
+Col <- brewer.pal(9, "Reds")
+    zval <- as.integer(cut(SD, breaks=br))
     fname <- file.path("c:/Users/Peter/Dropbox/josm/cawa-jeff/revision",
         "cawa-map-sd.png")
     png(fname, width=W, height=H)
@@ -279,7 +305,8 @@ fstat(km_tot, .9)
     points(city, pch=18, cex=cex*2)
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
 #	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
-    br2 <- round(br * crmean, 3)
+    br2 <- round(br, 3)
+    br2 <- format(br2, nsmall = 3)
     TEXT <- paste0(br2[-length(br2)], "-", br2[-1])
     INF <- grepl("Inf", TEXT)
     if (any(INF))
@@ -290,5 +317,50 @@ fstat(km_tot, .9)
     par(op)
     dev.off()
 
+## pop size by habitat & HF in it
 
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
+tv$age <- as.character(tv$AGE)
+tv$age[!(tv$age %in% c("5","6","7","8","9"))] <- ""
+tv$age[(tv$age %in% c("5","6","7","8","9"))] <- "O"
+tv$hab <- as.character(interaction(tv$Type, tv$age, sep=""))
+tv$hab[!is.na(tv$HF)] <- as.character(tv$Sector2[!is.na(tv$HF)])
+tv$hab[rownames(tv) %in% c("NonVeg","Water",
+    "BorrowpitsDugoutsSumps","MunicipalWaterSewage","Reservoirs","Canals",
+    "RailHardSurface","RoadHardSurface")] <- "XXX"
+
+tv$use_tr <- as.character(tv$VEGAGE_use)
+tv$use_tr[!is.na(tv$HF)] <- as.character(tv$VEGHFAGE[!is.na(tv$HF)])
+
+ch2veg$rfhab <- as.factor(tv$hab[match(ch2veg$rf, tv$use_tr)])
+ch2veg$crhab <- as.factor(tv$hab[match(ch2veg$cr, tv$use_tr)])
+ch2veg$A <- colSums(Aveg) # in ha
+summary(ch2veg)
+
+xthf <- as.matrix(Xtab(A ~ rfhab + crhab, ch2veg))
+
+Nveg <- groupSums(veg_B, 1, ch2veg$crhab)
+AA <- matrix(ch2veg$A, nrow(ch2veg), 240)
+DD <- veg_B / AA
+DD[is.na(DD)] <- 0
+Dveg <- groupMeans(DD, 1, ch2veg$crhab)
+Aveg <- groupSums(AA, 1, ch2veg$crhab)
+
+Nveg_stat <- fstatv(Nveg, 0.9)
+Dveg_stat <- fstatv(Dveg, 0.9)
+
+TAB <- data.frame(D=round(Dveg_stat[,c(1,5,6)], 4),
+    N=round(Nveg_stat[,c(1,5,6)],3),
+    A=round(Aveg[,1]/100)) # km^2
+TAB$Prc <- round(100*TAB$N.Mean / sum(TAB$N.Mean), 1)
+TAB <- TAB[rownames(TAB) != "XXX",]
+TAB <- TAB[order(TAB$D.Mean, decreasing=TRUE),]
+
+fstat(colMeans(Dveg[rownames(Dveg) != "XXX",]), 0.9)
+fstat(colSums(Nveg[rownames(Dveg) != "XXX",]), 0.9)
+fstat(colSums(Aveg[rownames(Dveg) != "XXX",]/100), 0.9)
+fstat(colSums(Nveg[rownames(Dveg) != "XXX",]) / colSums(Aveg[rownames(Dveg) != "XXX",]))
+
+write.csv(TAB, file.path("c:/Users/Peter/Dropbox/josm/cawa-jeff/revision",
+        "cawa-pop.csv"))
 

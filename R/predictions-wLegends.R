@@ -135,7 +135,7 @@ ks <- kgrid[kgrid$Rnd10 <= 10,]
 xy10 <- groupMeans(as.matrix(kgrid[,c("X","Y")]), 1, kgrid$Row10_Col10)
 
 library(RColorBrewer)
-br <- c(-0.001, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, Inf)
+br <- c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, Inf)
 Col <- rev(brewer.pal(10, "RdYlGn"))
 
 ## csv
@@ -628,9 +628,7 @@ dev.off()
 
 ## CoV
 
-TAG <- ""
 results10km_list <- list()
-
 for (spp in SPP) {
 
     load(file.path(ROOT, "out", "birds", "predB", spp, paste0(regs[1], ".Rdata")))
@@ -689,12 +687,20 @@ wS[ks$useN] <- 0
     crveg <- groupMeans(cr, 1, ks$Row10_Col10, na.rm=TRUE)
 
 results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
+}
+xy10km <- ks[,c("POINT_X","POINT_Y","Row10_Col10")]
+save(xy10km, results10km_list, file=file.path(ROOT, "out", "birds", "tables", "km10results.Rdata"))
 
+TAG <- ""
+for (spp in SPP) {
+    crveg <- results10km_list[[as.character(tax[spp,"Spp"])]]
     crvegm <- rowMeans(crveg)
     crvegsd <- apply(crveg, 1, sd)
+    crvegsd[crvegsd==0] <- 0.000001
     #crvegm <- apply(crveg, 1, median)
     #crvegsd <- apply(crveg, 1, IQR)
     covC <- crvegsd / crvegm
+    covC[crvegm==0] <- mean(covC[crvegm!=0], na.rm=TRUE) # will not stick out...
     #covN[is.na(covN)] <- 1
 
     #crsoil <- groupMeans(pxScr, 1, ks$Row10_Col10)
@@ -759,7 +765,7 @@ if (FALSE) {
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
 #	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
 
-    TEXT <- paste0(100*round(br,1)[-length(br)], "-", 100*br[-1])
+    TEXT <- paste0(100*br[-length(br)], "-", 100*br[-1])
     INF <- grepl("Inf", TEXT)
     if (any(INF))
         TEXT[length(TEXT)] <- paste0(">", 100*br[length(br)-1])
@@ -793,7 +799,7 @@ if (FALSE) {
     text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
 #	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
 
-    br2 <- round(round(br,1) * mean(crvegm,na.rm=TRUE), 3)
+    br2 <- round(br * mean(crvegm,na.rm=TRUE), 3)
     TEXT <- paste0(br2[-length(br2)], "-", br2[-1])
     INF <- grepl("Inf", TEXT)
     if (any(INF))
@@ -807,7 +813,5 @@ if (FALSE) {
 
 }
 
-xy10km <- ks[,c("POINT_X","POINT_Y","Row10_Col10")]
-save(xy10km, results10km_list, file=file.path(ROOT, "out", "birds", "tables", "km10results.Rdata"))
 
 

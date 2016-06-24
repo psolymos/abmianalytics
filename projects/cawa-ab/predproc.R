@@ -2,6 +2,7 @@ library(mefa4)
 
 shf <- TRUE
 doB <- TRUE
+do1 <- FALSE
 
 PROP <- 100
 BMAX <- 240
@@ -64,7 +65,7 @@ kgrid$CTI <- NULL
 all(rownames(kgrid) == rownames(dd1km_pred$veg_current))
 
 ## surrounding HF at 1km scale
-kgrid$THF_KM <- rowSums(dd1km_pred$veg_current[,setdiff(colnames(dd1km_pred$veg_current), 
+kgrid$THF_KM <- rowSums(dd1km_pred$veg_current[,setdiff(colnames(dd1km_pred$veg_current),
     colnames(dd1km_pred$veg_reference))]) / rowSums(dd1km_pred$veg_current)
 kgrid$Lin_KM <- rowSums(dd1km_pred$veg_current[,c("SeismicLine","TransmissionLine","Pipeline",
     "RailHardSurface", "RailVegetatedVerge","RoadHardSurface","RoadTrailVegetated",
@@ -75,7 +76,7 @@ kgrid$Cult_KM <- rowSums(dd1km_pred$veg_current[,c("CultivationCropPastureBaregr
 kgrid$Noncult_KM <- kgrid$THF_KM - kgrid$Cult_KM
 CClabs <- colnames(dd1km_pred$veg_current)[grep("CC", colnames(dd1km_pred$veg_current))]
 kgrid$Succ_KM <- rowSums(dd1km_pred$veg_current[,c("SeismicLine","TransmissionLine","Pipeline",
-    "RailVegetatedVerge","RoadTrailVegetated","RoadVegetatedVerge", 
+    "RailVegetatedVerge","RoadTrailVegetated","RoadVegetatedVerge",
     CClabs)]) / rowSums(dd1km_pred$veg_current)
 kgrid$Alien_KM <- kgrid$THF_KM - kgrid$Succ_KM
 
@@ -118,32 +119,32 @@ rm(dd1km_pred)
 ## 0 out in North
 cnn0 <- c("ROAD01", "SoftLin_PC", "ARU2ARU", "ARU3SM", "ARU3RF", "YR", "habCl:ROAD01")
 ## habitat in North
-cnnHab <- c("(Intercept)", "hab1BSpr", "hab1Conif", "hab1Cult", "hab1GrassHerb", 
-    "hab1Larch", "hab1Mixwood", "hab1Pine", "hab1Shrub", "hab1Swamp", 
-    "hab1UrbInd", "hab1WetGrass", "hab1WetShrub", "wtAge", "wtAge2", 
-    "wtAge05", "fCC2", 
-    "isCon:wtAge", "isCon:wtAge2", 
-    "isUpCon:wtAge", "isBSLarch:wtAge", "isUpCon:wtAge2", "isBSLarch:wtAge2", 
-    "isMix:wtAge", "isPine:wtAge", "isWSpruce:wtAge", "isMix:wtAge2", 
-    "isPine:wtAge2", "isWSpruce:wtAge2", "isCon:wtAge05", "isUpCon:wtAge05", 
+cnnHab <- c("(Intercept)", "hab1BSpr", "hab1Conif", "hab1Cult", "hab1GrassHerb",
+    "hab1Larch", "hab1Mixwood", "hab1Pine", "hab1Shrub", "hab1Swamp",
+    "hab1UrbInd", "hab1WetGrass", "hab1WetShrub", "wtAge", "wtAge2",
+    "wtAge05", "fCC2",
+    "isCon:wtAge", "isCon:wtAge2",
+    "isUpCon:wtAge", "isBSLarch:wtAge", "isUpCon:wtAge2", "isBSLarch:wtAge2",
+    "isMix:wtAge", "isPine:wtAge", "isWSpruce:wtAge", "isMix:wtAge2",
+    "isPine:wtAge2", "isWSpruce:wtAge2", "isCon:wtAge05", "isUpCon:wtAge05",
     "isBSLarch:wtAge05", "isMix:wtAge05", "isPine:wtAge05", "isWSpruce:wtAge05")
 ## 0 out in South
 cns0 <- c("pAspen", "ROAD01", "SoftLin_PC", "ARU2ARU", "YR", "habCl:ROAD01")
 ## habitat in South
-cnsHab <- c("(Intercept)", "soil1RapidDrain", "soil1Saline", "soil1Clay", 
-    "soil1Cult", "soil1UrbInd", "soil1vRapidDrain", "soil1vSalineAndClay", 
+cnsHab <- c("(Intercept)", "soil1RapidDrain", "soil1Saline", "soil1Clay",
+    "soil1Cult", "soil1UrbInd", "soil1vRapidDrain", "soil1vSalineAndClay",
     "soil1vCult", "soil1vUrbInd")
 ## climate (North & South)
 ## ASP and CTI included here
-#cnClim <- c("xASP", "xCTI", "xPET", "xMAT", "xAHM", "xFFP", "xMAP", "xMWMT", 
-#    "xMCMT", "xlat", "xlong", "xlat2", "xlong2", "xASP:xCTI", "xFFP:xMAP", 
+#cnClim <- c("xASP", "xCTI", "xPET", "xMAT", "xAHM", "xFFP", "xMAP", "xMWMT",
+#    "xMCMT", "xlat", "xlong", "xlat2", "xlong2", "xASP:xCTI", "xFFP:xMAP",
 #    "xMAP:xPET", "xAHM:xMAT", "xlat:xlong", "WetKM", "WetWaterKM")
 ## ASP and CTI *not* included here
-cnClim <- c("xPET", "xMAT", "xAHM", "xFFP", "xMAP", "xMWMT", 
-    "xMCMT", "xlat", "xlong", "xlat2", "xlong2", "xFFP:xMAP", 
+cnClim <- c("xPET", "xMAT", "xAHM", "xFFP", "xMAP", "xMWMT",
+    "xMCMT", "xlat", "xlong", "xlat2", "xlong2", "xFFP:xMAP",
     "xMAP:xPET", "xAHM:xMAT", "xlat:xlong")
-cnHF <- c("THF_KM", "Lin_KM", "Nonlin_KM", "Succ_KM", "Alien_KM", "Noncult_KM", 
-    "Cult_KM", "THF2_KM", "Nonlin2_KM", "Succ2_KM", "Alien2_KM", 
+cnHF <- c("THF_KM", "Lin_KM", "Nonlin_KM", "Succ_KM", "Alien_KM", "Noncult_KM",
+    "Cult_KM", "THF2_KM", "Nonlin2_KM", "Succ2_KM", "Alien2_KM",
     "Noncult2_KM")
 cnClimHF <- c(cnClim, cnHF, "xCTI", "WetPT", "WetPT:xCTI",
     "DecKM", "DecMixKM", "Dec80KM", "DecMix80KM")
@@ -169,7 +170,7 @@ regs <- levels(droplevels(kgrid$LUFxNSR[kgrid$NRNAME != "Grassland"]))
 ## example for structure (trSoil, trVeg)
 load(file.path(ROOT, "out", "transitions", "LowerPeace_LowerBorealHighlands.Rdata"))
 
-ch2veg <- t(sapply(strsplit(colnames(trVeg), "->"), 
+ch2veg <- t(sapply(strsplit(colnames(trVeg), "->"),
     function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
 ch2veg <- data.frame(ch2veg)
 colnames(ch2veg) <- c("rf","cr")
@@ -194,10 +195,10 @@ ch2veg$CutLine <- ch2veg$cr == "SeismicLine"
 ## nonveg is terrestrial stratum, do not exclude here
 ## water is not terrestrial, age0 is all redistributed (so =0)
 ch2veg$exclude <- ch2veg$cr %in% c("Water",
-    "Conif0", "Decid0", "Mixwood0", "Pine0", "BSpr0", "Larch0", 
+    "Conif0", "Decid0", "Mixwood0", "Pine0", "BSpr0", "Larch0",
     "CCConif0", "CCDecid0", "CCMixwood0", "CCPine0")
 ch2veg$exclude[ch2veg$rf %in% c("Water",
-    "Conif0", "Decid0", "Mixwood0", "Pine0", "BSpr0", "Larch0", 
+    "Conif0", "Decid0", "Mixwood0", "Pine0", "BSpr0", "Larch0",
     "CCConif0", "CCDecid0", "CCMixwood0", "CCPine0")] <- TRUE
 
 XNhab <- as.matrix(read.csv("~/repos/abmianalytics/lookup/xn-veg-noburn.csv"))
@@ -225,7 +226,7 @@ modsn$Wet
 
 STAGE <- list(veg =length(modsn) - ifelse(shf, 1, 2))
 
-fn <- file.path(ROOT, "out", "birds", "results", "cawa", 
+fn <- file.path(ROOT, "out", "birds", "results", "cawa",
     paste0("birds_abmi-cawa_", spp, ".Rdata"))
 resn <- loadSPP(fn)
 estn <- suppressWarnings(getEst(resn, stage=STAGE$veg, na.out=FALSE, Xnn))
@@ -313,13 +314,13 @@ Cells <- ifelse(iib, 1L, 0L)[ii]
 names(Cells) <- rownames(kgrid)[ii]
 
 ## 1st run
-if (TRUE) {
+if (do1) {
     j <- 1
     ## North
     D_hab_cr <- exp(logPNhab1[match(ch2veg$cr, rownames(logPNhab1)),j])
     ## vegetated linear (not cutline) treated as early seral
     if (any(ch2veg$EarlySeralLinear))
-        D_hab_cr[ch2veg$EarlySeralLinear] <- exp(logPNhab_es1[match(ch2veg$rf, 
+        D_hab_cr[ch2veg$EarlySeralLinear] <- exp(logPNhab_es1[match(ch2veg$rf,
             rownames(logPNhab_es1)),j][ch2veg$EarlySeralLinear])
     ## 0 density where either cr or rf hab is water or hard linear surface
     if (any(ch2veg$cr_zero))
@@ -353,7 +354,7 @@ if (doB) {
         D_hab_cr <- exp(logPNhabB[match(ch2veg$cr, rownames(logPNhabB)),j])
         ## vegetated linear (not cutline) treated as early seral
         if (any(ch2veg$EarlySeralLinear))
-            D_hab_cr[ch2veg$EarlySeralLinear] <- exp(logPNhab_esB[match(ch2veg$rf, 
+            D_hab_cr[ch2veg$EarlySeralLinear] <- exp(logPNhab_esB[match(ch2veg$rf,
                 rownames(logPNhab_esB)),j][ch2veg$EarlySeralLinear])
         if (any(ch2veg$cr_zero))
             D_hab_cr[ch2veg$cr_zero] <- 0
