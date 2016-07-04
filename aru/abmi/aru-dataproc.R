@@ -73,10 +73,10 @@ xt_toy <- as.matrix(Xtab(~ Spp + ToYc, det, rdrop="NONE"))
 
 Class <- nonDuplicated(det, visit, TRUE)
 Class <- Class[rownames(xt_vis),]
-Class$STR2 <- factor(NA, c("A", "B", "C"))
-Class$STR2[Class$ToYc %in% 1:3] <- "A"
-Class$STR2[Class$ToYc %in% 4:7] <- "B"
-Class$STR2[Class$ToYc %in% 8] <- "C"
+Class$STR2 <- factor(NA, c("Early", "Mid", "Late"))
+Class$STR2[Class$ToYc %in% 1:3] <- "Early"
+Class$STR2[Class$ToYc %in% 4:7] <- "Mid"
+Class$STR2[Class$ToYc %in% 8] <- "Late"
 table(Class$STR2, Class$ToYc)
 
 table(det$ToYc, det$Duration)
@@ -86,12 +86,12 @@ table(det$ToYc, det$Duration)
 keep <- det$Duration == 3 & det$ToDc == "Morning"
 keep[is.na(keep)] <- FALSE
 det2 <- det[keep,]
-det2$PKEY <- interaction(det2$SITE_LABEL, "_", det2$ToY, ":", 
+det2$PKEY <- interaction(det2$SITE_LABEL, "_", det2$ToY, ":",
     det2$Start$hour, ":", det2$Start$min, sep="", drop=TRUE)
 xt <- as.matrix(Xtab(~ PKEY + Spp, det2, cdrop="NONE"))
 x <- nonDuplicated(det2, PKEY, TRUE)
-x <- x[rownames(xt), c("PKEY", "SITE_LABEL", "ROTATION", 
-    "SITE", "YEAR", "STATION", "RAIN", "WIND", "INDUSTRY", "NOISE", "MICROPHONE", 
+x <- x[rownames(xt), c("PKEY", "SITE_LABEL", "ROTATION",
+    "SITE", "YEAR", "STATION", "RAIN", "WIND", "INDUSTRY", "NOISE", "MICROPHONE",
     "Start", "ToY", "ToD")]
 
 OUTDIR <- "e:/peter/AB_data_v2016/data/species"
@@ -103,15 +103,54 @@ save(det, xt, x, file=paste(OUTDIR, "/OUT_", tolower(T), d, ".Rdata",sep=""))
 ## opticut
 
 library(opticut)
+
 xtv <- ifelse(xt_vis > 0, 1, 0)
 oc2 <- opticut(xtv ~ 1, strata=Class$STR2, dist="binomial")
 oc3 <- opticut(xtv ~ 1, strata=Class$ToDc, dist="binomial")
 
+table(Class$STR2, Class$ToDc)
 plot(oc2,sort=1)
-summary(oc2)
+a1 <- summary(oc2)$summary
+a2 <- summary(oc3)$summary
 
-summary(oc3)
+aa <- data.frame(Species=rownames(a1),
+    Season=a1$split,
+    SeasonEvidence=round(pmax(0.1, a1$logLR), 1),
+    TimeOfDay=a2$split,
+    TimeOfDayEvidence=round(pmax(0.1, a2$logLR), 1),
+    n_occ=colSums(xtv))
+#aa$Season[a1$logLR < 2] <- NA
+#aa$TimeOfDay[a2$logLR < 2] <- NA
+with(aa, table(Season, useNA="a"))
+with(aa, table(TimeOfDay, useNA="a"))
+with(aa, table(Season, TimeOfDay, useNA="a"))
 
+aa[!is.na(aa$TimeOfDay) & aa$TimeOfDay == "Midnight",]
+aa[!is.na(aa$TimeOfDay) & aa$TimeOfDay == "Morning",]
+
+aa[!is.na(aa$Season) & aa$Season == "Early",]
+aa[!is.na(aa$Season) & aa$Season == "Late",]
+
+spp <- "BorealChickadee"
+table(xtv[,spp], Class$STR2)
+
+xtv1 <- t(groupMeans(xtv, 1, Class$STR2))
+xtv2 <- t(groupMeans(xtv, 1, Class$ToDc))
+
+aa <- data.frame(aa, Percent=round(100*cbind(xtv1, xtv2), 1))
+rownames(aa) <- NULL
+write.csv(aa, row.names=FALSE,
+    file="c:/Users/Peter/Dropbox/abmi/aru/aru-species-classification.csv")
+
+## only early detections
+aa[xtv1[,1] != 0 & xtv1[,2]+xtv1[,3] == 0,]
+## only late detections
+aa[xtv1[,1]+xtv1[,2] == 0 & xtv1[,3] != 0,]
+
+## only morning
+aa[xtv2[,1] != 0 & xtv2[,2] == 0,]
+## only midnight
+aa[xtv2[,1] == 0 & xtv2[,1] != 0,]
 
 
 ## --
@@ -164,9 +203,9 @@ zz[,c("RecordingKey", "Spp","INDIV_ID", "X0min", "X1min", "X2min")]
 
 #rec <- nonDuplicated(det[det$Replicate == 1, ], RecordingKey, TRUE)
 rec <- nonDuplicated(det, RecordingKey, TRUE)
-rec <- rec[,c("RecordingKey", "ProjectID", "Cluster", "SITE", "STATION", 
-    "Year", "Round", "FileName", "RECORDING_DATE", "RECORD_TIME", 
-    "Replicate", "Observer", "Rain", "Wind", "Industry", "Noise", 
+rec <- rec[,c("RecordingKey", "ProjectID", "Cluster", "SITE", "STATION",
+    "Year", "Round", "FileName", "RECORDING_DATE", "RECORD_TIME",
+    "Replicate", "Observer", "Rain", "Wind", "Industry", "Noise",
     "Microphone", "ProsTime", "Method", "Comment.Recording", "Duration", "Start")]
 rec$ToY <- rec$Start$yday
 rec$ToD <- rec$Start$hour + rec$Start$min / 60
