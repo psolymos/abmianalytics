@@ -137,7 +137,7 @@ slt <- data.frame(sppid=tax$file,
     tax[,c("ndet","modelN","modelS","ndet_n","ndet_s", "ndet_ns")])
 slt$map.det <- tax$map_det
 slt$veghf.north <- tax$modelN & tax$ndet_n > 99
-slt$soilhf.south <- tax$modelS & tax$ndet_s > 99
+slt$soilhf.south <- tax$modelS & tax$ndet_s > 49
 slt$map.pred <- slt$veghf.north | slt$soilhf.south
 slt$useavail.north=tax$useavail_north & !slt$veghf.north
 slt$useavail.south=tax$useavail_south & !slt$soilhf.south
@@ -153,7 +153,7 @@ slt$oldforest[is.na(slt$oldforest)] <- 0
 slt$oldforest[slt$oldforest > 0] <- 1
 #write.csv(slt, row.names=FALSE, file="~/repos/abmispecies/_data/birds.csv")
 
-slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
+#slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
 rownames(slt) <- slt$AOU
 
 ## spp specific output
@@ -318,6 +318,26 @@ write.csv(y01d, row.names=FALSE, file=file.path(ROOT, "birds-number-of-occurrenc
 ## veghf-north
 ## linear-north
 ## table: veghf-north
+
+list_df <- list()
+for (spp in rownames(tax)) {
+    cat(spp, "\n");flush.console()
+    df_n <- df_s <- 0
+    if (tax[spp, "veghf_north"]) {
+        resn <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-north_", spp, ".Rdata")))
+        estn6 <- getEst(resn, stage=6, na.out=FALSE, Xnn)
+        df_n <- sum(colSums(abs(estn6)) == 0)
+    }
+    if (tax[spp, "soilhf_treed_south"]) {
+        ress <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-south_", spp, ".Rdata")))
+        ests_hab <- getEst(ress, stage=3, na.out=FALSE, Xns)
+        df_s <- sum(colSums(abs(ests_hab)) == 0)
+    }
+    list_df[[spp]] <- c(N=df_n, S=df_s)
+}
+list_df <- do.call(rbind, list_df)
+summary(list_df)
+
 
 for (spp in rownames(tax)) {
     cat(spp, "\n");flush.console()
