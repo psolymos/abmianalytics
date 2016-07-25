@@ -33,15 +33,29 @@ tax <- droplevels(e$TAX[colnames(yy),])
 pveghf <- e$pveghf[rownames(dat),]
 pveghf <- data.frame(as.matrix(pveghf))
 pveghf$Open <- pveghf$GrassHerb + pveghf$Shrub
-pveghf <- as.matrix(pveghf[,c("Decid", "Mixwood", "Conif", "Pine", "BSpr", "Larch", 
+pveghf <- as.matrix(pveghf[,c("Decid", "Mixwood", "Conif", "Pine", "BSpr", "Larch",
     "Open", "Wetland", "Cult", "UrbInd", "HardLin", "SoftLin")])
-colnames(pveghf) <- c("Deciduous", "Mixedwood", "White Spruce", "Pine", 
-    "Black Spruce", "Larch", 
+colnames(pveghf) <- c("Deciduous", "Mixedwood", "White Spruce", "Pine",
+    "Black Spruce", "Larch",
     "Open", "Wet", "Cultivated", "Urban/Industrial", "Hard Linear", "Soft Linear")
-psoilhf <- as.matrix(e$psoilhf[rownames(dat),c("Productive", "Clay", 
+psoilhf <- as.matrix(e$psoilhf[rownames(dat),c("Productive", "Clay",
     "Saline", "RapidDrain", "Cult", "UrbInd")])
-colnames(psoilhf) <- c("Productive", "Clay", 
+colnames(psoilhf) <- c("Productive", "Clay",
     "Saline", "Rapid Drain", "Cultivated", "Urban/Industrial")
+
+## singing birds crosstab
+if (FALSE) {
+    sb <- read.csv("~/repos/bamanalytics/lookup/singing-species.csv")
+    rownames(sb) <- sb$Species_ID
+    compare_sets(rownames(tax), rownames(sb))
+    sb2 <- tax[setdiff(rownames(tax), rownames(sb)),c("Species_ID", "English_Name",
+        "Family_Sci")]
+    sb2 <- sb2[rownames(sb2) != "NONE",]
+    sb2$Singing_birds <- NA
+    sb3 <- rbind(sb[intersect(rownames(tax), rownames(sb)),], sb2)
+    write.csv(sb3, row.names=F, file="Bird-spp.csv")
+}
+
 
 en <- new.env()
 load(file.path(ROOT, "data", "data-useok-north.Rdata"), envir=en)
@@ -137,7 +151,7 @@ slt[setdiff(rownames(slt), gl$AOU.Code),1:3]
 slt$oldforest <- gl$Forest.Types.Old[match(rownames(slt), gl$AOU.Code)]
 slt$oldforest[is.na(slt$oldforest)] <- 0
 slt$oldforest[slt$oldforest > 0] <- 1
-#write.csv(slt, row.names=FALSE, file="~/repos/abmispecies/_data/birds.csv")    
+#write.csv(slt, row.names=FALSE, file="~/repos/abmispecies/_data/birds.csv")
 
 slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
 rownames(slt) <- slt$AOU
@@ -158,7 +172,7 @@ if (tax[spp, "useavail_north"]) {
     hhh <- pveghf[keep,]
     NAM <- as.character(tax[spp, "English_Name"])
     NDAT <- sum(yyn[,spp] > 0)
-    fname <- file.path(ROOT, "figs", "useavail-north", 
+    fname <- file.path(ROOT, "figs", "useavail-north",
         paste0(as.character(tax[spp, "file"]), ".png"))
     png(file=fname, width=480, height=480)
     tmp <- plot_wrsi(yyy, hhh, south=FALSE)
@@ -190,7 +204,7 @@ if (tax[spp, "useavail_south"]) {
     hhh <- psoilhf[keep,]
     NAM <- as.character(tax[spp, "English_Name"])
     NDAT <- sum(yys[,spp] > 0)
-    fname <- file.path(ROOT, "figs", "useavail-south", 
+    fname <- file.path(ROOT, "figs", "useavail-south",
         paste0(as.character(tax[spp, "file"]), ".png"))
 	png(file=fname, width=480, height=480)
     plot_wrsi(yyy, hhh, south=TRUE)
@@ -260,10 +274,10 @@ if (tax[spp, "map_det"]) {
     xy1 <- rbind(xy1n, xy1s)
     NAM <- as.character(tax[spp, "English_Name"])
     NDAT <- length(unique(rownames(xy1)))
-    fname <- file.path(ROOT, "figs", "map-det", 
+    fname <- file.path(ROOT, "figs", "map-det",
         paste0(as.character(tax[spp, "file"]), ".png"))
 	png(file=fname, width=600, height=1000)
-    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), "-detections.eps"), 
+    postscript(paste0("e:/peter/", as.character(tax[spp, "file"]), "-detections.eps"),
         horizontal = FALSE, onefile = FALSE, paper = "special",
         width=6, height=10)
 
@@ -295,7 +309,7 @@ if (tax[spp, "map_det"]) {
 y01 <- do.call(cbind, y01)
 colnames(y01) <- slt[colnames(y01), "sppid"]
 tmp <- strsplit(rownames(y01), "_")
-y01d <- data.frame(LUFxNSR=rownames(y01), 
+y01d <- data.frame(LUFxNSR=rownames(y01),
     LUF=sapply(tmp, "[[", 1),
     NSR=sapply(tmp, "[[", 2),
     y01)
@@ -328,13 +342,13 @@ if (tax[spp, "veghf_north"]) {
     res_veghf[[spp]] <- prn
     NDAT <- sum(yyn[,spp] > 0)
     ## veghf
-    fname <- file.path(ROOT, "figs", "veghf-north", 
+    fname <- file.path(ROOT, "figs", "veghf-north",
         paste0(as.character(tax[spp, "file"]), ".png"))
     png(file=fname,width=1500,height=700)
 	fig_veghf(prn, paste0(NAM, " (n = ", NDAT, " detections)"))
 	dev.off()
 	## linear
-    fname <- file.path(ROOT, "figs", "linear-north", 
+    fname <- file.path(ROOT, "figs", "linear-north",
         paste0(as.character(tax[spp, "file"]), ".png"))
 	png(file=fname,width=350,height=400)
     fig_linear(attr(prn, "linear"), paste0(NAM, "\nNorth (n = ", NDAT, " det.)"))
@@ -344,7 +358,7 @@ if (tax[spp, "veghf_north"]) {
 
 f1 <- function(x) {
     rr <- attr(x, "linear")[-1]
-    names(rr) <- c("SoftLinear", "SoftLinear.LCL", "SoftLinear.UCL", 
+    names(rr) <- c("SoftLinear", "SoftLinear.LCL", "SoftLinear.UCL",
         "HardLinear", "HardLinear.LCL", "HardLinear.UCL")
     x <- x[rownames(x) != "Burn",c(2,3,4)]
     rownames(x) <- gsub(" ", "", rownames(x))
@@ -388,21 +402,21 @@ if (tax[spp, "soilhf_treed_south"] | tax[spp, "soilhf_nontreed_south"]) {
     NDAT <- sum(yys[,spp] > 0)
     YMAX <- max(fig_soilhf_ymax(prs$treed), fig_soilhf_ymax(prs$nontreed))
     ## treed
-    fname <- file.path(ROOT, "figs", "soilhf-treed-south", 
+    fname <- file.path(ROOT, "figs", "soilhf-treed-south",
         paste0(as.character(tax[spp, "file"]), ".png"))
     png(file=fname,width=500,height=450)
 	fig_soilhf(prs$treed, paste0(NAM, ", South, Treed (n = ", NDAT, " detections)"),
         ymax=YMAX)
 	dev.off()
     ## nontreed
-    fname <- file.path(ROOT, "figs", "soilhf-nontreed-south", 
+    fname <- file.path(ROOT, "figs", "soilhf-nontreed-south",
         paste0(as.character(tax[spp, "file"]), ".png"))
     png(file=fname,width=500,height=450)
 	fig_soilhf(prs$nontreed, paste0(NAM, ", South, Non-treed (n = ", NDAT, " detections)"),
         ymax=YMAX)
 	dev.off()
 	## linear
-    fname <- file.path(ROOT, "figs", "linear-south", 
+    fname <- file.path(ROOT, "figs", "linear-south",
         paste0(as.character(tax[spp, "file"]), ".png"))
 	png(file=fname,width=350,height=400)
     fig_linear(prs$linear, paste0(NAM, "\nSouth (n = ", NDAT, " det.)"))
@@ -412,7 +426,7 @@ if (tax[spp, "soilhf_treed_south"] | tax[spp, "soilhf_nontreed_south"]) {
 
 f2 <- function(x) {
     rr <- x$linear[-1]
-    names(rr) <- c("SoftLinear", "SoftLinear.LCL", "SoftLinear.UCL", 
+    names(rr) <- c("SoftLinear", "SoftLinear.LCL", "SoftLinear.UCL",
         "HardLinear", "HardLinear.LCL", "HardLinear.UCL")
     x <- x$nontreed
     rownames(x) <- gsub(" ", "", rownames(x))
@@ -429,10 +443,10 @@ write.csv(soil2, file=file.path(ROOT, "figs", "birds-soilhf-south.csv"))
 
 ## climate & surrounding hf tables, climate surface maps
 
-cn <- c("xPET", "xMAT", "xAHM", "xFFP", 
-    "xMAP", "xMWMT", "xMCMT", "xlat", "xlong", "xlat2", "xlong2", 
-    "THF_KM", "Lin_KM", "Nonlin_KM", "Succ_KM", "Alien_KM", "Noncult_KM", 
-    "Cult_KM", "THF2_KM", "Nonlin2_KM", "Succ2_KM", "Alien2_KM", 
+cn <- c("xPET", "xMAT", "xAHM", "xFFP",
+    "xMAP", "xMWMT", "xMCMT", "xlat", "xlong", "xlat2", "xlong2",
+    "THF_KM", "Lin_KM", "Nonlin_KM", "Succ_KM", "Alien_KM", "Noncult_KM",
+    "Cult_KM", "THF2_KM", "Nonlin2_KM", "Succ2_KM", "Alien2_KM",
     "Noncult2_KM")
 transform_CLIM <- function(x, ID="PKEY") {
     z <- x[,ID,drop=FALSE]
@@ -468,7 +482,7 @@ if (tax[spp, "surroundinghf_north"]) {
     sp_n <- colMeans(estn_sp[,cn])
     clim_n[[spp]] <- sp_n
 
-    fname <- file.path(ROOT, "figs", "climate-north", 
+    fname <- file.path(ROOT, "figs", "climate-north",
         paste0(as.character(tax[spp, "file"]), ".png"))
     ## quick and dirty
     pr <- exp(drop(Xclim %*% colMeans(estn_sp[,colnames(Xclim)])))
@@ -500,7 +514,7 @@ if (tax[spp, "surroundinghf_south"]) {
     sp_s <- colMeans(ests_sp[,cn])
     clim_s[[spp]] <- sp_s
 
-    fname <- file.path(ROOT, "figs", "climate-south", 
+    fname <- file.path(ROOT, "figs", "climate-south",
         paste0(as.character(tax[spp, "file"]), ".png"))
     ## quick and dirty
     pr <- exp(drop(Xclim %*% colMeans(ests_sp[,colnames(Xclim)])))
@@ -528,9 +542,9 @@ if (tax[spp, "surroundinghf_south"]) {
 }
 }
 
-clim_N <- data.frame(tax[names(clim_n), c("English_Name","Scientific_Name")], 
+clim_N <- data.frame(tax[names(clim_n), c("English_Name","Scientific_Name")],
     do.call(rbind, clim_n))
-clim_S <- data.frame(tax[names(clim_s), c("English_Name","Scientific_Name")], 
+clim_S <- data.frame(tax[names(clim_s), c("English_Name","Scientific_Name")],
     do.call(rbind, clim_s))
 clim_N <- clim_N[rownames(slt)[slt$modelN],]
 clim_S <- clim_S[rownames(slt)[slt$modelS],]
@@ -548,7 +562,7 @@ for (spp in rownames(tax)) {
 if (tax[spp, "surroundinghf_north"]) {
     resn <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-north_", spp, ".Rdata")))
     estn_sp <- getEst(resn, stage=stage_hab_n + 2, na.out=FALSE, Xnn)
-    fname <- file.path(ROOT, "figs", "surroundinghf-north", 
+    fname <- file.path(ROOT, "figs", "surroundinghf-north",
         paste0(as.character(tax[spp, "file"]), ".png"))
     png(file=fname, width=7.5, height=5.7, units="in", res=300)
     op <- par(mai=c(0.9,1,0.2,0.3))
@@ -559,7 +573,7 @@ if (tax[spp, "surroundinghf_north"]) {
 if (tax[spp, "surroundinghf_south"]) {
     ress <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-south_", spp, ".Rdata")))
     ests_sp <- getEst(ress, stage=stage_hab_s + 2, na.out=FALSE, Xns)
-    fname <- file.path(ROOT, "figs", "surroundinghf-south", 
+    fname <- file.path(ROOT, "figs", "surroundinghf-south",
         paste0(as.character(tax[spp, "file"]), ".png"))
     png(file=fname, width=7.5, height=5.7, units="in", res=300)
     op <- par(mai=c(0.9,1,0.2,0.3))
@@ -597,12 +611,12 @@ if (tax[spp, "trend_south"]) {
 }
 if (tax[spp, "trend_north"] | tax[spp, "trend_south"]) {
     NAM <- as.character(tax[spp, "English_Name"])
-    fname <- file.path(ROOT, "figs", "trend", 
+    fname <- file.path(ROOT, "figs", "trend",
         paste0(as.character(tax[spp, "file"]), ".png"))
     png(file=fname, width=600, height=600)
     op <- par(mfrow=c(2,2), cex=0.8)
     if (tax[spp, "trend_north"]) {
-        plot(NN, ylab="Annual Mean Abundance Index", xlab="Year", 
+        plot(NN, ylab="Annual Mean Abundance Index", xlab="Year",
             type="b", col=1, pch=19,
             main=paste0(NAM, ", North (n = ", NDATN, " detections)"))
         abline(lm(x ~ year, NN), col="red4", lty=1, lwd=2)
@@ -614,7 +628,7 @@ if (tax[spp, "trend_north"] | tax[spp, "trend_south"]) {
         plot.new()
     }
     if (tax[spp, "trend_south"]) {
-        plot(NS, ylab="Annual Mean Abundance Index", xlab="Year", 
+        plot(NS, ylab="Annual Mean Abundance Index", xlab="Year",
             type="b", col=1, pch=19,
             main=paste0(NAM, ", South (n = ", NDATS, " detections)"))
         abline(lm(x ~ year, NS), col="red4", lty=1, lwd=2)
@@ -661,10 +675,10 @@ rowMeans(exp(tmp), na.rm=TRUE)
 spp <- "BTNW"
 xlin <- nonDuplicated(xnn[,c("ROAD01","hab1","hab_lcc","hab_lcc2","hab_lcc3")],
     hab1, TRUE)
-xlin <- xlin[c("Decid", "Mixwood", "Conif", "Pine", "BSpr", "Larch", 
-    "Decid", "Mixwood", "Conif", "Pine", "BSpr", "Larch", 
+xlin <- xlin[c("Decid", "Mixwood", "Conif", "Pine", "BSpr", "Larch",
+    "Decid", "Mixwood", "Conif", "Pine", "BSpr", "Larch",
     "GrassHerb", "Shrub", "Wetland", "Cult", "UrbInd"),]
-rownames(xlin)[1:12] <- paste0(rep(rownames(xlin)[1:6], 2), 
+rownames(xlin)[1:12] <- paste0(rep(rownames(xlin)[1:6], 2),
     rep(c("0-40","40+"), each=6))
 xlin$ROAD01 <- 1
 xlin$SoftLin_PC <- 0
@@ -707,18 +721,18 @@ hardlin$Species <- tax[as.character(hardlin$Species), "English_Name"]
 softlin <- droplevels(softlin[rownames(slt)[slt$veghf.north],])
 hardlin <- droplevels(hardlin[hardlin$Species %in% softlin$Species,])
 
-write.csv(softlin, row.names=FALSE, 
+write.csv(softlin, row.names=FALSE,
     file=file.path(ROOT, "figs", "soft-linear-coefs-2015.csv"))
-write.csv(hardlin, row.names=FALSE, 
+write.csv(hardlin, row.names=FALSE,
     file=file.path(ROOT, "figs", "hard-linear-EXPcoefs-2015.csv"))
-    
+
 softlin2 <- softlin[c("BTNW","BBWA","OVEN","BRCR","CAWA"),]
 hardlin2 <- do.call(rbind, res_hard[c("BTNW","BBWA","OVEN","BRCR","CAWA")])
 hardlin2$Species <- tax[as.character(hardlin2$Species), "English_Name"]
 
-write.csv(softlin2, row.names=FALSE, 
+write.csv(softlin2, row.names=FALSE,
     file=file.path(ROOT, "figs", "soft-linear-coefs-2015-5spp.csv"))
-write.csv(hardlin2, row.names=FALSE, 
+write.csv(hardlin2, row.names=FALSE,
     file=file.path(ROOT, "figs", "hard-linear-EXPcoefs-2015-5spp.csv"))
 
 ## upland/lowland classification of species
@@ -756,7 +770,7 @@ library(opticut)
 XXX <- model.matrix(~ ROAD01 + SoftLin_PC, dat2)
 oc1 <- opticut1(yy2[,1], XXX, dat2$strat, dist="poisson")
 
-oc <- opticut(yy2 ~ ROAD01 + SoftLin_PC, dat2, strata=dat2$strat, 
+oc <- opticut(yy2 ~ ROAD01 + SoftLin_PC, dat2, strata=dat2$strat,
     offset=off2, dist="poisson", comb="rank")
 os <- summary(oc)$summary
 os <- os[SPP,]
@@ -782,9 +796,9 @@ table(tax2v$split)
 tax2v$order <- tax3[SPP, "Order"]
 tax2v$split2 <- as.character(tax2v$split)
 tax2v$split2[] <- ""
-tax2v$split2[tax2v$General.Habitat.Category.Bog + 
+tax2v$split2[tax2v$General.Habitat.Category.Bog +
     tax2v$General.Habitat.Category.WetAq > 0 & tax2v$split == "lowland"] <- "lowland"
-tax2v$split2[tax2v$General.Habitat.Category.Bog + 
+tax2v$split2[tax2v$General.Habitat.Category.Bog +
     tax2v$General.Habitat.Category.WetAq == 0 & tax2v$split == "upland"] <- "upland"
 tax2v$split2[tax2v$order %in% c("ANSERIFORMES","CHARADRIIFORMES","CICONIIFORMES",
     "PODICIPEDIFORMES","PELECANIFORMES","GAVIIFORMES","GRUIFORMES")] <- "lowland"
