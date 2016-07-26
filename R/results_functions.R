@@ -249,7 +249,7 @@ function(pr, LAB="", ymax=NULL)
 }
 
 fig_veghf <-
-function(pr, LAB="", ymax, ylab="Relative abundance")
+function(pr, LAB="", ymax, ylab="Relative abundance", bw=FALSE)
 {
 
         op <- par(mai=c(1.5,1,0.2,0.3))
@@ -293,15 +293,20 @@ function(pr, LAB="", ymax, ylab="Relative abundance")
         #x <- c(rep(1:9,6)+rep(seq(0,50,10),each=9), 61,63,65, 68,70)
         x <- c(rep(1:9,6)+rep(seq(0,50,10),each=9), 61,63,65,67,69, 72,74)
         space <- c(1,x[-1]-x[-length(x)])-0.99  # The spacing between bars
-        col.r <- c(rep(0,9),seq(0.3,0.6,length.out=9),seq(0.5,1,length.out=9),
-            seq(0.8,0.9,length.out=9),rep(0,9),rep(0,9),
-            0.8,0.2,0,0,0, rep(0.2,2))  # The red part
-        col.g <- c(seq(0.5,1,length.out=9),seq(0.4,0.8,length.out=9),seq(0.1,0.2,length.out=9),
-            seq(0.4,0.8,length.out=9),seq(0.4,0.7,length.out=9),seq(0.15,0.5,length.out=9),
-            0.8,0.8,0,0,0, rep(0.2,2))  # The green part
-        col.b <- c(rep(0,9),rep(0,9),rep(0,9),seq(0.2,0.4,length.out=9),
-            seq(0.2,0.6,length.out=9),seq(0.4,0.7,length.out=9),
-            0,0,1,1,1, rep(0.2,2))  # The blue part
+        if (!bw) {
+            col.r <- c(rep(0,9),seq(0.3,0.6,length.out=9),seq(0.5,1,length.out=9),
+                seq(0.8,0.9,length.out=9),rep(0,9),rep(0,9),
+                0.8,0.2,0,0,0, rep(0.2,2))  # The red part
+            col.g <- c(seq(0.5,1,length.out=9),seq(0.4,0.8,length.out=9),seq(0.1,0.2,length.out=9),
+                seq(0.4,0.8,length.out=9),seq(0.4,0.7,length.out=9),seq(0.15,0.5,length.out=9),
+                0.8,0.8,0,0,0, rep(0.2,2))  # The green part
+            col.b <- c(rep(0,9),rep(0,9),rep(0,9),seq(0.2,0.4,length.out=9),
+                seq(0.2,0.6,length.out=9),seq(0.4,0.7,length.out=9),
+                0,0,1,1,1, rep(0.2,2))  # The blue part
+        } else {
+            col.r <- c(rep(seq(0.7,0.2,length.out=9), 6), rep(0.3,7))
+            col.b <- col.g <- col.r
+        }
         idx <- 1:length(x)
         x1 <- barplot(y1[idx],
             space=space,
