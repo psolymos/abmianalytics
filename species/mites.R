@@ -22,7 +22,7 @@ gis <- sqlFetch(con, "METADATA_GIS_SITE_SUMMARY")
 close(con)
 }
 
-res <- read.csv(file.path(ROOT, "mites.csv"))
+res <- read.csv(file.path(ROOT, "mites-new.csv"))
 #gis <- read.csv(file.path(ROOT, "data/sitemetadata.csv"))
 gis <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 taxo <- read.csv(file.path(ROOT, "taxonomy.csv"))
@@ -30,35 +30,35 @@ taxo <- read.csv(file.path(ROOT, "taxonomy.csv"))
 if (FALSE) {
 ## mite check, Dave Apr 25, 2014
 
-##- Two sites were in the mite file but not in the master list: 
-##  OG-ABMI-15-1 had a row in the mite file but no mites, so I just deleted it.  
+##- Two sites were in the mite file but not in the master list:
+##  OG-ABMI-15-1 had a row in the mite file but no mites, so I just deleted it.
 #new site where no species was found (all NONE for all 4 quadrants)
-##  OG-ABMI-1280-1B has a row, with 21 mite occurrences.  
-##  The results are very similar but not identical to OG-ABMI-1280-1.  
+##  OG-ABMI-1280-1B has a row, with 21 mite occurrences.
+##  The results are very similar but not identical to OG-ABMI-1280-1.
 ##  So, not sure what the "B" site is.
 #Ask IC
 
 ##- All sampled sites that were missing mite data seemed to be in lakes, so that's fine.
 #OK
-##- There is one species Anachipteria.sp..1.DEW and one Anachipteria.sp.1.DEW 
-##  (two dots after "sp" versus one dot).  The second one is the "non-standard" name, 
-##  because it is missing the "." after "sp".  
-#keep "Anachipteria sp. 1 DEW", merge "Anachipteria sp.1 DEW" 
+##- There is one species Anachipteria.sp..1.DEW and one Anachipteria.sp.1.DEW
+##  (two dots after "sp" versus one dot).  The second one is the "non-standard" name,
+##  because it is missing the "." after "sp".
+#keep "Anachipteria sp. 1 DEW", merge "Anachipteria sp.1 DEW"
 
-##- There is a Cepheus.sp..2.DEW with lots of records, and a Cepheus.sp..2B.DEW 
+##- There is a Cepheus.sp..2.DEW with lots of records, and a Cepheus.sp..2B.DEW
 ##  with one record.  Not sure if that is supposed to be a separate new species?
 #Ask PC/IC how to treat  "Cepheus sp. 2 DEW" and "Cepheus sp. 2B DEW"
 
-##- There is a species "Eueremaeus.marshalli...Eueremaeus.quadrilamellatus" 
+##- There is a species "Eueremaeus.marshalli...Eueremaeus.quadrilamellatus"
 ##  don't know if that's a typo, or just that the two options couldn't be distinguished.
-#"Eueremaeus marshalli / Eueremaeus quadrilamellatus" -- ask IC/PC is this should be 
+#"Eueremaeus marshalli / Eueremaeus quadrilamellatus" -- ask IC/PC is this should be
 #treated as Eueremaeus marshalli
 
-##- There is a species "Eupterotegaeus.rostratus." as well as the normal 
+##- There is a species "Eupterotegaeus.rostratus." as well as the normal
 ##  name without the dot at the end.  Must be a trailing blank space.
 #keep "Eupterotegaeus rostratus", merge "Eupterotegaeus rostratus "
 
-##- There is a Tectoribates.sp..1.DEW with 1 record, and a 
+##- There is a Tectoribates.sp..1.DEW with 1 record, and a
 ## Tectoribates.sp..B.DEW with 6 records.  Not sure if that is intentional?
 #Ask IC/PC how to treat "Tectoribates sp. 1 DEW" and "Tectoribates sp. B DEW"
 
@@ -100,9 +100,9 @@ res$SPECIES_OLD <- res$SCIENTIFIC_NAME
 levels(res$SCIENTIFIC_NAME) <- nameAlnum(levels(res$SCIENTIFIC_NAME), capitalize="mixed", collapse="")
 res$SCIENTIFIC_NAME <- droplevels(res$SCIENTIFIC_NAME)
 
-xt <- Xtab(count ~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 
+xt <- Xtab(count ~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"),
     rdrop=qs.to.exclude, drop.unused.levels = FALSE)
-#xt <- Xtab(~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 
+#xt <- Xtab(~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"),
 #    subset = !(res$SCIENTIFIC_NAME %in% c("VNA", "DNC")), drop.unused.levels = TRUE)
 
 ## get taxonomy
@@ -119,9 +119,9 @@ for (i in 1:ncol(z))
     if (is.factor(z[[i]]))
         levels(z[[i]]) <- sub(' +$', '', levels(z[[i]]))
 
-x <- nonDuplicated(res[,c("Label", "Label2", "ROTATION", "SITE", "YEAR", "ADATE", "CREWS", 
-    "TSM_QUADRANT", "OnOffGrid", 
-#    "OGLabel", 
+x <- nonDuplicated(res[,c("Label", "Label2", "ROTATION", "SITE", "YEAR", "ADATE", "CREWS",
+    "TSM_QUADRANT", "OnOffGrid",
+#    "OGLabel",
     "SiteLabel", "DataProvider", "Visit", "ClosestABMISite", "PUBLIC_X", "PUBLIC_Y")], res$Label, TRUE)
 
 ## crosstab on PC level
