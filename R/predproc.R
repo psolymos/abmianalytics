@@ -6,10 +6,10 @@ OUTDIRB <- "e:/peter/AB_data_v2016/out/birds/predB"
 OUTDIR_3x7 <- "e:/peter/AB_data_v2016/out/birds/pred3x7"
 
 shf <- FALSE # surrounding HF
-do1 <- FALSE # do only 1st run
-doB <- TRUE # do bootstrap
+do1 <- TRUE # do only 1st run
+doB <- FALSE # do bootstrap
 
-do3x7 <- TRUE
+do3x7 <- FALSE
 if (do3x7) {
     do1 <- TRUE
     doB <- FALSE
@@ -513,6 +513,24 @@ if (do1) {
     pxSrf1[,j] <- rowSums(AD_rf)
     hbScr1[,j] <- colSums(AD_cr) / colSums(Asoil1)
     hbSrf1[,j] <- colSums(AD_rf) / colSums(Asoil1)
+}
+
+## testing rf=0 situations
+if (FALSE) {
+
+load(file.path(ROOT, "out", "kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata")) # dd1km_pred
+z <- drop(pxNrf1)
+summary(z)
+table(iz <- z==0)
+rnz <- rownames(AD_rf)[iz]
+m0 <- as.matrix(dd1km_pred[[2]][rnz,])
+#m1 <- as.matrix(dd1km_pred[[1]][rnz,])
+m0 <- m0/rowSums(m0)
+#m1 <- m1/rowSums(m1)
+m0 <- m0[m0[,"Water"] == 0,]
+summary(m0[,colSums(m0) > 0])
+rnzz <- rownames(m0)
+
 }
 
 ## BMAX runs

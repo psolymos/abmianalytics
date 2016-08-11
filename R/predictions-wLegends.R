@@ -252,6 +252,9 @@ if (TRUE) {
 if (TRUE) {
     SI <- round(100 * pmin(cr, rf) / pmax(cr, rf))
     SI[SI < 1] <- 1 # this is only for mapping
+    cr0 <- cr
+    rf0 <- rf
+
     Max <- max(qcr, qrf)
     df <- (cr-rf) / Max
     df <- sign(df) * abs(df)^0.5
