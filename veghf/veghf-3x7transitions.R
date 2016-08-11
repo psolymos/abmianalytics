@@ -113,7 +113,14 @@ for (j in 1:length(fl)) {
             xt <- Xtab(Shape_Area ~ ABMI + vegTr, xx)
             xxx <- Melt(xt)
             colnames(xxx) <- c("Site_ID", "vegTr", "Shape_Area")
-            xxx0 <- xxx[xxx$vegTr %in% Target0,,drop=FALSE]
+            ## Target0 misses `0->` transitions
+            #xxx0 <- xxx[xxx$vegTr %in% Target0,,drop=FALSE]
+
+            ch2veg <- data.frame(t(sapply(strsplit(as.character(xxx$vegTr), "->"),
+                function(z) if (length(z)==1) z[c(1,1)] else z[1:2])))
+            colnames(ch2veg) <- c("rf","cr")
+            xxx0 <- xxx[ch2veg$rf %in% Target0,,drop=FALSE]
+
             if (nrow(xxx0)>0) {
                 xxx1 <- xxx[!(xxx$vegTr %in% Target0),,drop=FALSE]
                 xxx0$vegTr <- as.character(xxx0$vegTr)
@@ -139,6 +146,8 @@ for (j in 1:length(fl)) {
                     tmp[[k]] <- tmpv[,colnames(xxx1)]
                 }
                 xxx0v <- do.call(rbind, tmp)
+                if (any(grepl("0", names(table(xxx0v$vegTr)))))
+                    stop("Reference age 0 issue")
                 xxx <- rbind(xxx1, xxx0v)
             }
             xt <- Xtab(Shape_Area ~ Site_ID + vegTr, xxx)

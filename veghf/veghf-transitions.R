@@ -15,7 +15,7 @@ cc <- c("Row_Col","VEGAGEclass","VEGHFAGEclass","SOILclass","SOILHFclass","Shape
 Start <- c(0:79*10+1, 802)
 
 d <- read.csv(file.path(ROOT, VER, "data", "kgrid", "tiles", fl[1]))
-dd <- make_vegHF_wide(d, col.label="Row_Col", 
+dd <- make_vegHF_wide(d, col.label="Row_Col",
     col.year=HF_YEAR, col.HFyear="CutYear", wide=FALSE)
 ddd0 <- dd[character(0),cc]
 xddd0 <- ddd0
@@ -26,7 +26,7 @@ for (s in 1:(length(Start)-1)) {
         cat(i, "of", length(fl), "-", fl[i], "\t")
         flush.console()
         d <- read.csv(file.path(ROOT, VER, "data", "kgrid", "tiles", fl[i]))
-        dd <- make_vegHF_wide(d, col.label="Row_Col", 
+        dd <- make_vegHF_wide(d, col.label="Row_Col",
             col.year=HF_YEAR, col.HFyear="CutYear", wide=FALSE)
         if (i == Start[s]) {
             dd0 <- dd[,cc]
@@ -38,7 +38,7 @@ for (s in 1:(length(Start)-1)) {
     ddd0 <- rbind(ddd0, dd0)
     cat("\nFinished block", s, "dim:", nrow(ddd0), "\n")
     if (i %in% c(100, 200, 300, 400, 500, 600, 700, 801)) {
-        save(ddd0, file=file.path(ROOT, VER, 
+        save(ddd0, file=file.path(ROOT, VER,
             "data", "kgrid", "long", paste0("Long-part", i, ".Rdata")))
         ddd0 <- xddd0
         gc()
@@ -53,36 +53,36 @@ su <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
 
 lu$use_tr <- as.character(lu$VEGAGE_use)
 lu$use_tr[!is.na(lu$HF)] <- as.character(lu$VEGHFAGE[!is.na(lu$HF)])
-allVegTr <- unique(c(lu$use_tr[is.na(lu$HF)], 
+allVegTr <- unique(c(lu$use_tr[is.na(lu$HF)],
     paste0(rep(lu$use_tr[is.na(lu$HF)], sum(!is.na(lu$HF))), "->",
     rep(lu$use_tr[!is.na(lu$HF)], each=sum(is.na(lu$HF))))))
 lu$use_tr <- as.factor(lu$use_tr)
 
 su$use_tr <- as.character(su$Levels1)
 su$use_tr[!is.na(su$HF)] <- as.character(su$SOILHF[!is.na(su$HF)])
-allSoilTr <- unique(c(su$use_tr[is.na(su$HF)], 
+allSoilTr <- unique(c(su$use_tr[is.na(su$HF)],
     paste0(rep(su$use_tr[is.na(su$HF)], sum(!is.na(su$HF))), "->",
     rep(su$use_tr[!is.na(su$HF)], each=sum(is.na(su$HF))))))
 su$use_tr <- as.factor(su$use_tr)
 
 load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
-Target0 <- c("Conif0", "Decid0", "Mixwood0", "Pine0", 
-    "Swamp-Conif0", "Swamp-Decid0", "Swamp-Mixwood0", "Swamp-Pine0", 
+Target0 <- c("Conif0", "Decid0", "Mixwood0", "Pine0",
+    "Swamp-Conif0", "Swamp-Decid0", "Swamp-Mixwood0", "Swamp-Pine0",
     "Wetland-BSpr0", "Wetland-Decid0", "Wetland-Larch0")
 
 recl <- list(
-    bf=c("Conif", "Decid", "Mixwood", "Pine", "Swamp-Conif", "Swamp-Decid", 
+    bf=c("Conif", "Decid", "Mixwood", "Pine", "Swamp-Conif", "Swamp-Decid",
         "Swamp-Mixwood", "Swamp-Pine", "Wetland-BSpr", "Wetland-Decid", "Wetland-Larch"),
-    target=c("Conif0", "Decid0", "Mixwood0", "Pine0", "Swamp-Conif0", "Swamp-Decid0", 
+    target=c("Conif0", "Decid0", "Mixwood0", "Pine0", "Swamp-Conif0", "Swamp-Decid0",
         "Swamp-Mixwood0", "Swamp-Pine0", "Wetland-BSpr0", "Wetland-Decid0", "Wetland-Larch0"),
-    reclass=c("Conif0", "Decid0", "Mixwood0", "Pine0", "Swamp", "Swamp", 
+    reclass=c("Conif0", "Decid0", "Mixwood0", "Pine0", "Swamp", "Swamp",
         "Swamp", "Swamp", "BSpr0", "Larch0", "Larch0"))
-    
+
 fl3 <- list.files(file.path(ROOT, VER, "data", "kgrid", "long"))
 
 
 ## do one LUFxNSR class at a time and save it
-#i <- "UpperAthabasca_CentralMixedwood"
+#i <- "LowerAthabasca_CentralMixedwood"
 for (ii in 1:nlevels(kgrid$LUFxNSR)) {
     i <- levels(kgrid$LUFxNSR)[ii]
     cat("\n---------", i)
@@ -95,7 +95,7 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
         flush.console()
         ddd0$LUFxNSR <- kgrid$LUFxNSR[match(ddd0$Row_Col, kgrid$Row_Col)]
         nsr <- as.character(kgrid[which(kgrid$LUFxNSR==i)[1], "NSRNAME"])
-        
+
         if (any(ddd0$LUFxNSR == i)) {
             cat(" processing ... ")
 
@@ -112,7 +112,7 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
             xx$soilTr <- ifelse(as.character(xx$soil) == as.character(xx$shf),
                 as.character(xx$soil), paste0(as.character(xx$soil),
                 "->", as.character(xx$shf)))
-            
+
             xx$vegTr <- ifelse(as.character(xx$veg) == as.character(xx$vhf),
                 as.character(xx$veg), paste0(as.character(xx$veg),
                 "->", as.character(xx$vhf)))
@@ -124,13 +124,29 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
             xt <- Xtab(Shape_Area ~ Row_Col + vegTr, xx)
             xxx <- Melt(xt)
             colnames(xxx) <- c("Row_Col", "vegTr", "Shape_Area")
-            xxx0 <- xxx[xxx$vegTr %in% Target0,,drop=FALSE]
+
+            ## Target0 misses `0->` transitions
+            #xxx0 <- xxx[xxx$vegTr %in% Target0,,drop=FALSE]
+            #table(xxx0$vegTr)[table(xxx0$vegTr) != 0]
+            #table(xxx0$vegTr)[grep("0", names(table(xxx0$vegTr)))]
+            ch2veg <- data.frame(t(sapply(strsplit(as.character(xxx$vegTr), "->"),
+                function(z) if (length(z)==1) z[c(1,1)] else z[1:2])))
+            colnames(ch2veg) <- c("rf","cr")
+            xxx0 <- xxx[ch2veg$rf %in% Target0,,drop=FALSE]
+            #table(xxx0$vegTr)[table(xxx0$vegTr) != 0]
+            #table(xxx0$vegTr)[grep("0", names(table(xxx0$vegTr)))]
+
+            #setdiff(names(table(xxx0$vegTr)[grep("0", names(table(xxx0$vegTr)))]),
+            #    names(table(xxx0$vegTr)[table(xxx0$vegTr) != 0]))
+            #setdiff(names(table(xxx0$vegTr)[table(xxx0$vegTr) != 0]),
+            #    names(table(xxx0$vegTr)[grep("0", names(table(xxx0$vegTr)))]))
+
             if (nrow(xxx0)>0) {
                 cat("age0")
                 xxx1 <- xxx[!(xxx$vegTr %in% Target0),,drop=FALSE]
                 xxx0$vegTr <- as.character(xxx0$vegTr)
                 xxx0$veg <- sapply(strsplit(as.character(xxx0$vegTr), "->"), "[[", 1)
-                xxx0$vhf <- sapply(strsplit(as.character(xxx0$vegTr), "->"), 
+                xxx0$vhf <- sapply(strsplit(as.character(xxx0$vegTr), "->"),
                     function(z) z[length(z)])
                 xxx0$vhf[xxx0$vhf == xxx0$veg] <- ""
 
@@ -151,6 +167,8 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
                     tmp[[k]] <- tmpv[,colnames(xxx1)]
                 }
                 xxx0v <- do.call(rbind, tmp)
+                if (any(grepl("0", names(table(xxx0v$vegTr)))))
+                    stop("Reference age 0 issue")
                 xxx <- rbind(xxx1, xxx0v)
             }
             xt <- Xtab(Shape_Area ~ Row_Col + vegTr, xxx)
@@ -166,7 +184,7 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
     sunits <- do.call(rbind, sunits)
     levels(sunits$soilTr) <- c(levels(sunits$soilTr),
         setdiff(allSoilTr, levels(sunits$soilTr)))
-    
+
     trVeg <- Xtab(Shape_Area ~ Row_Col + vegTr, units)
     trVeg <- trVeg[,allVegTr]
     trSoil <- Xtab(Shape_Area ~ Row_Col + soilTr, sunits)
@@ -176,6 +194,6 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
 
     cat("\nSaving", i, "\n\n")
     flush.console()
-    save(trVeg, trSoil, file=file.path(ROOT, VER, "out", "transitions", 
+    save(trVeg, trSoil, file=file.path(ROOT, VER, "out", "transitions",
         paste0(i, ".Rdata")))
 }
