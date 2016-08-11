@@ -84,6 +84,7 @@ Col2fun <- colorRampPalette(Col2, space = "rgb") # Function to interpolate among
 C2 <- Col2fun(200)
 CW <- rgb(0.4,0.3,0.8) # water
 CE <- "lightcyan4" # exclude
+CSI <- colorRampPalette(c("red","yellow","green"), space = "rgb")(100)
 
 q <- 0.99
 H <- 1000
@@ -249,6 +250,8 @@ if (TRUE) {
 }
 
 if (TRUE) {
+    SI <- round(100 * pmin(cr, rf) / pmax(cr, rf))
+    SI[SI < 1] <- 1 # this is only for mapping
     Max <- max(qcr, qrf)
     df <- (cr-rf) / Max
     df <- sign(df) * abs(df)^0.5
@@ -263,8 +266,36 @@ if (TRUE) {
     NAM <- as.character(tax[spp, "English_Name"])
     TAG <- ""
 
-#    cat("\n")
-#    cat(spp, "\t");flush.console()
+    cat("si\t");flush.console()
+    fname <- file.path(ROOT, "out", "birds", "figs", "map-si",
+        paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
+    png(fname, width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=CSI[SI], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+#    with(kgrid[kgrid$NRNAME == "Rocky Mountain" & kgrid$POINT_X < -112,],
+#        points(X, Y, col=CE, pch=15, cex=cex))
+    if (TYPE == "N")
+        with(kgrid[kgrid$useS,], points(X, Y, col=CE, pch=15, cex=cex))
+    if (TYPE == "S")
+        with(kgrid[kgrid$useN,], points(X, Y, col=CE, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, "\nIntactness"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+#	text(378826,5774802,"Insufficient \n   data",col="white",cex=0.9)
+    for (i in 1:100) {
+        #lines(c(190000, 220000), c(5450000, 5700000), col=CSI[i], lwd=2)
+        j <- i * abs(diff(c(5450000, 5700000)))/100
+        segments(190000, 5450000+j, 220000, 5450000+j, col=CSI[i], lwd=2, lend=2)
+    }
+    text(240000, 5450000, "0%")
+    text(240000, 0.5*(5450000 + 5700000), "50%")
+    text(240000, 5700000, "100%")
+    ## test NAs
+    with(kgrid[is.na(SI) & kgrid$pWater <= 0.99,], points(X, Y, col="black", pch=15, cex=cex))
+    par(op)
+    dev.off()
+
     cat("rf\t");flush.console()
     fname <- file.path(ROOT, "out", "birds", "figs", "map-rf",
         paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))

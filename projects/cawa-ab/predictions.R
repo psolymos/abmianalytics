@@ -210,6 +210,17 @@ zval[is.na(zval)] <- 1
 
     iiii <- !(kgrid$POINT_Y > 50 & kgrid$NRNAME != "Grassland")
 
+## raster
+library(raster)
+source("~/repos/abmianalytics/R/maps_functions.R")
+rt <- raster(file.path(ROOT, "data", "kgrid", "AHM1k.asc"))
+x_cr_mean <- as_Raster(as.factor(kgrid$Row), as.factor(kgrid$Col),
+    ifelse(!iiii, km2$Mean, NA), rt)
+writeRaster(x_cr_mean, "CAWA_AB_2016-08-10.asc", overwrite=TRUE)
+writeRaster(x_cr_mean, "CAWA_AB_2016-08-10.tif", overwrite=TRUE)
+
+
+
     fname <- file.path("c:/Users/Peter/Dropbox/josm/cawa-jeff/revision",
         "cawa-map-cr-cov.png")
     png(fname, width=W*2, height=H)
