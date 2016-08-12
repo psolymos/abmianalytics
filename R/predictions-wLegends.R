@@ -308,7 +308,7 @@ writeRaster(r_si, paste0(spp, "-intactness_2016-08-12.tif"), overwrite=TRUE)
     text(240000, 0.5*(5450000 + 5700000), "50%")
     text(240000, 5700000, "100%")
     ## test NAs
-    with(kgrid[is.na(SI) & kgrid$pWater <= 0.99,], points(X, Y, col="black", pch=15, cex=cex))
+#    with(kgrid[is.na(SI) & kgrid$pWater <= 0.99,], points(X, Y, col="black", pch=15, cex=cex))
     par(op)
     dev.off()
 
