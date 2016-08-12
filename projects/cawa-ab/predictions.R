@@ -218,7 +218,7 @@ library(raster)
 source("~/repos/abmianalytics/R/maps_functions.R")
 rt <- raster(file.path(ROOT, "data", "kgrid", "AHM1k.asc"))
 x_cr_mean <- as_Raster(as.factor(kgrid$Row), as.factor(kgrid$Col),
-    ifelse(!iiii, km2$Mean, NA), rt)
+    ifelse(!iiii, round(km2$Mean, 5), NA), rt)
 #writeRaster(x_cr_mean, "CAWA_AB_2016-08-10.asc", overwrite=TRUE)
 writeRaster(x_cr_mean, "CAWA_AB_2016-08-12.tif", overwrite=TRUE)
 
