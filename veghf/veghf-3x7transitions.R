@@ -52,9 +52,12 @@ allSoilTr <- unique(c(su$use_tr[is.na(su$HF)],
 su$use_tr <- as.factor(su$use_tr)
 
 load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
+
 Target0 <- c("Conif0", "Decid0", "Mixwood0", "Pine0",
-    "Swamp-Conif0", "Swamp-Decid0", "Swamp-Mixwood0", "Swamp-Pine0",
-    "Wetland-BSpr0", "Wetland-Decid0", "Wetland-Larch0")
+    "BSpr0", "Larch0")
+#Target0 <- c("Conif0", "Decid0", "Mixwood0", "Pine0",
+#    "Swamp-Conif0", "Swamp-Decid0", "Swamp-Mixwood0", "Swamp-Pine0",
+#    "Wetland-BSpr0", "Wetland-Decid0", "Wetland-Larch0")
 
 recl <- list(
     bf=c("Conif", "Decid", "Mixwood", "Pine", "Swamp-Conif", "Swamp-Decid",
@@ -119,10 +122,11 @@ for (j in 1:length(fl)) {
             ch2veg <- data.frame(t(sapply(strsplit(as.character(xxx$vegTr), "->"),
                 function(z) if (length(z)==1) z[c(1,1)] else z[1:2])))
             colnames(ch2veg) <- c("rf","cr")
-            xxx0 <- xxx[ch2veg$rf %in% Target0,,drop=FALSE]
+            PROBLEM_AGE0 <- ch2veg$rf %in% Target0
+            xxx0 <- xxx[PROBLEM_AGE0,,drop=FALSE]
 
             if (nrow(xxx0)>0) {
-                xxx1 <- xxx[!(xxx$vegTr %in% Target0),,drop=FALSE]
+                xxx1 <- xxx[!PROBLEM_AGE0,,drop=FALSE]
                 xxx0$vegTr <- as.character(xxx0$vegTr)
                 xxx0$veg <- sapply(strsplit(as.character(xxx0$vegTr), "->"), "[[", 1)
                 xxx0$vhf <- sapply(strsplit(as.character(xxx0$vegTr), "->"),
@@ -146,8 +150,10 @@ for (j in 1:length(fl)) {
                     tmp[[k]] <- tmpv[,colnames(xxx1)]
                 }
                 xxx0v <- do.call(rbind, tmp)
-                if (any(grepl("0", names(table(xxx0v$vegTr)))))
-                    stop("Reference age 0 issue")
+                if (any(grepl("0", as.character(xxx1$vegTr))))
+                    stop("Reference age 0 issue (1)")
+                if (any(grepl("0", as.character(xxx0v$vegTr))))
+                    stop("Reference age 0 issue (2)")
                 xxx <- rbind(xxx1, xxx0v)
             }
             xt <- Xtab(Shape_Area ~ Site_ID + vegTr, xxx)
@@ -172,6 +178,8 @@ for (j in 1:length(fl)) {
     range(rowSums(trSoil)/10^6)
     dim(trVeg)
     dim(trSoil)
+    if (sum(trVeg[,grep("0", colnames(trVeg)),]) > 0)
+        stop("Reference age 0 issue (3)")
 
     save(trVeg, trSoil, file=file.path(ROOT, VER, "out", "transitions3x7",
         paste0(yr[j], ".Rdata")))
