@@ -150,12 +150,15 @@ for (i in 2:length(regs)) {
 }
 
 km <- fstatv(pxNcr0, level=level)
-km_tot <- colSums(100 * pxNcr0) # ha to km^2
+summary(km$Aland)
+km$Aland <- 1 - kgrid[rownames(pxNcr0), "pWater"]
+km_tot <- colSums(100 * pxNcr0 * km$Aland) # ha to km^2, taking into account land area in pixel
 save(km, km_tot, veg_B,
     file=file.path(ROOT, "out", "birds", "results", "cawa", "cawa-km-predB.Rdata"))
 
 load(file.path(ROOT, "out", "birds", "results", "cawa", "cawa-km-predB.Rdata"))
 km2 <- km[match(rownames(kgrid), rownames(km)),]
+## pretty close after accounting for Aland
 fstat(colSums(veg_B), .9)
 fstat(km_tot, .9)
 
@@ -216,8 +219,8 @@ source("~/repos/abmianalytics/R/maps_functions.R")
 rt <- raster(file.path(ROOT, "data", "kgrid", "AHM1k.asc"))
 x_cr_mean <- as_Raster(as.factor(kgrid$Row), as.factor(kgrid$Col),
     ifelse(!iiii, km2$Mean, NA), rt)
-writeRaster(x_cr_mean, "CAWA_AB_2016-08-10.asc", overwrite=TRUE)
-writeRaster(x_cr_mean, "CAWA_AB_2016-08-10.tif", overwrite=TRUE)
+#writeRaster(x_cr_mean, "CAWA_AB_2016-08-10.asc", overwrite=TRUE)
+writeRaster(x_cr_mean, "CAWA_AB_2016-08-12.tif", overwrite=TRUE)
 
 
 
