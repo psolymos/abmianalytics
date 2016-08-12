@@ -66,9 +66,15 @@ allSoilTr <- unique(c(su$use_tr[is.na(su$HF)],
 su$use_tr <- as.factor(su$use_tr)
 
 load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
+## Wetland-BSpr = BSpr
+## Wetland-else = Larch
+## Swamp-any = Swamp
+
 Target0 <- c("Conif0", "Decid0", "Mixwood0", "Pine0",
-    "Swamp-Conif0", "Swamp-Decid0", "Swamp-Mixwood0", "Swamp-Pine0",
-    "Wetland-BSpr0", "Wetland-Decid0", "Wetland-Larch0")
+    "BSpr0", "Larch0")
+#Target0 <- c("Conif0", "Decid0", "Mixwood0", "Pine0",
+#    "Swamp-Conif0", "Swamp-Decid0", "Swamp-Mixwood0", "Swamp-Pine0",
+#    "Wetland-BSpr0", "Wetland-Decid0", "Wetland-Larch0")
 
 recl <- list(
     bf=c("Conif", "Decid", "Mixwood", "Pine", "Swamp-Conif", "Swamp-Decid",
@@ -132,7 +138,8 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
             ch2veg <- data.frame(t(sapply(strsplit(as.character(xxx$vegTr), "->"),
                 function(z) if (length(z)==1) z[c(1,1)] else z[1:2])))
             colnames(ch2veg) <- c("rf","cr")
-            xxx0 <- xxx[ch2veg$rf %in% Target0,,drop=FALSE]
+            PROBLEM_AGE0 <- ch2veg$rf %in% Target0
+            xxx0 <- xxx[PROBLEM_AGE0,,drop=FALSE]
             #table(xxx0$vegTr)[table(xxx0$vegTr) != 0]
             #table(xxx0$vegTr)[grep("0", names(table(xxx0$vegTr)))]
 
@@ -143,7 +150,7 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
 
             if (nrow(xxx0)>0) {
                 cat("age0")
-                xxx1 <- xxx[!(xxx$vegTr %in% Target0),,drop=FALSE]
+                xxx1 <- xxx[!PROBLEM_AGE0,,drop=FALSE]
                 xxx0$vegTr <- as.character(xxx0$vegTr)
                 xxx0$veg <- sapply(strsplit(as.character(xxx0$vegTr), "->"), "[[", 1)
                 xxx0$vhf <- sapply(strsplit(as.character(xxx0$vegTr), "->"),
@@ -158,6 +165,7 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
 
                 tmp <- list()
                 for (k in 1:10) {
+                ## check this here ----- !!!!!
                     tmpv <- xxx0
                     target <- substr(tmpv$veg, 1, nchar(tmpv$veg)-1)
                     tmpv$Shape_Area <- tmpv$Shape_Area * bf0[match(tmpv$veg, rownames(bf0)),k]
@@ -167,8 +175,17 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
                     tmp[[k]] <- tmpv[,colnames(xxx1)]
                 }
                 xxx0v <- do.call(rbind, tmp)
-                if (any(grepl("0", names(table(xxx0v$vegTr)))))
-                    stop("Reference age 0 issue")
+
+                if (any(grepl("0", as.character(xxx1$vegTr))))
+                    stop("Reference age 0 issue (1)")
+                #unique(as.character(xxx1$vegTr)[grepl("0", as.character(xxx1$vegTr))])
+                #xxx1$veg <- sapply(strsplit(as.character(xxx1$vegTr), "->"), "[[", 1)
+                #xxx1$vhf <- sapply(strsplit(as.character(xxx1$vegTr), "->"),
+                #    function(z) z[length(z)])
+                #xxx1$vhf[xxx1$vhf == xxx1$veg] <- ""
+                #unique(as.character(xxx1$veg)[grepl("0", as.character(xxx1$vegTr))])
+                if (any(grepl("0", as.character(xxx0v$vegTr))))
+                    stop("Reference age 0 issue (2)")
                 xxx <- rbind(xxx1, xxx0v)
             }
             xt <- Xtab(Shape_Area ~ Row_Col + vegTr, xxx)
@@ -191,6 +208,9 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
     trSoil <- trSoil[rownames(trVeg),allSoilTr]
     range(rowSums(trVeg)/10^6)
     range(rowSums(trSoil)/10^6)
+
+    if (sum(trVeg[,grep("0", colnames(trVeg)),]) > 0)
+        stop("Reference age 0 issue (3)")
 
     cat("\nSaving", i, "\n\n")
     flush.console()

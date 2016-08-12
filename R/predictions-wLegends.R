@@ -251,9 +251,22 @@ if (TRUE) {
 
 if (TRUE) {
     SI <- round(100 * pmin(cr, rf) / pmax(cr, rf))
-    SI[SI < 1] <- 1 # this is only for mapping
+    SI[is.na(SI)] <- 100 # 0/0 is defined as 100 intact
+#    SI <- 100*as.matrix(dd1km_pred[[4]])[,"UNK"]/rowSums(dd1km_pred[[2]])
+#    SI <- 100-SI
     cr0 <- cr
     rf0 <- rf
+    SI0 <- SI
+    SI[SI < 1] <- 1 # this is only for mapping
+
+if (FALSE) {
+library(raster)
+source("~/repos/abmianalytics/R/maps_functions.R")
+rt <- raster(file.path(ROOT, "data", "kgrid", "AHM1k.asc"))
+r_si <- as_Raster(as.factor(kgrid$Row), as.factor(kgrid$Col), SI0, rt)
+plot(r_si)
+writeRaster(r_si, paste0(spp, "-intactness_2016-08-12.tif"), overwrite=TRUE)
+}
 
     Max <- max(qcr, qrf)
     df <- (cr-rf) / Max
@@ -298,6 +311,26 @@ if (TRUE) {
     with(kgrid[is.na(SI) & kgrid$pWater <= 0.99,], points(X, Y, col="black", pch=15, cex=cex))
     par(op)
     dev.off()
+
+if (FALSE) {
+load(file.path(ROOT, "out", "kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata")) # dd1km_pred
+m0 <- as.matrix(dd1km_pred[[2]])
+m0 <- 100*m0/rowSums(m0)
+m0 <- m0[rf0==0 & m0[,"Water"] <= 99 & m0[,"NonVeg"] <= 99 & kgrid$NRNAME == "Grassland",]
+m0 <- m0[,colSums(m0)>0]
+#summary(m0)
+round(colMeans(m0))
+
+m0 <- as.matrix(dd1km_pred[[4]])
+m0 <- 100*m0/rowSums(m0)
+m0 <- m0[rf0==0 & m0[,"Water"] <= 99 & kgrid$NRNAME == "Grassland",]
+m0 <- m0[,colSums(m0)>0]
+round(colMeans(m0))
+
+aggregate(100*as.matrix(dd1km_pred[[2]])[,"NonVeg"]/rowSums(dd1km_pred[[2]]),
+    list(nr=kgrid$NRNAME, rf0=rf0==0 & kgrid$pWater < 0.9), mean)
+
+}
 
     cat("rf\t");flush.console()
     fname <- file.path(ROOT, "out", "birds", "figs", "map-rf",

@@ -7,7 +7,7 @@ OUTDIR_3x7 <- "e:/peter/AB_data_v2016/out/birds/pred3x7"
 
 shf <- FALSE # surrounding HF
 do1 <- TRUE # do only 1st run
-doB <- FALSE # do bootstrap
+doB <- TRUE # do bootstrap
 
 do3x7 <- FALSE
 if (do3x7) {
@@ -402,6 +402,7 @@ rownames(logPShabB) <- rownames(logPShab1)
 
 
 Aveg1 <- trVeg[rownames(kgrid)[ii],,drop=FALSE]
+#Aveg1all <- Aveg1
 Aveg1[,ch2veg$exclude] <- 0
 rs <- rowSums(Aveg1)
 rs[rs <= 0] <- 1
@@ -475,18 +476,17 @@ if (do1) {
     ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption) --- ?????
     if (any(ch2veg$CutLine))
         D_hab_cr[ch2veg$CutLine] <- D_hab_rf[ch2veg$CutLine]
-
  #   if (any(ch2veg$exclude)) {
  #       D_hab_cr[ch2veg$exclude] <- 0
  #       D_hab_rf[ch2veg$exclude] <- 0
  #   }
-
     AD_cr <- t(D_hab_cr * t(Aveg1)) * exp(logPNclim1[,j])
     AD_rf <- t(D_hab_rf * t(Aveg1)) * exp(logPNclim01[,j])
     pxNcr1[,j] <- rowSums(AD_cr)
     pxNrf1[,j] <- rowSums(AD_rf)
     hbNcr1[,j] <- colSums(AD_cr) / colSums(Aveg1)
     hbNrf1[,j] <- colSums(AD_rf) / colSums(Aveg1)
+
     ## South
     D_hab_cr <- exp(logPShab1[match(ch2soil$cr, rownames(logPShab1)),j])
     ## vegetated linear (not cutline) treated as early seral
@@ -521,15 +521,17 @@ if (FALSE) {
 load(file.path(ROOT, "out", "kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata")) # dd1km_pred
 z <- drop(pxNrf1)
 summary(z)
-table(iz <- z==0)
+table(is_water=dd1km_pred[[2]][rownames(AD_rf),"Water"] >= 0.99, ref_eq_0=z == 0)
+table(iz <- dd1km_pred[[2]][rownames(AD_rf),"Water"] < 0.99 & z == 0)
 rnz <- rownames(AD_rf)[iz]
 m0 <- as.matrix(dd1km_pred[[2]][rnz,])
-#m1 <- as.matrix(dd1km_pred[[1]][rnz,])
-m0 <- m0/rowSums(m0)
-#m1 <- m1/rowSums(m1)
-m0 <- m0[m0[,"Water"] == 0,]
-summary(m0[,colSums(m0) > 0])
-rnzz <- rownames(m0)
+m0 <- m0 / rowSums(m0)
+#summary(m0[,"Water"])
+#m0 <- m0[m0[,"Water"] < 0.99,,drop=FALSE]
+dim(m0)
+summary(m0[,colSums(m0) > 0,drop=FALSE])
+summary(as.matrix(AD_rf[rnz,colSums(AD_rf[rnz,]) > 0,drop=FALSE]))
+summary(as.matrix(Aveg1[rnz,colSums(Aveg1[rnz,]) > 0,drop=FALSE]))
 
 }
 
