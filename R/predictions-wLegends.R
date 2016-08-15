@@ -588,7 +588,7 @@ tr_res[[spp]] <- list(N=cbind(rf=ThbNrf, cr=ThbNcr), S=cbind(rf=ThbSrf, cr=ThbSc
 }
 
 #save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects.Rdata"))
-load(file.path(ROOT, "out", "birds", "tables", "sector-effects.Rdata")
+load(file.path(ROOT, "out", "birds", "tables", "sector-effects.Rdata"))
 
 nres <- list()
 sres <- list()
@@ -687,7 +687,7 @@ if (abs(y[4]-y[5])<0.05*(ymax-ymin))
 text(q,y,paste(ifelse(total.effect>0,"+",""),
     sprintf("%.1f",total.effect),"%",sep=""),col="darkblue",cex=1.4)
 mtext(side=3,line=1,at=0,adj=0,
-    paste0(NAM, " - ", ifelse(WHERE=="N", "North", "South")),
+    paste0(NAM, " - ", ifelse(WHERE=="north", "North", "South")),
     cex=1.4,col="grey40")
 dev.off()
 }
@@ -783,9 +783,10 @@ for (spp in SPP) {
 
 
     NAM <- as.character(tax[spp, "English_Name"])
+    cat(spp)
 
 if (FALSE) {
-    cat(spp, "\tMean");flush.console()
+    cat("\tMean");flush.console()
     zval <- as.integer(cut(covC, breaks=br))
     zval <- pmin(100, ceiling(99 * (crvegm / max(crvegm, na.rm=TRUE)))+1)
     zval <- zval[match(kgrid$Row10_Col10, rownames(crveg))]
