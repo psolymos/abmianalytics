@@ -198,6 +198,7 @@ rocAll1 <- pblapply(1:ncol(prAll), function(i) roc(Y1[ss1], prAll[ss1,i]))
 names(rocAll1) <- c("NULL", names(mods))
 auc <- sapply(rocAll1, function(z) as.numeric(z$auc))
 #rocNoOff <- roc(Y1[ss1], prNoOff[ss1])
+plot(0:10, auc, type="b")
 
 #Y2 <- ifelse(y_cawa>1, 1, 0)
 #rocAll2 <- lapply(1:10, function(i) roc(Y2, prAll[,i]))
@@ -214,7 +215,8 @@ for (i in 2:length(Show))
     lines(Show[[i]], col=Col[i], lty=1)
 aucx <- sapply(Show, function(z) as.numeric(z$auc))
 #txt <- paste0(names(aucx), " (AUC = ", round(aucx, 3), ")")
-txt <- paste0(c("Local","Spatial","Year"), " (AUC = ", round(aucx, 3), ")")
+txt <- paste0(c("Local (stages 1-6)",
+    "Stand level (stages 1-9)","Year (stages 1-10)"), " (AUC = ", round(aucx, 3), ")")
 legend("bottomright", bty="n", col=rev(Col),
     lty=1, lwd=2, legend=rev(txt))
 dev.off()
