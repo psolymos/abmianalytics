@@ -176,12 +176,14 @@ function(est, Xn)
     X0 <- X1 <- X
     X1[,"pAspen"] <- 1
 
-    pr0 <- predStat(X0, est, level, n=0, ci=TRUE, raw=FALSE)
-    pr1 <- predStat(X1, est, level, n=0, ci=TRUE, raw=FALSE)
+    pr0 <- predStat(X0, est, level, n=0, ci=TRUE, raw=FALSE) # non-treed
+    pr1 <- predStat(X1, est, level, n=0, ci=TRUE, raw=FALSE) # treed
     ## Linear features
-    MEAN <- mean(pr0[,"Median"])
-    Soft <- quantile(MEAN * exp(0.1*est[,"SoftLin_PC"]), c(0.5, (1-level)/2, 1-(1-level)/2))
-    Hard <- quantile(MEAN * exp(est[,"ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
+    MEAN <- mean(pr0[,"Median"]) # non-treed
+#    Soft <- quantile(MEAN * exp(0.1*est[,"SoftLin_PC"]), c(0.5, (1-level)/2, 1-(1-level)/2))
+#    Hard <- quantile(MEAN * exp(est[,"ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
+    Soft <- quantile(exp(est[,"SoftLin_PC"]), c(0.5, (1-level)/2, 1-(1-level)/2))
+    Hard <- quantile(exp(est[,"ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
     list(treed=pr1[,c(1,2,5,6)], nontreed=pr0[,c(1,2,5,6)],
         linear=c(Baseline=MEAN, Soft=Soft, Hard=Hard))
 }
@@ -808,7 +810,7 @@ function(pr, LAB)
 		p.mean <- pr[1]
 		#p.softlin10 <- 0.9*pr[1] + 0.1*pr[2]
 		p.softlin10 <- pr[1] * exp(0.1*log(pr[2]))
-		p.hardlin10 <- pr[1]*pr[5]
+		p.hardlin10 <- pr[1] * pr[5]
 		#p.hardlin10 <- 0.9*pr[1] + 0.1*pr[5]
 		ymax1<-max(p.softlin10,p.hardlin10,2*p.mean)*1.03
 		plot(c(1,1.95,2.05),c(p.mean,p.softlin10,p.hardlin10),pch=c(1,16,15),col=c("grey30","blue3","red4"),xlab="Human footprint",ylab="Relative abundance",xlim=c(0.8,2.8),ylim=c(0,ymax1),tck=0.01,yaxs="i",xaxt="n",yaxt="n",bty="l",cex=2,lwd=2,cex.lab=1.4,cex.axis=1.3,col.lab="grey40")
@@ -822,6 +824,7 @@ function(pr, LAB)
 		if (abs(ly[2]-ly[1])<ymax1/20) ly<-c(mean(ly)+ymax1/40*sign(ly[1]-ly[2]),mean(ly)+ymax1/40*sign(ly[2]-ly[1]))
 		text(c(2.15,2.15),ly,c("Soft linear","Hard linear"),col=c("blue3","red4"),cex=1.3,adj=0)
 		mtext(side=3,at=0.8,adj=0,LAB,col="grey30",cex=1.3)
-    invisible(NULL)
+    invisible(c(mean=unname(p.mean),
+        soft=unname(p.softlin10),
+        hard=unname(p.hardlin10)))
 }
-
