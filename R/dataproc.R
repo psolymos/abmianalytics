@@ -1127,11 +1127,12 @@ save(DAT, YY, OFF, OFFmean, mods, BB, # HSH,
 DAT <- DATj
 YY <- YY0[rownames(DAT),]
 YY <- YY[,colnames(YY) %in% colnames(OFF0)]
-YY <- YY[,colSums(YY>0) >= nmin]
+#YY <- YY[,colSums(YY>0) >= nmin]
+YY <- YY[,colSums(YY>0) >= 100]
 BB <- BBj
 #HSH <- HSH0[rownames(DAT),]
 OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
-OFFmean <- OFFmean0[rownames(DAT)]
+#OFFmean <- OFFmean0[rownames(DAT)]
 mods <- modsVeg
 mods$Topo <- NULL
 mods$Wet <- NULL
