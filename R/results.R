@@ -152,6 +152,9 @@ slt$oldforest <- gl$Forest.Types.Old[match(rownames(slt), gl$AOU.Code)]
 slt$oldforest[is.na(slt$oldforest)] <- 0
 slt$oldforest[slt$oldforest > 0] <- 1
 #write.csv(slt, row.names=FALSE, file="~/repos/abmispecies/_data/birds.csv")
+sb <- read.csv("~/repos/abmianalytics/lookup/singing-species-alberta.csv")
+slt$singing <- sb$Singing_birds[match(rownames(slt), sb$Species_ID)]
+write.csv(slt, file=file.path(ROOT, "birds-lookup.csv"))
 
 #slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
 rownames(slt) <- slt$AOU

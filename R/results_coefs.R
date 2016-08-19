@@ -68,7 +68,7 @@ fls <- sub("birds_abmi-south_", "", fls)
 fls <- sub(".Rdata", "", fls)
 
 SPP <- sort(unique(c(fln, fls, colnames(yy))))
-tax <- droplevels(TAX[SPP, c("Spp","English_Name","Scientific_Name","TSNID")])
+tax <- droplevels(TAX[SPP, c("Spp","English_Name","Scientific_Name","TSNID","Family_Sci")])
 tax$AOUcode <- rownames(tax)
 tax$modelN <- rownames(tax) %in% fln
 tax$modelS <- rownames(tax) %in% fls
@@ -99,10 +99,11 @@ slt <- data.frame(sppid=tax$Spp,
     scinam=tax$Scientific_Name,
     tsnid=tax$TSNID,
     AOU=tax$AOUcode,
+    family=tax$Family_Sci,
     tax[,c("ndet","modelN","modelS","ndet_n","ndet_s", "ndet_ns")])
 slt$map.det <- tax$map_det
 slt$veghf.north <- tax$modelN & tax$ndet_n > 99
-slt$soilhf.south <- tax$modelS & tax$ndet_s > 99
+slt$soilhf.south <- tax$modelS & tax$ndet_s > 49
 slt$map.pred <- slt$veghf.north | slt$soilhf.south
 slt$useavail.north=tax$useavail_north & !slt$veghf.north
 slt$useavail.south=tax$useavail_south & !slt$soilhf.south
@@ -115,7 +116,25 @@ slt[setdiff(rownames(slt), gl$AOU.Code),1:3]
 slt$oldforest <- gl$Forest.Types.Old[match(rownames(slt), gl$AOU.Code)]
 slt$oldforest[is.na(slt$oldforest)] <- 0
 slt$oldforest[slt$oldforest > 0] <- 1
+
+if (FALSE) {
+    sb <- read.csv("~/repos/bamanalytics/lookup/singing-species.csv")
+    rownames(sb) <- sb$Species_ID
+    compare_sets(rownames(tax), rownames(sb))
+    sb2 <- tax[setdiff(rownames(tax), rownames(sb)),c("English_Name",
+        "Family_Sci")]
+    sb2 <- sb2[rownames(sb2) != "NONE",]
+    sb2$Singing_birds <- NA
+    sb3 <- rbind(sb[intersect(rownames(tax), rownames(sb)),colnames(sb2)], sb2)
+    write.csv(sb3, file=file.path(ROOT, "tables", "birds-lookup-temp.csv"))
+    #write.csv(sb3, row.names=F, file="Bird-spp.csv")
+}
+
+sb <- read.csv("~/repos/abmianalytics/lookup/singing-species-alberta.csv")
+slt$singing <- sb$Singing_birds[match(rownames(slt), sb$Species_ID)]
 #write.csv(slt, row.names=FALSE, file="~/repos/abmispecies/_data/birds.csv")
+write.csv(slt, row.names=FALSE,
+    file=file.path(ROOT, "tables", "birds-lookup.csv"))
 
 #slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
 #rownames(slt) <- slt$AOU
