@@ -294,6 +294,7 @@ vhf2[vhf2[,"HardLinear"] > 5,"HardLinear"] <- 5
 
 f2 <- function(spp) {
     x <- res_coef[[spp]]$soil
+    xTreed <- mean((x$treed / x$nontreed)[,2])
     pr <- x$linear
     x <- x$nontreed
     rownames(x) <- gsub(" ", "", rownames(x))
@@ -307,7 +308,7 @@ f2 <- function(spp) {
     xx <- t(x[,2:4])
     dim(xx) <- NULL
     names(xx) <- paste0(rep(rownames(x), each=3), c("", ".LCL", ".UCL"))
-    c(xx, rr)
+    c(xx, rr, xTreed=xTreed)
 }
 soil <- t(sapply(fls, f2))
 soil2 <- data.frame(tax[rownames(soil), c("English_Name","Scientific_Name","TSNID")],
