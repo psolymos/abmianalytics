@@ -29,11 +29,17 @@ function(f)
     substr(f, 1, nchar(f)-2)
 }
 aru_parse_date <-
-function(f)
+function(f, type=c("full", "date", "time"))
 {
+    type <- match.arg(type)
     f <- gsub(".wac", "", f)
-    f <- substr(sapply(strsplit(f, "\\+"), "[[", 2L), 3, nchar(f))
-    as.POSIXlt(strptime(f, "%Y%m%d_%H%M%S"))
+    if (type == "full") {
+        f <- substr(sapply(strsplit(f, "\\+"), "[[", 2L), 3, nchar(f))
+        out <- as.POSIXlt(strptime(f, "%Y%m%d_%H%M%S"))
+    } else {
+        out <- sapply(strsplit(f, "_"), "[[", if (type == "date") 3L else 4L)
+    }
+    out
 }
 aru_calculateH <-
 function (wave, f, wl = 512, envt = "hil", msmooth = NULL, ksmooth = NULL)
@@ -93,7 +99,7 @@ function(DIRIN, DIROUT, FNAME, CPROG, keep_wav=FALSE, quick=FALSE, return_object
     out
 }
 
-
+if (FALSE) {
 FLWAC <- list.files(DIRIN)
 FLWAC <- FLWAC[grep(".wac", FLWAC)]
 
@@ -175,7 +181,9 @@ object <- res1$object
 
 aru_calculateH(object[,1])
 aru_calculateH(object[,2])
+}
 
+## (1) define duration wac_size relationship based on random sample
 
 ## randomly picking 100 files
 dir <- c("u:\\2015_AllData\\ABMI-Core\\ABMI-0001",
@@ -285,3 +293,215 @@ save(RES, file="e:\\peter\\AB_data_v2016\\out\\aru-filtering\\sample.Rdata")
 
 z <- data.frame(t(sapply(1:length(RES), function(i) unlist(RES[[i]][c(2,5,6,7)]))))
 plot(z)
+
+## wac is 34-75% compression of original wav
+summary(z$size_wac / z$size_wav)
+
+## assume 3 min as minimum
+## some <180, but mostly 180 and 600 sec
+table(z$duration)
+(z0 <- z[z$duration < 180,])
+summary(z[z$duration >= 180,])
+summary(z[z$duration == 180,])
+summary(z[z$duration == 600,])
+
+#(WAC_SIZE_MIN <- max(min(z$size_wac[z$duration >= 180]), max(z$size_wac[z$duration < 180])))
+(WAC_SIZE_MIN0 <- min(z$size_wac[z$duration >= 180]))
+WAC_SIZE_MIN <- WAC_SIZE_MIN0
+
+## (2) assess 1 directory at a time and find small files
+
+#WAC_SIZE_MIN <- 11849974 # 3 minutes minimum
+WAC_SIZE_MIN <- 17825792 # some 3 mins in (17Mb)
+RESbyDIR <- list()
+ii <- 1:length(dirs)
+#ii <- matrix(1:length(dirs), nrow=4)[1,]
+for (i in ii) {
+    DIR <- dirs[i]
+    cat(DIR, "---", which(ii==i), "/", length(ii), "\n");flush.console()
+    FLWAC <- list.files(DIR)
+    FLWAC <- FLWAC[grep(".wac", FLWAC)]
+
+    #LOC <- aru_parse_location(FLWAC[1L])
+    dd <- data.frame(file=FLWAC,
+        full_date=aru_parse_date(FLWAC, type="full"),
+        date=aru_parse_date(FLWAC, type="date"),
+        time=aru_parse_date(FLWAC, type="time"),
+        size_wac=pbsapply(FLWAC, function(z) file.size(file.path(DIR, z, fsep="\\"))))
+    rownames(dd) <- NULL
+
+    si <- dd$size_wac / 1024^2
+    names(si) <- dd$file
+    si <- sort(si[si < 40])
+    sid <- cbind(Theoretical=qnorm(seq(0.0001,0.9999,len=length(si))),
+        Empirical=(si-mean(si))/sd(si),
+        pval=pnorm(-abs((si-mean(si))/sd(si)))) # 1-sided
+    rownames(sid) <- names(si)
+    sid[sid[,3] < 0.05,]
+    #dd$pval <- NA
+    dd$pval <- sid[match(dd$file, rownames(sid)),3]
+    dd$flag <- FALSE
+    dd$flag[!is.na(dd$pval) & dd$pval < 0.05] <- TRUE
+    dd <- dd[order(dd$size_wac),]
+    dd$flag[which.max(dd$size_wac[dd$flag])+1] <- TRUE
+    dd <- dd[order(dd$full_date),]
+
+#    dd$small <- dd$size_wac < WAC_SIZE_MIN
+    dd$small <- dd$flag
+    dd$duration <- NA
+
+
+    tmp <- list()
+    k <- 1
+    sss <- which(dd$small)
+    if (length(sss) > 20) {
+        sss <- sample(sss, 20)
+        #sss <- c(sss[1:10], sss[(length(sss)-9):length(sss)])
+    }
+    for (j in sss) {
+        cat(k, "/", length(sss), "\n");flush.console()
+        res <- try(aru_summarize(
+            FNAME = as.character(dd$file[j]),
+            #FNAME = "ABMI-0264-NW_0+1_20150421_195400.wac",
+            DIRIN = DIR,
+            DIROUT = "e:\\Peter\\tmp",
+            CPROG = "C:\\Users\\Peter\\Dropbox\\abmi\\aru\\wac2wav\\wac2wav.exe",
+            keep_wav = FALSE, quick=TRUE, return_object=FALSE))
+        if (!inherits(res, "try-error")) {
+#            tmp[[j]] <- res
+            dd$duration[j] <- res$duration
+        }
+        k <- k + 1
+        rm(res)
+    }
+    print(table(dd$duration))
+
+    ## update min
+#    ddd <- dd[!is.na(dd$duration),]
+#    ddd <- ddd[ddd$duration >= 180,]
+#    WAC_SIZE_MIN_NEW <- min(ddd$size_wac)
+#    WAC_SIZE_MIN <- min(WAC_SIZE_MIN, WAC_SIZE_MIN_NEW)
+
+    RESbyDIR[[DIR]] <- dd
+}
+
+save(RESbyDIR, file="e:\\peter\\AB_data_v2016\\out\\aru-filtering\\filter-dirs.Rdata")
+
+zz1 <- do.call(rbind, lapply(RESbyDIR, function(z) {
+    z <- z[!is.na(z$duration),,drop=FALSE]
+    z[z$duration < 180,,drop=FALSE]
+}))
+zz2 <- do.call(rbind, lapply(RESbyDIR, function(z) {
+    z <- z[!is.na(z$duration),,drop=FALSE]
+    z[z$duration >= 180,,drop=FALSE]
+}))
+
+## have a look at site level variation in file sizes that are OK (3 & 10 min)
+## also check min 3 minutes limit
+
+## (3) plot
+
+#source("~/repos/abmianalytics/aru/qcc_functions.R")
+
+i <- 1
+    DIR <- dirs[i]
+    cat(DIR, "---", i, "/", length(dirs), "\n");flush.console()
+    FLWAC <- list.files(DIR)
+    FLWAC <- FLWAC[grep(".wac", FLWAC)]
+
+    LOC <- aru_parse_location(FLWAC[1L])
+    dd <- data.frame(file=FLWAC,
+        full_date=aru_parse_date(FLWAC, type="full"),
+        date=aru_parse_date(FLWAC, type="date"),
+        time=aru_parse_date(FLWAC, type="time"),
+        size_wac=pbsapply(FLWAC, function(z) file.size(file.path(DIR, z, fsep="\\"))))
+    rownames(dd) <- NULL
+    dd$small <- dd$size_wac < WAC_SIZE_MIN0
+    dd$yday <- as.POSIXlt(dd$full_date)$yday
+
+    dd$date2 <- as.POSIXlt(strptime(dd$date, "%Y%m%d"))
+    dd$time2 <- as.POSIXlt(strptime(dd$time, "%H%M%S"))
+
+
+si <- dd$size_wac / 1024^2
+names(si) <- dd$file
+si <- sort(si[si < 40])
+sid <- cbind(Theoretical=qnorm(seq(0.0001,0.9999,len=length(si))),
+    Empirical=si,
+    pval=pnorm(-abs((si-mean(si))/sd(si)))) # 1-sided
+rownames(sid) <- names(si)
+sid[sid[,3] < 0.05,]
+#dd$pval <- NA
+dd$pval <- sid[match(dd$file, rownames(sid)),3]
+dd$flag <- FALSE
+dd$flag[!is.na(dd$pval) & dd$pval < 0.05] <- TRUE
+dd <- dd[order(dd$size_wac),]
+dd$flag[which.max(dd$size_wac[dd$flag])+1] <- TRUE
+dd <- dd[order(dd$full_date),]
+
+plot(sid[,-3], pch=19, col=ifelse(sid[,3] < 0.05, 2, 1))
+qqline(sid[,2], col=4)
+#qqplot(qnorm(seq(0.0001,0.9999,len=length(si))), si)
+#qqnorm(si)
+
+
+hist(dd$size_wac/1024^2, xlab="WAC file size (Mb)", main=LOC, col="grey")
+rug(dd$size_wac/1024^2)
+abline(v=WAC_SIZE_MIN0/1024^2, col=2)
+
+with(dd, plot(full_date, size_wac/1024^2, type="l"))
+abline(h=WAC_SIZE_MIN0/1024^2, col=2)
+
+#mav <- function(x, n = 8) filter(x, rep(1 / n, n), sides = 2)
+#dd$mav <- mav(dd$size_wac/1024^2)
+tmp <- as.matrix(aggregate(dd$size_wac, list(dd$yday), range))
+tmp <- tmp[match(as.character(dd$yday), as.character(tmp[,1])),]
+dd$dmin <- tmp[,2]
+dd$dmax <- tmp[,3]
+tmp <- as.matrix(aggregate(dd$size_wac, list(dd$yday), mean))
+tmp <- tmp[match(as.character(dd$yday), as.character(tmp[,1])),]
+dd$dmean <- tmp[,2]
+
+op <- par(mfrow=c(2,2))
+plot(dd$date2, dd$time2, pch=19, col=1, main=LOC,
+    xlab="Date", ylab="Time")
+with(dd[dd$pval < 0.05,], points(date2, time2, pch=19, col=2))
+
+plot(sid[,-3], type="l")
+points(sid[,-3], pch=19, col=ifelse(sid[,3] < 0.05, 2, 1))
+qqline(sid[,2], col=4)
+
+with(dd[dd$yday <= min(dd$yday)+7,], plot(full_date, size_wac/1024^2, type="n",
+    main="", ylab="WAC file size (Mb)", xlab="1 week after deployment",
+    ylim=c(0, max(dd$size_wac/1024^2))))
+polygon(c(dd$full_date, rev(dd$full_date)),
+    c(dd$dmin/1024^2, rev(dd$dmax/1024^2)), col="lightblue", border=NA)
+with(dd, lines(full_date, size_wac/1024^2, col=1))
+with(dd, points(full_date, size_wac/1024^2, pch=19,
+    col=ifelse(pval < 0.05, 2, 1)))
+abline(h=WAC_SIZE_MIN0/1024^2, col=2)
+#lines(dd$full_date, dd$dmean/1024^2, col=4)
+
+with(dd[dd$yday >= max(dd$yday)-7,], plot(full_date, size_wac/1024^2, type="n",
+    main="", ylab="WAC file size (Mb)", xlab="1 week before retrieval",
+    ylim=c(0, max(dd$size_wac/1024^2))))
+polygon(c(dd$full_date, rev(dd$full_date)),
+    c(dd$dmin/1024^2, rev(dd$dmax/1024^2)), col="lightblue", border=NA)
+with(dd, lines(full_date, size_wac/1024^2, col=1))
+with(dd, points(full_date, size_wac/1024^2, pch=19,
+    col=ifelse(pval < 0.05, 2, 1)))
+abline(h=WAC_SIZE_MIN0/1024^2, col=2)
+#lines(dd$full_date, dd$dmean/1024^2, col=4)
+
+par(op)
+
+plot_control_chart1(dd$full_date, dd$size_wac/1024^2)
+type=c("qcc","cusum","ewma"), n=8, nsigmas=4.5,
+main, use.date=TRUE, offset=0.2, lambda=0.2, sort=TRUE)
+
+with(dd[dd$yday >= max(dd$yday)-7,], plot_control_chart1(full_date, size_wac/1024^2,
+    "cusum", n=floor(0.9*nrow(dd)), use.date=FALSE))
+
+
+
+
