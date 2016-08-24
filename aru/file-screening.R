@@ -387,6 +387,26 @@ for (i in ii) {
 
 save(RESbyDIR, file="e:\\peter\\AB_data_v2016\\out\\aru-filtering\\filter-dirs.Rdata")
 
+## find the damn threshold
+
+load("e:\\peter\\AB_data_v2016\\out\\aru-filtering\\filter-dirs.Rdata")
+load("e:\\peter\\AB_data_v2016\\out\\aru-filtering\\dirs-files.Rdata")
+load("e:\\peter\\AB_data_v2016\\out\\aru-filtering\\sample.Rdata")
+
+for (i in 1:length(RES)) {
+    RESbyDIR[[i]][RESbyDIR[[i]]$file == RES[[i]]$file, "duration"] <- RES[[i]]$duration
+}
+
+zz <- do.call(rbind, lapply(RESbyDIR, function(z) {
+    z[!is.na(z$duration),,drop=FALSE]
+}))
+dim(zz)
+table(is.na(zz$pval), zz$duration < 600)
+zz$pval[is.na(zz$pval)] <- 1
+zz$small <- zz$flag <- NULL
+
+## --
+
 zz1 <- do.call(rbind, lapply(RESbyDIR, function(z) {
     z <- z[!is.na(z$duration),,drop=FALSE]
     z[z$duration < 180,,drop=FALSE]
@@ -429,20 +449,20 @@ n <- nrow(zz)
 ##  True pos           | False neg (Type II)
 ## --------------------+---------------------
 ##  False pos (Type I) | True neg
-(cm1 <- round((table(True=True, Pred=Min3min)/n)[c(2,1),c(2,1)],2))
+(cm1 <- round((table(True=True, Pred=Min3min)/1)[c(2,1),c(2,1)],2))
 ##        Pred
 ## True    TRUE FALSE
 ##   TRUE  0.56  0.04
 ##   FALSE 0.00  0.40
-(cm2 <- round((table(True=True, Pred=MaxSmall)/n)[c(2,1),c(2,1)],2))
+(cm2 <- round((table(True=True, Pred=MaxSmall)/1)[c(2,1),c(2,1)],2))
 ##        Pred
 ## True    TRUE FALSE
 ##   TRUE  0.60  0.00
 ##   FALSE 0.05  0.36
 
 ## Accuracy = (True pos + True neg) / n
-(Acc1 <- sum(diag(cm1)))
-(Acc2 <- sum(diag(cm2)))
+(Acc1 <- sum(diag(cm1)))/n
+(Acc2 <- sum(diag(cm2)))/n
 
 hist(zz1$size_wac/1024^2, col="grey")
 rug(zz1$size_wac/1024^2)

@@ -1,0 +1,246 @@
+---
+title: "ARU file screening"
+author: "Peter Solymos"
+date: "Aug 24, 2016"
+output:
+  word_document: default
+  pdf_document:
+    toc: yes
+    toc_depth: 2
+  html_document:
+    toc: no
+---
+
+## Intro
+
+Audio files from each ARU unit are dumped into neatly organized directories
+on hard drives and servers after retrieval.
+Checking these files requires someone to: bulk-convert the WAC files to WAV
+and look at them individually to check various features of the files.
+The goal is to eliminate files with defects that render them unsuitable for
+listening. Such defects most often include: recording stopped short 
+(<3 or 10 minutes duration), left, right, or both channel is useless (mic problem).
+This approach is time consuming because of the file conversion and
+human involvement (due to clicking in a graphical user interface, auditory/visual
+checking, etc.)
+
+Ways to speed up this part of the QA/QC process is to skip the conversion altogether,
+or to automate as much of the process as possible.
+My goal here is to find an efficient way to screen the files and reduce
+human intervention in the process. I am discussing some ideas about
+automating the inspection of converted WAC files, but I focus more
+on things that can be done based on original WAC file attributes.
+
+## Features of WAC and WAV files
+
+WAC is a compressed (35-70% compression
+compared to WAV) file format created by Wildlife Acoustics.
+The only useful attribute of the compressed file is its size. Mor on it later.
+
+The WAC source code was opened in 2014 under GPL license (see [here](http://peter.solymos.org/code/2016/03/14/wac2wav-converter.html)).
+A program written in C can be used to convert WAC to WAV, file conversion
+based on a random sample of files takes on 4.6-7.3 seconds for 3 minutes (mean = 5.4 sec, $n=191$)
+and 14.9-22.7 seconds for 10 minutes files (mean = 16.2 sec, $n=59$).
+This does not seem a lot for individual files, but the 2015 ABMI ARU sampling
+resulted in about 339 thousand WAC files.
+Altogether, conversion of 339K files would take 30 days on a single computer.
+
+
+```{r eval=FALSE,echo=FALSE,message=FALSE}
+load("e:\\peter\\AB_data_v2016\\out\\aru-filtering\\filter-dirs.Rdata")
+load("e:\\peter\\AB_data_v2016\\out\\aru-filtering\\dirs-files.Rdata")
+load("e:\\peter\\AB_data_v2016\\out\\aru-filtering\\sample.Rdata")
+
+p_time <- sapply(RES, "[[", "timer")
+dur <- sapply(RES, "[[", "duration")
+summary(p_time[dur == 180])
+summary(p_time[dur == 600])
+```
+
+After conversion, the WAV file can be further manipulated using the **tuneR**,
+and **seewave** R packages.
+Stereo WAV files store audio bitstreams, in our case
+aplitudes (dB) sampled at 48000/sec rate with 16 bits per sample for left and right channels.
+The following 2 plots show a 3 minutes (180 sec) fole with both channels fine.
+The second one is a 10 minutes (600 sec) recording from a unit where
+the right microphone was already dead on deployment.
+
+
+```{r echo=FALSE,message=FALSE}
+library(tuneR)
+library(seewave)
+DIRIN <- "u:\\2015_AllData\\ABMI-Core\\ABMI-0032\\ABMI-0032-NW"
+DIROUT <- "e:\\Peter\\tmp"
+CPROG <- "C:\\Users\\Peter\\Dropbox\\abmi\\aru\\wac2wav\\wac2wav.exe"
+aru_convert <-
+function(DIRIN, DIROUT, FNAME, CPROG)
+{
+    ## fin & fout must be full path
+    fin <- file.path(DIRIN, FNAME, fsep="\\")
+    fout <- file.path(DIROUT, gsub(".wac", ".wav", FNAME), fsep="\\")
+    CALL <- paste(CPROG, fin, fout)
+    system(CALL)
+    invisible(fout)
+}
+aru_parse_location <-
+function(f)
+{
+    f <- gsub(".wac", "", f)
+    f <- sapply(strsplit(f, "\\+"), "[[", 1L)
+    substr(f, 1, nchar(f)-2)
+}
+aru_parse_date <-
+function(f, type=c("full", "date", "time"))
+{
+    type <- match.arg(type)
+    f <- gsub(".wac", "", f)
+    if (type == "full") {
+        f <- substr(sapply(strsplit(f, "\\+"), "[[", 2L), 3, nchar(f))
+        out <- as.POSIXlt(strptime(f, "%Y%m%d_%H%M%S"))
+    } else {
+        out <- sapply(strsplit(f, "_"), "[[", if (type == "date") 3L else 4L)
+    }
+    out
+}
+aru_calculateH <-
+function (wave, f, wl = 512, envt = "hil", msmooth = NULL, ksmooth = NULL)
+{
+    input <- inputw(wave = wave, f = f)
+    wave <- input$w
+    f <- input$f
+    rm(input)
+    spec <- meanspec(wave = wave, f = f, wl = wl, plot = FALSE)
+    SH <- sh(spec)
+    enve <- env(wave = wave, f = f, envt = envt, msmooth = msmooth,
+        ksmooth = ksmooth, plot = FALSE)
+    TH <- th(enve)
+    H <- SH * TH
+    return(c(H=H, SH=SH, TH=TH))
+}
+aru_leftright <- function(object) {
+    d <- object@left - object@right
+    sdl <- sd(object@left)
+    sdr <- sd(object@right)
+    c(sd_left=sdl, sd_right=sdr,
+        mean_left=mean(object@left), mean_right=mean(object@right),
+        min_left=min(object@left), min_right=min(object@right),
+        max_left=max(object@left), max_right=max(object@right),
+        std_diff = mean(d / (0.5*(sdl+sdr))),
+        log_sd_ratio = log(sd(object@left) / sd(object@right)))
+}
+aru_summarize <-
+function(DIRIN, DIROUT, FNAME, CPROG, keep_wav=FALSE, quick=FALSE, return_object=TRUE)
+{
+    t0 <- proc.time()
+    if (!file.exists(file.path(DIRIN, FNAME, fsep="\\")))
+        stop("file does not exist")
+    FNWAV <- try(aru_convert(DIRIN, DIROUT, FNAME, CPROG))
+    if (inherits(FNWAV, "try-error"))
+        stop("wac2wav error")
+    object <- readWave(FNWAV)
+    #object <- if (sample_p < 1)
+    #    downsample(object0, samp.rate=sample_p*object@samp.rate) else object0
+    #SPECTRO <- spectro(object, plot=FALSE)
+    #CSH <- csh(object, plot=FALSE) # range, mean etc ?
+    H <- if (quick)
+        NULL else aru_calculateH(object)
+    out <- list(file=FNAME,
+        timer = unname(proc.time() - t0)[3L],
+        location = aru_parse_location(FNAME),
+        date = aru_parse_date(FNAME),
+        duration = length(object@left)/object@samp.rate,
+        size_wac = file.size(file.path(DIRIN, FNAME, fsep="\\")),
+        size_wav = file.size(FNWAV),
+        entropy=H,
+        channels=aru_leftright(object),
+        #sample_p=sample_p,
+        object=if (return_object) object else NULL)
+    if (!keep_wav)
+        file.remove(FNWAV)
+    out
+}
+## short file
+res0 <- aru_summarize(
+    FNAME = "ABMI-0032-NW_0+1_20150723_020255.wac",
+    DIRIN = "u:\\2015_AllData\\ABMI-Core\\ABMI-0032\\ABMI-0032-NW",
+    DIROUT = "e:\\Peter\\tmp",
+    CPROG = "C:\\Users\\Peter\\Dropbox\\abmi\\aru\\wac2wav\\wac2wav.exe",
+    keep_wav = TRUE, quick=TRUE)
+## Right microphone already dead on deployment recording
+res1 <- aru_summarize(
+    FNAME = "ABMI-0331-NW_0+1_20150301_090000.wac",
+    DIRIN = "u:\\2015_AllData\\ABMI-Core\\ABMI-0331\\ABMI-0331-NW",
+    DIROUT = "e:\\Peter\\tmp",
+    CPROG = "C:\\Users\\Peter\\Dropbox\\abmi\\aru\\wac2wav\\wac2wav.exe",
+    keep_wav = TRUE, quick=TRUE)
+## OK file
+res2 <- aru_summarize(
+    FNAME = "ABMI-0388-SW_0+1_20150626_071600.wac",
+    DIRIN = "u:\\2015_AllData\\ABMI-Core\\ABMI-0388\\ABMI-0388-SW",
+    DIROUT = "e:\\Peter\\tmp",
+    CPROG = "C:\\Users\\Peter\\Dropbox\\abmi\\aru\\wac2wav\\wac2wav.exe",
+    keep_wav = TRUE, quick=TRUE)
+```
+
+```{r echo=FALSE,fig.height=4,fig.width=7}
+plot(res2$object, main="ABMI-0388-SW_0+1_20150626_071600.wac", col=4)
+plot(res1$object, main="ABMI-0331-NW_0+1_20150301_090000.wac", col=4)
+```
+
+The left/right imbalance can be detected automatically by
+comparing the the SD's of the channels. In the 1st case 
+of the good file we get
+$SD_{left}$ = `r unname(round(res2$channels["sd_left"],2))`
+and $SD_{right}$ = `r unname(round(res2$channels["sd_right"],2))`.
+In the 2nd case of the broken right channel we get
+$SD_{left}$ = `r unname(round(res1$channels["sd_left"],2))`
+and $SD_{right}$ = `r unname(round(res1$channels["sd_right"],2))`.
+The ratio of the SD's can indicate channel issues (e.g.
+$log(SD_{left}/SD_{left})$, values close to 0 indicating comparable channels).
+
+Problems with microphones that a not intermittent can be detected by
+inspecting few of the recordings (after deployment, mid-season, before retrieval).
+I haven't purusued this line of research further, but will continue
+after gathering the relevant information from Hedwig (e.g. known issues
+with units, files, etc.), so that I can better assess accuracy of the
+automated process.
+
+Next I compared the file sizes of the WAC and WAV files to the recording duration
+for the $n=260$ random sample.
+These results show that WAV file size relationship with duration follow
+a perfect line as expected, but WAC file size and duration relationship showed more
+variation due to mostly noise level affecting compression.
+By looking at the WAC-WAV file size graph, we can see that the unwanted
+<180 second duration files would be easy to screen based on WAV file size,
+but WAC file size present a problem. The file size for the smalled 3-minutes
+file is smaller than the file size for the larges unwanted file.
+If we want to screen the WAC files based on their size to eliminate the <3 minutes
+files, we need to find a file size threshold that will minimize
+the chances of 3-minutes files being eliminated.
+
+```{r echo=FALSE,fig.height=4,fig.width=7}
+swac <- sapply(RES, "[[", "size_wac")/1024^2
+swav <- sapply(RES, "[[", "size_wav")/1024^2
+op <- par(mfrow=c(1,3))
+plot(dur, swac, xlab="Duration (sec)", ylab="WAC file size (Mb)")
+abline(lm(swac ~ dur), col=2)
+plot(dur, swav, xlab="Duration (sec)", ylab="WAV file size (Mb)")
+abline(lm(swav ~ dur), col=2)
+plot(swac, swav, xlab="WAC file size (Mb)", ylab="WAV file size (Mb)")
+abline(lm(swav ~ swac), col=2)
+par(op)
+```
+
+Describe site/unit level variation
+
+Describe the deplotment/retrieval patterns
+
+Describe the day-time patterns
+
+Describe the directory read-in and the QQ process
+
+Show accuracy resulyts
+
+Present proposed process
+
+Identify next steps
