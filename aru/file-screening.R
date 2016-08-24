@@ -396,6 +396,73 @@ zz2 <- do.call(rbind, lapply(RESbyDIR, function(z) {
     z[z$duration >= 180,,drop=FALSE]
 }))
 
+range_fun <- function(d1) {
+    d1$durc <- 10
+    d1$durc[d1$size_wac/1024^2 < 40] <- 3
+    d1$durc[!is.na(d1$duration) & d1$duration < 180] <- 0
+    table(d1$durc)
+    t(sapply(c(0, 3, 10), function(z) range(d1$size_wac[d1$durc==z]/1024^2)))
+}
+ranges <- lapply(RESbyDIR, range_fun)
+r0 <- t(sapply(ranges, function(z) z[1,]))
+r0[!is.finite(r0)] <- NA
+r3 <- t(sapply(ranges, function(z) z[2,]))
+r3[!is.finite(r3)] <- NA
+r10 <- t(sapply(ranges, function(z) z[3,]))
+r10[!is.finite(r10)] <- NA
+
+with(rbind(zz1, zz2), plot(size_wac/1024^2, duration,
+    col=c(rep(2, nrow(zz1)), rep(1, nrow(zz2)))))
+
+min(zz2$size_wac/1024^2) # 11.2
+max(zz1$size_wac/1024^2) # 17.7
+table(zz2$size_wac > max(zz1$size_wac))
+table(zz1$size_wac < min(zz2$size_wac))
+
+## confusion tables
+zz <- rbind(zz1, zz2)
+True <- zz$duration < 180
+Min3min <- zz$size_wac < min(zz2$size_wac)
+MaxSmall <- zz$size_wac < max(zz1$size_wac)
+n <- nrow(zz)
+
+##  True pos           | False neg (Type II)
+## --------------------+---------------------
+##  False pos (Type I) | True neg
+(cm1 <- round((table(True=True, Pred=Min3min)/n)[c(2,1),c(2,1)],2))
+##        Pred
+## True    TRUE FALSE
+##   TRUE  0.56  0.04
+##   FALSE 0.00  0.40
+(cm2 <- round((table(True=True, Pred=MaxSmall)/n)[c(2,1),c(2,1)],2))
+##        Pred
+## True    TRUE FALSE
+##   TRUE  0.60  0.00
+##   FALSE 0.05  0.36
+
+## Accuracy = (True pos + True neg) / n
+(Acc1 <- sum(diag(cm1)))
+(Acc2 <- sum(diag(cm2)))
+
+hist(zz1$size_wac/1024^2, col="grey")
+rug(zz1$size_wac/1024^2)
+abline(v=min(zz2$size_wac/1024^2), col=2)
+
+hist(zz2$size_wac/1024^2, col="grey")
+rug(zz2$size_wac/1024^2)
+abline(v=max(zz1$size_wac/1024^2), col=2)
+
+plot(0, type="n", xlim=c(0, max(r10, na.rm=TRUE)), ylim=c(0, length(RESbyDIR)+1),
+    xlim="WAC size (Mb)", ylim="ARU unit")
+for (i in 1:length(RESbyDIR)) {
+    lines(r0[i,], c(i,i), col=2)
+    lines(r3[i,], c(i,i), col=1)
+    lines(r10[i,], c(i,i), col=4)
+}
+
+
+
+
 ## have a look at site level variation in file sizes that are OK (3 & 10 min)
 ## also check min 3 minutes limit
 
