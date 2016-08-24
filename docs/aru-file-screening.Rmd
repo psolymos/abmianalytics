@@ -46,7 +46,7 @@ resulted in about 339 thousand WAC files.
 Altogether, conversion of 339K files would take 30 days on a single computer.
 
 
-```{r eval=FALSE,echo=FALSE,message=FALSE}
+```{r eval=TRUE,echo=FALSE,message=FALSE}
 load("e:\\peter\\AB_data_v2016\\out\\aru-filtering\\filter-dirs.Rdata")
 load("e:\\peter\\AB_data_v2016\\out\\aru-filtering\\dirs-files.Rdata")
 load("e:\\peter\\AB_data_v2016\\out\\aru-filtering\\sample.Rdata")
@@ -231,15 +231,202 @@ abline(lm(swav ~ swac), col=2)
 par(op)
 ```
 
-Describe site/unit level variation
+## Screening WAC files
 
-Describe the deplotment/retrieval patterns
+I screened $n=266694$ files from 260 ARU units. Here is the WAC file size 
+distribution for these files. The histogram shows the distribution
+for all units, the next figure below shows the unit-specific variation
+in file size ranges.
 
-Describe the day-time patterns
+```{r echo=FALSE,fig.height=4,fig.width=7}
+aswac <- unlist(lapply(RESbyDIR, function(z) z$size_wac))/1024^2
+aswacr <- t(sapply(RESbyDIR, function(z) range(z$size_wac)))/1024^2
+#aswacr1 <- t(sapply(RESbyDIR, function(z) 
+#    range(z$size_wac[!is.na(z$pval) & z$pval<0.05])))/1024^2
+#aswacr2 <- t(sapply(RESbyDIR, function(z) 
+#    range(z$size_wac[is.na(z$pval) | z$pval>=0.05])))/1024^2
+#op <- par(mfrow=c(2,1))
+hist(aswac, xlab="WAC size (Mb)", main="", col="grey")
+plot(0, type="n", 
+    ylim=c(0, max(aswac, na.rm=TRUE)), xlim=c(0, length(RESbyDIR)+1),
+    ylab="WAC size (Mb)", xlab="ARU unit")
+for (i in 1:length(RESbyDIR)) {
+    lines(c(i,i), aswacr[order(rowMeans(aswacr)),][i,], col=4)
+#    lines(c(i,i), aswacr2[order(aswacr2[,1]),][i,], col=4)
+#    lines(c(i,i), aswacr1[order(aswacr2[,1]),][i,], col=3)
+}
+#par(op)
+```
 
-Describe the directory read-in and the QQ process
+Zooming in on a single ARU unit (ABMI-0001-NE).
+The date-time distribution of recordings is shown in the
+leftmost plot. The middle one depicts the 1st week
+after deployment, the last one is about 1 week before retrieval.
+The pattern seen here is quite common across the units.
+The red dots are the files that are flagged as the ones that
+are likely be <3 minutes in duration.
 
-Show accuracy resulyts
+```{r echo=FALSE,fig.height=4,fig.width=7}
+i <- 1
+t0 <- proc.time()
+DIR <- dirs[i]
+FLWAC <- list.files(DIR)
+FLWAC <- FLWAC[grep(".wac", FLWAC)]
+
+LOC <- aru_parse_location(FLWAC[1L])
+dd <- data.frame(file=FLWAC,
+        full_date=aru_parse_date(FLWAC, type="full"),
+        date=aru_parse_date(FLWAC, type="date"),
+        time=aru_parse_date(FLWAC, type="time"),
+        size_wac=sapply(FLWAC, function(z) file.size(file.path(DIR, z, fsep="\\"))))
+rownames(dd) <- NULL
+dd$yday <- as.POSIXlt(dd$full_date)$yday
+dd$date2 <- as.POSIXlt(strptime(dd$date, "%Y%m%d"))
+dd$time2 <- as.POSIXlt(strptime(dd$time, "%H%M%S"))
+
+si <- dd$size_wac / 1024^2
+names(si) <- dd$file
+si <- sort(si[si < 40])
+sid <- cbind(Theoretical=qnorm(seq(0.0001,0.9999,len=length(si))),
+    Empirical=si,
+    pval=pnorm(-abs((si-mean(si))/sd(si)))) # 1-sided
+rownames(sid) <- names(si)
+#sid[sid[,3] < 0.05,]
+dd$pval <- sid[match(dd$file, rownames(sid)),3]
+dd$flag <- FALSE
+dd$flag[!is.na(dd$pval) & dd$pval < 0.05] <- TRUE
+#dd <- dd[order(dd$size_wac),]
+#dd$flag[which.max(dd$size_wac[dd$flag])+1] <- TRUE
+#dd <- dd[order(dd$full_date),]
+(t1 <- proc.time() - t0)
+
+tmp <- as.matrix(aggregate(dd$size_wac, list(dd$yday), range))
+tmp <- tmp[match(as.character(dd$yday), as.character(tmp[,1])),]
+dd$dmin <- tmp[,2]
+dd$dmax <- tmp[,3]
+tmp <- as.matrix(aggregate(dd$size_wac, list(dd$yday), mean))
+tmp <- tmp[match(as.character(dd$yday), as.character(tmp[,1])),]
+dd$dmean <- tmp[,2]
+
+op <- par(mfrow=c(1,3))
+
+plot(dd$date2, dd$time2, pch=19, col=1, main=LOC,
+    xlab="Date", ylab="Time")
+with(dd[dd$pval < 0.05,], points(date2, time2, pch=19, col=2))
+
+with(dd[dd$yday <= min(dd$yday)+7,], plot(full_date, size_wac/1024^2, type="n",
+    main="", ylab="WAC file size (Mb)", xlab="1 week after deployment",
+    ylim=c(0, max(dd$size_wac/1024^2))))
+polygon(c(dd$full_date, rev(dd$full_date)),
+    c(dd$dmin/1024^2, rev(dd$dmax/1024^2)), col="lightblue", border=NA)
+with(dd, lines(full_date, size_wac/1024^2, col=1))
+with(dd, points(full_date, size_wac/1024^2, pch=19,
+    col=ifelse(pval < 0.05, 2, 1)))
+box()
+#abline(h=WAC_SIZE_MIN0/1024^2, col=2)
+#lines(dd$full_date, dd$dmean/1024^2, col=4)
+
+with(dd[dd$yday >= max(dd$yday)-7,], plot(full_date, size_wac/1024^2, type="n",
+    main="", ylab="WAC file size (Mb)", xlab="1 week before retrieval",
+    ylim=c(0, max(dd$size_wac/1024^2))))
+polygon(c(dd$full_date, rev(dd$full_date)),
+    c(dd$dmin/1024^2, rev(dd$dmax/1024^2)), col="lightblue", border=NA)
+with(dd, lines(full_date, size_wac/1024^2, col=1))
+with(dd, points(full_date, size_wac/1024^2, pch=19,
+    col=ifelse(pval < 0.05, 2, 1)))
+box()
+#abline(h=WAC_SIZE_MIN0/1024^2, col=2)
+#lines(dd$full_date, dd$dmean/1024^2, col=4)
+
+par(op)
+```
+
+Identification of <3 minutes files is based on quantile-quantile plot ideas.
+Here we sort the WAC file sizes from smallest to larges. Their rank gives 
+quantile. This is then related to theoretical quantiles from a parametric
+distribution, here a Normal distribution. It is also possible to
+assign probabilities to the normalized observed file sizes 
+(probability of coming from a standard Normal distribution).
+The red dots indicate the outliers (also shown in the previous plots).
+This process is really fast: 3.5 sec with scanning a directory with 1051 files.
+This means 22 minutes for a full year worth of data.
+
+```{r echo=FALSE,fig.height=5,fig.width=5}
+plot(sid[,-3], type="l")
+points(sid[,-3], pch=19, col=ifelse(sid[,3] < 0.05, 2, 1))
+qqline(sid[,2], col=4)
+```
+
+To see if there is a file size threshold that can be applied as a
+rule of thumb to quickly eliminate files by only sorting in file
+explorer, I converted the flagged files to find out their true duration.
+I also converted the smallest of the files that was not flagged to make 
+sure I capture the low end of the file sizes for 3-minutes recordings.
+I repeated this for 260 units and assessed accuracy of different tresholds
+(a total of 4585 files, 1.2% smallest of all files, including the 260 random files).
+I converted a maximum of 20 files per unit when the number of flagged small files
+was high.
+
+```{r echo=FALSE,fig.height=5,fig.width=5}
+for (i in 1:length(RES)) {
+    RESbyDIR[[i]][RESbyDIR[[i]]$file == RES[[i]]$file, "duration"] <- RES[[i]]$duration
+}
+zz <- do.call(rbind, lapply(RESbyDIR, function(z) {
+    z[!is.na(z$duration),,drop=FALSE]
+}))
+zz$pval[is.na(zz$pval)] <- 1
+zz$small <- zz$flag <- NULL
+zz1 <- zz[zz$duration < 180,]
+zz2 <- zz[zz$duration >= 180,]
+```
+
+The following figure shows the size distribution for files that are <3 minutes in
+duration (in tomato color) and for longer (at least 3 minutes) files (grey).
+Again, the maximum file size for unwanted files (Threshold1 = 17.7 Mb) is higher than the  
+minimum file size for 3-minutes and above (Threshold2 = 11.2 Mb).
+
+```{r echo=FALSE,fig.height=5,fig.width=7}
+hist(zz2$size_wac/1024^2, col=rgb(190/255,190/255,190/255,0.6), breaks=seq(0,80,by=2),
+    main="", xlab="WAC size (Mb)", xlim=c(0, max(zz2$size_wac/1024^2)), ylim=c(0,1500))
+rug(zz2$size_wac/1024^2, col="grey", side=3)
+hist(zz1$size_wac/1024^2, col=rgb(255/255,99/255,71/255,0.6), 
+    add=TRUE, breaks=seq(0,80,by=2))
+rug(zz1$size_wac/1024^2, col="tomato", side=1)
+abline(v=min(zz2$size_wac/1024^2), col=4, lwd=2)
+abline(v=max(zz1$size_wac/1024^2), col=4, lwd=2)
+```
+
+To assess accuracy for the two thresholds, calculated confusion matrices
+
+```{r echo=FALSE}
+True <- zz$duration < 180
+Min3min <- zz$size_wac < min(zz2$size_wac)
+MaxSmall <- zz$size_wac < max(zz1$size_wac)
+n <- nrow(zz)
+##  True pos           | False neg (Type II)
+## --------------------+---------------------
+##  False pos (Type I) | True neg
+(cm2 <- round((table(Less_Than_3min=True, Less_Than_Threshold1=MaxSmall)/1)[c(2,1),c(2,1)],2))
+## Accuracy = (True pos + True neg) / n
+structure((Acc2 <- sum(diag(cm2)))/n, names="Accuracy_Threshold1")
+(cm1 <- round((table(Less_Than_3min=True, Less_Than_Threshold2=Min3min)/1)[c(2,1),c(2,1)],2))
+structure((Acc1 <- sum(diag(cm1)))/n, names="Accuracy_Threshold2")
+```
+
+Do accuracy for random sample only??? otherwise rates are misleading
+
+Based on Threshold1, we would discard quite a few truly 3-minutes
+files (the fals discovery rate needs to be assessed based on a random sample).
+Fals negative rate (not surprisingly < 0.001) can however be assessed based on the small files,
+because it contained almost all of the small files.
+
+For Threshold2, FNR is 5.9% which is pretty good when none of the 3-minutes files
+got into the mix.
+
+Mixed approach: eliminate files <T2, inspect files between T1 and T2
+to get rid of the rest of the unwanted (this is optional).
+
+Show accuracy results
 
 Present proposed process
 
