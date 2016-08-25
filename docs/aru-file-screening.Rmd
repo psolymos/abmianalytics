@@ -18,7 +18,7 @@ on hard drives and servers after retrieval.
 Checking these files requires someone to: bulk-convert the WAC files to WAV
 and look at them individually to check various features of the files.
 The goal is to eliminate files with defects that render them unsuitable for
-listening. Such defects most often include: recording stopped short 
+listening. Such defects most often include: recording stopped short
 (<3 or 10 minutes duration), left, right, or both channel is useless (mic problem).
 This approach is time consuming because of the file conversion and
 human involvement (due to clicking in a graphical user interface, auditory/visual
@@ -188,7 +188,7 @@ plot(res1$object, main="ABMI-0331-NW_0+1_20150301_090000.wac", col=4)
 ```
 
 The left/right imbalance can be detected automatically by
-comparing the the SD's of the channels. In the 1st case 
+comparing the the SD's of the channels. In the 1st case
 of the good file we get
 $SD_{left}$ = `r unname(round(res2$channels["sd_left"],2))`
 and $SD_{right}$ = `r unname(round(res2$channels["sd_right"],2))`.
@@ -233,7 +233,7 @@ par(op)
 
 ## Screening WAC files
 
-I screened $n=266694$ files from 260 ARU units. Here is the WAC file size 
+I screened $n=266694$ files from 260 ARU units. Here is the WAC file size
 distribution for these files. The histogram shows the distribution
 for all units, the next figure below shows the unit-specific variation
 in file size ranges.
@@ -241,13 +241,13 @@ in file size ranges.
 ```{r echo=FALSE,fig.height=4,fig.width=7}
 aswac <- unlist(lapply(RESbyDIR, function(z) z$size_wac))/1024^2
 aswacr <- t(sapply(RESbyDIR, function(z) range(z$size_wac)))/1024^2
-#aswacr1 <- t(sapply(RESbyDIR, function(z) 
+#aswacr1 <- t(sapply(RESbyDIR, function(z)
 #    range(z$size_wac[!is.na(z$pval) & z$pval<0.05])))/1024^2
-#aswacr2 <- t(sapply(RESbyDIR, function(z) 
+#aswacr2 <- t(sapply(RESbyDIR, function(z)
 #    range(z$size_wac[is.na(z$pval) | z$pval>=0.05])))/1024^2
 #op <- par(mfrow=c(2,1))
 hist(aswac, xlab="WAC size (Mb)", main="", col="grey")
-plot(0, type="n", 
+plot(0, type="n",
     ylim=c(0, max(aswac, na.rm=TRUE)), xlim=c(0, length(RESbyDIR)+1),
     ylab="WAC size (Mb)", xlab="ARU unit")
 for (i in 1:length(RESbyDIR)) {
@@ -342,10 +342,10 @@ par(op)
 ```
 
 Identification of <3 minutes files is based on quantile-quantile plot ideas.
-Here we sort the WAC file sizes from smallest to larges. Their rank gives 
+Here we sort the WAC file sizes from smallest to larges. Their rank gives
 quantile. This is then related to theoretical quantiles from a parametric
 distribution, here a Normal distribution. It is also possible to
-assign probabilities to the normalized observed file sizes 
+assign probabilities to the normalized observed file sizes
 (probability of coming from a standard Normal distribution).
 The red dots indicate the outliers (also shown in the previous plots).
 This process is really fast: 3.5 sec with scanning a directory with 1051 files.
@@ -360,7 +360,7 @@ qqline(sid[,2], col=4)
 To see if there is a file size threshold that can be applied as a
 rule of thumb to quickly eliminate files by only sorting in file
 explorer, I converted the flagged files to find out their true duration.
-I also converted the smallest of the files that was not flagged to make 
+I also converted the smallest of the files that was not flagged to make
 sure I capture the low end of the file sizes for 3-minutes recordings.
 I repeated this for 260 units and assessed accuracy of different tresholds
 (a total of 4585 files, 1.2% smallest of all files, including the 260 random files).
@@ -378,56 +378,85 @@ zz$pval[is.na(zz$pval)] <- 1
 zz$small <- zz$flag <- NULL
 zz1 <- zz[zz$duration < 180,]
 zz2 <- zz[zz$duration >= 180,]
+TT <- t(sapply(RESbyDIR, function(z) {
+    c(T1=max(z$size_wac[!is.na(z$duration) & z$duration < 180]),
+      T2=min(z$size_wac[!is.na(z$duration) & z$duration >= 180]))
+}))
+TT[is.infinite(TT)] <- NA
+nn <- sapply(RESbyDIR, function(z) {
+    sum(!is.na(z$duration) & z$size_wac >= min(zz2$size_wac) & z$size_wac < max(zz1$size_wac))
+})
 ```
 
 The following figure shows the size distribution for files that are <3 minutes in
 duration (in tomato color) and for longer (at least 3 minutes) files (grey).
-Again, the maximum file size for unwanted files (Threshold1 = 17.7 Mb) is higher than the  
-minimum file size for 3-minutes and above (Threshold2 = 11.2 Mb).
+Again, the maximum file size for unwanted files (Threshold 1, $T_{1}=17.7$ Mb) is higher than the
+minimum file size for 3-minutes and above (Threshold 2, $T_{2}=11.2$ Mb).
+The plot below shows the threshold discrepancy for each individual ARU unit.
 
-```{r echo=FALSE,fig.height=5,fig.width=7}
+```{r echo=FALSE,fig.height=8,fig.width=7}
+op <- par(mfrow=c(2,1))
 hist(zz2$size_wac/1024^2, col=rgb(190/255,190/255,190/255,0.6), breaks=seq(0,80,by=2),
     main="", xlab="WAC size (Mb)", xlim=c(0, max(zz2$size_wac/1024^2)), ylim=c(0,1500))
 rug(zz2$size_wac/1024^2, col="grey", side=3)
-hist(zz1$size_wac/1024^2, col=rgb(255/255,99/255,71/255,0.6), 
+hist(zz1$size_wac/1024^2, col=rgb(255/255,99/255,71/255,0.6),
     add=TRUE, breaks=seq(0,80,by=2))
 rug(zz1$size_wac/1024^2, col="tomato", side=1)
 abline(v=min(zz2$size_wac/1024^2), col=4, lwd=2)
 abline(v=max(zz1$size_wac/1024^2), col=4, lwd=2)
+
+plot(0, type="n", ylim=c(0,length(RESbyDIR)+1), xlim=c(0, max(zz2$size_wac/1024^2)),
+     xlab="WAC size (Mb)", ylab="ARU unit")
+for (i in 1:nrow(TT))
+    lines(TT[order(TT[,2]),][i,]/1024^2, c(i,i), col=2)
+abline(v=min(zz2$size_wac/1024^2), col=4, lwd=2)
+abline(v=max(zz1$size_wac/1024^2), col=4, lwd=2)
+par(op)
 ```
 
-To assess accuracy for the two thresholds, calculated confusion matrices
+To assess accuracy for the two thresholds, calculated confusion matrices.
+More precisely, accuracy cannot be estimated because I only analyzed
+small files, so we cannot talk about absolute probabilities based on that.
+But we can condition on the recording durations (<180 sec or not).
+We are mostly interested in interested in a binary classification
+based on file size that *maximizes specificity* to prevent throwing out
+3-minutes files. Let's see how $T_{1}$ performs:
+
 
 ```{r echo=FALSE}
 True <- zz$duration < 180
 Min3min <- zz$size_wac < min(zz2$size_wac)
 MaxSmall <- zz$size_wac < max(zz1$size_wac)
+Pval <- zz$pval < 0.05
 n <- nrow(zz)
 ##  True pos           | False neg (Type II)
 ## --------------------+---------------------
 ##  False pos (Type I) | True neg
 (cm2 <- round((table(Less_Than_3min=True, Less_Than_Threshold1=MaxSmall)/1)[c(2,1),c(2,1)],2))
 ## Accuracy = (True pos + True neg) / n
-structure((Acc2 <- sum(diag(cm2)))/n, names="Accuracy_Threshold1")
-(cm1 <- round((table(Less_Than_3min=True, Less_Than_Threshold2=Min3min)/1)[c(2,1),c(2,1)],2))
-structure((Acc1 <- sum(diag(cm1)))/n, names="Accuracy_Threshold2")
+#structure((Acc2 <- sum(diag(cm2)))/n, names="Accuracy_Threshold1")
 ```
 
-Do accuracy for random sample only??? otherwise rates are misleading
+Specificity is defined as true negative / total negative,
+1788 / (210 + 1788) = 0.89. $T_{2}$ has much higher specificity
+by definition (1):
 
-Based on Threshold1, we would discard quite a few truly 3-minutes
-files (the fals discovery rate needs to be assessed based on a random sample).
-Fals negative rate (not surprisingly < 0.001) can however be assessed based on the small files,
-because it contained almost all of the small files.
+```{r echo=FALSE}
+(cm1 <- round((table(Less_Than_3min=True, Less_Than_Threshold2=Min3min)/1)[c(2,1),c(2,1)],2))
+#structure((Acc1 <- sum(diag(cm1)))/n, names="Accuracy_Threshold2")
+```
 
-For Threshold2, FNR is 5.9% which is pretty good when none of the 3-minutes files
-got into the mix.
+In this $T_{2}$ case, *sensitivity* is smaller 
+(true positive / total positive: 2434 / (2434 + 153) = 0.94) than for $T_{1}$ 
+(2586 / (2586 + 1) = 0.99). 
 
-Mixed approach: eliminate files <T2, inspect files between T1 and T2
-to get rid of the rest of the unwanted (this is optional).
+I propose the following approach to maximize both specificity and sensitivity:
 
-Show accuracy results
+1. exclude files with size smaller than $T_{2}$ (2434 files),
+2. use the quantile approach to identify possible files with <3 minutes duration (362 files),
+3. convert and check these files and exclude ones with <3 minutes duration (500 files can be processed in about an hour).
 
-Present proposed process
+Next steps:
 
-Identify next steps
+1. Implement the procedure and run on incoming 2016 ARU data.
+2. Discuss potential other issues, strategies, and priorities with BA unit that needs automation, for example channel problems, automated visualization for quick visual checking.
