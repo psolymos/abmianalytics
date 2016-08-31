@@ -317,6 +317,31 @@ soil2 <- soil2[rownames(slt)[slt$soilhf.south],]
 write.csv(soil2,
     file=file.path(ROOT, "tables", "birds-soilhf-south.csv"), row.names=FALSE)
 
+## sector effects tables
+load(file.path(ROOT, "tables", "sector-effects.Rdata"))
+
+nres <- list()
+sres <- list()
+for (spp in names(seff_res)) {
+    nres[[spp]] <- 100*c(PopEffect=seff_res[[spp]]$N[,2], UnitEffect=seff_res[[spp]]$N[,3])
+    sres[[spp]] <- 100*c(PopEffect=seff_res[[spp]]$S[,2], UnitEffect=seff_res[[spp]]$S[,3])
+}
+nres <- do.call(rbind, nres)
+sres <- do.call(rbind, sres)
+nres <- data.frame(tax[names(seff_res), c("English_Name","Scientific_Name","TSNID")],
+    round(nres, 6))[fln,]
+sres <- data.frame(tax[names(seff_res), c("English_Name","Scientific_Name","TSNID")],
+    round(sres, 6))[fls,]
+
+round(sapply(seff_res[[1]], function(z) 100*z[,1]), 2)
+
+write.csv(nres, row.names=FALSE,
+    file=file.path(ROOT, "tables", "Birds_SectorEffects_North.csv"))
+write.csv(sres, row.names=FALSE,
+    file=file.path(ROOT, "tables", "Birds_SectorEffects_South.csv"))
+
+
+
 ## climate & surrounding hf tables, climate surface maps
 
 cn <- c("xPET", "xMAT", "xAHM", "xFFP",

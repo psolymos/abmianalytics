@@ -601,6 +601,8 @@ sres <- do.call(rbind, sres)
 nres <- data.frame(Species=tax[rownames(nres), "English_Name"], nres)
 sres <- data.frame(Species=tax[rownames(sres), "English_Name"], sres)
 
+## keep only spp that are OK
+
 write.csv(nres, row.names=FALSE,
     file=file.path(ROOT, "out", "birds", "tables", "Birds_SectorEffects_North.csv"))
 write.csv(sres, row.names=FALSE,
