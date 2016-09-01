@@ -357,14 +357,15 @@ Nveg <- groupSums(veg_B, 1, ch2veg$crhab)
 AA <- matrix(ch2veg$A, nrow(ch2veg), 240)
 DD <- veg_B / AA
 DD[is.na(DD)] <- 0
-Dveg <- groupMeans(DD, 1, ch2veg$crhab)
-Aveg <- groupSums(AA, 1, ch2veg$crhab)
+Aveg <- groupSums(AA, 1, ch2veg$crhab) # in ha
+#Dveg <- groupMeans(DD, 1, ch2veg$crhab)
+Dveg <- Nveg / Aveg
 
 Nveg_stat <- fstatv(Nveg, 0.9)
 Dveg_stat <- fstatv(Dveg, 0.9)
 
-TAB <- data.frame(D=round(Dveg_stat[,c(1,5,6)], 4),
-    N=round(Nveg_stat[,c(1,5,6)],3),
+TAB <- data.frame(D=round(Dveg_stat[,c(1,5,6)], 4), # males / ha
+    N=round(Nveg_stat[,c(1,5,6)]/1000,3), # 1K males
     A=round(Aveg[,1]/100)) # km^2
 TAB$Prc <- round(100*TAB$N.Mean / sum(TAB$N.Mean), 1)
 TAB <- TAB[rownames(TAB) != "XXX",]
