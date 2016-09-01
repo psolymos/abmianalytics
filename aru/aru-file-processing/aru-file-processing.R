@@ -14,12 +14,14 @@ CPROG <- "C:\\Users\\Peter\\Dropbox\\abmi\\aru\\wac2wav\\wac2wav.exe"
 KEEP_WAV <- FALSE
 ## set if conversion needs to be made, else the unverified summaries are returned
 ## conversion is needed for L/R channel testing
-CONVERT <- FALSE
+CONVERT <- TRUE
+## number of files to check for duration (usually the last NMAX in time sequence)
+NMAX <- 20
 ## --- preamble ends here ---
 
 
 ## --- function and final variable definitions start here ---
-library(pbapply)
+#library(pbapply)
 library(tuneR)
 library(seewave)
 ARGS <- if (interactive())
@@ -150,6 +152,7 @@ function(DIRIN)
     dd$chrtime[dd$time=="150000"] <- "3pm"
     IDS <- which(is.na(dd$chrtime))
     IDS <- IDS[IDS <= nrow(dd)-2]
+    IDS <- IDS[IDS != 1]
     for (i in IDS) {
         if (!is.na(dd$chrtime[i+2])) {
             if (dd$chrtime[i-1] %in% c("First", "2am") && dd$chrtime[i+2] == "Noon")
@@ -175,7 +178,7 @@ function(DIRIN)
     dd
 }
 aru_flag_files <-
-function(dat, WDay=1)
+function(dat, nmax=20)
 {
     Mb <- dat$size_wac / 1024^2
     names(Mb) <- dat$file
@@ -185,33 +188,105 @@ function(dat, WDay=1)
         pval=pnorm(-abs((Mb-mean(Mb))/sd(Mb)))) # 1-sided
     rownames(sid) <- names(Mb)
     dat$pval <- sid[match(dat$file, rownames(sid)),3]
-    dat$to_check <- FALSE
-    dat$to_check[!is.na(dat$pval) & dat$pval < 0.05] <- TRUE
+    dat$to_check <- 0L
+    dat$to_check[!is.na(dat$pval) & dat$pval < 0.05] <- -1L
     dat <- dat[order(dat$size_wac),]
-    dat$to_check[which.max(dat$size_wac[dat$to_check])+1] <- TRUE
+#    dat$to_check[which.max(dat$size_wac[dat$to_check])+1] <- TRUE
     dat <- dat[order(dat$full_date),]
-    dat$to_check[1] <- TRUE
-    ## weekly data from SunRise1 records
-    dat$to_check[dat$wday == WDay & dat$chrtime == "SunRise1"] <- TRUE
+    OK <- which(dat$to_check >= 0 & dat$chrtime == "SunRise1" &
+        dat$duration_class == "600sec")
+    OKJune <- which(dat$to_check >= 0 & dat$chrtime == "SunRise1" &
+        dat$duration_class == "600sec" & dat$mon == 6)
+    ID <- unique(sort(c(1, OK[1], OKJune[1], OK[length(OK)])))
+    dat$to_check[ID] <- 1L
+    if (sum(dat$to_check < 0) > nmax) {
+        tmp <- which(dat$to_check < 0)
+#        tmp1 <- tmp[1:(length(tmp)-nmax)]
+#        tmp2 <- tmp[(length(tmp)-nmax+1):length(tmp)]
+        dat$to_check[tmp[1:(length(tmp)-nmax)]] <- 0L
+    }
     dat
+}
+aru_plot <-
+function(dat) {
+    dat$date2 <- as.POSIXlt(strptime(dat$date, "%Y%m%d"))
+    dat$time2 <- as.POSIXlt(strptime(dat$time, "%H%M%S"))
+    LOC <- aru_parse_location(rownames(dat)[1])
+    PROBLM <- dat$to_check < 0 | dat$chrtime == "OUT_OF_SEQUENCE"
+    xx <- dat[!is.na(dat$channel_left_mean),,drop=FALSE]
+    xxx <- xx[xx$to_check > 0,,drop=FALSE]
+    #xxx <- xx
+    xval <- 1:nrow(xxx)
+    #xval <- xxx$yday
+
+    left <- cbind(xxx$channel_left_mean,
+        xxx$channel_left_mean-xxx$channel_left_sd,
+        xxx$channel_left_mean+xxx$channel_left_sd)
+    right <- cbind(xxx$channel_right_mean,
+        xxx$channel_right_mean-xxx$channel_right_sd,
+        xxx$channel_right_mean+xxx$channel_right_sd)
+
+    op <- par(mfrow=c(2,2))
+
+    plot(dat$date2, dat$time2, pch=19, col=1, main=LOC,
+        xlab="Date", ylab="Time", cex=1)
+    with(dat[PROBLM,], points(date2, time2, pch=19, col=2))
+    with(dat, points(date2[1], time2[1], pch=19, col=4))
+
+    plot(xval-0.1, left[,1], col=2, pch=19, ylim=range(left,right),
+        xlim=c(min(xval)-0.5, max(xval)+0.5), type="n",
+        ylab="Amplitude (dB) [mean +/- SD]", xlab="Julian day", axes=FALSE)
+    axis(2)
+    axis(1, at=xval, xxx$yday)
+    box()
+    segments(xval-0.1, y0=left[,2], y1=left[,3], col="tomato", lwd=6)
+    segments(xval+0.1, y0=right[,2], y1=right[,3], col="lightblue", lwd=6)
+    points(xval-0.1, left[,1], col=2, pch=19, ylim=range(left,right), cex=1.5)
+    points(xval+0.1, right[,1], col=4, pch=19, ylim=range(left,right), cex=1.5)
+    lines(xval-0.1, left[,1], col=2, lty=1, lwd=2)
+    lines(xval+0.1, right[,1], col=4, lty=1, lwd=2)
+    legend("bottomright", pch=19, lty=1, lwd=2, col=c(2,4),
+        legend=c("Left","Right"), bty="n")
+
+    with(dat[dat$yday <= min(dat$yday)+7,], plot(full_date, size_wac/1024^2, type="n",
+        main="", ylab="WAC file size (Mb)", xlab="1 week after deployment",
+        ylim=c(0, max(dat$size_wac/1024^2))))
+    with(dat, lines(full_date, size_wac/1024^2, col=1))
+    with(dat[!PROBLM,], points(full_date, size_wac/1024^2, pch=19, col=1))
+    with(dat[PROBLM,], points(full_date, size_wac/1024^2, pch=19, col=2))
+    with(dat[1,,drop=FALSE], points(full_date, size_wac/1024^2, pch=19, col=4))
+
+    with(dat[dat$yday >= max(dat$yday)-7,], plot(full_date, size_wac/1024^2, type="n",
+        main="", ylab="WAC file size (Mb)", xlab="1 week before retrieval",
+        ylim=c(0, max(dat$size_wac/1024^2))))
+    with(dat, lines(full_date, size_wac/1024^2, col=1))
+    with(dat[!PROBLM,], points(full_date, size_wac/1024^2, pch=19, col=1))
+    with(dat[PROBLM,], points(full_date, size_wac/1024^2, pch=19, col=2))
+
+    par(op)
+    invisible(NULL)
 }
 ## --- function and final variable definitions end here ---
 
 dat1 <- aru_parse_directory(DIRIN)
-dat2 <- aru_flag_files(dat1)
+dat2 <- aru_flag_files(dat1, nmax=NMAX)
 dat3 <- dat2
 dat3$duration <- NA
-dat3$size_wac <- NA
+dat3$size_wav <- NA
 dat3$channel_left_mean <- NA
 dat3$channel_right_mean <- NA
 dat3$channel_left_sd <- NA
 dat3$channel_right_sd <- NA
+
 if (CONVERT) {
-    files <- rownames(dat2)[dat2$to_check]
+    files <- rownames(dat2)[dat2$to_check != 0]
     RES <- list()
+    cat("Directory:", DIRIN, "\nStarted at", date(), "\n")
     for (i in seq_len(length(files))) {
         cat(i, "/", length(files), "\n")
         flush.console()
+        #OBJECT <- dat2[files[i], "to_check"] > 0
+        OBJECT <- FALSE
         RES[[files[i]]] <- aru_summarize(
             FNAME = files[i],
             DIRIN = DIRIN,
@@ -219,7 +294,7 @@ if (CONVERT) {
             CPROG = CPROG,
             keep_wav = KEEP_WAV,
             quick=TRUE,
-            return_object=TRUE)
+            return_object=OBJECT)
         dat3[files[i], "duration"] <- RES[[files[i]]]$duration
         dat3[files[i], "size_wav"] <- RES[[files[i]]]$size_wav
         dat3[files[i], "channel_left_mean"] <- RES[[files[i]]]$channels["mean_left"]
@@ -227,8 +302,72 @@ if (CONVERT) {
         dat3[files[i], "channel_left_sd"] <- RES[[files[i]]]$channels["sd_left"]
         dat3[files[i], "channel_right_sd"] <- RES[[files[i]]]$channels["sd_right"]
     }
+    cat("Finished at", date(), "\n\n")
+}
+DAT <- dat3
+LOC <- aru_parse_location(rownames(dat3)[1])
+#csv_out <- gsub("\\", "+", DIRIN, fixed=TRUE)
+#csv_out <- gsub(":", "", csv_out, fixed=TRUE)
+write.csv(DAT, row.names=FALSE, file=file.path(TMPDIR, paste0(LOC, ".csv")))
+save(DIRIN, TMPDIR, CPROG, KEEP_WAV, CONVERT, NMAX, RES, DAT, LOC,
+    file=file.path(TMPDIR, paste0(LOC, ".RData")))
+pdf(file.path(TMPDIR, paste0(LOC, ".pdf")), width=10, height=10)
+aru_plot(DAT)
+dev.off()
+
+
+do_all <- function(DIRIN) {
+    dat1 <- aru_parse_directory(DIRIN)
+    dat2 <- aru_flag_files(dat1, nmax=NMAX)
+    dat3 <- dat2
+    dat3$duration <- NA
+    dat3$size_wav <- NA
+    dat3$channel_left_mean <- NA
+    dat3$channel_right_mean <- NA
+    dat3$channel_left_sd <- NA
+    dat3$channel_right_sd <- NA
+
+    if (CONVERT) {
+        files <- rownames(dat2)[dat2$to_check != 0]
+        RES <- list()
+        cat("Directory:", DIRIN, "\nStarted at", date(), "\n")
+        for (i in seq_len(length(files))) {
+            cat(i, "/", length(files), "\n")
+            flush.console()
+            #OBJECT <- dat2[files[i], "to_check"] > 0
+            OBJECT <- FALSE
+            RES[[files[i]]] <- aru_summarize(
+                FNAME = files[i],
+                DIRIN = DIRIN,
+                DIROUT = TMPDIR,
+                CPROG = CPROG,
+                keep_wav = KEEP_WAV,
+                quick=TRUE,
+                return_object=OBJECT)
+            dat3[files[i], "duration"] <- RES[[files[i]]]$duration
+            dat3[files[i], "size_wav"] <- RES[[files[i]]]$size_wav
+            dat3[files[i], "channel_left_mean"] <- RES[[files[i]]]$channels["mean_left"]
+            dat3[files[i], "channel_right_mean"] <- RES[[files[i]]]$channels["mean_right"]
+            dat3[files[i], "channel_left_sd"] <- RES[[files[i]]]$channels["sd_left"]
+            dat3[files[i], "channel_right_sd"] <- RES[[files[i]]]$channels["sd_right"]
+        }
+        cat("Finished at", date(), "\n\n")
+    }
+    DAT <- dat3
+    LOC <- aru_parse_location(rownames(dat3)[1])
+    #csv_out <- gsub("\\", "+", DIRIN, fixed=TRUE)
+    #csv_out <- gsub(":", "", csv_out, fixed=TRUE)
+    write.csv(DAT, row.names=FALSE, file=file.path(TMPDIR, paste0(LOC, ".csv")))
+    save(DIRIN, TMPDIR, CPROG, KEEP_WAV, CONVERT, NMAX, RES, DAT, LOC,
+        file=file.path(TMPDIR, paste0(LOC, ".RData")))
+    pdf(file.path(TMPDIR, paste0(LOC, ".pdf")), width=10, height=10)
+    aru_plot(DAT)
+    dev.off()
+
+    invisible(NULL)
 }
 
-# write dat3
-# create plots: for dat2
-# create plots: for dat3 (L/R channel Db values)
+load("e:\\peter\\AB_data_v2016\\out\\aru-filtering\\dirs-files.Rdata")
+for (i in 1:length(dirs)) {
+    try(do_all(dirs[i]))
+}
