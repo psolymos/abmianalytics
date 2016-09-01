@@ -248,7 +248,11 @@ function(dat) {
     legend("bottomright", pch=19, lty=1, lwd=2, col=c(2,4),
         legend=c("Left","Right"), bty="n")
 
-    with(dat[dat$yday <= min(dat$yday)+7,], plot(full_date, size_wac/1024^2, type="n",
+    dd1 <- dat[!is.na(dat$yday) & dat$yday <= min(dat$yday,na.rm=TRUE)+7,]
+    if (nrow(dd1) < 10)
+        dd1 <- dat[!is.na(dat$yday) & dat$yday <= min(dat$yday,na.rm=TRUE)+14,]
+
+    with(dd1, plot(full_date, size_wac/1024^2, type="n",
         main="", ylab="WAC file size (Mb)", xlab="1 week after deployment",
         ylim=c(0, max(dat$size_wac/1024^2))))
     with(dat, lines(full_date, size_wac/1024^2, col=1))
@@ -256,7 +260,11 @@ function(dat) {
     with(dat[PROBLM,], points(full_date, size_wac/1024^2, pch=19, col=2))
     with(dat[1,,drop=FALSE], points(full_date, size_wac/1024^2, pch=19, col=4))
 
-    with(dat[dat$yday >= max(dat$yday)-7,], plot(full_date, size_wac/1024^2, type="n",
+    dd2 <- dat[!is.na(dat$yday) & dat$yday >= max(dat$yday,na.rm=TRUE)-7,]
+    if (nrow(dd2) < 10)
+        dd2 <- dat[!is.na(dat$yday) & dat$yday >= max(dat$yday,na.rm=TRUE)-14,]
+
+    with(dd2, plot(full_date, size_wac/1024^2, type="n",
         main="", ylab="WAC file size (Mb)", xlab="1 week before retrieval",
         ylim=c(0, max(dat$size_wac/1024^2))))
     with(dat, lines(full_date, size_wac/1024^2, col=1))
@@ -361,13 +369,13 @@ do_all <- function(DIRIN) {
     save(DIRIN, TMPDIR, CPROG, KEEP_WAV, CONVERT, NMAX, RES, DAT, LOC,
         file=file.path(TMPDIR, paste0(LOC, ".RData")))
     pdf(file.path(TMPDIR, paste0(LOC, ".pdf")), width=10, height=10)
+    on.exit(dev.off())
     aru_plot(DAT)
-    dev.off()
-
     invisible(NULL)
 }
 
 load("e:\\peter\\AB_data_v2016\\out\\aru-filtering\\dirs-files.Rdata")
 for (i in 1:length(dirs)) {
+    cat("\n\n--->>>", i, "/", length(dirs), "<<<---\n")
     try(do_all(dirs[i]))
 }
