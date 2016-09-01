@@ -1,0 +1,47 @@
+---
+title: "Time since local sunrise in Alberta: date and location"
+author: "Peter Solymos"
+date: "Sept 1, 2016"
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: 2
+  html_document:
+    toc: no
+  word_document: default
+---
+
+```{r fig.height=8,fig.width=5}
+#library(raster)
+library(sp)
+#library(rgdal)
+library(maptools)
+
+julian(as.Date("2016-04-01"), origin = as.Date("2015-12-31"))
+julian(as.Date("2016-08-31"), origin = as.Date("2015-12-31"))
+x <- 95:244 # 1:366
+y <- seq(49, 60, by=0.5)
+Data <- expand.grid(
+    Date = strptime(x, "%j"),
+    Latitude = y,
+    Longitude = c(-120, -110))
+## TSSR
+XY <- as.matrix(Data[,c("Longitude", "Latitude")])
+DT <- as.POSIXct(Data$Date, tz="America/Edmonton")
+SR <- sunriset(XY, DT, direction="sunrise", POSIXct.out=TRUE)
+Data$Hour <- SR$day_frac * 24
+
+d1 <- Data[Data$Longitude == -120,]
+m1 <- matrix(d1$Hour, length(x), length(y))
+
+d2 <- Data[Data$Longitude == -110,]
+m2 <- matrix(d2$Hour, length(x), length(y))
+
+op <- par(mfrow=c(2,1))
+image(x, y, m1, xlab="Julian days", ylab="Latitude", main="Longitude = -120")
+contour(x, y, m1, add=TRUE)
+
+image(x, y, m2, xlab="Julian days", ylab="Latitude", main="Longitude = -110")
+contour(x, y, m2, add=TRUE)
+par(op)
+```
