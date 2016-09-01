@@ -1,4 +1,4 @@
-## install R and the following packages: pbapply, tuneR, seewave
+## install R and the following packages: tuneR, seewave
 ## set variables in the preamble
 
 ## --- preamble starts here ---
@@ -226,50 +226,77 @@ function(dat) {
         xxx$channel_right_mean-xxx$channel_right_sd,
         xxx$channel_right_mean+xxx$channel_right_sd)
 
-    op <- par(mfrow=c(2,2))
+    op <- par(mfrow=c(2,3),las=3,mar=c(6, 4, 3, 2) + 0.1)
 
+    ## date-time plot
     plot(dat$date2, dat$time2, pch=19, col=1, main=LOC,
-        xlab="Date", ylab="Time", cex=1)
+        xlab="", ylab="Time", cex=1)
     with(dat[PROBLM,], points(date2, time2, pch=19, col=2))
     with(dat, points(date2[1], time2[1], pch=19, col=4))
 
-    plot(xval-0.1, left[,1], col=2, pch=19, ylim=range(left,right),
-        xlim=c(min(xval)-0.5, max(xval)+0.5), type="n",
-        ylab="Amplitude (dB) [mean +/- SD]", xlab="Julian day", axes=FALSE)
-    axis(2)
-    axis(1, at=xval, xxx$yday)
-    box()
-    segments(xval-0.1, y0=left[,2], y1=left[,3], col="tomato", lwd=6)
-    segments(xval+0.1, y0=right[,2], y1=right[,3], col="lightblue", lwd=6)
-    points(xval-0.1, left[,1], col=2, pch=19, ylim=range(left,right), cex=1.5)
-    points(xval+0.1, right[,1], col=4, pch=19, ylim=range(left,right), cex=1.5)
-    lines(xval-0.1, left[,1], col=2, lty=1, lwd=2)
-    lines(xval+0.1, right[,1], col=4, lty=1, lwd=2)
-    legend("bottomright", pch=19, lty=1, lwd=2, col=c(2,4),
-        legend=c("Left","Right"), bty="n")
-
+    ## 1st week wac size
     dd1 <- dat[!is.na(dat$yday) & dat$yday <= min(dat$yday,na.rm=TRUE)+7,]
     if (nrow(dd1) < 10)
         dd1 <- dat[!is.na(dat$yday) & dat$yday <= min(dat$yday,na.rm=TRUE)+14,]
-
+    if (nrow(dd1) < 10)
+        dd1 <- dat[!is.na(dat$yday) & dat$yday <= min(dat$yday,na.rm=TRUE)+21,]
     with(dd1, plot(full_date, size_wac/1024^2, type="n",
-        main="", ylab="WAC file size (Mb)", xlab="1 week after deployment",
+        main="", ylab="WAC file size (Mb)", xlab="",
         ylim=c(0, max(dat$size_wac/1024^2))))
     with(dat, lines(full_date, size_wac/1024^2, col=1))
     with(dat[!PROBLM,], points(full_date, size_wac/1024^2, pch=19, col=1))
     with(dat[PROBLM,], points(full_date, size_wac/1024^2, pch=19, col=2))
     with(dat[1,,drop=FALSE], points(full_date, size_wac/1024^2, pch=19, col=4))
 
+    ## last week wac size
     dd2 <- dat[!is.na(dat$yday) & dat$yday >= max(dat$yday,na.rm=TRUE)-7,]
     if (nrow(dd2) < 10)
         dd2 <- dat[!is.na(dat$yday) & dat$yday >= max(dat$yday,na.rm=TRUE)-14,]
-
+    if (nrow(dd2) < 10)
+        dd2 <- dat[!is.na(dat$yday) & dat$yday >= max(dat$yday,na.rm=TRUE)-21,]
     with(dd2, plot(full_date, size_wac/1024^2, type="n",
-        main="", ylab="WAC file size (Mb)", xlab="1 week before retrieval",
+        main="", ylab="WAC file size (Mb)", xlab="",
         ylim=c(0, max(dat$size_wac/1024^2))))
     with(dat, lines(full_date, size_wac/1024^2, col=1))
     with(dat[!PROBLM,], points(full_date, size_wac/1024^2, pch=19, col=1))
     with(dat[PROBLM,], points(full_date, size_wac/1024^2, pch=19, col=2))
+
+    ## wac size histogram/boxplot
+    dat$Mb <- dat$size_wac/1024^2
+    dat$ct <- dat$chrtime
+    levels(dat$ct)[levels(dat$ct) == "OUT_OF_SEQUENCE"] <- "OOS"
+    boxplot(Mb ~ ct, dat, range=0, xlab="", ylab="Wac file size (Mb)",
+        col="tomato")
+
+    ## L/R mean
+    plot(xval-0.1, left[,1], col=2, pch=19, ylim=range(left[,1],right[,1]),
+        xlim=c(min(xval)-0.5, max(xval)+0.5), type="n",
+        ylab="Amplitude mean (dB)", xlab="Julian day", axes=FALSE)
+    axis(2)
+    axis(1, at=xval, xxx$yday)
+    box()
+    points(xval-0.1, left[,1], col=2, pch=19, ylim=range(left,right), cex=1.5)
+    points(xval+0.1, right[,1], col=4, pch=19, ylim=range(left,right), cex=1.5)
+    lines(xval-0.1, left[,1], col=2, lty=1, lwd=2)
+    lines(xval+0.1, right[,1], col=4, lty=1, lwd=2)
+    legend("topright", pch=19, lty=1, lwd=2, col=c(2,4),
+        legend=c("Left","Right"), bty="n")
+
+    ## L/R SD
+    sdl <- xxx$channel_left_sd
+    sdr <- xxx$channel_right_sd
+    plot(xval-0.1, sdl, col=2, pch=19, ylim=range(sdl,sdr),
+        xlim=c(min(xval)-0.5, max(xval)+0.5), type="n",
+        ylab="Amplitude SD (dB)", xlab="Julian day", axes=FALSE)
+    axis(2)
+    axis(1, at=xval, xxx$yday)
+    box()
+    points(xval-0.1, sdl, col=2, pch=19, ylim=range(left,right), cex=1.5)
+    points(xval+0.1, sdr, col=4, pch=19, ylim=range(left,right), cex=1.5)
+    lines(xval-0.1, sdl, col=2, lty=1, lwd=2)
+    lines(xval+0.1, sdr, col=4, lty=1, lwd=2)
+    legend("topright", pch=19, lty=1, lwd=2, col=c(2,4),
+        legend=c("Left","Right"), bty="n")
 
     par(op)
     invisible(NULL)
@@ -379,3 +406,15 @@ for (i in 1:length(dirs)) {
     cat("\n\n--->>>", i, "/", length(dirs), "<<<---\n")
     try(do_all(dirs[i]))
 }
+
+fl <- list.files("e:\\Peter\\tmp")
+fl <- fl[grep(".RData", fl)]
+for (fi in fl) {
+    load(file.path(TMPDIR, fi))
+    LOC <- aru_parse_location(rownames(DAT)[1])
+    pdf(file.path(TMPDIR, paste0(LOC, ".pdf")), width=10, height=7)
+    try(aru_plot(DAT))
+    dev.off()
+}
+
+
