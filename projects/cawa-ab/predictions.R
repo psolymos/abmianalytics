@@ -371,10 +371,13 @@ TAB$Prc <- round(100*TAB$N.Mean / sum(TAB$N.Mean), 1)
 TAB <- TAB[rownames(TAB) != "XXX",]
 TAB <- TAB[order(TAB$D.Mean, decreasing=TRUE),]
 
-fstat(colMeans(Dveg[rownames(Dveg) != "XXX",]), 0.9)
-fstat(colSums(Nveg[rownames(Dveg) != "XXX",]), 0.9)
-fstat(colSums(Aveg[rownames(Dveg) != "XXX",]/100), 0.9)
-fstat(colSums(Nveg[rownames(Dveg) != "XXX",]) / colSums(Aveg[rownames(Dveg) != "XXX",]))
+TAB <- rbind(TAB, Total=NA)
+
+TAB["Total",1:3] <- round(fstat(colSums(Nveg[rownames(Dveg) != "XXX",]) / colSums(Aveg[rownames(Dveg) != "XXX",]))[c(1,3,4)], 4)
+TAB["Total",4:6] <- round(fstat(colSums(Nveg[rownames(Dveg) != "XXX",]), 0.9)[c(1,3,4)]/1000, 3)
+TAB["Total",7] <- round(sum(Aveg[rownames(Dveg) != "XXX",1]/100))
+TAB["Total",8] <- round(100,1)
+
 
 write.csv(TAB, file.path("c:/Users/Peter/Dropbox/josm/cawa-jeff/revision",
         "cawa-pop.csv"))
