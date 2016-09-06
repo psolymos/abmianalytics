@@ -407,6 +407,7 @@ for (i in 1:length(dirs)) {
     try(do_all(dirs[i]))
 }
 
+## save new figures -- done
 fl <- list.files("e:\\Peter\\tmp")
 fl <- fl[grep(".RData", fl)]
 for (fi in fl) {
@@ -417,4 +418,35 @@ for (fi in fl) {
     dev.off()
 }
 
+## look at L/R values
+fl <- list.files("e:\\Peter\\tmp")
+fl <- fl[grep(".RData", fl)]
+lr_list <- list()
+for (fi in fl) {
+    e <- new.env()
+    load(file.path(TMPDIR, fi), envir=e)
+    xx <- e$DAT[!is.na(e$DAT$channel_left_mean),,drop=FALSE]
+    xxx <- xx[xx$to_check > 0,,drop=FALSE]
+    lr <- xxx[,c("channel_left_mean","channel_right_mean",
+        "channel_left_sd","channel_right_sd")]
+    if (nrow(lr) == 4) {
+        lr_list[[e$LOC]] <- cbind(y=c(0,1), as.matrix(lr)[c(1,3),])
+    }
+}
+length(lr_list)
+lr_tab <- data.frame(do.call(rbind, lr_list))
+colnames(lr_tab) <- c("y", "lm", "rm", "lsd", "rsd")
+lr_tab$dm <- lr_tab$lm - lr_tab$rm
+lr_tab$mm <- 0.5 * (lr_tab$lm + lr_tab$rm)
+summary(lm(mm ~ y, lr_tab))
+summary(lm(dm ~ y, lr_tab))
+summary(lm(lm ~ y, lr_tab))
+summary(lm(rm ~ y, lr_tab))
 
+lr0 <- lr_tab[lr_tab$y==0,]
+lr1 <- lr_tab[lr_tab$y==1,]
+
+dd <- lr1 - lr0
+
+summary(dd$lm)
+summary(dd$rm)
