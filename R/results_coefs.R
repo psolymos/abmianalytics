@@ -93,6 +93,10 @@ tax$linear_south <- tax$modelS
 tax$surroundinghf_north <- tax$modelN
 tax$surroundinghf_south <- tax$modelS
 
+## this is hand edited version
+spp_OK <- read.csv("e:/peter/AB_data_v2016/out/birds/tables/birds-lookup-final.csv")
+rownames(spp_OK) <- spp_OK$AOU
+
 ## species lookup table for web
 slt <- data.frame(sppid=tax$Spp,
     species=tax$English_Name,
@@ -101,9 +105,15 @@ slt <- data.frame(sppid=tax$Spp,
     AOU=tax$AOUcode,
     family=tax$Family_Sci,
     tax[,c("ndet","modelN","modelS","ndet_n","ndet_s", "ndet_ns")])
+slt$modelN <- spp_OK[rownames(slt),"showN"]
+slt$modelS <- spp_OK[rownames(slt),"showS"]
+slt$known_issues <- spp_OK[rownames(slt),"Known_Problems"]
+
 slt$map.det <- tax$map_det
-slt$veghf.north <- tax$modelN & tax$ndet_n > 99
-slt$soilhf.south <- tax$modelS & tax$ndet_s > 49
+#slt$veghf.north <- tax$modelN & tax$ndet_n > 99
+#slt$soilhf.south <- tax$modelS & tax$ndet_s > 49
+slt$veghf.north <- slt$modelN
+slt$soilhf.south <- slt$modelS
 slt$map.pred <- slt$veghf.north | slt$soilhf.south
 slt$useavail.north=tax$useavail_north & !slt$veghf.north
 slt$useavail.south=tax$useavail_south & !slt$soilhf.south

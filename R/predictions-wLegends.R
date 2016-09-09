@@ -32,6 +32,7 @@ yy <- e$YY[rownames(dat),]
 tax <- droplevels(e$TAX[colnames(yy),])
 rm(e)
 
+if (FALSE) {
 ## model for species
 fln <- list.files(file.path(ROOT, "out", "birds", "results", "north"))
 fln <- sub("birds_abmi-north_", "", fln)
@@ -40,6 +41,11 @@ fls <- list.files(file.path(ROOT, "out", "birds", "results", "south"))
 fls <- sub("birds_abmi-south_", "", fls)
 fls <- sub(".Rdata", "", fls)
 ## need to update these once checking is done !!!!!!!!!!!!!!!!!!
+}
+spp_OK <- read.csv("e:/peter/AB_data_v2016/out/birds/tables/birds-lookup.csv")
+rownames(spp_OK) <- spp_OK$AOU
+fln <- rownames(spp_OK[spp_OK$modelN,])
+fls <- rownames(spp_OK[spp_OK$modelS,])
 
 load(file.path(ROOT, "out", "transitions", paste0(regs[1], ".Rdata")))
 Aveg <- rbind(colSums(trVeg))
