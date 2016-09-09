@@ -107,9 +107,22 @@ function(est, Xn, burn_included=TRUE)
 {
     X <- Xn[1:13,colnames(est)]
     X[,-1] <- 0 # this should take care of all the modifiers (soft/hard/ARU)
-    diag(X) <- 1
+    #diag(X) <- 1
     rownames(X) <- c("Decid","Mixwood", "Conif", "Pine", "BSpr", "Larch",
-    "Swamp", "WetGrass", "WetShrub", "Shrub", "GrassHerb", "Cult", "UrbInd")
+        "Swamp", "WetGrass", "WetShrub", "Shrub", "GrassHerb", "Cult", "UrbInd")
+
+    X["Mixwood", "hab1Mixwood"] <- 1
+    X["Conif", "hab1Conif"] <- 1
+    X["Pine", "hab1Pine"] <- 1
+    X["BSpr", "hab1BSpr"] <- 1
+    X["Larch", "hab1Larch"] <- 1
+    X["Swamp", "hab1Swamp"] <- 1
+    X["WetGrass", "hab1WetGrass"] <- 1
+    X["WetShrub", "hab1WetShrub"] <- 1
+    X["Shrub", "hab1Shrub"] <- 1
+    X["GrassHerb", "hab1GrassHerb"] <- 1
+    X["Cult", "hab1Cult"] <- 1
+    X["UrbInd", "hab1UrbInd"] <- 1
 
     if (burn_included) {
         X3 <- X[1,,drop=FALSE]
@@ -167,11 +180,14 @@ function(est, Xn, burn_included=TRUE)
 pred_soilhf <-
 function(est, Xn)
 {
-    X <- Xn[1:5,colnames(est)]
+    X <- Xn[1:6,colnames(est)]
     X[,-1] <- 0
-    diag(X) <- 1
-    X <- X[c(1,3,3,2,4,5),]
     rownames(X) <- c("Productive", "Clay", "Saline", "RapidDrain", "Cult", "UrbInd")
+    X["Clay", "soil1Clay"] <- 1
+    X["Saline", "soil1Saline"] <- 1
+    X["RapidDrain", "soil1RapidDrain"] <- 1
+    X["Cult", "soil1Cult"] <- 1
+    X["UrbInd", "soil1UrbInd"] <- 1
 
     X0 <- X1 <- X
     X1[,"pAspen"] <- 1
