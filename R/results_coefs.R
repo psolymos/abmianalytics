@@ -212,7 +212,17 @@ for (spp in rownames(tax)) {
     tp <- res_coef[[spp]]
     if (!all(is.na(tp$max))) {
         NAM <- as.character(tax[spp, "English_Name"])
-        MAX <- max(tp$max, na.rm=TRUE)
+        if (max(tp$max, na.rm=TRUE) > 3*min(tp$max, na.rm=TRUE)) {
+            MAXn <- tp$max[1]
+            MAXs <- tp$max[2]
+        } else {
+            MAXn <- max(tp$max, na.rm=TRUE)
+            MAXs <- max(tp$max, na.rm=TRUE)
+        }
+        if (is.na(MAXn))
+            MAXn <- max(tp$max, na.rm=TRUE)
+        if (is.na(MAXs))
+            MAXs <- max(tp$max, na.rm=TRUE)
 
         if (tax[spp, "veghf_north"]) {
             prn <- tp$veg
@@ -222,7 +232,7 @@ for (spp in rownames(tax)) {
                 paste0(as.character(tax[spp, "Spp"]), ".png"))
             png(file=fname,width=1500,height=700)
             fig_veghf(prn,
-                paste0(NAM, " (n = ", NDAT, " detections)"), ymax=MAX)
+                paste0(NAM, " (n = ", NDAT, " detections)"), ymax=MAXn)
             dev.off()
             ## linear
             fname <- file.path(ROOT, "figs", "linear-north",
@@ -241,7 +251,7 @@ for (spp in rownames(tax)) {
             png(file=fname,width=500,height=450)
             fig_soilhf(prs$treed,
                 paste0(NAM, ", South, Treed (n = ", NDAT, " detections)"),
-                ymax=MAX)
+                ymax=MAXs)
             dev.off()
             ## nontreed
             fname <- file.path(ROOT, "figs", "soilhf-nontreed-south",
@@ -249,7 +259,7 @@ for (spp in rownames(tax)) {
             png(file=fname,width=500,height=450)
             fig_soilhf(prs$nontreed,
                 paste0(NAM, ", South, Non-treed (n = ", NDAT, " detections)"),
-                ymax=MAX)
+                ymax=MAXs)
             dev.off()
             ## linear
             fname <- file.path(ROOT, "figs", "linear-south",
