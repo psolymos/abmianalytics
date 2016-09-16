@@ -5,28 +5,56 @@ source("~/repos/abmianalytics/veghf/veghf-setup.R")
 ## Sample year is current year, so that forest ages are relative to present
 ## and not relative to HF or veg inventory year.
 
-fl <- list.files(file.path(ROOT, VER, "data", "kgrid", "tiles"))
+fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6", "tiles"))
 
 ## test feature types
 if (FALSE) {
 NEW <- character(0)
-for (fn in fl) {
-    cat("checking", which(fl == fn), "/", length(fl));flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
+HF <- character(0)
+VEG <- character(0)
+SOIL <- character(0)
+blank_n <- numeric(length(fl)) # no. of cases
+blank_a <- numeric(length(fl)) # total area
+for (i in seq_len(length(fl))) {
+    fn <- fl[i]
+    cat("\nchecking", i, "/", length(fl));flush.console()
+    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
     d <- read.csv(f)
-    diff <- setdiff(levels(d$FEATURE_TY), rownames(hflt))
-    if (length(diff))
+    diff <- setdiff(levels(d$FEATURE_TY), c("", rownames(hflt)))
+    if (length(diff)) {
         NEW <- union(NEW, diff)
-    cat("\t", length(NEW), "new types found\n")
+        cat("\n\t", length(NEW), "new types found\n")
+    }
+    HF <- union(HF, levels(d$FEATURE_TY))
+    VEG <- union(VEG, levels(d$Veg_Type))
+    SOIL <- union(SOIL, levels(d$Soil_Type_1))
+    tmp <- d[d$HABIT == "",,drop=FALSE]
+    if (nrow(tmp)) {
+        blank_n[i] <- nrow(tmp)
+        blank_a[i] <- sum(tmp$Shape_Area)
+        cat("\n\tfound blanks:", nrow(tmp), "\n")
+    }
+    cat("\n\tveg:", length(VEG), "- soil:", length(SOIL), "- hf:", length(HF), "\n")
+    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata",
+        gsub(".csv", ".Rdata", fn, fixed = TRUE)))
 }
+
+## no blanks
+(blanks <- which(blank_n > 0))
+sum(blank_a)
+blank_a[blanks]
+## no NEW HF labels
+NEW
+x <- data.frame(Veg_Type=sort(VEG))
+write.csv(x, row.names=FALSE, file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6.csv"))
 
 ## tracking the strange area mismatch
 natrack <- list()
 for (fn in fl) {
     cat("checking", which(fl == fn), "/", length(fl), "\n");flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
+    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
     d <- read.csv(f)
-    dd <- make_vegHF_wide(d, col.label="Row_Col", 
+    dd <- make_vegHF_wide(d, col.label="Row_Col",
         col.year=NULL, col.HFyear="CutYear", wide=FALSE)
     tmp <- colSums(is.na(dd[,c("VEGAGEclass",
         "VEGHFAGEclass","SOILclass","SOILHFclass")]))
@@ -34,25 +62,6 @@ for (fn in fl) {
     if (tmp[1] > 0)
         break
 }
-
-## check blank HABIT cases
-blank_n <- numeric(length(fl)) # no. of cases
-blank_a <- numeric(length(fl)) # total area
-for (i in 1:length(fl)) {
-    cat("\nchecking", i, "/", length(fl));flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fl[i])
-    d <- read.csv(f)
-    tmp <- d[d$HABIT == "",,drop=FALSE]
-    if (nrow(tmp)) {
-        blank_n[i] <- nrow(tmp)
-        blank_a[i] <- sum(tmp$Shape_Area)
-        cat("\tfound:", nrow(tmp))
-    }
-}
-
-(blanks <- which(blank_n > 0))
-sum(blank_a) # 1.262801 < 2 m^2
-blank_a[blanks]
 
 }
 
@@ -68,10 +77,10 @@ for (s in 1:(length(Start)-1)) {
     fn <- fl[Start[s]]
     cat("\n\n------------- batch", s, "----------------\n")
     cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
+    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
     d <- read.csv(f)
     ## HF year is used as base year for prediction purposes
-    dd <- make_vegHF_wide(d, col.label="Row_Col", 
+    dd <- make_vegHF_wide(d, col.label="Row_Col",
         col.year=HF_YEAR, col.HFyear="CutYear", sparse=TRUE)
     veg_current <- dd$veg_current
     veg_reference <- dd$veg_reference
@@ -85,9 +94,9 @@ for (s in 1:(length(Start)-1)) {
 
         fn <- fl[i]
         cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
-        f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
+        f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
         d <- read.csv(f)
-        dd <- make_vegHF_wide(d, col.label="Row_Col", 
+        dd <- make_vegHF_wide(d, col.label="Row_Col",
             col.year=HF_YEAR, col.HFyear="CutYear", sparse=TRUE)
         veg_current <- bind_fun2(veg_current, dd$veg_current)
         veg_reference <- bind_fun2(veg_reference, dd$veg_reference)
@@ -128,12 +137,12 @@ dd1km_pred <- list(
 
 ## this has the climate stuff
 kgrid <- read.csv(
-    file.path(ROOT, VER, "data", "kgrid", 
+    file.path(ROOT, VER, "data", "kgrid-V6",
     "Grid1km_template_final_clippedBy_ABBound_with_atts_to_Peter.csv"))
 rownames(kgrid) <- kgrid$Row_Col
 ## this is the correct lat/long (i.e. more decimal places)
 kgrid2 <- read.csv(
-    file.path(ROOT, VER, "data", "kgrid", 
+    file.path(ROOT, VER, "data", "kgrid-V6",
     "Grid1km_template_latLong.csv"))
 rownames(kgrid2) <- kgrid2$Row_Col
 kgrid2 <- kgrid2[rownames(kgrid),]
@@ -144,16 +153,16 @@ rm(kgrid2)
 
 ## this is has Brandt boreal and BCR
 kgrid2 <- read.csv(
-    file.path(ROOT, VER, "data", "kgrid", 
+    file.path(ROOT, VER, "data", "kgrid-V6",
     "Grid1km_template_final_clippedBy_ABBound_with_atts_to_Peter_BCR_BRANDT_Done.csv"))
 kgrid2 <- nonDuplicated(kgrid2, Row_Col, TRUE)
 #rownames(kgrid2) <- kgrid2$Row_Col
 kgrid2 <- kgrid2[rownames(kgrid),]
 stopifnot(all(rownames(kgrid) == rownames(kgrid2)))
 kgrid$TYPE_BRANDT <- kgrid2$TYPE_BRANDT
-#kgrid$BCR <- kgrid2$BCR      
+#kgrid$BCR <- kgrid2$BCR
 #kgrid$BCR_NAME <- kgrid2$BCR_NAME
-kgrid$BCRCODE <- kgrid2$BCRCODE 
+kgrid$BCRCODE <- kgrid2$BCRCODE
 rm(kgrid2)
 
 compare.sets(rownames(dd1km_pred$veg_current), rownames(kgrid))
@@ -235,7 +244,7 @@ levels(kgrid$LUFxNSR) <- gsub(" ", "", levels(kgrid$LUFxNSR))
 
 ## topo variables
 kgrid2 <- read.csv(
-    file.path(ROOT, VER, "data", "kgrid", 
+    file.path(ROOT, VER, "data", "kgrid-V6",
     "Grid1kmCenter_topo.csv"))
 rownames(kgrid2) <- kgrid2$Row_Col
 kgrid2 <- kgrid2[rownames(kgrid),]
@@ -255,7 +264,7 @@ kgrid$TRI <- kgrid2$tri
 kgrid$CTI <- kgrid2$cti
 
 if (SAVE) { ## needed for recalculating average ages
-    save(dd1km_pred, 
+    save(dd1km_pred,
         file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
     save(kgrid,
         file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
@@ -282,7 +291,7 @@ sum(dd1km_pred[[2]])
 
 
 if (SAVE) {
-save(dd1km_pred, 
+save(dd1km_pred,
     file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata"))
 }
 
@@ -293,7 +302,7 @@ if (FALSE) {
     xx <- x[,"WindGenerationFacility"]
     xxx <- rowSums(x)
     data.frame(Wind=xx,Area=xxx,Perc=100*xx/xxx)
-    
+
     x <- as.matrix(groupSums(dd1km_pred[[1]]/10^6, 1, kgrid$LUFxNSR))
     write.csv(x, file=file.path(ROOT, VER, "out/kgrid", "current-veghf-area-km2.csv"))
 }
