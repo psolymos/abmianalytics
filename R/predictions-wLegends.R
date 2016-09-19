@@ -236,6 +236,11 @@ for (spp in SPP) {
 
     cr <- wS * km$CurrS + (1-wS) * km$CurrN
     rf <- wS * km$RefS + (1-wS) * km$RefN
+
+    #km2 <- as.matrix(cbind(Curr=cr, Ref=rf))
+    #rownames(km2) <- rownames(km)
+    #save(km2, file=file.path(ROOT, "out", "birds", "pred1combined", paste0(spp, ".Rdata")))
+    #cat("\n")
 if (FALSE) {
     ndat <- normalize_data(rf=rf, cr=cr)
 }
