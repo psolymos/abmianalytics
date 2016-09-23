@@ -48,6 +48,22 @@ NEW
 x <- data.frame(Veg_Type=sort(VEG))
 write.csv(x, row.names=FALSE, file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6.csv"))
 
+## reclass (v6->v5)
+MAP <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/veg-V6-reclass.csv")
+for (fn in fl) {
+    cat("checking", which(fl == fn), "/", length(fl), "\n");flush.console()
+    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
+    d <- read.csv(f)
+    d$HABIT <- reclass(d$Veg_Type, map=MAP, all=TRUE)
+    dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
+        col.year=HF_YEAR, col.HFyear="CutYear", wide=FALSE)
+    tmp <- colSums(is.na(dd[,c("VEGAGEclass",
+        "VEGHFAGEclass","SOILclass","SOILHFclass")]))
+    natrack[[fn]] <- tmp
+    if (tmp[1] > 0)
+        break
+}
+
 ## tracking the strange area mismatch
 natrack <- list()
 for (fn in fl) {
