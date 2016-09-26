@@ -5,28 +5,36 @@ source("~/repos/abmianalytics/veghf/veghf-setup.R")
 ## Sample year is current year, so that forest ages are relative to present
 ## and not relative to HF or veg inventory year.
 
-fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6", "tiles"))
+#fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6", "tiles"))
+fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata"))
 
 ## test feature types
 if (FALSE) {
 NEW <- character(0)
 HF <- character(0)
 VEG <- character(0)
+VEG3 <- character(0)
 SOIL <- character(0)
 blank_n <- numeric(length(fl)) # no. of cases
 blank_a <- numeric(length(fl)) # total area
 for (i in seq_len(length(fl))) {
     fn <- fl[i]
     cat("\nchecking", i, "/", length(fl));flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
-    d <- read.csv(f)
+#    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
+    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata", fn)
+#    d <- read.csv(f)
+    e <- new.env()
+    load(f, envir=e)
+    d <- e$d
     diff <- setdiff(levels(d$FEATURE_TY), c("", rownames(hflt)))
     if (length(diff)) {
         NEW <- union(NEW, diff)
         cat("\n\t", length(NEW), "new types found\n")
     }
+    d$VEG3 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source, drop=TRUE, sep="::")
     HF <- union(HF, levels(d$FEATURE_TY))
     VEG <- union(VEG, levels(d$Veg_Type))
+    VEG3 <- union(VEG3, levels(d$VEG3))
     SOIL <- union(SOIL, levels(d$Soil_Type_1))
     tmp <- d[d$HABIT == "",,drop=FALSE]
     if (nrow(tmp)) {
@@ -34,9 +42,10 @@ for (i in seq_len(length(fl))) {
         blank_a[i] <- sum(tmp$Shape_Area)
         cat("\n\tfound blanks:", nrow(tmp), "\n")
     }
-    cat("\n\tveg:", length(VEG), "- soil:", length(SOIL), "- hf:", length(HF), "\n")
-    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata",
-        gsub(".csv", ".Rdata", fn, fixed = TRUE)))
+    cat("\n\tveg:", length(VEG), "- veg^3:", length(VEG3),
+        "- soil:", length(SOIL), "- hf:", length(HF), "\n")
+#    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata",
+#        gsub(".csv", ".Rdata", fn, fixed = TRUE)))
 }
 
 ## no blanks
@@ -45,8 +54,18 @@ sum(blank_a)
 blank_a[blanks]
 ## no NEW HF labels
 NEW
-x <- data.frame(Veg_Type=sort(VEG))
-write.csv(x, row.names=FALSE, file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6.csv"))
+#x <- data.frame(Veg_Type=sort(VEG))
+#write.csv(x, row.names=FALSE, file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6.csv"))
+
+MAP <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/veg-V6-reclass.csv")
+x <- data.frame(Veg_3=sort(VEG3))
+tmp <- strsplit(sort(VEG3), "::")
+x$Veg_Type <- sapply(tmp, "[[", 1)
+x$Moisture_Reg <- sapply(tmp, "[[", 2)
+x$PreBackfill_Source <- sapply(tmp, "[[", 3)
+x$Veg_V5 <- MAP$Combined[match(x$Veg_Type, MAP$Veg_Type)]
+x <- droplevels(x[!(x$Veg_Type %in% c("Black spruce", "Lentic shrub")),])
+write.csv(x, row.names=FALSE, file="c:/Users/Peter/Dropbox/abmi/V6/veg-V6-combined3.csv")
 
 ## reclass (v6->v5)
 MAP <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/veg-V6-reclass.csv")
