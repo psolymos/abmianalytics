@@ -8,13 +8,18 @@ source("~/repos/abmianalytics/veghf/veghf-setup.R")
 #fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6", "tiles"))
 fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata"))
 
-## test feature types
+## test feature types and save in Rdata format
 if (FALSE) {
+recl <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/veg-V6-combined3.csv")
+
 NEW <- character(0)
 HF <- character(0)
 VEG <- character(0)
 VEG3 <- character(0)
 SOIL <- character(0)
+LARCH <- numeric(0)
+CWCS <- character(0)
+SRC <- character(0)
 blank_n <- numeric(length(fl)) # no. of cases
 blank_a <- numeric(length(fl)) # total area
 for (i in seq_len(length(fl))) {
@@ -31,21 +36,62 @@ for (i in seq_len(length(fl))) {
         NEW <- union(NEW, diff)
         cat("\n\t", length(NEW), "new types found\n")
     }
-    d$VEG3 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source, drop=TRUE, sep="::")
+    d$VEG3 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source,
+        drop=TRUE, sep="::")
+    d$c3 <- recl$Combined[match(d$VEG3, recl$Veg_3)]
+    d$needCWCS <- recl$need_CWCS[match(d$VEG3, recl$Veg_3)] == "x"
+    tmp <- data.frame(cwcs=d$CWCS_Class[d$needCWCS], c4=d$c3[d$needCWCS],
+        src=d$PostBackfill_Source[d$needCWCS])
+    tmp$c4x <- as.character(tmp$c4)
+    ## grass
+    tmp$c4x[tmp$cwcs %in% c("Marsh","Fen","Bog") & tmp$c4 == "GrassHerb"] <-
+        as.character(tmp$cwcs[tmp$cwcs %in% c("Marsh","Fen","Bog") & tmp$c4 == "GrassHerb"])
+    tmp$c4x[!(tmp$cwcs %in% c("Marsh","Fen","Bog")) & tmp$c4 == "GrassHerb"] <-
+        "Marsh"
+    ## shrub
+    tmp$c4x[tmp$cwcs %in% c("Marsh","Swamp","Fen","Bog") & tmp$c4 == "Shrub"] <-
+        paste0("Shrub-",
+        as.character(tmp$cwcs[tmp$cwcs %in% c("Marsh","Swamp","Fen","Bog") & tmp$c4 == "Shrub"]))
+    tmp$c4x[!(tmp$cwcs %in% c("Marsh","Swamp","Fen","Bog")) & tmp$c4 == "Shrub"] <-
+        "Shrub-Swamp"
+    ## muskeg
+    tmp$c4x[tmp$cwcs %in% c("Fen","Bog") & tmp$c4 == "Muskeg"] <-
+        as.character(tmp$cwcs[tmp$cwcs %in% c("Fen","Bog") & tmp$c4 == "Muskeg"])
+    tmp$c4x[!(tmp$cwcs %in% c("Fen","Bog")) & tmp$c4 == "Muskeg"] <-
+        "Bog" # can be: "None"   "Soil"   "ABMILC" "AVIE" "PLVI"  "Phase1" "MTNP"  "EINP"
+    tmp$c4x[!(tmp$cwcs %in% c("Swamp","Fen","Bog")) & tmp$c4 == "Muskeg" &
+        tmp$src != "WBNP"] <- "Fen"
+
+    d$c4 <- as.character(d$c3)
+    d$c4[d$needCWCS] <- tmp$c4x
+    d$c4 <- factor(d$c4, c(levels(d$c3)[levels(d$c3) != "Muskeg"],
+        "Shrub-Marsh","Shrub-Swamp","Shrub-Fen","Shrub-Bog"))
+
+    #if (any(tmp$c4 == "Muskeg"))
+    #    break
+
+    #d$VEG5 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source,
+    #    d$CWCS_Class, ifelse(d$Pct_of_Larch>0, "Larch1", "Larch0"), drop=TRUE, sep="::")
     HF <- union(HF, levels(d$FEATURE_TY))
     VEG <- union(VEG, levels(d$Veg_Type))
     VEG3 <- union(VEG3, levels(d$VEG3))
     SOIL <- union(SOIL, levels(d$Soil_Type_1))
+    CWCS <- union(CWCS, levels(d$CWCS_Class))
+    #SRC <- union(SRC, levels(d$PostBackfill_Source))
+    SRC <- union(SRC, levels(droplevels(tmp$src)))
     tmp <- d[d$HABIT == "",,drop=FALSE]
     if (nrow(tmp)) {
         blank_n[i] <- nrow(tmp)
         blank_a[i] <- sum(tmp$Shape_Area)
         cat("\n\tfound blanks:", nrow(tmp), "\n")
     }
-    cat("\n\tveg:", length(VEG), "- veg^3:", length(VEG3),
+#    LARCH <- sort(unique(c(LARCH, d$Pct_of_Larch)))
+    cat("\n\tveg:", length(VEG), "- veg^3:", #length(VEG3), "- larch:", length(LARCH),
         "- soil:", length(SOIL), "- hf:", length(HF), "\n")
-#    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata",
-#        gsub(".csv", ".Rdata", fn, fixed = TRUE)))
+    #print(summary(d$Pct_of_Larch))
+    d$VEG3 <- d$c3 <- d$needCWCS <- NULL
+    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata",
+        gsub(".csv", ".Rdata", fn, fixed = TRUE)))
 }
 
 ## no blanks
