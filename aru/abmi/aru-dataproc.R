@@ -73,10 +73,10 @@ xt_toy <- as.matrix(Xtab(~ Spp + ToYc, det, rdrop="NONE"))
 
 Class <- nonDuplicated(det, visit, TRUE)
 Class <- Class[rownames(xt_vis),]
-Class$STR2 <- factor(NA, c("Early", "Mid", "Late"))
-Class$STR2[Class$ToYc %in% 1:3] <- "Early"
-Class$STR2[Class$ToYc %in% 4:7] <- "Mid"
-Class$STR2[Class$ToYc %in% 8] <- "Late"
+Class$STR2 <- factor(NA, c("A_Early", "B_Mid", "C_Late"))
+Class$STR2[Class$ToYc %in% 1:3] <- "A_Early"
+Class$STR2[Class$ToYc %in% 4:7] <- "B_Mid"
+Class$STR2[Class$ToYc %in% 8] <- "C_Late"
 table(Class$STR2, Class$ToYc)
 
 table(det$ToYc, det$Duration)
@@ -109,7 +109,13 @@ oc2 <- opticut(xtv ~ 1, strata=Class$STR2, dist="binomial")
 oc3 <- opticut(xtv ~ 1, strata=Class$ToDc, dist="binomial")
 
 table(Class$STR2, Class$ToDc)
-plot(oc2,sort=1)
+
+pdf("aru-fig1.pdf", height=25, width=20)
+par(mfrow=c(1,2))
+plot(oc2,sort=1,mar=c(4,15,3,3),cut=-Inf,ylab="",xlab="Season")
+plot(oc3,sort=1,mar=c(4,15,3,3),cut=-Inf,ylab="",xlab="Time")
+dev.off()
+
 a1 <- summary(oc2)$summary
 a2 <- summary(oc3)$summary
 
