@@ -44,28 +44,30 @@ for (i in seq_len(length(fl))) {
         src=d$PostBackfill_Source[d$needCWCS])
     tmp$c4x <- as.character(tmp$c4)
     ## grass
-    tmp$c4x[tmp$cwcs %in% c("Marsh","Fen","Bog") & tmp$c4 == "GrassHerb"] <-
-        as.character(tmp$cwcs[tmp$cwcs %in% c("Marsh","Fen","Bog") & tmp$c4 == "GrassHerb"])
-    tmp$c4x[!(tmp$cwcs %in% c("Marsh","Fen","Bog")) & tmp$c4 == "GrassHerb"] <-
+    tmp$c4x[tmp$cwcs %in% c("Marsh","Bog") & tmp$c4 == "GraminoidWetland"] <-
+        as.character(tmp$cwcs[tmp$cwcs %in% c("Marsh","Bog") & tmp$c4 == "GraminoidWetland"])
+    tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "GraminoidWetland"] <-
+        "GraminoidFen"
+    tmp$c4x[!(tmp$cwcs %in% c("Marsh","Fen","Bog")) & tmp$c4 == "GraminoidWetland"] <-
         "Marsh"
     ## shrub
-    tmp$c4x[tmp$cwcs %in% c("Marsh","Swamp","Fen","Bog") & tmp$c4 == "Shrub"] <-
-        paste0("Shrub-",
-        as.character(tmp$cwcs[tmp$cwcs %in% c("Marsh","Swamp","Fen","Bog") & tmp$c4 == "Shrub"]))
-    tmp$c4x[!(tmp$cwcs %in% c("Marsh","Swamp","Fen","Bog")) & tmp$c4 == "Shrub"] <-
-        "Shrub-Swamp"
+    tmp$c4x[tmp$cwcs %in% c("Fen","Bog") & tmp$c4 == "ShrubbyWetland"] <-
+        paste0("Shrubby",
+        as.character(tmp$cwcs[tmp$cwcs %in% c("Fen","Bog") & tmp$c4 == "ShrubbyWetland"]))
+    tmp$c4x[!(tmp$cwcs %in% c("Fen","Bog")) & tmp$c4 == "ShrubbyWetland"] <-
+        "ShrubbySwamp"
     ## muskeg
-    tmp$c4x[tmp$cwcs %in% c("Fen","Bog") & tmp$c4 == "Muskeg"] <-
-        as.character(tmp$cwcs[tmp$cwcs %in% c("Fen","Bog") & tmp$c4 == "Muskeg"])
-    tmp$c4x[!(tmp$cwcs %in% c("Fen","Bog")) & tmp$c4 == "Muskeg"] <-
+    tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "Muskeg"] <-
+        "GraminoidFen"
+    tmp$c4x[tmp$cwcs != "Fen" & tmp$c4 == "Muskeg"] <-
         "Bog" # can be: "None"   "Soil"   "ABMILC" "AVIE" "PLVI"  "Phase1" "MTNP"  "EINP"
     tmp$c4x[!(tmp$cwcs %in% c("Swamp","Fen","Bog")) & tmp$c4 == "Muskeg" &
-        tmp$src != "WBNP"] <- "Fen"
+        tmp$src != "WBNP"] <- "GraminoidFen"
 
     d$c4 <- as.character(d$c3)
     d$c4[d$needCWCS] <- tmp$c4x
-    d$c4 <- factor(d$c4, c(levels(d$c3)[levels(d$c3) != "Muskeg"],
-        "Shrub-Marsh","Shrub-Swamp","Shrub-Fen","Shrub-Bog"))
+    d$c4 <- factor(d$c4, c(levels(d$c3)[!(levels(d$c3) %in%
+        c("GraminoidWetland","ShrubbyWetland","Muskeg"))], "Bog"))
 
     #if (any(tmp$c4 == "Muskeg"))
     #    break
