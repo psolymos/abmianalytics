@@ -10,6 +10,7 @@ fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata"))
 
 ## test feature types and save in Rdata format
 if (FALSE) {
+
 recl <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/veg-V6-combined3.csv")
 
 NEW <- character(0)
@@ -22,6 +23,7 @@ CWCS <- character(0)
 SRC <- character(0)
 blank_n <- numeric(length(fl)) # no. of cases
 blank_a <- numeric(length(fl)) # total area
+nro <- 0
 for (i in seq_len(length(fl))) {
     fn <- fl[i]
     cat("\nchecking", i, "/", length(fl));flush.console()
@@ -63,6 +65,12 @@ for (i in seq_len(length(fl))) {
         "Bog" # can be: "None"   "Soil"   "ABMILC" "AVIE" "PLVI"  "Phase1" "MTNP"  "EINP"
     tmp$c4x[!(tmp$cwcs %in% c("Swamp","Fen","Bog")) & tmp$c4 == "Muskeg" &
         tmp$src != "WBNP"] <- "GraminoidFen"
+    ## larch
+    tmp$c4[tmp$Pct_of_Larch != 0 & tmp$c4 == "TreedBog-BSpr"] <- "TreedFen-Larch"
+    ## treedwetland-mixedwood
+    tmp$c4[tmp$c4 == "TreedWetland-Mixedwood" & tmp$cwcs == "Fen"] <- "TreedFen-Mixedwood"
+    tmp$c4[tmp$c4 == "TreedWetland-Mixedwood" & tmp$cwcs == "Bog"] <- "TreedBog-BSpr"
+    tmp$c4[tmp$c4 == "TreedWetland-Mixedwood" & tmp$cwcs == "Swamp"] <- "TreedSwamp-Mixedwood"
 
     d$c4 <- as.character(d$c3)
     d$c4[d$needCWCS] <- tmp$c4x
@@ -76,7 +84,8 @@ for (i in seq_len(length(fl))) {
     #    d$CWCS_Class, ifelse(d$Pct_of_Larch>0, "Larch1", "Larch0"), drop=TRUE, sep="::")
     HF <- union(HF, levels(d$FEATURE_TY))
     VEG <- union(VEG, levels(d$Veg_Type))
-    VEG3 <- union(VEG3, levels(d$VEG3))
+    #VEG3 <- union(VEG3, levels(d$VEG3))
+    VEG3 <- union(VEG3, levels(droplevels(d$c4[d$CutYear != 0])))
     SOIL <- union(SOIL, levels(d$Soil_Type_1))
     CWCS <- union(CWCS, levels(d$CWCS_Class))
     #SRC <- union(SRC, levels(d$PostBackfill_Source))
@@ -88,12 +97,25 @@ for (i in seq_len(length(fl))) {
         cat("\n\tfound blanks:", nrow(tmp), "\n")
     }
 #    LARCH <- sort(unique(c(LARCH, d$Pct_of_Larch)))
-    cat("\n\tveg:", length(VEG), "- veg^3:", #length(VEG3), "- larch:", length(LARCH),
+    cat("\n\tveg:", length(VEG), #"- veg^3:", length(VEG3), "- larch:", length(LARCH),
         "- soil:", length(SOIL), "- hf:", length(HF), "\n")
     #print(summary(d$Pct_of_Larch))
     d$VEG3 <- d$c3 <- d$needCWCS <- NULL
     save(d, file=file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata",
         gsub(".csv", ".Rdata", fn, fixed = TRUE)))
+    nro <- nro + nrow(d)
+    cc <- factor(ifelse(d$CutYear != 0, "CC", "F"), c("CC","F"))
+    lr <- factor(ifelse(d$Pct_of_Larch != 0, "Larch", "Not"), c("Larch","Not"))
+    if (i == 1) {
+        nro2 <- Xtab(Shape_Area ~ c4 + cc, d)
+    } else {
+        nro2 <- nro2 + Xtab(Shape_Area ~ c4 + cc, d)
+    }
+    if (i == 1) {
+        al <- Xtab(Shape_Area ~ c4 + lr, d)
+    } else {
+        al <- al + Xtab(Shape_Area ~ c4 + lr, d)
+    }
 }
 
 ## no blanks
@@ -160,10 +182,14 @@ for (s in 1:(length(Start)-1)) {
     fn <- fl[Start[s]]
     cat("\n\n------------- batch", s, "----------------\n")
     cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
-    d <- read.csv(f)
+#    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
+#    d <- read.csv(f)
+    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata", fn)
+    e <- new.env()
+    load(f, envir=e)
+    d <- e$d
     ## HF year is used as base year for prediction purposes
-    dd <- make_vegHF_wide(d, col.label="Row_Col",
+    dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
         col.year=HF_YEAR, col.HFyear="CutYear", sparse=TRUE)
     veg_current <- dd$veg_current
     veg_reference <- dd$veg_reference
@@ -177,9 +203,13 @@ for (s in 1:(length(Start)-1)) {
 
         fn <- fl[i]
         cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
-        f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
-        d <- read.csv(f)
-        dd <- make_vegHF_wide(d, col.label="Row_Col",
+#        f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
+#        d <- read.csv(f)
+        f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata", fn)
+        e <- new.env()
+        load(f, envir=e)
+        d <- e$d
+        dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
             col.year=HF_YEAR, col.HFyear="CutYear", sparse=TRUE)
         veg_current <- bind_fun2(veg_current, dd$veg_current)
         veg_reference <- bind_fun2(veg_reference, dd$veg_reference)
@@ -271,6 +301,7 @@ for (i in seq_len(max(tmp))) {
     kgrid$Rnd10[lg] <- sample.int(sum(lg))
 }
 
+#load(file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
 dd1km_pred$veg_current <- dd1km_pred$veg_current[rownames(kgrid),]
 dd1km_pred$veg_reference <- dd1km_pred$veg_reference[rownames(kgrid),]
 dd1km_pred$soil_current <- dd1km_pred$soil_current[rownames(kgrid),]
@@ -346,11 +377,20 @@ kgrid$ASP <- kgrid2$slpasp
 kgrid$TRI <- kgrid2$tri
 kgrid$CTI <- kgrid2$cti
 
+dd1km_nsr <- dd1km_pred
+dd1km_nsr$veg_current <- groupSums(dd1km_pred$veg_current, 1, kgrid$NSRNAME)
+dd1km_nsr$veg_reference <- groupSums(dd1km_pred$veg_reference, 1, kgrid$NSRNAME)
+dd1km_nsr$soil_current <- groupSums(dd1km_pred$soil_current, 1, kgrid$NSRNAME)
+dd1km_nsr$soil_reference <- groupSums(dd1km_pred$soil_reference, 1, kgrid$NSRNAME)
+
+
 if (SAVE) { ## needed for recalculating average ages
     save(dd1km_pred,
-        file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
-    save(kgrid,
-        file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
+        file=file.path(ROOT, VER, "data/kgrid-V6", "veg-hf_1kmgrid_v6.Rdata"))
+    save(dd1km_nsr,
+        file=file.path(ROOT, VER, "data/kgrid-V6", "veg-hf_nsr_v6.Rdata"))
+    #save(kgrid,
+    #    file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
 }
 
 ## fix age 0 in saved files -----------------------------

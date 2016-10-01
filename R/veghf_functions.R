@@ -36,65 +36,33 @@ make_vegHF_sector <- function(d, col.label, col.year=NULL, wide=TRUE, sparse=FAL
 make_vegHF_wide_v6 <-
 function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) {
 
-    RfLab <- c("Conif0", "ConifR", "Conif1", "Conif2", "Conif3", "Conif4", "Conif5", "Conif6",
-        "Conif7", "Conif8", "Conif9",
-        "Decid0", "DecidR", "Decid1", "Decid2", "Decid3", "Decid4", "Decid5", "Decid6",
-        "Decid7", "Decid8", "Decid9",
-        "Mixedwood0", "MixedwoodR", "Mixedwood1", "Mixedwood2", "Mixedwood3", "Mixedwood4",
-        "Mixedwood5", "Mixedwood6", "Mixedwood7", "Mixedwood8", "Mixedwood9",
-        "Pine0", "PineR", "Pine1", "Pine2", "Pine3", "Pine4",
-        "Pine5", "Pine6", "Pine7", "Pine8", "Pine9",
-
-        "BSpr0", "BSprR", "BSpr1", "BSpr2", "BSpr3",
-        "BSpr4", "BSpr5", "BSpr6", "BSpr7",
-        "BSpr8", "BSpr9",
-        "Larch0", "LarchR", "Larch1", "Larch2", "Larch3",
-        "Larch4", "Larch5", "Larch6", "Larch7",
-        "Larch8", "Larch9",
-
-        "GrassHerb", "Shrub", "Water",
-        "ShowIce", "Bare",
-
-        "WetGrass", "WetShrub", # these 2 are fen
-        "Marsh", "Swamp",
-
-        "UNKNOWN_CONIF", "UNKNOWN_FOREST")
-
-    CrOnlyLab <- c("BorrowpitsDugoutsSumps", "Canals", "CultivationCropPastureBareground",
+    TreedClasses <- c("Conif", "Decid", "Fir", "Mixedwood", "Pine", "Spruce",
+        "TreedBog-BSpr",
+        "TreedFen-BSpr", "TreedFen-Decid", "TreedFen-Larch", "TreedFen-Mixedwood",
+        "TreedSwamp-Conif", "TreedSwamp-Decid", "TreedSwamp-Fir",
+        #"TreedSwamp-Forest",
+        "TreedSwamp-Mixedwood", "TreedSwamp-Spruce",
+        #"TreedWetland-Mixedwood",
+        "AlpineLarch")
+    NontreedClasses <- c("ShrubbyBog", "ShrubbyFen", "ShrubbySwamp",
+        "Bog", "Marsh", "Swamp", "GraminoidFen",
+        "GrassHerb", "Shrub", "Alkali",
+        "Bare", "SnowIce",
+        "Water")
+    Fragment <- c("TreedWetland-Mixedwood", "TreedSwamp-Forest")
+    HFLab <- c("BorrowpitsDugoutsSumps", "Canals", "CultivationCropPastureBareground",
         "HighDensityLivestockOperation", "IndustrialSiteRural", "MineSite",
         "MunicipalWaterSewage", "OtherDisturbedVegetation", "PeatMine",
         "Pipeline", "RailHardSurface", "RailVegetatedVerge", "Reservoirs",
         "RoadHardSurface", "RoadTrailVegetated", "RoadVegetatedVerge",
         "RuralResidentialIndustrial", "SeismicLine", "TransmissionLine",
-        "Urban", "WellSite", "WindGenerationFacility",
-        "CCDecid0", "CCDecidR", "CCDecid1", "CCDecid2",
-        "CCDecid3", "CCDecid4",
-        "CCMixwood0", "CCMixwoodR", "CCMixwood1", "CCMixwood2",
-        "CCMixwood3", "CCMixwood4",
-        "CCConif0", "CCConifR", "CCConif1", "CCConif2",
-        "CCConif3", "CCConif4",
-        "CCPine0", "CCPineR", "CCPine1", "CCPine2",
-        "CCPine3", "CCPine4")
-
-    ## Sept 22 2016 update:
-    ## complicated rule set with these levels:
-    #HLEVS <- c("Conif", "Decid", "GrassHerb", "Mixwood", "NonVeg", "Pine",
-    #    "Shrub", "Swamp-Conif", "Swamp-Decid", "Swamp-Mixwood", "Swamp-Pine",
-    #    "Water", "Wetland-Bare", "Wetland-BSpr", "Wetland-Decid", "Wetland-GrassHerb",
-    #    "Wetland-Larch", "Wetland-Shrub")
-    HLEVS <- c("Conif", "Decid", "Mixedwood", "Pine", "BSpr", "Larch",
-        "GrassHerb", "Shrub", "Water",
-        "ShowIce", "Bare",
-        "WetGrass", "WetShrub", # these 2 are fen
-        "Marsh", "Swamp",
-        "UNKNOWN_CONIF", "UNKNOWN_FOREST")
-
-    ## treed and non-treed veg classes where having age makes sense
-#    TreedClasses <- c("BlackSpruce", "WhiteSpruce", "Deciduous",
-#        "Mixedwood", "Pine", "LarchFen")
-    TreedClasses <- c("Conif", "Decid", "Mixedwood", "Pine", "BSpr", "Larch")
-    ## this is needed to assign "CCWetTypes"
-    TreedWetClasses <- c("BSpr", "Larch")
+        "Urban", "WellSite", "WindGenerationFacility")
+    RfLab <- c(paste0(rep(TreedClasses, each=11),
+        c("0","R","1","2","3","4","5","6","7","8","9")),
+        Fragment, NontreedClasses)
+    CrOnlyLab <- c(HFLab, paste0("CC", paste0(rep(TreedClasses, each=11),
+        c("R","1","2","3","4"))))
+    HLEVS <- c(TreedClasses, Fragment, NontreedClasses)
 
     ## designate a label column (there are different column names in use)
     d$LABEL <- d[,col.label]
@@ -121,7 +89,9 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
     levels(d$FEATURE_TY) <- toupper(levels(d$FEATURE_TY))
 
     d$ORIGIN_YEAR <- d$Origin_Year
-    d$Origin_Year <- NULL
+    #d$Origin_Year <- NULL
+    d$HABIT <- d$c4
+    #d$c4 <- NULL
 
     #### Footprint classes:
     ## check if we have all the feature types in the lookup table
@@ -166,8 +136,8 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
     #tmp2$p <- round(100*tmp2$x/sum(tmp2$x),2)
 
 
-    NontreedClasses <- setdiff(levels(d$VEGclass), TreedClasses)
-    NontreedClasses <- NontreedClasses[NontreedClasses != ""]
+#    NontreedClasses <- setdiff(levels(d$VEGclass), TreedClasses)
+#    NontreedClasses <- NontreedClasses[NontreedClasses != ""]
 
     #### Age info for backfilled (Rf) and current (Cr)
     ## reference age class 0=no age (either not forest or no info)
