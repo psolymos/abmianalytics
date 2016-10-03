@@ -104,7 +104,8 @@ for (i in seq_len(length(fl))) {
     #print(summary(d$Pct_of_Larch))
 
     nro <- nro + nrow(d)
-    cc <- factor(ifelse(d$CutYear != 0, "CC", "F"), c("CC","F"))
+#    cc <- factor(ifelse(d$CutYear != 0, "CC", "F"), c("CC","F"))
+    cc <- factor(ifelse(d$FEATURE_TY == "CUTBLOCK", "CC", "F"), c("CC","F"))
     lr <- factor(ifelse(d$Pct_of_Larch != 0, "Larch", "Not"), c("Larch","Not"))
     if (i == 1) {
         nro2 <- Xtab(Shape_Area ~ c4 + cc, d)
@@ -122,12 +123,12 @@ for (i in seq_len(length(fl))) {
     }
 
     d$VEG3 <- d$c3 <- d$needCWCS <- NULL
-    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata",
-        gsub(".csv", ".Rdata", fn, fixed = TRUE)))
+#    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata",
+#        gsub(".csv", ".Rdata", fn, fixed = TRUE)))
 }
 
 write.csv(as.matrix(nro2/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-cutblocks.csv"))
-write.csv(as.matrix(nro3/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-cutblocks3.csv"))
+write.csv(as.matrix(nro3/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-cutblocks3cc.csv"))
 write.csv(as.matrix(al3/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-larch3.csv"))
 write.csv(as.matrix(al/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-larch.csv"))
 
