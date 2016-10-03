@@ -32,6 +32,50 @@ make_vegHF_sector <- function(d, col.label, col.year=NULL, wide=TRUE, sparse=FAL
     out
 }
 
+c4_fun <- function(d) {
+    d$VEG3 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source,
+        drop=TRUE, sep="::")
+    d$c3 <- recl$Combined[match(d$VEG3, recl$Veg_3)]
+    d$needCWCS <- recl$need_CWCS[match(d$VEG3, recl$Veg_3)] == "x"
+    tmp <- data.frame(cwcs=d$CWCS_Class[d$needCWCS], c4=d$c3[d$needCWCS],
+        src=d$PostBackfill_Source[d$needCWCS])
+    tmp$c4x <- as.character(tmp$c4)
+    ## grass
+    tmp$c4x[tmp$cwcs %in% c("Marsh","Bog") & tmp$c4 == "GraminoidWetland"] <-
+        as.character(tmp$cwcs[tmp$cwcs %in% c("Marsh","Bog") & tmp$c4 == "GraminoidWetland"])
+    tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "GraminoidWetland"] <-
+        "GraminoidFen"
+    tmp$c4x[!(tmp$cwcs %in% c("Marsh","Fen","Bog")) & tmp$c4 == "GraminoidWetland"] <-
+        "Marsh"
+    ## shrub
+    tmp$c4x[tmp$cwcs %in% c("Fen","Bog") & tmp$c4 == "ShrubbyWetland"] <-
+        paste0("Shrubby",
+        as.character(tmp$cwcs[tmp$cwcs %in% c("Fen","Bog") & tmp$c4 == "ShrubbyWetland"]))
+    tmp$c4x[!(tmp$cwcs %in% c("Fen","Bog")) & tmp$c4 == "ShrubbyWetland"] <-
+        "ShrubbySwamp"
+    ## muskeg
+    tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "Muskeg"] <-
+        "GraminoidFen"
+    tmp$c4x[tmp$cwcs != "Fen" & tmp$c4 == "Muskeg"] <-
+        "Bog" # can be: "None"   "Soil"   "ABMILC" "AVIE" "PLVI"  "Phase1" "MTNP"  "EINP"
+    tmp$c4x[!(tmp$cwcs %in% c("Swamp","Fen","Bog")) & tmp$c4 == "Muskeg" &
+        tmp$src != "WBNP"] <- "GraminoidFen"
+
+    d$c4 <- as.character(d$c3)
+    d$c4[d$needCWCS] <- tmp$c4x
+
+    ## larch
+    d$c4[d$Pct_of_Larch != 0 & d$c4 == "TreedBog-BSpr"] <- "TreedFen-Larch"
+    ## treedwetland-mixedwood
+    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Fen"] <- "TreedFen-Mixedwood"
+    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Bog"] <- "TreedBog-BSpr"
+    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Swamp"] <- "TreedSwamp-Mixedwood"
+
+    d$c4 <- factor(d$c4, c(levels(d$c3)[!(levels(d$c3) %in%
+        c("GraminoidWetland","ShrubbyWetland","Muskeg"))], "Bog"))
+    d$VEG3 <- d$c3 <- d$needCWCS <- NULL
+    d
+}
 
 make_vegHF_wide_v6 <-
 function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) {
