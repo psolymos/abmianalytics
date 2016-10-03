@@ -65,15 +65,17 @@ for (i in seq_len(length(fl))) {
         "Bog" # can be: "None"   "Soil"   "ABMILC" "AVIE" "PLVI"  "Phase1" "MTNP"  "EINP"
     tmp$c4x[!(tmp$cwcs %in% c("Swamp","Fen","Bog")) & tmp$c4 == "Muskeg" &
         tmp$src != "WBNP"] <- "GraminoidFen"
-    ## larch
-    tmp$c4[tmp$Pct_of_Larch != 0 & tmp$c4 == "TreedBog-BSpr"] <- "TreedFen-Larch"
-    ## treedwetland-mixedwood
-    tmp$c4[tmp$c4 == "TreedWetland-Mixedwood" & tmp$cwcs == "Fen"] <- "TreedFen-Mixedwood"
-    tmp$c4[tmp$c4 == "TreedWetland-Mixedwood" & tmp$cwcs == "Bog"] <- "TreedBog-BSpr"
-    tmp$c4[tmp$c4 == "TreedWetland-Mixedwood" & tmp$cwcs == "Swamp"] <- "TreedSwamp-Mixedwood"
 
     d$c4 <- as.character(d$c3)
     d$c4[d$needCWCS] <- tmp$c4x
+
+    ## larch
+    d$c4[d$Pct_of_Larch != 0 & d$c4 == "TreedBog-BSpr"] <- "TreedFen-Larch"
+    ## treedwetland-mixedwood
+    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Fen"] <- "TreedFen-Mixedwood"
+    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Bog"] <- "TreedBog-BSpr"
+    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Swamp"] <- "TreedSwamp-Mixedwood"
+
     d$c4 <- factor(d$c4, c(levels(d$c3)[!(levels(d$c3) %in%
         c("GraminoidWetland","ShrubbyWetland","Muskeg"))], "Bog"))
 
@@ -100,23 +102,36 @@ for (i in seq_len(length(fl))) {
     cat("\n\tveg:", length(VEG), #"- veg^3:", length(VEG3), "- larch:", length(LARCH),
         "- soil:", length(SOIL), "- hf:", length(HF), "\n")
     #print(summary(d$Pct_of_Larch))
-    d$VEG3 <- d$c3 <- d$needCWCS <- NULL
-    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata",
-        gsub(".csv", ".Rdata", fn, fixed = TRUE)))
+
     nro <- nro + nrow(d)
     cc <- factor(ifelse(d$CutYear != 0, "CC", "F"), c("CC","F"))
     lr <- factor(ifelse(d$Pct_of_Larch != 0, "Larch", "Not"), c("Larch","Not"))
     if (i == 1) {
         nro2 <- Xtab(Shape_Area ~ c4 + cc, d)
+        nro3 <- Xtab(Shape_Area ~ c3 + cc, d)
     } else {
         nro2 <- nro2 + Xtab(Shape_Area ~ c4 + cc, d)
+        nro3 <- nro3 + Xtab(Shape_Area ~ c3 + cc, d)
     }
     if (i == 1) {
         al <- Xtab(Shape_Area ~ c4 + lr, d)
+        al3 <- Xtab(Shape_Area ~ c3 + lr, d)
     } else {
         al <- al + Xtab(Shape_Area ~ c4 + lr, d)
+        al3 <- al3 + Xtab(Shape_Area ~ c3 + lr, d)
     }
+
+    d$VEG3 <- d$c3 <- d$needCWCS <- NULL
+    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata",
+        gsub(".csv", ".Rdata", fn, fixed = TRUE)))
 }
+
+write.csv(as.matrix(nro2/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-cutblocks.csv"))
+write.csv(as.matrix(nro3/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-cutblocks3.csv"))
+write.csv(as.matrix(al3/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-larch3.csv"))
+write.csv(as.matrix(al/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-larch.csv"))
+
+
 
 ## no blanks
 (blanks <- which(blank_n > 0))

@@ -60,7 +60,7 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
     RfLab <- c(paste0(rep(TreedClasses, each=11),
         c("0","R","1","2","3","4","5","6","7","8","9")),
         Fragment, NontreedClasses)
-    CrOnlyLab <- c(HFLab, paste0("CC", paste0(rep(TreedClasses, each=11),
+    CrOnlyLab <- c(HFLab, paste0("CC", paste0(rep(TreedClasses, each=5),
         c("R","1","2","3","4"))))
     HLEVS <- c(TreedClasses, Fragment, NontreedClasses)
 
