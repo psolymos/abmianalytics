@@ -85,15 +85,16 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
         "TreedFen-BSpr", "TreedFen-Decid", "TreedFen-Larch", "TreedFen-Mixedwood",
         "TreedSwamp-Conif", "TreedSwamp-Decid", "TreedSwamp-Fir",
         #"TreedSwamp-Forest",
-        "TreedSwamp-Mixedwood", "TreedSwamp-Spruce",
+        "TreedSwamp-Mixedwood", "TreedSwamp-Spruce", "TreedSwamp-Pine",
         #"TreedWetland-Mixedwood",
         "AlpineLarch")
     NontreedClasses <- c("ShrubbyBog", "ShrubbyFen", "ShrubbySwamp",
-        "Bog", "Marsh", "Swamp", "GraminoidFen",
+        "Marsh", "GraminoidBog", "GraminoidFen",
         "GrassHerb", "Shrub", "Alkali",
         "Bare", "SnowIce",
         "Water")
-    Fragment <- c("TreedWetland-Mixedwood", "TreedSwamp-Forest")
+    Fragment <- c("TreedWetland-Mixedwood", "TreedSwamp-Forest",
+        "GraminoidWetland", "ShrubbyWetland", "Muskeg")
     HFLab <- c("BorrowpitsDugoutsSumps", "Canals", "CultivationCropPastureBareground",
         "HighDensityLivestockOperation", "IndustrialSiteRural", "MineSite",
         "MunicipalWaterSewage", "OtherDisturbedVegetation", "PeatMine",

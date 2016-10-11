@@ -45,42 +45,51 @@ for (i in seq_len(length(fl))) {
     tmp <- data.frame(cwcs=d$CWCS_Class[d$needCWCS], c4=d$c3[d$needCWCS],
         src=d$PostBackfill_Source[d$needCWCS])
     tmp$c4x <- as.character(tmp$c4)
-    ## grass
-    tmp$c4x[tmp$cwcs %in% c("Marsh","Bog") & tmp$c4 == "GraminoidWetland"] <-
-        as.character(tmp$cwcs[tmp$cwcs %in% c("Marsh","Bog") & tmp$c4 == "GraminoidWetland"])
-    tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "GraminoidWetland"] <-
-        "GraminoidFen"
-    tmp$c4x[!(tmp$cwcs %in% c("Marsh","Fen","Bog")) & tmp$c4 == "GraminoidWetland"] <-
-        "Marsh"
-    ## shrub
+
+    ## grass/GraminoidWetland
+    tmp$c4x[tmp$cwcs == "Marsh" & tmp$c4 == "GraminoidWetland"] <- "Marsh"
+    tmp$c4x[tmp$cwcs == "Bog" & tmp$c4 == "GraminoidWetland"] <- "GraminoidBog"
+    tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "GraminoidWetland"] <- "GraminoidFen"
+    #tmp$c4x[!(tmp$cwcs %in% c("Marsh","Fen","Bog")) & tmp$c4 == "GraminoidWetland"] <-
+    #    "Marsh"
+    ## nothing else remains, so no need for setting unknowns to Marsh
+
+    ## shrub/ShrubbyWetland
     tmp$c4x[tmp$cwcs %in% c("Fen","Bog") & tmp$c4 == "ShrubbyWetland"] <-
         paste0("Shrubby",
         as.character(tmp$cwcs[tmp$cwcs %in% c("Fen","Bog") & tmp$c4 == "ShrubbyWetland"]))
-    tmp$c4x[!(tmp$cwcs %in% c("Fen","Bog")) & tmp$c4 == "ShrubbyWetland"] <-
-        "ShrubbySwamp"
+    #tmp$c4x[!(tmp$cwcs %in% c("Fen","Bog")) & tmp$c4 == "ShrubbyWetland"] <-
+    #    "ShrubbySwamp"
+    ## nothing else remains, so no need for setting unknowns to ShrubbySwamp
+
     ## muskeg
-    tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "Muskeg"] <-
-        "GraminoidFen"
-    tmp$c4x[tmp$cwcs != "Fen" & tmp$c4 == "Muskeg"] <-
-        "Bog" # can be: "None"   "Soil"   "ABMILC" "AVIE" "PLVI"  "Phase1" "MTNP"  "EINP"
-    tmp$c4x[!(tmp$cwcs %in% c("Swamp","Fen","Bog")) & tmp$c4 == "Muskeg" &
-        tmp$src != "WBNP"] <- "GraminoidFen"
+    #tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "Muskeg"] <-
+    #    "GraminoidFen"
+    #tmp$c4x[tmp$cwcs != "Fen" & tmp$c4 == "Muskeg"] <-
+    #    "GraminoidBog" # can be: "None"   "Soil"   "ABMILC" "AVIE" "PLVI"  "Phase1" "MTNP"  "EINP"
+    #tmp$c4x[!(tmp$cwcs %in% c("Swamp","Fen","Bog")) & tmp$c4 == "Muskeg" &
+    #    tmp$src != "WBNP"] <- "GraminoidFen"
 
     d$c4 <- as.character(d$c3)
     d$c4[d$needCWCS] <- tmp$c4x
 
-    ## larch
-    d$c4[d$Pct_of_Larch != 0 & d$c4 == "TreedBog-BSpr"] <- "TreedFen-Larch"
     ## treedwetland-mixedwood
     d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Fen"] <- "TreedFen-Mixedwood"
     d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Bog"] <- "TreedBog-BSpr"
     d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Swamp"] <- "TreedSwamp-Mixedwood"
+    ## call the rest (not fen/bog/swamp) as TreedSwamp-Mixedwood ?
 
-    d$c4 <- factor(d$c4, c(levels(d$c3)[!(levels(d$c3) %in%
-        c("GraminoidWetland","ShrubbyWetland","Muskeg"))], "Bog"))
+    ## larch
+    d$c4[d$Pct_of_Larch >= 5] <- "TreedFen-Larch"
+    d$c4[d$Pct_of_Larch > 0 & d$c4 == "TreedBog-BSpr"] <- "TreedFen-BSpr"
+    d$c4[d$Pct_of_Larch > 0 & d$Pct_of_Larch < 5 & d$c4 %in% c("Decid",
+        "Fir","Mixedwood","Pine","Spruce")] <- paste0("TreedSwamp-", d$c4[d$Pct_of_Larch > 0 &
+        d$Pct_of_Larch < 5 & d$c4 %in% c("Decid", "Fir","Mixedwood","Pine","Spruce")])
 
-    #if (any(tmp$c4 == "Muskeg"))
-    #    break
+    #d$c4 <- factor(d$c4, c(levels(d$c3)[!(levels(d$c3) %in%
+    #    c("GraminoidWetland","ShrubbyWetland","Muskeg"))], "GraminoidBog"))
+    d$c4 <- factor(d$c4, c(levels(d$c3), "GraminoidBog", "TreedSwamp-Pine"))
+    if (any(is.na(d$c4))) break
 
     #d$VEG5 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source,
     #    d$CWCS_Class, ifelse(d$Pct_of_Larch>0, "Larch1", "Larch0"), drop=TRUE, sep="::")
@@ -106,7 +115,9 @@ for (i in seq_len(length(fl))) {
     nro <- nro + nrow(d)
 #    cc <- factor(ifelse(d$CutYear != 0, "CC", "F"), c("CC","F"))
     cc <- factor(ifelse(d$FEATURE_TY == "CUTBLOCK", "CC", "F"), c("CC","F"))
-    lr <- factor(ifelse(d$Pct_of_Larch != 0, "Larch", "Not"), c("Larch","Not"))
+    #lr <- factor(ifelse(d$Pct_of_Larch != 0, "Larch", "Not"), c("Larch","Not"))
+    lr <- cut(d$Pct_of_Larch, c(-1, 0, 4, 10))
+    levels(lr) <- c("PctL0","PctL1-4","PctL5-10")
     if (i == 1) {
         nro2 <- Xtab(Shape_Area ~ c4 + cc, d)
         nro3 <- Xtab(Shape_Area ~ c3 + cc, d)
@@ -123,16 +134,14 @@ for (i in seq_len(length(fl))) {
     }
 
     d$VEG3 <- d$c3 <- d$needCWCS <- NULL
-#    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata",
-#        gsub(".csv", ".Rdata", fn, fixed = TRUE)))
+    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata",
+        gsub(".csv", ".Rdata", fn, fixed = TRUE)))
 }
 
 write.csv(as.matrix(nro2/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-cutblocks.csv"))
 write.csv(as.matrix(nro3/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-cutblocks3cc.csv"))
 write.csv(as.matrix(al3/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-larch3.csv"))
 write.csv(as.matrix(al/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-larch.csv"))
-
-
 
 ## no blanks
 (blanks <- which(blank_n > 0))
@@ -399,11 +408,16 @@ dd1km_nsr$veg_reference <- groupSums(dd1km_pred$veg_reference, 1, kgrid$NSRNAME)
 dd1km_nsr$soil_current <- groupSums(dd1km_pred$soil_current, 1, kgrid$NSRNAME)
 dd1km_nsr$soil_reference <- groupSums(dd1km_pred$soil_reference, 1, kgrid$NSRNAME)
 
+dd1km_nr <- dd1km_pred
+dd1km_nr$veg_current <- groupSums(dd1km_pred$veg_current, 1, kgrid$NRNAME)
+dd1km_nr$veg_reference <- groupSums(dd1km_pred$veg_reference, 1, kgrid$NRNAME)
+dd1km_nr$soil_current <- groupSums(dd1km_pred$soil_current, 1, kgrid$NRNAME)
+dd1km_nr$soil_reference <- groupSums(dd1km_pred$soil_reference, 1, kgrid$NRNAME)
 
 if (SAVE) { ## needed for recalculating average ages
     save(dd1km_pred,
         file=file.path(ROOT, VER, "data/kgrid-V6", "veg-hf_1kmgrid_v6.Rdata"))
-    save(dd1km_nsr,
+    save(dd1km_nsr, dd1km_nr,
         file=file.path(ROOT, VER, "data/kgrid-V6", "veg-hf_nsr_v6.Rdata"))
     #save(kgrid,
     #    file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
@@ -445,3 +459,79 @@ if (FALSE) {
     x <- as.matrix(groupSums(dd1km_pred[[1]]/10^6, 1, kgrid$LUFxNSR))
     write.csv(x, file=file.path(ROOT, VER, "out/kgrid", "current-veghf-area-km2.csv"))
 }
+
+
+## check areas for V6 rule set
+source("~/repos/abmianalytics/veghf/veghf-setup.R")
+load(file.path(ROOT, VER, "data/kgrid-V6", "veg-hf_nsr_v6.Rdata"))
+
+## GraminoidWetland
+(x <- as.matrix(dd1km_nsr$veg_current)[,c("GraminoidWetland",
+    "Marsh", "GraminoidBog", "GraminoidFen")])
+(x <- as.matrix(dd1km_nsr$veg_reference)[,c("GraminoidWetland",
+    "Marsh", "GraminoidBog", "GraminoidFen")])
+## nothing else remains in current veg+HF or backfilled veg
+
+## ShrubbyWetland
+(x <- as.matrix(dd1km_nsr$veg_current)[,c("ShrubbyWetland",
+    "ShrubbyBog", "ShrubbyFen", "ShrubbySwamp")])
+(x <- as.matrix(dd1km_nsr$veg_reference)[,c("ShrubbyWetland",
+    "ShrubbyBog", "ShrubbyFen", "ShrubbySwamp")])
+## nothing else remains in current veg+HF or backfilled veg
+
+## Muskeg
+cn <- c("Muskeg",
+    "GraminoidBog", "GraminoidFen",
+    "ShrubbyBog", "ShrubbyFen",
+    "TreedBog-BSpr0", "TreedBog-BSpr1", "TreedBog-BSpr2", "TreedBog-BSpr3",
+    "TreedBog-BSpr4", "TreedBog-BSpr5", "TreedBog-BSpr6", "TreedBog-BSpr7",
+    "TreedBog-BSpr8", "TreedBog-BSpr9", "TreedBog-BSprR", "TreedFen-BSpr0",
+    "TreedFen-BSpr1", "TreedFen-BSpr2", "TreedFen-BSpr3", "TreedFen-BSpr4",
+    "TreedFen-BSpr5", "TreedFen-BSpr6", "TreedFen-BSpr7", "TreedFen-BSpr8",
+    "TreedFen-BSpr9", "TreedFen-BSprR", "TreedFen-Decid0", "TreedFen-Decid1",
+    "TreedFen-Decid2", "TreedFen-Decid3", "TreedFen-Decid4", "TreedFen-Decid5",
+    "TreedFen-Decid6", "TreedFen-Decid7", "TreedFen-Decid8", "TreedFen-Decid9",
+    "TreedFen-DecidR", "TreedFen-Larch0", "TreedFen-Larch1", "TreedFen-Larch2",
+    "TreedFen-Larch3", "TreedFen-Larch4", "TreedFen-Larch5", "TreedFen-Larch6",
+    "TreedFen-Larch7", "TreedFen-Larch8", "TreedFen-Larch9", "TreedFen-LarchR",
+    "TreedFen-Mixedwood0", "TreedFen-Mixedwood1", "TreedFen-Mixedwood2",
+    "TreedFen-Mixedwood3", "TreedFen-Mixedwood4", "TreedFen-Mixedwood5",
+    "TreedFen-Mixedwood6", "TreedFen-Mixedwood7", "TreedFen-Mixedwood8",
+    "TreedFen-Mixedwood9", "TreedFen-MixedwoodR", "TreedSwamp-Conif0")
+cn2 <- c("Muskeg",
+    "GraminoidBog", "GraminoidFen",
+    "ShrubbyBog", "ShrubbyFen",
+    "TreedBog-BSpr", "TreedBog-BSpr", "TreedBog-BSpr", "TreedBog-BSpr",
+    "TreedBog-BSpr", "TreedBog-BSpr", "TreedBog-BSpr", "TreedBog-BSpr",
+    "TreedBog-BSpr", "TreedBog-BSpr", "TreedBog-BSpr", "TreedFen-BSpr",
+    "TreedFen-BSpr", "TreedFen-BSpr", "TreedFen-BSpr", "TreedFen-BSpr",
+    "TreedFen-BSpr", "TreedFen-BSpr", "TreedFen-BSpr", "TreedFen-BSpr",
+    "TreedFen-BSpr", "TreedFen-BSpr", "TreedFen-Decid", "TreedFen-Decid",
+    "TreedFen-Decid", "TreedFen-Decid", "TreedFen-Decid", "TreedFen-Decid",
+    "TreedFen-Decid", "TreedFen-Decid", "TreedFen-Decid", "TreedFen-Decid",
+    "TreedFen-Decid", "TreedFen-Larch", "TreedFen-Larch", "TreedFen-Larch",
+    "TreedFen-Larch", "TreedFen-Larch", "TreedFen-Larch", "TreedFen-Larch",
+    "TreedFen-Larch", "TreedFen-Larch", "TreedFen-Larch", "TreedFen-Larch",
+    "TreedFen-Mixedwood", "TreedFen-Mixedwood", "TreedFen-Mixedwood",
+    "TreedFen-Mixedwood", "TreedFen-Mixedwood", "TreedFen-Mixedwood",
+    "TreedFen-Mixedwood", "TreedFen-Mixedwood", "TreedFen-Mixedwood",
+    "TreedFen-Mixedwood", "TreedFen-Mixedwood", "TreedSwamp-Conif")
+x <- as.matrix(dd1km_nsr$veg_current)[,cn]
+x <- x/rowSums(x)
+x <- groupSums(x, 2, cn2)
+x <- x[x[,"Muskeg"] > 0,]
+x
+find_max(x)
+
+## TreedWetland-Mixedwood
+
+
+    d$c4 <- as.character(d$c3)
+    d$c4[d$needCWCS] <- tmp$c4x
+
+    ## treedwetland-mixedwood
+    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Fen"] <- "TreedFen-Mixedwood"
+    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Bog"] <- "TreedBog-BSpr"
+    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Swamp"] <- "TreedSwamp-Mixedwood"
+    ## call the rest (not fen/bog/swamp) as TreedSwamp-Mixedwood ?
+
