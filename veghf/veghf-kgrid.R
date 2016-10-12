@@ -214,6 +214,7 @@ for (s in 1:(length(Start)-1)) {
     load(f, envir=e)
     d <- e$d
     ## HF year is used as base year for prediction purposes
+    Basic <- Xtab(Shape_Area ~ Row_Col + c4, d)
     dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
         col.year=HF_YEAR, col.HFyear="CutYear", sparse=TRUE)
     veg_current <- dd$veg_current
@@ -234,6 +235,8 @@ for (s in 1:(length(Start)-1)) {
         e <- new.env()
         load(f, envir=e)
         d <- e$d
+        Basic2 <- Xtab(Shape_Area ~ Row_Col + c4, d)
+        Basic <- bind_fun2(Basic, Basic2)
         dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
             col.year=HF_YEAR, col.HFyear="CutYear", sparse=TRUE)
         veg_current <- bind_fun2(veg_current, dd$veg_current)
@@ -248,7 +251,8 @@ for (s in 1:(length(Start)-1)) {
         soil_current = soil_current,
         soil_reference = soil_reference,
         sample_year = sample_year,
-        scale = "1 km x 1 km prediction grid cells")
+        scale = "1 km x 1 km prediction grid cells",
+        c4 = Basic)
 }
 
 ## binding together the pieces
@@ -256,12 +260,14 @@ veg_current <- tmplist[[1]]$veg_current
 veg_reference <- tmplist[[1]]$veg_reference
 soil_current <- tmplist[[1]]$soil_current
 soil_reference <- tmplist[[1]]$soil_reference
+Basic <- tmplist[[1]]$c4
 for (j in 2:length(tmplist)) {
     cat("binding", j-1, "&", j, "/", length(tmplist), "\n");flush.console()
     veg_current <- bind_fun2(veg_current, tmplist[[j]]$veg_current)
     veg_reference <- bind_fun2(veg_reference, tmplist[[j]]$veg_reference)
     soil_current <- bind_fun2(soil_current, tmplist[[j]]$soil_current)
     soil_reference <- bind_fun2(soil_reference, tmplist[[j]]$soil_reference)
+    Basic <- bind_fun2(Basic, tmplist[[j]]$c4)
 }
 
 ## assembling return object
@@ -271,7 +277,8 @@ dd1km_pred <- list(
     soil_current = soil_current,
     soil_reference = soil_reference,
     sample_year = tmplist[[1]]$sample_year,
-    scale = "1 km x 1 km prediction grid cells")
+    scale = "1 km x 1 km prediction grid cells",
+    v6veg = Basic)
 
 ## this has the climate stuff
 kgrid <- read.csv(
@@ -331,6 +338,7 @@ dd1km_pred$veg_current <- dd1km_pred$veg_current[rownames(kgrid),]
 dd1km_pred$veg_reference <- dd1km_pred$veg_reference[rownames(kgrid),]
 dd1km_pred$soil_current <- dd1km_pred$soil_current[rownames(kgrid),]
 dd1km_pred$soil_reference <- dd1km_pred$soil_reference[rownames(kgrid),]
+dd1km_pred$v6veg <- dd1km_pred$v6veg[rownames(kgrid),]
 
 ## check area diff
 range(sapply(dd1km_pred[1:4], sum) / 10^6)
@@ -407,12 +415,14 @@ dd1km_nsr$veg_current <- groupSums(dd1km_pred$veg_current, 1, kgrid$NSRNAME)
 dd1km_nsr$veg_reference <- groupSums(dd1km_pred$veg_reference, 1, kgrid$NSRNAME)
 dd1km_nsr$soil_current <- groupSums(dd1km_pred$soil_current, 1, kgrid$NSRNAME)
 dd1km_nsr$soil_reference <- groupSums(dd1km_pred$soil_reference, 1, kgrid$NSRNAME)
+dd1km_nsr$v6veg <- groupSums(dd1km_pred$v6veg, 1, kgrid$NSRNAME)
 
 dd1km_nr <- dd1km_pred
 dd1km_nr$veg_current <- groupSums(dd1km_pred$veg_current, 1, kgrid$NRNAME)
 dd1km_nr$veg_reference <- groupSums(dd1km_pred$veg_reference, 1, kgrid$NRNAME)
 dd1km_nr$soil_current <- groupSums(dd1km_pred$soil_current, 1, kgrid$NRNAME)
 dd1km_nr$soil_reference <- groupSums(dd1km_pred$soil_reference, 1, kgrid$NRNAME)
+dd1km_nr$v6veg <- groupSums(dd1km_pred$v6veg, 1, kgrid$NRNAME)
 
 if (SAVE) { ## needed for recalculating average ages
     save(dd1km_pred,
@@ -462,76 +472,71 @@ if (FALSE) {
 
 
 ## check areas for V6 rule set
+
+## check all fragments, nut just these
+
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 load(file.path(ROOT, VER, "data/kgrid-V6", "veg-hf_nsr_v6.Rdata"))
+Fragment <- c("TreedWetland-Mixedwood", "TreedSwamp-Forest",
+    "GraminoidWetland", "ShrubbyWetland", "Muskeg")
+aa <- as.matrix(dd1km_nr$v6veg[,Fragment])/10^6
 
 ## GraminoidWetland
-(x <- as.matrix(dd1km_nsr$veg_current)[,c("GraminoidWetland",
-    "Marsh", "GraminoidBog", "GraminoidFen")])
-(x <- as.matrix(dd1km_nsr$veg_reference)[,c("GraminoidWetland",
-    "Marsh", "GraminoidBog", "GraminoidFen")])
-## nothing else remains in current veg+HF or backfilled veg
+round(x <- as.matrix(dd1km_nr$v6veg)[,c("GraminoidWetland",
+    "Marsh", "GraminoidBog", "GraminoidFen")] / 10^6, 2)
+round(100*x[,-1]/rowSums(x[,-1]),2)
+find_max(100*x[,-1]/rowSums(x[,-1]))
+r1 <- data.frame(round(x[,1,drop=FALSE],2),
+    round(100*x[,-1]/rowSums(x[,-1]),2),
+    find_max(100*x[,-1]/rowSums(x[,-1])))
+print(r1, digits=2)
+## regional level solution:
+## Marsh in Grassland, GraminoidFen otherwise (one outlier is close in %)
 
 ## ShrubbyWetland
-(x <- as.matrix(dd1km_nsr$veg_current)[,c("ShrubbyWetland",
-    "ShrubbyBog", "ShrubbyFen", "ShrubbySwamp")])
-(x <- as.matrix(dd1km_nsr$veg_reference)[,c("ShrubbyWetland",
-    "ShrubbyBog", "ShrubbyFen", "ShrubbySwamp")])
-## nothing else remains in current veg+HF or backfilled veg
-
-## Muskeg
-cn <- c("Muskeg",
-    "GraminoidBog", "GraminoidFen",
-    "ShrubbyBog", "ShrubbyFen",
-    "TreedBog-BSpr0", "TreedBog-BSpr1", "TreedBog-BSpr2", "TreedBog-BSpr3",
-    "TreedBog-BSpr4", "TreedBog-BSpr5", "TreedBog-BSpr6", "TreedBog-BSpr7",
-    "TreedBog-BSpr8", "TreedBog-BSpr9", "TreedBog-BSprR", "TreedFen-BSpr0",
-    "TreedFen-BSpr1", "TreedFen-BSpr2", "TreedFen-BSpr3", "TreedFen-BSpr4",
-    "TreedFen-BSpr5", "TreedFen-BSpr6", "TreedFen-BSpr7", "TreedFen-BSpr8",
-    "TreedFen-BSpr9", "TreedFen-BSprR", "TreedFen-Decid0", "TreedFen-Decid1",
-    "TreedFen-Decid2", "TreedFen-Decid3", "TreedFen-Decid4", "TreedFen-Decid5",
-    "TreedFen-Decid6", "TreedFen-Decid7", "TreedFen-Decid8", "TreedFen-Decid9",
-    "TreedFen-DecidR", "TreedFen-Larch0", "TreedFen-Larch1", "TreedFen-Larch2",
-    "TreedFen-Larch3", "TreedFen-Larch4", "TreedFen-Larch5", "TreedFen-Larch6",
-    "TreedFen-Larch7", "TreedFen-Larch8", "TreedFen-Larch9", "TreedFen-LarchR",
-    "TreedFen-Mixedwood0", "TreedFen-Mixedwood1", "TreedFen-Mixedwood2",
-    "TreedFen-Mixedwood3", "TreedFen-Mixedwood4", "TreedFen-Mixedwood5",
-    "TreedFen-Mixedwood6", "TreedFen-Mixedwood7", "TreedFen-Mixedwood8",
-    "TreedFen-Mixedwood9", "TreedFen-MixedwoodR", "TreedSwamp-Conif0")
-cn2 <- c("Muskeg",
-    "GraminoidBog", "GraminoidFen",
-    "ShrubbyBog", "ShrubbyFen",
-    "TreedBog-BSpr", "TreedBog-BSpr", "TreedBog-BSpr", "TreedBog-BSpr",
-    "TreedBog-BSpr", "TreedBog-BSpr", "TreedBog-BSpr", "TreedBog-BSpr",
-    "TreedBog-BSpr", "TreedBog-BSpr", "TreedBog-BSpr", "TreedFen-BSpr",
-    "TreedFen-BSpr", "TreedFen-BSpr", "TreedFen-BSpr", "TreedFen-BSpr",
-    "TreedFen-BSpr", "TreedFen-BSpr", "TreedFen-BSpr", "TreedFen-BSpr",
-    "TreedFen-BSpr", "TreedFen-BSpr", "TreedFen-Decid", "TreedFen-Decid",
-    "TreedFen-Decid", "TreedFen-Decid", "TreedFen-Decid", "TreedFen-Decid",
-    "TreedFen-Decid", "TreedFen-Decid", "TreedFen-Decid", "TreedFen-Decid",
-    "TreedFen-Decid", "TreedFen-Larch", "TreedFen-Larch", "TreedFen-Larch",
-    "TreedFen-Larch", "TreedFen-Larch", "TreedFen-Larch", "TreedFen-Larch",
-    "TreedFen-Larch", "TreedFen-Larch", "TreedFen-Larch", "TreedFen-Larch",
-    "TreedFen-Mixedwood", "TreedFen-Mixedwood", "TreedFen-Mixedwood",
-    "TreedFen-Mixedwood", "TreedFen-Mixedwood", "TreedFen-Mixedwood",
-    "TreedFen-Mixedwood", "TreedFen-Mixedwood", "TreedFen-Mixedwood",
-    "TreedFen-Mixedwood", "TreedFen-Mixedwood", "TreedSwamp-Conif")
-x <- as.matrix(dd1km_nsr$veg_current)[,cn]
-x <- x/rowSums(x)
-x <- groupSums(x, 2, cn2)
-x <- x[x[,"Muskeg"] > 0,]
-x
-find_max(x)
+round(x <- as.matrix(dd1km_nr$v6veg)[,c("ShrubbyWetland",
+    "ShrubbyBog", "ShrubbyFen", "ShrubbySwamp")] / 10^6, 2)
+round(100*x[,-1]/rowSums(x[,-1]),2)
+find_max(100*x[,-1]/rowSums(x[,-1]))
+r2 <- data.frame(round(x[,1,drop=FALSE],2),
+    round(100*x[,-1]/rowSums(x[,-1]),2),
+    find_max(100*x[,-1]/rowSums(x[,-1])))
+print(r2, digits=2)
+## table level solution:
+## call it ShrubbyFen (not present in Grassland, Alpine is ShrubbySwamp but very little area)
 
 ## TreedWetland-Mixedwood
+round(x <- as.matrix(dd1km_nr$v6veg)[,c("TreedWetland-Mixedwood",
+    "TreedFen-Mixedwood", "TreedBog-BSpr","TreedSwamp-Mixedwood")] / 10^6, 2)
+round(100*x[,-1]/rowSums(x[,-1]),2)
+find_max(100*x[,-1]/rowSums(x[,-1]))
+## call it ShrubbyFen (not present in Grassland, Alpine is ShrubbySwamp but very little area)
+r4 <- data.frame(round(x[,1,drop=FALSE],2),
+    round(100*x[,-1]/rowSums(x[,-1]),2),
+    find_max(100*x[,-1]/rowSums(x[,-1])))
+print(r4, digits=2)
+## table level solution:
+## call it TreedBog-BSpr (Grassland is TreedSwamp-Mix but very little area)
 
+## Muskeg
+round(x <- as.matrix(dd1km_nr$v6veg)[,c("Muskeg",
+    "GraminoidBog", "GraminoidFen",
+    "ShrubbyBog", "ShrubbyFen",
+    "TreedBog-BSpr", "TreedFen-BSpr", "TreedFen-Decid", "TreedFen-Larch",
+    "TreedFen-Mixedwood")] / 10^6, 2)
+round(100*x[,-1]/rowSums(x[,-1]),2)
+find_max(100*x[,-1]/rowSums(x[,-1]))
+## call it ShrubbyFen (not present in Grassland, Alpine is ShrubbySwamp but very little area)
+r3 <- data.frame(x[,1,drop=FALSE], 100*x[,-1]/rowSums(x[,-1]), find_max(100*x[,-1]/rowSums(x[,-1])))
+print(r3, digits=2)
+aa <- data.frame(round(x[,1,drop=FALSE], 2), find_max(100*x[,-1]/rowSums(x[,-1])))
+aa[order(aa[,1]),]
+## ??? level solution:
+## Shield:ShrubbyFen, Parkland:GraminoidFen, else: TreedBog-BSpr
 
-    d$c4 <- as.character(d$c3)
-    d$c4[d$needCWCS] <- tmp$c4x
-
-    ## treedwetland-mixedwood
-    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Fen"] <- "TreedFen-Mixedwood"
-    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Bog"] <- "TreedBog-BSpr"
-    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Swamp"] <- "TreedSwamp-Mixedwood"
-    ## call the rest (not fen/bog/swamp) as TreedSwamp-Mixedwood ?
+cn <- c("GraminoidBog", "ShrubbyBog", "TreedBog-BSpr")
+round(100*x[,cn]/rowSums(x[,cn]),2)
+cn <- c("GraminoidFen", "ShrubbyFen", "TreedFen-BSpr",
+    "TreedFen-Decid", "TreedFen-Larch","TreedFen-Mixedwood")
+round(100*x[,cn]/rowSums(x[,cn]),2)
 

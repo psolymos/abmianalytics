@@ -159,15 +159,15 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
     #stopifnot(max(d$Shape_Area[d$VEGclass == ""]) < 1)
     if (any(d$HABIT == ""))
         warning(paste("blank HABIT:", sum(d$Shape_Area[d$HABIT == ""]), "m^2"))
-    d <- d[d$HABIT != "",]
+    #d <- d[d$HABIT != "",]
     d$HABIT <- droplevels(d$HABIT)
 
     #### HABIT/EC classes:
     ## follow HABIT/EC classes, but there are few oddities when outside of AVI
     #d$VEGclass <- d$EC_Type
     d$VEGclass <- d$HABIT
-    levels(d$VEGclass)[levels(d$VEGclass) == "Non-Veg"] <- "NonVeg"
-    levels(d$VEGclass) <- gsub("/", "", levels(d$VEGclass))
+#    levels(d$VEGclass)[levels(d$VEGclass) == "Non-Veg"] <- "NonVeg"
+#    levels(d$VEGclass) <- gsub("/", "", levels(d$VEGclass))
 
     if (length(setdiff(d$VEGclass, HLEVS)) > 0)
         stop(paste("check HABIT classes", setdiff(d$VEGclass, HLEVS)))
@@ -235,7 +235,7 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
     ## NA --> "0" as unknown age class
     d$AgeRf[is.na(d$AgeRf)] <- "0"
     ## age is not relevant in non-treed veg types
-    d$AgeRf[d$VEGclass %in% NontreedClasses] <- ""
+    d$AgeRf[!(d$VEGclass %in% TreedClasses)] <- ""
     ## burn
     levels(d$AgeRf)[levels(d$AgeRf)=="999"] <- "R"
 
@@ -472,7 +472,7 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
     #stopifnot(max(d$Shape_Area[d$VEGclass == ""]) < 1)
     if (any(d$HABIT == ""))
         warning(paste("blank HABIT:", sum(d$Shape_Area[d$HABIT == ""]), "m^2"))
-    d <- d[d$HABIT != "",]
+    #d <- d[d$HABIT != "",]
     d$HABIT <- droplevels(d$HABIT)
 
     #### HABIT/EC classes:
