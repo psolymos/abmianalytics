@@ -143,11 +143,12 @@ if (FALSE) {
 sb <- read.csv("~/repos/abmianalytics/lookup/singing-species-alberta.csv")
 slt$singing <- sb$Singing_birds[match(rownames(slt), sb$Species_ID)]
 #write.csv(slt, row.names=FALSE, file="~/repos/abmispecies/_data/birds.csv")
-write.csv(slt, row.names=FALSE,
-    file=file.path(ROOT, "tables", "birds-lookup.csv"))
+#write.csv(slt, row.names=FALSE,
+#    file=file.path(ROOT, "tables", "birds-lookup.csv"))
 
-#slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
-#rownames(slt) <- slt$AOU
+slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
+rownames(slt) <- slt$AOU
+slr$comments <- NULL
 
 ## terms and design matrices
 nTerms <- getTerms(modsn, "list")
@@ -354,6 +355,9 @@ sres <- data.frame(tax[names(seff_res), c("English_Name","Scientific_Name","TSNI
     round(sres, 6))[fls,]
 
 round(sapply(seff_res[[1]], function(z) 100*z[,1]), 2)
+
+nres <- nres[rownames(slt)[slt$veghf.north],]
+sres <- sres[rownames(slt)[slt$soilhf.south],]
 
 write.csv(nres, row.names=FALSE,
     file=file.path(ROOT, "tables", "Birds_SectorEffects_North.csv"))
