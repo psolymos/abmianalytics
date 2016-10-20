@@ -12,7 +12,9 @@ WEB <- TRUE
 #kgrid2 <- kgrid[,c("Row_Col", "POINT_X", "POINT_Y")]
 #write.csv(kgrid2, row.names=FALSE, file="w:/gis/Grid1km_working.csv")
 
-taxon <- "mosses"
+taxon <- "lichens"
+#taxon <- "vplants"
+#taxon <- "mosses"
 #taxon <- "mites"
 #taxon <- "mammals"
 #taxon <- "birds"
@@ -31,7 +33,7 @@ if (taxon == "birds") {
     nam_in <- "AOU"
     nam_out <- "sppid"
 }
-if (taxon %in% c("mites", "mosses")) {
+if (taxon %in% c("mites", "mosses", "lichens", "vplants")) {
     ext <- ".Rdata" # csv or Rdata
     VER <- "4.0 (2016-09-12)" # version
     nam_col <- "scinam" # column used in README
@@ -44,6 +46,11 @@ root_out <- "w:/species-v4"
 spptab <- read.csv(file.path("~/repos/abmispecies/_data", paste0(taxon, ".csv")))
 rownames(spptab) <- spptab[,nam_in]
 sppid <- sort(rownames(spptab)[spptab$map.pred])
+
+fexists <- sapply(file.path(root_in, taxon, paste0(sppid, ext)), file.exists)
+table(fexists)
+sppid[!fexists]
+stopifnot(all(fexists))
 
 for (i in 1:length(sppid)) {
     gc()
