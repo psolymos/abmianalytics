@@ -99,10 +99,45 @@ T <- "BirdsSM"
 d <- paste("_", Sys.Date(), sep="")
 save(det, xt, x, file=paste(OUTDIR, "/OUT_", tolower(T), d, ".Rdata",sep=""))
 
+## Use the 1st 1-minute segment only
+
+keep <- det$MIN_1 != "VNA"
+det3 <- det[keep,]
+det3$PKEY <- interaction(det3$SITE_LABEL, "_", det3$ToY, ":",
+    det3$Start$hour, ":", det3$Start$min, sep="", drop=TRUE)
+xt <- as.matrix(Xtab(~ PKEY + Spp, det3, cdrop="NONE"))
+x <- nonDuplicated(det3, PKEY, TRUE)
+x <- x[rownames(xt), c("PKEY", "SITE_LABEL", "ROTATION",
+    "SITE", "YEAR", "STATION", "RAIN", "WIND", "INDUSTRY", "NOISE", "MICROPHONE",
+    "Start", "ToY", "ToD", "ToYc", "ToDc")]
+xt <- xt[,colSums(xt)>0]
+
+save(xt, x, file="~/Dropbox/collaborations/opticut/R/abmi-aru-1min.Rdata")
+
+
 
 ## opticut
 
 library(opticut)
+load("~/Dropbox/collaborations/opticut/R/abmi-aru-1min.Rdata")
+
+x$STR2 <- factor(NA, c("A_Early", "B_Mid", "C_Late"))
+x$STR2[x$ToYc %in% 1:3] <- "A_Early"
+x$STR2[x$ToYc %in% 4:7] <- "B_Mid"
+x$STR2[x$ToYc %in% 8] <- "C_Late"
+table(x$STR2, x$ToYc)
+xtv <- ifelse(xt > 0, 1, 0)
+oc2 <- opticut(xtv ~ 1, strata=x$STR2, dist="binomial")
+oc3 <- opticut(xtv ~ 1, strata=x$ToDc, dist="binomial")
+
+pdf("aru-season.pdf", height=10, width=10)
+plot(oc2,sort=1,mar=c(4,10,3,3),cut=2,ylab="",xlab="Season",show_I=FALSE, show_S=FALSE, cex.axis=0.6)
+dev.off()
+
+pdf("aru-time.pdf", height=10, width=10)
+plot(oc3,sort=1,mar=c(4,10,3,3),cut=2,ylab="",xlab="Time",show_I=FALSE, show_S=FALSE, cex.axis=0.6)
+dev.off()
+
 
 xtv <- ifelse(xt_vis > 0, 1, 0)
 oc2 <- opticut(xtv ~ 1, strata=Class$STR2, dist="binomial")
