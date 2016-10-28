@@ -19,7 +19,19 @@ xtv <- ifelse(xt > 0, 1, 0)
 ## binomial opticut
 
 o1 <- opticut(xtv ~ 1, strata=x$Ssn, dist="binomial")
+o1a <- opticut(xtv ~ 1, strata=x$Ssn, dist="binomial", comb="all")
 o2 <- opticut(xtv ~ 1, strata=x$ToDc, dist="binomial")
+
+## uncertainty
+
+library(parallel)
+cl <- makeCluster(3)
+u1 <- uncertainty(o1, type="multi", B=99, cl=cl)
+u2 <- uncertainty(o2, type="multi", B=99, cl=cl)
+stopCluster(cl)
+
+save(o1, o1a, o2, u1, u2,
+    file="~/Dropbox/collaborations/opticut/R/abmi-aru-ocresults.Rdata")
 
 ## visualization
 
@@ -33,13 +45,4 @@ dev.off()
 pdf("aru-time.pdf", height=10, width=10)
 plot(o2,sort=1,mar=c(4,10,3,3),cut=2,ylab="",xlab="Time",show_I=FALSE, show_S=FALSE, cex.axis=0.6)
 dev.off()
-
-## uncertainty
-
-library(parallel)
-cl <- makeCluster(3)
-u1 <- uncertainty(o1, type="multi", B=99, cl=cl)
-u2 <- uncertainty(o2, type="multi", B=99, cl=cl)
-stopCluster(cl)
-
 

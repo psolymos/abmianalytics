@@ -1,0 +1,54 @@
+---
+title: 'Listening protocol revision for ARUs'
+author: "Peter Solymos"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: pdf_document
+---
+
+```{r setup,echo=FALSE,message=FALSE,results='hide'}
+#devtools::install_github("psolymos/opticut")
+library(opticut)
+load("~/Dropbox/collaborations/opticut/R/abmi-aru-1min.Rdata")
+load("~/Dropbox/collaborations/opticut/R/abmi-aru-ocresults.Rdata")
+ocoptions(theme=c("#7b3294", "#ffffbf", "#008837"))
+```
+
+## Time of day associations
+
+```{r tod_uncertainty,echo=FALSE}
+knitr::kable(as.data.frame(u2), digits=2)
+```
+
+
+```{r tod_plot,fig.height=8,fig.width=6,echo=FALSE}
+plot(o2,sort=1,mar=c(4,10,3,3),cut=2,ylab="",xlab="Time",
+    show_I=TRUE, show_S=FALSE, cex.axis=0.6, lower=0.25)
+```
+
+```{r species}
+table(Sora=ifelse(xt[,"Sora"] > 0, 1, 0), x$ToDc)
+```
+
+## Season associations
+
+
+```{r toy_uncertainty,echo=FALSE}
+df <- as.data.frame(u1)
+bp <- t(bestpart(u1))
+bp <- bp[rownames(df),]
+knitr::kable(data.frame(df, P=bp), digits=2)
+```
+
+
+```{r toy_plot,fig.height=8,fig.width=6,echo=FALSE}
+plot(o1,sort=1,mar=c(4,10,3,3),cut=2,ylab="",xlab="Season",
+    show_I=TRUE, show_S=FALSE, cex.axis=0.6, lower=0.25)
+```
+
+
+```{r toy_hmap,fig.height=16,fig.width=10,echo=FALSE}
+heatmap(t(bestpart(u1)), scale="none", 
+    col=occolors(c("#008837", "#ffffbf"))(100),
+    distfun=function(x) dist(x, "manhattan"))
+```
+
