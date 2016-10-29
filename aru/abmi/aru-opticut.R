@@ -1,3 +1,4 @@
+#devtools::install_github("psolymos/opticut")
 library(opticut)
 load("~/Dropbox/collaborations/opticut/R/abmi-aru-1min.Rdata")
 
