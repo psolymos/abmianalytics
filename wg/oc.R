@@ -43,16 +43,20 @@ cat("OK\nload data on master...")
 fn <- paste0("data-north.Rdata")
 load(file.path("data", fn))
 
-cut_1spec1run_noW <- function(j, i, z)
+f_opticut <- function(j, i, z, dist="poisson")
 {
     x <- DAT[BB[,j],]
     y <- as.numeric(YY[BB[,j], i])
+    if (dist == "binomial") {
+        y <- ifelse(y > 0, 1, 0)
+        dist <- "binomial:cloglog"
+    }
     off <- if (i %in% colnames(OFF))
         OFF[BB[,j], i] else OFFmean[BB[,j]]
     HABV <- x[,z]
     ## opticut based approach for core habitat delineation
     require(opticut)
-    oc <- opticut(y ~ ROAD01, data=x, strata=HABV, dist="poisson",
+    oc <- opticut(y ~ ROAD01, data=x, strata=HABV, dist=dist,
         offset=off, comb="rank")
     part <- drop(bestpart(oc))
     habmod_oc <- glm_skeleton(bestmodel(oc)[[1]])
@@ -60,12 +64,27 @@ cut_1spec1run_noW <- function(j, i, z)
     Prob <- table(HABV, part)[,"1"]
     ## missing/dropped levels are NaN=0/0
     Prob[is.na(Prob)] <- 0
-    Hi_oc <- names(Prob)[Prob > 0]
+    Hi <- names(Prob)[Prob > 0]
+    ## final assembly
+    out <- list(species=i, iteration=j,
+        dist=dist,
+        hi=Hi,
+        ocres=ocres,
+        habmod=habmod_oc$coef)
+    out
+}
+f_lorenz <- function(j, i, z)
+{
+    x <- DAT[BB[,j],]
+    y <- as.numeric(YY[BB[,j], i])
+    off <- if (i %in% colnames(OFF))
+        OFF[BB[,j], i] else OFFmean[BB[,j]]
+    HABV <- x[,z]
     ## Lorenz-tangent approach for core habitat delineation
     habmod <- glm_skeleton(try(glm(y ~ HABV + ROAD01,
         x,
-        family=poisson(), 
-        offset=off, 
+        family=poisson(),
+        offset=off,
         #weights=w,
         x=FALSE, y=FALSE, model=FALSE)))
     ## need to correct for linear effects
@@ -74,27 +93,36 @@ cut_1spec1run_noW <- function(j, i, z)
     XHSH[,"ROAD01"] <- 0 # not predicting edge effects
     ## some levels might be dropped (e.g. Marsh)
     XHSH <- XHSH[,names(habmod$coef)]
+
+    ## density based
     lam <- exp(drop(XHSH %*% habmod$coef))
     cv <- Lc_cut(lam, transform=FALSE) # $lam is threshold
     Freq <- table(hab=HABV, lc=ifelse(lam >= cv$lam, 1, 0))
     Prob <- Freq[,"1"] / rowSums(Freq)
-    ## missing/dropped levels are NaN=0/0
     Prob[is.na(Prob)] <- 0
-    Hi_lc <- names(Prob)[Prob > 0.5]
+    Hi <- names(Prob)[Prob > 0.5]
+
+    ## probability based
+    p <- 1-exp(-lam)
+    cv2 <- Lc_cut(lam, transform=FALSE) # $lam is threshold
+    Freq2 <- table(hab=HABV, lc=ifelse(p >= cv2$lam, 1, 0))
+    Prob2 <- Freq2[,"1"] / rowSums(Freq2)
+    Prob2[is.na(Prob2)] <- 0
+    Hi2 <- names(Prob2)[Prob2 > 0.5]
+
     ## final assembly
-    out <- list(species=i, iteration=j,
-        hi_oc=Hi_oc,
-        hi_lc=Hi_lc,
-        lc=cv,
-        ocres=ocres,
-        #nmax=nmax,
-        #w_id=w_id,
-        habmod_oc=habmod_oc$coef,
-        habmod_lc=habmod$coef)
+    out <- list(species=i, iteration=j, habmod=habmod$coef,
+        lam=list(
+            hi=Hi,
+            freq=Freq,
+            lc=cv),
+        p=list(
+            hi=Hi2,
+            freq=Freq2,
+            lc=cv2))
     out
 }
-level_1spec1run_noW <- function(j, i, z)
-{
+f_optilevels <- function(j, i, z) {
     x <- DAT[BB[,j],]
     y <- as.numeric(YY[BB[,j], i])
     off <- if (i %in% colnames(OFF))
@@ -102,7 +130,7 @@ level_1spec1run_noW <- function(j, i, z)
     require(opticut)
     Z <- model.matrix(~ ROAD01 - 1, x)
     Z[,1] <- Z[,1] - mean(Z[,1], na.rm=TRUE)
-    optilevel(y=y, x=x[,z], z=Z, dist="poisson",
+    optilevels(y=y, x=x[,z], z=Z, dist="poisson",
         offset=off)
 }
 
@@ -140,22 +168,38 @@ PROJECT <- if (TEST)
 
 #### checkpoint ####
 cat("OK\nsetting checkpoint...")
-SPP <- colnames(YY)
+SPP <- colnames(OFF)
 done_fl <- list.files(paste0("results/oc"))
 DONE <- substr(sapply(strsplit(done_fl, "_"), "[[", 3), 1, 4)
 SPP <- setdiff(SPP, DONE)
 if (TEST)
     SPP <- SPP[1:2]
 
+if (FALSE) {
+SPP1 <- "OVEN"
+system.time(m1 <- f_opticut(1, i=SPP1, z="hab1ec", dist="binomial")) # 49 sec
+gc()
+system.time(m2 <- f_opticut(1, i=SPP1, z="hab1ec", dist="poisson")) # 42 sec
+gc()
+system.time(m3 <- f_lorenz(1, i=SPP1, z="hab1ec")) # 5 sec
+gc()
+system.time(m4 <- f_optilevels(1, i=SPP1, z="hab1ec")) #  sec
+gc()
+}
+
 cat("OK\nstart running models:")
 for (SPP1 in SPP) {
     cat("\t", SPP1, date(), "...")
     if (interactive())
         flush.console()
-    res <- parLapply(cl, 1:BBB, cut_1spec1run_noW, i=SPP1, z="hab1ec")
+    m1 <- parLapply(cl, 1:BBB, f_opticut, i=SPP1, z="hab1ec", dist="binomial")
+    m2 <- parLapply(cl, 1:BBB, f_opticut, i=SPP1, z="hab1ec", dist="poisson")
+    m3 <- parLapply(cl, 1:BBB, f_lorenz, i=SPP1, z="hab1ec")
+    #m4 <- parLapply(cl, 1:BBB, f_optilevels, i=SPP1, z="hab1ec")
+    res <- list(opticut_binomial=m1, opticut_poisson=m2,
+        lorenz=m3)
+
     save(res, file=paste0("results/oc/birds_", PROJECT, "_", SPP1, ".Rdata"))
-#    res <- parLapply(cl, 1:BBB, level_1spec1run_noW, i=SPP1, z="hab1ec")
-#    save(res, file=paste0("results/ol/birds_", PROJECT, "_", SPP1, ".Rdata"))
     cat("OK\n")
 }
 
