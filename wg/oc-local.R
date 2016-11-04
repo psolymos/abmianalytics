@@ -201,6 +201,8 @@ for (i in 1:length(SPP)) {
     res <- list(opticut_binomial=m1, opticut_poisson=m2, lorenz=m3)
     all_res[[SPP1]] <- res
 }
+
+save(all_res, file="~/Dropbox/josm/2016/oc/oc-local-all-spp-2016-11-04.Rdata")
 }
 
 cat("OK\nstart running models:")
