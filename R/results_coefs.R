@@ -161,6 +161,27 @@ colnames(Xns) <- fixNames(colnames(Xns))
 stage_hab_n <- 5
 stage_hab_s <- 3
 
+## computing times
+
+t_n <- numeric(length(fln))
+names(t_n) <- fln
+for (spp in fln) {
+    cat(spp, "\n");flush.console()
+    resn <- loadSPP(file.path(ROOT, "results", "north", paste0("birds_abmi-north_", spp, ".Rdata")))
+    t_n[spp] <- attr(resn, "ncl") * abs(attr(resn, "timing")["elapsed"])
+}
+t_s <- numeric(length(fls))
+names(t_s) <- fls
+for (spp in fls) {
+    cat(spp, "\n");flush.console()
+    ress <- loadSPP(file.path(ROOT, "results", "south", paste0("birds_abmi-south_", spp, ".Rdata")))
+    t_s[spp] <- attr(ress, "ncl") * abs(attr(ress, "timing")["elapsed"])
+}
+summary(t_n)
+summary(t_s)
+((sum(c(t_n, t_s))/60)/60)/24 # 475.5 days
+
+
 
 ## spp specific output
 
