@@ -52,3 +52,26 @@ heatmap(t(bestpart(u1)), scale="none",
     distfun=function(x) dist(x, "manhattan"))
 ```
 
+
+```{r dates,echo=FALSE}
+dd <- matrix(x$ToY, nrow(xt), ncol(xt))
+dd[xt==0] <- NA
+dimnames(dd) <- dimnames(xt)
+dd <- dd[,order(apply(dd, 2, quantile, prob=0.5, na.rm=TRUE), decreasing=TRUE)]
+#aa <- summary(o1)$summary[colnames(dd),]
+aa <- summary(u1)$uctab[colnames(dd),]
+col <- c(occolors()(6), "#D3D3D3")
+split <- as.integer(aa$split)
+split[aa$R <= 0.5] <- max(split)+1
+```
+
+```{r toy_boxplot,fig.height=8,fig.width=6,echo=FALSE}
+op <- par(mar=c(4,8,3,3), las=1, cex.axis=0.5)
+boxplot(dd, outline=FALSE, lty=1, ann=FALSE, horizontal=TRUE,
+    ylim=c(70,220),
+    col=col[split], border=col[split])
+abline(v=c(140, 180), col=1, lty=2)
+legend("bottomleft", fill=col, border=col, cex=0.5, 
+    bty="n", legend=c(levels(aa$split), "Uncertain"))
+par(op)
+```
