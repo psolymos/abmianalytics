@@ -27,6 +27,11 @@ plot(o2,sort=1,mar=c(4,10,3,3),cut=2,ylab="",xlab="Time",
 
 ```{r species}
 table(Sora=ifelse(xt[,"Sora"] > 0, 1, 0), x$ToDc)
+f_tod <- function(i) {
+    tab <- table(Sora=ifelse(xt[,i] > 0, 1, 0), x$ToDc)
+    (tab[2,1]/tab[1,1]) / (tab[2,2]/tab[1,2])
+}
+or <- sapply(colnames(xt), f_tod)
 ```
 
 ## Season associations
