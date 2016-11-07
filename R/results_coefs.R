@@ -148,7 +148,7 @@ slt$singing <- sb$Singing_birds[match(rownames(slt), sb$Species_ID)]
 
 slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
 rownames(slt) <- slt$AOU
-slr$comments <- NULL
+slt$comments <- NULL
 
 ## terms and design matrices
 nTerms <- getTerms(modsn, "list")
@@ -181,7 +181,8 @@ summary(t_n)
 summary(t_s)
 ((sum(c(t_n, t_s))/60)/60)/24 # 475.5 days
 
-
+## EC2: 1.68 US / h, 19170.64
+1.68 * (sum(c(t_n, t_s))/60)/60
 
 ## spp specific output
 
