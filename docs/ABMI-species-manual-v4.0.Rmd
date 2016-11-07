@@ -22,7 +22,8 @@ with the results.
 
 ## Version
 
-This version of the manual describes results for version 4 of the species website.
+This version of the manual describes results for version 
+4.0 (2016-09-12) of the species website.
 
 ## License
 
@@ -30,13 +31,15 @@ This version of the manual describes results for version 4 of the species websit
 
 ## Rationale for presenting model results
 
-ABMI collects data on thousands of species, and evaluates how their relative abundance varies among natural and human-created habitats.  The raw data and model results are made available for public use on the ABMI website (http://species.abmi.ca).  However, some species are detected only a few times, other species are not well detected using the ABMI sampling method, and some models produce models that are not plausible. 
+ABMI collects data on thousands of species, and evaluates how their relative abundance varies among natural and human-created habitats.  The raw data and model results are made available for public use on the ABMI website (http://species.abmi.ca).  However, some species are detected only a few times, other species are not well detected using the ABMI sampling method, and some species produce models that are not plausible. 
 
 ####	Sample size
-ABMI conducts separate analysis for two regions: the Northern (Boreal, Canadian shield, Foothills and Rocky Mountain natural regions) that is vegetation-based and Southern (Grassland, Parkland and Dry Mixedwood regions) which is soil based. An important factor influencing model results is sample size. The vegetation-based models require on average 20 degrees of freedom (df) with habitat/age/climate terms in the models. The soil-based models require on average 10 df with soil/climate terms in the model. Accordingly, modelling is carried for all species, except birds, that occur in at least 20 sites in an analysis region. Since a great deal more information is available for birds, a species must have at least 100 detections in the Northern analysis region, and 50 detections in the Southern analysis region to be modelled.
+
+ABMI conducts separate analysis for two regions: the Northern (Boreal, Canadian shield, Foothills and Rocky Mountain natural regions) which is vegetation-based and Southern (Grassland, Parkland and Dry Mixedwood regions) which is soil based. The vegetation-based models require on average 20 degrees of freedom (df) with habitat/age/climate terms in the models. The soil-based models require on average 10 df with soil/climate terms in the model. Accordingly, modelling is carried out for all species, except birds, that occur in at least 20 sites in an analysis region. Since a great deal more information is available for birds, a species must have at least 100 detections in the Northern analysis region, and 50 detections in the Southern analysis region to be modelled.
 
 #### Sampling design adequacy and detection issue
-ABMI is designed to determine habitat association and track population trend for common species. The chosen sampling methods, however, do not capture all species effectively, especially those species that live in rare patchy habitats. 
+
+ABMI is designed to determine habitat association and track population trend for common species. The chosen sampling methods, however, do not capture all species effectively, including species that live in rare patchy habitats. 
 
 **Birds.** Point count methods are inadequate for monitoring the following groups of birds: waterfowl, shorebirds, raptors, owls, nightjars because: 
 
@@ -49,27 +52,25 @@ The taxonomic information for bird species as part of the downloadable material 
 
 **Vascular plants, bryophytes and lichens.** A number of species belonging to these taxa are inadequately sampled or detected, because:
 
-* Survey season is not optimized (too early/too late) to sample the species when their characteristic features (flowers, seeds) for field identification are available to distinguish them from similar species in the field. Problematic vascular plants are downgraded to genus or family level in the data, 
-* Survey protocol is not designed to sample them (e.g., crustose lichens),
-* Species is part of taxonomically complex groups or are subject to taxonomic split, which makes it difficult to distinguish them. This applies particularly for lichens and bryophytes, and a few vascular plants. These species are analysed at genus level or species group level.
+* Survey season is not optimized (too early/too late) to sample the species when their characteristic features (flowers, seeds) for field identification are available to distinguish them from similar species in the field. Problematic vascular plants are downgraded to genus or family level in the data, * Survey protocol is not designed to sample them (e.g., crustose lichens),
+* Species is part of taxonomically complex groups which makes it difficult to distinguish them. This applies particularly for lichens and bryophytes, and a few vascular plants. These species are analysed at genus level or species group level.
 
 #### Model output plausibility
+
 Once a species meets the minimum detection requirements, visual inspection of the model results is done to evaluate the plausibility of the output. Visual inspection includes:
 
 * Determining whether habitat associations are compatible with known biology of species,
-* Determining whether confidence intervals in habitat associations are extreme (relative to mean relative abundance),
+* Determining whether confidence intervals in habitat associations are extreme (relative to mean abundance),
 * Determining whether the predicted distribution of the species is compatible with the known spatial distribution of the species (range maps, detections).
 
-Once inspection is done, notes are added to the species lookup table and final decisions are made. This way the steps in the evaluation process are transparent and decisions can be re-evaluated if needed. These are incorporated into the species taxonomic information to make the process and any caveats transparent.
-
-
+Once inspection is done, notes are added to the species lookup table and final decisions are made. This way the steps in the evaluation process are transparent and decisions can be re-evaluated if needed. These are incorporated into the species taxonomic information table to make the process and any caveats transparent.
 
 
 # Habitat associations
 
 ## Full habitat models for relatively common species, systematic (non-wetland) sites
 
-Models were used to show how species, relative abundance differed among vegetation, soil and, human footprint types in the northern, and southern regions of Alberta. Models were only created for species that had at least enough detections using the data. The following figures are presented to describe habitat associations:
+Models are used to show how species, relative abundance differed among vegetation, soil and, human footprint types in the northern, and southern regions of Alberta. Models were only created for species that had enough detections. The following figures are presented to describe habitat associations:
 
 * **Species--habitat associations in northern Alberta.** Predicted species abundance in each vegetation and human footprint type is shown with bars. Vertical lines indicate 90\% confidence intervals. Dots within the forested habitat types show predicted species abundance in cutblocks of various ages.
 
