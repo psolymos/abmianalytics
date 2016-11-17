@@ -66,7 +66,7 @@ res$SPECIES_OLD <- res$SCIENTIFIC_NAME
 levels(res$SCIENTIFIC_NAME) <- nameAlnum(levels(res$SCIENTIFIC_NAME), capitalize="mixed", collapse="")
 res$SCIENTIFIC_NAME <- droplevels(res$SCIENTIFIC_NAME)
 
-xt <- Xtab(~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 
+xt <- Xtab(~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"),
     rdrop=qs.to.exclude, drop.unused.levels = FALSE)
 xt[xt>0] <- 1
 
@@ -74,7 +74,7 @@ if (com_dom) {
     res$comdom <- res$COMM_DOM
     levels(res$comdom)[!(levels(res$comdom) %in% c("Dominant", "Common"))] <- "Uncommon"
     table(res$comdom)
-    xt0 <- Xtab(~ Label + SCIENTIFIC_NAME + comdom, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 
+    xt0 <- Xtab(~ Label + SCIENTIFIC_NAME + comdom, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"),
         rdrop=pcs.to.exclude, drop.unused.levels = FALSE)
     xt1 <- xt0$Uncommon
     xt1[xt1>0] <- 1
@@ -87,7 +87,7 @@ if (com_dom) {
     xt[xt10>0] <- xt10[xt10>0]
     xt[xt100>0] <- xt100[xt100>0]
 }
-#xt <- Xtab(~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 
+#xt <- Xtab(~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"),
 #    subset = !(res$SCIENTIFIC_NAME %in% c("VNA", "DNC")), drop.unused.levels = TRUE)
 ## get taxonomy
 z <- nonDuplicated(res[!(res$SCIENTIFIC_NAME %in% c("VNA", "DNC")),],
@@ -104,8 +104,8 @@ levels(z$RANK_NAME)[levels(z$RANK_NAME) %in% c("Subspecies","Variety")] <- "Spec
 #    if (is.factor(z[[i]]))
 #        levels(z[[i]]) <- sub(' +$', '', levels(z[[i]]))
 
-x <- nonDuplicated(res[,c("Label", "Label2", "ROTATION", "SITE", "YEAR", "GSA_DATE", "GCL_NAMES", 
-    "SubType", "SubTypeID", "OnOffGrid", 
+x <- nonDuplicated(res[,c("Label", "Label2", "ROTATION", "SITE", "YEAR", "GSA_DATE", "GCL_NAMES",
+    "SubType", "SubTypeID", "OnOffGrid",
     "SiteLabel", "DataProvider", "Visit", "ClosestABMISite")], res$Label, TRUE)
 
 ## crosstab on PC level
@@ -153,7 +153,7 @@ if (!combine.tables) {
     rntw <- TRUE
 } else {
     res1 <- data.frame(samp(m), as.matrix(m))
-    mmm <- Mefa(xtab(m2), data.frame(nonDuplicated(samp(m)[,-which(colnames(samp(m))=="Label")], 
+    mmm <- Mefa(xtab(m2), data.frame(nonDuplicated(samp(m)[,-which(colnames(samp(m))=="Label")],
         Label2, TRUE)[rownames(m2),], samp(m2)))
     res2 <- data.frame(samp(mmm), as.matrix(mmm))
     rntw <- FALSE
@@ -199,23 +199,23 @@ if (check.completeness) {
 }
 
 ## write static files into csv
-write.csv(res1, file=paste(D, "/OUT_", T, "_Species_QU-PA", d, 
+write.csv(res1, file=paste(D, "/OUT_", T, "_Species_QU-PA", d,
     ifelse(com_dom, "_ComDom", ""), ".csv",sep=""), row.names = rntw)
-write.csv(res2, file=paste(D, "/OUT_", T, "_Species_Site-Binomial", d, 
+write.csv(res2, file=paste(D, "/OUT_", T, "_Species_Site-Binomial", d,
     ifelse(com_dom, "_ComDom", ""), ".csv",sep=""), row.names = rntw)
-write.csv(tax, file=paste(D, "/OUT_", T, "_Species_Taxa", d, 
+write.csv(tax, file=paste(D, "/OUT_", T, "_Species_Taxa", d,
     ifelse(com_dom, "_ComDom", ""), ".csv",sep=""), row.names = TRUE)
-#write.csv(rr, file=paste(D, "/OUT_", T, "_SampleInfo", d, 
+#write.csv(rr, file=paste(D, "/OUT_", T, "_SampleInfo", d,
 #    ifelse(com_dom, "_ComDom", ""), ".csv",sep=""))
 write.csv(data.frame(Excluded_Sites=sort(pcs.to.exclude)),
-    file=paste(D, "/OUT_", T, "_Excluded_Sites", d, 
+    file=paste(D, "/OUT_", T, "_Excluded_Sites", d,
     ifelse(com_dom, "_ComDom", ""), ".csv",sep=""), row.names = FALSE)
 
 
 if (do.prof)
     summaryRprof(proffile)
 if (do.image)
-    save.image(paste(D, "/OUT_", tolower(T), d, 
+    save.image(paste(D, "/OUT_", tolower(T), d,
         ifelse(com_dom, "_ComDom", ""), ".Rdata",sep=""))
 ## quit without saving workspace
 quit(save="no")

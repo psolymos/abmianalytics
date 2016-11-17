@@ -2,8 +2,13 @@
 title: 'Listening protocol revision for ARUs'
 author: "Peter Solymos"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
-output: pdf_document
+output: 
+  pdf_document:
+    fig_caption: no
+  word_document:
+    fig_caption: no
 ---
+
 
 ```{r setup,echo=FALSE,message=FALSE,results='hide'}
 #devtools::install_github("psolymos/opticut")
@@ -13,28 +18,73 @@ load("~/Dropbox/collaborations/opticut/R/abmi-aru-ocresults.Rdata")
 ocoptions(theme=c("#7b3294", "#ffffbf", "#008837"))
 ```
 
-## Time of day associations
+# Goal
+
+We have developed a *listening protocol* that describes what times/dates to pick for listening out of the available files from bird points and sites (~1000 files per ARU unit over the season). The protocol has been followed in selecting files to listen to from the 2015 and 2016 field data. The protocol that we came up with was based on ARU observations from the EMC project, thus was quite limited in terms of full-seasonal distribution across many sites because units were moved around a lot.
+
+![](c:/Users/Peter/Dropbox/abmi/aru/schedule1.png)
+
+With one year worth of ABMI's own data listened to based on the existing protocol, I looked at the transcribed results to see if listening effort can be re-allocated to better target some species, groups of species, or some times/dates are of no use in terms of new species detections.
+
+# Data
+
+I used all the ARU data frim 2015 (Northern Alberta).
+`r nlevels(x$SITE)` sites and `r nlevels(x$PKEY)` unique sampling events (sessions, 0--1 or 0--1--2--3 min duration recordings) have been transcribed
+(`r round(nlevels(x$PKEY)/nlevels(x$SITE),1)` files per site).
+I used the first 1-minute part of the 3-minutes sessions, and all the 1-minute sessions to standardize for sampling effort. I tabulated counts (number of individuals detected in 1-minute interval) of `r ncol(xt)` taxa by sampling events. 
+
+I used date and start time of each session to classify these into date and time categories.
+I differentiated the following time-of-day categories: `r levels(x$ToDc)`. 
+(Other times were not listened to according to the existing listining protocol.)
+Time-of-year was categorized into weeks using the following ordinal days as breaks:
+105, 120, 140, 150, 160, 170, 180.
+
+```{r class1,echo=FALSE}
+knitr::kable(table(cut(x$ToY, c(0, 105, 120, 140, 150, 160, 170, 180, 365)), x$ToDc))
+```
+
+Dates were further pooled into 3 main time-windows: Early (89--140), Mid (141--180), and Late (181--209), where the mid-season is defined by the range of existing May/June data from RiverForks and human observer based point counts:
+
+```{r class2,echo=FALSE}
+SsnLab <- c("Early", "Mid", "Late")
+x$Ssn <- factor(NA, SsnLab)
+x$Ssn[x$ToYc %in% 1:3] <- SsnLab[1]
+x$Ssn[x$ToYc %in% 4:7] <- SsnLab[2]
+x$Ssn[x$ToYc %in% 8] <- SsnLab[3]
+knitr::kable(table(x$Ssn, x$ToDc))
+```
+
+
+# Time of day associations
+
+I used the [**opticut**](https://github.com/psolymos/opticut) package to classify species according to their
+associations with dates and times using detections in a logistic regression. The method seeks to find the binary partition based that maximizes model fit in terms of information criteria. In case of the time-of-day model, there is only one possible binary partition because there are only 2 different classes, Midnight and Morning.
+Species can be associated to either or both of these classes. We use the *indicator value* (I) to describe the contrast between the 2 classes. Values close to 0 indicate weak differentiation between the Morning and Midnight samples.
+
+I used bootstrap to understand the uncertainty with respect to the indicator value (I) and the best supported model. This latter metric is the reliability (R), chat is the probability that the same model would be best supported if we were to replicate the surveys. High reliability indicates that the best model (called split in the tables, indicating positive association with that class) was very consistent across the 99 bootstrap samples.
+
+There were `r table(as.data.frame(u2)$split)[1]` species that associated more often to Midnight sampling, although some of these had really low reliability (e.g. Wilson's Snipe and Western Kingbird) that indicates no particular preference towards morning or midnight. The other species were the expected suspects (owls, bats, amphibians, waterfowl, rails).
+
+The other `r table(as.data.frame(u2)$split)[2]` species associated with Morning. A lot of these species had high indicator value and reliability. A few species had low reliability (e.g. Greater White-fronted Goose, American Bittern, Common Loon) which, again, do not differentiate between time-of-day that well as other species. Here is the list with all the species:
 
 ```{r tod_uncertainty,echo=FALSE}
 knitr::kable(as.data.frame(u2), digits=2)
 ```
 
+Here is a visual with similar information (but without bootstrap based reliability). The coloring refers to the indicator value. Hight I means more contrast (line width and color contrast).
+Species with not enough model support (log likelihood ratio < 2 compared to the null model of no association) were dropped.
 
 ```{r tod_plot,fig.height=8,fig.width=6,echo=FALSE}
 plot(o2,sort=1,mar=c(4,10,3,3),cut=2,ylab="",xlab="Time",
     show_I=TRUE, show_S=FALSE, cex.axis=0.6, lower=0.25)
 ```
 
-```{r species}
-table(Sora=ifelse(xt[,"Sora"] > 0, 1, 0), x$ToDc)
-f_tod <- function(i) {
-    tab <- table(Sora=ifelse(xt[,i] > 0, 1, 0), x$ToDc)
-    (tab[2,1]/tab[1,1]) / (tab[2,2]/tab[1,2])
-}
-or <- sapply(colnames(xt), f_tod)
-```
 
-## Season associations
+# Season associations
+
+With 3 classes for season, there are 6 different combinations for positive associations between season and taxa. Based on the same bootstrapping procedure as described above, I identified associations for the taxa.
+There were 34 early species. One early-late species, the Black-capped Chickadee, which being a resident seems less ominous in mid-season. There were 27 early-mid species, 51 mid species, and 39 mid-late species. There were only 5 late-season species all of which had low indicator and reliability scores. I incorporated proportions when early/mid/late season was part of the best supported partition (P.Early, P.Mid, P.Late).
+Red-breasted Nuthatch seemed to be mostly a late-season species, all other of the 5 species showed an early+late pattern indicating decreased vocal activity in mid season.
 
 
 ```{r toy_uncertainty,echo=FALSE}
@@ -44,12 +94,9 @@ bp <- bp[rownames(df),]
 knitr::kable(data.frame(df, P=bp), digits=2)
 ```
 
-
-```{r toy_plot,fig.height=8,fig.width=6,echo=FALSE}
-plot(o1,sort=1,mar=c(4,10,3,3),cut=2,ylab="",xlab="Season",
-    show_I=TRUE, show_S=FALSE, cex.axis=0.6, lower=0.25)
-```
-
+The following heatmap summarizes the similarity across species and sub-seasons.
+The graph uses the proportions (P.Early, P.Mid, P.Late).
+Late and mid season communities were more similar, and species formed and early and a mid+late group:
 
 ```{r toy_hmap,fig.height=16,fig.width=10,echo=FALSE}
 heatmap(t(bestpart(u1)), scale="none", 
@@ -57,6 +104,15 @@ heatmap(t(bestpart(u1)), scale="none",
     distfun=function(x) dist(x, "manhattan"))
 ```
 
+
+The next figure is visualization for seasonality without bootstrap results, dropping non significant associations. The only late-season species is Boreal Chickadee with a low indicator value (I=0.37):
+
+```{r toy_plot,fig.height=8,fig.width=6,echo=FALSE}
+plot(o1,sort=1,mar=c(4,10,3,3),cut=2,ylab="",xlab="Season",
+    show_I=TRUE, show_S=FALSE, cex.axis=0.6, lower=0.25)
+```
+
+In the last graph I am showing the quantiles of the detection days for each species, colored according the the groups they belong to based on optimal partitioning analysis. This shows a true gradation across the species:
 
 ```{r dates,echo=FALSE}
 dd <- matrix(x$ToY, nrow(xt), ncol(xt))
@@ -80,3 +136,47 @@ legend("bottomleft", fill=col, border=col, cex=0.5,
     bty="n", legend=c(levels(aa$split), "Uncertain"))
 par(op)
 ```
+
+# Detection ratios
+
+I fit a GAM model to the number of detections per minute (sum across all species and individuals).
+Based on this summary, there were 5x more individuals detected during a 1-minute morning session than in a 1-minute midnight session. I used a spline for date for morning and midnight sessions separately. Detection rate increased steadily till day 145 and started decreasing after day 170 for the morning sessions. Midnight detections showes an earlier peak around day 130 and stayed similarly high till day 160, so nocturnal species seem to start activity earlier. Results for number of taxa detected were very similar due to the high (0.96) correlation. 
+
+```{r det_ratio,echo=FALSE,warning=FALSE}
+library(mgcv)
+x$nd <- rowSums(xt)
+x$ns <- rowSums(xt>0)
+#ndm <- mgcv::gam(ns ~ ToDc + s(ToY), data=x, family=poisson)
+ndm1 <- mgcv::gam(ns ~ s(ToY), data=x[x$ToDc=="Midnight",], family=poisson)
+ndm2 <- mgcv::gam(ns ~ s(ToY), data=x[x$ToDc=="Morning",], family=poisson)
+#summary(ndm)
+```
+
+```{r gam_plot,echo=FALSE}
+#plot(ndm1,shade=TRUE,shade.col=occolors()(6)[4],rug=FALSE, main="Midnight")
+#abline(v=c(130,170), col=occolors()(6)[6])
+#plot(ndm2,shade=TRUE,shade.col=occolors()(6)[4],rug=FALSE, main="Morning")
+#abline(v=c(140,170), col=occolors()(6)[6])
+zzz <- cbind(x[x$ToDc=="Morning","ToY"], fitted(ndm2))
+zzz <- zzz[order(zzz[,1]),]
+plot(zzz, type="l", col=occolors()(6)[1], lwd=2, ylim=c(0, max(zzz[,2])),
+     xlab="Time-of-year (ordinal days)", ylab="# of detections / min")
+zzz <- cbind(x[x$ToDc=="Midnight","ToY"], fitted(ndm1))
+zzz <- zzz[order(zzz[,1]),]
+lines(zzz, col=occolors()(6)[6], lwd=2)
+abline(v=c(140,180), col="grey")
+legend("topleft", col=occolors()(6)[c(1,6)], lty=1, lwd=2, bty="n", legend=c("Morning", "Midnight"))
+```
+
+# Recommendations for listening protocol
+
+Main conclusions:
+
+1. The current level of Mignight sampling seems adequate for detecting nocturnal species to expand the species list in ABMI data.
+2. The early season samples are characterized by a distinct community of vocalizing taxa compared to the middle and late season. The latter two are very similar. Because detection rates start to decline later in the season, and because there are no distinct species detected in the late season (i.e. which are not detecable earlier).
+3. Midnight detection rate is 1/5th of the morning detection rate, and peak activity is 1--2 weeks earlier.
+
+Based on these observations, I suggest that the late season listeing (2 x 1min) to be re-scheduled for the midnight sessions around peak activity, as shown below:
+
+![](c:/Users/Peter/Dropbox/abmi/aru/schedule2.png)
+
