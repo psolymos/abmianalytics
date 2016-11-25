@@ -55,6 +55,8 @@ v5[[2]] <- v5[[2]] / ifelse(rowSums(v5[[2]])==0, 1, rowSums(v5[[2]]))
 v6[[1]] <- v6[[1]] / ifelse(rowSums(v6[[1]])==0, 1, rowSums(v6[[1]]))
 v6[[2]] <- v6[[2]] / ifelse(rowSums(v6[[2]])==0, 1, rowSums(v6[[2]]))
 
+## NSR level comparison
+
 cr5 <- groupSums(v5[[1]], 2, xt$v5[match(colnames(v5[[1]]), xt$v5)])
 rf5 <- groupSums(v5[[2]], 2, xt$v5[match(colnames(v5[[2]]), xt$v5)])
 
@@ -143,3 +145,239 @@ dev.off()
 ## only v6
 crS <- rowSums(v6[[1]][,setdiff(colnames(v6[[1]]), colnames(v5[[1]]))]) / ifelse(rowSums(v6[[1]])==0, 1, rowSums(v6[[1]]))
 
+## maps
+
+cex <- 0.25
+legcex <- 1.5
+C1 <- colorRampPalette(c("#edf8e9","#bae4b3","#74c476","#31a354","#006d2c"))(101)
+C2 <- colorRampPalette(c("#d7191c","#fdae61","#ffffbf","#abd9e9","#2c7bb6"))(101)
+CW <- rgb(0.4,0.3,0.8) # water
+CE <- "lightcyan4" # exclude
+library(raster)
+library(sp)
+library(rgdal)
+city <-data.frame(x = -c(114,113,112,111,117,118)-c(5,30,49,23,8,48)/60,
+    y = c(51,53,49,56,58,55)+c(3,33,42,44,31,10)/60)
+rownames(city) <- c("Calgary","Edmonton","Lethbridge","Fort McMurray",
+    "High Level","Grande Prairie")
+coordinates(city) <- ~ x + y
+proj4string(city) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+city <- spTransform(city, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))
+city <- as.data.frame(city)
+
+cr5 <- groupSums(v5[[1]], 2, xt$v5[match(colnames(v5[[1]]), xt$v5)])
+rf5 <- groupSums(v5[[2]], 2, xt$v5[match(colnames(v5[[2]]), xt$v5)])
+
+cr6 <- groupSums(v6[[1]], 2, xt$v5[match(colnames(v6[[1]]), xt$v6)])
+rf6 <- groupSums(v6[[2]], 2, xt$v5[match(colnames(v6[[2]]), xt$v6)])
+
+cr5 <- cr5[,colnames(cr6)]
+rf5 <- rf5[,colnames(rf6)]
+
+z <- colnames(cr5)
+z1 <- ifelse(substr(z, nchar(z),nchar(z)) %in% c("R",0:9), substr(z, 1,nchar(z)-1), z)
+z <- colnames(rf5)
+z2 <- ifelse(substr(z, nchar(z),nchar(z)) %in% c("R",0:9), substr(z, 1,nchar(z)-1), z)
+
+cr5 <- groupSums(cr5, 2, z1)
+cr6 <- groupSums(cr6, 2, z1)
+rf5 <- groupSums(rf5, 2, z2)
+rf6 <- groupSums(rf6, 2, z2)
+
+for (i in 1:ncol(rf6)) {
+
+j <- colnames(rf6)[i]
+cat(j, "\n");flush.console()
+png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6/maps/v5v6_", j, ".png"),
+    width=3*600, height=1000)
+op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,3))
+
+MAX <- max(rf5[,j], rf6[,j])
+
+iii <- as.integer(pmin(101, round(100*rf5[,j]/MAX)+1))
+plot(kgrid$X, kgrid$Y, col=C1[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+mtext(side=3,paste(j, "v5 reference"),col="grey30", cex=legcex)
+points(city, pch=18, cex=cex*2)
+text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+for (ii in 1:101) {
+    jj <- ii * abs(diff(c(5450000, 5700000)))/100
+    segments(190000, 5450000+jj, 220000, 5450000+jj, col=C1[ii], lwd=2, lend=2)
+}
+text(240000, 5450000, "0%")
+text(240000, 5700000, paste0(round(MAX*100),"%"))
+
+iii <- as.integer(pmin(101, round(100*rf6[,j]/MAX)+1))
+plot(kgrid$X, kgrid$Y, col=C1[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+mtext(side=3,paste(j, "v6 reference"),col="grey30", cex=legcex)
+points(city, pch=18, cex=cex*2)
+text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+for (ii in 1:101) {
+    jj <- ii * abs(diff(c(5450000, 5700000)))/100
+    segments(190000, 5450000+jj, 220000, 5450000+jj, col=C1[ii], lwd=2, lend=2)
+}
+text(240000, 5450000, "0%")
+text(240000, 5700000, paste0(round(MAX*100),"%"))
+
+iii <- as.integer(pmin(101, round(50+50*(rf6[,j]-rf5[,j]))+1))
+plot(kgrid$X, kgrid$Y, col=C2[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+mtext(side=3,paste(j, "v6-v5 reference"),col="grey30", cex=legcex)
+points(city, pch=18, cex=cex*2)
+text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+for (ii in 1:101) {
+    jj <- ii * abs(diff(c(5450000, 5700000)))/100
+    segments(190000, 5450000+jj, 220000, 5450000+jj, col=C2[ii], lwd=2, lend=2)
+}
+text(240000, 5450000, "+100%")
+text(240000, 0.5*(5450000 + 5700000), "0%")
+text(240000, 5700000, "-100%")
+
+par(op)
+dev.off()
+}
+
+## v5 only
+
+cr5 <- v5[[1]]
+rf5 <- v5[[2]]
+z <- colnames(cr5)
+z1 <- ifelse(substr(z, nchar(z),nchar(z)) %in% c("R",0:9), substr(z, 1,nchar(z)-1), z)
+z <- colnames(rf5)
+z2 <- ifelse(substr(z, nchar(z),nchar(z)) %in% c("R",0:9), substr(z, 1,nchar(z)-1), z)
+cr5 <- groupSums(cr5, 2, z1)
+rf5 <- groupSums(rf5, 2, z2)
+
+
+for (i in 1:ncol(cr5)) {
+
+j <- colnames(cr5)[i]
+cat(j, "\n");flush.console()
+png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6/maps/v5_", j, ".png"),
+    width=3*600, height=1000)
+op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,3))
+
+MAX <- if (j %in% colnames(rf5))
+    max(cr5[,j], rf5[,j]) else max(cr5[,j])
+
+iii <- as.integer(pmin(101, round(100*cr5[,j]/MAX)+1))
+plot(kgrid$X, kgrid$Y, col=C1[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+mtext(side=3,paste(j, "v5 current"),col="grey30", cex=legcex)
+points(city, pch=18, cex=cex*2)
+text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+for (ii in 1:101) {
+    jj <- ii * abs(diff(c(5450000, 5700000)))/100
+    segments(190000, 5450000+jj, 220000, 5450000+jj, col=C1[ii], lwd=2, lend=2)
+}
+text(240000, 5450000, "0%")
+text(240000, 5700000, paste0(round(MAX*100),"%"))
+
+if (j %in% colnames(rf5)) {
+    iii <- as.integer(pmin(101, round(100*rf5[,j]/MAX)+1))
+    plot(kgrid$X, kgrid$Y, col=C1[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,paste(j, "v5 reference"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    for (ii in 1:101) {
+        jj <- ii * abs(diff(c(5450000, 5700000)))/100
+        segments(190000, 5450000+jj, 220000, 5450000+jj, col=C1[ii], lwd=2, lend=2)
+    }
+    text(240000, 5450000, "0%")
+    text(240000, 5700000, paste0(round(MAX*100),"%"))
+
+    iii <- as.integer(pmin(101, round(50+50*(cr5[,j]-rf5[,j]))+1))
+    plot(kgrid$X, kgrid$Y, col=C2[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,paste(j, "current-reference"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    for (ii in 1:101) {
+        jj <- ii * abs(diff(c(5450000, 5700000)))/100
+        segments(190000, 5450000+jj, 220000, 5450000+jj, col=C2[ii], lwd=2, lend=2)
+    }
+    text(240000, 5450000, "+100%")
+    text(240000, 0.5*(5450000 + 5700000), "0%")
+    text(240000, 5700000, "-100%")
+
+} else {
+    plot.new()
+    plot.new()
+}
+par(op)
+dev.off()
+}
+
+## v6 only
+
+cr6 <- v6[[1]]
+rf6 <- v6[[2]]
+z <- colnames(cr6)
+z1 <- ifelse(substr(z, nchar(z),nchar(z)) %in% c("R",0:9), substr(z, 1,nchar(z)-1), z)
+z <- colnames(rf6)
+z2 <- ifelse(substr(z, nchar(z),nchar(z)) %in% c("R",0:9), substr(z, 1,nchar(z)-1), z)
+cr6 <- groupSums(cr6, 2, z1)
+rf6 <- groupSums(rf6, 2, z2)
+
+
+for (i in 1:ncol(cr6)) {
+
+j <- colnames(cr6)[i]
+cat(j, "\n");flush.console()
+png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6/maps/v6_", j, ".png"),
+    width=3*600, height=1000)
+op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,3))
+
+MAX <- if (j %in% colnames(rf6))
+    max(cr6[,j], rf6[,j]) else max(cr6[,j])
+
+iii <- as.integer(pmin(101, round(100*cr6[,j]/MAX)+1))
+plot(kgrid$X, kgrid$Y, col=C1[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+mtext(side=3,paste(j, "v6 current"),col="grey30", cex=legcex)
+points(city, pch=18, cex=cex*2)
+text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+for (ii in 1:101) {
+    jj <- ii * abs(diff(c(5450000, 5700000)))/100
+    segments(190000, 5450000+jj, 220000, 5450000+jj, col=C1[ii], lwd=2, lend=2)
+}
+text(240000, 5450000, "0%")
+text(240000, 5700000, paste0(round(MAX*100),"%"))
+
+if (j %in% colnames(rf6)) {
+    iii <- as.integer(pmin(101, round(100*rf6[,j]/MAX)+1))
+    plot(kgrid$X, kgrid$Y, col=C1[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,paste(j, "v6 reference"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    for (ii in 1:101) {
+        jj <- ii * abs(diff(c(5450000, 5700000)))/100
+        segments(190000, 5450000+jj, 220000, 5450000+jj, col=C1[ii], lwd=2, lend=2)
+    }
+    text(240000, 5450000, "0%")
+    text(240000, 5700000, paste0(round(MAX*100),"%"))
+
+    iii <- as.integer(pmin(101, round(50+50*(cr6[,j]-rf6[,j]))+1))
+    plot(kgrid$X, kgrid$Y, col=C2[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,paste(j, "current-reference"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    for (ii in 1:101) {
+        jj <- ii * abs(diff(c(5450000, 5700000)))/100
+        segments(190000, 5450000+jj, 220000, 5450000+jj, col=C2[ii], lwd=2, lend=2)
+    }
+    text(240000, 5450000, "+100%")
+    text(240000, 0.5*(5450000 + 5700000), "0%")
+    text(240000, 5700000, "-100%")
+
+} else {
+    plot.new()
+    plot.new()
+}
+par(op)
+dev.off()
+}
