@@ -844,3 +844,152 @@ function(pr, LAB)
         soft=unname(p.softlin10),
         hard=unname(p.hardlin10)))
 }
+
+## Mean,median,min,max of the **median** !!!
+combine_spp_coefs <- function(res_coef, gspp) {
+    rescale <- function(x) {
+        x / mean(x)
+    }
+    out <- res_coef[[gspp[1]]]
+    ## veg
+    gsppN <- gspp[sapply(res_coef[gspp], function(z) !is.null(z$veg))]
+    out$veg[,"Mean"] <- rowMeans(sapply(res_coef[gsppN], function(z)
+        rescale(z$veg[,"Median"])))
+    out$veg[,"Median"] <- apply(sapply(res_coef[gsppN], function(z)
+        rescale(z$veg[,"Median"])), 1, median)
+    out$veg[,"CL1q"] <- apply(sapply(res_coef[gsppN], function(z)
+        rescale(z$veg[,"Median"])), 1, min)
+    out$veg[,"CL2q"] <- apply(sapply(res_coef[gsppN], function(z)
+        rescale(z$veg[,"Median"])), 1, max)
+    ## lin N
+    linN <- sapply(res_coef[gsppN], function(z) attr(z$veg, "linear"))
+    linN[,1] <- 1
+    attr(out$veg, "linear") <- rowMeans(linN)
+    attr(out$veg, "linear_guild") <- cbind(Mean=rowMeans(linN),
+        Median=apply(linN, 1, median),
+        Min=apply(linN, 1, min),
+        Max=apply(linN, 1, max))
+    ## soil:treed
+    gsppS <- gspp[sapply(res_coef[gspp], function(z) !is.null(z$soil))]
+    out$soil$treed[,"Mean"] <- rowMeans(sapply(res_coef[gsppS], function(z)
+        rescale(z$soil$treed[,"Median"])))
+    out$soil$treed[,"Median"] <- apply(sapply(res_coef[gsppS], function(z)
+        rescale(z$soil$treed[,"Median"])), 1, median)
+    out$soil$treed[,"CL1q"] <- apply(sapply(res_coef[gsppS], function(z)
+        rescale(z$soil$treed[,"Median"])), 1, min)
+    out$soil$treed[,"CL2q"] <- apply(sapply(res_coef[gsppS], function(z)
+        rescale(z$soil$treed[,"Median"])), 1, max)
+    ## soil:nontreed
+    out$soil$nontreed[,"Mean"] <- rowMeans(sapply(res_coef[gsppS], function(z)
+        rescale(z$soil$nontreed[,"Median"])))
+    out$soil$nontreed[,"Median"] <- apply(sapply(res_coef[gsppS], function(z)
+        rescale(z$soil$nontreed[,"Median"])), 1, median)
+    out$soil$nontreed[,"CL1q"] <- apply(sapply(res_coef[gsppS], function(z)
+        rescale(z$soil$nontreed[,"Median"])), 1, min)
+    out$soil$nontreed[,"CL2q"] <- apply(sapply(res_coef[gsppS], function(z)
+        rescale(z$soil$nontreed[,"Median"])), 1, max)
+    ## lin S
+    linS <- sapply(res_coef[gsppS], function(z) z$soil$linear)
+    linS[,1] <- 1
+    out$soil$linear <- rowMeans(linS)
+    out$soil$linear_guild <- cbind(Mean=rowMeans(linN),
+        Median=apply(linN, 1, median),
+        Min=apply(linN, 1, min),
+        Max=apply(linN, 1, max))
+    ## max
+    out$max[1] <- fig_veghf_ymax(out$veg)
+    out$max[2] <- max(fig_soilhf_ymax(out$soil$treed), fig_soilhf_ymax(out$soil$nontreed))
+    out$species <- list(all=gspp, north=gsppN, south=gsppS)
+    out
+}
+
+combine_spp_seff <- function(seff_res, gspp) {
+    out <- seff_res[[gspp[1]]]
+    gsppN <- gspp[sapply(seff_res[gspp], function(z) !is.null(z$N))]
+    gsppS <- gspp[sapply(seff_res[gspp], function(z) !is.null(z$S))]
+
+    out$N[] <- rowMeans(sapply(seff_res[gsppN], function(z) z$N))
+    out$Nmin[] <- apply(sapply(seff_res[gsppN], function(z) z$N), 1, min)
+    out$Nmax[] <- apply(sapply(seff_res[gsppN], function(z) z$N), 1, max)
+    out$S[] <- rowMeans(sapply(seff_res[gsppS], function(z) z$S))
+    out$Smin[] <- apply(sapply(seff_res[gsppS], function(z) z$S), 1, min)
+    out$Smax[] <- apply(sapply(seff_res[gsppS], function(z) z$S), 1, max)
+
+    out
+}
+
+plot_seff <- function(SEFF, NAM="", TAG="", WHERE="north") {
+    SEFF <- if (WHERE=="north")
+        SEFF$N else SEFF$S
+    ## Sector effect plot from Dave
+    ## Sectors to plot and their order
+    sectors <- c("Agriculture","Forestry",
+        "Energy",#"EnergySoftLin","MineWell",
+        "RuralUrban","Transportation")
+    ## Names that will fit without overlap
+    sector.names <- c("Agriculture","Forestry",
+        "Energy",#"EnergySL","EnergyEX",
+        "RuralUrban","Transport")
+    ## The colours for each sector above
+    c1 <- c("tan3","palegreen4","indianred3",#"hotpink4",
+        "skyblue3","slateblue2")
+    total.effect <- 100 * SEFF[sectors,"dN"]
+    unit.effect <- 100 * SEFF[sectors,"U"]
+    ## Max y-axis at 20%, 50% or 100% increments
+    ## (made to be symmetrical with y-min, except if y-max is >100
+    ymax <- ifelse(max(abs(unit.effect))<20,20,
+        ifelse(max(abs(unit.effect))<50,50,round(max(abs(unit.effect))+50,-2)))
+    ymin <- ifelse(ymax>50,min(-100,round(min(unit.effect)-50,-2)),-ymax)
+    ## This is to leave enough space at the top of bars for the text giving the % population change
+    ymax <- max(ymax,max(unit.effect)+0.08*(max(unit.effect)-min(unit.effect,0)))
+    ## This is to leave enough space at the bottom of negative bars for the
+    ## text giving the % population change
+    ymin <- min(ymin,min(unit.effect)-0.08*(max(unit.effect,0)-min(unit.effect)))
+
+    q <- barplot(unit.effect,
+        width=100 * SEFF[sectors,"dA"],
+        space=0,col=c1,border=c1,ylim=c(ymin,ymax),
+        ylab="Unit effect (%)",xlab="Area (% of region)",
+        xaxt="n",cex.lab=1.3,cex.axis=1.2,tcl=0.3,
+        xlim=c(0,round(sum(100 * SEFF[,"dA"])+1,0)),
+        bty="n",col.axis="grey40",col.lab="grey40",las=2)
+
+    rect(par("usr")[1],par("usr")[3],par("usr")[2],par("usr")[4],col = "gray88",border="gray88")
+    x.at<-pretty(c(0,sum(100 * SEFF[,"dA"])))
+    axis(side=1,tck=1,at=x.at,lab=rep("",length(x.at)),col="grey95")
+    y.at<-pretty(c(ymin,ymax),n=6)
+    axis(side=2,tck=1,at=y.at,lab=rep("",length(y.at)),col="grey95")
+    q <- barplot(unit.effect,
+        width=100 * SEFF[sectors,"dA"],
+        space=0,col=c1,border=c1,ylim=c(ymin,ymax),
+        ylab="Unit effect (%)",xlab="Area (% of region)",
+        xaxt="n",cex.lab=1.3,cex.axis=1.2,tcl=0.3,
+        xlim=c(0,round(sum(100 * SEFF[,"dA"])+1,0)),
+        bty="n",col.axis="grey40",col.lab="grey40",las=2,add=TRUE)
+    box(bty="l",col="grey40")
+    mtext(side=1,line=2,at=x.at,x.at,col="grey40",cex=1.2)
+    axis(side=1,at=x.at,tcl=0.3,lab=rep("",length(x.at)),col="grey40",
+        col.axis="grey40",cex.axis=1.2,las=1)
+    abline(h=0,lwd=2,col="grey40")
+    ## Set the lines so that nearby labels don't overlap
+    mtext(side=1,at=q+c(0,0,-1,0,+1),sector.names,col=c1,cex=1.3,
+        adj=0.5,line=c(0.1,0.1,1.1,0.1,1.1))
+    ## Just above positive bars, just below negative ones
+    y <- unit.effect+0.025*(ymax-ymin)*sign(unit.effect)
+    ## Make sure there is no y-axis overlap in % change labels of
+    ## sectors that are close together on x-axis
+    if (abs(y[3]-y[4])<0.05*(ymax-ymin))
+        y[3:4]<-mean(y[3:4])+(c(-0.015,0.015)*(ymax-ymin))[rank(y[3:4])]
+    ## Make sure there is no y-axis overlap in % change labels of sectors
+    ## that are close together on x-axis
+    if (abs(y[4]-y[5])<0.05*(ymax-ymin))
+        y[4:5]<-mean(y[4:5])+(c(-0.015,0.015)*(ymax-ymin))[rank(y[4:5])]
+    #if (abs(y[5]-y[6])<0.05*(ymax-ymin))
+    #    y[5:6]<-mean(y[5:6])+(c(-0.015,0.015)*(ymax-ymin))[rank(y[5:6])]
+    text(q,y,paste(ifelse(total.effect>0,"+",""),
+        sprintf("%.1f",total.effect),"%",sep=""),col="darkblue",cex=1.4)
+    mtext(side=3,line=1,at=0,adj=0,
+        paste0(NAM, " - ", ifelse(WHERE=="north", "North", "South")),
+        cex=1.4,col="grey40")
+    invisible()
+}

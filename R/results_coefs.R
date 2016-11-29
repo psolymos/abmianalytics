@@ -227,6 +227,7 @@ for (spp in rownames(tax)) {
         res_coef[[spp]]$max[2] <- max(fig_soilhf_ymax(tmp2$treed), fig_soilhf_ymax(tmp2$nontreed))
     }
 }
+save(res_coef, file=file.path(ROOT, "tables", "res_coef.Rdata"))
 
 ## plots for N & S
 lin_n <- lin_s <- list()
