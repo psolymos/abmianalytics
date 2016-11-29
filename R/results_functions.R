@@ -909,18 +909,18 @@ combine_spp_seff <- function(seff_res, gspp) {
     gsppS <- gspp[sapply(seff_res[gspp], function(z) !is.null(z$S))]
 
     out$N[] <- rowMeans(sapply(seff_res[gsppN], function(z) z$N))
+    out$Nmin <- out$Nmax <- out$N
     out$Nmin[] <- apply(sapply(seff_res[gsppN], function(z) z$N), 1, min)
     out$Nmax[] <- apply(sapply(seff_res[gsppN], function(z) z$N), 1, max)
     out$S[] <- rowMeans(sapply(seff_res[gsppS], function(z) z$S))
+    out$Smin <- out$Smax <- out$S
     out$Smin[] <- apply(sapply(seff_res[gsppS], function(z) z$S), 1, min)
     out$Smax[] <- apply(sapply(seff_res[gsppS], function(z) z$S), 1, max)
 
     out
 }
 
-plot_seff <- function(SEFF, NAM="", TAG="", WHERE="north") {
-    SEFF <- if (WHERE=="north")
-        SEFF$N else SEFF$S
+plot_seff <- function(SEFF, NAM="", TAG="", WHERE="North", CL1=NULL, CL2=NULL) {
     ## Sector effect plot from Dave
     ## Sectors to plot and their order
     sectors <- c("Agriculture","Forestry",
@@ -933,6 +933,9 @@ plot_seff <- function(SEFF, NAM="", TAG="", WHERE="north") {
     ## The colours for each sector above
     c1 <- c("tan3","palegreen4","indianred3",#"hotpink4",
         "skyblue3","slateblue2")
+    ## colours for CI
+    c2 <- sapply(c1, function(z) colorRampPalette(c(z, "black"))(5)[2])
+
     total.effect <- 100 * SEFF[sectors,"dN"]
     unit.effect <- 100 * SEFF[sectors,"U"]
     ## Max y-axis at 20%, 50% or 100% increments
@@ -966,6 +969,9 @@ plot_seff <- function(SEFF, NAM="", TAG="", WHERE="north") {
         xaxt="n",cex.lab=1.3,cex.axis=1.2,tcl=0.3,
         xlim=c(0,round(sum(100 * SEFF[,"dA"])+1,0)),
         bty="n",col.axis="grey40",col.lab="grey40",las=2,add=TRUE)
+    if (!is.null(CL1) & !is.null(CL2)) {
+        segments(q, 100*CL1[sectors,"U"], q, 100*CL2[sectors,"U"], col=c2, lwd=3)
+    }
     box(bty="l",col="grey40")
     mtext(side=1,line=2,at=x.at,x.at,col="grey40",cex=1.2)
     axis(side=1,at=x.at,tcl=0.3,lab=rep("",length(x.at)),col="grey40",
@@ -989,7 +995,7 @@ plot_seff <- function(SEFF, NAM="", TAG="", WHERE="north") {
     text(q,y,paste(ifelse(total.effect>0,"+",""),
         sprintf("%.1f",total.effect),"%",sep=""),col="darkblue",cex=1.4)
     mtext(side=3,line=1,at=0,adj=0,
-        paste0(NAM, " - ", ifelse(WHERE=="north", "North", "South")),
+        paste0(NAM, " - ", WHERE),
         cex=1.4,col="grey40")
     invisible()
 }

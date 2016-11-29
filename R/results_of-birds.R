@@ -93,10 +93,24 @@ load(file.path(ROOT, "tables", "sector-effects.Rdata"))
 
 gseff <- combine_spp_seff(seff_res, gspp)
 
+fname <- file.path(ROOT, "guilds", gname,
+    paste0(gname, "-sector-north.png"))
+png(fname, width=600, height=600)
+plot_seff(gseff$N, NAM=NAM, TAG="", WHERE="North", CL1=gseff$Nmin, CL2=gseff$Nmax)
+dev.off()
 
+fname <- file.path(ROOT, "guilds", gname,
+    paste0(gname, "-sector-south.png"))
+png(fname, width=600, height=600)
+plot_seff(gseff$S, NAM=NAM, TAG="", WHERE="North", CL1=gseff$Smin, CL2=gseff$Smax)
+dev.off()
 
-    png(file.path(ROOT, "out", "birds", "figs", paste0("sector-", WHERE),
-        paste0(as.character(tax[spp, "Spp"]), TAG, ".png")),
-        width=600, height=600)
-    dev.off()
+## det map
 
+## richness map
+
+## intactness A map
+
+## intactness B map
+
+## total abund (cr, rf, df)
