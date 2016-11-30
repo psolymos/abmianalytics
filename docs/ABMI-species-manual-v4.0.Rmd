@@ -1,7 +1,7 @@
 ---
 title: 'ABMI Species Website Manual'
 author: "ABMI Science Team"
-date: "November 8, 2016"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
   pdf_document:
     toc: true
@@ -25,6 +25,13 @@ with the results.
 
 This version of the manual describes results for version 
 4.0 (2016-09-12) of the species website.
+
+## Suggested citation
+
+Alberta Biodiversity Monitoring Institute. 2016.
+ABMI Species Website Manual (`r format(Sys.time(), '%B %d, %Y')`).
+Alberta Biodiversity Monitoring Institute, Alberta, Canada.
+URL: [http://species.abmi.ca](http://species.abmi.ca).
 
 ## License
 
@@ -103,7 +110,7 @@ The analysis is conducted in a 'model selection framework', which means that the
 
 This habitat modeling requires moderate sample sizes, so we can only do the analyses for species found in at least 20 sites in an analysis region (25 sites for birds; 50 transect segments for mammals).
 
-Full details of the habitat modeling can be found in the [ABMI Species Modeling Protocol](http://abmi.ca/home/publications/401-450/438.html?mode=detail).
+Full details of the habitat modeling can be found in the ABMI Species Modeling Protocol[1].
 
 ### Limitations
 
@@ -123,11 +130,14 @@ For mammals, ABMI is switching to camera-based indices, but these are not availa
 
 **There are errors in species identification.** All taxa have potential for errors in species identification, including the mammal track surveys and the bird recording interpretation. Taxonomic issues are common with the plants, bryophytes, and lichens, where many species groups are difficult to distinguish and taxonomy changes frequently. This adds to uncertainty in models for some species.
 
-**The vegetation and soil classification is simplified and contains errors.** [ABMI's vegetation map](http://species.abmi.ca/pages/geospatial/vegetation-detailed.html) is compiled from various sources, not all of which cover the entire province. Some layers are less accurate than others. Also, even if individual polygons are accurate, their boundaries may not be precise, and many ABMI sites fall on the edges of vegetation polygons. Resulting error in the vegetation types at sites increases error in the habitat models. Some habitat types may have additional challenges. Grass and shrub sites in the North, for example, may be true permanent open habitats, but the same designation is often given to early seral stages of forested sites after fire. Grass and shrub sites in the prairies are also poorly mapped. Mixedwood stands are also poorly mapped, because they represent a gradient between deciduous and upland conifer stands, which can often change as a stand ages.
+**The vegetation and soil classification is simplified and contains errors.** ABMI's vegetation map[2] is compiled from various sources, not all of which cover the entire province. Some layers are less accurate than others. Also, even if individual polygons are accurate, their boundaries may not be precise, and many ABMI sites fall on the edges of vegetation polygons. Resulting error in the vegetation types at sites increases error in the habitat models. Some habitat types may have additional challenges. Grass and shrub sites in the North, for example, may be true permanent open habitats, but the same designation is often given to early seral stages of forested sites after fire. Grass and shrub sites in the prairies are also poorly mapped. Mixedwood stands are also poorly mapped, because they represent a gradient between deciduous and upland conifer stands, which can often change as a stand ages.
 
-**The [soil classification](http://species.abmi.ca/pages/geospatial/soil-abmi.html) currently uses only broad groupings of individual soil types.** Few species show strong responses to soil type in our models, suggesting that these groups may not be well-defined or relevant to many species. We have too few sites to treat lowland sites in the South separately.
 
-**We have only broad classes of human footprint.** [Human footprint](http://species.abmi.ca/pages/geospatial/footprint.html) is generally mapped more precisely than vegetation, but we use only broad groups of footprint types. Industrial sites and urban or rural residential areas, for example, cannot be reliably distinguished. Values are particularly difficult to estimate reliably for linear features, because these usually occupy only a small portion of a site. We also have few sites with older forestry cutblocks. Values for those habitat types combine our rough estimates with an assumed rate of convergence of aging forestry and natural stands.
+**The soil classification[3] currently uses only broad groupings of individual soil types.** Few species show strong responses to soil type in our models, suggesting that these groups may not be well-defined or relevant to many species. We have too few sites to treat lowland sites in the South separately.
+
+
+**We have only broad classes of human footprint.** Human footprint[4] is generally mapped more precisely than vegetation, but we use only broad groups of footprint types. Industrial sites and urban or rural residential areas, for example, cannot be reliably distinguished. Values are particularly difficult to estimate reliably for linear features, because these usually occupy only a small portion of a site. We also have few sites with older forestry cutblocks. Values for those habitat types combine our rough estimates with an assumed rate of convergence of aging forestry and natural stands.
+
 
 **No other effects of human activities are included in our models.** Many sites in the South are grazed to varying degrees but this information is not available. Thus grazing effects cannot be included in our models, and if grazing differs among native habitat types the effects confound those difference. Any wide-scale human effects, like pollution away from visible human footprint or recent climate change, are also not included in our modeling. Additionally, we only include effects of footprint at the local scale --- the 1-ha scale we sample at, or larger sampling areas for birds and mammals. Due to sample size constraints and confounding among variables, we do not include any additional effects that might be caused by human footprint in the larger surrounding area.
 
@@ -170,7 +180,7 @@ Coefficients are also given for a set of human footprint types:
 
 Note that some features are assumed to have coefficients of 0 for all terrestrial species, these are open water (natural or human created) and active mine sites.
 
-**Southern coefficients table.** The southern coefficients are based on broad soil types derived from the GSC soil layers (see [soil map on website](http://species.abmi.ca/pages/geospatial/soil-abmi.html)).  For areas mapped with multiple soil types, the dominant type is used.  As in the north, the mean estimate is presented, along with the lower and upper 90\% confidence intervals on the estimates (`.LCI` and `.UCI` columns). Soil types modeled are:
+**Southern coefficients table.** The southern coefficients are based on broad soil types derived from the GSC soil layers (see soil map on website[3]).  For areas mapped with multiple soil types, the dominant type is used.  As in the north, the mean estimate is presented, along with the lower and upper 90\% confidence intervals on the estimates (`.LCI` and `.UCI` columns). Soil types modeled are:
 
 - "Productive" soils include loamy, silty, limy and subirrigated soils.
 - "Clay".
@@ -201,7 +211,7 @@ Habitat models for species found in wetlands include covariates describing the w
 
 We then use the best set of covariates in models to estimate how human footprint in the area surrounding the wetland affects the species. We use broad human footprint categories, such as agriculture or all other footprint types in the south, and successional or alienating footprint in the north. We use a flexible regression to estimate how the amount of surrounding footprint affects the species, accounting for the effect of the covariates at each wetland. These models can be used to predict what effect human footprint has had on each wetland species in a region, which is the basis of ABMI's reporting on species intactness.
 
-Full details of the habitat modeling can be found in the [ABMI Species Modeling Protocol](http://abmi.ca/home/publications/401-450/438.html?mode=detail).
+Full details of the habitat modeling can be found in the ABMI Species Modeling Protocol[1].
 
 ### Limitations
 
@@ -248,14 +258,14 @@ Habitat association models, plus models describing how species varied spatially 
 
 We present the following figures:
 
-* **Predicted relative abundance throughout Alberta under reference conditions.** Habitat association models, plus models describing how species varied spatially and with climate gradients were used to predict species abundance in 1 km$^2$ spatial units under reference conditions. Predictions of relative abundance of species in each 1 km$^2$ unit were made after all human footprint in the 1 km$^2$ unit had been ['backfilled'](http://ftp.public.abmi.ca/species.abmi.ca/geospatial/vegetation/2012_w2w_Backfilled_LayerV5_Metadata_2.docx) based on native vegetation in the surrounding area.
-* **Predicted relative abundance throughout Alberta under current conditions.** Habitat association models, plus models describing how species varied spatially and with climate gradients were used to predict species abundance in 1 km$^2$ spatial units under current conditions. Predictions of relative species abundance in each 1 km$^2$ unit were made based on the vegetation and human footprint present in the 1 km$^2$ unit under [current conditions (in year 2012)](http://species.abmi.ca/pages/geospatial/vegetation-detailed.html). 
+* **Predicted relative abundance throughout Alberta under reference conditions.** Habitat association models, plus models describing how species varied spatially and with climate gradients were used to predict species abundance in 1 km$^2$ spatial units under reference conditions. Predictions of relative abundance of species in each 1 km$^2$ unit were made after all human footprint in the 1 km$^2$ unit had been 'backfilled'[2] based on native vegetation in the surrounding area.
+* **Predicted relative abundance throughout Alberta under current conditions.** Habitat association models, plus models describing how species varied spatially and with climate gradients were used to predict species abundance in 1 km$^2$ spatial units under current conditions. Predictions of relative species abundance in each 1 km$^2$ unit were made based on the vegetation and human footprint present in the 1 km$^2$ unit under current conditions (in year 2012). 
 * **Difference in relative abundance between current and reference conditions.** For each 1 km$^2$ unit the difference between predicted current and reference conditions was determined.
 * **Uncertainty in predicted current conditions.** To highlight the degree of uncertainty in the models, we estimated the standard error of prediction for each 10 km x 10 km units.
 
 ### Methods
 
-Province-wide maps are generated by applying the models of a species' relationship with vegetation or soil types, human footprint, geographic location and climate to a set of 1-km$^2$ pixels covering the province. Within each pixel, the proportion of each vegetation or soil and human footprint type in the 1-km$^2$ area is determined, along with the latitude, longitude and climate values at the centre of the pixel. The 'current' maps summarize information from the current landbase, including current human footprint ([2012 human footprint](http://species.abmi.ca/pages/geospatial/footprint.html) is being used presently). The 'reference' maps summarize information from a [back-filled map](http://ftp.public.abmi.ca/species.abmi.ca/geospatial/vegetation/2012_w2w_Backfilled_LayerV5_Metadata_2.docx), in which footprint has been removed and replaced with the vegetation type that was expected prior to the footprint being created. Back-filling is based on adjacent vegetation types and rules about what vegetation types different footprint types can occur in (e.g., forestry occurs only in harvestable-age upland stands). The 'difference' maps show the areas where the species is predicted to be higher or lower in the current map compared to the reference map. 
+Province-wide maps are generated by applying the models of a species' relationship with vegetation or soil types, human footprint, geographic location and climate to a set of 1-km$^2$ pixels covering the province. Within each pixel, the proportion of each vegetation or soil and human footprint type in the 1-km$^2$ area is determined, along with the latitude, longitude and climate values at the centre of the pixel. The 'current' maps summarize information from the current landbase, including current human footprint (2012 human footprint[4] is being used presently). The 'reference' maps summarize information from a 'back-filled' map[2], in which footprint has been removed and replaced with the vegetation type that was expected prior to the footprint being created. Back-filling is based on adjacent vegetation types and rules about what vegetation types different footprint types can occur in (e.g., forestry occurs only in harvestable-age upland stands). The 'difference' maps show the areas where the species is predicted to be higher or lower in the current map compared to the reference map. 
 
 Separate predictions are made using the North and South models. In the overlap area where both of these predictions are available, a weighted average prediction is used. The weighting is based on the mapped probability that the site is or was treed, with the weight for the North prediction being that probability and the weight for the South prediction being 1 minus that probability. In other words, the South predictions apply to the untreed proportion of the raster, while the North applies to the treed part.
 
@@ -296,7 +306,7 @@ The effect of a sector on a species is the product of the area of the sector's f
 
 ### Methods
 
-We calculate the effects of different industrial sectors by predicting the abundance of each species in the current landbase versus a landbase in which the footprint associated with a particular industrial sector has been back-filled. ["Back-filling"](http://ftp.public.abmi.ca/species.abmi.ca/geospatial/vegetation/2012_w2w_Backfilled_LayerV5_Metadata_2.docx) means replacing that sector's footprint with the vegetation or soil type that would have been present before the footprint was made. The difference between the total predicted population in the current and the back-filled landbase is the predicted effect of that sector on the abundance of a species in the region. 
+We calculate the effects of different industrial sectors by predicting the abundance of each species in the current landbase versus a landbase in which the footprint associated with a particular industrial sector has been back-filled. 'Back-filling'[2] means replacing that sector's footprint with the vegetation or soil type that would have been present before the footprint was made. The difference between the total predicted population in the current and the back-filled landbase is the predicted effect of that sector on the abundance of a species in the region. 
 
 For the sector effect figures, we express the effect as the percent population change per unit area of the sector's footprint (height of the bar). The width of the bar for each sector shows the total area of the region occupied by that sector's footprint. The height multiplied by the width of the bar (i.e., the area of the bar = the effect per unit area of footprint multiplied by the area of footprint)  is the total effect of the sector on the population of the species in the region.  A bar with a large area means that that sector has had a large effect on the population --- increasing the population if the bar is above 0, decreasing it if the bar is below 0.
 
@@ -424,3 +434,13 @@ species equal weight.
 
 **Other measures of similarity/dissimilarity are
 possible** and different patterns of uniqueness may emerge using these. 
+
+## References
+
+[1]: Alberta Biodiversity Monitoring Institute. 2015. Manual for Species Modeling and Intactness (20029), Version 2016-04-14. Alberta Biodiversity Monitoring Institute, Alberta, Canada. Report available at: [abmi.ca](http://abmi.ca/home/publications/401-450/438.html?mode=detail).
+
+[2]: Alberta Biodiversity Monitoring Institute. 2015. Alberta Backfilled Wall-to-Wall Vegetation Layer (Version 5) Metadata. Alberta Biodiversity Monitoring Institute, Alberta, Canada. Report available at: [abmi.ca](http://species.abmi.ca/pages/geospatial/vegetation-detailed.html).
+
+[3]: Alberta Biodiversity Monitoring Institute. 2015. Soil Layers Metadata. Alberta Biodiversity Monitoring Institute, Alberta, Canada. Report available at: [abmi.ca](http://species.abmi.ca/pages/geospatial/soil-abmi.html).
+
+[4]: Alberta Biodiversity Monitoring Institute. 2015. ABMI Human Footprint Inventory for 2012 conditions (Version 3). Alberta Biodiversity Monitoring Institute, Alberta, Canada. Report available at: [abmi.ca](http://species.abmi.ca/pages/geospatial/footprint.html)
