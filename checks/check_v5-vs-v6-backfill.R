@@ -151,6 +151,7 @@ cex <- 0.25
 legcex <- 1.5
 C1 <- colorRampPalette(c("#edf8e9","#bae4b3","#74c476","#31a354","#006d2c"))(101)
 C2 <- colorRampPalette(c("#d7191c","#fdae61","#ffffbf","#abd9e9","#2c7bb6"))(101)
+C3 <- C1[ceiling(100*sqrt(seq(0,1,len=101)))+1] # sqrt transformed
 CW <- rgb(0.4,0.3,0.8) # water
 CE <- "lightcyan4" # exclude
 library(raster)
@@ -326,7 +327,7 @@ for (i in 1:ncol(cr6)) {
 
 j <- colnames(cr6)[i]
 cat(j, "\n");flush.console()
-png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6/maps/v6_", j, ".png"),
+png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6/maps/v6col_", j, ".png"),
     width=3*600, height=1000)
 op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,3))
 
@@ -334,7 +335,7 @@ MAX <- if (j %in% colnames(rf6))
     max(cr6[,j], rf6[,j]) else max(cr6[,j])
 
 iii <- as.integer(pmin(101, round(100*cr6[,j]/MAX)+1))
-plot(kgrid$X, kgrid$Y, col=C1[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+plot(kgrid$X, kgrid$Y, col=C3[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
 with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
 mtext(side=3,paste(j, "v6 current"),col="grey30", cex=legcex)
 points(city, pch=18, cex=cex*2)
@@ -348,7 +349,7 @@ text(240000, 5700000, paste0(round(MAX*100),"%"))
 
 if (j %in% colnames(rf6)) {
     iii <- as.integer(pmin(101, round(100*rf6[,j]/MAX)+1))
-    plot(kgrid$X, kgrid$Y, col=C1[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    plot(kgrid$X, kgrid$Y, col=C3[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
     with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
     mtext(side=3,paste(j, "v6 reference"),col="grey30", cex=legcex)
     points(city, pch=18, cex=cex*2)
