@@ -1,7 +1,7 @@
 ---
 title: 'ABMI Species Website Manual'
-author: "ABMI Science Team"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
+author: "Alberta Biodiversity Monitoring Institute"
+date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
 output:
   pdf_document:
     toc: true
@@ -15,21 +15,23 @@ urlcolor: blue
 
 # Introduction
 
-This manual serves as background material for *individual species* results
-available from the Alberta Biodiversity Monitoring Institute (ABMI) Species Website
-([http://species.abmi.ca](http://species.abmi.ca)).
-The document describes the content, methods, and limitations/caveats associated
-with the results.
+This manual serves as background material for *individual species* results available from the Alberta Biodiversity Monitoring Institute (ABMI). The document describes the content, methods, and limitations/caveats associated with species results which are currently accessible in two places:
+
+* Species Website ([http://species.abmi.ca](http://species.abmi.ca)): The ABMI Species Website was developed, and is maintained by the ABMI Science Centre. This site was developed to publicly share species results, and present summaries of new analyses as results become available.  
+* Data & Analytics Portal (http://www.abmi.ca/home/data-analytics; launched December 2016): The ABMI Data & Analytics (DA) Portal was developed, and is maintained by the ABMI Information Centre. The DA Portal serves to present a variety of ABMI data and mapping products, including not only the results presented in the Species Website but also a number of other data and mapping products and functions. This site allows users to access and interact with ABMI data in a variety of ways.  
+
+Because the DA Portal has only been recently launched, these two websites will continue to function in parallel for the immediate future. This allows users to learn about the new website, it allows the Science Centre to responsively update data products and present new analyses, and it ensures seamless access to all materials provided at both sites.
 
 ## Version
 
-This version of the manual describes results for version 
-4.0 (2016-09-12) of the species website.
+This version `r format(Sys.time(), '%Y-%m-%d')` (date of updating the manual) 
+of the manual describes results for version 
+4.0 (2016-09-12) species results available from the ABMI Species Website (http://species.abmi.ca) and the ABMI Data & Analytics Portal (http://abmi.ca/home/data-analytics) (date of updating the website results).
 
 ## Suggested citation
 
 Alberta Biodiversity Monitoring Institute. 2016.
-ABMI Species Website Manual (`r format(Sys.time(), '%B %d, %Y')`).
+ABMI Species Website Manual, Version: `r format(Sys.time(), '%Y-%m-%d')`.
 Alberta Biodiversity Monitoring Institute, Alberta, Canada.
 URL: [http://species.abmi.ca](http://species.abmi.ca).
 
@@ -39,11 +41,11 @@ URL: [http://species.abmi.ca](http://species.abmi.ca).
 
 ## Contact
 
-In case of questions related to ABMI Species Website, please contact [Peter Solymos](mailto:solymos@ualberta.ca).
+In case of questions related to ABMI Species Website Manual, please contact [Peter Solymos](mailto:solymos@ualberta.ca).
 
 ## Rationale for presenting model results
 
-ABMI collects data on thousands of species, and evaluates how their relative abundance varies among natural and human-created habitats.  The raw data and model results are made available for public use on the ABMI website (http://species.abmi.ca).  However, some species are detected only a few times, other species are not well detected using the ABMI sampling method, and some species produce models that are not plausible. 
+ABMI collects data on thousands of species, and evaluates how their relative abundance varies among natural and human-created habitats.  The raw data and model results are made available for public use on the ABMI website.  However, some species are detected only a few times, other species are not well detected using the ABMI sampling method, and some species produce models that are not plausible. 
 
 ####	Sample size
 
