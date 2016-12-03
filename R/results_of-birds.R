@@ -32,6 +32,18 @@ gspp <- rownames(slt)[slt$oldforest == 1 & slt$map.pred]
 load(file.path(ROOT, "tables", "res_coef.Rdata"))
 
 tp <- combine_spp_coefs(res_coef, gspp)
+
+library(plotrix)
+par(las=2, mar=c(8,4,1,1))
+ladderplot(t(tp$matN), pch=NA, col=1:ncol(tp$matN))
+
+fname <- file.path(ROOT, "guilds", gname,
+    paste0(gname, "-veghf-north-all.pdf"))
+pdf(file=fname,width=10,height=5,onefile=TRUE)
+for (i in gspp)
+fig_veghf(res_coef[[i]]$veg, i, res_coef[[i]]$max[1])
+dev.off()
+
 if (max(tp$max, na.rm=TRUE) > 3*min(tp$max, na.rm=TRUE)) {
     MAXn <- tp$max[1]
     MAXs <- tp$max[2]
@@ -50,15 +62,13 @@ NDAT <- length(tp$species$north)
 fname <- file.path(ROOT, "guilds", gname,
     paste0(gname, "-veghf-north.png"))
 png(file=fname,width=1500,height=700)
-fig_veghf(prn,
-    paste0(NAM, " (n = ", NDAT, " species)"), ymax=MAXn)
+fig_veghf(prn, paste0(NAM, " (n = ", NDAT, " species)"), ymax=MAXn)
 dev.off()
 ## linear
 fname <- file.path(ROOT, "guilds", gname,
     paste0(gname, "-linear-north.png"))
 png(file=fname,width=350,height=400)
-fig_linear(attr(prn, "linear"),
-    paste0(NAM, "\nNorth (n = ", NDAT, " species)"))
+fig_linear(attr(prn, "linear"), paste0(NAM, "\nNorth (n = ", NDAT, " species)"))
 dev.off()
 
 prs <- tp$soil
@@ -90,6 +100,13 @@ dev.off()
 ## sector effects
 
 load(file.path(ROOT, "tables", "sector-effects.Rdata"))
+
+fname <- file.path(ROOT, "guilds", gname,
+    paste0(gname, "-sector-north-all.pdf"))
+pdf(fname, width=6, height=6, onefile=TRUE)
+for (i in gspp)
+    plot_seff(seff_res[[i]]$N, NAM=i, TAG="", WHERE="North")
+dev.off()
 
 gseff <- combine_spp_seff(seff_res, gspp)
 

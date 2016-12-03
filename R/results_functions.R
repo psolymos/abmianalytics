@@ -846,60 +846,56 @@ function(pr, LAB)
 }
 
 ## Mean,median,min,max of the **median** !!!
-combine_spp_coefs <- function(res_coef, gspp) {
+combine_spp_coefs <- function(res_coef, gspp, r = c(0, 1)) {
     rescale <- function(x) {
-        x / mean(x)
+        x / max(x)
     }
+
     out <- res_coef[[gspp[1]]]
     ## veg
     gsppN <- gspp[sapply(res_coef[gspp], function(z) !is.null(z$veg))]
-    out$veg[,"Mean"] <- rowMeans(sapply(res_coef[gsppN], function(z)
-        rescale(z$veg[,"Median"])))
-    out$veg[,"Median"] <- apply(sapply(res_coef[gsppN], function(z)
-        rescale(z$veg[,"Median"])), 1, median)
-    out$veg[,"CL1q"] <- apply(sapply(res_coef[gsppN], function(z)
-        rescale(z$veg[,"Median"])), 1, min)
-    out$veg[,"CL2q"] <- apply(sapply(res_coef[gsppN], function(z)
-        rescale(z$veg[,"Median"])), 1, max)
+    matN <- sapply(res_coef[gsppN], function(z) rescale(z$veg[,"Median"]))
+    out$veg[,"Mean"] <- rowMeans(matN)
+    out$veg[,"Median"] <- apply(matN, 1, median)
+    out$veg[,"CL1q"] <- apply(matN, 1, quantile, r[1])
+    out$veg[,"CL2q"] <- apply(matN, 1, quantile, r[2])
     ## lin N
     linN <- sapply(res_coef[gsppN], function(z) attr(z$veg, "linear"))
     linN[,1] <- 1
     attr(out$veg, "linear") <- rowMeans(linN)
     attr(out$veg, "linear_guild") <- cbind(Mean=rowMeans(linN),
         Median=apply(linN, 1, median),
-        Min=apply(linN, 1, min),
-        Max=apply(linN, 1, max))
+        Min=apply(linN, 1, quantile, r[1]),
+        Max=apply(linN, 1, quantile, r[2]))
     ## soil:treed
     gsppS <- gspp[sapply(res_coef[gspp], function(z) !is.null(z$soil))]
-    out$soil$treed[,"Mean"] <- rowMeans(sapply(res_coef[gsppS], function(z)
-        rescale(z$soil$treed[,"Median"])))
-    out$soil$treed[,"Median"] <- apply(sapply(res_coef[gsppS], function(z)
-        rescale(z$soil$treed[,"Median"])), 1, median)
-    out$soil$treed[,"CL1q"] <- apply(sapply(res_coef[gsppS], function(z)
-        rescale(z$soil$treed[,"Median"])), 1, min)
-    out$soil$treed[,"CL2q"] <- apply(sapply(res_coef[gsppS], function(z)
-        rescale(z$soil$treed[,"Median"])), 1, max)
+    matStreed <- sapply(res_coef[gsppS], function(z) rescale(z$soil$treed[,"Median"]))
+    out$soil$treed[,"Mean"] <- rowMeans(matStreed)
+    out$soil$treed[,"Median"] <- apply(matStreed, 1, median)
+    out$soil$treed[,"CL1q"] <- apply(matStreed, 1, quantile, r[1])
+    out$soil$treed[,"CL2q"] <- apply(matStreed, 1, quantile, r[2])
     ## soil:nontreed
-    out$soil$nontreed[,"Mean"] <- rowMeans(sapply(res_coef[gsppS], function(z)
-        rescale(z$soil$nontreed[,"Median"])))
-    out$soil$nontreed[,"Median"] <- apply(sapply(res_coef[gsppS], function(z)
-        rescale(z$soil$nontreed[,"Median"])), 1, median)
-    out$soil$nontreed[,"CL1q"] <- apply(sapply(res_coef[gsppS], function(z)
-        rescale(z$soil$nontreed[,"Median"])), 1, min)
-    out$soil$nontreed[,"CL2q"] <- apply(sapply(res_coef[gsppS], function(z)
-        rescale(z$soil$nontreed[,"Median"])), 1, max)
+    matSnontreed <- sapply(res_coef[gsppS], function(z) rescale(z$soil$nontreed[,"Median"]))
+    out$soil$nontreed[,"Mean"] <- rowMeans(matSnontreed)
+    out$soil$nontreed[,"Median"] <- apply(matSnontreed, 1, median)
+    out$soil$nontreed[,"CL1q"] <- apply(matSnontreed, 1, quantile, r[1])
+    out$soil$nontreed[,"CL2q"] <- apply(matSnontreed, 1, quantile, r[2])
     ## lin S
     linS <- sapply(res_coef[gsppS], function(z) z$soil$linear)
     linS[,1] <- 1
     out$soil$linear <- rowMeans(linS)
     out$soil$linear_guild <- cbind(Mean=rowMeans(linN),
         Median=apply(linN, 1, median),
-        Min=apply(linN, 1, min),
-        Max=apply(linN, 1, max))
+        Min=apply(linN, 1, quantile, r[1]),
+        Max=apply(linN, 1, quantile, r[2]))
     ## max
     out$max[1] <- fig_veghf_ymax(out$veg)
     out$max[2] <- max(fig_soilhf_ymax(out$soil$treed), fig_soilhf_ymax(out$soil$nontreed))
     out$species <- list(all=gspp, north=gsppN, south=gsppS)
+    out$matStreed <- matStreed
+    out$matSnontreed <- matSnontreed
+    out$matN <- matN
+
     out
 }
 
