@@ -899,20 +899,28 @@ combine_spp_coefs <- function(res_coef, gspp, r = c(0, 1)) {
     out
 }
 
-combine_spp_seff <- function(seff_res, gspp) {
+combine_spp_seff <- function(seff_res, gspp, r=c(0,1), scale=FALSE) {
     out <- seff_res[[gspp[1]]]
     gsppN <- gspp[sapply(seff_res[gspp], function(z) !is.null(z$N))]
     gsppS <- gspp[sapply(seff_res[gspp], function(z) !is.null(z$S))]
 
-    out$N[] <- rowMeans(sapply(seff_res[gsppN], function(z) z$N))
+    matN <- sapply(seff_res[gsppN], function(z) z$N)
+    if (scale)
+        matN <- tanh(matN*0.5)
+    out$N[] <- rowMeans(matN)
     out$Nmin <- out$Nmax <- out$N
-    out$Nmin[] <- apply(sapply(seff_res[gsppN], function(z) z$N), 1, min)
-    out$Nmax[] <- apply(sapply(seff_res[gsppN], function(z) z$N), 1, max)
-    out$S[] <- rowMeans(sapply(seff_res[gsppS], function(z) z$S))
+    out$Nmin[] <- apply(matN, 1, quantile, r[1])
+    out$Nmax[] <- apply(matN, 1, quantile, r[2])
+    matS <- sapply(seff_res[gsppS], function(z) z$S)
+    if (scale)
+        matS <- tanh(matS*0.5)
+    out$S[] <- rowMeans(matS)
     out$Smin <- out$Smax <- out$S
-    out$Smin[] <- apply(sapply(seff_res[gsppS], function(z) z$S), 1, min)
-    out$Smax[] <- apply(sapply(seff_res[gsppS], function(z) z$S), 1, max)
+    out$Smin[] <- apply(matS, 1, quantile, r[1])
+    out$Smax[] <- apply(matS, 1, quantile, r[2])
 
+    out$matN <- matN
+    out$matS <- matS
     out
 }
 

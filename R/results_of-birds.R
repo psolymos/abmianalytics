@@ -109,6 +109,7 @@ for (i in gspp)
 dev.off()
 
 gseff <- combine_spp_seff(seff_res, gspp)
+gseff2 <- combine_spp_seff(seff_res, gspp, scale=TRUE)
 
 fname <- file.path(ROOT, "guilds", gname,
     paste0(gname, "-sector-north.png"))
@@ -120,6 +121,18 @@ fname <- file.path(ROOT, "guilds", gname,
     paste0(gname, "-sector-south.png"))
 png(fname, width=600, height=600)
 plot_seff(gseff$S, NAM=NAM, TAG="", WHERE="North", CL1=gseff$Smin, CL2=gseff$Smax)
+dev.off()
+
+fname <- file.path(ROOT, "guilds", gname,
+    paste0(gname, "-sector-north-scaled.png"))
+png(fname, width=600, height=600)
+plot_seff(gseff2$N, NAM=NAM, TAG="", WHERE="South", CL1=gseff$Nmin, CL2=gseff$Nmax)
+dev.off()
+
+fname <- file.path(ROOT, "guilds", gname,
+    paste0(gname, "-sector-south-scaled.png"))
+png(fname, width=600, height=600)
+plot_seff(gseff2$S, NAM=NAM, TAG="", WHERE="South", CL1=gseff$Smin, CL2=gseff$Smax)
 dev.off()
 
 ## det map
