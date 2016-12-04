@@ -118,6 +118,12 @@ plot_seff(gseff$N, NAM=NAM, TAG="", WHERE="North", CL1=gseff$Nmin, CL2=gseff$Nma
 dev.off()
 
 fname <- file.path(ROOT, "guilds", gname,
+    paste0(gname, "-sector-north-noerr.png"))
+png(fname, width=600, height=600)
+plot_seff(gseff$N, NAM=NAM, TAG="", WHERE="North")
+dev.off()
+
+fname <- file.path(ROOT, "guilds", gname,
     paste0(gname, "-sector-south.png"))
 png(fname, width=600, height=600)
 plot_seff(gseff$S, NAM=NAM, TAG="", WHERE="North", CL1=gseff$Smin, CL2=gseff$Smax)
