@@ -382,3 +382,52 @@ if (j %in% colnames(rf6)) {
 par(op)
 dev.off()
 }
+
+## total area check
+
+e <- new.env()
+load(fv5, envir=e)
+e$dd1km_pred$sample_year
+e$dd1km_pred$scale
+ta5 <- sapply(e$dd1km_pred[1:4], rowSums)
+
+e <- new.env()
+load(fv6, envir=e)
+e$dd1km_pred$sample_year
+e$dd1km_pred$scale
+ta6 <- sapply(e$dd1km_pred[1:4], rowSums)
+
+rm(e)
+
+all(rownames(kgrid) == rownames(ta5))
+all(rownames(kgrid) == rownames(ta6))
+
+colnames(ta5) <- paste0(colnames(ta5), "_v5")
+colnames(ta6) <- paste0(colnames(ta6), "_v6")
+
+ta <- cbind(ta5, ta6)
+
+for (i in 1:8) {
+
+cat(i, "\n");flush.console()
+png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6/maps/Atot_", colnames(ta)[i], ".png"),
+    width=600, height=1000)
+op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,1))
+
+    iii <- as.integer(pmin(101, round(50+50*(ta[,i]/10^6-kgrid$Area_km2))+1))
+    plot(kgrid$X, kgrid$Y, col=C2[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,colnames(ta)[i],col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    for (ii in 1:101) {
+        jj <- ii * abs(diff(c(5450000, 5700000)))/100
+        segments(190000, 5450000+jj, 220000, 5450000+jj, col=C2[ii], lwd=2, lend=2)
+    }
+    text(240000, 5450000, "+100%")
+    text(240000, 0.5*(5450000 + 5700000), "0%")
+    text(240000, 5700000, "-100%")
+par(op)
+dev.off()
+
+}
