@@ -41,8 +41,8 @@ map14 <- cbind(
 x$FT12 <- reclass(x$FEATURE_TY, map12)
 x$FT14 <- reclass(x$FEATURE_TY, map14)
 
-#y <- Xtab(SHAPE_Area ~ Row_Col + FEATURE_TY, x)
-#y <- y[rownames(kgrid),]
+y <- Xtab(SHAPE_Area ~ Row_Col + FEATURE_TY, x)
+y <- y[rownames(kgrid),]
 
 compare_sets(levels(x$FEATURE_TY), lt$FEATURE_TY)
 setdiff(levels(x$FEATURE_TY), lt$FEATURE_TY)
@@ -219,3 +219,35 @@ for (i in 1:ncol(y14re)) {
     dev.off()
 }
 
+## all feature types
+
+rs <- rowSums(y)
+for (i in 1:ncol(y)) {
+
+    j <- colnames(y)[i]
+    cr5 <- y[,j] / rs
+    if (j != "") {
+    cat(j, "\n");flush.console()
+
+    png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6/hfmaps/HF14ft_", j, ".png"),
+        width=1*600, height=1000)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,1))
+
+    MAX <- max(cr5)
+
+    iii <- as.integer(pmin(101, round(100*cr5/MAX)+1))
+    plot(kgrid$X, kgrid$Y, col=C3[iii], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,paste("HF2012:", j),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    for (ii in 1:101) {
+        jj <- ii * abs(diff(c(5450000, 5700000)))/100
+        segments(190000, 5450000+jj, 220000, 5450000+jj, col=C1[ii], lwd=2, lend=2)
+    }
+    text(240000, 5450000, "0%")
+    text(240000, 5700000, paste0(round(MAX*100),"%"))
+    par(op)
+    dev.off()
+    }
+}
