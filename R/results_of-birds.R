@@ -673,3 +673,123 @@ srf <- pmin(100, ceiling(99 * sqrt(Srf / Max2))+1)
     par(op)
     dev.off()
 
+    fname <- file.path(ROOT, "guilds", gname,
+        paste0(gname, "-map-total-ref.png"))
+    png(fname, width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=C1[drf], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, "\nReference abundance"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    for (i in 1:100) {
+        #lines(c(190000, 220000), c(5450000, 5700000), col=C1[i], lwd=2)
+        j <- i * abs(diff(c(5450000, 5700000)))/100
+        segments(190000, 5450000+j, 220000, 5450000+j, col=C1[i], lwd=2, lend=2)
+    }
+    text(240000, 5450000, "0%")
+    text(240000, 0.5*(5450000 + 5700000), "50%")
+    text(240000, 5700000, "100%")
+    par(op)
+    dev.off()
+
+    fname <- file.path(ROOT, "guilds", gname,
+        paste0(gname, "-map-total-curr.png"))
+    png(fname, width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=C1[dcr], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, "\nCurrent abundance"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    for (i in 1:100) {
+        #lines(c(190000, 220000), c(5450000, 5700000), col=C1[i], lwd=2)
+        j <- i * abs(diff(c(5450000, 5700000)))/100
+        segments(190000, 5450000+j, 220000, 5450000+j, col=C1[i], lwd=2, lend=2)
+    }
+    text(240000, 5450000, "0%")
+    text(240000, 0.5*(5450000 + 5700000), "50%")
+    text(240000, 5700000, "100%")
+    par(op)
+    dev.off()
+
+    fname <- file.path(ROOT, "guilds", gname,
+        paste0(gname, "-map-total-diff.png"))
+    png(fname, width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=C2[ddf], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, "\nDifference"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    for (i in 1:200) {
+        #lines(c(190000, 220000), c(5450000, 5700000), col=C2[i], lwd=2)
+        j <- i * abs(diff(c(5450000, 5700000)))/200
+        segments(190000, 5450000+j, 220000, 5450000+j, col=C2[i], lwd=2, lend=2)
+    }
+    text(245000, 5450000, "-100%")
+    text(245000, 0.5*(5450000 + 5700000), "0%")
+    text(245000, 5700000, "+100%")
+    par(op)
+    dev.off()
+
+
+    fname <- file.path(ROOT, "guilds", gname,
+        paste0(gname, "-map-srich-ref.png"))
+    png(fname, width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=CSR[srf], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, "\nSpecies Richness, Reference"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    for (i in 1:100) {
+        #lines(c(190000, 220000), c(5450000, 5700000), col=CSR[i], lwd=2)
+        j <- i * abs(diff(c(5450000, 5700000)))/100
+        segments(190000, 5450000+j, 220000, 5450000+j, col=CSR[i], lwd=2, lend=2)
+    }
+    text(240000, 5450000, "0%")
+    text(240000, 0.5*(5450000 + 5700000), "50%")
+    text(240000, 5700000, "100%")
+    par(op)
+    dev.off()
+
+    fname <- file.path(ROOT, "guilds", gname,
+        paste0(gname, "-map-srich-curr.png"))
+    png(fname, width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=CSR[scr], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, "\nSpecies Richness, Current"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    for (i in 1:100) {
+        #lines(c(190000, 220000), c(5450000, 5700000), col=CSR[i], lwd=2)
+        j <- i * abs(diff(c(5450000, 5700000)))/100
+        segments(190000, 5450000+j, 220000, 5450000+j, col=CSR[i], lwd=2, lend=2)
+    }
+    text(240000, 5450000, "0%")
+    text(240000, 0.5*(5450000 + 5700000), "50%")
+    text(240000, 5700000, "100%")
+    par(op)
+    dev.off()
+
+    fname <- file.path(ROOT, "guilds", gname,
+        paste0(gname, "-map-srich-diff.png"))
+    png(fname, width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=C2[sdf], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, "\nSpecies Richness, Difference"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    for (i in 1:200) {
+        #lines(c(190000, 220000), c(5450000, 5700000), col=C2[i], lwd=2)
+        j <- i * abs(diff(c(5450000, 5700000)))/200
+        segments(190000, 5450000+j, 220000, 5450000+j, col=C2[i], lwd=2, lend=2)
+    }
+    text(245000, 5450000, "-100%")
+    text(245000, 0.5*(5450000 + 5700000), "0%")
+    text(245000, 5700000, "+100%")
+    par(op)
+    dev.off()
