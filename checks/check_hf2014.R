@@ -23,6 +23,20 @@ lt <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-type-v2014.csv")
 lt$Description <- NULL
 lt$ref <- ifelse(lt$Refined=="", as.character(lt$HF_GROUP), as.character(lt$Refined))
 
+yrft <- Xtab(SHAPE_Area ~ x$YEAR + x$FEATURE_TY, x)
+round(100 * rowSums(yrft) / sum(yrft),2)
+
+round(100*yrft[,"CULTIVATION_ABANDONED"][yrft[,"CULTIVATION_ABANDONED"] > 0] / sum(yrft[,"CULTIVATION_ABANDONED"]), 2)
+
+rn <- rownames(yrft)
+rn[-1] <- "1"
+yrft2 <- groupSums(yrft, 1, rn)
+yrft2 <- as.matrix(t(yrft2) / colSums(yrft))
+yr0p <- 100 * yrft["0",] / colSums(yrft)
+
+yrft2 <- round(100 * yrft2[-1,], 2)
+colnames(yrft2) <- c("PercentNoAge", "PercentWithAge")
+write.csv(yrft2, file="e:/peter/AB_data_v2016/raw_new/hf2014/feature-types-ages.csv")
 
 ## reclass
 ## compare to 2012

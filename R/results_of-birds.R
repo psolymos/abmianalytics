@@ -219,7 +219,9 @@ Col2fun <- colorRampPalette(Col2, space = "rgb") # Function to interpolate among
 C2 <- Col2fun(200)
 CW <- rgb(0.4,0.3,0.8) # water
 CE <- "lightcyan4" # exclude
-CSI <- colorRampPalette(c("red","orange","yellow","darkgreen"), space = "rgb")(100)
+#CSI <- colorRampPalette(c("red","orange","yellow","darkgreen"), space = "rgb")(100)
+CSI <- colorRampPalette(c("#D73027","#FC8D59","#FEE090","#E0F3D8","#41DB45","#12A412"),
+    space = "rgb")(100)
 CSR <- colorRampPalette(c("yellow","purple"), space = "rgb")(100)
 
 q <- 0.99
@@ -535,4 +537,139 @@ srf <- pmin(100, ceiling(99 * sqrt(Srf / Max2))+1)
     par(op)
     dev.off()
 
+## intactness map for all species
+
+gspp <- rownames(slt)[slt$map.pred]
+gname <- "all-birds"
+NAM <- "All Birds"
+
+mcr <- matrix(0, nrow(kgrid), length(gspp))
+dimnames(mcr) <- list(rownames(kgrid), gspp)
+mrf <- mcr
+for (spp in gspp) {
+    cat(spp, "\n");flush.console()
+    load(paste0("e:/peter/AB_data_v2016/out/birds/pred1cmb/", spp, ".Rdata"))
+    stopifnot(all(rownames(kgrid)==rownames(km)))
+    km <- data.frame(km)
+
+    TYPE <- "C" # combo
+    if (!slt[spp, "veghf.north"])
+    #if (!(spp %in% fln))
+        TYPE <- "S"
+    if (!slt[spp, "soilhf.south"])
+    #if (!(spp %in% fls))
+        TYPE <- "N"
+
+    wS <- 1-kgrid$pAspen
+    if (TYPE == "S")
+        wS[] <- 1
+    if (TYPE == "N")
+        wS[] <- 0
+    wS[kgrid$useS] <- 1
+    wS[kgrid$useN] <- 0
+
+    cr <- wS * km$CurrS + (1-wS) * km$CurrN
+    rf <- wS * km$RefS + (1-wS) * km$RefN
+
+    qcr <- quantile(cr, q, na.rm=TRUE)
+    cr[!is.na(cr) & cr > qcr] <- qcr
+    qrf <- quantile(rf, q, na.rm=TRUE)
+    rf[!is.na(rf) & rf > qrf] <- qrf
+
+    if (TYPE=="N") {
+        cr[!kgrid$useN] <- NA
+        rf[!kgrid$useN] <- NA
+    }
+    if (TYPE=="S") {
+        cr[!kgrid$useS] <- NA
+        rf[!kgrid$useS] <- NA
+    }
+
+    mcr[,spp] <- cr
+    mrf[,spp] <- rf
+}
+range(mcr, na.rm=TRUE)
+range(mrf, na.rm=TRUE)
+
+## richness map
+Scr <- rowSums(1-exp(-mcr), na.rm=TRUE)
+Srf <- rowSums(1-exp(-mrf), na.rm=TRUE)
+Dcr <- rowSums(mcr, na.rm=TRUE)
+Drf <- rowSums(mrf, na.rm=TRUE)
+SItot <- 100 * pmin(Dcr, Drf, na.rm=TRUE) / pmax(Dcr, Drf, na.rm=TRUE)
+SImean <- 100 * rowMeans(pmin(mcr, mrf) / pmax(mcr, mrf), na.rm=TRUE)
+#plot(SItot, SImean)
+
+
+#    SI <- round(100 * pmin(cr, rf) / pmax(cr, rf))
+#    SI[is.na(SI)] <- 100 # 0/0 is defined as 100 intact
+#    cr0 <- cr
+#    rf0 <- rf
+#    SI0 <- SI
+
+SItot[is.na(SItot)] <- 100
+SItot <- round(SItot)
+SItot[SItot < 1] <- 1 # this is only for mapping
+
+SImean[is.na(SImean)] <- 100
+SImean <- round(SImean)
+SImean[SImean < 1] <- 1 # this is only for mapping
+
+Max <- max(Dcr, Drf, na.rm=TRUE)
+ddf <- (Dcr-Drf) / Max
+ddf <- sign(ddf) * abs(ddf)^0.5
+ddf <- pmin(200, ceiling(99 * ddf)+100)
+ddf[ddf==0] <- 1
+dcr <- pmin(100, ceiling(99 * sqrt(Dcr / Max))+1)
+drf <- pmin(100, ceiling(99 * sqrt(Drf / Max))+1)
+
+Max2 <- max(Scr, Srf, na.rm=TRUE)
+sdf <- (Scr-Srf) / Max2
+sdf <- sign(sdf) * abs(sdf)^0.5
+sdf <- pmin(200, ceiling(99 * sdf)+100)
+sdf[sdf==0] <- 1
+scr <- pmin(100, ceiling(99 * sqrt(Scr / Max2))+1)
+srf <- pmin(100, ceiling(99 * sqrt(Srf / Max2))+1)
+
+
+
+    fname <- file.path(ROOT, "guilds", gname,
+        paste0(gname, "-map-SIsummed.png"))
+    png(fname, width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=CSI[SItot], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, "\nIntactness (summed)"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    for (i in 1:100) {
+        #lines(c(190000, 220000), c(5450000, 5700000), col=CSI[i], lwd=2)
+        j <- i * abs(diff(c(5450000, 5700000)))/100
+        segments(190000, 5450000+j, 220000, 5450000+j, col=CSI[i], lwd=2, lend=2)
+    }
+    text(240000, 5450000, "0%")
+    text(240000, 0.5*(5450000 + 5700000), "50%")
+    text(240000, 5700000, "100%")
+    par(op)
+    dev.off()
+
+    fname <- file.path(ROOT, "guilds", gname,
+        paste0(gname, "-map-SIaveraged.png"))
+    png(fname, width=W, height=H)
+    op <- par(mar=c(0, 0, 4, 0) + 0.1)
+    plot(kgrid$X, kgrid$Y, col=CSI[SImean], pch=15, cex=cex, ann=FALSE, axes=FALSE)
+    with(kgrid[kgrid$pWater > 0.99,], points(X, Y, col=CW, pch=15, cex=cex))
+    mtext(side=3,paste(NAM, "\nIntactness (averaged)"),col="grey30", cex=legcex)
+    points(city, pch=18, cex=cex*2)
+    text(city[,1], city[,2], rownames(city), cex=0.8, adj=-0.1, col="grey10")
+    for (i in 1:100) {
+        #lines(c(190000, 220000), c(5450000, 5700000), col=CSI[i], lwd=2)
+        j <- i * abs(diff(c(5450000, 5700000)))/100
+        segments(190000, 5450000+j, 220000, 5450000+j, col=CSI[i], lwd=2, lend=2)
+    }
+    text(240000, 5450000, "0%")
+    text(240000, 0.5*(5450000 + 5700000), "50%")
+    text(240000, 5700000, "100%")
+    par(op)
+    dev.off()
 
