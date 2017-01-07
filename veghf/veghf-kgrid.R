@@ -6,12 +6,58 @@ source("~/repos/abmianalytics/veghf/veghf-setup.R")
 ## and not relative to HF or veg inventory year.
 
 #fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6", "tiles"))
-fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata"))
+fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata"))
 
 ## test feature types and save in Rdata format
 if (FALSE) {
 
+library(data.table)
+getOption("datatable.fread.datatable")
+options(datatable.fread.datatable=FALSE)
+getOption("datatable.fread.datatable")
+
+fl0 <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles"))
+HF <- character(0)
+VEG <- character(0)
+A1 <- numeric(length(fl0))
+A2 <- numeric(length(fl0))
+for (i in seq_len(length(fl0))) {
+    fn <- fl0[i]
+    cat("\nchecking", i, "/", length(fl0));flush.console()
+    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
+    #d <- fread(f)
+    d <- read.csv(f)
+    d2 <- c4_fun(d)
+    HF <- union(HF, levels(d$FEATURE_TY))
+    VEG <- union(VEG, levels(d2$c4))
+    A1[i] <- sum(d$Shape_Area)
+    A2[i] <- sum(d2$Shape_Area)
+    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata",
+        gsub(".csv", ".Rdata", fn, fixed = TRUE)))
+}
+
+setdiff(HF, c("", rownames(hflt)))
+summary(A1-A2)
+## todo
+## - check c4 lookup table and rules
+## - make sure that Areas are conserved
+## - do crosstab
+## - prepare maps
+
 recl <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/veg-V6-combined3.csv")
+
+HF <- character(0)
+C4 <- character(0)
+for (i in seq_len(length(fl))) {
+    fn <- fl[i]
+    cat("\nchecking", i, "/", length(fl));flush.console()
+    f <- file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata", fn)
+    e <- new.env()
+    load(f, envir=e)
+    d <- e$d
+    HF <- union(HF, levels(d$FEATURE_TY))
+    VEG <- union(VEG, levels(d$c4))
+}
 
 NEW <- character(0)
 HF <- character(0)
