@@ -1,0 +1,179 @@
+---
+title: 'Fire/CC effects on species based on estimated coefficients'
+author: "Peter Solymos"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output: word_document
+---
+
+```{r echo=FALSE,message=FALSE,warning=FALSE}
+library(vegan)
+library(ape)
+library(mefa4)
+load("~/Dropbox/abmi/fire-cc-all.Rdata")
+col1 <- colorRampPalette(c("red", "darkgreen"))(9)
+col2 <- c(col1, colorRampPalette(c("blue", col1[5]))(5))
+Age <- as.integer(gsub("[[:alpha:]]", "", colnames(all[[1]][[2]])))
+
+data_fun <- function(taxon, ftype, cc=FALSE) {
+    tmp <- all[[taxon]][[paste0(ftype, "_fire")]]
+    if (cc)
+        tmp <- cbind(tmp, all[[taxon]][[paste0(ftype, "_cc")]])
+    Max <- sapply(all[[taxon]][c("conif_fire", "decid_fire", "pine_fire", "conif_cc",
+        "decid_cc", "pine_cc")], function(z) apply(z, 1, max, na.rm=TRUE))
+    Max <- apply(Max, 1, max)
+    tmp <- tmp / Max
+    tmp
+}
+
+lt <- list()
+for (i in 1:length(all))
+    lt[[i]] <- data.frame(taxon=names(all)[i], all[[i]]$spp)
+lt <- do.call(rbind, lt)
+```
+
+# Pine
+
+```{r echo=FALSE,fig.height=4,fig.width=8}
+ftype <- "pine"
+cc <- FALSE
+tmp1 <- rbind(data_fun("birds", ftype, cc), data_fun("lichens", ftype, cc),
+    data_fun("mites", ftype, cc), data_fun("mosses", ftype, cc),
+    data_fun("vplants", ftype, cc))
+cc <- TRUE
+tmp2 <- rbind(data_fun("birds", ftype, cc), data_fun("lichens", ftype, cc),
+    data_fun("mites", ftype, cc), data_fun("mosses", ftype, cc),
+    data_fun("vplants", ftype, cc))
+
+op <- par(mfrow=c(1,2))
+plot(as.phylo(hclust(vegdist(t(tmp1)), method="ward.D2"), main="All species"),
+    tip.color=col1, font=2, main=ftype)
+plot(as.phylo(hclust(vegdist(t(tmp2)), method="ward.D2"), main="All species"),
+    tip.color=col2, font=2)
+par(op)
+```
+
+```{r echo=FALSE}
+rr <- tanh(0.5 * log(tmp2[,10] / tmp2[,1]))
+boxplot(rr ~ taxon, lt, main=ftype, col="lightgreen",
+    ylab="Cutblock Affinity")
+abline(h=0, col=4, lwd=2)
+```
+
+```{r echo=FALSE,eval=FALSE}
+d1 <- as.matrix(vegdist(t(tmp1)))
+d1 <- diag(rbind(d1[-1,], d1[1,]))
+d1 <- d1[-length(d1)]
+names(d1) <- paste0(Age[-length(Age)], "-", Age[-1])
+
+d2 <- as.matrix(vegdist(t(tmp2)))
+d2 <- diag(rbind(d2[-1,], d2[1,]))
+d2 <- d2[-length(d2)]
+d2 <- d2[c(9:13, 6:8)]
+names(d2) <- paste0(Age[-length(Age)], "-", Age[-1])
+
+dd <- cbind(Fire=d1, CC=d2)
+barplot(t(dd), ylab="Distance", main=ftype, beside=TRUE)
+```
+
+# White Spruce
+
+```{r echo=FALSE,fig.height=4,fig.width=8}
+ftype <- "conif"
+cc <- FALSE
+tmp1 <- rbind(data_fun("birds", ftype, cc), data_fun("lichens", ftype, cc),
+    data_fun("mites", ftype, cc), data_fun("mosses", ftype, cc),
+    data_fun("vplants", ftype, cc))
+cc <- TRUE
+tmp2 <- rbind(data_fun("birds", ftype, cc), data_fun("lichens", ftype, cc),
+    data_fun("mites", ftype, cc), data_fun("mosses", ftype, cc),
+    data_fun("vplants", ftype, cc))
+
+op <- par(mfrow=c(1,2))
+plot(as.phylo(hclust(vegdist(t(tmp1)), method="ward.D2"), main="All species"),
+    tip.color=col1, font=2, main=ftype)
+plot(as.phylo(hclust(vegdist(t(tmp2)), method="ward.D2"), main="All species"),
+    tip.color=col2, font=2)
+par(op)
+```
+
+```{r echo=FALSE}
+rr <- tanh(0.5 * log(tmp2[,10] / tmp2[,1]))
+boxplot(rr ~ taxon, lt, main=ftype, col="lightgreen",
+    ylab="Cutblock Affinity")
+abline(h=0, col=4, lwd=2)
+```
+
+```{r echo=FALSE,eval=FALSE}
+d1 <- as.matrix(vegdist(t(tmp1)))
+d1 <- diag(rbind(d1[-1,], d1[1,]))
+d1 <- d1[-length(d1)]
+names(d1) <- paste0(Age[-length(Age)], "-", Age[-1])
+
+d2 <- as.matrix(vegdist(t(tmp2)))
+d2 <- diag(rbind(d2[-1,], d2[1,]))
+d2 <- d2[-length(d2)]
+d2 <- d2[c(9:13, 6:8)]
+names(d2) <- paste0(Age[-length(Age)], "-", Age[-1])
+
+dd <- cbind(Fire=d1, CC=d2)
+barplot(t(dd), ylab="Distance", main=ftype, beside=TRUE)
+```
+
+```{r eval=FALSE,echo=FALSE}
+k1 <- cutree(hclust(vegdist(t(tmp1)), method="ward.D2"), k=3)
+m1 <- groupMeans(as.matrix(tmp1), 2, k1)
+mx1 <- find_max(m1)
+table(mx1$index)
+
+k2 <- cutree(hclust(vegdist(t(tmp2)), method="ward.D2"), k=3)
+m2 <- groupMeans(as.matrix(tmp2), 2, k)
+mx2 <- find_max(m1)
+table(mx1$index)
+
+```
+
+# Deciduous
+
+```{r echo=FALSE,fig.height=4,fig.width=8}
+ftype <- "decid"
+cc <- FALSE
+tmp1 <- rbind(data_fun("birds", ftype, cc), data_fun("lichens", ftype, cc),
+    data_fun("mites", ftype, cc), data_fun("mosses", ftype, cc),
+    data_fun("vplants", ftype, cc))
+cc <- TRUE
+tmp2 <- rbind(data_fun("birds", ftype, cc), data_fun("lichens", ftype, cc),
+    data_fun("mites", ftype, cc), data_fun("mosses", ftype, cc),
+    data_fun("vplants", ftype, cc))
+
+op <- par(mfrow=c(1,2))
+plot(as.phylo(hclust(vegdist(t(tmp1)), method="ward.D2"), main="All species"),
+    tip.color=col1, font=2, main=ftype)
+plot(as.phylo(hclust(vegdist(t(tmp2)), method="ward.D2"), main="All species"),
+    tip.color=col2, font=2)
+par(op)
+```
+
+```{r echo=FALSE}
+rr <- tanh(0.5 * log(tmp2[,10] / tmp2[,1]))
+boxplot(rr ~ taxon, lt, main=ftype, col="lightgreen",
+    ylab="Cutblock Affinity")
+abline(h=0, col=4, lwd=2)
+```
+
+
+```{r echo=FALSE,eval=FALSE}
+d1 <- as.matrix(vegdist(t(tmp1)))
+d1 <- diag(rbind(d1[-1,], d1[1,]))
+d1 <- d1[-length(d1)]
+names(d1) <- paste0(Age[-length(Age)], "-", Age[-1])
+
+d2 <- as.matrix(vegdist(t(tmp2)))
+d2 <- diag(rbind(d2[-1,], d2[1,]))
+d2 <- d2[-length(d2)]
+d2 <- d2[c(9:13, 6:8)]
+names(d2) <- paste0(Age[-length(Age)], "-", Age[-1])
+
+dd <- cbind(Fire=d1, CC=d2)
+barplot(t(dd), ylab="Distance", main=ftype, beside=TRUE)
+```
+

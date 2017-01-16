@@ -32,13 +32,102 @@ for (i in names(fl)) {
     rownames(d) <- d$Species
     dc <- d[,grepl("WhiteSpruce", colnames(d))]
     dd <- d[,grepl("Deciduous", colnames(d))]
+    dp <- d[,grepl("Pine", colnames(d))]
     dcf <- dc[,!grepl("CC", colnames(dc))]
     dcc <- dc[,grepl("CC", colnames(dc))]
     ddf <- dd[,!grepl("CC", colnames(dd))]
     ddc <- dd[,grepl("CC", colnames(dd))]
-    all[[i]] <- list(hab=d0, conif_fire=dcf, decid_fire=ddf,
-        conif_cc=dcc, decid_cc=ddc, spp=data.frame(Species=d[,1]))
+    dpf <- dp[,!grepl("CC", colnames(dp))]
+    dpc <- dp[,grepl("CC", colnames(dp))]
+    all[[i]] <- list(hab=d0, conif_fire=dcf, decid_fire=ddf, pine_fire=dpf,
+        conif_cc=dcc, decid_cc=ddc, pine_cc=dpc,
+        spp=data.frame(Species=d0[,1]))
 }
+
+save(all, file="~/Dropbox/abmi/fire-cc-all.Rdata")
+
+## select upland forest species
+
+library(vegan)
+library(ape)
+col1 <- colorRampPalette(c("red", "darkgreen"))(9)
+col2 <- c(col1, colorRampPalette(c("blue", col1[5]))(5))
+Age <- as.integer(gsub("[[:alpha:]]", "", colnames(all[[1]][[2]])))
+
+data_fun <- function(taxon, ftype, cc=FALSE) {
+    tmp <- all[[taxon]][[paste0(ftype, "_fire")]]
+    if (cc)
+        tmp <- cbind(tmp, all[[taxon]][[paste0(ftype, "_cc")]])
+    Max <- sapply(all[[taxon]][c("conif_fire", "decid_fire", "pine_fire", "conif_cc",
+        "decid_cc", "pine_cc")], function(z) apply(z, 1, max, na.rm=TRUE))
+    Max <- apply(Max, 1, max)
+    tmp <- tmp / Max
+    tmp
+}
+
+ftype <- "pine"
+cc <- FALSE
+tmp1 <- rbind(data_fun("birds", ftype, cc), data_fun("lichens", ftype, cc),
+    data_fun("mites", ftype, cc), data_fun("mosses", ftype, cc),
+    data_fun("vplants", ftype, cc))
+cc <- TRUE
+tmp2 <- rbind(data_fun("birds", ftype, cc), data_fun("lichens", ftype, cc),
+    data_fun("mites", ftype, cc), data_fun("mosses", ftype, cc),
+    data_fun("vplants", ftype, cc))
+
+par(mfrow=c(1,2))
+plot(as.phylo(hclust(vegdist(t(tmp1)), method="ward.D2"), main="All species"),
+    tip.color=col1, font=2, main=ftype)
+plot(as.phylo(hclust(vegdist(t(tmp2)), method="ward.D2"), main="All species"),
+    tip.color=col2, font=2)
+
+
+hclust_fun <- function(taxon, ftype, cc=FALSE) {
+    tmp <- all[[taxon]][[paste0(ftype, "_fire")]]
+    if (cc)
+        tmp <- cbind(tmp, all[[taxon]][[paste0(ftype, "_cc")]])
+    Max <- sapply(all[[taxon]][c("conif_fire", "decid_fire", "pine_fire", "conif_cc",
+        "decid_cc", "pine_cc")], function(z) apply(z, 1, max, na.rm=TRUE))
+    Max <- apply(Max, 1, max)
+    tmp <- tmp / Max
+    hclust(vegdist(t(tmp)), method="ward.D2")
+}
+
+par(mfrow=c(1,2))
+plot(hclust_fun("birds", "conif", FALSE))
+plot(hclust_fun("birds", "conif", TRUE))
+
+par(mfrow=c(1,2))
+plot(hclust_fun("birds", "decid", FALSE))
+plot(hclust_fun("birds", "decid", TRUE))
+
+par(mfrow=c(1,2))
+plot(hclust_fun("birds", "pine", FALSE))
+plot(hclust_fun("birds", "pine", TRUE))
+
+tmp <- all[[1]][["conif_fire"]]
+tmp <- all[[1]][["decid_fire"]]
+#tmp <- all[[1]][["pine_fire"]]
+tmp <- tmp / apply(tmp, 1, max)
+matplot(Age, t(tmp), type="l", lty=1, col=1)
+
+plot(hclust(vegdist(t(tmp)), method="ward.D2"))
+
+library(opticut)
+y <- ifelse(t(tmp) > 0.5, 1, 0)
+y <- y[,sort(colnames(y))]
+oc <- opticut(y ~ 1, strata=Age, dist="binomial")
+plot(oc, sort=F, mar=c(4,8,2,2), cex.axis=0.6, ylab="",cut=-Inf)
+
+for (i in names(fl)) {
+    all[[i]]$spp$upfor <- rowMeans(all[[i]]$hab[,colnames(all[[i]]$hab) %in% upfor], na.rm=TRUE)
+    all[[i]]$spp$lowfor <- rowMeans(all[[i]]$hab[,colnames(all[[i]]$hab) %in% lowfor], na.rm=TRUE)
+    all[[i]]$spp$open <- rowMeans(all[[i]]$hab[,colnames(all[[i]]$hab) %in% open], na.rm=TRUE)
+    tmp <- find_max(all[[i]]$spp[,c("upfor","lowfor","open")])
+    all[[i]]$spp$class <- tmp$index
+}
+
+
 
 ## establish age preference
 
