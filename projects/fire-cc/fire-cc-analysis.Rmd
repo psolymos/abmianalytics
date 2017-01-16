@@ -53,27 +53,15 @@ par(op)
 ```
 
 ```{r echo=FALSE}
-rr <- tanh(0.5 * log(tmp2[,10] / tmp2[,1]))
-boxplot(rr ~ taxon, lt, main=ftype, col="lightgreen",
+lt$rr <- tanh(0.5 * log(tmp2[,10] / tmp2[,1]))
+mx <- find_max(tmp2)
+ii <- as.integer(mx$index) %in% c(1,2,3, 10,11,12)
+boxplot(rr ~ taxon, lt[ii,], main=ftype, col="lightgreen",
     ylab="Cutblock Affinity")
 abline(h=0, col=4, lwd=2)
 ```
 
-```{r echo=FALSE,eval=FALSE}
-d1 <- as.matrix(vegdist(t(tmp1)))
-d1 <- diag(rbind(d1[-1,], d1[1,]))
-d1 <- d1[-length(d1)]
-names(d1) <- paste0(Age[-length(Age)], "-", Age[-1])
 
-d2 <- as.matrix(vegdist(t(tmp2)))
-d2 <- diag(rbind(d2[-1,], d2[1,]))
-d2 <- d2[-length(d2)]
-d2 <- d2[c(9:13, 6:8)]
-names(d2) <- paste0(Age[-length(Age)], "-", Age[-1])
-
-dd <- cbind(Fire=d1, CC=d2)
-barplot(t(dd), ylab="Distance", main=ftype, beside=TRUE)
-```
 
 # White Spruce
 
@@ -97,39 +85,12 @@ par(op)
 ```
 
 ```{r echo=FALSE}
-rr <- tanh(0.5 * log(tmp2[,10] / tmp2[,1]))
-boxplot(rr ~ taxon, lt, main=ftype, col="lightgreen",
+lt$rr <- tanh(0.5 * log(tmp2[,10] / tmp2[,1]))
+mx <- find_max(tmp2)
+ii <- as.integer(mx$index) %in% c(1,2,3, 10,11,12)
+boxplot(rr ~ taxon, lt[ii,], main=ftype, col="lightgreen",
     ylab="Cutblock Affinity")
 abline(h=0, col=4, lwd=2)
-```
-
-```{r echo=FALSE,eval=FALSE}
-d1 <- as.matrix(vegdist(t(tmp1)))
-d1 <- diag(rbind(d1[-1,], d1[1,]))
-d1 <- d1[-length(d1)]
-names(d1) <- paste0(Age[-length(Age)], "-", Age[-1])
-
-d2 <- as.matrix(vegdist(t(tmp2)))
-d2 <- diag(rbind(d2[-1,], d2[1,]))
-d2 <- d2[-length(d2)]
-d2 <- d2[c(9:13, 6:8)]
-names(d2) <- paste0(Age[-length(Age)], "-", Age[-1])
-
-dd <- cbind(Fire=d1, CC=d2)
-barplot(t(dd), ylab="Distance", main=ftype, beside=TRUE)
-```
-
-```{r eval=FALSE,echo=FALSE}
-k1 <- cutree(hclust(vegdist(t(tmp1)), method="ward.D2"), k=3)
-m1 <- groupMeans(as.matrix(tmp1), 2, k1)
-mx1 <- find_max(m1)
-table(mx1$index)
-
-k2 <- cutree(hclust(vegdist(t(tmp2)), method="ward.D2"), k=3)
-m2 <- groupMeans(as.matrix(tmp2), 2, k)
-mx2 <- find_max(m1)
-table(mx1$index)
-
 ```
 
 # Deciduous
@@ -154,26 +115,11 @@ par(op)
 ```
 
 ```{r echo=FALSE}
-rr <- tanh(0.5 * log(tmp2[,10] / tmp2[,1]))
-boxplot(rr ~ taxon, lt, main=ftype, col="lightgreen",
+lt$rr <- tanh(0.5 * log(tmp2[,10] / tmp2[,1]))
+mx <- find_max(tmp2)
+ii <- as.integer(mx$index) %in% c(1,2,3, 10,11,12)
+boxplot(rr ~ taxon, lt[ii,], main=ftype, col="lightgreen",
     ylab="Cutblock Affinity")
 abline(h=0, col=4, lwd=2)
-```
-
-
-```{r echo=FALSE,eval=FALSE}
-d1 <- as.matrix(vegdist(t(tmp1)))
-d1 <- diag(rbind(d1[-1,], d1[1,]))
-d1 <- d1[-length(d1)]
-names(d1) <- paste0(Age[-length(Age)], "-", Age[-1])
-
-d2 <- as.matrix(vegdist(t(tmp2)))
-d2 <- diag(rbind(d2[-1,], d2[1,]))
-d2 <- d2[-length(d2)]
-d2 <- d2[c(9:13, 6:8)]
-names(d2) <- paste0(Age[-length(Age)], "-", Age[-1])
-
-dd <- cbind(Fire=d1, CC=d2)
-barplot(t(dd), ylab="Distance", main=ftype, beside=TRUE)
 ```
 
