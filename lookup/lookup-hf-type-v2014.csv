@@ -1,116 +1,116 @@
-FEATURE_TY,HF_GROUP,Refined,DuplicateFor,Ambiguous,Description
-AIRP-RUNWAY,RoadHardSurface,,,,"An active licensed landing facility for aircraft, usually with paved and lighted runways, an operating control tower, and services for aircraft and passengers."
-BORROWPIT-DRY,BorrowpitsDugoutsSumps,,,,"Dry excavation outside of the road right-of-way, made solely for the purpose of removing or proving borrows material for the construction of the sub-base for a specific roadway project. Areas where soil has been dug out to be used for construction purposes."
-BORROWPITS,BorrowpitsDugoutsSumps,,,,"Includes pits dug to build forestry and well-site roads. They are always associated with a road, are rectangular in shape, and may or may not be filled with water."
-BORROWPIT-WET,BorrowpitsDugoutsSumps,,,,"Excavation filled with water, outside of the road right-of-way, made solely for the purpose of removing or proving borrows material for the construction of the sub-base for a specific roadway project. Areas where soil has been dug out to be used for construction purposes."
-CAMPGROUND,RuralResidentialIndustrial,RuralResidential,,,Disturbed vegetation with frequently changing facilities of RVs and tents used for overnight stay in the outdoors. Most often comprised of several individual clearings surrounded by vegetation and gravel or concrete roads connecting clearings.
-CAMP-INDUSTRIAL,IndustrialSiteRural,IndustrialSiteRuralMisc,,,"Building used for temporary residence by employees on or in close proximity to an industrial activity such as mining, forestry, or oil and gas activities."
-CANAL,Canals,,,,A man-made watercourse built to convey water for irrigation. An irrigation canal is larger than a ditch with reinforced banks that are usually well maintained.
-CFO,HighDensityLivestockOperation,,,,"Confined feeding operations interpreted as the presence of large buildings and fenced pens appearing to be used for the purpose of feeding and confining pigs, poultry, or cows."
-CLEARING-UNKNOWN,OtherDisturbedVegetation,,,,"A human-made clearing with unknown purposes and contains no visible buildings, fences or equipment."
-CLEARING-WELLPAD-UNCONFIRMED,OtherDisturbedVegetation,,,,"Roughly square in shape clearing, roughly 90-120 meters wide (approximately 1 ha)."
-COUNTRY-RESIDENCE,RuralResidentialIndustrial,RuralResidential,,,Developments having a density of 10 - 100 residential buildings per quarter section.
-CROP,CultivationCropPastureBareground,CultivationCrop,,,"Agricultural land designated and cultivated for cereal crops and food production. Land surface has been broken and crop seeded and harvested, leaving visible swath or till lines in imagery."
-CULTIVATION_ABANDONED,CultivationCropPastureBareground,CultivationAbandoned,,,"Agricultural land that has been formally seeded and tilled, but no evidence of present day production use. Landscape appears to have a heterogeneous mix of vegetation and closely resembles natural cover."
-CUTBLOCK,CutBlocks,,,,"Areas where forestry operations have occurred (clearcuts, selective harvest, salvage logging, etc.)."
-DISTURB_VEG,OtherDisturbedVegetation,,,,Disturbed vegetation that does not fit any other category of human footprint.
-DUGOUT,BorrowpitsDugoutsSumps,,,,"Excavations typically associated with agriculture and rural residence, constructed to catch off water for use by livestock."
-FACILITY-OTHER,IndustrialSiteRural,IndustrialSiteRuralMisc,,,Industrial facility characterized by large non-residential buildings most often surrounded by concrete for parking purposes. The purpose of the facility is not disclosed.
-FACILITY-UNKNOWN,IndustrialSiteRural,IndustrialSiteRuralMisc,,,Industrial facility characterized by large non-residential buildings most often surrounded by concrete for parking purposes. The purpose of the facility is unknown.
-GOLFCOURSE,RuralResidentialIndustrial,RuralResidential,,,Large recreational area comprised of a series of grass patches surrounded by trees.
-GREENSPACE,RuralResidentialIndustrial,RuralResidential,,,"Greenspace used for recreation within a residential area that does not fit into other categories (e.g. grave yards , baseball diamonds, parks, shelterbelts, ski hills, DND exercise areas, clearings from old industrial activity that is now vegetated)."
-GRVL-SAND-PIT,MineSite,,,,"An area of surface disturbance for the purpose of extracting sand and/or gravel consistently open and/or expanding over multiple years, usually close to lakes or rivers."
-INTERCHANGE-RAMP,RoadHardSurface,,,,"A series of roadways/ramps (>20m wide) constructed to permit access to and from intersecting paved roads. These ramps are usually at different levels, and form an overpass/underpass."
-LAGOON,MunicipalWaterSewage,,,,Artificial holding or treatment ponds for agricultural or municipal wastewater. Human made water and sewage lagoons used for municipal purposes.
-LANDFILL,OtherDisturbedVegetation,,,,"Large area of raised land, indicating buried garbage. Some landfills have evidence of surface revegetation and garbage dispersed throughout designated extent. They may also have large perimeter berms or fences."
-LOW-IMPACT-SEISMIC,SeismicLine,SeismicLineNarrow,,,"Can vary in width from 1-4.5 meters, lines are buffered to a total width of 2.5 meters. Only the lines visible from the imagery are included in the dataset."
-MILL,IndustrialSiteRural,IndustrialSiteRuralForestry,,,Intense industrial & commercial development for the purpose of pulp or paper production.
-MINES-COAL,MineSite,,,,Heavy industry use with vegetated and/or vegetated ground and low human density for the purpose of coal mining.
-MINES-OILSANDS,MineSite,,,,Heavy industry use with vegetated and/or vegetated ground and low human density for oil sand mining.
-MINES-PITLAKE,MineSite,,,,Body of water on/in close proximity to an active mine. Areas of ground that were surface water is collected into the existing mine pit usually after mining activity is finished.
-MISC-OIL-GAS-FACILITY,IndustrialSiteRural,IndustrialSiteRuralEnergy,,,Industrial facility used for the purpose of oil and gas.
-OIL-GAS-PLANT,IndustrialSiteRural,IndustrialSiteRuralEnergy,,,Industrial facility used for oil production.
-OPEN-PIT-MINE,MineSite,,,,"An area of surface disturbance for the purpose of mining (with the exception of sand and/or gravel), consistently open and/or expanding over multiple years, usually close to lakes or rivers."
-PEAT,PeatMine,,,,"An area of surface disturbance for the purpose of mining peat, consistently open and/or expanding over multiple years, usually in bogs or fens."
-PIPELINE,Pipeline,,,,"A line of pipes, of substantial length and capacity, used for the conveyance of petrochemicals."
-PRE-LOW-IMPACT-SEISMIC,SeismicLine,SeismicLineWide,,,A polygon feature class derived from a 3-meter buffer (6 meter total length) of a pre-low-impact-seismic centerline.
-RECREATION,OtherDisturbedVegetation,,,,"Urban/rural greenspace and recreation that does not fit into other categories (e.g. grave yards, baseball diamonds, parks, shelterbelts, ski hills, DND exercise areas, clearings from old industrial activity that is now vegetated). This layer was also used to identify green-space features that do not fit into other categories such as storage areas and parking lots."
-RESERVOIR,Reservoirs,,,,A body of water created by excavation or the man-made damming of a river or stream
-RESIDENCE_CLEARING,OtherDisturbedVegetation,,,,Areas cleared for building developments that do not yet have any buildings.
-RIS-AIRP-RUNWAY,RoadHardSurface,,,,Identifies operator owned landing facility for airplanes and related transportation
-RIS-BORROWPITS,BorrowpitsDugoutsSumps,,,,Identifies any area disturbed for the purpose of extraction of aggregate materials including gravel pits.
-RIS-CAMP-INDUSTRIAL,IndustrialSiteRural,IndustrialSiteRuralMisc,,,Identifies area disturbed for the purposes of housing camp workers.
-RIS-CLEARING-UNKNOWN,OtherDisturbedVegetation,,,,"Identifies all areas where vegetation has been removed for the purposes of preparing the land for drainage, soil removal, overburden removal, mining, etc. but where soil has been left mostly intact and relatively undisturbed.  May include any or all of tree removal, shrub removal, and/or grubbing (stump removal). Identifies areas cleared for by other industry and not for the purposes of forest harvesting or for oil sands development."
-RIS-DRAINAGE,Reservoirs,ArtificialDrainage,,,Identifies surface disturbance for the purpose of managing surface water features.
-RIS-FACILITY-OPERATIONS,IndustrialSiteRural,IndustrialSiteRuralMisc,,,"Designated for areas which are not part of the plant site, e.g., may include laydown areas not integrated with the main plant site(s), tailings lines, water lines, compressor station, buildings away from the main plant site, flare stack, communications tower."
-RIS-FACILITY-UNKNOWN,IndustrialSiteRural,IndustrialSiteRuralMisc,,Misc or Energy?,Identifies areas where the reclamation liability associated for the disturbance is currently held by another industry operator.
-RIS-MINES-OILSANDS,MineSite,,,,"Identifies areas where overburden removal has commenced for the purposes of preparing an area for open pit mining and all mine pit features. Smaller features within the mine pit (e.g., crusher, hydro-transporter) don’t need to be reported as separate polygons but can be included in the mine pit polygon."
-RIS-OILSANDS-RMS,MineSite,,,,Identifies reclamation material stockpiles (RMS). Each RMS may have several material types and corresponding volumes identified in the associated “RMS” simple table and “RMS_Type” coded value domain.
-RIS-OVERBURDEN-DUMP,MineSite,,,,Includes all areas where overburden and interburden is placed out-of-pit or in-pit for disposal. Overburden placed in-pit for the purposes of dyke construction can be categorized under the “Tailings” simple table and associated coded value domains.
-RIS-PIPELINE,Pipeline,,,,Includes areas disturbed for pipelines and the right of way area designated for pipeline
-RIS-PLANT,IndustrialSiteRural,IndustrialSiteRuralEnergy,,,"Includes areas associated with extraction, processing, upgrader.  Plant sites may be multiple non-contiguous polygons if that is meaningful. Upgrading, extraction activities need not be divided up into separate features (mines only)."
-RIS-RECLAIMED-CERTIFIED,WellSite,,Is this WellSite?,,Identifies polygons of reclaimed areas which have received a reclamation certificate.
-RIS-RECLAIMED-PERMANENT,WellSite,,Is this WellSite?,,"Identifies polygons which meet the definition of permanent reclamation - land is considered permanently reclaimed when landform construction and contouring, clean material placement (as required), reclamation material placement and revegetation has taken place."
-RIS-RECLAIMED-TEMP,WellSite,,Is this WellSite?,,"Identifies polygons which meet the definition of temporary reclamation - areas being managed where vegetation has been seeded, planted, or ingressed, where there is an expectation that future disturbance may occur at that location. This does not include cleared areas (planned for future disturbance) that have naturally revegetated through ingress."
-RIS-RECLAIM-READY,WellSite,,Is this WellSite?,,"Identifies areas where landform construction has been completed and the site is ready for clean cap, subsoil and surface soil placement. This definition is consistent with that used for annual reporting which identifies land 'no longer required for mine or plant purposes and available for reclamation but where reclamation activities have not yet commenced.'"
-RIS-RESERVOIR,Reservoirs,,,,Identifies surface disturbance for the purpose of managing surface water features.
-RIS-ROAD,RoadHardSurface,,,,"Identifies roads that are not specifically part of other disturbed features. For example, roads through other 'disturbed'� features do not need to be identified (i.e., roads in the plant site can be part of the plant site polygon)."
-RIS-SOIL-REPLACED,OtherDisturbedVegetation,,,,Identifies areas which have had subsoil or topsoil placed and which have not been revegetated.
-RIS-SOIL-SALVAGED,OtherDisturbedVegetation,,,,Identifies areas where soil salvage is occurring but where overburden removal has not commenced.
-RIS-TAILING-POND,MineSite,,,,"Identifies all areas associated with tailings including toe berms, dykes, beaches, ponds and drying areas."
-RIS-TANK-FARM,IndustrialSiteRural,IndustrialSiteRuralEnergy,,,Identifies areas where products of extraction or upgrading are stored. Product stored for on-site use can be identified under plant site or operations.
-RIS-TRANSMISSION-LINE,TransmissionLine,,,,Include the right of way area designated for the powerline.
-RIS-UTILITIES,IndustrialSiteRural,IndustrialSiteRuralEnergy,,,"Identifies areas specifically disturbed for the purposes of utilities (power generation). If these cannot be distinguished from the plant site, then they can be identified as plant site."
-RIS-WASTE,MineSite,,,,"Identifies all areas associated with waste and byproduct storage on-site. Polygons identified as waste link to the ""Waste"" simpletable and ""Waste and Byproduct Description"" coded domain value."
-RIS-WELL,WellSite,,,,"Identifies areas disturbed for the purpose of establishing exploration, production or disposal wells. Links to the wellsite simpletable and associated coded domain values."
-RIS-WINDROW,OtherDisturbedVegetation,,,,Includes areas where a line of reclamation material (soil or vegetation) is heaped up by a machine.
-RLWY-ABANDONED,RailHardSurface,,,,"An abandoned track for trains and associated gravel pad (10-20m wide). This consists of parallel steel rails, supported on wooden crossbeams, which are no longer in use. The abandoned railway either can be single line (one parallel set of tracks) or double line (two parallel sets of tracks)."
-RLWY-DBL-TRACK,RailHardSurface,,,,"A track for trains and associated gravel pad, >20m wide. This consists of 2 sets of parallel steel rails, supported on wooden crossbeams."
-RLWY-MLT-TRACK,RailHardSurface,,,,"A track for trains and associated gravel pad, >20m wide. This consists of more than 2 sets of parallel steel rails, supported on wooden crossbeams."
-RLWY-SGL-TRACK,RailHardSurface,,,,"A track for trains and associated gravel pad, >20m wide. This consists of 1 set of parallel steel rails, supported on wooden crossbeams."
-RLWY-SPUR,RailHardSurface,,,,"A short length of railway leading off a main line, to a dead end.  Spur lines usually lead to a commercial/industrial site, or may be used as a turn-around along a rail line."
-ROAD-GRAVEL-1L,RoadHardSurface,,,,"A roadway surfaced with gravel and constituted as a main access route. The road surface is about 6m in width, and the road clearing is about 20m or greater in width. The surface, ditches, bridges and intersections are in good condition."
-ROAD-GRAVEL-2L,RoadHardSurface,,,,"A roadway surfaced with gravel and constituted as a main access route. The road surface is 7m or greater in width, and the road clearing is 30m or greater in width. The surface, ditches, bridges and intersections are in good condition."
-ROAD-PAVED-1L,RoadHardSurface,,,,"A roadway surfaced with gravel and constituted as a main access route. The road surface is about 6m in width, and the road clearing is about 5-20m in width. The surface, ditches, bridges and intersections are in good condition."
-ROAD-PAVED-2L,RoadHardSurface,,,,"A roadway surfaced with gravel and constituted as a main access route. The road surface is 7m or greater in width, and the road clearing is 30m or greater in width. The surface, ditches, bridges and intersections are in good condition."
-ROAD-PAVED-3L,RoadHardSurface,,,,"A roadway (>20m wide), paved with asphalt or concrete, and consisting of 3 adjacent lanes and constituted as a main access route. The surface, ditches, bridges and intersections are in good condition."
-ROAD-PAVED-4L,RoadHardSurface,,,,"A roadway (>20m wide), paved with asphalt or concrete, and consisting of 4 adjacent lanes. The surface, ditches, bridges and intersections are in good condition."
-ROAD-PAVED-5L,RoadHardSurface,,,,"A roadway (>20m wide), paved with asphalt or concrete, and consisting of 5 adjacent lanes and constituted as a main access route. The surface, ditches, bridges and intersections are in good condition."
-ROAD-PAVED-6L,RoadHardSurface,,,,"A roadway (>20m wide), paved with asphalt or concrete, and consisting of 6 adjacent lanes and constituted as a main access route. The surface, ditches, bridges and intersections are in good condition."
-ROAD-PAVED-7L,RoadHardSurface,,,,"A roadway (>20m wide), paved with asphalt or concrete, and consisting of 7 adjacent lanes and constituted as a main access route. The surface, ditches, bridges and intersections are in good condition."
-ROAD-PAVED-DIV,RoadHardSurface,,,,"A major roadway, which is paved with asphalt or concrete, and consists of 2 roadbeds separated by a median. Each road bed usually consists of 2 or more lanes."
-ROAD-PAVED-UNDIV-1L,RoadHardSurface,,,,"A roadway (10-20m wide), paved with asphalt or concrete, consisting of 1 lane, and usually found servicing rural acreages that are close to large urban centres."
-ROAD-PAVED-UNDIV-2L,RoadHardSurface,,,,"A roadway (>20m wide), paved with asphalt or concrete, and consisting of 2 adjacent lanes, with no median to separate them."
-ROAD-PAVED-UNDIV-4L,RoadHardSurface,,,,"A roadway (>20m wide), paved with asphalt or concrete, and consisting of 4 adjacent lanes, with no median to separate them."
-ROAD-UNCLASSIFIED,RoadTrailVegetated,,,,"Vegetated Road (10-20m wide). Roads, trails and paths with unimproved surfaces."
-ROAD-UNIMPROVED,RoadTrailVegetated,,,,"A roadway surfaced with dirt and constituted as a minor access route. The road surface is up to 7m in width, and the road clearing is up to 20m in width. The surface and ditches are poorly maintained, and the bridges are narrow."
-ROAD-UNPAVED-1L,RoadHardSurface,,RoadTrailVegetated or RoadHardSurface?,,A roadway surfaced with dirt (10-20m wide) consisting of 1 lanes.
-ROAD-UNPAVED-2L,RoadHardSurface,,RoadTrailVegetated or RoadHardSurface?,,A roadway surfaced with dirt (>20m wide) consisting of 2 lanes.
-ROAD-WINTER-ACCESS,RoadTrailVegetated,,,,"A roadway used only in winter, crossing water bodies or wet areas must be frozen for safe travel."
-ROUGH_PASTURE,CultivationCropPastureBareground,CultivationRoughPasture,,,Land cleared of vegetation with no ground breakage. No tilling or seeding has taken place historically. May have few shrubs and trees present.
-RUNWAY,RoadTrailVegetated,,,,Vegetated runway.
-RURAL-RESIDENCE,RuralResidentialIndustrial,RuralResidential,,,Includes all rural dwellings and buildings that are of a density less than ten buildings per quarter section.
-SUMP,BorrowpitsDugoutsSumps,,,,An artificial holding or treatment ponds for industrial wastewater on/adjacent to/in proximity to a well site. Drilling waste storage system – holding of drilling waste on well sites or remotely. Either earthen excavation (in clayey soils) or sumps lined with a synthetic liner.
-SURROUNDING-VEG,OtherDisturbedVegetation,,,,Disturbed vegetation surrounding an airport runway and other industrial features.
-TAILING-PILE,MineSite,,,,An area used to store waste materials produced in mining processes.
-TAILING-POND,MineSite,,,,"Body of water on/in close proximity to an oil sands mine somprised of acids, benzene, hydrocarbons, residual bitumen, fine silts, and water."
-TAME_PASTURE,CultivationCropPastureBareground,CultivationTamePasture,,,Agricultural land that has been cleared of surface vegetation and tilled. Seeded with grass species or alfalfa. Typically used to graze livestock-evidence of livestock may be present; or used for livestock feed production.
-TRAIL,RoadTrailVegetated,,,,"Some trails are from abandoned linear features such as roads, seismic lines, or other industrial trails. Most often these lines are not straight. Trails could either be used for recreation or industrial purposes. Any line with a line sinuosity (percent difference between the actual length of the line and the straight-line distance from the start and end nodes) greater than 1.001 is a potential trail."
-TRAIL-ATV,RoadTrailVegetated,,,,"A trail primarily used for ATV activities, generally with a vegetated surface. Most often <5m in width and does not conform to a straight line."
-TRANSFER_STATION,RuralResidentialIndustrial,RurallIndustrial,,,"Small area of land, less than one hectare, usually fenced with a U-shaped road and two entry ways. One small rectangular building. Used primarily for garbage drop-off and located close to municipalities or present in rural areas."
-TRANSMISSION-LINE,TransmissionLine,,,,"A utility corridor >10m wide with poles, towers and lines for transmitting high voltage electricity (voltage greater than 69 kV)."
-TRUCK-TRAIL,RoadTrailVegetated,,,,"A roadway surfaced with dirt or low vegetation and constituted as a minor access route. The road clearing is 6m or greater in width. Streams are generally forded, and ditches are few."
-URBAN-INDUSTRIAL,Urban,UrbanIndustrial,,,An industrial building within the boundary of an urban residence.
-URBAN-RESIDENCE,Urban,UrbanResidence,,,A polygon was drawn around areas having >100 buildings per quarter section of residential development. Areas within the urban/residential polygons >5ha with natural vegetation were excluded.
-VEGETATED-EDGE-RAILWAYS,RailVegetatedVerge,,,,Disturbed vegetation alongside railway edges.
-VEGETATED-EDGE-ROADS,RoadVegetatedVerge,,,,Disturbed vegetation alongside road edges.
-WELL-ABAND,WellSite,,,,Ground cleared for an oil/gas well pad where the well is currently abandoned.
-WELL-CLEARED-DRILLED,WellSite,,,,Confirmation of drilling and the boundary outline are provided by reference sources.
-WELL-CLEARED-NOT-DRILLED,WellSite,,,,Confirmation of drilling and the boundary outline are provided by reference sources.
-WELL-DRILLED-OTHER,WellSite,,,,Confirmation of drilling and the boundary outline are provided by reference sources.
-WELL-GAS,WellSite,,,,Ground cleared for a gas well pad.
-WELL-OIL,WellSite,,,,Ground cleared for an oil well pad.
-WELL-OTHER,WellSite,,,,"Clearing, purpose is unknown"
-WINDMILLS,WindGenerationFacility,,,,"Wind turbines, operational or former, visible on imagery. Digitized to represent original land disturbance from construction."
-WELL-CASED,WellSite,,,,
-WELL-BIT,WellSite,,,,
+FEATURE_TY,HF_GROUP,Refined,DuplicateFor,Remarks,Ambiguous,Description
+AIRP-RUNWAY,RoadHardSurface,,,,,"An active licensed landing facility for aircraft, usually with paved and lighted runways, an operating control tower, and services for aircraft and passengers."
+BORROWPIT-DRY,BorrowpitsDugoutsSumps,,,,,"Dry excavation outside of the road right-of-way, made solely for the purpose of removing or proving borrows material for the construction of the sub-base for a specific roadway project. Areas where soil has been dug out to be used for construction purposes."
+BORROWPITS,BorrowpitsDugoutsSumps,,,,,"Includes pits dug to build forestry and well-site roads. They are always associated with a road, are rectangular in shape, and may or may not be filled with water."
+BORROWPIT-WET,BorrowpitsDugoutsSumps,,,,,"Excavation filled with water, outside of the road right-of-way, made solely for the purpose of removing or proving borrows material for the construction of the sub-base for a specific roadway project. Areas where soil has been dug out to be used for construction purposes."
+CAMPGROUND,RuralResidentialIndustrial,RuralResidential,,,,Disturbed vegetation with frequently changing facilities of RVs and tents used for overnight stay in the outdoors. Most often comprised of several individual clearings surrounded by vegetation and gravel or concrete roads connecting clearings.
+CAMP-INDUSTRIAL,IndustrialSiteRural,IndustrialSiteRuralMisc,,,,"Building used for temporary residence by employees on or in close proximity to an industrial activity such as mining, forestry, or oil and gas activities."
+CANAL,Canals,,,,,A man-made watercourse built to convey water for irrigation. An irrigation canal is larger than a ditch with reinforced banks that are usually well maintained.
+CFO,HighDensityLivestockOperation,,,,,"Confined feeding operations interpreted as the presence of large buildings and fenced pens appearing to be used for the purpose of feeding and confining pigs, poultry, or cows."
+CLEARING-UNKNOWN,OtherDisturbedVegetation,,,,,"A human-made clearing with unknown purposes and contains no visible buildings, fences or equipment."
+CLEARING-WELLPAD-UNCONFIRMED,OtherDisturbedVegetation,,,,,"Roughly square in shape clearing, roughly 90-120 meters wide (approximately 1 ha)."
+COUNTRY-RESIDENCE,RuralResidentialIndustrial,RuralResidential,,,,Developments having a density of 10 - 100 residential buildings per quarter section.
+CROP,CultivationCropPastureBareground,CultivationCrop,,Use it as Cultivation only?,,"Agricultural land designated and cultivated for cereal crops and food production. Land surface has been broken and crop seeded and harvested, leaving visible swath or till lines in imagery."
+CULTIVATION_ABANDONED,CultivationCropPastureBareground,CultivationAbandoned,,Use it as Cultivation only?,,"Agricultural land that has been formally seeded and tilled, but no evidence of present day production use. Landscape appears to have a heterogeneous mix of vegetation and closely resembles natural cover."
+CUTBLOCK,CutBlocks,,,,,"Areas where forestry operations have occurred (clearcuts, selective harvest, salvage logging, etc.)."
+DISTURB_VEG,OtherDisturbedVegetation,,,,,Disturbed vegetation that does not fit any other category of human footprint.
+DUGOUT,BorrowpitsDugoutsSumps,,,,,"Excavations typically associated with agriculture and rural residence, constructed to catch off water for use by livestock."
+FACILITY-OTHER,IndustrialSiteRural,IndustrialSiteRuralMisc,,,,Industrial facility characterized by large non-residential buildings most often surrounded by concrete for parking purposes. The purpose of the facility is not disclosed.
+FACILITY-UNKNOWN,IndustrialSiteRural,IndustrialSiteRuralMisc,,,,Industrial facility characterized by large non-residential buildings most often surrounded by concrete for parking purposes. The purpose of the facility is unknown.
+GOLFCOURSE,RuralResidentialIndustrial,RuralResidential,,,,Large recreational area comprised of a series of grass patches surrounded by trees.
+GREENSPACE,RuralResidentialIndustrial,RuralResidential,,,,"Greenspace used for recreation within a residential area that does not fit into other categories (e.g. grave yards , baseball diamonds, parks, shelterbelts, ski hills, DND exercise areas, clearings from old industrial activity that is now vegetated)."
+GRVL-SAND-PIT,MineSite,,,,,"An area of surface disturbance for the purpose of extracting sand and/or gravel consistently open and/or expanding over multiple years, usually close to lakes or rivers."
+INTERCHANGE-RAMP,RoadHardSurface,,,,,"A series of roadways/ramps (>20m wide) constructed to permit access to and from intersecting paved roads. These ramps are usually at different levels, and form an overpass/underpass."
+LAGOON,MunicipalWaterSewage,,,,,Artificial holding or treatment ponds for agricultural or municipal wastewater. Human made water and sewage lagoons used for municipal purposes.
+LANDFILL,OtherDisturbedVegetation,,,,,"Large area of raised land, indicating buried garbage. Some landfills have evidence of surface revegetation and garbage dispersed throughout designated extent. They may also have large perimeter berms or fences."
+LOW-IMPACT-SEISMIC,SeismicLine,SeismicLineNarrow,,,,"Can vary in width from 1-4.5 meters, lines are buffered to a total width of 2.5 meters. Only the lines visible from the imagery are included in the dataset."
+MILL,IndustrialSiteRural,IndustrialSiteRuralForestry,,,,Intense industrial & commercial development for the purpose of pulp or paper production.
+MINES-COAL,MineSite,,,,,Heavy industry use with vegetated and/or vegetated ground and low human density for the purpose of coal mining.
+MINES-OILSANDS,MineSite,,,,,Heavy industry use with vegetated and/or vegetated ground and low human density for oil sand mining.
+MINES-PITLAKE,MineSite,,,,,Body of water on/in close proximity to an active mine. Areas of ground that were surface water is collected into the existing mine pit usually after mining activity is finished.
+MISC-OIL-GAS-FACILITY,IndustrialSiteRural,IndustrialSiteRuralEnergy,,,,Industrial facility used for the purpose of oil and gas.
+OIL-GAS-PLANT,IndustrialSiteRural,IndustrialSiteRuralEnergy,,,,Industrial facility used for oil production.
+OPEN-PIT-MINE,MineSite,,,,,"An area of surface disturbance for the purpose of mining (with the exception of sand and/or gravel), consistently open and/or expanding over multiple years, usually close to lakes or rivers."
+PEAT,PeatMine,,,,,"An area of surface disturbance for the purpose of mining peat, consistently open and/or expanding over multiple years, usually in bogs or fens."
+PIPELINE,Pipeline,,,,,"A line of pipes, of substantial length and capacity, used for the conveyance of petrochemicals."
+PRE-LOW-IMPACT-SEISMIC,SeismicLine,SeismicLineWide,,,,A polygon feature class derived from a 3-meter buffer (6 meter total length) of a pre-low-impact-seismic centerline.
+RECREATION,OtherDisturbedVegetation,,,,,"Urban/rural greenspace and recreation that does not fit into other categories (e.g. grave yards, baseball diamonds, parks, shelterbelts, ski hills, DND exercise areas, clearings from old industrial activity that is now vegetated). This layer was also used to identify green-space features that do not fit into other categories such as storage areas and parking lots."
+RESERVOIR,Reservoirs,,,,,A body of water created by excavation or the man-made damming of a river or stream
+RESIDENCE_CLEARING,OtherDisturbedVegetation,,,,,Areas cleared for building developments that do not yet have any buildings.
+RIS-AIRP-RUNWAY,RoadHardSurface,,,,,Identifies operator owned landing facility for airplanes and related transportation
+RIS-BORROWPITS,BorrowpitsDugoutsSumps,,,,,Identifies any area disturbed for the purpose of extraction of aggregate materials including gravel pits.
+RIS-CAMP-INDUSTRIAL,IndustrialSiteRural,IndustrialSiteRuralMisc,,,,Identifies area disturbed for the purposes of housing camp workers.
+RIS-CLEARING-UNKNOWN,OtherDisturbedVegetation,,,,,"Identifies all areas where vegetation has been removed for the purposes of preparing the land for drainage, soil removal, overburden removal, mining, etc. but where soil has been left mostly intact and relatively undisturbed.  May include any or all of tree removal, shrub removal, and/or grubbing (stump removal). Identifies areas cleared for by other industry and not for the purposes of forest harvesting or for oil sands development."
+RIS-DRAINAGE,Reservoirs,ArtificialDrainage,,,,Identifies surface disturbance for the purpose of managing surface water features.
+RIS-FACILITY-OPERATIONS,IndustrialSiteRural,IndustrialSiteRuralMisc,,,,"Designated for areas which are not part of the plant site, e.g., may include laydown areas not integrated with the main plant site(s), tailings lines, water lines, compressor station, buildings away from the main plant site, flare stack, communications tower."
+RIS-FACILITY-UNKNOWN,IndustrialSiteRural,IndustrialSiteRuralMisc,,,Misc or Energy?,Identifies areas where the reclamation liability associated for the disturbance is currently held by another industry operator.
+RIS-MINES-OILSANDS,MineSite,,,,,"Identifies areas where overburden removal has commenced for the purposes of preparing an area for open pit mining and all mine pit features. Smaller features within the mine pit (e.g., crusher, hydro-transporter) don’t need to be reported as separate polygons but can be included in the mine pit polygon."
+RIS-OILSANDS-RMS,MineSite,,,,,Identifies reclamation material stockpiles (RMS). Each RMS may have several material types and corresponding volumes identified in the associated “RMS” simple table and “RMS_Type” coded value domain.
+RIS-OVERBURDEN-DUMP,MineSite,,,,,Includes all areas where overburden and interburden is placed out-of-pit or in-pit for disposal. Overburden placed in-pit for the purposes of dyke construction can be categorized under the “Tailings” simple table and associated coded value domains.
+RIS-PIPELINE,Pipeline,,,,,Includes areas disturbed for pipelines and the right of way area designated for pipeline
+RIS-PLANT,IndustrialSiteRural,IndustrialSiteRuralEnergy,,,,"Includes areas associated with extraction, processing, upgrader.  Plant sites may be multiple non-contiguous polygons if that is meaningful. Upgrading, extraction activities need not be divided up into separate features (mines only)."
+RIS-RECLAIMED-CERTIFIED,WellSite,,,Is this WellSite?,,Identifies polygons of reclaimed areas which have received a reclamation certificate.
+RIS-RECLAIMED-PERMANENT,WellSite,,,Is this WellSite?,,"Identifies polygons which meet the definition of permanent reclamation - land is considered permanently reclaimed when landform construction and contouring, clean material placement (as required), reclamation material placement and revegetation has taken place."
+RIS-RECLAIMED-TEMP,WellSite,,,Is this WellSite?,,"Identifies polygons which meet the definition of temporary reclamation - areas being managed where vegetation has been seeded, planted, or ingressed, where there is an expectation that future disturbance may occur at that location. This does not include cleared areas (planned for future disturbance) that have naturally revegetated through ingress."
+RIS-RECLAIM-READY,WellSite,,,Is this WellSite?,,"Identifies areas where landform construction has been completed and the site is ready for clean cap, subsoil and surface soil placement. This definition is consistent with that used for annual reporting which identifies land 'no longer required for mine or plant purposes and available for reclamation but where reclamation activities have not yet commenced.'"
+RIS-RESERVOIR,Reservoirs,,,,,Identifies surface disturbance for the purpose of managing surface water features.
+RIS-ROAD,RoadHardSurface,,,,,"Identifies roads that are not specifically part of other disturbed features. For example, roads through other 'disturbed'� features do not need to be identified (i.e., roads in the plant site can be part of the plant site polygon)."
+RIS-SOIL-REPLACED,OtherDisturbedVegetation,,,,,Identifies areas which have had subsoil or topsoil placed and which have not been revegetated.
+RIS-SOIL-SALVAGED,OtherDisturbedVegetation,,,,,Identifies areas where soil salvage is occurring but where overburden removal has not commenced.
+RIS-TAILING-POND,MineSite,,,,,"Identifies all areas associated with tailings including toe berms, dykes, beaches, ponds and drying areas."
+RIS-TANK-FARM,IndustrialSiteRural,IndustrialSiteRuralEnergy,,,,Identifies areas where products of extraction or upgrading are stored. Product stored for on-site use can be identified under plant site or operations.
+RIS-TRANSMISSION-LINE,TransmissionLine,,,,,Include the right of way area designated for the powerline.
+RIS-UTILITIES,IndustrialSiteRural,IndustrialSiteRuralEnergy,,,,"Identifies areas specifically disturbed for the purposes of utilities (power generation). If these cannot be distinguished from the plant site, then they can be identified as plant site."
+RIS-WASTE,MineSite,,,,,"Identifies all areas associated with waste and byproduct storage on-site. Polygons identified as waste link to the ""Waste"" simpletable and ""Waste and Byproduct Description"" coded domain value."
+RIS-WELL,WellSite,,,,,"Identifies areas disturbed for the purpose of establishing exploration, production or disposal wells. Links to the wellsite simpletable and associated coded domain values."
+RIS-WINDROW,OtherDisturbedVegetation,,,,,Includes areas where a line of reclamation material (soil or vegetation) is heaped up by a machine.
+RLWY-ABANDONED,RailHardSurface,,,,,"An abandoned track for trains and associated gravel pad (10-20m wide). This consists of parallel steel rails, supported on wooden crossbeams, which are no longer in use. The abandoned railway either can be single line (one parallel set of tracks) or double line (two parallel sets of tracks)."
+RLWY-DBL-TRACK,RailHardSurface,,,,,"A track for trains and associated gravel pad, >20m wide. This consists of 2 sets of parallel steel rails, supported on wooden crossbeams."
+RLWY-MLT-TRACK,RailHardSurface,,,,,"A track for trains and associated gravel pad, >20m wide. This consists of more than 2 sets of parallel steel rails, supported on wooden crossbeams."
+RLWY-SGL-TRACK,RailHardSurface,,,,,"A track for trains and associated gravel pad, >20m wide. This consists of 1 set of parallel steel rails, supported on wooden crossbeams."
+RLWY-SPUR,RailHardSurface,,,,,"A short length of railway leading off a main line, to a dead end.  Spur lines usually lead to a commercial/industrial site, or may be used as a turn-around along a rail line."
+ROAD-GRAVEL-1L,RoadHardSurface,,,,,"A roadway surfaced with gravel and constituted as a main access route. The road surface is about 6m in width, and the road clearing is about 20m or greater in width. The surface, ditches, bridges and intersections are in good condition."
+ROAD-GRAVEL-2L,RoadHardSurface,,,,,"A roadway surfaced with gravel and constituted as a main access route. The road surface is 7m or greater in width, and the road clearing is 30m or greater in width. The surface, ditches, bridges and intersections are in good condition."
+ROAD-PAVED-1L,RoadHardSurface,,,,,"A roadway surfaced with gravel and constituted as a main access route. The road surface is about 6m in width, and the road clearing is about 5-20m in width. The surface, ditches, bridges and intersections are in good condition."
+ROAD-PAVED-2L,RoadHardSurface,,,,,"A roadway surfaced with gravel and constituted as a main access route. The road surface is 7m or greater in width, and the road clearing is 30m or greater in width. The surface, ditches, bridges and intersections are in good condition."
+ROAD-PAVED-3L,RoadHardSurface,,,,,"A roadway (>20m wide), paved with asphalt or concrete, and consisting of 3 adjacent lanes and constituted as a main access route. The surface, ditches, bridges and intersections are in good condition."
+ROAD-PAVED-4L,RoadHardSurface,,,,,"A roadway (>20m wide), paved with asphalt or concrete, and consisting of 4 adjacent lanes. The surface, ditches, bridges and intersections are in good condition."
+ROAD-PAVED-5L,RoadHardSurface,,,,,"A roadway (>20m wide), paved with asphalt or concrete, and consisting of 5 adjacent lanes and constituted as a main access route. The surface, ditches, bridges and intersections are in good condition."
+ROAD-PAVED-6L,RoadHardSurface,,,,,"A roadway (>20m wide), paved with asphalt or concrete, and consisting of 6 adjacent lanes and constituted as a main access route. The surface, ditches, bridges and intersections are in good condition."
+ROAD-PAVED-7L,RoadHardSurface,,,,,"A roadway (>20m wide), paved with asphalt or concrete, and consisting of 7 adjacent lanes and constituted as a main access route. The surface, ditches, bridges and intersections are in good condition."
+ROAD-PAVED-DIV,RoadHardSurface,,,,,"A major roadway, which is paved with asphalt or concrete, and consists of 2 roadbeds separated by a median. Each road bed usually consists of 2 or more lanes."
+ROAD-PAVED-UNDIV-1L,RoadHardSurface,,,,,"A roadway (10-20m wide), paved with asphalt or concrete, consisting of 1 lane, and usually found servicing rural acreages that are close to large urban centres."
+ROAD-PAVED-UNDIV-2L,RoadHardSurface,,,,,"A roadway (>20m wide), paved with asphalt or concrete, and consisting of 2 adjacent lanes, with no median to separate them."
+ROAD-PAVED-UNDIV-4L,RoadHardSurface,,,,,"A roadway (>20m wide), paved with asphalt or concrete, and consisting of 4 adjacent lanes, with no median to separate them."
+ROAD-UNCLASSIFIED,RoadTrailVegetated,,,,,"Vegetated Road (10-20m wide). Roads, trails and paths with unimproved surfaces."
+ROAD-UNIMPROVED,RoadTrailVegetated,,,,,"A roadway surfaced with dirt and constituted as a minor access route. The road surface is up to 7m in width, and the road clearing is up to 20m in width. The surface and ditches are poorly maintained, and the bridges are narrow."
+ROAD-UNPAVED-1L,RoadHardSurface,,,RoadTrailVegetated or RoadHardSurface?,,A roadway surfaced with dirt (10-20m wide) consisting of 1 lanes.
+ROAD-UNPAVED-2L,RoadHardSurface,,,RoadTrailVegetated or RoadHardSurface?,,A roadway surfaced with dirt (>20m wide) consisting of 2 lanes.
+ROAD-WINTER-ACCESS,RoadTrailVegetated,,,,,"A roadway used only in winter, crossing water bodies or wet areas must be frozen for safe travel."
+ROUGH_PASTURE,CultivationCropPastureBareground,CultivationRoughPasture,,Use it as Cultivation only?,,Land cleared of vegetation with no ground breakage. No tilling or seeding has taken place historically. May have few shrubs and trees present.
+RUNWAY,RoadTrailVegetated,,,,,Vegetated runway.
+RURAL-RESIDENCE,RuralResidentialIndustrial,RuralResidential,,,,Includes all rural dwellings and buildings that are of a density less than ten buildings per quarter section.
+SUMP,BorrowpitsDugoutsSumps,,,,,An artificial holding or treatment ponds for industrial wastewater on/adjacent to/in proximity to a well site. Drilling waste storage system – holding of drilling waste on well sites or remotely. Either earthen excavation (in clayey soils) or sumps lined with a synthetic liner.
+SURROUNDING-VEG,OtherDisturbedVegetation,,,,,Disturbed vegetation surrounding an airport runway and other industrial features.
+TAILING-PILE,MineSite,,,,,An area used to store waste materials produced in mining processes.
+TAILING-POND,MineSite,,,,,"Body of water on/in close proximity to an oil sands mine somprised of acids, benzene, hydrocarbons, residual bitumen, fine silts, and water."
+TAME_PASTURE,CultivationCropPastureBareground,CultivationTamePasture,,Use it as Cultivation only?,,Agricultural land that has been cleared of surface vegetation and tilled. Seeded with grass species or alfalfa. Typically used to graze livestock-evidence of livestock may be present; or used for livestock feed production.
+TRAIL,RoadTrailVegetated,,,Seismic or vegetated road?,,"Some trails are from abandoned linear features such as roads, seismic lines, or other industrial trails. Most often these lines are not straight. Trails could either be used for recreation or industrial purposes. Any line with a line sinuosity (percent difference between the actual length of the line and the straight-line distance from the start and end nodes) greater than 1.001 is a potential trail."
+TRAIL-ATV,RoadTrailVegetated,,,,,"A trail primarily used for ATV activities, generally with a vegetated surface. Most often <5m in width and does not conform to a straight line."
+TRANSFER_STATION,RuralResidentialIndustrial,RurallIndustrial,,,,"Small area of land, less than one hectare, usually fenced with a U-shaped road and two entry ways. One small rectangular building. Used primarily for garbage drop-off and located close to municipalities or present in rural areas."
+TRANSMISSION-LINE,TransmissionLine,,,,,"A utility corridor >10m wide with poles, towers and lines for transmitting high voltage electricity (voltage greater than 69 kV)."
+TRUCK-TRAIL,RoadTrailVegetated,,,,,"A roadway surfaced with dirt or low vegetation and constituted as a minor access route. The road clearing is 6m or greater in width. Streams are generally forded, and ditches are few."
+URBAN-INDUSTRIAL,Urban,UrbanIndustrial,,,,An industrial building within the boundary of an urban residence.
+URBAN-RESIDENCE,Urban,UrbanResidence,,,,A polygon was drawn around areas having >100 buildings per quarter section of residential development. Areas within the urban/residential polygons >5ha with natural vegetation were excluded.
+VEGETATED-EDGE-RAILWAYS,RailVegetatedVerge,,,,,Disturbed vegetation alongside railway edges.
+VEGETATED-EDGE-ROADS,RoadVegetatedVerge,,,,,Disturbed vegetation alongside road edges.
+WELL-ABAND,WellSite,,,,,Ground cleared for an oil/gas well pad where the well is currently abandoned.
+WELL-CLEARED-DRILLED,WellSite,,,,,Confirmation of drilling and the boundary outline are provided by reference sources.
+WELL-CLEARED-NOT-DRILLED,WellSite,,,,,Confirmation of drilling and the boundary outline are provided by reference sources.
+WELL-DRILLED-OTHER,WellSite,,,,,Confirmation of drilling and the boundary outline are provided by reference sources.
+WELL-GAS,WellSite,,,,,Ground cleared for a gas well pad.
+WELL-OIL,WellSite,,,,,Ground cleared for an oil well pad.
+WELL-OTHER,WellSite,,,,,"Clearing, purpose is unknown"
+WINDMILLS,WindGenerationFacility,,,,,"Wind turbines, operational or former, visible on imagery. Digitized to represent original land disturbance from construction."
+WELL-CASED,WellSite,,,,,
+WELL-BIT,WellSite,,,,,
