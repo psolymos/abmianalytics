@@ -33,14 +33,22 @@ for (i in names(fl)) {
     dc <- d[,grepl("WhiteSpruce", colnames(d))]
     dd <- d[,grepl("Deciduous", colnames(d))]
     dp <- d[,grepl("Pine", colnames(d))]
+    dm <- d[,grepl("Mixedwood", colnames(d))]
     dcf <- dc[,!grepl("CC", colnames(dc))]
     dcc <- dc[,grepl("CC", colnames(dc))]
     ddf <- dd[,!grepl("CC", colnames(dd))]
     ddc <- dd[,grepl("CC", colnames(dd))]
     dpf <- dp[,!grepl("CC", colnames(dp))]
     dpc <- dp[,grepl("CC", colnames(dp))]
-    all[[i]] <- list(hab=d0, conif_fire=dcf, decid_fire=ddf, pine_fire=dpf,
-        conif_cc=dcc, decid_cc=ddc, pine_cc=dpc,
+    dmf <- dm[,!grepl("CC", colnames(dm))]
+    dmc <- dm[,grepl("CC", colnames(dm))]
+    if (i != "birds") {
+        dmc2 <- ddc
+        colnames(dmc2) <- colnames(dmc)
+        dmc <- dmc2
+    }
+    all[[i]] <- list(hab=d0, conif_fire=dcf, decid_fire=ddf, pine_fire=dpf, mixed_fire=dmf,
+        conif_cc=dcc, decid_cc=ddc, pine_cc=dpc, mixed_cc=dmc,
         spp=data.frame(Species=d0[,1]))
 }
 

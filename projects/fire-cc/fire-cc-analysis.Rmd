@@ -5,10 +5,48 @@ date: "`r format(Sys.time(), '%Y-%m-%d')`"
 output: word_document
 ---
 
+# Introduction
+
+The goal is to use coefficients from our all-in-one analysis (as posted on the species website)
+and generalize how fire vs. cutblock affect species and taxa.
+This hopefully simple analysis can feed into the ACTWS presentation.
+
+
+# Methods
+
+I compiled coefficients for White Spruce, Pine, Mixedwood, and Deciduous forest stands from
+all taxa (except for mammals).
+
+I averaged coefficients in upland forest, lowland forest and open habitats.
+I defined upland forest species as having a >0.5 upland forest score
+based on sum-standardized mean abundances amon the 3 broad land cover types.
+Note that this eliminates some generalist species which might well live in upland forests.
+
+I further defined early seral upland forest species that showed 
+highest relative abundance in the 0-40 years post harvest/fire classes.
+
+I used relative abundances within the 4 stand types 
+(for each species standardized by maximum across all upland stand types to reflect differences across species)
+to cluster age classes based on species' relative abundances.
+I classified age classes based on natural stands alone, or natural and harvested stands combined.
+I used Bray-Curtis dissimilarity and Ward's agglomerative method for clustering.
+
+Fire vs. forest harvest associations were quantified based on the 0-9 yr age classes.
+The rescaled (-1, 1 interval) ratio of harvest / fire was used as an affinity index.
+I also compared the 90\% confidence intervals around the 0-9 yr age class coefficients
+and tested if the intervals overlaped, and tested the direction when those did not overlap.
+This is not an exact test, but takes into account uncertainty, unlike the simple affinity index above.
+
+The analyses were repeated for each stand type.
+
+# Results
+
 ```{r echo=FALSE,message=FALSE,warning=FALSE}
 library(vegan)
 library(ape)
 library(mefa4)
+library(intrval)
+library(knitr)
 load("~/Dropbox/abmi/fire-cc-all.Rdata")
 col1 <- colorRampPalette(c("red", "darkgreen"))(9)
 col2 <- c(col1, colorRampPalette(c("blue", col1[5]))(5))
@@ -18,20 +56,99 @@ data_fun <- function(taxon, ftype, cc=FALSE) {
     tmp <- all[[taxon]][[paste0(ftype, "_fire")]]
     if (cc)
         tmp <- cbind(tmp, all[[taxon]][[paste0(ftype, "_cc")]])
-    Max <- sapply(all[[taxon]][c("conif_fire", "decid_fire", "pine_fire", "conif_cc",
-        "decid_cc", "pine_cc")], function(z) apply(z, 1, max, na.rm=TRUE))
+    Max <- sapply(all[[taxon]][c("conif_fire", "decid_fire", "pine_fire", "mixed_fire",
+        "conif_cc", "decid_cc", "pine_cc", "mixed_cc")], function(z) apply(z, 1, max, na.rm=TRUE))
     Max <- apply(Max, 1, max)
     tmp <- tmp / Max
     tmp
 }
 
+## Upland species
+upfor <- c("WhiteSpruce0", "WhiteSpruce10", "WhiteSpruce20",
+    "WhiteSpruce40", "WhiteSpruce60", "WhiteSpruce80", "WhiteSpruce100",
+    "WhiteSpruce120", "WhiteSpruce140", "Pine0", "Pine10", "Pine20",
+    "Pine40", "Pine60", "Pine80", "Pine100", "Pine120", "Pine140",
+    "Deciduous0", "Deciduous10", "Deciduous20", "Deciduous40", "Deciduous60",
+    "Deciduous80", "Deciduous100", "Deciduous120", "Deciduous140",
+    "Mixedwood0", "Mixedwood10", "Mixedwood20", "Mixedwood40", "Mixedwood60",
+    "Mixedwood80", "Mixedwood100", "Mixedwood120", "Mixedwood140")
+lowfor <- c("BlackSpruce0", "BlackSpruce10", "BlackSpruce20", "BlackSpruce40",
+    "BlackSpruce60", "BlackSpruce80", "BlackSpruce100", "BlackSpruce120",
+    "BlackSpruce140", "Larch0", "Larch10", "Larch20", "Larch40",
+    "Larch60", "Larch80", "Larch100", "Larch120", "Larch140")
+open <- c("Swamp", "WetGrass", "WetShrub", "Shrub", "GrassHerb")
 lt <- list()
-for (i in 1:length(all))
-    lt[[i]] <- data.frame(taxon=names(all)[i], all[[i]]$spp)
+for (i in names(all)) {
+    mm <- data.frame(upfor = rowMeans(all[[i]]$hab[,colnames(all[[i]]$hab) %in% upfor], na.rm=TRUE),
+        lowfor = rowMeans(all[[i]]$hab[,colnames(all[[i]]$hab) %in% lowfor], na.rm=TRUE),
+        open = rowMeans(all[[i]]$hab[,colnames(all[[i]]$hab) %in% open], na.rm=TRUE))
+    lt[[i]] <- data.frame(taxon=i, all[[i]]$spp, mm)
+}
 lt <- do.call(rbind, lt)
+mmm <- lt[,c("upfor","lowfor","open")]
+mmm <- mmm / rowSums(mmm)
+#mmm[mmm[,"open"] > 0.5,]
+#mmm[mmm[,"lowfor"] > 0.5,]
+#mmm[mmm[,"open"] <= 0.5 & mmm[,"lowfor"] <= 0.5,]
+lt$pref <- factor("general", levels=c("upfor", "lowfor", "open", "general"))
+lt$pref[mmm[,"upfor"] > 0.5] <- "upfor"
+lt$pref[mmm[,"lowfor"] > 0.5] <- "lowfor"
+lt$pref[mmm[,"open"] > 0.5] <- "open"
+
+## CI based comparison
+cio <- list()
+cig <- list()
+for (i in names(all)) {
+    tmp <- all[[i]]$hab[,c("WhiteSpruce0.LCL","WhiteSpruce0.UCL",
+        "WhiteSpruceCC0.LCL","WhiteSpruceCC0.UCL",
+        "Pine0.LCL","Pine0.UCL",
+        "PineCC0.LCL","PineCC0.UCL",
+        "Mixedwood0.LCL","Mixedwood0.UCL",
+        "MixedwoodCC0.LCL","MixedwoodCC0.UCL",
+        "Deciduous0.LCL","Deciduous0.UCL",
+        "DeciduousCC0.LCL","DeciduousCC0.UCL")]
+    cio[[i]] <- data.frame(
+        conif= tmp[,1:2] %)o(% tmp[,3:4],
+        pine=tmp[,5:6] %)o(% tmp[,7:8],
+        mixed=tmp[,9:10] %)o(% tmp[,11:12],
+        decid=tmp[,13:14] %)o(% tmp[,15:16])
+    cig[[i]] <- data.frame(
+        conif= tmp[,1:2] %[o>]% tmp[,3:4],
+        pine=tmp[,5:6] %[o>]% tmp[,7:8],
+        mixed=tmp[,9:10] %[o>]% tmp[,11:12],
+        decid=tmp[,13:14] %[o>]% tmp[,15:16])
+}
+cio <- do.call(rbind, cio)
+cig <- do.call(rbind, cig)
+
+lt <- data.frame(lt, out=cio, fgtcc=cig)
+
+lt$ci.conif <- factor("f=c", levels=c("f>c", "f=c", "f<c"))
+lt$ci.conif[!lt$out.conif] <- "f=c"
+lt$ci.conif[lt$out.conif & lt$fgtcc.conif] <- "f>c"
+lt$ci.conif[lt$out.conif & !lt$fgtcc.conif] <- "f<c"
+
+lt$ci.pine <- factor("f=c", levels=c("f>c", "f=c", "f<c"))
+lt$ci.pine[!lt$out.pine] <- "f=c"
+lt$ci.pine[lt$out.pine & lt$fgtcc.pine] <- "f>c"
+lt$ci.pine[lt$out.pine & !lt$fgtcc.pine] <- "f<c"
+
+lt$ci.mixed <- factor("f=c", levels=c("f>c", "f=c", "f<c"))
+lt$ci.mixed[!lt$out.mixed] <- "f=c"
+lt$ci.mixed[lt$out.mixed & lt$fgtcc.mixed] <- "f>c"
+lt$ci.mixed[lt$out.mixed & !lt$fgtcc.mixed] <- "f<c"
+
+lt$ci.decid <- factor("f=c", levels=c("f>c", "f=c", "f<c"))
+lt$ci.decid[!lt$out.decid] <- "f=c"
+lt$ci.decid[lt$out.decid & lt$fgtcc.decid] <- "f>c"
+lt$ci.decid[lt$out.decid & !lt$fgtcc.decid] <- "f<c"
 ```
 
-# Pine
+## Pine
+
+```{r echo=FALSE}
+kable(as.matrix(ftable(lt[lt$pref=="upfor",c("taxon", "ci.pine")])))
+```
 
 ```{r echo=FALSE,fig.height=4,fig.width=8}
 ftype <- "pine"
@@ -43,6 +160,8 @@ cc <- TRUE
 tmp2 <- rbind(data_fun("birds", ftype, cc), data_fun("lichens", ftype, cc),
     data_fun("mites", ftype, cc), data_fun("mosses", ftype, cc),
     data_fun("vplants", ftype, cc))
+tmp1 <- tmp1[lt$pref=="upfor",]
+tmp2 <- tmp2[lt$pref=="upfor",]
 
 op <- par(mfrow=c(1,2))
 plot(as.phylo(hclust(vegdist(t(tmp1)), method="ward.D2"), main="All species"),
@@ -52,18 +171,27 @@ plot(as.phylo(hclust(vegdist(t(tmp2)), method="ward.D2"), main="All species"),
 par(op)
 ```
 
-```{r echo=FALSE}
-lt$rr <- tanh(0.5 * log(tmp2[,10] / tmp2[,1]))
+```{r echo=FALSE,fig.height=7,fig.width=7}
+dat <- data.frame(taxon=lt$taxon[lt$pref=="upfor"], rr = tanh(0.5 * log(tmp2[,10] / tmp2[,1])))
 mx <- find_max(tmp2)
 ii <- as.integer(mx$index) %in% c(1,2,3, 10,11,12)
-boxplot(rr ~ taxon, lt[ii,], main=ftype, col="lightgreen",
-    ylab="Cutblock Affinity")
+op <- par(mfrow=c(2,1))
+boxplot(rr ~ taxon, dat, main=ftype, col="lightgreen",
+    ylab="Cutblock Affinity", sub="Upland species")
 abline(h=0, col=4, lwd=2)
+boxplot(rr ~ taxon, dat[ii,], main=ftype, col="lightgreen",
+    ylab="Cutblock Affinity", sub="Upland early-seral species")
+abline(h=0, col=4, lwd=2)
+par(op)
 ```
 
 
 
-# White Spruce
+## White Spruce
+
+```{r echo=FALSE}
+kable(as.matrix(ftable(lt[lt$pref=="upfor",c("taxon", "ci.conif")])))
+```
 
 ```{r echo=FALSE,fig.height=4,fig.width=8}
 ftype <- "conif"
@@ -75,6 +203,8 @@ cc <- TRUE
 tmp2 <- rbind(data_fun("birds", ftype, cc), data_fun("lichens", ftype, cc),
     data_fun("mites", ftype, cc), data_fun("mosses", ftype, cc),
     data_fun("vplants", ftype, cc))
+tmp1 <- tmp1[lt$pref=="upfor",]
+tmp2 <- tmp2[lt$pref=="upfor",]
 
 op <- par(mfrow=c(1,2))
 plot(as.phylo(hclust(vegdist(t(tmp1)), method="ward.D2"), main="All species"),
@@ -84,16 +214,67 @@ plot(as.phylo(hclust(vegdist(t(tmp2)), method="ward.D2"), main="All species"),
 par(op)
 ```
 
-```{r echo=FALSE}
-lt$rr <- tanh(0.5 * log(tmp2[,10] / tmp2[,1]))
+```{r echo=FALSE,fig.height=7,fig.width=7}
+dat <- data.frame(taxon=lt$taxon[lt$pref=="upfor"], rr = tanh(0.5 * log(tmp2[,10] / tmp2[,1])))
 mx <- find_max(tmp2)
 ii <- as.integer(mx$index) %in% c(1,2,3, 10,11,12)
-boxplot(rr ~ taxon, lt[ii,], main=ftype, col="lightgreen",
-    ylab="Cutblock Affinity")
+op <- par(mfrow=c(2,1))
+boxplot(rr ~ taxon, dat, main=ftype, col="lightgreen",
+    ylab="Cutblock Affinity", sub="Upland species")
 abline(h=0, col=4, lwd=2)
+boxplot(rr ~ taxon, dat[ii,], main=ftype, col="lightgreen",
+    ylab="Cutblock Affinity", sub="Upland early-seral species")
+abline(h=0, col=4, lwd=2)
+par(op)
 ```
 
-# Deciduous
+## Mixedwood
+
+```{r echo=FALSE}
+kable(as.matrix(ftable(lt[lt$pref=="upfor",c("taxon", "ci.mixed")])))
+```
+
+```{r echo=FALSE,fig.height=4,fig.width=8}
+ftype <- "mixed"
+cc <- FALSE
+tmp1 <- rbind(data_fun("birds", ftype, cc), data_fun("lichens", ftype, cc),
+    data_fun("mites", ftype, cc), data_fun("mosses", ftype, cc),
+    data_fun("vplants", ftype, cc))
+cc <- TRUE
+tmp2 <- rbind(data_fun("birds", ftype, cc), data_fun("lichens", ftype, cc),
+    data_fun("mites", ftype, cc), data_fun("mosses", ftype, cc),
+    data_fun("vplants", ftype, cc))
+tmp1 <- tmp1[lt$pref=="upfor",]
+tmp2 <- tmp2[lt$pref=="upfor",]
+
+op <- par(mfrow=c(1,2))
+plot(as.phylo(hclust(vegdist(t(tmp1)), method="ward.D2"), main="All species"),
+    tip.color=col1, font=2, main=ftype)
+plot(as.phylo(hclust(vegdist(t(tmp2)), method="ward.D2"), main="All species"),
+    tip.color=col2, font=2)
+par(op)
+```
+
+```{r echo=FALSE,fig.height=7,fig.width=7}
+dat <- data.frame(taxon=lt$taxon[lt$pref=="upfor"], rr = tanh(0.5 * log(tmp2[,10] / tmp2[,1])))
+mx <- find_max(tmp2)
+ii <- as.integer(mx$index) %in% c(1,2,3, 10,11,12)
+op <- par(mfrow=c(2,1))
+boxplot(rr ~ taxon, dat, main=ftype, col="lightgreen",
+    ylab="Cutblock Affinity", sub="Upland species")
+abline(h=0, col=4, lwd=2)
+boxplot(rr ~ taxon, dat[ii,], main=ftype, col="lightgreen",
+    ylab="Cutblock Affinity", sub="Upland early-seral species")
+abline(h=0, col=4, lwd=2)
+par(op)
+```
+
+
+## Deciduous
+
+```{r echo=FALSE}
+kable(as.matrix(ftable(lt[lt$pref=="upfor",c("taxon", "ci.decid")])))
+```
 
 ```{r echo=FALSE,fig.height=4,fig.width=8}
 ftype <- "decid"
@@ -105,6 +286,8 @@ cc <- TRUE
 tmp2 <- rbind(data_fun("birds", ftype, cc), data_fun("lichens", ftype, cc),
     data_fun("mites", ftype, cc), data_fun("mosses", ftype, cc),
     data_fun("vplants", ftype, cc))
+tmp1 <- tmp1[lt$pref=="upfor",]
+tmp2 <- tmp2[lt$pref=="upfor",]
 
 op <- par(mfrow=c(1,2))
 plot(as.phylo(hclust(vegdist(t(tmp1)), method="ward.D2"), main="All species"),
@@ -114,12 +297,17 @@ plot(as.phylo(hclust(vegdist(t(tmp2)), method="ward.D2"), main="All species"),
 par(op)
 ```
 
-```{r echo=FALSE}
-lt$rr <- tanh(0.5 * log(tmp2[,10] / tmp2[,1]))
+```{r echo=FALSE,fig.height=7,fig.width=7}
+dat <- data.frame(taxon=lt$taxon[lt$pref=="upfor"], rr = tanh(0.5 * log(tmp2[,10] / tmp2[,1])))
 mx <- find_max(tmp2)
 ii <- as.integer(mx$index) %in% c(1,2,3, 10,11,12)
-boxplot(rr ~ taxon, lt[ii,], main=ftype, col="lightgreen",
-    ylab="Cutblock Affinity")
+op <- par(mfrow=c(2,1))
+boxplot(rr ~ taxon, dat, main=ftype, col="lightgreen",
+    ylab="Cutblock Affinity", sub="Upland species")
 abline(h=0, col=4, lwd=2)
+boxplot(rr ~ taxon, dat[ii,], main=ftype, col="lightgreen",
+    ylab="Cutblock Affinity", sub="Upland early-seral species")
+abline(h=0, col=4, lwd=2)
+par(op)
 ```
 
