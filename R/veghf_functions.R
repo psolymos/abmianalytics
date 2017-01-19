@@ -35,24 +35,27 @@ make_vegHF_sector <- function(d, col.label, col.year=NULL, wide=TRUE, sparse=FAL
 c4_fun <- function(d) {
     d$VEG3 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source,
         drop=TRUE, sep="::")
-    d$c3 <- recl$Combined[match(d$VEG3, recl$Veg_3)]
-    d$needCWCS <- recl$need_CWCS[match(d$VEG3, recl$Veg_3)] == "x"
+    d$c3 <- recl$Combined[match(d$VEG3, recl$Veg_Moist_preBkfSrs)]
+    d$needCWCS <- recl$need_CWCS[match(d$VEG3, recl$Veg_Moist_preBkfSrs)] == "x"
     tmp <- data.frame(cwcs=d$CWCS_Class[d$needCWCS], c4=d$c3[d$needCWCS],
         src=d$PostBackfill_Source[d$needCWCS])
+    #tmp$c4 <- as.character(tmp$c4)
     tmp$c4x <- as.character(tmp$c4)
+
     ## grass
-    tmp$c4x[tmp$cwcs %in% c("Marsh","Bog") & tmp$c4 == "GraminoidWetland"] <-
-        as.character(tmp$cwcs[tmp$cwcs %in% c("Marsh","Bog") & tmp$c4 == "GraminoidWetland"])
-    tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "GraminoidWetland"] <-
-        "GraminoidFen"
+    tmp$c4x[tmp$cwcs == "Bog" & tmp$c4 == "GraminoidWetland"] <- "ShrubbyBog"
+    tmp$c4x[tmp$cwcs == "Marsh" & tmp$c4 == "GraminoidWetland"] <- "Marsh"
+    tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "GraminoidWetland"] <- "GraminoidFen"
     tmp$c4x[!(tmp$cwcs %in% c("Marsh","Fen","Bog")) & tmp$c4 == "GraminoidWetland"] <-
         "Marsh"
+
     ## shrub
     tmp$c4x[tmp$cwcs %in% c("Fen","Bog") & tmp$c4 == "ShrubbyWetland"] <-
         paste0("Shrubby",
         as.character(tmp$cwcs[tmp$cwcs %in% c("Fen","Bog") & tmp$c4 == "ShrubbyWetland"]))
     tmp$c4x[!(tmp$cwcs %in% c("Fen","Bog")) & tmp$c4 == "ShrubbyWetland"] <-
         "ShrubbySwamp"
+
     ## muskeg
     tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "Muskeg"] <-
         "GraminoidFen"
@@ -60,6 +63,10 @@ c4_fun <- function(d) {
         "Bog" # can be: "None"   "Soil"   "ABMILC" "AVIE" "PLVI"  "Phase1" "MTNP"  "EINP"
     tmp$c4x[!(tmp$cwcs %in% c("Swamp","Fen","Bog")) & tmp$c4 == "Muskeg" &
         tmp$src != "WBNP"] <- "GraminoidFen"
+    tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "Muskeg" & tmp$src == "Phase1"] <-
+        "TreedFen-BSpr"
+    tmp$c4x[tmp$cwcs != "Fen" & tmp$c4 == "Muskeg" & tmp$src == "Phase1"] <-
+        "TreedBog-BSpr"
 
     d$c4 <- as.character(d$c3)
     d$c4[d$needCWCS] <- tmp$c4x

@@ -6,16 +6,11 @@ source("~/repos/abmianalytics/veghf/veghf-setup.R")
 ## and not relative to HF or veg inventory year.
 
 #fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6", "tiles"))
-fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata"))
+fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata-x"))
+#recl <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/combined_to_peter.csv")
+recl <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/veg-V6-combined4.csv")
 
 ## test feature types and save in Rdata format
-if (FALSE) {
-
-library(data.table)
-getOption("datatable.fread.datatable")
-options(datatable.fread.datatable=FALSE)
-getOption("datatable.fread.datatable")
-
 fl0 <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles"))
 HF <- character(0)
 VEG <- character(0)
@@ -24,222 +19,53 @@ A2 <- numeric(length(fl0))
 for (i in seq_len(length(fl0))) {
     fn <- fl0[i]
     cat("\nchecking", i, "/", length(fl0));flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
+    f <- file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles", fn)
     #d <- fread(f)
     d <- read.csv(f)
-    d2 <- c4_fun(d)
-    HF <- union(HF, levels(d$FEATURE_TY))
-    VEG <- union(VEG, levels(d2$c4))
+    #d2 <- c4_fun(d)
+    HF <- sort(union(HF, levels(d$FEATURE_TY)))
+    VEG3 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source,
+        drop=TRUE, sep="::")
+    VEG <- sort(union(VEG, VEG3))
     A1[i] <- sum(d$Shape_Area)
-    A2[i] <- sum(d2$Shape_Area)
+    #A2[i] <- sum(d2$Shape_Area)
     save(d, file=file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata",
         gsub(".csv", ".Rdata", fn, fixed = TRUE)))
 }
+setdiff(HF, c("", rownames(hflt)))
+setdiff(VEG, levels(recl$Veg_Moist_preBkfSrs))
+
+
+## reclassify using Rdata versions
+
+fl0 <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata"))
+HF <- character(0)
+VEG <- character(0)
+A1 <- numeric(length(fl0))
+A2 <- numeric(length(fl0))
+for (i in seq_len(length(fl0))) {
+    fn <- fl0[i]
+    cat("checking", i, "/", length(fl0), "\n");flush.console()
+    f <- file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata", fn)
+    load(f)
+    d2 <- c4_fun(d)
+    HF <- sort(union(HF, levels(d$FEATURE_TY)))
+    VEG <- sort(union(VEG, levels(d2$c4)))
+    A1[i] <- sum(d$Shape_Area)
+    A2[i] <- sum(d2$Shape_Area)
+    save(d2, file=file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata-x", fn))
+}
 
 setdiff(HF, c("", rownames(hflt)))
+setdiff(VEG, levels(recl$Veg_Moist_preBkfSrs))
 summary(A1-A2)
+
 ## todo
 ## - check c4 lookup table and rules
 ## - make sure that Areas are conserved
 ## - do crosstab
 ## - prepare maps
 
-recl <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/veg-V6-combined3.csv")
-
-HF <- character(0)
-C4 <- character(0)
-for (i in seq_len(length(fl))) {
-    fn <- fl[i]
-    cat("\nchecking", i, "/", length(fl));flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata", fn)
-    e <- new.env()
-    load(f, envir=e)
-    d <- e$d
-    HF <- union(HF, levels(d$FEATURE_TY))
-    VEG <- union(VEG, levels(d$c4))
-}
-
-NEW <- character(0)
-HF <- character(0)
-VEG <- character(0)
-VEG3 <- character(0)
-SOIL <- character(0)
-LARCH <- numeric(0)
-CWCS <- character(0)
-SRC <- character(0)
-blank_n <- numeric(length(fl)) # no. of cases
-blank_a <- numeric(length(fl)) # total area
-nro <- 0
-for (i in seq_len(length(fl))) {
-    fn <- fl[i]
-    cat("\nchecking", i, "/", length(fl));flush.console()
-#    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
-    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata", fn)
-#    d <- read.csv(f)
-    e <- new.env()
-    load(f, envir=e)
-    d <- e$d
-    diff <- setdiff(levels(d$FEATURE_TY), c("", rownames(hflt)))
-    if (length(diff)) {
-        NEW <- union(NEW, diff)
-        cat("\n\t", length(NEW), "new types found\n")
-    }
-    d$VEG3 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source,
-        drop=TRUE, sep="::")
-    d$c3 <- recl$Combined[match(d$VEG3, recl$Veg_3)]
-    d$needCWCS <- recl$need_CWCS[match(d$VEG3, recl$Veg_3)] == "x"
-    tmp <- data.frame(cwcs=d$CWCS_Class[d$needCWCS], c4=d$c3[d$needCWCS],
-        src=d$PostBackfill_Source[d$needCWCS])
-    tmp$c4x <- as.character(tmp$c4)
-
-    ## grass/GraminoidWetland
-    tmp$c4x[tmp$cwcs == "Marsh" & tmp$c4 == "GraminoidWetland"] <- "Marsh"
-    tmp$c4x[tmp$cwcs == "Bog" & tmp$c4 == "GraminoidWetland"] <- "GraminoidBog"
-    tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "GraminoidWetland"] <- "GraminoidFen"
-    #tmp$c4x[!(tmp$cwcs %in% c("Marsh","Fen","Bog")) & tmp$c4 == "GraminoidWetland"] <-
-    #    "Marsh"
-    ## nothing else remains, so no need for setting unknowns to Marsh
-
-    ## shrub/ShrubbyWetland
-    tmp$c4x[tmp$cwcs %in% c("Fen","Bog") & tmp$c4 == "ShrubbyWetland"] <-
-        paste0("Shrubby",
-        as.character(tmp$cwcs[tmp$cwcs %in% c("Fen","Bog") & tmp$c4 == "ShrubbyWetland"]))
-    #tmp$c4x[!(tmp$cwcs %in% c("Fen","Bog")) & tmp$c4 == "ShrubbyWetland"] <-
-    #    "ShrubbySwamp"
-    ## nothing else remains, so no need for setting unknowns to ShrubbySwamp
-
-    ## muskeg
-    #tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "Muskeg"] <-
-    #    "GraminoidFen"
-    #tmp$c4x[tmp$cwcs != "Fen" & tmp$c4 == "Muskeg"] <-
-    #    "GraminoidBog" # can be: "None"   "Soil"   "ABMILC" "AVIE" "PLVI"  "Phase1" "MTNP"  "EINP"
-    #tmp$c4x[!(tmp$cwcs %in% c("Swamp","Fen","Bog")) & tmp$c4 == "Muskeg" &
-    #    tmp$src != "WBNP"] <- "GraminoidFen"
-
-    d$c4 <- as.character(d$c3)
-    d$c4[d$needCWCS] <- tmp$c4x
-
-    ## treedwetland-mixedwood
-    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Fen"] <- "TreedFen-Mixedwood"
-    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Bog"] <- "TreedBog-BSpr"
-    d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Swamp"] <- "TreedSwamp-Mixedwood"
-    ## call the rest (not fen/bog/swamp) as TreedSwamp-Mixedwood ?
-
-    ## larch
-    d$c4[d$Pct_of_Larch >= 5] <- "TreedFen-Larch"
-    d$c4[d$Pct_of_Larch > 0 & d$c4 == "TreedBog-BSpr"] <- "TreedFen-BSpr"
-    d$c4[d$Pct_of_Larch > 0 & d$Pct_of_Larch < 5 & d$c4 %in% c("Decid",
-        "Fir","Mixedwood","Pine","Spruce")] <- paste0("TreedSwamp-", d$c4[d$Pct_of_Larch > 0 &
-        d$Pct_of_Larch < 5 & d$c4 %in% c("Decid", "Fir","Mixedwood","Pine","Spruce")])
-
-    #d$c4 <- factor(d$c4, c(levels(d$c3)[!(levels(d$c3) %in%
-    #    c("GraminoidWetland","ShrubbyWetland","Muskeg"))], "GraminoidBog"))
-    d$c4 <- factor(d$c4, c(levels(d$c3), "GraminoidBog", "TreedSwamp-Pine"))
-    if (any(is.na(d$c4))) break
-
-    #d$VEG5 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source,
-    #    d$CWCS_Class, ifelse(d$Pct_of_Larch>0, "Larch1", "Larch0"), drop=TRUE, sep="::")
-    HF <- union(HF, levels(d$FEATURE_TY))
-    VEG <- union(VEG, levels(d$Veg_Type))
-    #VEG3 <- union(VEG3, levels(d$VEG3))
-    VEG3 <- union(VEG3, levels(droplevels(d$c4[d$CutYear != 0])))
-    SOIL <- union(SOIL, levels(d$Soil_Type_1))
-    CWCS <- union(CWCS, levels(d$CWCS_Class))
-    #SRC <- union(SRC, levels(d$PostBackfill_Source))
-    SRC <- union(SRC, levels(droplevels(tmp$src)))
-    tmp <- d[d$HABIT == "",,drop=FALSE]
-    if (nrow(tmp)) {
-        blank_n[i] <- nrow(tmp)
-        blank_a[i] <- sum(tmp$Shape_Area)
-        cat("\n\tfound blanks:", nrow(tmp), "\n")
-    }
-#    LARCH <- sort(unique(c(LARCH, d$Pct_of_Larch)))
-    cat("\n\tveg:", length(VEG), #"- veg^3:", length(VEG3), "- larch:", length(LARCH),
-        "- soil:", length(SOIL), "- hf:", length(HF), "\n")
-    #print(summary(d$Pct_of_Larch))
-
-    nro <- nro + nrow(d)
-#    cc <- factor(ifelse(d$CutYear != 0, "CC", "F"), c("CC","F"))
-    cc <- factor(ifelse(d$FEATURE_TY == "CUTBLOCK", "CC", "F"), c("CC","F"))
-    #lr <- factor(ifelse(d$Pct_of_Larch != 0, "Larch", "Not"), c("Larch","Not"))
-    lr <- cut(d$Pct_of_Larch, c(-1, 0, 4, 10))
-    levels(lr) <- c("PctL0","PctL1-4","PctL5-10")
-    if (i == 1) {
-        nro2 <- Xtab(Shape_Area ~ c4 + cc, d)
-        nro3 <- Xtab(Shape_Area ~ c3 + cc, d)
-    } else {
-        nro2 <- nro2 + Xtab(Shape_Area ~ c4 + cc, d)
-        nro3 <- nro3 + Xtab(Shape_Area ~ c3 + cc, d)
-    }
-    if (i == 1) {
-        al <- Xtab(Shape_Area ~ c4 + lr, d)
-        al3 <- Xtab(Shape_Area ~ c3 + lr, d)
-    } else {
-        al <- al + Xtab(Shape_Area ~ c4 + lr, d)
-        al3 <- al3 + Xtab(Shape_Area ~ c3 + lr, d)
-    }
-
-    d$VEG3 <- d$c3 <- d$needCWCS <- NULL
-    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata",
-        gsub(".csv", ".Rdata", fn, fixed = TRUE)))
-}
-
-write.csv(as.matrix(nro2/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-cutblocks.csv"))
-write.csv(as.matrix(nro3/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-cutblocks3cc.csv"))
-write.csv(as.matrix(al3/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-larch3.csv"))
-write.csv(as.matrix(al/10^6), file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6-larch.csv"))
-
-## no blanks
-(blanks <- which(blank_n > 0))
-sum(blank_a)
-blank_a[blanks]
-## no NEW HF labels
-NEW
-#x <- data.frame(Veg_Type=sort(VEG))
-#write.csv(x, row.names=FALSE, file=file.path(ROOT, VER, "data", "kgrid-V6", "veg-V6.csv"))
-
-MAP <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/veg-V6-reclass.csv")
-x <- data.frame(Veg_3=sort(VEG3))
-tmp <- strsplit(sort(VEG3), "::")
-x$Veg_Type <- sapply(tmp, "[[", 1)
-x$Moisture_Reg <- sapply(tmp, "[[", 2)
-x$PreBackfill_Source <- sapply(tmp, "[[", 3)
-x$Veg_V5 <- MAP$Combined[match(x$Veg_Type, MAP$Veg_Type)]
-x <- droplevels(x[!(x$Veg_Type %in% c("Black spruce", "Lentic shrub")),])
-write.csv(x, row.names=FALSE, file="c:/Users/Peter/Dropbox/abmi/V6/veg-V6-combined3.csv")
-
-## reclass (v6->v5)
-MAP <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/veg-V6-reclass.csv")
-for (fn in fl) {
-    cat("checking", which(fl == fn), "/", length(fl), "\n");flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
-    d <- read.csv(f)
-    d$HABIT <- reclass(d$Veg_Type, map=MAP, all=TRUE)
-    dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
-        col.year=HF_YEAR, col.HFyear="CutYear", wide=FALSE)
-    tmp <- colSums(is.na(dd[,c("VEGAGEclass",
-        "VEGHFAGEclass","SOILclass","SOILHFclass")]))
-    natrack[[fn]] <- tmp
-    if (tmp[1] > 0)
-        break
-}
-
-## tracking the strange area mismatch
-natrack <- list()
-for (fn in fl) {
-    cat("checking", which(fl == fn), "/", length(fl), "\n");flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
-    d <- read.csv(f)
-    dd <- make_vegHF_wide(d, col.label="Row_Col",
-        col.year=NULL, col.HFyear="CutYear", wide=FALSE)
-    tmp <- colSums(is.na(dd[,c("VEGAGEclass",
-        "VEGHFAGEclass","SOILclass","SOILHFclass")]))
-    natrack[[fn]] <- tmp
-    if (tmp[1] > 0)
-        break
-}
-
-}
 
 ## processing csv files in batches of 50
 
@@ -255,10 +81,10 @@ for (s in 1:(length(Start)-1)) {
     cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
 #    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
 #    d <- read.csv(f)
-    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata", fn)
+    f <- file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata", fn)
     e <- new.env()
     load(f, envir=e)
-    d <- e$d
+    d <- c4_fun(e$d)
     ## HF year is used as base year for prediction purposes
     Basic <- Xtab(Shape_Area ~ Row_Col + c4, d)
     dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
@@ -277,10 +103,10 @@ for (s in 1:(length(Start)-1)) {
         cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
 #        f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
 #        d <- read.csv(f)
-        f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles-rdata", fn)
+        f <- file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata", fn)
         e <- new.env()
         load(f, envir=e)
-        d <- e$d
+        d <- c4_fun(e$d)
         Basic2 <- Xtab(Shape_Area ~ Row_Col + c4, d)
         Basic <- bind_fun2(Basic, Basic2)
         dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
