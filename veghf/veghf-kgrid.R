@@ -57,12 +57,12 @@ for (i in seq_len(length(fl0))) {
 }
 
 setdiff(HF, c("", rownames(hflt)))
-setdiff(VEG, levels(recl$Veg_Moist_preBkfSrs))
+setdiff(VEG, levels(recl$Combined))
 summary(A1-A2)
 
 ## todo
-## - check c4 lookup table and rules
-## - make sure that Areas are conserved
+## OK - check c4 lookup table and rules
+## OK - make sure that Areas are conserved
 ## - do crosstab
 ## - prepare maps
 
@@ -282,6 +282,14 @@ kgrid$ASP <- kgrid2$slpasp
 kgrid$TRI <- kgrid2$tri
 kgrid$CTI <- kgrid2$cti
 
+
+load(file.path(ROOT, VER, "out", "kgrid", "kgrid_table.Rdata")) # kgrid
+dd1km_pred$veg_current <- dd1km_pred$veg_current[rownames(kgrid),]
+dd1km_pred$veg_reference <- dd1km_pred$veg_reference[rownames(kgrid),]
+dd1km_pred$soil_current <- dd1km_pred$soil_current[rownames(kgrid),]
+dd1km_pred$soil_reference <- dd1km_pred$soil_reference[rownames(kgrid),]
+dd1km_pred$v6veg <- dd1km_pred$v6veg[rownames(kgrid),]
+
 dd1km_nsr <- dd1km_pred
 dd1km_nsr$veg_current <- groupSums(dd1km_pred$veg_current, 1, kgrid$NSRNAME)
 dd1km_nsr$veg_reference <- groupSums(dd1km_pred$veg_reference, 1, kgrid$NSRNAME)
@@ -298,9 +306,9 @@ dd1km_nr$v6veg <- groupSums(dd1km_pred$v6veg, 1, kgrid$NRNAME)
 
 if (SAVE) { ## needed for recalculating average ages
     save(dd1km_pred,
-        file=file.path(ROOT, VER, "data/kgrid-V6", "veg-hf_1kmgrid_v6.Rdata"))
+        file=file.path(ROOT, VER, "data/kgrid-V6dec", "veg-hf_1kmgrid_v6.Rdata"))
     save(dd1km_nsr, dd1km_nr,
-        file=file.path(ROOT, VER, "data/kgrid-V6", "veg-hf_nsr_v6.Rdata"))
+        file=file.path(ROOT, VER, "data/kgrid-V6dec", "veg-hf_nsr_v6.Rdata"))
     #save(kgrid,
     #    file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
 }

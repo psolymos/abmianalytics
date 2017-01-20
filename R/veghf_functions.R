@@ -57,10 +57,9 @@ c4_fun <- function(d) {
         "ShrubbySwamp"
 
     ## muskeg
-    tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "Muskeg"] <-
-        "GraminoidFen"
-    tmp$c4x[tmp$cwcs != "Fen" & tmp$c4 == "Muskeg"] <-
-        "Bog" # can be: "None"   "Soil"   "ABMILC" "AVIE" "PLVI"  "Phase1" "MTNP"  "EINP"
+    tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "Muskeg"] <- "GraminoidFen"
+    ## source can be: "None"   "Soil"   "ABMILC" "AVIE" "PLVI"  "Phase1" "MTNP"  "EINP"
+    tmp$c4x[tmp$cwcs != "Fen" & tmp$c4 == "Muskeg"] <- "TreedFen-BSpr"
     tmp$c4x[!(tmp$cwcs %in% c("Swamp","Fen","Bog")) & tmp$c4 == "Muskeg" &
         tmp$src != "WBNP"] <- "GraminoidFen"
     tmp$c4x[tmp$cwcs == "Fen" & tmp$c4 == "Muskeg" & tmp$src == "Phase1"] <-
