@@ -1,7 +1,7 @@
 library(mefa4)
 load("e:/peter/AB_data_v2016/out/kgrid/kgrid_table.Rdata")
 fv5 <- "e:/peter/AB_data_v2016/out/kgrid/veg-hf_1kmgrid_fix-fire.Rdata"
-fv6 <- "e:/peter/AB_data_v2016/data/kgrid-V6/veg-hf_1kmgrid_v6.Rdata"
+fv6 <- "e:/peter/AB_data_v2016/data/kgrid-V6dec/veg-hf_1kmgrid_v6.Rdata"
 
 e <- new.env()
 load(fv5, envir=e)
@@ -34,7 +34,7 @@ intersect(colnames(v5[[2]]), colnames(v6[[2]]))
 setdiff(colnames(v5[[2]]), colnames(v6[[2]]))
 setdiff(colnames(v6[[2]]), colnames(v5[[2]]))
 
-xt <- read.csv("e:/peter/AB_data_v2016/data/kgrid-V6/xwalk-v5-v6.csv")
+xt <- read.csv("e:/peter/AB_data_v2016/data/kgrid-V6dec/xwalk-v5-v6.csv")
 setdiff(colnames(v5[[1]]), xt$v5)
 setdiff(colnames(v5[[2]]), xt$v5)
 setdiff(colnames(v6[[1]]), xt$v6)
@@ -99,7 +99,7 @@ rf6 <- groupMeans(rf6, 1, kgrid$NSRNAME)
 
 col <- "grey"
 cols <- colorRampPalette(c("blue","red"))(5)
-pdf("e:/peter/AB_data_v2016/data/kgrid-V6/nsr-level-comparison-noage.pdf",
+pdf("e:/peter/AB_data_v2016/data/kgrid-V6dec/nsr-level-comparison-noage.pdf",
     width=10, height=5.5, onefile=TRUE)
 for (i in 1:ncol(cr6)) {
     j <- colnames(cr6)[i]
@@ -189,7 +189,7 @@ for (i in 1:ncol(rf6)) {
 
 j <- colnames(rf6)[i]
 cat(j, "\n");flush.console()
-png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6/maps/v5v6_", j, ".png"),
+png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6dec/maps/v5v6_", j, ".png"),
     width=3*600, height=1000)
 op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,3))
 
@@ -231,9 +231,9 @@ for (ii in 1:101) {
     jj <- ii * abs(diff(c(5450000, 5700000)))/100
     segments(190000, 5450000+jj, 220000, 5450000+jj, col=C2[ii], lwd=2, lend=2)
 }
-text(240000, 5450000, "+100%")
-text(240000, 0.5*(5450000 + 5700000), "0%")
-text(240000, 5700000, "-100%")
+text(250000, 5450000, "-100%")
+text(250000, 0.5*(5450000 + 5700000), "0%")
+text(250000, 5700000, "+100%")
 
 par(op)
 dev.off()
@@ -255,7 +255,7 @@ for (i in 1:ncol(cr5)) {
 
 j <- colnames(cr5)[i]
 cat(j, "\n");flush.console()
-png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6/maps/v5_", j, ".png"),
+png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6dec/maps/v5_", j, ".png"),
     width=3*600, height=1000)
 op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,3))
 
@@ -299,9 +299,9 @@ if (j %in% colnames(rf5)) {
         jj <- ii * abs(diff(c(5450000, 5700000)))/100
         segments(190000, 5450000+jj, 220000, 5450000+jj, col=C2[ii], lwd=2, lend=2)
     }
-    text(240000, 5450000, "+100%")
-    text(240000, 0.5*(5450000 + 5700000), "0%")
-    text(240000, 5700000, "-100%")
+    text(250000, 5450000, "-100%")
+    text(250000, 0.5*(5450000 + 5700000), "0%")
+    text(250000, 5700000, "+100%")
 
 } else {
     plot.new()
@@ -327,7 +327,7 @@ for (i in 1:ncol(cr6)) {
 
 j <- colnames(cr6)[i]
 cat(j, "\n");flush.console()
-png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6/maps/v6col_", j, ".png"),
+png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6dec/maps/v6col_", j, ".png"),
     width=3*600, height=1000)
 op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,3))
 
@@ -371,9 +371,9 @@ if (j %in% colnames(rf6)) {
         jj <- ii * abs(diff(c(5450000, 5700000)))/100
         segments(190000, 5450000+jj, 220000, 5450000+jj, col=C2[ii], lwd=2, lend=2)
     }
-    text(240000, 5450000, "+100%")
-    text(240000, 0.5*(5450000 + 5700000), "0%")
-    text(240000, 5700000, "-100%")
+    text(250000, 5450000, "-100%")
+    text(250000, 0.5*(5450000 + 5700000), "0%")
+    text(250000, 5700000, "+100%")
 
 } else {
     plot.new()
@@ -396,6 +396,7 @@ load(fv6, envir=e)
 e$dd1km_pred$sample_year
 e$dd1km_pred$scale
 ta6 <- sapply(e$dd1km_pred[1:4], rowSums)
+xxx <- e$dd1km_pred[[1]]
 
 rm(e)
 
@@ -406,11 +407,26 @@ colnames(ta5) <- paste0(colnames(ta5), "_v5")
 colnames(ta6) <- paste0(colnames(ta6), "_v6")
 
 ta <- cbind(ta5, ta6)
+summary(round(ta/10^6-kgrid$Area_km2, 3))
+
+summary(abs(ta/10^6-kgrid$Area_km2) > 0.1)
+
+yyy <- ifelse(abs(ta[,5]/10^6-kgrid$Area_km2) > 0.1, 1, 0)
+xxx2 <- xxx[yyy>0,]
+xxx2 <- xxx2[,abs(colSums(xxx2)) > 0]
+
+table(kgrid$NRNAME, yyy)
+
+iii <- c(which(yyy == 1), sample(which(kgrid$NRNAME == "Boreal" & yyy == 0), 10000))
+ddd <- data.frame(yyy=yyy[iii], as.matrix(xxx[iii,]/10^6))
+ddd <- ddd[,abs(colSums(ddd)) > 0]
+ddd <- ddd[,apply(ddd,2,max) > 0.1]
+mmm <- glm(yyy ~ ., data=ddd, family="binomial")
 
 for (i in 1:8) {
 
 cat(i, "\n");flush.console()
-png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6/maps/Atot_", colnames(ta)[i], ".png"),
+png(paste0("e:/peter/AB_data_v2016/data/kgrid-V6dec/maps/Atot_", colnames(ta)[i], ".png"),
     width=600, height=1000)
 op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,1))
 
@@ -424,9 +440,9 @@ op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,1))
         jj <- ii * abs(diff(c(5450000, 5700000)))/100
         segments(190000, 5450000+jj, 220000, 5450000+jj, col=C2[ii], lwd=2, lend=2)
     }
-    text(240000, 5450000, "+100%")
-    text(240000, 0.5*(5450000 + 5700000), "0%")
-    text(240000, 5700000, "-100%")
+    text(250000, 5450000, "-100%")
+    text(250000, 0.5*(5450000 + 5700000), "0%")
+    text(250000, 5700000, "+100%")
 par(op)
 dev.off()
 
