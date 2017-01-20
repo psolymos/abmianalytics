@@ -5,56 +5,67 @@ source("~/repos/abmianalytics/veghf/veghf-setup.R")
 ## Sample year is current year, so that forest ages are relative to present
 ## and not relative to HF or veg inventory year.
 
-fl <- list.files(file.path(ROOT, VER, "data", "kgrid", "tiles"))
+#fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6", "tiles"))
+fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata-x"))
+#recl <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/combined_to_peter.csv")
+recl <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/veg-V6-combined4.csv")
 
-## test feature types
-if (FALSE) {
-NEW <- character(0)
-for (fn in fl) {
-    cat("checking", which(fl == fn), "/", length(fl));flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
+## test feature types and save in Rdata format
+fl0 <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles"))
+HF <- character(0)
+VEG <- character(0)
+A1 <- numeric(length(fl0))
+A2 <- numeric(length(fl0))
+for (i in seq_len(length(fl0))) {
+    fn <- fl0[i]
+    cat("\nchecking", i, "/", length(fl0));flush.console()
+    f <- file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles", fn)
+    #d <- fread(f)
     d <- read.csv(f)
-    diff <- setdiff(levels(d$FEATURE_TY), rownames(hflt))
-    if (length(diff))
-        NEW <- union(NEW, diff)
-    cat("\t", length(NEW), "new types found\n")
+    #d2 <- c4_fun(d)
+    HF <- sort(union(HF, levels(d$FEATURE_TY)))
+    VEG3 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source,
+        drop=TRUE, sep="::")
+    VEG <- sort(union(VEG, VEG3))
+    A1[i] <- sum(d$Shape_Area)
+    #A2[i] <- sum(d2$Shape_Area)
+    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata",
+        gsub(".csv", ".Rdata", fn, fixed = TRUE)))
+}
+setdiff(HF, c("", rownames(hflt)))
+setdiff(VEG, levels(recl$Veg_Moist_preBkfSrs))
+
+
+## reclassify using Rdata versions
+
+fl0 <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata"))
+HF <- character(0)
+VEG <- character(0)
+A1 <- numeric(length(fl0))
+A2 <- numeric(length(fl0))
+for (i in seq_len(length(fl0))) {
+    fn <- fl0[i]
+    cat("checking", i, "/", length(fl0), "\n");flush.console()
+    f <- file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata", fn)
+    load(f)
+    d2 <- c4_fun(d)
+    HF <- sort(union(HF, levels(d$FEATURE_TY)))
+    VEG <- sort(union(VEG, levels(d2$c4)))
+    A1[i] <- sum(d$Shape_Area)
+    A2[i] <- sum(d2$Shape_Area)
+    save(d2, file=file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata-x", fn))
 }
 
-## tracking the strange area mismatch
-natrack <- list()
-for (fn in fl) {
-    cat("checking", which(fl == fn), "/", length(fl), "\n");flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
-    d <- read.csv(f)
-    dd <- make_vegHF_wide(d, col.label="Row_Col", 
-        col.year=NULL, col.HFyear="CutYear", wide=FALSE)
-    tmp <- colSums(is.na(dd[,c("VEGAGEclass",
-        "VEGHFAGEclass","SOILclass","SOILHFclass")]))
-    natrack[[fn]] <- tmp
-    if (tmp[1] > 0)
-        break
-}
+setdiff(HF, c("", rownames(hflt)))
+setdiff(VEG, levels(recl$Combined))
+summary(A1-A2)
 
-## check blank HABIT cases
-blank_n <- numeric(length(fl)) # no. of cases
-blank_a <- numeric(length(fl)) # total area
-for (i in 1:length(fl)) {
-    cat("\nchecking", i, "/", length(fl));flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fl[i])
-    d <- read.csv(f)
-    tmp <- d[d$HABIT == "",,drop=FALSE]
-    if (nrow(tmp)) {
-        blank_n[i] <- nrow(tmp)
-        blank_a[i] <- sum(tmp$Shape_Area)
-        cat("\tfound:", nrow(tmp))
-    }
-}
+## todo
+## OK - check c4 lookup table and rules
+## OK - make sure that Areas are conserved
+## - do crosstab
+## - prepare maps
 
-(blanks <- which(blank_n > 0))
-sum(blank_a) # 1.262801 < 2 m^2
-blank_a[blanks]
-
-}
 
 ## processing csv files in batches of 50
 
@@ -68,10 +79,15 @@ for (s in 1:(length(Start)-1)) {
     fn <- fl[Start[s]]
     cat("\n\n------------- batch", s, "----------------\n")
     cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
-    d <- read.csv(f)
+#    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
+#    d <- read.csv(f)
+    f <- file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata", fn)
+    e <- new.env()
+    load(f, envir=e)
+    d <- c4_fun(e$d)
     ## HF year is used as base year for prediction purposes
-    dd <- make_vegHF_wide(d, col.label="Row_Col", 
+    Basic <- Xtab(Shape_Area ~ Row_Col + c4, d)
+    dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
         col.year=HF_YEAR, col.HFyear="CutYear", sparse=TRUE)
     veg_current <- dd$veg_current
     veg_reference <- dd$veg_reference
@@ -85,9 +101,15 @@ for (s in 1:(length(Start)-1)) {
 
         fn <- fl[i]
         cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
-        f <- file.path(ROOT, VER, "data", "kgrid", "tiles", fn)
-        d <- read.csv(f)
-        dd <- make_vegHF_wide(d, col.label="Row_Col", 
+#        f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
+#        d <- read.csv(f)
+        f <- file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata", fn)
+        e <- new.env()
+        load(f, envir=e)
+        d <- c4_fun(e$d)
+        Basic2 <- Xtab(Shape_Area ~ Row_Col + c4, d)
+        Basic <- bind_fun2(Basic, Basic2)
+        dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
             col.year=HF_YEAR, col.HFyear="CutYear", sparse=TRUE)
         veg_current <- bind_fun2(veg_current, dd$veg_current)
         veg_reference <- bind_fun2(veg_reference, dd$veg_reference)
@@ -101,7 +123,8 @@ for (s in 1:(length(Start)-1)) {
         soil_current = soil_current,
         soil_reference = soil_reference,
         sample_year = sample_year,
-        scale = "1 km x 1 km prediction grid cells")
+        scale = "1 km x 1 km prediction grid cells",
+        c4 = Basic)
 }
 
 ## binding together the pieces
@@ -109,12 +132,14 @@ veg_current <- tmplist[[1]]$veg_current
 veg_reference <- tmplist[[1]]$veg_reference
 soil_current <- tmplist[[1]]$soil_current
 soil_reference <- tmplist[[1]]$soil_reference
+Basic <- tmplist[[1]]$c4
 for (j in 2:length(tmplist)) {
     cat("binding", j-1, "&", j, "/", length(tmplist), "\n");flush.console()
     veg_current <- bind_fun2(veg_current, tmplist[[j]]$veg_current)
     veg_reference <- bind_fun2(veg_reference, tmplist[[j]]$veg_reference)
     soil_current <- bind_fun2(soil_current, tmplist[[j]]$soil_current)
     soil_reference <- bind_fun2(soil_reference, tmplist[[j]]$soil_reference)
+    Basic <- bind_fun2(Basic, tmplist[[j]]$c4)
 }
 
 ## assembling return object
@@ -124,16 +149,17 @@ dd1km_pred <- list(
     soil_current = soil_current,
     soil_reference = soil_reference,
     sample_year = tmplist[[1]]$sample_year,
-    scale = "1 km x 1 km prediction grid cells")
+    scale = "1 km x 1 km prediction grid cells",
+    v6veg = Basic)
 
 ## this has the climate stuff
 kgrid <- read.csv(
-    file.path(ROOT, VER, "data", "kgrid", 
+    file.path(ROOT, VER, "data", "kgrid-V6",
     "Grid1km_template_final_clippedBy_ABBound_with_atts_to_Peter.csv"))
 rownames(kgrid) <- kgrid$Row_Col
 ## this is the correct lat/long (i.e. more decimal places)
 kgrid2 <- read.csv(
-    file.path(ROOT, VER, "data", "kgrid", 
+    file.path(ROOT, VER, "data", "kgrid-V6",
     "Grid1km_template_latLong.csv"))
 rownames(kgrid2) <- kgrid2$Row_Col
 kgrid2 <- kgrid2[rownames(kgrid),]
@@ -144,16 +170,16 @@ rm(kgrid2)
 
 ## this is has Brandt boreal and BCR
 kgrid2 <- read.csv(
-    file.path(ROOT, VER, "data", "kgrid", 
+    file.path(ROOT, VER, "data", "kgrid-V6",
     "Grid1km_template_final_clippedBy_ABBound_with_atts_to_Peter_BCR_BRANDT_Done.csv"))
 kgrid2 <- nonDuplicated(kgrid2, Row_Col, TRUE)
 #rownames(kgrid2) <- kgrid2$Row_Col
 kgrid2 <- kgrid2[rownames(kgrid),]
 stopifnot(all(rownames(kgrid) == rownames(kgrid2)))
 kgrid$TYPE_BRANDT <- kgrid2$TYPE_BRANDT
-#kgrid$BCR <- kgrid2$BCR      
+#kgrid$BCR <- kgrid2$BCR
 #kgrid$BCR_NAME <- kgrid2$BCR_NAME
-kgrid$BCRCODE <- kgrid2$BCRCODE 
+kgrid$BCRCODE <- kgrid2$BCRCODE
 rm(kgrid2)
 
 compare.sets(rownames(dd1km_pred$veg_current), rownames(kgrid))
@@ -179,10 +205,12 @@ for (i in seq_len(max(tmp))) {
     kgrid$Rnd10[lg] <- sample.int(sum(lg))
 }
 
+#load(file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
 dd1km_pred$veg_current <- dd1km_pred$veg_current[rownames(kgrid),]
 dd1km_pred$veg_reference <- dd1km_pred$veg_reference[rownames(kgrid),]
 dd1km_pred$soil_current <- dd1km_pred$soil_current[rownames(kgrid),]
 dd1km_pred$soil_reference <- dd1km_pred$soil_reference[rownames(kgrid),]
+dd1km_pred$v6veg <- dd1km_pred$v6veg[rownames(kgrid),]
 
 ## check area diff
 range(sapply(dd1km_pred[1:4], sum) / 10^6)
@@ -235,7 +263,7 @@ levels(kgrid$LUFxNSR) <- gsub(" ", "", levels(kgrid$LUFxNSR))
 
 ## topo variables
 kgrid2 <- read.csv(
-    file.path(ROOT, VER, "data", "kgrid", 
+    file.path(ROOT, VER, "data", "kgrid-V6",
     "Grid1kmCenter_topo.csv"))
 rownames(kgrid2) <- kgrid2$Row_Col
 kgrid2 <- kgrid2[rownames(kgrid),]
@@ -254,11 +282,35 @@ kgrid$ASP <- kgrid2$slpasp
 kgrid$TRI <- kgrid2$tri
 kgrid$CTI <- kgrid2$cti
 
+
+load(file.path(ROOT, VER, "out", "kgrid", "kgrid_table.Rdata")) # kgrid
+dd1km_pred$veg_current <- dd1km_pred$veg_current[rownames(kgrid),]
+dd1km_pred$veg_reference <- dd1km_pred$veg_reference[rownames(kgrid),]
+dd1km_pred$soil_current <- dd1km_pred$soil_current[rownames(kgrid),]
+dd1km_pred$soil_reference <- dd1km_pred$soil_reference[rownames(kgrid),]
+dd1km_pred$v6veg <- dd1km_pred$v6veg[rownames(kgrid),]
+
+dd1km_nsr <- dd1km_pred
+dd1km_nsr$veg_current <- groupSums(dd1km_pred$veg_current, 1, kgrid$NSRNAME)
+dd1km_nsr$veg_reference <- groupSums(dd1km_pred$veg_reference, 1, kgrid$NSRNAME)
+dd1km_nsr$soil_current <- groupSums(dd1km_pred$soil_current, 1, kgrid$NSRNAME)
+dd1km_nsr$soil_reference <- groupSums(dd1km_pred$soil_reference, 1, kgrid$NSRNAME)
+dd1km_nsr$v6veg <- groupSums(dd1km_pred$v6veg, 1, kgrid$NSRNAME)
+
+dd1km_nr <- dd1km_pred
+dd1km_nr$veg_current <- groupSums(dd1km_pred$veg_current, 1, kgrid$NRNAME)
+dd1km_nr$veg_reference <- groupSums(dd1km_pred$veg_reference, 1, kgrid$NRNAME)
+dd1km_nr$soil_current <- groupSums(dd1km_pred$soil_current, 1, kgrid$NRNAME)
+dd1km_nr$soil_reference <- groupSums(dd1km_pred$soil_reference, 1, kgrid$NRNAME)
+dd1km_nr$v6veg <- groupSums(dd1km_pred$v6veg, 1, kgrid$NRNAME)
+
 if (SAVE) { ## needed for recalculating average ages
-    save(dd1km_pred, 
-        file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
-    save(kgrid,
-        file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
+    save(dd1km_pred,
+        file=file.path(ROOT, VER, "data/kgrid-V6dec", "veg-hf_1kmgrid_v6.Rdata"))
+    save(dd1km_nsr, dd1km_nr,
+        file=file.path(ROOT, VER, "data/kgrid-V6dec", "veg-hf_nsr_v6.Rdata"))
+    #save(kgrid,
+    #    file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
 }
 
 ## fix age 0 in saved files -----------------------------
@@ -282,7 +334,7 @@ sum(dd1km_pred[[2]])
 
 
 if (SAVE) {
-save(dd1km_pred, 
+save(dd1km_pred,
     file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata"))
 }
 
@@ -293,7 +345,78 @@ if (FALSE) {
     xx <- x[,"WindGenerationFacility"]
     xxx <- rowSums(x)
     data.frame(Wind=xx,Area=xxx,Perc=100*xx/xxx)
-    
+
     x <- as.matrix(groupSums(dd1km_pred[[1]]/10^6, 1, kgrid$LUFxNSR))
     write.csv(x, file=file.path(ROOT, VER, "out/kgrid", "current-veghf-area-km2.csv"))
 }
+
+
+## check areas for V6 rule set
+
+## check all fragments, nut just these
+
+source("~/repos/abmianalytics/veghf/veghf-setup.R")
+load(file.path(ROOT, VER, "data/kgrid-V6", "veg-hf_nsr_v6.Rdata"))
+Fragment <- c("TreedWetland-Mixedwood", "TreedSwamp-Forest",
+    "GraminoidWetland", "ShrubbyWetland", "Muskeg")
+aa <- as.matrix(dd1km_nr$v6veg[,Fragment])/10^6
+
+## GraminoidWetland
+round(x <- as.matrix(dd1km_nr$v6veg)[,c("GraminoidWetland",
+    "Marsh", "GraminoidBog", "GraminoidFen")] / 10^6, 2)
+round(100*x[,-1]/rowSums(x[,-1]),2)
+find_max(100*x[,-1]/rowSums(x[,-1]))
+r1 <- data.frame(round(x[,1,drop=FALSE],2),
+    round(100*x[,-1]/rowSums(x[,-1]),2),
+    find_max(100*x[,-1]/rowSums(x[,-1])))
+print(r1, digits=2)
+## regional level solution:
+## Marsh in Grassland, GraminoidFen otherwise (one outlier is close in %)
+
+## ShrubbyWetland
+round(x <- as.matrix(dd1km_nr$v6veg)[,c("ShrubbyWetland",
+    "ShrubbyBog", "ShrubbyFen", "ShrubbySwamp")] / 10^6, 2)
+round(100*x[,-1]/rowSums(x[,-1]),2)
+find_max(100*x[,-1]/rowSums(x[,-1]))
+r2 <- data.frame(round(x[,1,drop=FALSE],2),
+    round(100*x[,-1]/rowSums(x[,-1]),2),
+    find_max(100*x[,-1]/rowSums(x[,-1])))
+print(r2, digits=2)
+## table level solution:
+## call it ShrubbyFen (not present in Grassland, Alpine is ShrubbySwamp but very little area)
+
+## TreedWetland-Mixedwood
+round(x <- as.matrix(dd1km_nr$v6veg)[,c("TreedWetland-Mixedwood",
+    "TreedFen-Mixedwood", "TreedBog-BSpr","TreedSwamp-Mixedwood")] / 10^6, 2)
+round(100*x[,-1]/rowSums(x[,-1]),2)
+find_max(100*x[,-1]/rowSums(x[,-1]))
+## call it ShrubbyFen (not present in Grassland, Alpine is ShrubbySwamp but very little area)
+r4 <- data.frame(round(x[,1,drop=FALSE],2),
+    round(100*x[,-1]/rowSums(x[,-1]),2),
+    find_max(100*x[,-1]/rowSums(x[,-1])))
+print(r4, digits=2)
+## table level solution:
+## call it TreedBog-BSpr (Grassland is TreedSwamp-Mix but very little area)
+
+## Muskeg
+round(x <- as.matrix(dd1km_nr$v6veg)[,c("Muskeg",
+    "GraminoidBog", "GraminoidFen",
+    "ShrubbyBog", "ShrubbyFen",
+    "TreedBog-BSpr", "TreedFen-BSpr", "TreedFen-Decid", "TreedFen-Larch",
+    "TreedFen-Mixedwood")] / 10^6, 2)
+round(100*x[,-1]/rowSums(x[,-1]),2)
+find_max(100*x[,-1]/rowSums(x[,-1]))
+## call it ShrubbyFen (not present in Grassland, Alpine is ShrubbySwamp but very little area)
+r3 <- data.frame(x[,1,drop=FALSE], 100*x[,-1]/rowSums(x[,-1]), find_max(100*x[,-1]/rowSums(x[,-1])))
+print(r3, digits=2)
+aa <- data.frame(round(x[,1,drop=FALSE], 2), find_max(100*x[,-1]/rowSums(x[,-1])))
+aa[order(aa[,1]),]
+## ??? level solution:
+## Shield:ShrubbyFen, Parkland:GraminoidFen, else: TreedBog-BSpr
+
+cn <- c("GraminoidBog", "ShrubbyBog", "TreedBog-BSpr")
+round(100*x[,cn]/rowSums(x[,cn]),2)
+cn <- c("GraminoidFen", "ShrubbyFen", "TreedFen-BSpr",
+    "TreedFen-Decid", "TreedFen-Larch","TreedFen-Mixedwood")
+round(100*x[,cn]/rowSums(x[,cn]),2)
+
