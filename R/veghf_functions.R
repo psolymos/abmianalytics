@@ -78,7 +78,7 @@ c4_fun <- function(d) {
     d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Swamp"] <- "TreedSwamp-Mixedwood"
 
     d$c4 <- factor(d$c4, c(levels(d$c3)[!(levels(d$c3) %in%
-        c("GraminoidWetland","ShrubbyWetland","Muskeg"))], "Bog"))
+        c("GraminoidWetland","ShrubbyWetland","Muskeg"))]))
     d$VEG3 <- d$c3 <- d$needCWCS <- NULL
     d
 }
