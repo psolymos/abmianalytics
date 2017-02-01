@@ -72,6 +72,7 @@ c4_fun <- function(d) {
 
     ## larch
     d$c4[d$Pct_of_Larch != 0 & d$c4 == "TreedBog-BSpr"] <- "TreedFen-Larch"
+
     ## treedwetland-mixedwood
     d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Fen"] <- "TreedFen-Mixedwood"
     d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Bog"] <- "TreedBog-BSpr"
