@@ -182,8 +182,8 @@ Coefficients are also given for a set of human footprint types:
 - "CC" preceding a stand-age designations indicates a cutblock in that stand type. The age classes are the same as for natural stands, and refer to time since harvest.  Mixedwood cutblocks are combined with deciduous for all taxa except birds.
 - "Cult". Cultivated land, primarily tame (plowed) forage and pasture in the north and crops in the south.
 - "UrbInd".  Urban areas, industrial areas (including wellsites, compressor stations, etc.) and rural residential areas.
-- "SoftLin".  Soft linear footprint, which are vegetated linear features potentially capable of succeeding to natural vegetation eventually.  These include seismic lines, pipelines, powerlines and road margins.  Note that these linear features are treated as areas here, like all other habitat types.  If they are mapped as linear vectors, they have a buffer width assigned along their length to give them an area.
-- "HardLin". Hard linear footprint, which is permanently alienated, primarily roads, but also rail lines. These linear features are treated as areas. If they are mapped as linear vectors, they have a buffer width assigned along their length to give them an area.
+- "SoftLin".  Soft linear footprint, which are vegetated linear features potentially capable of succeeding to natural vegetation eventually.  These include seismic lines, pipelines, powerlines and road margins.  Note that these linear features are treated as areas here, like all other habitat types.  If they are mapped as linear vectors, they have a buffer width assigned along their length to give them an area. Values in the table and figures on the website represent 10\% linear footprint, i.e. composed as a mix of two strata: 90\% natural (AverageCoef) + 10\% footprint.
+- "HardLin". Hard linear footprint, which is permanently alienated, primarily roads, but also rail lines. These linear features are treated as areas. If they are mapped as linear vectors, they have a buffer width assigned along their length to give them an area. Values in the table and figures on the website represent 10\% linear footprint, i.e. composed as a mix of two strata: 90\% natural (AverageCoef) + 10\% footprint.
 - "AverageCoef" refers to the mean of coefficients across all natural habitats and human footprint types not counting "SoftLin" and "HardLin". This is used as a reference value in the website figures.
 
 Note that some features are assumed to have coefficients of 0 for all terrestrial species, these are open water (natural or human created) and active mine sites.
@@ -204,7 +204,7 @@ In addition, coefficients are given for the human fooprint types (detailed descr
 - "SoftLin"
 - "HardLin"
 
-There are separate tables listing coefficient values in *treed* and *non-treed* locations. This reflects the difference based on probability that the site is or was naturally treed.
+There are separate tables listing coefficient values in *treed* and *non-treed* locations. This reflects the difference based on probability that the site is or was naturally treed. The average coefficient provided for the soft and hard linear feature coefficients in the south refers to the average of natural habitat coefficients under non-treed conditions.
 
 Water and active mine sites are assumed to have coefficients of 0 for all terrestrial species.
 
