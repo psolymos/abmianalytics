@@ -133,4 +133,21 @@ for (spp in SPP) {
 
 }
 
+## NN plants
 
+f <- "e:/peter/sppweb2016/nn-plants/Combine regions/Km2 summaries/nNNSpp.csv"
+km <- read.csv(f)
+
+ndat <- normalize_data(rf=km$Ref, cr=km$Curr, q=0.99, normalize=FALSE)
+ndat <- data.frame(LinkID=km$LinkID, ndat)
+dir.create(file.path("e:/peter/sppweb2016/nn-plants", "nonnative-plants"))
+write.csv(ndat, row.names=FALSE,
+    file=file.path("e:/peter/sppweb2016/nn-plants", "nonnative-plants", "nonnative-plants.csv"))
+Info <- gsub("&species&", "Non-native vascular plants", Info0)
+Info <- gsub("&version&", "3.2", Info)
+writeLines(Info, file.path("e:/peter/sppweb2016/nn-plants", "nonnative-plants", "README.md"))
+
+setwd(file.path("e:/peter/sppweb2016/nn-plants"))
+zip(paste0("nonnative-plants.zip"),
+    paste0("./nonnative-plants/", c("nonnative-plants.csv", "README.md")))
+unlink(file.path(root_out, taxon, sppout), recursive=TRUE, force=TRUE)

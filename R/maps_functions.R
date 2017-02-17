@@ -123,9 +123,9 @@ function(rf, cr, q=1, transf=FALSE, normalize=TRUE)
         rf <- 1-exp(-rf)
     }
     ## truncate if necessary
-    qcr <- quantile(cr, q)
+    qcr <- quantile(cr, q, na.rm=TRUE)
     cr[cr>qcr] <- qcr
-    qrf <- quantile(rf, q)
+    qrf <- quantile(rf, q, na.rm=TRUE)
     rf[rf>qrf] <- qrf
     Max <- max(qcr, qrf)
 
