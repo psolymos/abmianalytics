@@ -54,6 +54,124 @@ for (i in names(fl)) {
 
 save(all, file="~/Dropbox/abmi/fire-cc-all.Rdata")
 
+## prepare data for JS
+
+load("~/Dropbox/abmi/fire-cc/fire-cc-all.Rdata")
+ul <- read.csv("~/Dropbox/abmi/fire-cc/Intactness_lookup_v1.0.csv")
+
+tab <- NULL
+for (i in names(all)) {
+    tmp <- all[[i]]$hab
+    tmp <- tmp[,!grepl("[[:punct:]]", colnames(tmp))]
+    if (i == "birds") {
+        uplow <- ul$HabitatAssociation[match(tmp$Species, ul$CommonName)]
+        spp <- ul[match(tmp$Species, ul$CommonName), ]
+    } else {
+        uplow <- ul$HabitatAssociation[match(tmp$Species, ul$ScientificName)]
+        spp <- ul[match(tmp$Species, ul$ScientificName), ]
+    }
+#    compare_sets(tmp$Species, ul$CommonName)
+#    compare_sets(tmp$Species, ul$AnalysisName)
+#    compare_sets(tmp$Species, ul$ScientificName)
+    tmp <- data.frame(taxon=i, uplow=uplow, spp, tmp)
+    tab <- rbind(tab, tmp)
+}
+tab$uplow[is.na(tab$uplow)] <- ""
+tab$Swamp <- tab$Singing <- tab$Taxon <- tab$HabitatAssociation <- NULL
+sum(is.na(tab))
+table(tab$taxon, tab$uplow)
+
+tab2 <- tab[tab$uplow=="Upland",]
+rownames(tab2) <- tab2$Species
+sum(is.na(tab2))
+
+upforfc <- c("WhiteSpruce0", "WhiteSpruce10", "WhiteSpruce20",
+    "WhiteSpruce40", "WhiteSpruce60", "WhiteSpruce80", "WhiteSpruce100",
+    "WhiteSpruce120", "WhiteSpruce140", "Pine0", "Pine10", "Pine20",
+    "Pine40", "Pine60", "Pine80", "Pine100", "Pine120", "Pine140",
+    "Deciduous0", "Deciduous10", "Deciduous20", "Deciduous40", "Deciduous60",
+    "Deciduous80", "Deciduous100", "Deciduous120", "Deciduous140",
+    "Mixedwood0", "Mixedwood10", "Mixedwood20", "Mixedwood40", "Mixedwood60",
+    "Mixedwood80", "Mixedwood100", "Mixedwood120", "Mixedwood140",
+    "WhiteSpruceCC0", "WhiteSpruceCC10", "WhiteSpruceCC20", "WhiteSpruceCC40",
+    "WhiteSpruceCC60", "PineCC0", "PineCC10", "PineCC20", "PineCC40",
+    "PineCC60", "DeciduousCC0", "DeciduousCC10", "DeciduousCC20",
+    "DeciduousCC40", "DeciduousCC60", "MixedwoodCC0", "MixedwoodCC10",
+    "MixedwoodCC20", "MixedwoodCC40", "MixedwoodCC60")
+upforfc2 <- c(
+    "S_n_0-10", "S_n_10-40", "S_n_10-40", "S_n_40-100", "S_n_40-100", "S_n_40-100",
+    "S_n_100+", "S_n_100+", "S_n_100+",
+    "P_n_0-10", "P_n_10-40", "P_n_10-40", "P_n_40-100", "P_n_40-100", "P_n_40-100",
+    "P_n_100+", "P_n_100+", "P_n_100+",
+    "D_n_0-10", "D_n_10-40", "D_n_10-40", "D_n_40-100", "D_n_40-100", "D_n_40-100",
+    "D_n_100+", "D_n_100+", "D_n_100+",
+    "M_n_0-10", "M_n_10-40", "M_n_10-40", "M_n_40-100", "M_n_40-100", "M_n_40-100",
+    "M_n_100+", "M_n_100+", "M_n_100+",
+    "S_h_0-10", "S_h_10-40", "S_h_10-40", "xxx", "xxx",
+    "P_h_0-10", "P_h_10-40", "P_h_10-40", "xxx", "xxx",
+    "D_h_0-10", "D_h_10-40", "D_h_10-40", "xxx", "xxx",
+    "M_h_0-10", "M_h_10-40", "M_h_10-40", "xxx", "xxx")
+
+mat <- as.matrix(tab2[, upforfc])
+mat2 <- groupMeans(mat, 2, upforfc2)
+mat2 <- mat2[,colnames(mat2) != "xxx"]
+
+Max <- apply(mat2, 1, max)
+#mat2 <- mat2 / Max
+
+
+long <- Melt(mat2)
+tmp <- strsplit(as.character(long$cols), "_")
+long$StandType <- as.factor(sapply(tmp, "[", 1))
+levels(long$StandType) <- c("Deciduous", "Mixedwood", "Pine", "WhiteSpruce", "xxx")
+long$StandOrigin <- as.factor(sapply(tmp, "[", 2))
+levels(long$StandOrigin) <- c("Harvest", "Natural")
+long$StandAge <- as.factor(sapply(tmp, "[", 3))
+long$CommonName <- tab2$CommonName[match(long$rows, tab2$Species)]
+long$ScientificName <- tab2$ScientificName[match(long$rows, tab2$Species)]
+long$Taxa <- tab2$taxon[match(long$rows, tab2$Species)]
+long$RelativeAbundance <- round(long$value, 4)
+
+long <- long[,c("CommonName", "ScientificName", "Taxa", "StandType",
+    "StandOrigin", "StandAge", "RelativeAbundance")]
+
+write.csv(long, row.names=FALSE,
+    "~/Dropbox/abmi/fire-cc/fire-harvest-results.csv")
+
+Max <- apply(mat2, 1, max)
+mats <- mat2 / Max
+
+mats <- mats[,c(
+    "S_n_0-10", "S_n_10-40",
+    "P_n_0-10", "P_n_10-40",
+    "D_n_0-10", "D_n_10-40",
+    "M_n_0-10", "M_n_10-40",
+    "S_h_0-10", "S_h_10-40",
+    "P_h_0-10", "P_h_10-40",
+    "D_h_0-10", "D_h_10-40",
+    "M_h_0-10", "M_h_10-40")]
+plot(hclust(vegdist(t(mats)), method="ward.D2"))
+
+plot(hclust(vegdist(t(mats[tab2$taxon=="birds",])), method="ward.D2"))
+plot(hclust(vegdist(t(mats[tab2$taxon=="mites",])), method="ward.D2"))
+plot(hclust(vegdist(t(mats[tab2$taxon=="lichens",])), method="ward.D2"))
+plot(hclust(vegdist(t(mats[tab2$taxon=="mosses",])), method="ward.D2"))
+plot(hclust(vegdist(t(mats[tab2$taxon=="vplants",])), method="ward.D2"))
+
+library(partykit)
+
+ct <- ctree(RelativeAbundance ~ StandType + StandOrigin + StandAge,
+    long[long$StandAge %in% c("0-10", "10-40"),])
+plot(ct)
+
+I also want to present a community analyses for each stand type. Can you create
+the dendograms you sent earlier, but for the reduced categories of age-class.
+I don’t like dendograms (they are difficult for an audience to understand) but
+I have not thought of any better way to present community results.
+
+Let me know if you have any Qs.
+
+
 ## select upland forest species
 
 library(vegan)
