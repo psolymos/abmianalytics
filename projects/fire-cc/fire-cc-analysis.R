@@ -52,7 +52,7 @@ for (i in names(fl)) {
         spp=data.frame(Species=d0[,1]))
 }
 
-save(all, file="~/Dropbox/abmi/fire-cc-all.Rdata")
+save(all, file="~/Dropbox/abmi/fire-cc/fire-cc-all.Rdata")
 
 ## prepare data for JS
 
