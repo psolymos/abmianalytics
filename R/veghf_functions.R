@@ -72,13 +72,14 @@ c4_fun <- function(d) {
 
     ## larch
     d$c4[d$Pct_of_Larch != 0 & d$c4 == "TreedBog-BSpr"] <- "TreedFen-Larch"
+
     ## treedwetland-mixedwood
     d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Fen"] <- "TreedFen-Mixedwood"
     d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Bog"] <- "TreedBog-BSpr"
     d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Swamp"] <- "TreedSwamp-Mixedwood"
 
     d$c4 <- factor(d$c4, c(levels(d$c3)[!(levels(d$c3) %in%
-        c("GraminoidWetland","ShrubbyWetland","Muskeg"))], "Bog"))
+        c("GraminoidWetland","ShrubbyWetland","Muskeg"))]))
     d$VEG3 <- d$c3 <- d$needCWCS <- NULL
     d
 }

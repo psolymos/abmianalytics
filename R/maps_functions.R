@@ -116,29 +116,36 @@ pch0=3, pch1=19, cex0=0.3, cex1=0.8, col0="red1", col1="red4")
 }
 
 normalize_data <-
-function(rf, cr, q=1, transf=FALSE)
+function(rf, cr, q=1, transf=FALSE, normalize=TRUE)
 {
     if (transf) {
         cr <- 1-exp(-cr)
         rf <- 1-exp(-rf)
     }
     ## truncate if necessary
-    qcr <- quantile(cr, q)
+    qcr <- quantile(cr, q, na.rm=TRUE)
     cr[cr>qcr] <- qcr
-    qrf <- quantile(rf, q)
+    qrf <- quantile(rf, q, na.rm=TRUE)
     rf[rf>qrf] <- qrf
     Max <- max(qcr, qrf)
 
-    #si <- pmin(cr, rf) / pmax(cr, rf)
-    #si <- pmin(100, ceiling(99 * si)+1)
-    #si2 <- ifelse(cr > rf, 200-si, si)
-    df <- (cr-rf) / Max
-    df <- sign(df) * abs(df)^0.5
-    df <- pmin(200, ceiling(99 * df)+100)
-    df[df==0] <- 1
-    cr <- pmin(100, ceiling(99 * sqrt(cr / Max))+1)
-    rf <- pmin(100, ceiling(99 * sqrt(rf / Max))+1)
+    if (normalize) {
+        #si <- pmin(cr, rf) / pmax(cr, rf)
+        #si <- pmin(100, ceiling(99 * si)+1)
+        #si2 <- ifelse(cr > rf, 200-si, si)
+        df <- (cr-rf) / Max
+        df <- sign(df) * abs(df)^0.5
+        df <- pmin(200, ceiling(99 * df)+100)
+        df[df==0] <- 1
+        cr <- pmin(100, ceiling(99 * sqrt(cr / Max))+1)
+        rf <- pmin(100, ceiling(99 * sqrt(rf / Max))+1)
 
-    #data.frame(Ref=rf, Curr=cr, Diff=df, si=si, si2=si2)
-    data.frame(Ref=rf, Curr=cr, Diff=df)
+        #data.frame(Ref=rf, Curr=cr, Diff=df, si=si, si2=si2)
+        out <- data.frame(Ref=rf, Curr=cr, Diff=df)
+    } else {
+        cr <- round(100 * cr / Max)
+        rf <- round(100 * rf / Max)
+        out <- data.frame(Ref=rf, Curr=cr)
+    }
+    out
 }

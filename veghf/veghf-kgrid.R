@@ -8,7 +8,8 @@ source("~/repos/abmianalytics/veghf/veghf-setup.R")
 #fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6", "tiles"))
 fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata-x"))
 #recl <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/combined_to_peter.csv")
-recl <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/veg-V6-combined4.csv")
+#recl <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/veg-V6-combined4.csv")
+recl <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-v6.csv")
 
 ## test feature types and save in Rdata format
 fl0 <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles"))
@@ -41,6 +42,7 @@ setdiff(VEG, levels(recl$Veg_Moist_preBkfSrs))
 fl0 <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata"))
 HF <- character(0)
 VEG <- character(0)
+c5 <- character(0)
 A1 <- numeric(length(fl0))
 A2 <- numeric(length(fl0))
 for (i in seq_len(length(fl0))) {
@@ -53,19 +55,24 @@ for (i in seq_len(length(fl0))) {
     VEG <- sort(union(VEG, levels(d2$c4)))
     A1[i] <- sum(d$Shape_Area)
     A2[i] <- sum(d2$Shape_Area)
-    save(d2, file=file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata-x", fn))
+    d2$c5 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source,
+        d$CWCS_Class, drop=TRUE, sep="::")
+    c5 <- sort(union(c5, levels(d2$c5)))
+    #save(d2, file=file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata-x", fn))
 }
 
 setdiff(HF, c("", rownames(hflt)))
 setdiff(VEG, levels(recl$Combined))
 summary(A1-A2)
 
-## todo
-## OK - check c4 lookup table and rules
-## OK - make sure that Areas are conserved
-## - do crosstab
-## - prepare maps
-
+tmp <- strsplit(c5, "::")
+tmp <- do.call(rbind, lapply(tmp, function(z) if (length(z) < 4) c(z, "") else z))
+colnames(tmp) <- c("Veg_Type", "Moisture_Reg", "PreBackfill_Source", "CWCS_Class")
+d5 <- data.frame(Combine4=c5, tmp)
+d5$Combine3 <- interaction(d5$Veg_Type, d5$Moisture_Reg, d5$PreBackfill_Source,
+    drop=TRUE, sep="::")
+d5$Final <- recl$Combined[match(d5$Combine3, recl$Veg_Moist_preBkfSrs)]
+d5$needCWCS <- recl$need_CWCS[match(d5$Combine3, recl$Veg_Moist_preBkfSrs)]
 
 ## processing csv files in batches of 50
 

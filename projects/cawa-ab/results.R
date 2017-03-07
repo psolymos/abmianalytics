@@ -256,7 +256,7 @@ pdf(file.path(OUTDIR, "cawa-fig-wet.pdf"))
 op <- par(las=1)
 image(vals1*100, vals2, pr_mat,
       col = rev(grey(seq(0.2, 1, len=25))), axes=FALSE,
-      ylab="Compound topographic index", xlab="% wet habitats in 150m buffer",
+      ylab="Compound topographic index", xlab="% wet land cover in 150m buffer",
       main="")
 cti <- 10 * exp(DAT$xCTI) - 1
 ii <- sample(which(y_cawa==0), 10000)
@@ -272,7 +272,7 @@ png(file.path(OUTDIR, "cawa-fig-wet.png"))
 op <- par(las=1)
 image(vals1*100, vals2, pr_mat,
       col = rev(grey(seq(0.2, 1, len=25))), axes=FALSE,
-      ylab="Compound topographic index", xlab="% wet habitats in 150m buffer",
+      ylab="Compound topographic index", xlab="% wet land cover in 150m buffer",
       main="")
 cti <- 10 * exp(DAT$xCTI) - 1
 ii <- sample(which(y_cawa==0), 10000)
@@ -509,8 +509,47 @@ par(op)
 range(pmat)
 range(qmat)
 
-pdf(file.path(OUTDIR, "cawa-fig-qpad.pdf"), width=12)
-op <- par(las=1, mfrow=c(1,2))
+## http://menugget.blogspot.ca/2011/08/adding-scale-to-image-plot.html#more
+image.scale <- function(z, zlim, col = heat.colors(12),
+breaks, horiz=TRUE, ylim=NULL, xlim=NULL, ...){
+ if(!missing(breaks)){
+  if(length(breaks) != (length(col)+1)){stop("must have one more break than colour")}
+ }
+ if(missing(breaks) & !missing(zlim)){
+  breaks <- seq(zlim[1], zlim[2], length.out=(length(col)+1))
+ }
+ if(missing(breaks) & missing(zlim)){
+  zlim <- range(z, na.rm=TRUE)
+  zlim[2] <- zlim[2]+c(zlim[2]-zlim[1])*(1E-3)#adds a bit to the range in both directions
+  zlim[1] <- zlim[1]-c(zlim[2]-zlim[1])*(1E-3)
+  breaks <- seq(zlim[1], zlim[2], length.out=(length(col)+1))
+ }
+ poly <- vector(mode="list", length(col))
+ for(i in seq(poly)){
+  poly[[i]] <- c(breaks[i], breaks[i+1], breaks[i+1], breaks[i])
+ }
+ xaxt <- ifelse(horiz, "s", "n")
+ yaxt <- ifelse(horiz, "n", "s")
+ if(horiz){YLIM<-c(0,1); XLIM<-range(breaks)}
+ if(!horiz){YLIM<-range(breaks); XLIM<-c(0,1)}
+ if(missing(xlim)) xlim=XLIM
+ if(missing(ylim)) ylim=YLIM
+ plot(1,1,t="n",ylim=ylim, xlim=xlim, xaxt=xaxt, yaxt=yaxt, xaxs="i", yaxs="i", ...)
+ for(i in seq(poly)){
+  if(horiz){
+   polygon(poly[[i]], c(0,0,1,1), col=col[i], border=NA)
+  }
+  if(!horiz){
+   polygon(c(0,0,1,1), poly[[i]], col=col[i], border=NA)
+  }
+ }
+}
+
+pdf(file.path(OUTDIR, "cawa-fig-qpad.pdf"), width=13*0.8, height=7*0.8)
+
+#op <- par(las=1, mfrow=c(1,2), mar=c(5, 4, 4, 2) + 0.1)
+layout(matrix(c(1,2,3), nrow=1, ncol=3), widths=c(1,1,0.25), heights=c(1))
+par(las=1, mar=c(5, 4, 4, 2) + 0.1)
 
 xval <- if (mi$sra %in% c("9","10","11","12","13","14"))
     ls*365 else jd*365
@@ -518,8 +557,8 @@ image(xval, ts*24, pmat,
     #col = rev(grey(seq(1-max(pmat), 1-min(pmat), len=50))),
     col = rev(grey(seq(1-0.8, 1, len=25))),
     xlab=ifelse(mi$sra %in% c("9","10","11","12","13","14"),
-        "Days since local springs", "Julian days"),
-    ylab="Hours since sunrise",
+        "Days since local springs", "Ordinal days"),
+    ylab="Hours since local sunrise",
     main="A")#"Probability of availability")
 #contour(xval, ts*24, pmat, add=TRUE, labcex = 0.8)
 box()
@@ -539,5 +578,10 @@ if (version > 2)
     axis(1, 1:nlevels(xq$LCC4), levels(xq$LCC4))
 axis(2)
 box()
-par(op)
+
+par(mar=c(5+5, 4, 4+5, 3+1) + 0.1)
+image.scale(seq(0,1,0.01), col=rev(grey(seq(1-0.8, 1, len=10))), breaks=seq(0,1,0.1), horiz=FALSE,
+ylab="Probability",xlab="")
+box()
+
 dev.off()

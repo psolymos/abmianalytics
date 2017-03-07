@@ -331,3 +331,37 @@ out[[paste0(names(xx)[i], "_uniq_south")]] <- fff(South_out[,2])
 }
 
 write.csv(out, row.names=FALSE, file="w:/normalized_data/uniqueness-normalized.csv")
+
+## new color scale for intactness
+
+## Colour gradient for intactness map
+si1<-c("#D73027","#FC8D59","#FEE090","#E0F3D8","#41DB45","#12A412")
+## Function to interpolate among these colours for intactness map
+si2<-colorRampPalette(si1, space = "rgb")
+
+ff <- list("Intactness - Birds"="w:/multispecies/intactness/intactness-birds.asc",
+    "Intactness - All Species"="w:/multispecies/intactness/intactness-all.asc",
+    "Intactness - Vasculer Plants"="w:/multispecies/intactness/intactness-vplants.asc",
+    "Intactness - Soil Mites"="w:/multispecies/intactness/intactness-mites.asc",
+    "Intactness - Mammals (Snow Tracking)"="w:/multispecies/intactness/intactness-mammals.asc",
+    "Intactness - Bryophytes"="w:/multispecies/intactness/intactness-mosses.asc",
+    "Intactness - Lichens"="w:/multispecies/intactness/intactness-lichens.asc")
+
+nf <- list("Intactness - Birds"="birds",
+    "Intactness - All Species"="all",
+    "Intactness - Vasculer Plants"="vplants",
+    "Intactness - Soil Mites"="mites",
+    "Intactness - Mammals (Snow Tracking)"="mammals",
+    "Intactness - Bryophytes"="mosses",
+    "Intactness - Lichens"="lichens")
+
+i <- 1
+for (i in 1:7) {
+r <- raster(ff[[i]])
+
+png(file.path("v:/contents/2016/multispecies/intactness", paste0("intactness-", nf[[i]], ".png")), width=W, height=H)
+op <- par(mar=c(0, 0, 4, 0) + 0.1)
+map_fun(r, main=names(ff)[i], colScale=si2)
+par(op)
+dev.off()
+}

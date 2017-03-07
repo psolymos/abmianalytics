@@ -236,6 +236,11 @@ for (spp in SPP) {
 
     cr <- wS * km$CurrS + (1-wS) * km$CurrN
     rf <- wS * km$RefS + (1-wS) * km$RefN
+
+    #km2 <- as.matrix(cbind(Curr=cr, Ref=rf))
+    #rownames(km2) <- rownames(km)
+    #save(km2, file=file.path(ROOT, "out", "birds", "pred1combined", paste0(spp, ".Rdata")))
+    #cat("\n")
 if (FALSE) {
     ndat <- normalize_data(rf=rf, cr=cr)
 }
@@ -765,6 +770,20 @@ results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
 }
 xy10km <- ks[,c("POINT_X","POINT_Y","Row10_Col10")]
 save(xy10km, results10km_list, file=file.path(ROOT, "out", "birds", "tables", "km10results.Rdata"))
+
+slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
+rownames(slt) <- slt$AOU
+slt$comments <- NULL
+
+mcrvegsd <- matrix(0, nrow(results10km_list[[1]]), sum(slt$map.pred))
+rownames(mcrvegsd) <- rownames(results10km_list[[1]])
+colnames(mcrvegsd) <- as.character(tax[rownames(slt)[slt$map.pred],"Spp"])
+for (spp in rownames(slt)[slt$map.pred]) {
+    crveg <- results10km_list[[as.character(tax[spp,"Spp"])]]
+    mcrvegsd[,as.character(tax[spp,"Spp"])] <- apply(crveg, 1, sd)
+}
+write.csv(mcrvegsd, file=file.path(ROOT, "out", "birds", "tables", "birds-10x10km-SD-summary.csv"))
+write.csv(xy10km, file=file.path(ROOT, "out", "birds", "tables", "xy-for-10x10km-SD-summary.csv"))
 
 TAG <- ""
 for (spp in SPP) {

@@ -48,7 +48,7 @@ $$ P(W_{ij}=1) = \gamma_{ij} (1 - e^{-\lambda_{ij} t_{ij}}) $$
 We can simply fit a ZIP or ZINB model to the total counts, using $log(t)$
 as offset.
 
-```{r}
+```{r eval=FALSE}
 method="Nelder-Mead"
 inits, control=list()
 hessian=FALSE

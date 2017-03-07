@@ -949,6 +949,20 @@ ROOT2 <- "e:/peter/AB_data_v2016"
 load(file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
 source("~/repos/abmianalytics/R/analysis_models.R")
 
+if (FALSE) {
+boxplot(I(JDAY*365) ~ ARU3, DAT)
+boxplot(I(TSSR*24) ~ ARU3, DAT)
+boxplot(YEAR ~ ARU3, DAT)
+
+library(ggplot2)
+p <- ggplot(DAT, aes(factor(ARU3), YEAR))
+p + geom_violin() + coord_flip()
+
+p <- ggplot(DAT, aes(factor(ARU3), TSSR*24))
+p + geom_violin() + coord_flip()
+
+}
+
 B <- 239
 
 DAT$MAXDUR <- NULL

@@ -25,7 +25,7 @@ cat("OK\ngetting args and setup...")
 if (!interactive())
     (args <- commandArgs(trailingOnly = TRUE))
 
-TEST <- interactive()
+TEST <- FALSE#interactive()
 
 #### setup ####
 
@@ -67,6 +67,7 @@ f_opticut <- function(j, i, z, dist="poisson")
     Hi <- names(Prob)[Prob > 0]
     ## final assembly
     out <- list(species=i, iteration=j,
+        oc1=oc$species[[1]],
         dist=dist,
         hi=Hi,
         ocres=ocres,
@@ -185,6 +186,23 @@ system.time(m3 <- f_lorenz(1, i=SPP1, z="hab1ec")) # 5 sec
 gc()
 system.time(m4 <- f_optilevels(1, i=SPP1, z="hab1ec")) #  sec
 gc()
+
+library(opticut)
+SPP <- sort(colnames(OFF))
+all_res <- list()
+for (i in 1:length(SPP)) {
+    SPP1 <- SPP[i]
+    cat("\n", SPP1, date(), "(", i, "/", length(SPP), ") --- bin");flush.console()
+    m1 <- f_opticut(1, i=SPP1, z="hab1ec", dist="binomial")
+    cat("\tpois");flush.console()
+    m2 <- f_opticut(1, i=SPP1, z="hab1ec", dist="poisson")
+    cat("\tlc");flush.console()
+    m3 <- f_lorenz(1, i=SPP1, z="hab1ec")
+    res <- list(opticut_binomial=m1, opticut_poisson=m2, lorenz=m3)
+    all_res[[SPP1]] <- res
+}
+
+save(all_res, file="~/Dropbox/josm/2016/oc/oc-local-all-spp-2016-11-04.Rdata")
 }
 
 cat("OK\nstart running models:")

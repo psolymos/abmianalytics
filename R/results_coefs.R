@@ -143,11 +143,12 @@ if (FALSE) {
 sb <- read.csv("~/repos/abmianalytics/lookup/singing-species-alberta.csv")
 slt$singing <- sb$Singing_birds[match(rownames(slt), sb$Species_ID)]
 #write.csv(slt, row.names=FALSE, file="~/repos/abmispecies/_data/birds.csv")
-write.csv(slt, row.names=FALSE,
-    file=file.path(ROOT, "tables", "birds-lookup.csv"))
+#write.csv(slt, row.names=FALSE,
+#    file=file.path(ROOT, "tables", "birds-lookup.csv"))
 
-#slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
-#rownames(slt) <- slt$AOU
+slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
+rownames(slt) <- slt$AOU
+slt$comments <- NULL
 
 ## terms and design matrices
 nTerms <- getTerms(modsn, "list")
@@ -160,6 +161,28 @@ colnames(Xns) <- fixNames(colnames(Xns))
 stage_hab_n <- 5
 stage_hab_s <- 3
 
+## computing times
+
+t_n <- numeric(length(fln))
+names(t_n) <- fln
+for (spp in fln) {
+    cat(spp, "\n");flush.console()
+    resn <- loadSPP(file.path(ROOT, "results", "north", paste0("birds_abmi-north_", spp, ".Rdata")))
+    t_n[spp] <- attr(resn, "ncl") * abs(attr(resn, "timing")["elapsed"])
+}
+t_s <- numeric(length(fls))
+names(t_s) <- fls
+for (spp in fls) {
+    cat(spp, "\n");flush.console()
+    ress <- loadSPP(file.path(ROOT, "results", "south", paste0("birds_abmi-south_", spp, ".Rdata")))
+    t_s[spp] <- attr(ress, "ncl") * abs(attr(ress, "timing")["elapsed"])
+}
+summary(t_n)
+summary(t_s)
+((sum(c(t_n, t_s))/60)/60)/24 # 475.5 days
+
+## EC2: 1.68 US / h, 19170.64
+1.68 * (sum(c(t_n, t_s))/60)/60
 
 ## spp specific output
 
@@ -204,6 +227,7 @@ for (spp in rownames(tax)) {
         res_coef[[spp]]$max[2] <- max(fig_soilhf_ymax(tmp2$treed), fig_soilhf_ymax(tmp2$nontreed))
     }
 }
+save(res_coef, file=file.path(ROOT, "tables", "res_coef.Rdata"))
 
 ## plots for N & S
 lin_n <- lin_s <- list()
@@ -354,6 +378,9 @@ sres <- data.frame(tax[names(seff_res), c("English_Name","Scientific_Name","TSNI
     round(sres, 6))[fls,]
 
 round(sapply(seff_res[[1]], function(z) 100*z[,1]), 2)
+
+nres <- nres[rownames(slt)[slt$veghf.north],]
+sres <- sres[rownames(slt)[slt$soilhf.south],]
 
 write.csv(nres, row.names=FALSE,
     file=file.path(ROOT, "tables", "Birds_SectorEffects_North.csv"))
@@ -593,59 +620,35 @@ rowMeans(exp(tmp), na.rm=TRUE)
 
 ## Linear features coefficients
 
-spp <- "BTNW"
-xlin <- nonDuplicated(xnn[,c("ROAD01","hab1","hab_lcc","hab_lcc2","hab_lcc3")],
-    hab1, TRUE)
-xlin <- xlin[c("Decid", "Mixwood", "Conif", "Pine", "BSpr", "Larch",
-    "Decid", "Mixwood", "Conif", "Pine", "BSpr", "Larch",
-    "GrassHerb", "Shrub", "Wetland", "Cult", "UrbInd"),]
-rownames(xlin)[1:12] <- paste0(rep(rownames(xlin)[1:6], 2),
-    rep(c("0-40","40+"), each=6))
-xlin$ROAD01 <- 1
-xlin$SoftLin_PC <- 0
-xlin$hab_lcc[] <- c(4,4, 3,3,3,3, 2,2, 1,1,1,1, 5,5,5,5,5)
-xlin$hab_lcc3 <- xlin$hab_lcc
-levels(xlin$hab_lcc3) <- c("1", "1", "2", "2", "3")
-xlin$hab_lcc2 <- xlin$hab_lcc
-levels(xlin$hab_lcc2) <- c("1", "1", "1", "1", "2")
-
-
-Xlin <- model.matrix(getTerms(modsn["Contrast"], "formula", intercept=TRUE), xlin)
-colnames(Xlin) <- fixNames(colnames(Xlin))
-Xlin <- Xlin[,-1]
-
-
-res_soft <- list()
-res_hard <- list()
+res_lin <- list()
 for (spp in rownames(tax)) {
     cat(spp, "\n");flush.console()
     NAM <- as.character(tax[spp, "English_Name"])
 if (tax[spp, "veghf_north"]) {
-    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-north_", spp, ".Rdata")))
+#    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-north_", spp, ".Rdata")))
+    resn <- loadSPP(file.path(ROOT, "results", "north",
+            paste0("birds_abmi-north_", spp, ".Rdata")))
     estn_lin <- getEst(resn, stage=stage_hab_n, na.out=FALSE, Xnn)
     colnames(estn_lin) <- fixNames(colnames(estn_lin))
-    estn_lin2 <- estn_lin[,colnames(Xlin)]
-    pr <- apply(estn_lin2, 1, function(z) Xlin %*% z)
-    rownames(pr) <- rownames(xlin)
-    tab <- t(apply(exp(pr), 1, quantile, c(0.5, 0.05, 0.95)))
-    res_hard[[spp]] <- data.frame(Species=spp, Habitat=rownames(tab), tab)
-    res_soft[[spp]] <- quantile(estn_lin[,"SoftLin_PC"], c(0.5, 0.05, 0.95))
+    ehl0 <- exp(estn_lin[,c("ROAD01")])
+    ehl1 <- exp(estn_lin[,c("ROAD01")] + estn_lin[,c("habCl:ROAD01")])
+    sl <- estn_lin[,c("SoftLin_PC")]
+    res_lin[[spp]] <- c(expHardLin_Open=fstat(ehl0),
+        expHardLin_Closed=fstat(ehl1),
+        SoftLin=fstat(sl))
 }
 }
 ## note: roadside stuff is exponentiated, but soft lin is not,
 ## because it is exp(x * est)
 
-softlin <- data.frame(Species=tax[names(res_soft), "English_Name"], do.call(rbind, res_soft))
-hardlin <- do.call(rbind, res_hard)
-hardlin$Species <- tax[as.character(hardlin$Species), "English_Name"]
+## habCl is 0/1:
+## 0 = 40yrs or older forest % in 150m radius buffer <= 50%
+## 1 = 40yrs or older forest % in 150m radius buffer > 50%
 
-softlin <- droplevels(softlin[rownames(slt)[slt$veghf.north],])
-hardlin <- droplevels(hardlin[hardlin$Species %in% softlin$Species,])
+lin <- data.frame(Species=tax[names(res_lin), "English_Name"], do.call(rbind, res_lin))
 
-write.csv(softlin, row.names=FALSE,
-    file=file.path(ROOT, "figs", "soft-linear-coefs-2015.csv"))
-write.csv(hardlin, row.names=FALSE,
-    file=file.path(ROOT, "figs", "hard-linear-EXPcoefs-2015.csv"))
+write.csv(lin, row.names=FALSE,
+    file=file.path(ROOT, "tables", "linear-coefs-2016.csv"))
 
 softlin2 <- softlin[c("BTNW","BBWA","OVEN","BRCR","CAWA"),]
 hardlin2 <- do.call(rbind, res_hard[c("BTNW","BBWA","OVEN","BRCR","CAWA")])
@@ -730,3 +733,173 @@ tax2v$split2[tax2v$native == 0] <- "nonnative"
 table(tax2v$order,tax2v$split)
 table(tax2v$split2)
 write.csv(tax2v, file="~/birds-upland-lowland-classification.csv", row.names=FALSE)
+
+## desperate attempt to clean up labeling mess
+library(mefa4)
+v <- read.csv("e:/peter/sppweb2016/round01/tables/col-xwalk.csv")
+
+## mosses
+tax1 <- read.csv("e:/peter/sppweb2016/round01/tables/mosses-tax-eta.csv")
+tax2 <- read.csv("e:/peter/sppweb2016/round01/tables/mosses-tax-tsn.csv")
+compare_sets(tax1$Species, tax2$SCIENTIFIC_NAME)
+tax1$TSNID <- tax2$TSN_ID[match(tax1$Species, tax2$SCIENTIFIC_NAME)]
+write.csv(tax1, file="e:/peter/sppweb2016/round01/tables/mosses-tax-eta-tsn.csv")
+
+y <- read.csv("e:/peter/sppweb2016/round01/tables/mosses-veghf.csv")
+z <- data.frame(Species=y$Species)
+for (i in 1:nrow(v)) {
+    if (as.character(v$eta)[i] != "") {
+        z[[as.character(v$ref[i])]] <- y[[as.character(v$eta)[i]]]
+    } else {
+        z[[as.character(v$ref[i])]] <- NA
+    }
+}
+write.csv(z, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/tables/mosses-veghf2.csv")
+
+yy <- as.matrix(y[,-1])
+yy <- yy[,!grepl(".LCI", colnames(yy))]
+yy <- yy[,!grepl(".UCI", colnames(yy))]
+yy <- yy[,!(colnames(yy) %in% c("SoftLin", "HardLin"))]
+yyy <- data.frame(Species=y$Species, AverageCoef=rowMeans(yy, na.rm=TRUE), y[,c("SoftLin","SoftLin.LCI","SoftLin.UCI","HardLin","HardLin.LCI","HardLin.UCI")])
+write.csv(yyy, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/tables/mosses-lin2.csv")
+
+## NN plants
+y <- read.csv("e:/peter/sppweb2016/round01/tables/nnplants-veghf.csv")
+y <- y[1,,drop=FALSE]
+z <- data.frame(Species=y$Species)
+for (i in 1:nrow(v)) {
+    if (as.character(v$eta)[i] != "") {
+        z[[as.character(v$ref[i])]] <- y[[as.character(v$eta)[i]]]
+    } else {
+        z[[as.character(v$ref[i])]] <- NA
+    }
+}
+write.csv(z, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/tables/nnplants-veghf2.csv")
+
+## mites
+y <- read.csv("e:/peter/sppweb2016/round01/tables/mites-veghf.csv")
+z <- data.frame(Species=y$Species)
+for (i in 1:nrow(v)) {
+    if (as.character(v$eta)[i] != "") {
+        z[[as.character(v$ref[i])]] <- y[[as.character(v$eta)[i]]]
+    } else {
+        z[[as.character(v$ref[i])]] <- NA
+    }
+}
+write.csv(z, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/tables/mites-veghf2.csv")
+
+## mammals
+y <- read.csv("e:/peter/sppweb2016/round01/tables/mammals-veghf.csv")
+z <- data.frame(SpeciesID=y$SpeciesID)
+for (i in 1:nrow(v)) {
+    if (as.character(v$eta)[i] != "") {
+        z[[as.character(v$ref[i])]] <- y[[as.character(v$eta)[i]]]
+    } else {
+        z[[as.character(v$ref[i])]] <- NA
+    }
+}
+write.csv(z, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/tables/mammals-veghf2.csv")
+
+## lichens
+tax1 <- read.csv("e:/peter/sppweb2016/round01/tables/lichens-tax-eta.csv")
+#tax2 <- read.csv("e:/peter/AB_data_v2016/data/species/OUT_Lichens_Species_Taxa_2016-04-28.csv")
+tax3 <- read.csv("e:/peter/AB_data_v2016/oracle/lichens-0308.csv")
+tax4 <- read.csv("e:/peter/AB_data_v2016/oracle/lichens-09.csv")
+
+tax2 <- rbind(nonDuplicated(tax3[,c("SCIENTIFIC_NAME", "TSNID")], tax3$SCIENTIFIC_NAME),
+    nonDuplicated(tax4[,c("SCIENTIFIC_NAME", "TSNID")], tax4$SCIENTIFIC_NAME))
+tax2 <- nonDuplicated(tax2, SCIENTIFIC_NAME)
+tax2 <- tax2[order(tax2[,1]),]
+
+compare_sets(tax1$scinam, tax2$SCIENTIFIC_NAME)
+tax1$TSNID <- tax2$TSNID[match(tax1$scinam, tax2$SCIENTIFIC_NAME)]
+write.csv(tax1, row.names=FALSE, na="", file="e:/peter/sppweb2016/round01/tables/lichens-tax-eta-tsn.csv")
+
+write.csv(tax2, row.names=FALSE, na="", file="e:/peter/sppweb2016/round01/tables/lichens-tax-tsn.csv")
+
+x <- read.csv("e:/peter/sppweb2016/round01/tables/lichens-use-s.csv")
+x$Species <- tax1$scinam[match(x$SpLabel, tax1$sppid)]
+write.csv(x, row.names=FALSE, na="", file="e:/peter/sppweb2016/round01/tables/lichens-use-s2.csv")
+
+y <- read.csv("e:/peter/sppweb2016/round01/tables/lichens-veghf.csv")
+z <- data.frame(Species=y$Species)
+for (i in 1:nrow(v)) {
+    if (as.character(v$eta)[i] != "") {
+        z[[as.character(v$ref[i])]] <- y[[as.character(v$eta)[i]]]
+    } else {
+        z[[as.character(v$ref[i])]] <- NA
+    }
+}
+write.csv(z, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/tables/lichens-veghf2.csv")
+
+yy <- as.matrix(y[,-1])
+yy <- yy[,!grepl(".LCI", colnames(yy))]
+yy <- yy[,!grepl(".UCI", colnames(yy))]
+yy <- yy[,!(colnames(yy) %in% c("SoftLin", "HardLin"))]
+yyy <- data.frame(Species=y$Species, AverageCoef=rowMeans(yy, na.rm=TRUE), y[,c("SoftLin","SoftLin.LCI","SoftLin.UCI","HardLin","HardLin.LCI","HardLin.UCI")])
+write.csv(yyy, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/tables/lichens-lin2.csv")
+
+x <- read.csv("e:/peter/sppweb2016/round01/tables/lichens-soil.csv")
+y <- read.csv("e:/peter/sppweb2016/round01/tables/lichens-paspen.csv")[,1:2]
+y$Species <- tax1$scinam[match(y$Sp, tax1$sppid)]
+all(as.character(y$Species) == as.character(x$Species))
+xx <- x[,c("Productive", "Productive.LCI", "Productive.UCI",
+"Clay", "Clay.LCI", "Clay.UCI", "Saline", "Saline.LCI", "Saline.UCI",
+"RapidDrain", "RapidDrain.LCI", "RapidDrain.UCI", "Cult", "Cult.LCI",
+"Cult.UCI", "UrbInd", "UrbInd.LCI", "UrbInd.UCI")]
+xx <- data.frame(Species=x$Species, plogis(qlogis(as.matrix(xx))+y$pAspen))
+write.csv(xx, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/tables/lichens-s-paspen.csv")
+
+yy <- as.matrix(x[,-1])
+yy <- yy[,!grepl(".LCI", colnames(yy))]
+yy <- yy[,!grepl(".UCI", colnames(yy))]
+yy <- yy[,!(colnames(yy) %in% c("SoftLin", "HardLin"))]
+yyy <- data.frame(Species=x$Species, AverageCoef=rowMeans(yy, na.rm=TRUE), x[,c("SoftLin","SoftLin.LCI","SoftLin.UCI","HardLin","HardLin.LCI","HardLin.UCI")])
+write.csv(yyy, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/tables/lichens-lin2south.csv")
+
+
+## vplants
+tax1 <- read.csv("e:/peter/sppweb2016/round01/tables/vplants-tax-eta.csv")
+tax2 <- read.csv("e:/peter/AB_data_v2016/data/species/OUT_VPlants_Species_Taxa_2016-08-18.csv")
+
+compare_sets(tax1$scinam, tax2$SPECIES_OLD)
+tax1$TSNID <- tax2$TSN_ID[match(tax1$scinam, tax2$SPECIES_OLD)]
+write.csv(tax1, row.names=FALSE, na="", file="e:/peter/sppweb2016/round01/tables/vplants-tax-eta-tsn.csv")
+
+y <- read.csv("e:/peter/sppweb2016/round01/tables/vplants-veghf.csv")
+z <- data.frame(Species=y$Species)
+for (i in 1:nrow(v)) {
+    if (as.character(v$eta)[i] != "") {
+        z[[as.character(v$ref[i])]] <- y[[as.character(v$eta)[i]]]
+    } else {
+        z[[as.character(v$ref[i])]] <- NA
+    }
+}
+write.csv(z, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/tables/vplants-veghf2.csv")
+
+yy <- as.matrix(y[,-1])
+yy <- yy[,!grepl(".LCI", colnames(yy))]
+yy <- yy[,!grepl(".UCI", colnames(yy))]
+yy <- yy[,!(colnames(yy) %in% c("SoftLin", "HardLin"))]
+yyy <- data.frame(Species=y$Species, AverageCoef=rowMeans(yy, na.rm=TRUE), y[,c("SoftLin","SoftLin.LCI","SoftLin.UCI","HardLin","HardLin.LCI","HardLin.UCI")])
+write.csv(yyy, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/tables/vplants-lin2.csv")
+
+x <- read.csv("e:/peter/sppweb2016/round01/tables/vplants-soil.csv")
+y <- read.csv("e:/peter/sppweb2016/round01/tables/vplants-paspen.csv")[,1:2]
+y$Species <- tax1$scinam[match(y$Sp, tax1$sppid)]
+y <- y[!is.na(y$Species),]
+all(as.character(y$Species) == as.character(x$Species))
+xx <- x[,c("Productive", "Productive.LCI", "Productive.UCI",
+"Clay", "Clay.LCI", "Clay.UCI", "Saline", "Saline.LCI", "Saline.UCI",
+"RapidDrain", "RapidDrain.LCI", "RapidDrain.UCI", "Cult", "Cult.LCI",
+"Cult.UCI", "UrbInd", "UrbInd.LCI", "UrbInd.UCI")]
+xx <- data.frame(Species=x$Species, plogis(qlogis(as.matrix(xx))+y$pAspen))
+write.csv(xx, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/tables/vplants-s-paspen.csv")
+
+yy <- as.matrix(x[,-1])
+yy <- yy[,!grepl(".LCI", colnames(yy))]
+yy <- yy[,!grepl(".UCI", colnames(yy))]
+yy <- yy[,!(colnames(yy) %in% c("SoftLin", "HardLin"))]
+yyy <- data.frame(Species=x$Species, AverageCoef=rowMeans(yy, na.rm=TRUE), x[,c("SoftLin","SoftLin.LCI","SoftLin.UCI","HardLin","HardLin.LCI","HardLin.UCI")])
+write.csv(yyy, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/tables/vplants-lin2south.csv")
+
