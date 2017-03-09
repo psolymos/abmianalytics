@@ -109,7 +109,8 @@ for (s in 1:(length(Start)-1)) {
     d <- e$d
     ## HF year is used as base year for prediction purposes
     dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
-        col.year=HF_YEAR, col.HFyear="YEAR_MineCFOAgCutblock", sparse=TRUE)
+        col.year=HF_YEAR, col.HFyear="YEAR_MineCFOAgCutblock", sparse=TRUE,
+        HF_fine=HF_VERSION=="2014")
     stopifnot(sum(duplicated(colnames(dd$veg_current))) < 1)
     veg_current <- dd$veg_current
     veg_reference <- dd$veg_reference
@@ -128,14 +129,15 @@ for (s in 1:(length(Start)-1)) {
         load(f, envir=e)
         d <- e$d
         dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
-            col.year=HF_YEAR, col.HFyear="YEAR_MineCFOAgCutblock", sparse=TRUE)
+            col.year=HF_YEAR, col.HFyear="YEAR_MineCFOAgCutblock", sparse=TRUE,
+            HF_fine=HF_VERSION=="2014")
         veg_current <- bind_fun2(veg_current, dd$veg_current)
         veg_reference <- bind_fun2(veg_reference, dd$veg_reference)
         soil_current <- bind_fun2(soil_current, dd$soil_current)
         soil_reference <- bind_fun2(soil_reference, dd$soil_reference)
 
-        cs <- colSums(veg_current)
-        print(round(sum(cs[grep("Cultivation", names(cs))])/10^6,2))
+#        cs <- colSums(veg_current)
+#        print(round(sum(cs[grep("Cultivation", names(cs))])/10^6,2))
 
     }
     tmplist[[s]] <- list(
@@ -171,9 +173,12 @@ dd1km_pred <- list(
 
 df <- data.frame(h=colnames(dd1km_pred$veg_current), A=colSums(dd1km_pred$veg_current)/10^6)
 df$P <- round(100*df$A / sum(df$A), 2)
-rownames(df) <- NULL
-df[,-2]
-write.csv(df[,c(1,3,2)], file="veg6.csv")
+#write.csv(df[,c(1,3,2)], row.names=FALSE,
+#    file=file.path(ROOT, VER, "data", "inter", "veghf","veg6_sums.csv"))
+
+save(dd1km_pred,
+    file=file.path(ROOT, VER, "data", "inter", "veghf",
+        paste0("veg-hf_", SCALE, "-grid_v6hf", HF_VERSION, "_unsorted.Rdata")))
 
 
 ## this has the climate stuff
@@ -306,38 +311,73 @@ kgrid$ASP <- kgrid2$slpasp
 kgrid$TRI <- kgrid2$tri
 kgrid$CTI <- kgrid2$cti
 
+## load kgrid table from last year
 
-load(file.path(ROOT, VER, "out", "kgrid", "kgrid_table.Rdata")) # kgrid
+load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
+compare_sets(rownames(dd1km_pred[[1]]), rownames(kgrid))
+
 dd1km_pred$veg_current <- dd1km_pred$veg_current[rownames(kgrid),]
 dd1km_pred$veg_reference <- dd1km_pred$veg_reference[rownames(kgrid),]
 dd1km_pred$soil_current <- dd1km_pred$soil_current[rownames(kgrid),]
 dd1km_pred$soil_reference <- dd1km_pred$soil_reference[rownames(kgrid),]
-dd1km_pred$v6veg <- dd1km_pred$v6veg[rownames(kgrid),]
 
 dd1km_nsr <- dd1km_pred
 dd1km_nsr$veg_current <- groupSums(dd1km_pred$veg_current, 1, kgrid$NSRNAME)
 dd1km_nsr$veg_reference <- groupSums(dd1km_pred$veg_reference, 1, kgrid$NSRNAME)
 dd1km_nsr$soil_current <- groupSums(dd1km_pred$soil_current, 1, kgrid$NSRNAME)
 dd1km_nsr$soil_reference <- groupSums(dd1km_pred$soil_reference, 1, kgrid$NSRNAME)
-dd1km_nsr$v6veg <- groupSums(dd1km_pred$v6veg, 1, kgrid$NSRNAME)
 
 dd1km_nr <- dd1km_pred
 dd1km_nr$veg_current <- groupSums(dd1km_pred$veg_current, 1, kgrid$NRNAME)
 dd1km_nr$veg_reference <- groupSums(dd1km_pred$veg_reference, 1, kgrid$NRNAME)
 dd1km_nr$soil_current <- groupSums(dd1km_pred$soil_current, 1, kgrid$NRNAME)
 dd1km_nr$soil_reference <- groupSums(dd1km_pred$soil_reference, 1, kgrid$NRNAME)
-dd1km_nr$v6veg <- groupSums(dd1km_pred$v6veg, 1, kgrid$NRNAME)
 
 if (SAVE) { ## needed for recalculating average ages
     save(dd1km_pred,
-        file=file.path(ROOT, VER, "data/kgrid-V6dec", "veg-hf_1kmgrid_v6.Rdata"))
+        file=file.path(ROOT, VER, "data", "analysis", "veg-hf_1kmgrid_v6.Rdata"))
     save(dd1km_nsr, dd1km_nr,
-        file=file.path(ROOT, VER, "data/kgrid-V6dec", "veg-hf_nsr_v6.Rdata"))
+        file=file.path(ROOT, VER, "data", "analysis", "veg-hf_nsr_v6.Rdata"))
     #save(kgrid,
     #    file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
 }
 
 ## fix age 0 in saved files -----------------------------
+
+
+cr <- as.matrix(dd1km_nsr[[1]])
+rf <- as.matrix(dd1km_nsr[[2]])
+
+ages_list <- list(
+    "Decid"=c("Decid0", "DecidR", "Decid1", "Decid2", "Decid3", "Decid4",
+        "Decid5", "Decid6", "Decid7", "Decid8", "Decid9"),
+    "Mixedwood"=c("Mixedwood0", "MixedwoodR", "Mixedwood1", "Mixedwood2", "Mixedwood3", "Mixedwood4",
+        "Mixedwood5", "Mixedwood6", "Mixedwood7", "Mixedwood8", "Mixedwood9"),
+    "Pine"=c("Pine0", "PineR", "Pine1", "Pine2", "Pine3", "Pine4",
+        "Pine5", "Pine6", "Pine7", "Pine8", "Pine9"),
+    "Spruce"=c("Spruce0", "SpruceR", "Spruce1", "Spruce2", "Spruce3", "Spruce4",
+        "Spruce5", "Spruce6", "Spruce7", "Spruce8", "Spruce9"),
+    "TreedBog"=c("TreedBog0", "TreedBogR", "TreedBog1", "TreedBog2", "TreedBog3", "TreedBog4",
+        "TreedBog5", "TreedBog6", "TreedBog7", "TreedBog8", "TreedBog9"),
+    "TreedFen"=c("TreedFen0", "TreedFenR", "TreedFen1", "TreedFen2", "TreedFen3", "TreedFen4",
+        "TreedFen5", "TreedFen6", "TreedFen7", "TreedFen8", "TreedFen9"),
+    "TreedSwamp"=c("TreedSwamp0", "TreedSwampR", "TreedSwamp1", "TreedSwamp2", "TreedSwamp3", "TreedSwamp4",
+        "TreedSwamp5", "TreedSwamp6", "TreedSwamp7", "TreedSwamp8", "TreedSwamp9"))
+cr_ages <- lapply(ages_list, function(z) {
+    zz <- cr[,z]
+    zz[,1] <- 0
+    zz <- zz / ifelse(rowSums(zz)==0, 1, rowSums(zz))
+    })
+rf_ages <- lapply(ages_list, function(z) {
+    zz <- rf[,z]
+    zz[,1] <- 0
+    zz <- zz / ifelse(rowSums(zz)==0, 1, rowSums(zz))
+    })
+AvgAges <- list(current=cr_ages, reference=rf_ages)
+
+save(AvgAges, ages_list,
+    file=file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
+
 
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
@@ -350,7 +390,7 @@ sum(dd1km_pred[[1]][,Target0])
 sum(dd1km_pred[[2]][,Target0])
 sum(dd1km_pred[[1]])
 sum(dd1km_pred[[2]])
-dd1km_pred <- fill_in_0ages(dd1km_pred, kgrid$NSRNAME)
+dd1km_pred <- fill_in_0ages_v6(dd1km_pred, kgrid$NSRNAME, ages_list)
 sum(dd1km_pred[[1]][,Target0])
 sum(dd1km_pred[[2]][,Target0])
 sum(dd1km_pred[[1]])

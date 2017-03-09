@@ -95,14 +95,9 @@ make_vegHF_wide_v6 <-
 function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE,
 HF_fine=TRUE) {
 
-    TreedClassesCC <- c("Decid", "Mixedwood", "Pine", "Fir", "AlpineLarch", "Spruce")
-    TreedClasses   <- c(TreedClassesCC,
-        "TreedBog-BSpr",
-        "TreedFen-BSpr", "TreedFen-Decid", "TreedFen-Larch", "TreedFen-Mixedwood",
-        "TreedSwamp-Conif", "TreedSwamp-Decid", "TreedSwamp-Fir", "TreedSwamp-Forest",
-        "TreedSwamp-Mixedwood", "TreedSwamp-Spruce")
-    NontreedClasses <- c("Alkali", "GrassHerb",
-        "Shrub",
+    TreedClassesCC <- c("Decid", "Mixedwood", "Pine", "Spruce")
+    TreedClasses   <- c(TreedClassesCC, "TreedBog", "TreedFen", "TreedSwamp")
+    NontreedClasses <- c("GrassHerb", "Shrub",
         "GraminoidFen", "Marsh",
         "ShrubbyBog", "ShrubbyFen", "ShrubbySwamp",
         "Bare", "SnowIce", "Water")
@@ -134,8 +129,10 @@ HF_fine=TRUE) {
     HLEVS <- c(TreedClasses, NontreedClasses)
 
     d <- droplevels(d[d$Combined_ChgByCWCS != "",])
-    d$c6 <- factor(as.character(d$Combined_ChgByCWCS), c(HLEVS, "TreedWetland-Mixedwood"))
-    levels(d$c6)[levels(d$c6) == "TreedWetland-Mixedwood"] <- "TreedFen-Mixedwood"
+    d$c6 <- reclass(d$Combined_ChgByCWCS, as.matrix(recl), all=TRUE)
+#    d$c6 <- factor(as.character(d$Combined_ChgByCWCS), c(HLEVS, "TreedWetland-Mixedwood"))
+#    levels(d$c6)[levels(d$c6) == "TreedWetland-Mixedwood"] <- "TreedFen-Mixedwood"
+
 
     ## designate a label column (there are different column names in use)
     d$LABEL <- d[,col.label]
@@ -801,6 +798,46 @@ function(x, NSR)
                     Mat <- xx[j, Cols, drop=FALSE]
                     ## multiply Mat[,1] (unknown age) with this matrix
                     Unk <- Mat[,1] * t(matrix(ag[i,,nsr], length(Ages), sum(j)))
+                    Mat[,1] <- 0 # will be 0 and redistributed from Unk
+                    Mat <- Mat + Unk
+                    xx[j, Cols] <- Mat # ridiculously slow as sparse matrix
+                }
+            }
+            cat(" --- OK\n")
+        }
+        if (current) {
+            x$veg_current <- as(xx, "dgCMatrix")
+        } else {
+            x$veg_reference <- as(xx, "dgCMatrix")
+        }
+    }
+    x
+}
+
+fill_in_0ages_v6 <-
+function(x, NSR, ages_list)
+{
+    Target <- names(ages_list)
+
+    Ages <- c("0", "R", as.character(1:9))
+    NSR <- droplevels(as.factor(NSR))
+    NSRs <- levels(NSR)
+    for (current in c(TRUE, FALSE)) {
+        xx <- if (current)
+            x$veg_current else x$veg_reference
+        xx <- as.matrix(xx)
+        ag <- if (current)
+            AvgAges$current else AvgAges$reference
+        for (nsr in NSRs) {
+            cat(ifelse(current, "current:", "reference:"), nsr)
+            flush.console()
+            for (i in Target) {
+                Cols <- paste0(i, Ages)
+                j <- NSR == nsr
+                if (any(j)) {
+                    Mat <- xx[j, Cols, drop=FALSE]
+                    ## multiply Mat[,1] (unknown age) with this matrix
+                    Unk <- Mat[,1] * t(matrix(ag[[i]][nsr,], length(Ages), sum(j)))
                     Mat[,1] <- 0 # will be 0 and redistributed from Unk
                     Mat <- Mat + Unk
                     xx[j, Cols] <- Mat # ridiculously slow as sparse matrix
