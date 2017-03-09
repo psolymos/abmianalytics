@@ -107,9 +107,17 @@ det3$PKEY <- interaction(det3$SITE_LABEL, "_", det3$ToY, ":",
     det3$Start$hour, ":", det3$Start$min, sep="", drop=TRUE)
 xt <- as.matrix(Xtab(~ PKEY + Spp, det3, cdrop="NONE"))
 x <- nonDuplicated(det3, PKEY, TRUE)
+
+x$MONTH <- x$Start$mon+1
+x$MDAY <- x$Start$mday
+x$HOUR <- x$Start$hour
+x$MINUTE <- x$Start$min
+x$YDAY <- x$Start$yday
+
 x <- x[rownames(xt), c("PKEY", "SITE_LABEL", "ROTATION",
     "SITE", "YEAR", "STATION", "RAIN", "WIND", "INDUSTRY", "NOISE", "MICROPHONE",
-    "Start", "ToY", "ToD", "ToYc", "ToDc")]
+    "Start", "ToY", "ToD", "ToYc", "ToDc",
+    "MONTH", "MDAY", "HOUR", "MINUTE", "YDAY")]
 xt <- xt[,colSums(xt)>0]
 
 save(xt, x, file="~/Dropbox/collaborations/opticut/R/abmi-aru-1min.Rdata")

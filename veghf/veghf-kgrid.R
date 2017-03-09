@@ -1,60 +1,67 @@
+HF_VERSION <- "2014"
+
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 
-### 1K grid --------------------------------------------------------
+SCALE <- "km" # km or qs
+
+### Provincial grid (km or QS scale) ---------------------------------------
 
 ## Sample year is current year, so that forest ages are relative to present
 ## and not relative to HF or veg inventory year.
 
-#fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6", "tiles"))
-fl <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata-x"))
-#recl <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/combined_to_peter.csv")
-#recl <- read.csv("c:/Users/Peter/Dropbox/abmi/V6/veg-V6-combined4.csv")
-recl <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-v6.csv")
-
-## test feature types and save in Rdata format
-fl0 <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles"))
-HF <- character(0)
-VEG <- character(0)
-A1 <- numeric(length(fl0))
-A2 <- numeric(length(fl0))
+## save in Rdata format
+fl0 <- list.files(file.path(ROOT, VER, "data", "raw", "veghf", SCALE))
 for (i in seq_len(length(fl0))) {
     fn <- fl0[i]
     cat("\nchecking", i, "/", length(fl0));flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles", fn)
+    f <- file.path(ROOT, VER, "data", "raw", "veghf", SCALE, fn)
     #d <- fread(f)
     d <- read.csv(f)
-    #d2 <- c4_fun(d)
-    HF <- sort(union(HF, levels(d$FEATURE_TY)))
-    VEG3 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source,
-        drop=TRUE, sep="::")
-    VEG <- sort(union(VEG, VEG3))
-    A1[i] <- sum(d$Shape_Area)
-    #A2[i] <- sum(d2$Shape_Area)
-    save(d, file=file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata",
+    save(d, file=file.path(ROOT, VER, "data", "inter", "veghf", SCALE,
         gsub(".csv", ".Rdata", fn, fixed = TRUE)))
 }
-setdiff(HF, c("", rownames(hflt)))
-setdiff(VEG, levels(recl$Veg_Moist_preBkfSrs))
 
 
-## reclassify using Rdata versions
+## check Rdata files
 
-fl0 <- list.files(file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata"))
+fl0 <- list.files(file.path(ROOT, VER, "data", "inter", "veghf", SCALE))
+SLIVER <- numeric(length(fl0))
 HF <- character(0)
 VEG <- character(0)
+COMB <- character(0)
+VEGissue <- character(0)
 c5 <- character(0)
 A1 <- numeric(length(fl0))
 A2 <- numeric(length(fl0))
+Acomb <- numeric(length(fl0))
+Awetmix <- Awetmix0 <- numeric(length(fl0))
+Awm <- matrix(NA, length(fl0), 3)
 for (i in seq_len(length(fl0))) {
     fn <- fl0[i]
     cat("checking", i, "/", length(fl0), "\n");flush.console()
-    f <- file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata", fn)
+    f <- file.path(ROOT, VER, "data", "inter", "veghf", SCALE, fn)
     load(f)
+
+    d$c6 <- factor(as.character(d$Combined_ChgByCWCS), VEG_LEVS)
+
+#    Awetmix0[i] <- sum(d$Shape_Area[d$c6 == "TreedWetland-Mixedwood"])
+#    d$c6[d$c6 == "TreedWetland-Mixedwood" & d$CWCS == "Fen"] <- "TreedFen-Mixedwood"
+#    d$c6[d$c6 == "TreedWetland-Mixedwood" & d$CWCS == "Bog"] <- "TreedBog-BSpr"
+#    d$c6[d$c6 == "TreedWetland-Mixedwood" & d$CWCS == "Swamp"] <- "TreedSwamp-Mixedwood"
+#    Awetmix[i] <- sum(d$Shape_Area[d$c6 == "TreedWetland-Mixedwood"])
+    Awm[i,1] <- sum(d$Shape_Area[d$c6 == "TreedFen-Mixedwood"])
+    Awm[i,2] <- sum(d$Shape_Area[d$c6 == "TreedBog-Mixedwood"])
+    Awm[i,3] <- sum(d$Shape_Area[d$c6 == "TreedSwamp-Mixedwood"])
+
     d2 <- c4_fun(d)
     HF <- sort(union(HF, levels(d$FEATURE_TY)))
     VEG <- sort(union(VEG, levels(d2$c4)))
-    A1[i] <- sum(d$Shape_Area)
-    A2[i] <- sum(d2$Shape_Area)
+    COMB <- sort(union(COMB, as.character(d$Combined_ChgByCWCS)))
+    A1[i] <- sum(d$Shape_Area)/10^6
+    A2[i] <- sum(d2$Shape_Area)/10^6
+    SLIVER[i] <- sum(d2$Shape_Area[d2$issue > 0])
+    Acomb[i] <- sum(d$Shape_Area[d$Combined_ChgByCWCS == ""])
+    VEGissue <- sort(union(VEGissue, as.character(d2$VEG3)[d2$issue > 0]))
     d2$c5 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source,
         d$CWCS_Class, drop=TRUE, sep="::")
     c5 <- sort(union(c5, levels(d2$c5)))
@@ -63,7 +70,14 @@ for (i in seq_len(length(fl0))) {
 
 setdiff(HF, c("", rownames(hflt)))
 setdiff(VEG, levels(recl$Combined))
+setdiff(COMB, levels(recl$Combined))
+setdiff(levels(recl$Combined), COMB)
 summary(A1-A2)
+sum(SLIVER,na.rm=TRUE)/10^6
+VEGissue
+sum(Awetmix0,na.rm=TRUE)/10^6
+sum(Awetmix,na.rm=TRUE)/10^6
+
 
 tmp <- strsplit(c5, "::")
 tmp <- do.call(rbind, lapply(tmp, function(z) if (length(z) < 4) c(z, "") else z))
@@ -78,24 +92,25 @@ d5$needCWCS <- recl$need_CWCS[match(d5$Combine3, recl$Veg_Moist_preBkfSrs)]
 
 Start <- c(1, 51, 101, 151, 201, 251, 301, 351, 401, 451,
     501, 551, 601, 651, 701, 751, 802)
-tmplist <- list()
+fl <- list.files(file.path(ROOT, VER, "data", "inter", "veghf", SCALE))
 
+SCALE_NOTE <- if (SCALE == "km")
+    "1 km x 1 km prediction grid cells" else "QS prediction grid cells"
+tmplist <- list()
 for (s in 1:(length(Start)-1)) {
 
     gc()
     fn <- fl[Start[s]]
     cat("\n\n------------- batch", s, "----------------\n")
     cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
-#    f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
-#    d <- read.csv(f)
-    f <- file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata", fn)
+    f <- file.path(ROOT, VER, "data", "inter", "veghf", SCALE, fn)
     e <- new.env()
     load(f, envir=e)
-    d <- c4_fun(e$d)
+    d <- e$d
     ## HF year is used as base year for prediction purposes
-    Basic <- Xtab(Shape_Area ~ Row_Col + c4, d)
     dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
-        col.year=HF_YEAR, col.HFyear="CutYear", sparse=TRUE)
+        col.year=HF_YEAR, col.HFyear="YEAR_MineCFOAgCutblock", sparse=TRUE)
+    stopifnot(sum(duplicated(colnames(dd$veg_current))) < 1)
     veg_current <- dd$veg_current
     veg_reference <- dd$veg_reference
     soil_current <- dd$soil_current
@@ -108,20 +123,19 @@ for (s in 1:(length(Start)-1)) {
 
         fn <- fl[i]
         cat(which(fl == fn), "/", length(fl), "--", fn, "\n");flush.console()
-#        f <- file.path(ROOT, VER, "data", "kgrid-V6", "tiles", fn)
-#        d <- read.csv(f)
-        f <- file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata", fn)
+        f <- file.path(ROOT, VER, "data", "inter", "veghf", SCALE, fn)
         e <- new.env()
         load(f, envir=e)
-        d <- c4_fun(e$d)
-        Basic2 <- Xtab(Shape_Area ~ Row_Col + c4, d)
-        Basic <- bind_fun2(Basic, Basic2)
+        d <- e$d
         dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
-            col.year=HF_YEAR, col.HFyear="CutYear", sparse=TRUE)
+            col.year=HF_YEAR, col.HFyear="YEAR_MineCFOAgCutblock", sparse=TRUE)
         veg_current <- bind_fun2(veg_current, dd$veg_current)
         veg_reference <- bind_fun2(veg_reference, dd$veg_reference)
         soil_current <- bind_fun2(soil_current, dd$soil_current)
         soil_reference <- bind_fun2(soil_reference, dd$soil_reference)
+
+        cs <- colSums(veg_current)
+        print(round(sum(cs[grep("Cultivation", names(cs))])/10^6,2))
 
     }
     tmplist[[s]] <- list(
@@ -130,8 +144,7 @@ for (s in 1:(length(Start)-1)) {
         soil_current = soil_current,
         soil_reference = soil_reference,
         sample_year = sample_year,
-        scale = "1 km x 1 km prediction grid cells",
-        c4 = Basic)
+        scale = SCALE_NOTE)
 }
 
 ## binding together the pieces
@@ -139,14 +152,12 @@ veg_current <- tmplist[[1]]$veg_current
 veg_reference <- tmplist[[1]]$veg_reference
 soil_current <- tmplist[[1]]$soil_current
 soil_reference <- tmplist[[1]]$soil_reference
-Basic <- tmplist[[1]]$c4
 for (j in 2:length(tmplist)) {
     cat("binding", j-1, "&", j, "/", length(tmplist), "\n");flush.console()
     veg_current <- bind_fun2(veg_current, tmplist[[j]]$veg_current)
     veg_reference <- bind_fun2(veg_reference, tmplist[[j]]$veg_reference)
     soil_current <- bind_fun2(soil_current, tmplist[[j]]$soil_current)
     soil_reference <- bind_fun2(soil_reference, tmplist[[j]]$soil_reference)
-    Basic <- bind_fun2(Basic, tmplist[[j]]$c4)
 }
 
 ## assembling return object
@@ -156,8 +167,14 @@ dd1km_pred <- list(
     soil_current = soil_current,
     soil_reference = soil_reference,
     sample_year = tmplist[[1]]$sample_year,
-    scale = "1 km x 1 km prediction grid cells",
-    v6veg = Basic)
+    scale = SCALE_NOTE)
+
+df <- data.frame(h=colnames(dd1km_pred$veg_current), A=colSums(dd1km_pred$veg_current)/10^6)
+df$P <- round(100*df$A / sum(df$A), 2)
+rownames(df) <- NULL
+df[,-2]
+write.csv(df[,c(1,3,2)], file="veg6.csv")
+
 
 ## this has the climate stuff
 kgrid <- read.csv(

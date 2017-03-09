@@ -37,6 +37,11 @@ c4_fun <- function(d) {
         drop=TRUE, sep="::")
     d$c3 <- recl$Combined[match(d$VEG3, recl$Veg_Moist_preBkfSrs)]
     d$needCWCS <- recl$need_CWCS[match(d$VEG3, recl$Veg_Moist_preBkfSrs)] == "x"
+
+    ## slivers??? VEG3='::::'
+    d$issue <- ifelse(is.na(d$needCWCS), 1L, 0L)
+    d$needCWCS[is.na(d$needCWCS)] <- FALSE
+
     tmp <- data.frame(cwcs=d$CWCS_Class[d$needCWCS], c4=d$c3[d$needCWCS],
         src=d$PostBackfill_Source[d$needCWCS])
     #tmp$c4 <- as.character(tmp$c4)
@@ -78,43 +83,59 @@ c4_fun <- function(d) {
     d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Bog"] <- "TreedBog-BSpr"
     d$c4[d$c4 == "TreedWetland-Mixedwood" & d$cwcs == "Swamp"] <- "TreedSwamp-Mixedwood"
 
-    d$c4 <- factor(d$c4, c(levels(d$c3)[!(levels(d$c3) %in%
+    d$c4 <- factor(d$c4, c("UNK", levels(d$c3)[!(levels(d$c3) %in%
         c("GraminoidWetland","ShrubbyWetland","Muskeg"))]))
-    d$VEG3 <- d$c3 <- d$needCWCS <- NULL
+    #d$VEG3 <- d$c3 <- d$needCWCS <- NULL
+    d$c4[is.na(d$c4)] <- "UNK"
     d
 }
 
+## HF_fine T=use 2014 classification, F=use previous
 make_vegHF_wide_v6 <-
-function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) {
+function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE,
+HF_fine=TRUE) {
 
-    TreedClasses <- c("Conif", "Decid", "Fir", "Mixedwood", "Pine", "Spruce",
+    TreedClassesCC <- c("Decid", "Mixedwood", "Pine", "Fir", "AlpineLarch", "Spruce")
+    TreedClasses   <- c(TreedClassesCC,
         "TreedBog-BSpr",
         "TreedFen-BSpr", "TreedFen-Decid", "TreedFen-Larch", "TreedFen-Mixedwood",
-        "TreedSwamp-Conif", "TreedSwamp-Decid", "TreedSwamp-Fir",
-        #"TreedSwamp-Forest",
-        "TreedSwamp-Mixedwood", "TreedSwamp-Spruce", "TreedSwamp-Pine",
-        #"TreedWetland-Mixedwood",
-        "AlpineLarch")
-    NontreedClasses <- c("ShrubbyBog", "ShrubbyFen", "ShrubbySwamp",
-        "Marsh", "GraminoidBog", "GraminoidFen",
-        "GrassHerb", "Shrub", "Alkali",
-        "Bare", "SnowIce",
-        "Water")
-    Fragment <- c("TreedWetland-Mixedwood", "TreedSwamp-Forest",
-        "GraminoidWetland", "ShrubbyWetland", "Muskeg")
-    HFLab <- c("BorrowpitsDugoutsSumps", "Canals", "CultivationCropPastureBareground",
-        "HighDensityLivestockOperation", "IndustrialSiteRural", "MineSite",
-        "MunicipalWaterSewage", "OtherDisturbedVegetation", "PeatMine",
-        "Pipeline", "RailHardSurface", "RailVegetatedVerge", "Reservoirs",
-        "RoadHardSurface", "RoadTrailVegetated", "RoadVegetatedVerge",
-        "RuralResidentialIndustrial", "SeismicLine", "TransmissionLine",
-        "Urban", "WellSite", "WindGenerationFacility")
+        "TreedSwamp-Conif", "TreedSwamp-Decid", "TreedSwamp-Fir", "TreedSwamp-Forest",
+        "TreedSwamp-Mixedwood", "TreedSwamp-Spruce")
+    NontreedClasses <- c("Alkali", "GrassHerb",
+        "Shrub",
+        "GraminoidFen", "Marsh",
+        "ShrubbyBog", "ShrubbyFen", "ShrubbySwamp",
+        "Bare", "SnowIce", "Water")
+    if (!HF_fine)
+        HFlab <- c("BorrowpitsDugoutsSumps", "Canals", "CultivationCropPastureBareground",
+            "CutBlocks", "HighDensityLivestockOperation", "IndustrialSiteRural",
+            "MineSite", "MunicipalWaterSewage", "OtherDisturbedVegetation",
+            "PeatMine", "Pipeline", "RailHardSurface", "RailVegetatedVerge",
+            "Reservoirs", "RoadHardSurface", "RoadTrailVegetated", "RoadVegetatedVerge",
+            "RuralResidentialIndustrial", "SeismicLine", "TransmissionLine",
+            "Urban", "WellSite", "WindGenerationFacility")
+    if (HF_fine)
+        HFLab <- c("UrbanIndustrial", "UrbanResidence", "RuralResidentialIndustrial",
+            "IndustrialSiteRural", "WindGenerationFacility", "OtherDisturbedVegetation",
+            "MineSite", "PeatMine", "WellSite", "Pipeline", "TransmissionLine",
+            "SeismicLineNarrow", "SeismicLineWide", "RoadHardSurface", "RailHardSurface",
+            "RoadTrailVegetated", "RoadVegetatedVerge", "RailVegetatedVerge",
+            "CultivationCrop", "CultivationAbandoned", "CultivationRoughPasture",
+            "CultivationTamePasture", "HighDensityLivestockOperation",
+            "CutBlocks", "BorrowpitsDugoutsSumps", "MunicipalWaterSewage",
+            "Reservoirs", "Canals")
     RfLab <- c(paste0(rep(TreedClasses, each=11),
         c("0","R","1","2","3","4","5","6","7","8","9")),
-        Fragment, NontreedClasses)
-    CrOnlyLab <- c(HFLab, paste0("CC", paste0(rep(TreedClasses, each=5),
+        NontreedClasses)
+    ## use necessary CC-forest classes once evaluated
+    CrOnlyLab <- c(HFLab,
+        paste0("CC", paste0(rep(TreedClassesCC, each=5),
         c("R","1","2","3","4"))))
-    HLEVS <- c(TreedClasses, Fragment, NontreedClasses)
+    HLEVS <- c(TreedClasses, NontreedClasses)
+
+    d <- droplevels(d[d$Combined_ChgByCWCS != "",])
+    d$c6 <- factor(as.character(d$Combined_ChgByCWCS), c(HLEVS, "TreedWetland-Mixedwood"))
+    levels(d$c6)[levels(d$c6) == "TreedWetland-Mixedwood"] <- "TreedFen-Mixedwood"
 
     ## designate a label column (there are different column names in use)
     d$LABEL <- d[,col.label]
@@ -142,7 +163,7 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
 
     d$ORIGIN_YEAR <- d$Origin_Year
     #d$Origin_Year <- NULL
-    d$HABIT <- d$c4
+    d$HABIT <- d$c6
     #d$c4 <- NULL
 
     #### Footprint classes:
@@ -156,7 +177,11 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
             collapse="\n\t", sep="")))
     ## classify feature types according to the chosen level of HF designation
     ## which comes from hf.level column of hflt (HF lookup table)
-    d$HFclass <- hflt$HF_GROUP[match(d$FEATURE_TY, rownames(hflt))]
+    if (HF_fine) {
+        d$HFclass <- hflt$HF_GROUP_COMB[match(d$FEATURE_TY, rownames(hflt))]
+    } else {
+        d$HFclass <- hflt$HF_GROUP[match(d$FEATURE_TY, rownames(hflt))]
+    }
     ## HFclass inhgerits all levels from hflt[,hf.level]
     ## need to add in the blank for further parsing
     levels(d$HFclass) <- c(levels(d$HFclass), "")
@@ -733,7 +758,7 @@ bind_fun <- function(x) {
 bind_fun2 <- function(x, y, check.col=TRUE) {
     if (check.col &&
         length(union(colnames(x), colnames(y))) != length(intersect(colnames(x), colnames(y))))
-            stop("colnames must be same", dput(setdiff(union(colnames(x), colnames(y)),
+            stop("colnames must be same ", dput(setdiff(union(colnames(x), colnames(y)),
                 intersect(colnames(x), colnames(y)))))
     melx <- Melt(x)
     mely <- Melt(y)
