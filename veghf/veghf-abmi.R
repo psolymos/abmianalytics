@@ -1,11 +1,33 @@
+HF_VERSION <- "2014" # load 2014 defs
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
+load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
+#meta <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 
 ### ABMI on+off grid sites --------------------------------------------------
 
+cn <- c("ABMI_ID_WithB", "ABMI_ID_WithoutB", "NSRNAME", "NRNAME", "LUF_NAME")
+
 ## ABMI sites (on+off) cetre 1 ha
-f1ha <- file.path(ROOT, VER, "data", "raw", "veghf", "site", "Site1ha.csv")
-d1ha <- read.csv(f1ha)
-d1ha$Site_YEAR <- with(d1ha, interaction(ABMI_Assigned_Site_ID, survey_year, sep="_", drop=TRUE))
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site", "Site1ha.csv")
+#f <- file.path(ROOT, VER, "data", "raw", "veghf", "site", "Site564m.csv")
+d <- read.csv(f)
+d$Year <- 2016
+d$ABMI_ID_WithoutB <- d$ABMI_ID_WithB
+levels(d$ABMI_ID_WithoutB) <- gsub("[[:alpha:]]", "", levels(d$ABMI_ID_WithoutB))
+dd <- make_vegHF_wide_v6(d,
+    col.label="ABMI_ID_WithB",
+    col.year="Year",
+    col.HFyear="Year_HF",
+    sparse=TRUE, HF_fine=FALSE) # don't use refined classes
+dd$scale <- "1 ha square around site centre"
+
+dx <- nonDuplicated(d[,cn], ABMI_ID_WithB, TRUE)[rownames(dd[[1]]),]
+
+dd <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+save(dd, file=file.path(ROOT, VER, "data", "inter", "veghf", "site", "veghf_V6bf-VerifiedHF.Rdata"))
+
+d$Site_YEAR <- with(d, interaction(ABMI_ID_WithB, survey_year, sep="_", drop=TRUE))
 head(d1ha)
 ## 2014 site updates
 f1hax <- file.path(ROOT, VER, "data/veghf/update2014", "Center1ha_2014.csv")

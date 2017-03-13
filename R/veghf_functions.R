@@ -102,7 +102,7 @@ HF_fine=TRUE) {
         "ShrubbyBog", "ShrubbyFen", "ShrubbySwamp",
         "Bare", "SnowIce", "Water")
     if (!HF_fine)
-        HFlab <- c("BorrowpitsDugoutsSumps", "Canals", "CultivationCropPastureBareground",
+        HFLab <- c("BorrowpitsDugoutsSumps", "Canals", "CultivationCropPastureBareground",
             "CutBlocks", "HighDensityLivestockOperation", "IndustrialSiteRural",
             "MineSite", "MunicipalWaterSewage", "OtherDisturbedVegetation",
             "PeatMine", "Pipeline", "RailHardSurface", "RailVegetatedVerge",
