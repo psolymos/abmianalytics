@@ -1,4 +1,4 @@
-HF_VERSION <- "2014" # load 2014 defs
+HF_VERSION <- "2014_coarse" # load 2014 defs
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
 #meta <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
@@ -20,8 +20,11 @@ dd <- make_vegHF_wide_v6(d,
     col.HFyear="Year_HF",
     sparse=TRUE, HF_fine=FALSE) # don't use refined classes
 dd$scale <- "1 ha square around site centre"
+sum(dd[[3]][,"CultivationCropPastureBareground"])/10^4
 
 dx <- nonDuplicated(d[,cn], ABMI_ID_WithB, TRUE)[rownames(dd[[1]]),]
+
+
 
 dd <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 

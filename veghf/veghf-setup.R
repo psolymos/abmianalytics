@@ -19,10 +19,16 @@ library(mefa4)
 source("~/repos/abmianalytics/R/veghf_functions.R")
 source("~/repos/bamanalytics/R/dataprocessing_functions.R")
 
-if (HF_VERSION == "2014") {
+if (HF_VERSION == "2014_fine") {
     hftypes <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-type-v2014.csv")
+    hftypes <- droplevels(hftypes[hftypes$Source=="W2W_HF2014",])
     hfgroups <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-class-v2014.csv")
     hflt <- hfgroups[match(hftypes$HF_GROUP_COMB, hfgroups$HF_GROUP_COMB),]
+}
+if (HF_VERSION == "2014_coarse") {
+    hftypes <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-type-v2014.csv")
+    hfgroups <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-class-v2014.csv")
+    hflt <- hfgroups[match(hftypes$HF_GROUP, hfgroups$HF_GROUP),]
 }
 if (HF_VERSION == "2012") {
     hftypes <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-type.csv")
