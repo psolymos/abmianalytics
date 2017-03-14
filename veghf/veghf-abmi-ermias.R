@@ -17,7 +17,11 @@ head(d)
 d$comb <- as.character(d$PublicCode)
 d$comb[d$comb == ""] <- as.character(d$Dom_final)[d$comb == ""]
 
-Xtab(Shape_Area ~ SiteQ +
+dd <- Xtab(Shape_Area ~ SiteQ + comb, d)
+dd <- as.matrix(dd)
+fo <- "e:/peter/AB_data_v2017/data/inter/veghf/EA_20170214_grasslandplots_HF2012.csv"
+write.csv(dd, file=fo)
+
 dd <- make_vegHF_wide(d, col.label = "SiteQ",
     col.year="survey_year", col.HFyear="CutYear")
 dd$scale <- "1 ha and 1/4 ha square at well sites"

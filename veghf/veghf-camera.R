@@ -1,4 +1,4 @@
-HF_VERSION <- "2014"
+HF_VERSION <- "2014_coarse"
 
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 
