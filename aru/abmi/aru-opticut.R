@@ -1,5 +1,79 @@
 #devtools::install_github("psolymos/opticut")
 library(opticut)
+library(mefa4)
+
+## analyses for ms/scilett
+
+data(birdrec)
+x <- birdrec$x
+y <- birdrec$y
+table(colSums(y>0))
+nmin <- 1
+y <- y[,colSums(y>0) >= nmin]
+
+## species accumulation
+
+yo <- y[order(x$YDAY),]
+xo <- x[order(x$YDAY),]
+
+yall <- groupSums(yo, 1, xo$YDAY)
+xall <- nonDuplicated(xo, xo$YDAY, TRUE)
+
+ymor <- groupSums(yo[xo$TOD=="Morning",], 1, xo$YDAY[xo$TOD=="Morning"])
+xmor <- nonDuplicated(xo[xo$TOD=="Morning",], xo$YDAY[xo$TOD=="Morning"], TRUE)
+
+ymid <- groupSums(yo[xo$TOD=="Midnight",], 1, xo$YDAY[xo$TOD=="Midnight"])
+xmid <- nonDuplicated(xo[xo$TOD=="Midnight",], xo$YDAY[xo$TOD=="Midnight"], TRUE)
+
+yall <- apply(yall, 2, function(z) pmin(1, cumsum(z)))
+ymor <- apply(ymor, 2, function(z) pmin(1, cumsum(z)))
+ymid <- apply(ymid, 2, function(z) pmin(1, cumsum(z)))
+
+d1all <- apply(yall, 2, function(z) xall$YDAY[which(z>0)[1]])
+d1mor <- apply(ymor, 2, function(z) xmor$YDAY[which(z>0)[1]])
+d1mid <- apply(ymid, 2, function(z) xmid$YDAY[which(z>0)[1]])
+
+Sall <- rowSums(yall)
+Smor <- rowSums(ymor)
+Smid <- rowSums(ymid)
+dall <- diff(Sall)/diff(xall$YDAY)
+dmor <- diff(Smor)/diff(xmor$YDAY)
+dmid <- diff(Smid)/diff(xmid$YDAY)
+
+par(mfrow=c(2,1))
+plot(xall$YDAY, Sall, type="l")
+lines(xmor$YDAY, Smor, col=2)
+lines(xmid$YDAY, Smid, col=4)
+
+plot(lowess(dall ~ xall$YDAY[-1]), type="l")
+lines(lowess(dmor ~ xmor$YDAY[-1]), col=2)
+lines(lowess(dmid ~ xmid$YDAY[-1]), col=4)
+
+plot(table(colSums(y>0)))
+
+lall <- lowess(log(rowSums(y)+1) ~ x$YDAY)
+lmor <- lowess(log(rowSums(y[x$TOD=="Morning",])+1) ~ x$YDAY[x$TOD=="Morning"])
+lmid <- lowess(log(rowSums(y[x$TOD=="Midnight",])+1) ~ x$YDAY[x$TOD=="Midnight"])
+
+plot(jitter(rowSums(y), factor=2) ~ x$YDAY, pch="+", cex=0.6, col="grey")
+lines(lall$x, exp(lall$y)-1, col=1)
+rug(d1all)
+lines(lmor$x, exp(lmor$y)-1, col=2)
+lines(lmid$x, exp(lmid$y)-1, col=4)
+
+
+## spp detected at midnight only
+colnames(y)[colSums(y01mor) == 0 & colSums(y01mid) > 0]
+sum(colSums(y01mor) == 0 & colSums(y01mid) > 0)
+sum(colSums(y01mor) > 0 & colSums(y01mid) == 0)
+sum(colSums(y01mor) > 0 & colSums(y01mid) > 0)
+
+
+
+
+
+## --
+
 load("~/Dropbox/collaborations/opticut/R/abmi-aru-1min.Rdata")
 
 SsnLab <- c("Early", "Mid", "Late")
