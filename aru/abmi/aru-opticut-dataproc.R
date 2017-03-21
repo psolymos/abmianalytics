@@ -8,7 +8,18 @@ x0 <- x
 x <- x[,c("PKEY", "POINT", "SITE",
     "YEAR", "MONTH", "MDAY", "HOUR", "MINUTE", "YDAY",
     "RAIN", "WIND", "INDUSTRY", "NOISE", "MICROPHONE")]
+zz <- c("Early1", "Early2", "Early3", "Mid4", "Mid5", "Mid6", "Mid7", "Late8")
+x$TOY <- factor(zz[x0$ToYc], zz)
+x$TOD <- factor(as.character(x0$ToDc), c("Morning", "Midnight"))
 
+with(x, table(TOY, TOD))
+
+for (i in 1:ncol(x))
+    if (!is.factor(x[,i]))
+        x[,i] <- as.integer(x[,i])
+mode(y) <- "integer"
+birdrec <- list(x=x, y=y)
+save(birdrec, file="~/repos/opticut/data/birdrec.rda")
 
 SsnLab <- c("Early", "Mid", "Late")
 x$Ssn <- factor(NA, SsnLab)
