@@ -58,11 +58,18 @@ lall <- lowess(log(rowSums(y)+1) ~ x$YDAY)
 lmor <- lowess(log(rowSums(y[x$TOD=="Morning",])+1) ~ x$YDAY[x$TOD=="Morning"])
 lmid <- lowess(log(rowSums(y[x$TOD=="Midnight",])+1) ~ x$YDAY[x$TOD=="Midnight"])
 
-plot(jitter(rowSums(y), factor=2.5) ~ jitter(x$YDAY, factor=2.5), pch=".", cex=0.6, col="grey")
-lines(lall$x, exp(lall$y)-1, col=1)
-#rug(d1all)
-lines(lmor$x, exp(lmor$y)-1, col=2)
-lines(lmid$x, exp(lmid$y)-1, col=4)
+
+par(mfrow=c(2,1), mar=c(4,4,1,1), las=1)
+plot(xall$YDAY, Sall, type="l", xlab="", ylab="Number of Species", lwd=2)
+lines(xmor$YDAY, Smor, col=2, lwd=2)
+lines(xmid$YDAY, Smid, col=4, lwd=2)
+abline(v=c(140, 180))
+plot(jitter(rowSums(y), factor=2.5) ~ jitter(x$YDAY, factor=2.5), pch=19, cex=1,
+    col=rgb(0.75, 0.75, 0.75, 0.1), xlab="Day of Year", ylab="Detection rate / minute")
+lines(lall$x, exp(lall$y)-1, col=1, lwd=2)
+lines(lmor$x, exp(lmor$y)-1, col=2, lwd=2)
+lines(lmid$x, exp(lmid$y)-1, col=4, lwd=2)
+abline(v=c(140, 180))
 
 
 ## spp detected at midnight only
@@ -91,8 +98,14 @@ plot(0, xlim=int, ylim=c(1,ncol(y)))
 oo <- order(d1all)
 for (i in 1:ncol(y01)) {
     tmp <- y01[,oo][,i]
-    lines(range(x$YDAY[tmp > 0]), rep(i, 2), pch=".")
+    lines(range(x$YDAY[tmp > 0]), rep(i, 2), lwd=2, col="grey")
 }
+abline(v=c(140, 180))
+
+## add table with taxonomy behaviour
+## make temporal summary plot: color according to groups from table
+## dots on line plot: dot size ~ # det, color ~ ratio of midnight/morning
+## highlight few species this way
 
 ## --
 
