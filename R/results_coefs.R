@@ -229,6 +229,48 @@ for (spp in rownames(tax)) {
 }
 save(res_coef, file=file.path(ROOT, "tables", "res_coef.Rdata"))
 
+## get all kinds of linear coefs
+
+get_lin <- function(tp, what="veg") {
+    if (what=="veg")
+        pr <- unname(attr(tp$veg, "linear"))
+    if (what=="soil")
+        pr <- unname(tp$soil$linear)
+    c(AverageCoef=pr[1],
+        SoftLin10=pr[1] * exp(0.1*log(pr[2])),
+        HardLin10=pr[1] * pr[5],
+        SoftLin	=pr[2],
+        SoftLin.LCI	=pr[3],
+        SoftLin.UCI	=pr[4],
+        HardLin	=pr[5],
+        HardLin.LCI	=pr[6],
+        HardLin.UCI=pr[7])
+}
+
+lin1_n <- lin1_s <- list()
+for (spp in rownames(tax)) {
+    cat(spp, "\n");flush.console()
+    tp <- res_coef[[spp]]
+    if (!all(is.na(tp$max))) {
+        if (tax[spp, "veghf_north"])
+            lin1_n[[spp]] <- get_lin(tp, "veg")
+        if (tax[spp, "soilhf_treed_south"])
+            lin1_s[[spp]] <- get_lin(tp, "soil")
+    }
+}
+
+lin1_n <- do.call(rbind, lin1_n)
+lin1_s <- do.call(rbind, lin1_s)
+lin2_n <- data.frame(tax[rownames(lin1_n), c("English_Name","Scientific_Name","TSNID")],
+    lin1_n)
+lin2_s <- data.frame(tax[rownames(lin1_s), c("English_Name","Scientific_Name","TSNID")],
+    lin1_s)
+write.csv(lin2_n,
+    file=file.path(ROOT, "tables", "birds-linearfull-north.csv"), row.names=FALSE)
+write.csv(lin2_s,
+    file=file.path(ROOT, "tables", "birds-linearfull-south.csv"), row.names=FALSE)
+
+
 ## plots for N & S
 lin_n <- lin_s <- list()
 for (spp in rownames(tax)) {
