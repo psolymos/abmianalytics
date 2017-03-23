@@ -12,6 +12,36 @@ y <- birdrec$y
 table(colSums(y>0))
 nmin <- 2
 y <- y[,colSums(y>0) >= nmin]
+y01 <- ifelse(y > 0, 1, 0)
+z <- read.csv("~/Dropbox/bam/lhreg2/aru_z.csv")
+rownames(z) <- z$Species
+
+if (FALSE) {
+t1 <- read.csv("~/Dropbox/bam/lhreg2/LH-all-for-qpadv3.csv")
+t2 <- read.csv("~/Dropbox/bam/lhreg2/taxonomy.csv")
+t3 <- read.csv("~/Dropbox/bam/lhreg2/tblAvianLifeHistory.csv")
+
+z <- data.frame(Species=colnames(y))
+rownames(z) <- z$Species
+
+levels(t2$Fn)[levels(t2$Fn) == "BlackandwhiteWarbler"] <- "BlackAndWhiteWarbler"
+compare_sets(rownames(z), t2$Fn)
+setdiff(rownames(z), t2$Fn)
+z$CommonName <- t2$English_Name[match(rownames(z), t2$Fn)]
+z$ScientificName <- t2$Scientific_Name[match(rownames(z), t2$Fn)]
+z$Family <- t2$Family_Sci[match(rownames(z), t2$Fn)]
+z$Order <- t2$Order[match(rownames(z), t2$Fn)]
+#z$Species_ID <- t2$Species_ID[match(rownames(z), t2$Fn)]
+#compare_sets(z$Species_ID, t1$spp)
+#write.csv(z, row.names=FALSE, file="~/Dropbox/bam/lhreg2/aru_z.csv")
+
+z <- read.csv("~/Dropbox/bam/lhreg2/aru_z.csv")
+rownames(z) <- z$Species
+z$Species_ID <- t2$Species_ID[match(rownames(z), t2$Fn)]
+compare_sets(z$Species_ID, t3$SpeciesID)
+z$MigratoryBehaviour <- t3$Migration1[match(z$Species_ID, t3$SpeciesID)]
+write.csv(z, row.names=FALSE, file="~/Dropbox/bam/lhreg2/aru_z.csv")
+}
 
 ## species accumulation
 
@@ -86,7 +116,6 @@ D <- vegdist(yy, "bray")
 h <- hclust(D, "ward.D2")
 plot(h)
 
-y01 <- ifelse(y > 0, 1, 0)
 oc <- opticut(y01 ~ 1, strata=x$toytod, dist="binomial")
 bp <- summary(oc)$bestpart
 D <- vegdist(t(bp), "jaccard")
@@ -102,10 +131,34 @@ for (i in 1:ncol(y01)) {
 }
 abline(v=c(140, 180))
 
-## add table with taxonomy behaviour
-## make temporal summary plot: color according to groups from table
-## dots on line plot: dot size ~ # det, color ~ ratio of midnight/morning
-## highlight few species this way
+
+dd <- matrix(x$YDAY, nrow(y), ncol(y))
+dd[y==0] <- NA
+dimnames(dd) <- dimnames(y)
+ddd <- t(apply(dd, 2, quantile, prob=seq(0, 1, 0.25), na.rm=TRUE))
+ddd <- ddd[order(ddd[,2]),]
+col <- occolors()(8)[2:5]
+split <- col[as.integer(z[rownames(ddd), "MigratoryBehaviour"])]
+split2 <- c(2,4,2)[as.integer(z[rownames(ddd), "Class"])]
+split2[z[rownames(ddd), "Order"] == "Passeriformes"] <- 1
+
+plot(x$YDAY, rep(0, length(x$YDAY)), type="n", ann=FALSE, axes=FALSE,
+    xlim=c(90,210), ylim=c(nrow(ddd), 1))
+axis(1, at=seq(100, 200, 20))
+for (i in 1:nrow(ddd)) {
+    lines(ddd[i,c(1,5)], c(i,i), col=split[i], lwd=1)
+    polygon(ddd[i,c(2,4,4,2)], c(i-0.5,i-0.5,i+0.5,i+0.5), col=split[i], lwd=2, border=NA)
+}
+abline(v=c(140, 180), col="grey", lty=1)
+for (i in 1:nrow(ddd)) {
+    text(ddd[i,2], i, z[rownames(ddd)[i], "CommonName"], cex=0.4, pos=4, col=split2[i])
+}
+legend("topright", fill=col, border=col, cex=0.6,
+    bty="n", legend=levels(z$MigratoryBehaviour))
+
+
+
+
 
 ## --
 
