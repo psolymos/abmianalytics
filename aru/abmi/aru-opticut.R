@@ -8,6 +8,10 @@ library(vegan)
 data(birdrec)
 x <- birdrec$x
 x$toytod <- interaction(x$TOY, x$TOD)
+x$xtoy <- x$TOY
+levels(x$xtoy) <- gsub("[[:digit:]]", "", levels(x$xtoy))
+x$toytod <- interaction(x$TOY, x$TOD)
+x$xtoytod <- interaction(x$xtoy, x$TOD)
 y <- birdrec$y
 table(colSums(y>0))
 nmin <- 2
@@ -78,27 +82,31 @@ lmor <- lowess(log(rowSums(y[x$TOD=="Morning",])+1) ~ x$YDAY[x$TOD=="Morning"])
 lmid <- lowess(log(rowSums(y[x$TOD=="Midnight",])+1) ~ x$YDAY[x$TOD=="Midnight"])
 
 
+col <- occolors()(6)[c(2,5)]
 par(mfrow=c(2,1), mar=c(4,4,1,1), las=1)
-plot(xall$YDAY, Sall, type="l", xlab="", ylab="Number of Species", lwd=2,
-    ylim=c(0,150))
-lines(xmor$YDAY, Smor, col=2, lwd=2)
-lines(xmid$YDAY, Smid, col=4, lwd=2)
+plot(xall$YDAY, Sall, type="n", xlab="", ylab="Number of Species", lwd=2,
+    ylim=c(0,150), axes=FALSE)
+lines(xmor$YDAY, Smor, col=col[1], lwd=2)
+lines(xmid$YDAY, Smid, col=col[2], lwd=2)
 abline(v=c(140, 180), col="grey")
-legend("topleft", lty=1, lwd=2, col=c(1,2,4),
-    legend=c("All", "Morning", "Midnight"), bty="n")
+box(bty="l", col="grey")
+axis(1)
+axis(2)
+legend(85, 140, lty=1, lwd=2, col=col,
+    legend=c("Morning", "Midnight"), bty="n", cex=0.8)
 text(4:8*30-32, rep(150, 5), c("April", "May", "June", "July", "August"),
     cex=0.6, col="darkgrey")
 
 plot(jitter(rowSums(y), factor=2.5) ~ jitter(x$YDAY, factor=2.5),
     pch=19, cex=1, col=rgb(0.75, 0.75, 0.75, 0.1), type="n",
-    ylim=c(0,7),
+    ylim=c(0,7), axes=FALSE,
     xlab="Day of Year", ylab="Detection rate / minute")
-lines(lall$x, exp(lall$y)-1, col=1, lwd=2)
-lines(lmor$x, exp(lmor$y)-1, col=2, lwd=2)
-lines(lmid$x, exp(lmid$y)-1, col=4, lwd=2)
+lines(lmor$x, exp(lmor$y)-1, col=col[1], lwd=2)
+lines(lmid$x, exp(lmid$y)-1, col=col[2], lwd=2)
 abline(v=c(140, 180), col="grey")
-legend("topleft", lty=1, lwd=2, col=c(1,2,4),
-    legend=c("All", "Morning", "Midnight"), bty="n")
+box(bty="l", col="grey")
+axis(1)
+axis(2)
 text(4:8*30-32, rep(7, 5), c("April", "May", "June", "July", "August"),
     cex=0.6, col="darkgrey")
 
@@ -144,6 +152,12 @@ legend(80, 135, fill=col, border=col, cex=0.6,
 legend(110, 135, border=1, cex=0.6, fill=c("grey", "white", "black"),
     bty="n", legend=levels(z$sday), title="Diurnal Detections")
 
+f <- function(z) c(Mean=mean(z), quantile(z, c(0.05, 0.95)))
+f(ddd[z[rownames(ddd), "MigratoryBehaviour"]=="Resident",2])
+f(ddd[z[rownames(ddd), "MigratoryBehaviour"]=="Short distance migrant",2])
+f(ddd[z[rownames(ddd), "MigratoryBehaviour"]=="Neotropical migrant",2])
+
+
 
 ## spp detected at midnight only
 colnames(y)[colSums(ymor) == 0 & colSums(ymid) > 0]
@@ -151,15 +165,16 @@ sum(colSums(ymor) == 0 & colSums(ymid) > 0)
 sum(colSums(ymor) > 0 & colSums(ymid) == 0)
 sum(colSums(ymor) > 0 & colSums(ymid) > 0)
 
-yy <- groupSums(y, 1, x$toytod)
-#yy <- ifelse(yy > 0, 1, 0)
-#D <- vegdist(yy, "jaccard")
-D <- vegdist(yy, "bray")
+#yy <- groupSums(y, 1, x$toytod)
+yy <- groupSums(y, 1, x$xtoytod)
+yy <- ifelse(yy > 0, 1, 0)
+D <- vegdist(yy, "jaccard")
+#D <- vegdist(yy, "bray")
 #D <- dist(yy, "manhattan")
 h <- hclust(D, "ward.D2")
 plot(h)
 
-oc <- opticut(y01 ~ 1, strata=x$toytod, dist="binomial")
+oc <- opticut(y01 ~ 1, strata=x$xtoytod, dist="binomial")
 bp <- summary(oc)$bestpart
 D <- vegdist(t(bp), "jaccard")
 h <- hclust(D, "ward.D2")
