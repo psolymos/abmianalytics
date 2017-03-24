@@ -87,7 +87,7 @@ abline(v=c(140, 180), col="grey")
 legend("topleft", lty=1, lwd=2, col=c(1,2,4),
     legend=c("All", "Morning", "Midnight"), bty="n")
 text(4:8*30-32, rep(150, 5), c("April", "May", "June", "July", "August"),
-    cex=0.6, col="grey")
+    cex=0.6, col="darkgrey")
 
 plot(jitter(rowSums(y), factor=2.5) ~ jitter(x$YDAY, factor=2.5),
     pch=19, cex=1, col=rgb(0.75, 0.75, 0.75, 0.1), type="n",
@@ -100,7 +100,49 @@ abline(v=c(140, 180), col="grey")
 legend("topleft", lty=1, lwd=2, col=c(1,2,4),
     legend=c("All", "Morning", "Midnight"), bty="n")
 text(4:8*30-32, rep(7, 5), c("April", "May", "June", "July", "August"),
-    cex=0.6, col="grey")
+    cex=0.6, col="darkgrey")
+
+
+yd <- groupSums(y, 1, x$TOD)
+z$sday <- factor("All", c("All", "Morning", "Midnight"))
+z$sday[yd["Midnight",]==0] <- "Morning"
+z$sday[yd["Morning",]==0] <- "Midnight"
+table(z$sday)
+levels(z$MigratoryBehaviour)[levels(z$MigratoryBehaviour) ==
+    "Nomadic"] <- "Short distance migrant"
+
+dd <- apply(y, 2, function(z) rep(x$YDAY, z))
+
+p <- c(0.05, 0.05, 0.5, 0.95, 0.95)
+ddd <- t(sapply(dd, quantile, prob=p, na.rm=TRUE))
+ddm <- sapply(dd, mean)
+ddm <- ddm[order(ddd[,2])]
+ddd <- ddd[order(ddd[,2]),]
+col <- occolors()(6)[2:4]
+split <- col[as.integer(z[rownames(ddd), "MigratoryBehaviour"])]
+split2 <- c("grey", "white", "black")[as.integer(z[rownames(ddd), "sday"])]
+
+par(mfrow=c(1,1), mar=c(4,4,1,1), las=1)
+plot(0, type="n", axes=FALSE,
+    xlim=c(75,210), ylim=c(nrow(ddd), -1), xlab="Day of Year", ylab="")
+axis(1, at=seq(100, 200, 20))
+for (i in 1:nrow(ddd)) {
+    #lines(ddd[i,c(1,5)], c(i,i), col=split[i], lwd=1)
+    polygon(ddd[i,c(2,4,4,2)], c(i-0.5,i-0.5,i+0.5,i+0.5), col=split[i], lwd=2, border=NA)
+}
+abline(v=c(140, 180), col="grey", lty=1)
+for (i in 1:nrow(ddd)) {
+    points(ddm[i], i, pch=19, cex=0.9, col=split2[i])
+    points(ddm[i], i, pch=21, cex=0.9, col=1)
+    text(ddd[i,2], i, z[rownames(ddd)[i], "CommonName"], cex=0.4, pos=2,
+    col=1)
+}
+text(4:8*30-32, rep(-1, 5), c("April", "May", "June", "July", ""),
+    cex=0.6, col="darkgrey")
+legend(80, 135, fill=col, border=col, cex=0.6,
+    bty="n", legend=levels(z$MigratoryBehaviour), title="Migratory Behaviour")
+legend(110, 135, border=1, cex=0.6, fill=c("grey", "white", "black"),
+    bty="n", legend=levels(z$sday), title="Diurnal Detections")
 
 
 ## spp detected at midnight only
@@ -131,46 +173,6 @@ for (i in 1:ncol(y01)) {
     lines(range(x$YDAY[tmp > 0]), rep(i, 2), lwd=2, col="grey")
 }
 abline(v=c(140, 180))
-
-
-yd <- groupSums(y, 1, x$TOD)
-z$sday <- factor("All", c("All", "Morning", "Midnight"))
-z$sday[yd["Midnight",]==0] <- "Morning"
-z$sday[yd["Morning",]==0] <- "Midnight"
-table(z$sday)
-levels(z$MigratoryBehaviour)[levels(z$MigratoryBehaviour) ==
-    "Nomadic"] <- "Short distance migrant"
-
-dd <- apply(y, 2, function(z) rep(x$YDAY, z))
-
-p <- c(0.05, 0.05, 0.5, 0.95, 0.95)
-ddd <- t(sapply(dd, quantile, prob=p, na.rm=TRUE))
-ddm <- sapply(dd, mean)
-ddm <- ddm[order(ddd[,2])]
-ddd <- ddd[order(ddd[,2]),]
-col <- occolors()(6)[2:4]
-split <- col[as.integer(z[rownames(ddd), "MigratoryBehaviour"])]
-split2 <- c(1,4,2)[as.integer(z[rownames(ddd), "sday"])]
-
-plot(x$YDAY, rep(0, length(x$YDAY)), type="n", axes=FALSE,
-    xlim=c(70,210), ylim=c(nrow(ddd), -5), xlab="Day of Year", ylab="")
-axis(1, at=seq(100, 200, 20))
-for (i in 1:nrow(ddd)) {
-    #lines(ddd[i,c(1,5)], c(i,i), col=split[i], lwd=1)
-    polygon(ddd[i,c(2,4,4,2)], c(i-0.5,i-0.5,i+0.5,i+0.5), col=split[i], lwd=2, border=NA)
-}
-abline(v=c(140, 180), col="grey", lty=1)
-for (i in 1:nrow(ddd)) {
-    points(ddm[i], i, pch="+", cex=0.9)
-    text(ddd[i,2], i, z[rownames(ddd)[i], "CommonName"], cex=0.4, pos=2,
-    col=split2[i])
-}
-legend("bottomleft", fill=col, border=col, cex=0.6,
-    bty="n", legend=levels(z$MigratoryBehaviour))
-text(4:8*30-32, rep(-4, 5), c("April", "May", "June", "July", "August"),
-    cex=0.6, col="grey")
-
-## add text ~ day
 
 
 ## --
