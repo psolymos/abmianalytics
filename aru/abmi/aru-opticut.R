@@ -73,17 +73,6 @@ dall <- diff(Sall)/diff(xall$YDAY)
 dmor <- diff(Smor)/diff(xmor$YDAY)
 dmid <- diff(Smid)/diff(xmid$YDAY)
 
-par(mfrow=c(2,1))
-plot(xall$YDAY, Sall, type="l")
-lines(xmor$YDAY, Smor, col=2)
-lines(xmid$YDAY, Smid, col=4)
-
-plot(lowess(dall ~ xall$YDAY[-1]), type="l")
-lines(lowess(dmor ~ xmor$YDAY[-1]), col=2)
-lines(lowess(dmid ~ xmid$YDAY[-1]), col=4)
-
-plot(table(colSums(y>0)))
-
 lall <- lowess(log(rowSums(y)+1) ~ x$YDAY)
 lmor <- lowess(log(rowSums(y[x$TOD=="Morning",])+1) ~ x$YDAY[x$TOD=="Morning"])
 lmid <- lowess(log(rowSums(y[x$TOD=="Midnight",])+1) ~ x$YDAY[x$TOD=="Midnight"])
@@ -144,37 +133,44 @@ for (i in 1:ncol(y01)) {
 abline(v=c(140, 180))
 
 
-levels(z$MigratoryBehaviour)[levels(z$MigratoryBehaviour) == "Nomadic"] <- "Resident"
-dd <- matrix(x$YDAY, nrow(y), ncol(y))
-dd[y==0] <- NA
-dimnames(dd) <- dimnames(y)
-dd <- dd[,colSums(y01) >= 10]
+yd <- groupSums(y, 1, x$TOD)
+z$sday <- factor("All", c("All", "Morning", "Midnight"))
+z$sday[yd["Midnight",]==0] <- "Morning"
+z$sday[yd["Morning",]==0] <- "Midnight"
+table(z$sday)
+levels(z$MigratoryBehaviour)[levels(z$MigratoryBehaviour) ==
+    "Nomadic"] <- "Short distance migrant"
 
-ddd <- t(apply(dd, 2, quantile, prob=seq(0, 1, 0.25), na.rm=TRUE))
+dd <- apply(y, 2, function(z) rep(x$YDAY, z))
+
+p <- c(0.05, 0.05, 0.5, 0.95, 0.95)
+ddd <- t(sapply(dd, quantile, prob=p, na.rm=TRUE))
+ddm <- sapply(dd, mean)
+ddm <- ddm[order(ddd[,2])]
 ddd <- ddd[order(ddd[,2]),]
 col <- occolors()(6)[2:4]
 split <- col[as.integer(z[rownames(ddd), "MigratoryBehaviour"])]
-split2 <- c(2,4,2)[as.integer(z[rownames(ddd), "Class"])]
-split2[z[rownames(ddd), "Order"] == "Passeriformes"] <- 1
+split2 <- c(1,4,2)[as.integer(z[rownames(ddd), "sday"])]
 
 plot(x$YDAY, rep(0, length(x$YDAY)), type="n", axes=FALSE,
-    xlim=c(90,210), ylim=c(nrow(ddd), -5), xlab="Day of Year", ylab="")
+    xlim=c(70,210), ylim=c(nrow(ddd), -5), xlab="Day of Year", ylab="")
 axis(1, at=seq(100, 200, 20))
 for (i in 1:nrow(ddd)) {
-    lines(ddd[i,c(1,5)], c(i,i), col=split[i], lwd=1)
+    #lines(ddd[i,c(1,5)], c(i,i), col=split[i], lwd=1)
     polygon(ddd[i,c(2,4,4,2)], c(i-0.5,i-0.5,i+0.5,i+0.5), col=split[i], lwd=2, border=NA)
 }
 abline(v=c(140, 180), col="grey", lty=1)
 for (i in 1:nrow(ddd)) {
-    text(ddd[i,2], i, z[rownames(ddd)[i], "CommonName"], cex=0.4, pos=4,
-    col=1)
+    points(ddm[i], i, pch="+", cex=0.9)
+    text(ddd[i,2], i, z[rownames(ddd)[i], "CommonName"], cex=0.4, pos=2,
+    col=split2[i])
 }
-legend("topright", fill=col, border=col, cex=0.6,
+legend("bottomleft", fill=col, border=col, cex=0.6,
     bty="n", legend=levels(z$MigratoryBehaviour))
 text(4:8*30-32, rep(-4, 5), c("April", "May", "June", "July", "August"),
     cex=0.6, col="grey")
 
-
+## add text ~ day
 
 
 ## --
