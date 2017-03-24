@@ -90,16 +90,28 @@ lmid <- lowess(log(rowSums(y[x$TOD=="Midnight",])+1) ~ x$YDAY[x$TOD=="Midnight"]
 
 
 par(mfrow=c(2,1), mar=c(4,4,1,1), las=1)
-plot(xall$YDAY, Sall, type="l", xlab="", ylab="Number of Species", lwd=2)
+plot(xall$YDAY, Sall, type="l", xlab="", ylab="Number of Species", lwd=2,
+    ylim=c(0,150))
 lines(xmor$YDAY, Smor, col=2, lwd=2)
 lines(xmid$YDAY, Smid, col=4, lwd=2)
-abline(v=c(140, 180))
-plot(jitter(rowSums(y), factor=2.5) ~ jitter(x$YDAY, factor=2.5), pch=19, cex=1,
-    col=rgb(0.75, 0.75, 0.75, 0.1), xlab="Day of Year", ylab="Detection rate / minute")
+abline(v=c(140, 180), col="grey")
+legend("topleft", lty=1, lwd=2, col=c(1,2,4),
+    legend=c("All", "Morning", "Midnight"), bty="n")
+text(4:8*30-32, rep(150, 5), c("April", "May", "June", "July", "August"),
+    cex=0.6, col="grey")
+
+plot(jitter(rowSums(y), factor=2.5) ~ jitter(x$YDAY, factor=2.5),
+    pch=19, cex=1, col=rgb(0.75, 0.75, 0.75, 0.1), type="n",
+    ylim=c(0,7),
+    xlab="Day of Year", ylab="Detection rate / minute")
 lines(lall$x, exp(lall$y)-1, col=1, lwd=2)
 lines(lmor$x, exp(lmor$y)-1, col=2, lwd=2)
 lines(lmid$x, exp(lmid$y)-1, col=4, lwd=2)
-abline(v=c(140, 180))
+abline(v=c(140, 180), col="grey")
+legend("topleft", lty=1, lwd=2, col=c(1,2,4),
+    legend=c("All", "Morning", "Midnight"), bty="n")
+text(4:8*30-32, rep(7, 5), c("April", "May", "June", "July", "August"),
+    cex=0.6, col="grey")
 
 
 ## spp detected at midnight only
@@ -132,18 +144,21 @@ for (i in 1:ncol(y01)) {
 abline(v=c(140, 180))
 
 
+levels(z$MigratoryBehaviour)[levels(z$MigratoryBehaviour) == "Nomadic"] <- "Resident"
 dd <- matrix(x$YDAY, nrow(y), ncol(y))
 dd[y==0] <- NA
 dimnames(dd) <- dimnames(y)
+dd <- dd[,colSums(y01) >= 10]
+
 ddd <- t(apply(dd, 2, quantile, prob=seq(0, 1, 0.25), na.rm=TRUE))
 ddd <- ddd[order(ddd[,2]),]
-col <- occolors()(8)[2:5]
+col <- occolors()(6)[2:4]
 split <- col[as.integer(z[rownames(ddd), "MigratoryBehaviour"])]
 split2 <- c(2,4,2)[as.integer(z[rownames(ddd), "Class"])]
 split2[z[rownames(ddd), "Order"] == "Passeriformes"] <- 1
 
-plot(x$YDAY, rep(0, length(x$YDAY)), type="n", ann=FALSE, axes=FALSE,
-    xlim=c(90,210), ylim=c(nrow(ddd), 1))
+plot(x$YDAY, rep(0, length(x$YDAY)), type="n", axes=FALSE,
+    xlim=c(90,210), ylim=c(nrow(ddd), -5), xlab="Day of Year", ylab="")
 axis(1, at=seq(100, 200, 20))
 for (i in 1:nrow(ddd)) {
     lines(ddd[i,c(1,5)], c(i,i), col=split[i], lwd=1)
@@ -151,11 +166,13 @@ for (i in 1:nrow(ddd)) {
 }
 abline(v=c(140, 180), col="grey", lty=1)
 for (i in 1:nrow(ddd)) {
-    text(ddd[i,2], i, z[rownames(ddd)[i], "CommonName"], cex=0.4, pos=4, col=split2[i])
+    text(ddd[i,2], i, z[rownames(ddd)[i], "CommonName"], cex=0.4, pos=4,
+    col=1)
 }
 legend("topright", fill=col, border=col, cex=0.6,
     bty="n", legend=levels(z$MigratoryBehaviour))
-
+text(4:8*30-32, rep(-4, 5), c("April", "May", "June", "July", "August"),
+    cex=0.6, col="grey")
 
 
 
