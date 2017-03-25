@@ -19,6 +19,15 @@ y <- y[,colSums(y>0) >= nmin]
 y01 <- ifelse(y > 0, 1, 0)
 z <- read.csv("~/Dropbox/bam/lhreg2/aru_z.csv")
 rownames(z) <- z$Species
+levels(z$MigratoryBehaviour)[levels(z$MigratoryBehaviour) ==
+    "Nomadic"] <- "Short distance migrant"
+
+if (FALSE) {
+names(birdrec) <- c("xtab", "samp")
+birdrec$taxa <- z
+birdrec$taxa$Species_ID <- NULL
+save(birdrec, file="~/repos/opticut/data/birdrec.rda")
+}
 
 if (FALSE) {
 t1 <- read.csv("~/Dropbox/bam/lhreg2/LH-all-for-qpadv3.csv")
@@ -116,8 +125,6 @@ z$sday <- factor("All", c("All", "Morning", "Midnight"))
 z$sday[yd["Midnight",]==0] <- "Morning"
 z$sday[yd["Morning",]==0] <- "Midnight"
 table(z$sday)
-levels(z$MigratoryBehaviour)[levels(z$MigratoryBehaviour) ==
-    "Nomadic"] <- "Short distance migrant"
 
 dd <- apply(y, 2, function(z) rep(x$YDAY, z))
 
