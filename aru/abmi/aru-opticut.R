@@ -6,15 +6,15 @@ library(vegan)
 ## analyses for ms/scilett
 
 data(birdrec)
-x <- birdrec$x
+x <- birdrec$samp
 x$toytod <- interaction(x$TOY, x$TOD)
 x$xtoy <- x$TOY
 levels(x$xtoy) <- gsub("[[:digit:]]", "", levels(x$xtoy))
 x$toytod <- interaction(x$TOY, x$TOD)
 x$xtoytod <- interaction(x$xtoy, x$TOD)
-y <- birdrec$y
+y <- birdrec$xtab
 table(colSums(y>0))
-nmin <- 2
+nmin <- 1
 y <- y[,colSums(y>0) >= nmin]
 y01 <- ifelse(y > 0, 1, 0)
 z <- read.csv("~/Dropbox/bam/lhreg2/aru_z.csv")
@@ -32,7 +32,7 @@ save(birdrec, file="~/repos/opticut/data/birdrec.rda")
 if (FALSE) {
 t1 <- read.csv("~/Dropbox/bam/lhreg2/LH-all-for-qpadv3.csv")
 t2 <- read.csv("~/Dropbox/bam/lhreg2/taxonomy.csv")
-t3 <- read.csv("~/Dropbox/bam/lhreg2/tblAvianLifeHistory.csv")
+t3 <- read.csv("~/Dropbox/bam/lhreg2/tblAvianLifeHistory.csv", encoding="latin1")
 
 z <- data.frame(Species=colnames(y))
 rownames(z) <- z$Species
@@ -44,16 +44,36 @@ z$CommonName <- t2$English_Name[match(rownames(z), t2$Fn)]
 z$ScientificName <- t2$Scientific_Name[match(rownames(z), t2$Fn)]
 z$Family <- t2$Family_Sci[match(rownames(z), t2$Fn)]
 z$Order <- t2$Order[match(rownames(z), t2$Fn)]
-#z$Species_ID <- t2$Species_ID[match(rownames(z), t2$Fn)]
-#compare_sets(z$Species_ID, t1$spp)
-#write.csv(z, row.names=FALSE, file="~/Dropbox/bam/lhreg2/aru_z.csv")
 
-z <- read.csv("~/Dropbox/bam/lhreg2/aru_z.csv")
+z$Species_ID <- t2$Species_ID[match(rownames(z), t2$Fn)]
+compare_sets(z$Species_ID, t1$spp)
+write.csv(z, row.names=FALSE, file="~/Dropbox/bam/lhreg2/aru_z2.csv")
+
+zz <- birdrec$taxa
+z0 <- z
+
+#z <- read.csv("~/Dropbox/bam/lhreg2/aru_z.csv")
 rownames(z) <- z$Species
 z$Species_ID <- t2$Species_ID[match(rownames(z), t2$Fn)]
 compare_sets(z$Species_ID, t3$SpeciesID)
 z$MigratoryBehaviour <- t3$Migration1[match(z$Species_ID, t3$SpeciesID)]
-write.csv(z, row.names=FALSE, file="~/Dropbox/bam/lhreg2/aru_z.csv")
+#write.csv(z, row.names=FALSE, file="~/Dropbox/bam/lhreg2/aru_z.csv")
+z$Class <- "Aves"
+zzz <- z[!(rownames(z) %in% rownames(zz)),colnames(zz)]
+write.csv(zzz, row.names=FALSE, file="~/Dropbox/bam/lhreg2/aru_znew.csv")
+
+zzz <- read.csv("~/Dropbox/bam/lhreg2/aru_znew.csv")
+rownames(zzz) <- zzz$Species
+
+aa <- rbind(zz, zzz[,colnames(zz)])
+aa <- aa[colnames(y),]
+rownames(aa) <- colnames(y)
+for (i in 1:ncol(aa))
+    aa[,i] <- as.character(aa[,i])
+aa[rownames(zzz),] <- zzz
+
+birdrec$taxa <- aa
+save(birdrec, file="~/repos/opticut/data/birdrec.rda")
 }
 
 ## species accumulation
