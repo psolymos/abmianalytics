@@ -124,6 +124,7 @@ yr_fun <- function(i, subset=NULL, part=c("all", "bbs", "bam"), colD="Dhf") {
     dat$logDoff <- log(dat$D) + dat$off
     mod <- glm(Y ~ YR, data=dat, offset=dat$logDoff, family=poisson)
     out <- 100 * (exp(0.1*coef(mod)[2]) - 1)
+    #attr(out, "n") <- nrow(dat)
     out
 }
 
@@ -188,14 +189,19 @@ for (j in 1:nrow(vals)) {
         "both-noCL"="all",
         "offroad-noCL"="bam")
     SUBSET <- NULL
-    if (PART == "CL")
+    if (as.character(vals$part[j]) == "CL")
         SUBSET <- DAT$PCODE == "CL"
-    if (PART %in% c("both-noCL", "offroad-noCL"))
+    if (as.character(vals$part[j]) %in% c("both-noCL", "offroad-noCL"))
         SUBSET <- DAT$PCODE != "CL"
     res[[jj]] <- pbsapply(1:Bmax, yr_fun, cl=cl,
         subset=SUBSET, part=PART, colD=as.character(vals$dens[j]))
+    #res[[j]] <- yr_fun(1, subset=SUBSET, part=PART, colD=as.character(vals$dens[j]))
 }
 stopCluster(cl)
+
+#vals$est <- unlist(res)
+#vals$n <- sapply(res, attr, "n")
+#vals
 
 all_res[[spp]] <- res
 }
