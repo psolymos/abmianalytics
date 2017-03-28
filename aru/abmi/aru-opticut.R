@@ -129,7 +129,7 @@ text(4:8*30-32, rep(150, 5), c("April", "May", "June", "July", "August"),
 plot(jitter(rowSums(y), factor=2.5) ~ jitter(x$YDAY, factor=2.5),
     pch=19, cex=1, col=rgb(0.75, 0.75, 0.75, 0.1), type="n",
     ylim=c(0,7), axes=FALSE,
-    xlab="Day of Year", ylab="Detection rate / minute")
+    xlab="Day of Year", ylab="Number of Detection / Minute")
 lines(lmor$x, exp(lmor$y)-1, col=col[1], lwd=2)
 lines(lmid$x, exp(lmid$y)-1, col=col[2], lwd=2)
 abline(v=c(140, 180), col="grey")
