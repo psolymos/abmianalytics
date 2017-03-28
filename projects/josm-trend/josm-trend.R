@@ -149,10 +149,6 @@ col_keep <- colSums(abs(estHb) > 0) != 0
 prHb <- exp(sapply(1:nrow(estHb), function(j)
     Xnn[,colnames(estHb[,col_keep,drop=FALSE]),drop=FALSE] %*%
     estHb[j,col_keep]))
-col_keep <- colSums(abs(estHb) > 0) != 0
-prHb <- exp(sapply(1:nrow(estHb), function(j)
-    Xnn[,colnames(estHb[,col_keep,drop=FALSE]),drop=FALSE] %*%
-    estHb[j,col_keep]))
 col_keep <- colSums(abs(estCl) > 0) != 0
 prCl <- exp(sapply(1:nrow(estCl), function(j)
     Xnn[,colnames(estCl[,col_keep,drop=FALSE]),drop=FALSE] %*%
@@ -173,6 +169,7 @@ DAT$D0 <- mean(pr0)
 DAT$Dhb <- rowMeans(prHb)
 DAT$Dcl <- rowMeans(prCl)
 DAT$Dhf <- rowMeans(prHF)
+DAT$sset <- xnn$NRNAME != "Grassland" & xnn$POINT_Y > 50
 
 
 cl <- makeCluster(4)
@@ -188,11 +185,11 @@ for (j in 1:nrow(vals)) {
         "CL"="bam",
         "both-noCL"="all",
         "offroad-noCL"="bam")
-    SUBSET <- NULL
+    SUBSET <- DAT$sset
     if (as.character(vals$part[j]) == "CL")
-        SUBSET <- DAT$PCODE == "CL"
+        SUBSET <- DAT$sset & DAT$PCODE == "CL"
     if (as.character(vals$part[j]) %in% c("both-noCL", "offroad-noCL"))
-        SUBSET <- DAT$PCODE != "CL"
+        SUBSET <- DAT$sset & DAT$PCODE != "CL"
     res[[jj]] <- pbsapply(1:Bmax, yr_fun, cl=cl,
         subset=SUBSET, part=PART, colD=as.character(vals$dens[j]))
     #res[[j]] <- yr_fun(1, subset=SUBSET, part=PART, colD=as.character(vals$dens[j]))
