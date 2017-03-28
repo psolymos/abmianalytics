@@ -19,7 +19,7 @@ up <- function() {
 up()
 
 en <- new.env()
-load(file.path(ROOT, "data", "data-josm.Rdata"), envir=en)
+load(file.path(ROOT, "data", "data-north.Rdata"), envir=en)
 xnn <- en$DAT
 modsn <- en$mods
 yyn <- en$YY
@@ -36,12 +36,22 @@ levels(TAX$Fn) <- nameAlnum(levels(TAX$Fn), capitalize="mixed", collapse="")
 rm(e, en)
 
 ## model for species
-fln <- list.files(file.path(ROOT, "results", "josm"))
-fln <- sub("birds_abmi-josm_", "", fln)
-fln <- sub(".Rdata", "", fln)
 ## subset: good models on spp website
 splt <- read.csv("~/repos/abmispecies/_data/birds.csv")
-SPP <- sort(fln)
+SPP <- c("ALFL", "AMCR", "AMGO", "AMRE", "AMRO", "ATTW", "BAOR", "BARS",
+    "BAWW", "BBMA", "BBWA", "BBWO", "BCCH", "BHCO", "BHVI", "BLJA",
+    "BLPW", "BOCH", "BRBL", "BRCR", "BTNW", "CAWA", "CCSP", "CEDW",
+    "CHSP", "CMWA", "COGR", "CONW", "CORA", "COYE", "DEJU", "DOWO",
+    "EAKI", "EAPH", "EUST", "EVGR", "FOSP", "GCKI", "GRAJ", "GRCA",
+    "GRYE", "HAWO", "HETH", "HOWR", "KILL", "LCSP", "LEFL", "LEYE",
+    "LISP", "MAWA", "MODO", "MOWA", "NOFL", "NOWA", "OCWA", "OSFL",
+    "OVEN", "PAWA", "PHVI", "PIGR", "PISI", "PIWO", "PUFI", "RBGR",
+    "RBNU", "RCKI", "RECR", "REVI", "RUBL", "RUGR", "RWBL", "SAVS",
+    "SOSA", "SOSP", "SPSA", "SWSP", "SWTH", "TEWA", "TOSO", "TRES",
+    "VATH", "VEER", "VESP", "WAVI", "WBNU", "WCSP", "WETA", "WEWP",
+    "WISN", "WIWA", "WIWR", "WTSP", "WWCR", "YBFL", "YBSA", "YEWA",
+    "YRWA")
+
 tax <- droplevels(TAX[SPP, c("Spp","English_Name","Scientific_Name","Family_Sci")])
 compare_sets(tax$Spp, as.character(splt$sppid))
 compare_sets(tax$Spp, as.character(splt$sppid[splt$veghf.north]))
@@ -56,14 +66,14 @@ colnames(Xnn) <- fixNames(colnames(Xnn))
 
 ## spp specific output
 
-spp <- "BTNW"
+#spp <- "BTNW"
 
 all_yr <- list()
 for (spp in SPP) {
 cat(spp, "\n");flush.console()
 
-resn <- loadSPP(file.path(ROOT, "results", "josm", paste0("birds_abmi-josm_", spp, ".Rdata")))
-estYr <- getEst(resn, stage=8, na.out=FALSE, Xnn)
+resn <- loadSPP(file.path(ROOT, "results", "north", paste0("birds_abmi-north_", spp, ".Rdata")))
+estYr <- getEst(resn, stage=which(names(modsn)=="Year"), na.out=FALSE, Xnn)
 
 ## Boreal year effect estimates
 
@@ -89,20 +99,6 @@ dev.off()
 save(all_yr, tax, file=file.path(ROOT, "josm2", "josm-yreffects.Rdata"))
 
 ## Residual trend estimates
-
-SPP <- c("ALFL", "AMCR", "AMGO", "AMRE", "AMRO", "ATTW", "BAOR", "BARS",
-    "BAWW", "BBMA", "BBWA", "BBWO", "BCCH", "BHCO", "BHVI", "BLJA",
-    "BLPW", "BOCH", "BRBL", "BRCR", "BTNW", "CAWA", "CCSP", "CEDW",
-    "CHSP", "CMWA", "COGR", "CONW", "CORA", "COYE", "DEJU", "DOWO",
-    "EAKI", "EAPH", "EUST", "EVGR", "FOSP", "GCKI", "GRAJ", "GRCA",
-    "GRYE", "HAWO", "HETH", "HOWR", "KILL", "LCSP", "LEFL", "LEYE",
-    "LISP", "MAWA", "MODO", "MOWA", "NOFL", "NOWA", "OCWA", "OSFL",
-    "OVEN", "PAWA", "PHVI", "PIGR", "PISI", "PIWO", "PUFI", "RBGR",
-    "RBNU", "RCKI", "RECR", "REVI", "RUBL", "RUGR", "RWBL", "SAVS",
-    "SOSA", "SOSP", "SPSA", "SWSP", "SWTH", "TEWA", "TOSO", "TRES",
-    "VATH", "VEER", "VESP", "WAVI", "WBNU", "WCSP", "WETA", "WEWP",
-    "WISN", "WIWA", "WIWR", "WTSP", "WWCR", "YBFL", "YBSA", "YEWA",
-    "YRWA")
 
 yr_fun <- function(i, subset=NULL, part=c("all", "bbs", "bam"), colD="Dhf") {
     part <- match.arg(part)
@@ -137,12 +133,11 @@ all_res <- list()
 for (spp in SPP) {
 cat("\n------------", spp, "------------\n");flush.console()
 
-resn <- loadSPP(file.path(ROOT, "results", "josm", paste0("birds_abmi-josm_", spp, ".Rdata")))
+resn <- loadSPP(file.path(ROOT, "results", "north", paste0("birds_abmi-north_", spp, ".Rdata")))
 est0 <- sapply(resn, "[[", "null")
-estHb <- getEst(resn, stage=5, na.out=FALSE, Xnn)
-estCl <- getEst(resn, stage=6, na.out=FALSE, Xnn)
-estHF <- getEst(resn, stage=7, na.out=FALSE, Xnn)
-estYr <- getEst(resn, stage=8, na.out=FALSE, Xnn)
+estHb <- getEst(resn, stage=which(names(modsn)=="ARU"), na.out=FALSE, Xnn)
+estCl <- getEst(resn, stage=which(names(modsn)=="Space"), na.out=FALSE, Xnn)
+estHF <- getEst(resn, stage=which(names(modsn)=="HF"), na.out=FALSE, Xnn)
 
 pr0 <- exp(est0)
 col_keep <- colSums(abs(estHb) > 0) != 0
@@ -169,7 +164,8 @@ DAT$D0 <- mean(pr0)
 DAT$Dhb <- rowMeans(prHb)
 DAT$Dcl <- rowMeans(prCl)
 DAT$Dhf <- rowMeans(prHF)
-DAT$sset <- xnn$NRNAME != "Grassland" & xnn$POINT_Y > 50
+## North only
+#DAT$sset <- xnn$NRNAME != "Grassland" & xnn$POINT_Y > 50
 
 
 cl <- makeCluster(4)
@@ -185,11 +181,11 @@ for (j in 1:nrow(vals)) {
         "CL"="bam",
         "both-noCL"="all",
         "offroad-noCL"="bam")
-    SUBSET <- DAT$sset
+    SUBSET <- NULL
     if (as.character(vals$part[j]) == "CL")
-        SUBSET <- DAT$sset & DAT$PCODE == "CL"
+        SUBSET <- DAT$PCODE == "CL"
     if (as.character(vals$part[j]) %in% c("both-noCL", "offroad-noCL"))
-        SUBSET <- DAT$sset & DAT$PCODE != "CL"
+        SUBSET <- DAT$PCODE != "CL"
     res[[jj]] <- pbsapply(1:Bmax, yr_fun, cl=cl,
         subset=SUBSET, part=PART, colD=as.character(vals$dens[j]))
     #res[[j]] <- yr_fun(1, subset=SUBSET, part=PART, colD=as.character(vals$dens[j]))
