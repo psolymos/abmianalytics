@@ -86,7 +86,7 @@ i <- which.min(abs(d$x - apcstat[4]))
 lines(c(d$x[c(i,i)]), c(d$y[i], -0), col=2, lwd=1)
 dev.off()
 }
-save(all_yr, tax, file=file.path(ROOT, "results", "josm", "josm-yreffects.Rdata"))
+save(all_yr, tax, file=file.path(ROOT, "josm2", "josm-yreffects.Rdata"))
 
 ## Residual trend estimates
 
@@ -205,4 +205,4 @@ stopCluster(cl)
 
 all_res[[spp]] <- res
 }
-save(all_res, tax, file=file.path(ROOT, "results", "josm", "josm-reseffects.Rdata"))
+save(all_res, tax, file=file.path(ROOT, "josm2", "josm-reseffects.Rdata"))
