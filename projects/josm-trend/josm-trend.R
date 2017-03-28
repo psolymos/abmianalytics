@@ -90,6 +90,20 @@ save(all_yr, tax, file=file.path(ROOT, "results", "josm", "josm-yreffects.Rdata"
 
 ## Residual trend estimates
 
+SPP <- c("ALFL", "AMCR", "AMGO", "AMRE", "AMRO", "ATTW", "BAOR", "BARS",
+    "BAWW", "BBMA", "BBWA", "BBWO", "BCCH", "BHCO", "BHVI", "BLJA",
+    "BLPW", "BOCH", "BRBL", "BRCR", "BTNW", "CAWA", "CCSP", "CEDW",
+    "CHSP", "CMWA", "COGR", "CONW", "CORA", "COYE", "DEJU", "DOWO",
+    "EAKI", "EAPH", "EUST", "EVGR", "FOSP", "GCKI", "GRAJ", "GRCA",
+    "GRYE", "HAWO", "HETH", "HOWR", "KILL", "LCSP", "LEFL", "LEYE",
+    "LISP", "MAWA", "MODO", "MOWA", "NOFL", "NOWA", "OCWA", "OSFL",
+    "OVEN", "PAWA", "PHVI", "PIGR", "PISI", "PIWO", "PUFI", "RBGR",
+    "RBNU", "RCKI", "RECR", "REVI", "RUBL", "RUGR", "RWBL", "SAVS",
+    "SOSA", "SOSP", "SPSA", "SWSP", "SWTH", "TEWA", "TOSO", "TRES",
+    "VATH", "VEER", "VESP", "WAVI", "WBNU", "WCSP", "WETA", "WEWP",
+    "WISN", "WIWA", "WIWR", "WTSP", "WWCR", "YBFL", "YBSA", "YEWA",
+    "YRWA")
+
 yr_fun <- function(i, subset=NULL, part=c("all", "bbs", "bam"), colD="Dhf") {
     part <- match.arg(part)
     if (is.null(subset))
