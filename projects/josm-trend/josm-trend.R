@@ -198,4 +198,190 @@ stopCluster(cl)
 
 all_res[[spp]] <- res
 }
-save(all_res, tax, file=file.path(ROOT, "josm2", "josm-reseffects.Rdata"))
+save(all_res, tax, vals, file=file.path(ROOT, "josm2", "josm-reseffects.Rdata"))
+
+## determining associations for species
+
+library(ResourceSelection)
+
+spp <- "AMRO"
+
+s_fun <- function(spp) {
+    DAT <- xnn[,c("ROAD01"),drop=FALSE]
+    rownames(DAT) <- rownames(xnn)
+    DAT$Y <- yyn[,spp]
+    DAT$ST <- 0
+    #DAT <- DAT[bb[,j],]
+    DAT1 <- DAT[rep(seq_len(nrow(DAT)), DAT$Y),]
+    DAT1$ST <- 1
+    DAT <- rbind(DAT1, DAT)
+    m <- rsf(ST ~ ROAD01, DAT, m=0, B=0)
+    #exp(coef(m))
+    #mm <- glm(ST ~ ROAD01, DAT, family="binomial")
+    #exp(coef(mm))
+
+    #fU <- sum(DAT$ROAD01[DAT$ST==1]) / sum(DAT$ST)
+    #fA <- sum(DAT$ROAD01[DAT$ST==0]) / sum(1-DAT$ST)
+    #s <- fU / fA
+    #c(s=s, fU=fU, fA=fA)
+    unname(coef(m))
+}
+
+sroad <- pbsapply(SPP, s_fun)
+pdet <- colSums(yyn[,SPP])/nrow(yyn)
+save(sroad, pdet, file=file.path(ROOT, "josm2", "josm-sroad.Rdata"))
+
+
+## combining all estimates
+
+library(plotrix)
+library(mefa4)
+setwd("e:/peter/AB_data_v2016/out/birds/josm2")
+
+## year effects
+load("josm-yreffects.Rdata")
+
+LEVEL <- 0.9
+fstat <- function(x, level=0.95) {
+    c(Mean=mean(x), Median=median(x), quantile(x, c((1-level)/2, 1 - (1-level)/2)))
+}
+tyr <- t(sapply(all_yr, fstat, level=LEVEL))
+
+## species list
+SPP <- rownames(tax)
+tyr <- tyr[SPP,]
+load("josm-sroad.Rdata")
+tax$sroad <- sroad[rownames(tax)]
+tax$pdet <- pdet[rownames(tax)]
+TAX <- tax
+
+## official BBS trend in BCR6/AB
+tbbs <- read.csv("ron_bbs_t20170330.csv")
+compare_sets(SPP, tbbs$SpeciesID)
+setdiff(SPP, tbbs$SpeciesID)
+bbs_lt <- droplevels(tbbs[tbbs$timeFrame=="Long-term",])
+bbs_st <- droplevels(tbbs[tbbs$timeFrame=="Short-term",])
+bbs_lt <- bbs_lt[match(SPP, bbs_lt$SpeciesID),c("annualTrend", "lowerLimit", "upperLimit")]
+bbs_st <- bbs_st[match(SPP, bbs_st$SpeciesID),c("annualTrend", "lowerLimit", "upperLimit")]
+rownames(bbs_lt) <- rownames(bbs_st) <- SPP
+
+## residual trend
+load("josm-reseffects.Rdata")
+
+all_res2 <- list()
+for (i in rownames(vals))
+    all_res2[[i]] <- t(sapply(all_res, function(z) fstat(z[[i]], level=LEVEL)))
+
+D0 <- sapply(all_res2[1:6], function(z) z[,2])
+Dhb <- sapply(all_res2[7:12], function(z) z[,2])
+Dcl <- sapply(all_res2[13:18], function(z) z[,2])
+Dhf <- sapply(all_res2[19:24], function(z) z[,2])
+D0[D0 > 100] <- 100
+Dhb[Dhb > 100] <- 100
+Dcl[Dcl > 100] <- 100
+Dhf[Dhf > 100] <- 100
+colnames(D0) <- colnames(Dhb) <- colnames(Dcl) <- colnames(Dhf) <- levels(vals$part)
+
+## changing averages across the board
+op <- par(mfrow=c(2,2), las=1, mar=c(5,8,2,2))
+boxplot(D0[,6:1], horizontal=TRUE, col="#ABD9E9", main="D0", xlab="% annual change")
+abline(v=0, col="#D7191C", lwd=2)
+boxplot(Dhb[,6:1], horizontal=TRUE, col="#ABD9E9", main="Dhb", xlab="% annual change")
+abline(v=0, col="#D7191C", lwd=2)
+boxplot(Dcl[,6:1], horizontal=TRUE, col="#ABD9E9", main="Dcl", xlab="% annual change")
+abline(v=0, col="#D7191C", lwd=2)
+boxplot(Dhf[,6:1], horizontal=TRUE, col="#ABD9E9", main="Dhf", xlab="% annual change")
+abline(v=0, col="#D7191C", lwd=2)
+par(op)
+
+## D0-Dhf effects
+tmp <- cbind(D0=D0[,"offroad-noCL"], Dhb=Dhb[,"offroad-noCL"],
+    Dcl=Dcl[,"offroad-noCL"], Dhf=Dhf[,"offroad-noCL"])
+ladderplot(tmp, pch=NA, col="#2C7BB6", ylab="% annual change", main="offroad-noCL")
+abline(h=0, col="#D7191C", lwd=2)
+
+## compare with BBS
+
+rn <- intersect(rownames(Dhf), tbbs$SpeciesID)
+tmp <- cbind(BBS_lt=bbs_lt[rn,1], BBS_st=bbs_st[rn,1],
+    Dhf[rn,c("both-noCL", "BBS", "offroad-noCL")])
+ladderplot(tmp, pch=NA, col="#2C7BB6", ylab="% annual change", main="")
+abline(h=0, col="#D7191C", lwd=2)
+
+tmp2 <- cbind(BBS_lt=bbs_lt[rn,1], BBS_st=bbs_st[rn,1],
+    Dhf[rn,c("both", "BBS", "offroad", "CL")])
+
+e <- new.env()
+load("e:/peter/AB_data_v2016/out/3x7/veg-hf_3x7_fix-fire_fix-age0.Rdata", envir=e)
+slt <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+nrn <- as.character(slt$SITE_ID[slt$NATURAL_REGIONS %in% c("Boreal", "Parkland", "Foothills")])
+hfn <- c("RoadHardSurface", "RoadTrailVegetated", "RoadVegetatedVerge")
+allhf <- c("BorrowpitsDugoutsSumps",
+    "Canals", "CultivationCropPastureBareground", "HighDensityLivestockOperation",
+    "IndustrialSiteRural", "MineSite", "MunicipalWaterSewage", "OtherDisturbedVegetation",
+    "PeatMine", "Pipeline", "RailHardSurface", "RailVegetatedVerge",
+    "Reservoirs", "RoadHardSurface", "RoadTrailVegetated", "RoadVegetatedVerge",
+    "RuralResidentialIndustrial", "SeismicLine", "TransmissionLine",
+    "Urban", "WellSite", "WindGenerationFacility", "CCDecid0", "CCDecidR",
+    "CCDecid1", "CCDecid2", "CCDecid3", "CCDecid4", "CCMixwood0",
+    "CCMixwoodR", "CCMixwood1", "CCMixwood2", "CCMixwood3", "CCMixwood4",
+    "CCConif0", "CCConifR", "CCConif1", "CCConif2", "CCConif3", "CCConif4",
+    "CCPine0", "CCPineR", "CCPine1", "CCPine2", "CCPine3", "CCPine4")
+rd1999 <- sum(e$yearly_vhf[["1999"]][["veg_current"]][nrn, hfn])
+rd2014 <- sum(e$yearly_vhf[["2014"]][["veg_current"]][nrn, hfn])
+hf1999 <- sum(e$yearly_vhf[["1999"]][["veg_current"]][nrn, allhf])
+hf2014 <- sum(e$yearly_vhf[["2014"]][["veg_current"]][nrn, allhf])
+all1999 <- sum(e$yearly_vhf[["1999"]][["veg_current"]][nrn, ])
+all2014 <- sum(e$yearly_vhf[["2014"]][["veg_current"]][nrn, ])
+
+## annual rate of change
+100*((rd2014/rd1999)^(1/(2014-1999))-1) # 0.8023384
+(rd2014/rd1999)^(1/(2014-1999)) # 1.008023
+
+(hf2014/hf1999)^(1/(2014-1999)) # 1.01053
+
+d <- (1+tmp2[,"BBS"]/100) / (1+tmp2[,"offroad"]/100)
+dc <- d / Deltap
+plot(d, sroad[names(d)])
+cor.test(d, sroad[names(d)]) # no correlation
+
+## subsets make a difference, that is consistent across how residual is defined
+## residual definition impacts mostly extreme estimates
+## CL is influential, correlates best with off-road data
+## with and without CL (Dhf), explain correlations
+## lack of pattern re road associations
+## HF calculations: no huge change in road strata to drive changes
+## emphasize that BBS and bbs is correlated (but bbs < BBS)
+## strata specific trend: math indicates that
+## but is off-road trend reliable given temporal sparsity?
+## based on CL vs. offroad there is big scatter but agreement on average
+## reasons why we see strata specific trend?
+## - geographic shift relative to road network (climate change)
+## - habitat related rearrangements: suboptimal habitat density declining more
+## but why is offroad trend positive??? -- not very reliable (CL average is neutral)
+## is it a data artifact or is it real?
+## - Hard to decide, but there is strong relationship with pdet
+##   indicating that data is driving the extreme trends
+##   or that rare species decline more: no because of funnel shape
+## can it be disturbance other than roads? not much bigger changes there either
+## correcting for pdet indicates that roadside trend might be -5%
+##   offroad trend might be around 0%, definitely pointing towards concentration
+##   in better habitats, need to come up with ways of testing it
+##   e.g. annual variation in good/bad habitats, and trends over time in these
+
+plot(BBS ~ BBS_st, tmp2) # bbs is smaller than BBS
+abline(0,1,lty=2)
+abline(lm(BBS ~ BBS_st, data.frame(tmp2)))
+
+plot(CL ~ offroad, tmp2) # 1:1 but huge scatter
+abline(0,1,lty=2)
+abline(lm(CL ~ offroad, data.frame(tmp2)))
+
+#plot(abs(tmp[,"offroad-noCL"])~pdet[rownames(tmp)]) # strong pattern
+plot(tmp[,"offroad-noCL"]~pdet[rownames(tmp)]) # strong pattern
+abline(h=0, lty=2)
+abline(lm(tmp[,"offroad-noCL"]~pdet[rownames(tmp)]))
+
+plot(tmp[,"BBS"]~pdet[rownames(tmp)]) # strong pattern
+abline(h=0, lty=2)
+abline(lm(tmp[,"BBS"]~pdet[rownames(tmp)]))
