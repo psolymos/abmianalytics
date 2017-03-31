@@ -204,7 +204,7 @@ save(all_res, tax, vals, file=file.path(ROOT, "josm2", "josm-reseffects.Rdata"))
 
 library(ResourceSelection)
 
-spp <- "AMRO"
+#spp <- "AMRO"
 
 s_fun <- function(spp) {
     DAT <- xnn[,c("ROAD01"),drop=FALSE]
@@ -229,7 +229,13 @@ s_fun <- function(spp) {
 
 sroad <- pbsapply(SPP, s_fun)
 pdet <- colSums(yyn[,SPP])/nrow(yyn)
-save(sroad, pdet, file=file.path(ROOT, "josm2", "josm-sroad.Rdata"))
+## sroad=log(pdet1/pdet0)
+ii1 <- xnn$PCODE == "BBSAB"
+ii0 <- !ii1 & xnn$ROAD01==0
+pdet1 <- colSums(yyn[ii1,SPP])/sum(ii1)
+pdet0 <- colSums(yyn[ii0,SPP])/sum(ii0)
+
+save(sroad, pdet, pdet0, pdet1, file=file.path(ROOT, "josm2", "josm-sroad.Rdata"))
 
 
 ## combining all estimates
