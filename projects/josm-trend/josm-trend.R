@@ -249,7 +249,8 @@ load("josm-yreffects.Rdata")
 
 LEVEL <- 0.9
 fstat <- function(x, level=0.95) {
-    c(Mean=mean(x), Median=median(x), quantile(x, c((1-level)/2, 1 - (1-level)/2)))
+    c(Mean=mean(x), Median=median(x),
+        quantile(x, c((1-level)/2, 1 - (1-level)/2)), SE=sd(x))
 }
 tyr <- t(sapply(all_yr, fstat, level=LEVEL))
 
@@ -260,6 +261,31 @@ load("josm-sroad.Rdata")
 tax$sroad <- sroad[rownames(tax)]
 tax$pdet <- pdet[rownames(tax)]
 TAX <- tax
+TAX$AOUcode <- rownames(TAX)
+lh <- read.csv("~/Dropbox/bam/lhreg2/bna-life-history-info.csv")
+TAX$Hab <- lh$habitat[match(TAX$English_Name, lh$species)]
+TAX$Beh <- lh$behavior[match(TAX$English_Name, lh$species)]
+TAX$Hab4 <- TAX$Hab3 <- TAX$Hab2 <- TAX$Hab
+#levels(x$Hab) <- c("Forest", "Grassland", "Lake/Pond", "Marsh", "Mountains",
+#    "Open Woodland", "Scrub", "Shore-line", "Town")
+levels(TAX$Hab4) <- c("For", "Open", "Wet", "Wet", "Open",
+    "Wood", "Open", "Wet", "Open")
+levels(TAX$Hab3) <- c("For", "Open", "Open", "Open", "Open",
+    "Wood", "Open", "Open", "Open")
+levels(TAX$Hab2) <- c("Closed", "Open", "Open", "Open", "Open",
+    "Closed", "Open", "Open", "Open")
+#levels(TAX$Beh) <- c("Aerial Dive", "Aerial Forager", "Bark Forager",
+#    "Flycatching", "Foliage Gleaner", "Ground Forager", "Hovering", "Probing")
+TAX$Beh3 <- TAX$Beh
+levels(TAX$Beh3) <- c("Aerial", "Aerial", "Bark/Foliage",
+    "Aerial", "Bark/Foliage", "Ground", "Bark/Foliage", "Ground")
+mig <- read.csv("~/Dropbox/bam/lhreg2/tblAvianLifeHistory.csv")
+TAX$Mig <- droplevels(mig$Migration1[match(TAX$English_Name, mig$English_Name)])
+TAX["ATTW","Mig"] <- "Resident"
+TAX["WISN","Mig"] <- "Short distance migrant"
+levels(TAX$Mig)[levels(TAX$Mig)=="Nomadic"] <- "Short distance migrant"
+#write.csv(TAX, row.names=FALSE, file="~/Dropbox/josm/2017/Table-tax.csv")
+
 
 ## official BBS trend in BCR6/AB
 tbbs <- read.csv("ron_bbs_t20170330.csv")
@@ -270,6 +296,11 @@ bbs_st <- droplevels(tbbs[tbbs$timeFrame=="Short-term",])
 bbs_lt <- bbs_lt[match(SPP, bbs_lt$SpeciesID),c("annualTrend", "lowerLimit", "upperLimit")]
 bbs_st <- bbs_st[match(SPP, bbs_st$SpeciesID),c("annualTrend", "lowerLimit", "upperLimit")]
 rownames(bbs_lt) <- rownames(bbs_st) <- SPP
+
+tBBS <- data.frame(AOUcode=SPP,LongTerm=bbs_lt, ShortTerm=bbs_st)
+#write.csv(tBBS, row.names=FALSE, file="~/Dropbox/josm/2017/Table-bbs.csv")
+#write.csv(data.frame(AOUcode=rownames(tyr), tyr), row.names=FALSE,
+#    file="~/Dropbox/josm/2017/Table-yr.csv")
 
 ## residual trend
 load("josm-reseffects.Rdata")
@@ -287,6 +318,17 @@ Dhb[Dhb > 100] <- 100
 Dcl[Dcl > 100] <- 100
 Dhf[Dhf > 100] <- 100
 colnames(D0) <- colnames(Dhb) <- colnames(Dcl) <- colnames(Dhf) <- levels(vals$part)
+
+lDhf1 <- do.call(cbind, lapply(all_res2[c(19:21)], function(z) z[,2:4]))
+colnames(lDhf1) <- paste(rep(names(all_res2)[c(19:21)], each=3),
+    c("Median", "CL5", "CL95"), sep="_")
+lDhf2 <- do.call(cbind, lapply(all_res2[22:24], function(z) z[,2:4]))
+colnames(lDhf2) <- paste(rep(names(all_res2)[c(22:24)], each=3),
+    c("Median", "CL5", "CL95"), sep="_")
+lDhf1 <- data.frame(AOUcode=rownames(lDhf1), lDhf1)
+lDhf2 <- data.frame(AOUcode=rownames(lDhf2), lDhf2)
+#write.csv(lDhf1, row.names=FALSE, file="~/Dropbox/josm/2017/Table-res1.csv")
+#write.csv(lDhf2, row.names=FALSE, file="~/Dropbox/josm/2017/Table-res2.csv")
 
 ## changing averages across the board
 op <- par(mfrow=c(2,2), las=1, mar=c(5,8,2,2))
@@ -339,17 +381,27 @@ hf1999 <- sum(e$yearly_vhf[["1999"]][["veg_current"]][nrn, allhf])
 hf2014 <- sum(e$yearly_vhf[["2014"]][["veg_current"]][nrn, allhf])
 all1999 <- sum(e$yearly_vhf[["1999"]][["veg_current"]][nrn, ])
 all2014 <- sum(e$yearly_vhf[["2014"]][["veg_current"]][nrn, ])
+nrd1999 <- all1999-rd1999
+nrd2014 <- all2014-rd2014
 
 ## annual rate of change
-100*((rd2014/rd1999)^(1/(2014-1999))-1) # 0.8023384
 (rd2014/rd1999)^(1/(2014-1999)) # 1.008023
-
+(nrd2014/nrd1999)^(1/(2014-1999)) # 0.9999121
 (hf2014/hf1999)^(1/(2014-1999)) # 1.01053
-
+Delta_1p <- (rd2014/rd1999)^(1/(2014-1999))
+Delta_0p <- (nrd2014/nrd1999)^(1/(2014-1999))
+Delta_p <- Delta_1p / Delta_0p
 d <- (1+tmp2[,"BBS"]/100) / (1+tmp2[,"offroad"]/100)
-dc <- d / Deltap
+fstat(d)
+Delta_p
+dc <- d / Delta_p
 plot(d, sroad[names(d)])
+
 cor.test(d, sroad[names(d)]) # no correlation
+
+boxplot(d ~ TAX[names(d),"Hab4"])
+boxplot(d ~ TAX[names(d),"Beh3"])
+boxplot(d ~ TAX[names(d),"Mig"])
 
 ## subsets make a difference, that is consistent across how residual is defined
 ## residual definition impacts mostly extreme estimates
@@ -374,6 +426,11 @@ cor.test(d, sroad[names(d)]) # no correlation
 ##   offroad trend might be around 0%, definitely pointing towards concentration
 ##   in better habitats, need to come up with ways of testing it
 ##   e.g. annual variation in good/bad habitats, and trends over time in these
+## look at lh traits
+## yr effect and 'both' trend is very similar, joint estimates are more extreme
+## also explain: drawing conclusion from 5-10% of the population (assuming even distr)
+##   we are missing the big part
+
 
 plot(BBS ~ BBS_st, tmp2) # bbs is smaller than BBS
 abline(0,1,lty=2)
@@ -391,3 +448,13 @@ abline(lm(tmp[,"offroad-noCL"]~pdet[rownames(tmp)]))
 plot(tmp[,"BBS"]~pdet[rownames(tmp)]) # strong pattern
 abline(h=0, lty=2)
 abline(lm(tmp[,"BBS"]~pdet[rownames(tmp)]))
+
+plot(tmp2[,"both"] ~ tyr[rownames(tmp2),1])
+abline(0,1, lty=2)
+abline(lm(tmp2[,"both"] ~ tyr[rownames(tmp2),1]))
+
+plot(tyr[,"SE"] ~ TAX[rownames(tyr),"pdet"])
+mm <- lm(log(tyr[,"SE"]) ~ log(TAX[rownames(tyr),"pdet"]))
+f <- function(x) exp(coef(mm)[1]+log(x)*coef(mm)[2])
+curve(f, add=TRUE)
+
