@@ -1,4 +1,4 @@
-HF_VERSION <- "2014"
+HF_VERSION <- "2014_fine"
 
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 
@@ -314,6 +314,8 @@ kgrid$CTI <- kgrid2$cti
 ## load kgrid table from last year
 
 load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
+load(file.path(ROOT, VER, "data", "analysis", "veg-hf_1kmgrid_v6.Rdata"))
+
 compare_sets(rownames(dd1km_pred[[1]]), rownames(kgrid))
 
 dd1km_pred$veg_current <- dd1km_pred$veg_current[rownames(kgrid),]
@@ -344,9 +346,13 @@ if (SAVE) { ## needed for recalculating average ages
 
 ## fix age 0 in saved files -----------------------------
 
+load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
+load(file.path(ROOT, VER, "data", "analysis", "veg-hf_nsr_v6.Rdata"))
 
 cr <- as.matrix(dd1km_nsr[[1]])
 rf <- as.matrix(dd1km_nsr[[2]])
+cr2 <- as.matrix(dd1km_nr[[1]])
+rf2 <- as.matrix(dd1km_nr[[2]])
 
 ages_list <- list(
     "Decid"=c("Decid0", "DecidR", "Decid1", "Decid2", "Decid3", "Decid4",
@@ -373,34 +379,88 @@ rf_ages <- lapply(ages_list, function(z) {
     zz[,1] <- 0
     zz <- zz / ifelse(rowSums(zz)==0, 1, rowSums(zz))
     })
-AvgAges <- list(current=cr_ages, reference=rf_ages)
+cr_old <- lapply(ages_list, function(z) {
+    zz <- cr[,z]
+    zz[,1:6] <- 0 # 1:6 is 0,R,1,2,3,4 (0-80yrs)
+    zz <- zz / ifelse(rowSums(zz)==0, 1, rowSums(zz))
+    })
+rf_old <- lapply(ages_list, function(z) {
+    zz <- rf[,z]
+    zz[,1:6] <- 0
+    zz <- zz / ifelse(rowSums(zz)==0, 1, rowSums(zz))
+    })
+cr_ages2 <- lapply(ages_list, function(z) {
+    zz <- cr2[,z]
+    zz[,1] <- 0
+    zz <- zz / ifelse(rowSums(zz)==0, 1, rowSums(zz))
+    })
+rf_ages2 <- lapply(ages_list, function(z) {
+    zz <- rf2[,z]
+    zz[,1] <- 0
+    zz <- zz / ifelse(rowSums(zz)==0, 1, rowSums(zz))
+    })
+cr_old2 <- lapply(ages_list, function(z) {
+    zz <- cr2[,z]
+    zz[,1:6] <- 0
+    zz <- zz / ifelse(rowSums(zz)==0, 1, rowSums(zz))
+    })
+rf_old2 <- lapply(ages_list, function(z) {
+    zz <- rf2[,z]
+    zz[,1:6] <- 0
+    zz <- zz / ifelse(rowSums(zz)==0, 1, rowSums(zz))
+    })
+cr_ages3 <- lapply(ages_list, function(z) {
+    zz <- colSums(cr2[,z])
+    zz[1] <- 0
+    zz <- zz / ifelse(sum(zz)==0, 1, sum(zz))
+    })
+rf_ages3 <- lapply(ages_list, function(z) {
+    zz <- colSums(rf2[,z])
+    zz[1] <- 0
+    zz <- zz / ifelse(sum(zz)==0, 1, sum(zz))
+    })
+cr_old3 <- lapply(ages_list, function(z) {
+    zz <- colSums(cr2[,z])
+    zz[1:6] <- 0
+    zz <- zz / ifelse(sum(zz)==0, 1, sum(zz))
+    })
+rf_old3 <- lapply(ages_list, function(z) {
+    zz <- colSums(rf2[,z])
+    zz[1:6] <- 0
+    zz <- zz / ifelse(sum(zz)==0, 1, sum(zz))
+    })
+AvgAgesNSR <- list(current=cr_ages, reference=rf_ages)
+AvgAgesNSROld <- list(current=cr_old, reference=rf_old)
+AvgAgesNR <- list(current=cr_ages2, reference=rf_ages2)
+AvgAgesNROld <- list(current=cr_old2, reference=rf_old2)
+AvgAgesAll <- list(current=cr_ages3, reference=rf_ages3)
+AvgAgesAllOld <- list(current=cr_old3, reference=rf_old3)
 
-save(AvgAges, ages_list,
+save(AvgAgesNSR, AvgAgesNSROld, AvgAgesNR, AvgAgesNROld, AvgAgesAll, AvgAgesAllOld, ages_list,
     file=file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
 
 
+## fix 0 ages for km grid
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
-load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
+load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
+load(file.path(ROOT, VER, "data", "analysis", "veg-hf_1kmgrid_v6.Rdata"))
 
-## 1 km grid
-load(file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire.Rdata"))
-load(file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
-
-sum(dd1km_pred[[1]][,Target0])
-sum(dd1km_pred[[2]][,Target0])
-sum(dd1km_pred[[1]])
-sum(dd1km_pred[[2]])
+Target0 <- sapply(ages_list, "[[", 1)
+sum(dd1km_pred[[1]][,Target0])/10^6
+sum(dd1km_pred[[2]][,Target0])/10^6
+(Aincr <- sum(dd1km_pred[[1]])/10^6)
+(Ainrf <- sum(dd1km_pred[[2]])/10^6)
 dd1km_pred <- fill_in_0ages_v6(dd1km_pred, kgrid$NSRNAME, ages_list)
-sum(dd1km_pred[[1]][,Target0])
-sum(dd1km_pred[[2]][,Target0])
-sum(dd1km_pred[[1]])
-sum(dd1km_pred[[2]])
+sum(dd1km_pred[[1]][,Target0])/10^6
+sum(dd1km_pred[[2]][,Target0])/10^6
+(Aoutcr <- sum(dd1km_pred[[1]])/10^6)
+(Aoutrf <- sum(dd1km_pred[[2]])/10^6)
+stopifnot(Aincr == Aoutcr)
+stopifnot(Ainrf == Aoutrf)
 
-
-if (SAVE) {
 save(dd1km_pred,
-    file=file.path(ROOT, VER, "out/kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata"))
-}
+    file=file.path(ROOT, VER, "data", "analysis", "veg-hf_1kmgrid_v6-fixage0.Rdata"))
+
 
 ## summaries
 

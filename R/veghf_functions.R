@@ -827,20 +827,29 @@ function(x, NSR, ages_list)
             x$veg_current else x$veg_reference
         xx <- as.matrix(xx)
         ag <- if (current)
-            AvgAges$current else AvgAges$reference
+            AvgAgesNSROld$current else AvgAgesNSROld$reference
+        ag2 <- if (current)
+            AvgAgesAllOld$current else AvgAgesAllOld$reference
         for (nsr in NSRs) {
             cat(ifelse(current, "current:", "reference:"), nsr)
             flush.console()
             for (i in Target) {
                 Cols <- paste0(i, Ages)
                 j <- NSR == nsr
+                nr <- unique(NR[j])
                 if (any(j)) {
+                    p0 <- ag[[i]][nsr,]
+                    if (sum(p0) == 0)
+                        p0 <- ag2[[i]]
                     Mat <- xx[j, Cols, drop=FALSE]
+                    Mat0 <- Mat
                     ## multiply Mat[,1] (unknown age) with this matrix
-                    Unk <- Mat[,1] * t(matrix(ag[[i]][nsr,], length(Ages), sum(j)))
+                    Unk <- Mat[,1] * t(matrix(p0, length(Ages), sum(j)))
                     Mat[,1] <- 0 # will be 0 and redistributed from Unk
                     Mat <- Mat + Unk
                     xx[j, Cols] <- Mat # ridiculously slow as sparse matrix
+                    if (sum(Mat0)-sum(Mat) > 10^-6)
+                        cat("\n\ttype:", i, "| diff =", round((sum(Mat0)-sum(Mat))/10^6))
                 }
             }
             cat(" --- OK\n")
