@@ -1,3 +1,5 @@
+ROOT   <- "e:/peter/AB_data_v2017/data/raw/species"
+OUTDIR <- "e:/peter/AB_data_v2017/data/analysis/species"
 ROOT <- "e:/peter/AB_data_v2017"
 library(mefa4)
 

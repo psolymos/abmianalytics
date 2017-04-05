@@ -1,5 +1,5 @@
-ROOT <- "e:/peter/AB_data_v2016/oracle"
-OUTDIR <- "e:/peter/AB_data_v2016/data/species"
+ROOT   <- "e:/peter/AB_data_v2017/data/raw/species"
+OUTDIR <- "e:/peter/AB_data_v2017/data/analysis/species"
 getwd()
 if (interactive())
     source("~/repos/abmianalytics/species/00globalvars.R") else source("00globalvars.R")
@@ -22,7 +22,7 @@ gis <- sqlFetch(con, "METADATA_GIS_SITE_SUMMARY")
 close(con)
 }
 
-res <- read.csv(file.path(ROOT, "mites-new.csv"))
+res <- read.csv(file.path(ROOT, "mites-20170404.csv"))
 #gis <- read.csv(file.path(ROOT, "data/sitemetadata.csv"))
 gis <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 taxo <- read.csv(file.path(ROOT, "taxonomy.csv"))

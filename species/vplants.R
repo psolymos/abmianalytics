@@ -1,5 +1,5 @@
-ROOT <- "e:/peter/AB_data_v2017/data/raw/species"
-OUTDIR <- "e:/peter/AB_data_v2017/data/inter/species"
+ROOT   <- "e:/peter/AB_data_v2017/data/raw/species"
+OUTDIR <- "e:/peter/AB_data_v2017/data/analysis/species"
 getwd()
 if (interactive())
     source("~/repos/abmianalytics/species/00globalvars.R") else source("00globalvars.R")
@@ -25,10 +25,10 @@ close(con)
 
 #res <- read.csv(file.path(ROOT, "data", "plants2015",
 #    "A_T15_Vascular_Plants_AllYear_AB_689250437025811679.csv"), row.names=NULL)
-res <- read.csv(file.path(ROOT, "vplants20170213.csv"))
+res <- read.csv(file.path(ROOT, "vplants-20170404.csv"))
 #gis <- read.csv(file.path(ROOT, "data/sitemetadata.csv"))
 gis <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
-taxo <- read.csv(file.path(ROOT, "taxonomy20170213.csv"))
+taxo <- read.csv(file.path(ROOT, "taxonomy.csv"))
 
 ## Labels etc
 rr <- LabelFun(res)
@@ -140,7 +140,9 @@ mmm <- m[samp(m)$SubTypeID != "DNC",]
 m2 <- groupSums(mmm, 1, mmm@samp$Label2)
 no_q <- table(m[samp(m)$SubTypeID != "DNC",]@samp$Label2)
 no_q <- no_q[rownames(m2)]
-samp(m2) <- data.frame(NoQuadrantsPerSite = no_q)
+sampm2 <- data.frame(NoQuadrantsPerSite = as.numeric(no_q))
+rownames(sampm2) <- rownames(m2)
+samp(m2) <- sampm2
 #xtab(m2) <- as(xtab(m2) > 0, "dgCMatrix") # it might be 5 due to QU=DNC
 
 range(xtab(m))

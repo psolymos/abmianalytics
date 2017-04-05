@@ -1,5 +1,5 @@
-ROOT <- "e:/peter/AB_data_v2016/oracle"
-OUTDIR <- "e:/peter/AB_data_v2016/data/species"
+ROOT   <- "e:/peter/AB_data_v2017/data/raw/species"
+OUTDIR <- "e:/peter/AB_data_v2017/data/analysis/species"
 getwd()
 if (interactive())
     source("~/repos/abmianalytics/species/00globalvars.R") else source("00globalvars.R")
@@ -83,13 +83,13 @@ table(resb0$YEAR)
 #resb$YEAR <- resb$MS_YEAR
 
 resa$TMLIR_COLLECTION_STATUS <- factor("C", levels(resb$TMLIR_COLLECTION_STATUS))
-#ccol <- c("SITE_LABEL","ROTATION", "SITE", "YEAR", "ADATE", "CREWS", "TMLIR_PLOT", 
+#ccol <- c("SITE_LABEL","ROTATION", "SITE", "YEAR", "ADATE", "CREWS", "TMLIR_PLOT",
 #    "TMLIR_STRATUM", "SCIENTIFIC_NAME", "COMMON_NAME", "RANK_NAME", "TSN_ID",
-#    "OnOffGrid", "SiteLabel", "DataProvider", 
+#    "OnOffGrid", "SiteLabel", "DataProvider",
 #    "SubType", "SubTypeID", "OGSeqenceID",
 #    "Visit", "ClosestABMISite", "Label", "Label2")
 ccol <- c("SITE_LABEL","YEAR", "SCIENTIFIC_NAME", "COMMON_NAME",
-    "OnOffGrid", "SiteLabel", "DataProvider", 
+    "OnOffGrid", "SiteLabel", "DataProvider",
     "SubType", "SubTypeID", "OGSeqenceID",
     "Visit", "ClosestABMISite", "Label", "Label2","TMLIR_COLLECTION_STATUS")
 res <- rbind(resa[,ccol], resb[,ccol])
@@ -128,7 +128,7 @@ res$sppnam <- res$SCIENTIFIC_NAME
 levels(res$sppnam) <- nameAlnum(levels(res$sppnam),"first",collapse="")
 res$sppnam <- droplevels(res$sppnam)
 
-xt <- Xtab(~ Label + sppnam, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 
+xt <- Xtab(~ Label + sppnam, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"),
     rdrop=qs.to.exclude, drop.unused.levels = FALSE)
 ## get rid of them here, because drop=FALSE
 sum(grepl("ALPAC-SK", rownames(xt)))
@@ -151,12 +151,12 @@ for (i in 1:ncol(z))
         levels(z[[i]]) <- sub(' +$', '', levels(z[[i]]))
 }
 
-#x <- nonDuplicated(res[,c("Label", "Label2", "ROTATION", "SITE", "YEAR", "ADATE", "CREWS", 
-#    "OnOffGrid", 
+#x <- nonDuplicated(res[,c("Label", "Label2", "ROTATION", "SITE", "YEAR", "ADATE", "CREWS",
+#    "OnOffGrid",
 #    "SiteLabel", "DataProvider", "Visit", "ClosestABMISite",
 #    "SubType", "SubTypeID", "OGSeqenceID", "Quadrant")], res$Label, TRUE)
-x <- nonDuplicated(res[,c("Label", "Label2", "YEAR", 
-    "OnOffGrid", 
+x <- nonDuplicated(res[,c("Label", "Label2", "YEAR",
+    "OnOffGrid",
     "SiteLabel", "DataProvider", "Visit", "ClosestABMISite",
     "SubType", "SubTypeID", "OGSeqenceID", "Quadrant")], res$Label, TRUE)
 
