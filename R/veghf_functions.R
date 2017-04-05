@@ -836,7 +836,6 @@ function(x, NSR, ages_list)
             for (i in Target) {
                 Cols <- paste0(i, Ages)
                 j <- NSR == nsr
-                nr <- unique(NR[j])
                 if (any(j)) {
                     p0 <- ag[[i]][nsr,]
                     if (sum(p0) == 0)

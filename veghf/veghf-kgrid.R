@@ -2,7 +2,7 @@ HF_VERSION <- "2014_fine"
 
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 
-SCALE <- "km" # km or qs
+SCALE <- "qs" # km or qs
 
 ### Provincial grid (km or QS scale) ---------------------------------------
 
@@ -13,12 +13,13 @@ SCALE <- "km" # km or qs
 fl0 <- list.files(file.path(ROOT, VER, "data", "raw", "veghf", SCALE))
 for (i in seq_len(length(fl0))) {
     fn <- fl0[i]
-    cat("\nchecking", i, "/", length(fl0));flush.console()
+    cat("checking", i, "/", length(fl0));flush.console()
     f <- file.path(ROOT, VER, "data", "raw", "veghf", SCALE, fn)
     #d <- fread(f)
     d <- read.csv(f)
     save(d, file=file.path(ROOT, VER, "data", "inter", "veghf", SCALE,
         gsub(".csv", ".Rdata", fn, fixed = TRUE)))
+    cat("\n")
 }
 
 
@@ -96,6 +97,8 @@ fl <- list.files(file.path(ROOT, VER, "data", "inter", "veghf", SCALE))
 
 SCALE_NOTE <- if (SCALE == "km")
     "1 km x 1 km prediction grid cells" else "QS prediction grid cells"
+COL_LABEL <- if (SCALE == "km")
+    "Row_Col" else "LinkID"
 tmplist <- list()
 for (s in 1:(length(Start)-1)) {
 
@@ -108,7 +111,7 @@ for (s in 1:(length(Start)-1)) {
     load(f, envir=e)
     d <- e$d
     ## HF year is used as base year for prediction purposes
-    dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
+    dd <- make_vegHF_wide_v6(d, col.label=COL_LABEL,
         col.year=HF_YEAR, col.HFyear="YEAR_MineCFOAgCutblock", sparse=TRUE,
         HF_fine=HF_VERSION=="2014")
     stopifnot(sum(duplicated(colnames(dd$veg_current))) < 1)
@@ -128,7 +131,7 @@ for (s in 1:(length(Start)-1)) {
         e <- new.env()
         load(f, envir=e)
         d <- e$d
-        dd <- make_vegHF_wide_v6(d, col.label="Row_Col",
+        dd <- make_vegHF_wide_v6(d, col.label=COL_LABEL,
             col.year=HF_YEAR, col.HFyear="YEAR_MineCFOAgCutblock", sparse=TRUE,
             HF_fine=HF_VERSION=="2014")
         veg_current <- bind_fun2(veg_current, dd$veg_current)
@@ -311,10 +314,10 @@ kgrid$ASP <- kgrid2$slpasp
 kgrid$TRI <- kgrid2$tri
 kgrid$CTI <- kgrid2$cti
 
-## load kgrid table from last year
+## load KM kgrid table from last year
 
 load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
-load(file.path(ROOT, VER, "data", "analysis", "veg-hf_1kmgrid_v6.Rdata"))
+load(file.path(ROOT, VER, "data", "inter", "veg-hf_km-grid_v6hf2014_fine_unsorted.Rdata"))
 
 compare_sets(rownames(dd1km_pred[[1]]), rownames(kgrid))
 
@@ -342,6 +345,24 @@ if (SAVE) { ## needed for recalculating average ages
         file=file.path(ROOT, VER, "data", "analysis", "veg-hf_nsr_v6.Rdata"))
     #save(kgrid,
     #    file=file.path(ROOT, VER, "out/kgrid", "kgrid_table.Rdata"))
+}
+
+## load QS kgrid table from last year
+
+load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_qs.Rdata"))
+load(file.path(ROOT, VER, "data", "inter", "veg-hf_qs-grid_v6hf2014_fine_unsorted.Rdata"))
+
+compare_sets(rownames(dd1km_pred[[1]]), rownames(kgrid))
+setdiff(rownames(dd1km_pred[[1]]), rownames(kgrid))
+
+dd1km_pred$veg_current <- dd1km_pred$veg_current[rownames(kgrid),]
+dd1km_pred$veg_reference <- dd1km_pred$veg_reference[rownames(kgrid),]
+dd1km_pred$soil_current <- dd1km_pred$soil_current[rownames(kgrid),]
+dd1km_pred$soil_reference <- dd1km_pred$soil_reference[rownames(kgrid),]
+
+if (SAVE) { ## needed for recalculating average ages
+    save(dd1km_pred,
+        file=file.path(ROOT, VER, "data", "analysis", "veg-hf_QSgrid_v6.Rdata"))
 }
 
 ## fix age 0 in saved files -----------------------------
@@ -442,6 +463,7 @@ save(AvgAgesNSR, AvgAgesNSROld, AvgAgesNR, AvgAgesNROld, AvgAgesAll, AvgAgesAllO
 
 ## fix 0 ages for km grid
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
+load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
 load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
 load(file.path(ROOT, VER, "data", "analysis", "veg-hf_1kmgrid_v6.Rdata"))
 
@@ -461,6 +483,27 @@ stopifnot(Ainrf == Aoutrf)
 save(dd1km_pred,
     file=file.path(ROOT, VER, "data", "analysis", "veg-hf_1kmgrid_v6-fixage0.Rdata"))
 
+## fix 0 ages for QS grid
+source("~/repos/abmianalytics/veghf/veghf-setup.R")
+load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
+load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_qs.Rdata"))
+load(file.path(ROOT, VER, "data", "analysis", "veg-hf_QSgrid_v6.Rdata"))
+
+Target0 <- sapply(ages_list, "[[", 1)
+sum(dd1km_pred[[1]][,Target0])/10^6
+sum(dd1km_pred[[2]][,Target0])/10^6
+(Aincr <- sum(dd1km_pred[[1]])/10^6)
+(Ainrf <- sum(dd1km_pred[[2]])/10^6)
+dd1km_pred <- fill_in_0ages_v6(dd1km_pred, kgrid$NSR, ages_list)
+sum(dd1km_pred[[1]][,Target0])/10^6
+sum(dd1km_pred[[2]][,Target0])/10^6
+(Aoutcr <- sum(dd1km_pred[[1]])/10^6)
+(Aoutrf <- sum(dd1km_pred[[2]])/10^6)
+stopifnot(Aincr == Aoutcr)
+stopifnot(Ainrf == Aoutrf)
+
+save(dd1km_pred,
+    file=file.path(ROOT, VER, "data", "analysis", "veg-hf_QSgrid_v6-fixage0.Rdata"))
 
 ## summaries
 
