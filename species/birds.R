@@ -1,5 +1,5 @@
-ROOT <- "e:/peter/AB_data_v2016/oracle"
-OUTDIR <- "e:/peter/AB_data_v2016/data/species"
+ROOT   <- "e:/peter/AB_data_v2017/data/raw/species"
+OUTDIR <- "e:/peter/AB_data_v2017/data/analysis/species"
 getwd()
 if (interactive())
     source("~/repos/abmianalytics/species/00globalvars.R") else source("00globalvars.R")
@@ -21,7 +21,7 @@ gis <- sqlFetch(con, "METADATA_GIS_SITE_SUMMARY")
 close(con)
 }
 
-res <- read.csv(file.path(ROOT, "birds-rf.csv"))
+res <- read.csv(file.path(ROOT, "birds-rf-20170404.csv"))
 #gis <- read.csv(file.path(ROOT, "data/sitemetadata.csv"))
 gis <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 taxo <- read.csv(file.path(ROOT, "taxonomy.csv"))
@@ -44,7 +44,7 @@ gis <- sqlFetch(con, "METADATA_GIS_SITE_SUMMARY")
 close(con)
 res$PUBLIC_X <- gis$PUBLIC_LONGITUDE[match(res$ClosestABMISite, gis$SITE_ID)]
 res$PUBLIC_Y <- gis$PUBLIC_LATTITUDE[match(res$ClosestABMISite, gis$SITE_ID)]
-resxx <- res[!is.na(res$PUBLIC_X),c("SITE", "YEAR", "COMMON_NAME", 
+resxx <- res[!is.na(res$PUBLIC_X),c("SITE", "YEAR", "COMMON_NAME",
     "SCIENTIFIC_NAME", "RANK_NAME", "TSNID", "Label", "PUBLIC_X", "PUBLIC_Y")]
 summary(resxx)
 write.csv(resxx, file="c:/p/GoA_ABMI_data_toTrish_20140113.csv")
@@ -76,9 +76,9 @@ res$SPECIES_OLD <- res$COMMON_NAME
 levels(res$COMMON_NAME) <- nameAlnum(levels(res$COMMON_NAME), capitalize="mixed", collapse="")
 res$COMMON_NAME <- droplevels(res$COMMON_NAME)
 
-xt <- Xtab(~ Label + COMMON_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 
+xt <- Xtab(~ Label + COMMON_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"),
     rdrop=pcs.to.exclude, drop.unused.levels = FALSE)
-#xt <- Xtab(~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"), 
+#xt <- Xtab(~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"),
 #    subset = !(res$SCIENTIFIC_NAME %in% c("VNA", "DNC")), drop.unused.levels = TRUE)
 ## get taxonomy
 z <- nonDuplicated(res, res$COMMON_NAME, TRUE)
@@ -99,9 +99,9 @@ z <- droplevels(z)
 ## add here higher taxa too
 #z <- z[,c("TSNID","COMMON_NAME","SCIENTIFIC_NAME","RANK_NAME")]
 
-x <- nonDuplicated(res[,c("Label", "Label2", "ROTATION", "SITE", "YEAR", "ADATE", "CREW", 
-    "TBB_POINT_COUNT", "WIND_CONDITION", "PRECIPTATION", 
-    "TBB_START_TIME", "TBB_END_TIME", "OnOffGrid", 
+x <- nonDuplicated(res[,c("Label", "Label2", "ROTATION", "SITE", "YEAR", "ADATE", "CREW",
+    "TBB_POINT_COUNT", "WIND_CONDITION", "PRECIPTATION",
+    "TBB_START_TIME", "TBB_END_TIME", "OnOffGrid",
     "SiteLabel", "DataProvider", "Visit", "ClosestABMISite", "PUBLIC_X", "PUBLIC_Y")], res$Label, TRUE)
 
 ## crosstab on PC level
