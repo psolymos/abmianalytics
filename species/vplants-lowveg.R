@@ -1,11 +1,10 @@
 ROOT   <- "e:/peter/AB_data_v2017/data/raw/species"
 OUTDIR <- "e:/peter/AB_data_v2017/data/analysis/species"
-ROOT <- "e:/peter/AB_data_v2017"
 library(mefa4)
 
-x <- read.csv(file.path(ROOT, "data", "raw", "species", "LowVegCover-PSolymos.csv"))
-levels(x$YEAR) <- gsub(",", "", levels(x$YEAR))
-x$YEAR <- as.integer(as.character(x$YEAR))
+x <- read.csv(file.path(ROOT, "vplant-loweg-20170404.csv"))
+#levels(x$YEAR) <- gsub(",", "", levels(x$YEAR))
+#x$YEAR <- as.integer(as.character(x$YEAR))
 
 table(x$TLVC_COVER_PCT)
 x$TLVC_COVER_PCT[x$TLVC_COVER_PCT %in% c("DNC", "PNA", "VNA", "SNI")] <- NA
@@ -32,17 +31,25 @@ slugify <- function(x, ...) {
     x
 }
 
-x$Species <- slugify(x$SCIENTIFIC_NAME)
+#x$Species <- slugify(x$SCIENTIFIC_NAME)
 
-y <- Xtab(TLVC_COVER_PCT ~ SITE_LABEL + Species, x,
-    cdrop=tolower(c("NONE", "DNC", "PNA", "VNA", "SNI")))
-s <- nonDuplicated(x[,1:9], SITE_LABEL, TRUE)
-t <- nonDuplicated(x[,c(15, 10:13)], Species, TRUE)
+x$SPECIES_OLD <- x$SCIENTIFIC_NAME
+levels(x$SCIENTIFIC_NAME) <- nameAlnum(levels(x$SCIENTIFIC_NAME), capitalize="mixed", collapse="")
+x$SiteYear <- interaction(x$SITE, x$YEAR, drop=TRUE, sep="_")
+
+y <- Xtab(TLVC_COVER_PCT ~ SiteYear + SCIENTIFIC_NAME, x,
+    cdrop=c("NONE", "DNC", "PNA", "VNA", "SNI"))
+
+cn1 <- c("SiteYear", "ROTATION", "SITE", "YEAR", "FIELDDATE", "FIELDCREW", "TLVC_ID_DATE",
+    "TLVC_ID_CREW", "TLVC_PLOT")
+cn2 <- c("SCIENTIFIC_NAME", "COMMON_NAME", "SPECIES_OLD", "RANK_NAME", "TSNID")
+s <- nonDuplicated(x[,cn1], SiteYear, TRUE)
+t <- nonDuplicated(x[,cn2], SCIENTIFIC_NAME, TRUE)
 m <- Mefa(y, s, t, "inner")
 
 df1 <- data.frame(samp(m), as.matrix(xtab(m)))
 df2 <- taxa(m)
-write.csv(df1, row.names=FALSE, file=file.path(ROOT, "data", "inter", "species",
+write.csv(df1, row.names=FALSE, file=file.path(OUTDIR,
     paste0("LowVegCover_out_", as.Date(Sys.time()), ".csv")))
-write.csv(df2, row.names=FALSE, file=file.path(ROOT, "data", "inter", "species",
+write.csv(df2, row.names=FALSE, file=file.path(OUTDIR,
     paste0("LowVegCover_spp_", as.Date(Sys.time()), ".csv")))
