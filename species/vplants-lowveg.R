@@ -1,5 +1,6 @@
 ROOT   <- "e:/peter/AB_data_v2017/data/raw/species"
 OUTDIR <- "e:/peter/AB_data_v2017/data/analysis/species"
+
 library(mefa4)
 
 x <- read.csv(file.path(ROOT, "vplant-loweg-20170404.csv"))
@@ -50,6 +51,6 @@ m <- Mefa(y, s, t, "inner")
 df1 <- data.frame(samp(m), as.matrix(xtab(m)))
 df2 <- taxa(m)
 write.csv(df1, row.names=FALSE, file=file.path(OUTDIR,
-    paste0("LowVegCover_out_", as.Date(Sys.time()), ".csv")))
+    paste0("LowVegCover_out_", DATE, ".csv")))
 write.csv(df2, row.names=FALSE, file=file.path(OUTDIR,
-    paste0("LowVegCover_spp_", as.Date(Sys.time()), ".csv")))
+    paste0("LowVegCover_spp_", DATE, ".csv")))

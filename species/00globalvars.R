@@ -1,3 +1,4 @@
+DATE <- as.Date(Sys.time(), tz=Sys.timezone(location = TRUE))
 ## load mefa4 package
 stopifnot(require(mefa4))
 ## load package RODBC
@@ -33,13 +34,13 @@ LabelFun <- function(res) {
     for (i in 1:ncol(rr))
         attr(rr[,i], "names") <- NULL
     tmp <- lapply(levels(rr$SiteLabel), function(z) strsplit(z, "-", fixed=TRUE)[[1]])
-    rr$ClosestABMISite <- as.factor(sapply(tmp, function(zz) 
+    rr$ClosestABMISite <- as.factor(sapply(tmp, function(zz)
         if (length(zz) == 1) zz[1] else zz[3])[as.integer(rr$SiteLabel)])
-    rr$OGSeqenceID <- as.factor(sapply(tmp, function(zz) 
+    rr$OGSeqenceID <- as.factor(sapply(tmp, function(zz)
         if (length(zz) == 1) NA else zz[4])[as.integer(rr$SiteLabel)])
-    rr$Label <- as.factor(with(rr, 
+    rr$Label <- as.factor(with(rr,
         paste(Protocol, OnOffGrid, DataProvider, SiteLabel, ABMIYear, Visit, SubType, SubTypeID, sep="_")))
-    rr$Label2 <- as.factor(with(rr, 
+    rr$Label2 <- as.factor(with(rr,
         paste(Protocol, OnOffGrid, DataProvider, SiteLabel, ABMIYear, Visit, sep="_")))
 
     ## ALPAC-SK issue
