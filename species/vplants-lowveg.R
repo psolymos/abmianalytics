@@ -35,7 +35,7 @@ slugify <- function(x, ...) {
 
 x$SPECIES_OLD <- x$SCIENTIFIC_NAME
 levels(x$SCIENTIFIC_NAME) <- nameAlnum(levels(x$SCIENTIFIC_NAME), capitalize="mixed", collapse="")
-x$SiteYear <- interaction(x$SITE, x$YEAR, drop=TRUE, sep="_")
+x$SiteYear <- interaction(x$SITE, x$YEAR, x$TLVC_PLOT, drop=TRUE, sep="_")
 
 y <- Xtab(TLVC_COVER_PCT ~ SiteYear + SCIENTIFIC_NAME, x,
     cdrop=c("NONE", "DNC", "PNA", "VNA", "SNI"))
