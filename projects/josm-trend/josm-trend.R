@@ -343,21 +343,19 @@ abline(v=0, col="#D7191C", lwd=2)
 par(op)
 
 ## D0-Dhf effects
-tmp <- cbind(D0=D0[,"offroad-noCL"], Dhb=Dhb[,"offroad-noCL"],
-    Dcl=Dcl[,"offroad-noCL"], Dhf=Dhf[,"offroad-noCL"])
-ladderplot(tmp, pch=NA, col="#2C7BB6", ylab="% annual change", main="offroad-noCL")
+WHICH <- "both"
+tmp <- cbind(Null=D0[,WHICH], Habitat=Dhb[,WHICH],
+    Climate=Dcl[,WHICH], SurroundingHF=Dhf[,WHICH])
+ladderplot(tmp, pch=NA, col="#2C7BB6", ylab="% annual change")
 abline(h=0, col="#D7191C", lwd=2)
-
-## compare with BBS
-
+## year effect vs BBS vs residual
 rn <- intersect(rownames(Dhf), tbbs$SpeciesID)
-tmp <- cbind(BBS_lt=bbs_lt[rn,1], BBS_st=bbs_st[rn,1],
-    Dhf[rn,c("both-noCL", "BBS", "offroad-noCL")])
-ladderplot(tmp, pch=NA, col="#2C7BB6", ylab="% annual change", main="")
+tmp <- cbind(bbs_lt[rn,1], bbs_st[rn,1],
+    tyr[rn,"Median"], Dhf[rn,c("both","BBS","offroad")])
+colnames(tmp) <- c("BBS Long", "BBS Short", "Joint Est.", "Resid. All", "Resid. Roadside", "Resid. Off-road")
+ladderplot(tmp, pch=NA, col="#2C7BB6", ylab="% annual change")
 abline(h=0, col="#D7191C", lwd=2)
 
-tmp2 <- cbind(BBS_lt=bbs_lt[rn,1], BBS_st=bbs_st[rn,1],
-    Dhf[rn,c("both", "BBS", "offroad", "CL")])
 
 e <- new.env()
 load("e:/peter/AB_data_v2016/out/3x7/veg-hf_3x7_fix-fire_fix-age0.Rdata", envir=e)
@@ -391,6 +389,8 @@ nrd2014 <- all2014-rd2014
 Delta_1p <- (rd2014/rd1999)^(1/(2014-1999))
 Delta_0p <- (nrd2014/nrd1999)^(1/(2014-1999))
 Delta_p <- Delta_1p / Delta_0p
+
+tmp2 <- Dhf[rn,c("both","BBS","offroad")]
 d <- (1+tmp2[,"BBS"]/100) / (1+tmp2[,"offroad"]/100)
 fstat(d)
 Delta_p
@@ -402,6 +402,22 @@ cor.test(d, sroad[names(d)]) # no correlation
 boxplot(d ~ TAX[names(d),"Hab4"])
 boxplot(d ~ TAX[names(d),"Beh3"])
 boxplot(d ~ TAX[names(d),"Mig"])
+
+par(mfrow=c(3,3))
+z <- tmp[,2]
+boxplot(z ~ TAX[names(d),"Hab4"], main="BBS")
+boxplot(z ~ TAX[names(d),"Beh3"])
+boxplot(z ~ TAX[names(d),"Mig"])
+
+z <- tmp[,5]
+boxplot(z ~ TAX[names(d),"Hab4"], main="rdside")
+boxplot(z ~ TAX[names(d),"Beh3"])
+boxplot(z ~ TAX[names(d),"Mig"])
+
+z <- tmp[,6]
+boxplot(z ~ TAX[names(d),"Hab4"], main="offroad")
+boxplot(z ~ TAX[names(d),"Beh3"])
+boxplot(z ~ TAX[names(d),"Mig"])
 
 ## subsets make a difference, that is consistent across how residual is defined
 ## residual definition impacts mostly extreme estimates
@@ -458,3 +474,111 @@ mm <- lm(log(tyr[,"SE"]) ~ log(TAX[rownames(tyr),"pdet"]))
 f <- function(x) exp(coef(mm)[1]+log(x)*coef(mm)[2])
 curve(f, add=TRUE)
 
+## uncertainty
+
+library(intrval)
+ci1 <- data.frame(all_res2[["BBS_Dhf"]])
+ci1$sign <- sign(ci1[,2])
+ci1$sign[0 %[]% ci1[,3:4]] <- 0
+ci0 <- data.frame(all_res2[["offroad_Dhf"]])[rownames(ci1),]
+ci0$sign <- sign(ci0[,2])
+ci0$sign[0 %[]% ci0[,3:4]] <- 0
+
+addmargins(table(ci0=ci0$sign, ci1=ci1$sign))
+ftable(gr=TAX[rownames(ci1), "Mig"], ci0=ci0$sign, ci1=ci1$sign)
+ftable(gr=TAX[rownames(ci1), "pdet"] >= 0.05, ci0=ci0$sign, ci1=ci1$sign)
+
+fftable(gr=TAX[rownames(ci1), "Hab4"], ci0=ci0$sign, ci1=ci1$sign), ci0=ci0$sign, ci1=ci1$sign)
+
+rownames(ci0)[ci0$sign < 0 & ci1$sign < 0]
+rownames(ci0)[ci0$sign > 0 & ci1$sign < 0]
+
+plot(ci1$SE~ci0$SE)
+abline(0, 1)
+
+plot(TAX[rownames(ci1),"sroad"], ci1$SE/ci0$SE, col="#2C7BB6", cex=1.5,
+    ylab="SE(roadside) / SE(offroad)", xlab="Road Association")
+abline(h=1, col="#D7191C")
+mm <- lm(log(ci1$SE/ci0$SE) ~ TAX[rownames(ci1),"sroad"])
+f <- function(x) exp(coef(mm)[1]+x*coef(mm)[2])
+curve(f, add=TRUE, col="#2C7BB6")
+
+plot(tyr[,"SE"] ~ TAX[rownames(tyr),"pdet"], col="#2C7BB6", cex=1.5,
+    ylab="SE(joint model)", xlab="Detection Rate")
+mm <- lm(log(tyr[,"SE"]) ~ log(TAX[rownames(tyr),"pdet"]))
+f <- function(x) exp(coef(mm)[1]+log(x)*coef(mm)[2])
+curve(f, add=TRUE, col="#2C7BB6")
+
+Pairs <- function (x, ...)
+{
+    #y <- data.frame(x)
+    y <- x
+    fun.lower <- function(x1, x2, ...) {
+        COR <- cor(x1, x2)
+        text(mean(range(x1, na.rm = TRUE)), mean(range(x2, na.rm = TRUE)),
+            round(COR, 2), cex = 0.5 + 2*abs(COR))
+        box(col="grey")
+    }
+    fun.upper <- function(x1, x2, ...) {
+        if (is.factor(x1)) {
+            x1 <- as.integer(x1)
+        }
+        if (is.factor(x2)) {
+            x1 <- as.integer(x2)
+        }
+        abline(h=0, v=0, lty=1, col="grey")
+        points(x1, x2, col = "#2C7BB6")
+        LM <- lm(x2 ~ x1)
+        abline(LM, col="#D7191C")
+        box(col="#80B9D8")
+    }
+    panel.hist <- function(x, ...) {
+        usr <- par("usr")
+        on.exit(par(usr))
+        par(usr = c(usr[1:2], 0, 1.5))
+        h <- hist(x, plot = FALSE)
+        breaks <- h$breaks
+        nB <- length(breaks)
+        y <- h$density
+        Max <- max(y)
+        y <- y/Max
+        rect(breaks[-nB], 0, breaks[-1], y, col = "#FDC980", border = "#F07C4A",
+            ...)
+        abline(v=0, lty=1, col="grey")
+        den <- density(x)
+        den$y <- den$y/Max
+        lines(den, col="#F07C4A")
+        box(col="#F07C4A")
+    }
+    pairs.default(y, lower.panel = fun.lower, upper.panel = fun.upper,
+        diag.panel = panel.hist)
+    invisible(NULL)
+}
+
+Pairs(tmp)
+
+
+par(mfrow=c(3,3))
+z <- tmp[,1]
+boxplot(z ~ TAX[names(d),"Hab4"], col="#FDC980", ylim=c(-15,15), main="BBS Long Term")
+abline(h=0, col="#D7191C")
+boxplot(z ~ TAX[names(d),"Beh3"], col="#FDC980", ylim=c(-15,15))
+abline(h=0, col="#D7191C")
+boxplot(z ~ TAX[names(d),"Mig"], col="#FDC980", ylim=c(-15,15))
+abline(h=0, col="#D7191C")
+
+z <- tmp[,5]
+boxplot(z ~ TAX[names(d),"Hab4"], col="#FDC980", ylim=c(-15,15), main="Residual Roadside")
+abline(h=0, col="#D7191C")
+boxplot(z ~ TAX[names(d),"Beh3"], col="#FDC980", ylim=c(-15,15))
+abline(h=0, col="#D7191C")
+boxplot(z ~ TAX[names(d),"Mig"], col="#FDC980", ylim=c(-15,15))
+abline(h=0, col="#D7191C")
+
+z <- tmp[,6]
+boxplot(z ~ TAX[names(d),"Hab4"], col="#FDC980", ylim=c(-15,15), main="Off-road")
+abline(h=0, col="#D7191C")
+boxplot(z ~ TAX[names(d),"Beh3"], col="#FDC980", ylim=c(-15,15))
+abline(h=0, col="#D7191C")
+boxplot(z ~ TAX[names(d),"Mig"], col="#FDC980", ylim=c(-15,15))
+abline(h=0, col="#D7191C")
