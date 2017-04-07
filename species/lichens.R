@@ -22,9 +22,9 @@ taxo <- sqlQuery(con, paste("SELECT * FROM PUBLIC_ACCESS_PUBLIC_DETAIL_TAXONOMYS
 close(con)
 }
 
+resa0 <- read.csv(file.path(ROOT, "lichens-0308-20170407.csv"))
+resb0 <- read.csv(file.path(ROOT, "lichens-current-20170407.csv"))
 gis <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
-resa0 <- read.csv(file.path(ROOT, "lichens-0308.csv"))
-resb0 <- read.csv(file.path(ROOT, "lichens-09.csv"))
 taxo <- read.csv(file.path(ROOT, "taxonomy.csv"))
 #cs <- read.csv(file.path(ROOT, "data/moss-lichen-collstatus.csv"))
 
@@ -162,6 +162,8 @@ x <- nonDuplicated(res[,c("Label", "Label2", "YEAR",
 
 ## crosstab on PC level
 m <- Mefa(xt, x, z)
+sum(is.na(samp(m)))
+sum(is.na(taxa(m)))
 ## exclude not species level taxa
 #table(m@taxa$RANK_NAME) # here are sub-specific levels
 #m <- m[,taxa(m)$RANK_NAME %in% c("Genus", "Species", "Subspecies", "Variety")]
