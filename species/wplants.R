@@ -1,6 +1,5 @@
 ROOT   <- "e:/peter/AB_data_v2017/data/raw/species"
 OUTDIR <- "e:/peter/AB_data_v2017/data/analysis/species"
-ROOT <- "y:/Oracle_access_2015"
 getwd()
 if (interactive())
     source("~/repos/abmianalytics/species/00globalvars.R") else source("00globalvars.R")
@@ -23,23 +22,28 @@ taxo <- sqlQuery(con, paste("SELECT * FROM PUBLIC_ACCESS_PUBLIC_DETAIL_TAXONOMYS
 close(con)
 }
 
-res <- read.csv(file.path(ROOT, "data/aqplants.csv"))
-gis <- read.csv(file.path(ROOT, "data/sitemetadata.csv"))
-taxo <- read.csv(file.path(ROOT, "data/taxonomy.csv"))
-cap <- read.csv(file.path(ROOT, "data/aqsitecap.csv"))
+res <- read.csv(file.path(ROOT, "wplants-20170404.csv"))
+gis <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+taxo <- read.csv(file.path(ROOT, "taxonomy.csv"))
+cap <- read.csv(file.path(ROOT, "wsitecap-20170407.csv"))
+phc <- read.csv(file.path(ROOT, "wphychem-20170407.csv"))
 
-cap <- droplevels(cap[cap$ZONE != "Upland" & !(cap$WTD_TRANSECT_CODE %in%
-    c("DNC","Transition Transect","Transect 6")),])
-cap$Label <- with(cap, interaction(SITE, YEAR, ZONE, sep="_", drop=TRUE))
-xtc <- rowSums(as.matrix(Xtab(~Label + WTD_TRANSECT_CODE, cap)))
+table(cap$OLD_ZONE, cap$NEW_ZONE)
+cap <- droplevels(cap[cap$OLD_ZONE != "Upland" & !(cap$WTD_TRANSECT_CODE %in%
+    c("DNC","Transition Transect")),])
+cap$Label <- with(cap, interaction(SITE, YEAR, OLD_ZONE, sep="_", drop=TRUE))
+table(cap$WTD_TRANSECT_CODE)
+xtc <- as.matrix(Xtab(~Label + WTD_TRANSECT_CODE, cap))
+xtc[xtc>0] <- 1
+xtc <- rowSums(xtc)
+table(xtc)
 
-res$capLabel <- with(res, interaction(SITE, YEAR, ZONE1, sep="_", drop=TRUE))
-#compare.sets(res$capLabel, cap$Label)
+res$Label <- with(res, interaction(SITE, YEAR, OLD_ZONE, sep="_", drop=TRUE))
+#compare_sets(res$capLabel, cap$Label)
 
-rr <- LabelFun(res)
-#rr <- nonDuplicated(rr, Label, TRUE)
-
-res <- data.frame(res, rr[match(res$SITE_LABEL, rr$Label),])
+#rr <- LabelFun(res)
+#rr <- nonDuplicated(cap, Label, TRUE)
+#res <- data.frame(res, rr[match(res$capLabel, rr$Label),])
 
 ## exclude parts here if necessary
 ## remove bad wetlands
@@ -47,35 +51,37 @@ keep <- !(res$SITE %in% REJECT)
 res <- droplevels(res[keep,])
 
 keep <- rep(TRUE, nrow(res))
-keep[res$ZONE1 == "Upland"] <- FALSE
+keep[res$OLD_ZONE == "Upland"] <- FALSE
 keep[res$TRANSECT == "Transition Transect"] <- FALSE
 res <- res[keep,]
 res$TRANSECT <- droplevels(res$TRANSECT)
-res$ZONE1 <- droplevels(res$ZONE1)
+res$OLD_ZONE <- droplevels(res$OLD_ZONE)
 res$Label <- droplevels(res$Label)
-res$Label2 <- droplevels(res$Label2)
+res$Label2 <- with(res, interaction(SITE, YEAR, sep="_", drop=TRUE))
 
 ## crosstab
 
 ## using species only
-res$SPECIES_OLD <- res$SCIENTIFICNAME
-levels(res$SCIENTIFICNAME) <- gsub("X ", "", levels(res$SCIENTIFICNAME))
-levels(res$SCIENTIFICNAME) <- gsub(" x ", " ", levels(res$SCIENTIFICNAME))
-levels(res$SCIENTIFICNAME) <- sapply(strsplit(levels(res$SCIENTIFICNAME), " "), function(z) {
+res$SPECIES_OLD <- res$SCIENTIFIC_NAME
+levels(res$SCIENTIFIC_NAME) <- gsub("X ", "", levels(res$SCIENTIFIC_NAME))
+levels(res$SCIENTIFIC_NAME) <- gsub(" x ", " ", levels(res$SCIENTIFIC_NAME))
+levels(res$SCIENTIFIC_NAME) <- sapply(strsplit(levels(res$SCIENTIFIC_NAME), " "), function(z) {
     paste(z[1:min(2, length(z))], collapse=" ")
 })
-levels(res$SCIENTIFICNAME) <- nameAlnum(levels(res$SCIENTIFICNAME), capitalize="mixed", collapse="")
-res$SCIENTIFICNAME <- droplevels(res$SCIENTIFICNAME)
+levels(res$SCIENTIFIC_NAME) <- nameAlnum(levels(res$SCIENTIFIC_NAME), capitalize="mixed", collapse="")
+res$SCIENTIFIC_NAME <- droplevels(res$SCIENTIFIC_NAME)
 
 ## getting rid of duplicate rows for species
-res$uid <- paste(res$Label, res$TRANSECT, res$SCIENTIFICNAME, sep="::")
+res$uid <- paste(res$Label, res$TRANSECT, res$SCIENTIFIC_NAME, sep="::")
 dim(res)
-nlevels(res$SCIENTIFICNAME)
+nlevels(res$SCIENTIFIC_NAME)
 res <- nonDuplicated(res, uid)
 dim(res)
-nlevels(res$SCIENTIFICNAME)
+nlevels(res$SCIENTIFIC_NAME)
 
-xt <- Xtab(~ Label + SCIENTIFICNAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"),
+## SNR ?new sentinel value?
+xt <- Xtab(~ Label + SCIENTIFIC_NAME, res,
+    cdrop=c("NONE","SNI", "VNA", "DNC", "PNA", "SNR"),
     drop.unused.levels = FALSE)
 range(xt)
 #xt[xt>0] <- 1
@@ -84,10 +90,10 @@ range(xt)
 #rowSums(xtcap[,2:6])
 
 ## get taxonomy
-z <- nonDuplicated(res[!(res$SCIENTIFICNAME %in% c("VNA", "DNC")),],
-    res$SCIENTIFICNAME[!(res$SCIENTIFICNAME %in% c("VNA", "DNC"))], TRUE)
+z <- nonDuplicated(res[!(res$SCIENTIFIC_NAME %in% c("VNA", "DNC")),],
+    res$SCIENTIFIC_NAME[!(res$SCIENTIFIC_NAME %in% c("VNA", "DNC"))], TRUE)
 ## add here higher taxa too
-z <- z[,c("TSNID","COMMONNAME","SCIENTIFICNAME","SPECIES_OLD","TAXONOMICRESOLUTION")]
+z <- z[,c("TSN_ID","COMMON_NAME","SCIENTIFIC_NAME","SPECIES_OLD","RANK_NAME")]
 #z2 <- taxo[taxo$SCIENTIFIC_NAME %in% z$PECIES_OLD,]
 z2 <- taxo[match(z$SPECIES_OLD, taxo$SCIENTIFIC_NAME),]
 z <- data.frame(z, z2[,setdiff(colnames(z2), colnames(z))])
@@ -95,9 +101,8 @@ levels(z$RANK_NAME)[levels(z$RANK_NAME) %in% c("Subspecies","Variety")] <- "Spec
 #z[] <- lapply(z, function(z) z[drop=TRUE])
 #summary(z)
 
-x <- nonDuplicated(res[,c("Label", "Label2", "ROTATION", "SITE", "YEAR", "FIELDDATE", "CREWMEMBER",
-    "ZONE1", "OnOffGrid",
-    "SiteLabel", "DataProvider", "Visit", "ClosestABMISite","capLabel")], res$Label, TRUE)
+x <- nonDuplicated(res[,c("Label", "Label2", "ROTATION", "SITE", "YEAR",
+    "FIELDDATE", "CREWMEMBER", "OLD_ZONE")], res$Label, TRUE)
 
 ## crosstab on PC level
 m <- Mefa(xt, x, z)
@@ -119,7 +124,7 @@ if (!combine.tables) {
     res2 <- as.matrix(m2)
     rntw <- TRUE
 } else {
-    samp(m)$TotlaNoOfTransects <- xtc[match(samp(m)$capLabel, names(xtc))]
+    samp(m)$TotlaNoOfTransects <- xtc[match(samp(m)$Label, names(xtc))]
     res1 <- data.frame(samp(m), as.matrix(m))
     mmm <- Mefa(xtab(m2), data.frame(nonDuplicated(samp(m)[,-which(colnames(samp(m))=="Label")],
         Label2, TRUE)))
@@ -135,7 +140,6 @@ m2
 str(tax)
 range(xtab(m))
 range(xtab(m2))
-
 
 ## write static files into csv
 write.csv(res1, file=paste(D, "/OUT_", T, "_Species_WZ-Binomial", d,
