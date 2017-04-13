@@ -25,7 +25,7 @@ close(con)
 
 #res <- read.csv(file.path(ROOT, "data", "plants2015",
 #    "A_T15_Vascular_Plants_AllYear_AB_689250437025811679.csv"), row.names=NULL)
-res <- read.csv(file.path(ROOT, "vplants-20170404.csv"))
+res <- read.csv(file.path(ROOT, "vplants-20170413.csv"))
 #gis <- read.csv(file.path(ROOT, "data/sitemetadata.csv"))
 gis <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 taxo <- read.csv(file.path(ROOT, "taxonomy.csv"))
@@ -69,6 +69,9 @@ res$SCIENTIFIC_NAME <- droplevels(res$SCIENTIFIC_NAME)
 xt <- Xtab(~ Label + SCIENTIFIC_NAME, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"),
     rdrop=qs.to.exclude, drop.unused.levels = FALSE)
 xt[xt>0] <- 1
+xtID <- Xtab(~ Label + SCIENTIFIC_NAME + IDENTIFY_CREW, res,
+    cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"),
+    rdrop=qs.to.exclude, drop.unused.levels = FALSE)
 
 if (com_dom) {
     res$comdom <- res$COMM_DOM

@@ -14,7 +14,7 @@ DBVERSION <- "" # "y:/Oracle_access/DatabaseCombined_Clean_2014-04-28.accdb"
 D <- OUTDIR
 if (use.date) {
     #d <- paste(strsplit(date(), " ")[[1]][c(2,3,5)], collapse="-")
-    d <- paste("_", Sys.Date(), sep="")
+    d <- paste("_", DATE, sep="")
 } else {
     d <- ""
 }

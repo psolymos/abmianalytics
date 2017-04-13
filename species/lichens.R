@@ -51,7 +51,27 @@ rrb <- nonDuplicated(rrb, Label, TRUE)
 resb <- data.frame(resb0, rrb[match(resb0$SITE_LABEL, rrb$Label),])
 
 ## identification issues to exclude
-resb <- resb[resb$QUALIFIER != "cf.",]
+resb <- droplevels(resb[!(resb$QUALIFIER == "cf." & resb$QUALIFIER_LOCATION == "Genus"),])
+tmp0 <- as.character(resb$SCIENTIFIC_NAME[resb$QUALIFIER == "cf."])
+#tmp <- unique(tmp0)
+tmp <- strsplit(tmp0, " ")
+ntmp <- sapply(tmp, length)
+out <- character(length(tmp))
+for (i in 1:length(tmp)) {
+    if (ntmp[i] == 2)
+        out[i] <- tmp[[i]][1]
+    if (ntmp[i] > 2 & tmp[[i]][3] %in% c("var.", "f.", "ssp.", "grp.")) {
+        out[i] <- if (tmp[[i]][3] == "grp.")
+            paste(tmp[[i]][1], tmp[[i]][2], tmp[[i]][3]) else paste(tmp[[i]][1], tmp[[i]][2])
+    } else {
+        out[i] <- tmp[[i]][1]
+    }
+}
+#oo <- cbind(In=sapply(tmp, paste, collapse=" "), Out=out)[ntmp>2,]
+oo <- cbind(In=tmp0, Out=out)[ntmp>2,]
+resb$SCIENTIFIC_NAME <- as.character(resb$SCIENTIFIC_NAME)
+resb$SCIENTIFIC_NAME[resb$QUALIFIER == "cf."] <- out
+resb$SCIENTIFIC_NAME <- as.factor(resb$SCIENTIFIC_NAME)
 
 if (FALSE) {
 tmp <- t(sapply(as.character(resb0$MS_SITE), function(z) {
