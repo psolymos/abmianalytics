@@ -1,5 +1,7 @@
 ROOT   <- "e:/peter/AB_data_v2017/data/raw/species"
 OUTDIR <- "e:/peter/AB_data_v2017/data/analysis/species"
+if (interactive())
+    source("~/repos/abmianalytics/species/00globalvars.R") else source("00globalvars.R")
 
 library(mefa4)
 
@@ -34,8 +36,16 @@ slugify <- function(x, ...) {
 
 #x$Species <- slugify(x$SCIENTIFIC_NAME)
 
+## using species only
+levels(x$SCIENTIFIC_NAME) <- gsub("X ", "", levels(x$SCIENTIFIC_NAME))
+levels(x$SCIENTIFIC_NAME) <- gsub(" x ", " ", levels(x$SCIENTIFIC_NAME))
+levels(x$SCIENTIFIC_NAME) <- sapply(strsplit(levels(x$SCIENTIFIC_NAME), " "), function(z) {
+    paste(z[1:min(2, length(z))], collapse=" ")
+})
+
 x$SPECIES_OLD <- x$SCIENTIFIC_NAME
 levels(x$SCIENTIFIC_NAME) <- nameAlnum(levels(x$SCIENTIFIC_NAME), capitalize="mixed", collapse="")
+x$SCIENTIFIC_NAME <- droplevels(x$SCIENTIFIC_NAME)
 x$SiteYear <- interaction(x$SITE, x$YEAR, x$TLVC_PLOT, drop=TRUE, sep="_")
 
 y <- Xtab(TLVC_COVER_PCT ~ SiteYear + SCIENTIFIC_NAME, x,
