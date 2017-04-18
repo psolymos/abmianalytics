@@ -1,0 +1,46 @@
+---
+title: "Converting revisit/prior totals to yearly rate"
+author: "D. Huggard "
+output: pdf_document
+---
+
+Using the mean time-between-visits weighted by the initial abundance
+to convert `sum(prior_visit) / sum(revisit)` into a yearly rate is exactly
+correct when the rate is 1 (no trend), and is very close over a
+reasonable range of rates.
+It is only off when the rate of change is very high, increasing or decreasing.
+
+## Calculations
+
+* Initial value for each site is `X0[i]`,
+* time between visits for each site is `T[i]`,
+* yearly rate of change is `lambda`,
+* therefore, the revisit value is `XR[i] = X0[i]*(lambda^T[i])`.
+* The weighted mean is `WM = sum(T[i]*X0[i])/sum(X0[i])`.
+* We calculate total change `TC = sum(XR[i])/sum(X0[i])`.
+
+`TC^(1/WM) = lambda` when `lambda = 1`, and is very close over ranges of
+`lambda` values from 0.8 to 1.25 (if the range of `T[i]`'s isn't excessive,
+e.g., from 3--8 years like we have in our revisits).
+
+```{r}
+f <- function(lambda=1) {
+    XR <- X0*(lambda^T)
+    WM <- sum(T*X0)/sum(X0)
+    TC <- sum(XR)/sum(X0)
+    TC^(1/WM)
+}
+N <- 100
+Tmax <- 10
+T <- sample(1:Tmax, N, replace=TRUE)
+X0 <- runif(N, 0, 1)
+lambda <- seq(0.1, 2, by=0.01)
+values <- sapply(lambda, f)
+plot(lambda, values, xlab="Yearly rate of change",
+    ylab="Approximation", col=2, type="l", lwd=2)
+abline(0, 1, lty=2, col="grey")
+```
+
+## TODO
+
+Look at how `T` distribution is affecting bias.
