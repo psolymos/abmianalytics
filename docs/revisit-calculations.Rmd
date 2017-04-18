@@ -23,6 +23,8 @@ It is only off when the rate of change is very high, increasing or decreasing.
 `lambda` values from 0.8 to 1.25 (if the range of `T[i]`'s isn't excessive,
 e.g., from 3--8 years like we have in our revisits).
 
+The distribution of revisit times have an effect as well.
+
 ```{r}
 f <- function(lambda=1) {
     XR <- X0*(lambda^T)
@@ -30,17 +32,22 @@ f <- function(lambda=1) {
     TC <- sum(XR)/sum(X0)
     TC^(1/WM)
 }
-N <- 100
-Tmax <- 10
-T <- sample(1:Tmax, N, replace=TRUE)
+N <- 1000
+set.seed(1)
+T <- sample(1:5, N, replace=TRUE)
 X0 <- runif(N, 0, 1)
 lambda <- seq(0.1, 2, by=0.01)
-values <- sapply(lambda, f)
-plot(lambda, values, xlab="Yearly rate of change",
-    ylab="Approximation", col=2, type="l", lwd=2)
+values1 <- sapply(lambda, f)
+T <- T + 5
+values2 <- sapply(lambda, f)
+T <- T + 5
+values3 <- sapply(lambda, f)
+plot(lambda, values1, xlab="Yearly rate of change",
+    ylab="Approximation", type="l", col=1, lwd=2)
+lines(lambda, values2, col=2, lwd=2)
+lines(lambda, values3, col=4, lwd=2)
 abline(0, 1, lty=2, col="grey")
+legend("topleft", bty="n", lwd=2, col=c(1, 2, 4), 
+    legend=c("T in 1-5 yrs", "T in 6-10 yrs", "T in 11-15 yrs"))
 ```
 
-## TODO
-
-Look at how `T` distribution is affecting bias.
