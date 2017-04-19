@@ -1156,3 +1156,32 @@ legend("bottomright", bty="n", col=rev(Col),
     lty=1, lwd=2, legend=rev(txt))
 dev.off()
 
+## estimating overall ARU effect
+
+table(xnn$ARU3)
+
+aru <- list()
+for (spp in colnames(OFFn)) {
+    cat(spp, "\n");flush.console()
+    y1sp <- yyn[,spp]
+    off1sp <- if (spp %in% colnames(OFFn)) OFFn[,spp] else OFFmn
+    m0 <- glm(y1sp ~ ARU3-1, xnn, family=poisson, offset=off1sp)
+    aru[[spp]] <- exp(coef(m0))
+}
+aru <- do.call(rbind, aru)
+
+nn <- list()
+for (spp in colnames(OFFn)) {
+    cat(spp, "\n");flush.console()
+    nn[[spp]] <- table(xnn$ARU3, factor(ifelse(yyn[,spp]>0, 1, 0), 0:1))[,"1"]
+}
+nn <- do.call(rbind, nn)
+smin <- apply(nn, 1, min)
+
+boxplot(aru[smin >= 5, ])
+plotrix::ladderplot(aru[smin >= 5, ], pch=NA)
+
+plot(density(aru[smin >= 5,"ARU3SM"]/aru[smin >= 5,"ARU3RF"]))
+summary(aru[smin >= 5,"ARU3SM"]/aru[smin >= 5,"ARU3RF"])
+
+## this is too small -- use SVW and YIP
