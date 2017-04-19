@@ -952,63 +952,161 @@ library(ResourceSelection)
 en <- new.env()
 load(file.path(ROOT, "data", "data-north.Rdata"), envir=en)
 OFFn <- en$OFF
+OFFmn <- en$OFFmean
 BBn <- en$BB
 DATn <- en$DAT
 rm(en)
 ## out-of-sample set
-ss <- BBn[,1]
-ss1 <- which(!(1:nrow(DATn) %in% BBn[,1]) & !DATn$Revisit)
-#Xnnn <- Xnn[BBn[,1],]
+bunique <- unique(BBn)
+INTERNAL <- 1:nrow(DATn) %in% bunique
+ss <- which(INTERNAL)
+ss1 <- which(!INTERNAL)
+bid <- DATn$bootid
+levels(bid) <- sapply(strsplit(levels(bid), "\\."), "[[", 1)
+table(bid, SUB)
 
-pr_fun_for_gof <- function(stage, off=0) {
-    est0 <- getEst(resn, stage=stage, na.out=FALSE, Xnn)
-    mu0 <- apply(est0, 1, function(z) Xnn %*% z)
-    lam0 <- exp(mu0 + off)
-    rowMeans(lam0)
+
+pr_fun_for_gof <- function(est, X, off=0) {
+    if (is.null(dim(est))) {
+        mu0 <- drop(X %*% est)
+        exp(mu0 + off)
+    } else {
+        mu0 <- apply(est, 1, function(z) X %*% z)
+        rowMeans(exp(mu0 + off))
+    }
 }
 
-spp <- "CAWA"
+spp <- "OVEN"
+all_acc <- list()
+for (spp in fln) {
+cat(spp, "\n");flush.console()
 
 ## Deviance based pseudo R^2 (only internal)
 y1sp <- yyn[,spp]
 y10sp <- ifelse(y1sp > 0, 1, 0)
-off1sp <- OFFn[,spp]
+off1sp <- if (spp %in% colnames(OFFn)) OFFn[,spp] else OFFmn
 resn <- loadSPP(file.path(ROOT, "results", "north", paste0("birds_abmi-north_", spp, ".Rdata")))
+est5 <- getEst(resn, stage=5, na.out=FALSE, Xnn)
+est6 <- getEst(resn, stage=6, na.out=FALSE, Xnn)
 #pr0 <- pr_fun_for_gof(0, off=off1sp)
 ## null model need to represent ARU as well
 m0 <- glm(y1sp[ss] ~ ARU3, xnn[ss,], family=poisson, offset=off1sp[ss])
-pr0 <- exp(drop(model.matrix(~ARU3, xnn) %*% coef(m0)) + off1sp)
-prf1 <- pr_fun_for_gof(5, off=off1sp)
-prf2 <- pr_fun_for_gof(6, off=off1sp)
+#pr0 <- exp(drop(model.matrix(~ARU3, xnn) %*% coef(m0)) + off1sp)
+pr0 <- pr_fun_for_gof(coef(m0), model.matrix(~ARU3, xnn), off=off1sp)
+## 1st run
+pr11 <- pr_fun_for_gof(est5[1,], Xnn, off=off1sp)
+pr12 <- pr_fun_for_gof(est6[1,], Xnn, off=off1sp)
+## smooth
+prf1 <- pr_fun_for_gof(est5, Xnn, off=off1sp)
+prf2 <- pr_fun_for_gof(est6, Xnn, off=off1sp)
 ## Null model: intercept and offset
 ll0 <- sum(dpois(y1sp[ss], pr0[ss], log=TRUE))
+## Saturated: one parameter per observation
+lls <- sum(dpois(y1sp[ss], y1sp[ss], log=TRUE))
 ## Full: our smoothed prediction
 llf1 <- sum(dpois(y1sp[ss], prf1[ss], log=TRUE))
 llf2 <- sum(dpois(y1sp[ss], prf2[ss], log=TRUE))
-## Saturated: one parameter per observation
-lls <- sum(dpois(y1sp[ss], y1sp[ss], log=TRUE))
-R2D1 <- 1-(lls-llf1)/(lls-ll0)
-R2D2 <- 1-(lls-llf2)/(lls-ll0)
+## Full: our 1st prediction
+ll11 <- sum(dpois(y1sp[ss], pr11[ss], log=TRUE))
+ll12 <- sum(dpois(y1sp[ss], pr12[ss], log=TRUE))
+R2f1 <- 1-(lls-llf1)/(lls-ll0)
+R2f2 <- 1-(lls-llf2)/(lls-ll0)
+R211 <- 1-(lls-ll11)/(lls-ll0)
+R212 <- 1-(lls-ll12)/(lls-ll0)
 
 ## ROC (only external, and 0/1)
 roc0 <- roc(y10sp[ss1], pr0[ss1])
 rocf1 <- roc(y10sp[ss1], prf1[ss1])
 rocf2 <- roc(y10sp[ss1], prf2[ss1])
+roc11 <- roc(y10sp[ss1], pr11[ss1])
+roc12 <- roc(y10sp[ss1], pr12[ss1])
 auc0 <- as.numeric(roc0$auc)
 aucf1 <- as.numeric(rocf1$auc)
 aucf2 <- as.numeric(rocf2$auc)
-k1 <- (aucf1-auc0) / (1-auc0)
-k2 <- (aucf2-auc0) / (1-auc0)
+auc11 <- as.numeric(roc11$auc)
+auc12 <- as.numeric(roc12$auc)
+kf1 <- (aucf1-auc0) / (1-auc0)
+kf2 <- (aucf2-auc0) / (1-auc0)
+k11 <- (auc11-auc0) / (1-auc0)
+k12 <- (auc12-auc0) / (1-auc0)
 
-mean(y1sp[ss])
-mean(pr0[ss])
-mean(prf1[ss])
-mean(prf2[ss])
+spp1res <- c(R2f1=R2f1, R2f2=R2f2, R211=R211, R212=R212,
+    AUC0=auc0, AUCf1=aucf1, AUCf2=aucf2, AUC11=auc11, AUC12=auc12,
+    kf1=kf1, kf2=kf2, k11=k11, k12=k12,
+    y_in=mean(y1sp[ss]),
+    lam0_in=mean(pr0[ss]),
+    lam1_in=mean(prf1[ss]),
+    lam2_in=mean(prf2[ss]),
+    y_out=mean(y1sp[ss1]),
+    lam0_out=mean(pr0[ss1]),
+    lam1_out=mean(prf1[ss1]),
+    lam2_out=mean(prf2[ss1]))
 
-mean(y1sp[ss1])
-mean(pr0[ss1])
-mean(prf1[ss1])
-mean(prf2[ss1])
+## regional ROC analysis
+regres <- list()
+#REG <- "Foothills"
+for (REG in levels(bid)) {
+    regss <- bid == REG & !INTERNAL
+    yreg <- y10sp[regss]
+    if (sum(yreg) == 0) {
+        reg1res <- c(AUC0=NA, AUCf1=NA, AUCf2=NA, AUC11=NA, AUC12=NA,
+            kf1=NA, kf2=NA, k11=NA, k12=NA)
+    } else {
+        roc0 <- roc(yreg, pr0[regss])
+        rocf1 <- roc(yreg, prf1[regss])
+        rocf2 <- roc(yreg, prf2[regss])
+        roc11 <- roc(yreg, pr11[regss])
+        roc12 <- roc(yreg, pr12[regss])
+        auc0 <- as.numeric(roc0$auc)
+        aucf1 <- as.numeric(rocf1$auc)
+        aucf2 <- as.numeric(rocf2$auc)
+        auc11 <- as.numeric(roc11$auc)
+        auc12 <- as.numeric(roc12$auc)
+        kf1 <- (aucf1-auc0) / (1-auc0)
+        kf2 <- (aucf2-auc0) / (1-auc0)
+        k11 <- (auc11-auc0) / (1-auc0)
+        k12 <- (auc12-auc0) / (1-auc0)
+        reg1res <- c(AUC0=auc0, AUCf1=aucf1, AUCf2=aucf2, AUC11=auc11, AUC12=auc12,
+            kf1=kf1, kf2=kf2, k11=k11, k12=k12)
+    }
+    regres[[REG]] <- reg1res
+}
+regres <- do.call(rbind, regres)
+regres <- regres[c("NW", "NE", "SW", "SE", "Foothills", "Parkland", "Rocky Mountain"),]
+
+all_acc[[spp]] <- list(overall=spp1res, regions=regres)
+}
+
+save(all_acc, file=file.path(ROOT, "tables", "res_acc.Rdata"))
+
+pdet <- sapply(fln, function(z) sum(yyn[ss,z]>0)/length(ss))
+overall <- t(sapply(all_acc, function(z) z$overall))
+kreg <- t(sapply(all_acc, function(z) z$regions[,"kf2"]))
+
+plot(overall[,c("R2f2", "R212")], xlim=c(0,1), ylim=c(0,1))
+abline(0,1)
+
+overall[overall[,"R2f2"]<0,]
+
+plot(overall[,c("R211", "R212")], xlim=c(0,1), ylim=c(0,1), cex=1+2*sqrt(pdet))
+abline(0,1)
+
+plot(pdet*length(ss), overall[,"R212"], xlim=c(0,200))
+
+plot(overall[,c("kf1", "kf2")], xlim=c(-1,1), ylim=c(-1,1), cex=1+overall[,"R212"])
+abline(0,1)
+abline(h=0,v=0)
+
+plot(overall[,c("AUCf1", "AUCf2")], xlim=c(0,1), ylim=c(0,1), cex=1+2*sqrt(pdet))
+abline(0,1)
+
+boxplot(kreg[rowSums(is.na(kreg))==0,], ylim=c(-1,1))
+abline(h=0)
+
+library(plotrix)
+ladderplot(kreg[rowSums(is.na(kreg))==0,], ylim=c(-1,1), pch=NA)
+abline(h=0)
+
 
 par(mfrow=c(2,3))
 ymax <- max(pr0,prf1, prf2)
