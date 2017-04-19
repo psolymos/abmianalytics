@@ -945,3 +945,116 @@ yy <- yy[,!(colnames(yy) %in% c("SoftLin", "HardLin"))]
 yyy <- data.frame(Species=x$Species, AverageCoef=rowMeans(yy, na.rm=TRUE), x[,c("SoftLin","SoftLin.LCI","SoftLin.UCI","HardLin","HardLin.LCI","HardLin.UCI")])
 write.csv(yyy, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/tables/vplants-lin2south.csv")
 
+## GoF AUC ROC R2 and stuff
+
+library(pROC)
+library(ResourceSelection)
+en <- new.env()
+load(file.path(ROOT, "data", "data-north.Rdata"), envir=en)
+OFFn <- en$OFF
+BBn <- en$BB
+DATn <- en$DAT
+rm(en)
+## out-of-sample set
+ss <- BBn[,1]
+ss1 <- which(!(1:nrow(DATn) %in% BBn[,1]) & !DATn$Revisit)
+#Xnnn <- Xnn[BBn[,1],]
+
+pr_fun_for_gof <- function(stage, off=0) {
+    est0 <- getEst(resn, stage=stage, na.out=FALSE, Xnn)
+    mu0 <- apply(est0, 1, function(z) Xnn %*% z)
+    lam0 <- exp(mu0 + off)
+    rowMeans(lam0)
+}
+
+spp <- "CAWA"
+
+## Deviance based pseudo R^2 (only internal)
+y1sp <- yyn[,spp]
+y10sp <- ifelse(y1sp > 0, 1, 0)
+off1sp <- OFFn[,spp]
+resn <- loadSPP(file.path(ROOT, "results", "north", paste0("birds_abmi-north_", spp, ".Rdata")))
+#pr0 <- pr_fun_for_gof(0, off=off1sp)
+## null model need to represent ARU as well
+m0 <- glm(y1sp[ss] ~ ARU3, xnn[ss,], family=poisson, offset=off1sp[ss])
+pr0 <- exp(drop(model.matrix(~ARU3, xnn) %*% coef(m0)) + off1sp)
+prf1 <- pr_fun_for_gof(5, off=off1sp)
+prf2 <- pr_fun_for_gof(6, off=off1sp)
+## Null model: intercept and offset
+ll0 <- sum(dpois(y1sp[ss], pr0[ss], log=TRUE))
+## Full: our smoothed prediction
+llf1 <- sum(dpois(y1sp[ss], prf1[ss], log=TRUE))
+llf2 <- sum(dpois(y1sp[ss], prf2[ss], log=TRUE))
+## Saturated: one parameter per observation
+lls <- sum(dpois(y1sp[ss], y1sp[ss], log=TRUE))
+R2D1 <- 1-(lls-llf1)/(lls-ll0)
+R2D2 <- 1-(lls-llf2)/(lls-ll0)
+
+## ROC (only external, and 0/1)
+roc0 <- roc(y10sp[ss1], pr0[ss1])
+rocf1 <- roc(y10sp[ss1], prf1[ss1])
+rocf2 <- roc(y10sp[ss1], prf2[ss1])
+auc0 <- as.numeric(roc0$auc)
+aucf1 <- as.numeric(rocf1$auc)
+aucf2 <- as.numeric(rocf2$auc)
+k1 <- (aucf1-auc0) / (1-auc0)
+k2 <- (aucf2-auc0) / (1-auc0)
+
+mean(y1sp[ss])
+mean(pr0[ss])
+mean(prf1[ss])
+mean(prf2[ss])
+
+mean(y1sp[ss1])
+mean(pr0[ss1])
+mean(prf1[ss1])
+mean(prf2[ss1])
+
+par(mfrow=c(2,3))
+ymax <- max(pr0,prf1, prf2)
+ResourceSelection:::.mep(y1sp[ss], pr0[ss], link="log", type="unique", level=0.9,
+    main="Internal Null", ylim=c(0,ymax))
+ResourceSelection:::.mep(y1sp[ss], prf1[ss], link="log", type="unique", level=0.9,
+    main="Internall Local", ylim=c(0,ymax))
+ResourceSelection:::.mep(y1sp[ss], prf2[ss], link="log", type="unique", level=0.9,
+    main="Internal Space", ylim=c(0,ymax))
+ResourceSelection:::.mep(y1sp[ss1], pr0[ss1], link="log", type="unique", level=0.9,
+    main="External Null", ylim=c(0,ymax))
+ResourceSelection:::.mep(y1sp[ss1], prf1[ss1], link="log", type="unique", level=0.9,
+    main="Externall Local", ylim=c(0,ymax))
+ResourceSelection:::.mep(y1sp[ss1], prf2[ss1], link="log", type="unique", level=0.9,
+    main="External Space", ylim=c(0,ymax))
+
+#ss <- lapply(1:240, function(i) which(!(1:nrow(DAT) %in% BB[,i])))
+#ssd <- data.frame(id=unlist(ss), iter=unlist(lapply(1:240, function(i) rep(i, length(ss[[i]])))))
+#ssx <- Xtab(~iter + id, ssd)
+#ssi <- which(colSums(ssx) == 240)
+#ssc <- as.integer(colnames(ssx)[ssi])
+#compare_sets(ssc, ss1)
+
+Col <- c("blue","darkgreen","red")
+
+pdf(file.path(OUTDIR, "cawa-fig-roc.pdf"))
+op <- par(las=1)
+plot(Show[[1]], col=Col[1], lty=1)
+for (i in 2:length(Show))
+    lines(Show[[i]], col=Col[i], lty=1)
+aucx <- sapply(Show, function(z) as.numeric(z$auc))
+#txt <- paste0(names(aucx), " (AUC = ", round(aucx, 3), ")")
+txt <- paste0(c("Local (stages 1-6)",
+    "Stand level (stages 1-9)","Year (stages 1-10)"), " (AUC = ", round(aucx, 3), ")")
+legend("bottomright", bty="n", col=rev(Col),
+    lty=1, lwd=2, legend=rev(txt))
+dev.off()
+png(file.path(OUTDIR, "cawa-fig-roc.png"))
+op <- par(las=1)
+plot(Show[[1]], col=Col[1], lty=1)
+for (i in 2:length(Show))
+    lines(Show[[i]], col=Col[i], lty=1)
+aucx <- sapply(Show, function(z) as.numeric(z$auc))
+#txt <- paste0(names(aucx), " (AUC = ", round(aucx, 3), ")")
+txt <- paste0(c("Local","Spatial","Year"), " (AUC = ", round(aucx, 3), ")")
+legend("bottomright", bty="n", col=rev(Col),
+    lty=1, lwd=2, legend=rev(txt))
+dev.off()
+
