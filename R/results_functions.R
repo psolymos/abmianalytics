@@ -103,7 +103,7 @@ ages=c(0,10,20,40,60,80,100,120,140), CC=FALSE, Xn)
 }
 
 pred_veghf <-
-function(est, Xn, burn_included=TRUE)
+function(est, Xn, burn_included=TRUE, raw=FALSE)
 {
     X <- Xn[1:13,colnames(est)]
     X[,-1] <- 0 # this should take care of all the modifiers (soft/hard/ARU)
@@ -156,7 +156,9 @@ function(est, Xn, burn_included=TRUE)
         X <- rbind(X, X3)
     }
 
-    pr <- predStat(X, est, level, n=0, ci=TRUE, raw=FALSE)
+    pr <- predStat(X, est, level, n=0, ci=TRUE, raw=raw)
+    if (raw)
+        return(pr)
     out <- pr[,c(1,2,5,6)]
     ## Linear features
     MEAN <- mean(out[,"Median"])
