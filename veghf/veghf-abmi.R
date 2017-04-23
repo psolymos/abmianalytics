@@ -3,32 +3,116 @@ source("~/repos/abmianalytics/veghf/veghf-setup.R")
 load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
 #meta <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 
-### ABMI on+off grid sites --------------------------------------------------
+### ABMI on+off grid sites 1 ha ------------------------------------------------
 
-cn <- c("ABMI_ID_WithB", "ABMI_ID_WithoutB", "NSRNAME", "NRNAME", "LUF_NAME")
-
-## ABMI sites (on+off) cetre 1 ha
-f <- file.path(ROOT, VER, "data", "raw", "veghf", "site", "Site1ha.csv")
-#f <- file.path(ROOT, VER, "data", "raw", "veghf", "site", "Site564m.csv")
+## ABMI sites (on+off) cetre
+## 1 ha
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all", "siteCenter_1ha.csv")
 d <- read.csv(f)
-d$Year <- 2016
-d$ABMI_ID_WithoutB <- d$ABMI_ID_WithB
-levels(d$ABMI_ID_WithoutB) <- gsub("[[:alpha:]]", "", levels(d$ABMI_ID_WithoutB))
 dd <- make_vegHF_wide_v6(d,
-    col.label="ABMI_ID_WithB",
-    col.year="Year",
-    col.HFyear="Year_HF",
+    col.label="Site_YEAR",
+    col.year="survey_year",
+    col.HFyear="year",
     sparse=TRUE, HF_fine=FALSE) # don't use refined classes
 dd$scale <- "1 ha square around site centre"
-sum(dd[[3]][,"CultivationCropPastureBareground"])/10^4
+dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
+dd_1ha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+## 150m
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all", "siteCenter_Buf150m.csv")
+d <- read.csv(f)
+dd <- make_vegHF_wide_v6(d,
+    col.label="Site_YEAR",
+    col.year="survey_year",
+    col.HFyear="year",
+    sparse=TRUE, HF_fine=FALSE) # don't use refined classes
+dd$scale <- "150m circle buffer around site centre"
+dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
+dd_150m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+## 564m
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all", "siteCenter_Buf564m.csv")
+d <- read.csv(f)
+dd <- make_vegHF_wide_v6(d,
+    col.label="Site_YEAR",
+    col.year="survey_year",
+    col.HFyear="year",
+    sparse=TRUE, HF_fine=FALSE) # don't use refined classes
+dd$scale <- "564m circle buffer around site centre"
+dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
+dd_564m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
-dx <- nonDuplicated(d[,cn], ABMI_ID_WithB, TRUE)[rownames(dd[[1]]),]
+if (FALSE) {
+## climate etc
+e <- new.env()
+load("e:/peter/AB_data_v2016/out/abmi_onoff/veg-hf-clim-reg_abmi-onoff_siteCentre_incl2015.Rdata",
+    envir=e)
+
+tmp0 <- dx
+tmp1 <- e$climSite
+tmp2 <- read.csv(file.path(ROOT, VER, "data", "raw", "veghf",
+    "site", "SiteClimate.csv"))
+}
+
+save(dd_1ha, dd_150m, dd_564m, file=file.path(ROOT, VER, "data", "analysis", "site",
+    "veg-hf_siteCenter_v6-fixage0.Rdata"))
+
+## ABMI Camera/ARU
+## 10m
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all", "CamARUBird_Buf10m.csv")
+d <- read.csv(f)
+d$UID <- with(d, interaction(Site_ID, deployment, Cam_ARU_Bird_Location, survey_year,
+    sep="_", drop=TRUE))
+dd <- make_vegHF_wide_v6(d,
+    col.label="UID",
+    col.year="survey_year",
+    col.HFyear="year",
+    sparse=TRUE, HF_fine=FALSE) # don't use refined classes
+dd$scale <- "10m circle buffer around camera/ARU locations"
+dx <- nonDuplicated(d, UID, TRUE)[rownames(dd[[1]]),]
+dd_10m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+## 150m
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all", "CamARUBird_Buf150m.csv")
+d <- read.csv(f)
+d$UID <- with(d, interaction(Site_ID, deployment, Cam_ARU_Bird_Location, survey_year,
+    sep="_", drop=TRUE))
+dd <- make_vegHF_wide_v6(d,
+    col.label="UID",
+    col.year="survey_year",
+    col.HFyear="year",
+    sparse=TRUE, HF_fine=FALSE) # don't use refined classes
+dd$scale <- "150m circle buffer around camera/ARU locations"
+dx <- nonDuplicated(d, UID, TRUE)[rownames(dd[[1]]),]
+dd_150m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+## 564m
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all", "CamARUBird_Buf564m.csv")
+d <- read.csv(f)
+d$UID <- with(d, interaction(Site_ID, deployment, Cam_ARU_Bird_Location, survey_year,
+    sep="_", drop=TRUE))
+dd <- make_vegHF_wide_v6(d,
+    col.label="UID",
+    col.year="survey_year",
+    col.HFyear="year",
+    sparse=TRUE, HF_fine=FALSE) # don't use refined classes
+dd$scale <- "564m circle buffer around camera/ARU locations"
+dx <- nonDuplicated(d, UID, TRUE)[rownames(dd[[1]]),]
+dd_564m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+save(dd_10m, dd_150m, dd_564m, file=file.path(ROOT, VER, "data", "analysis", "site",
+    "veg-hf_CamARUBird_v6-fixage0.Rdata"))
 
 
 
-dd <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+e:/peter/AB_data_v2016/out/abmi_onoff/veg-hf-clim-reg_abmi-onoff_Birds-RF-SM_incl2015.Rdata
+e:/peter/AB_data_v2016/out/abmi_onoff/veg-hf-clim-reg_abmi-onoff_siteCentre_incl2015.Rdata
+e:/peter/AB_data_v2016/out/abmi_onoff/veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015-revisits.Rdata
+e:/peter/AB_data_v2016/out/abmi_onoff/veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015.Rdata
+e:/peter/AB_data_v2016/out/abmi_onoff/veg-hf-clim-reg_mammals-onoff_fix-fire_fix-age0.Rdata
+e:/peter/AB_data_v2016/out/abmi_onoff/veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0.Rdata
 
-save(dd, file=file.path(ROOT, VER, "data", "inter", "veghf", "site", "veghf_V6bf-VerifiedHF.Rdata"))
+
+
+
+
+
 
 d$Site_YEAR <- with(d, interaction(ABMI_ID_WithB, survey_year, sep="_", drop=TRUE))
 head(d1ha)

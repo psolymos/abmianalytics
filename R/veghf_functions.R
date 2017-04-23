@@ -168,10 +168,10 @@ HF_fine=TRUE) {
     ## "" blank is for non-HF classes in current veg
     levels(d$FEATURE_TY)[levels(d$FEATURE_TY) == "''"] <- ""
     levels(d$FEATURE_TY)[levels(d$FEATURE_TY) == " "] <- ""
-    if (!all(setdiff(levels(d$FEATURE_TY), rownames(hflt)) == ""))
-        stop("HF diff:\n\t",
-            dput(paste(setdiff(levels(d$FEATURE_TY), rownames(hflt)),
-            collapse="\n\t", sep="")))
+    if (!all(setdiff(levels(d$FEATURE_TY), rownames(hflt)) == "")) {
+        print(setdiff(levels(d$FEATURE_TY), c("", rownames(hflt))))
+        stop("HF diff found, see above")
+    }
     ## classify feature types according to the chosen level of HF designation
     ## which comes from hf.level column of hflt (HF lookup table)
     if (HF_fine) {
