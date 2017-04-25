@@ -40,19 +40,56 @@ dd$scale <- "564m circle buffer around site centre"
 dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_564m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
-if (FALSE) {
-## climate etc
-e <- new.env()
-load("e:/peter/AB_data_v2016/out/abmi_onoff/veg-hf-clim-reg_abmi-onoff_siteCentre_incl2015.Rdata",
-    envir=e)
+xx <- read.csv(file.path(ROOT, VER, "data", "raw", "veghf",
+    "site_all", "siteCenter_climate.csv"))
+rownames(xx) <- xx$Site_YEAR
 
-tmp0 <- dx
-tmp1 <- e$climSite
-tmp2 <- read.csv(file.path(ROOT, VER, "data", "raw", "veghf",
-    "site", "SiteClimate.csv"))
+compare_sets(rownames(dd_1ha[[1]]), rownames(xx))
+compare_sets(rownames(dd_150m[[1]]), rownames(xx))
+compare_sets(rownames(dd_564m[[1]]), rownames(xx))
+setdiff(rownames(xx), rownames(dd_1ha[[1]]))
+
+xx <- droplevels(xx[rownames(dd_1ha[[1]]),])
+xx$PET <- xx$Eref
+xx$pAspen <- xx$Populus_tremuloides_brtpred_nofp
+xx$Populus_tremuloides_brtpred_nofp <- NULL
+xx$OBJECTID <- NULL
+xx$NSRNAME <- dx$NSRNAME[match(rownames(xx), rownames(dx))]
+xx$NRNAME <- dx$NRNAME[match(rownames(xx), rownames(dx))]
+xx$LUF_NAME <- dx$LUF_NAME[match(rownames(xx), rownames(dx))]
+
+## check revisits
+if (FALSE) {
+aa <- dd_1ha[[1]]
+xt <- as.matrix(Xtab(~ ABMI_Assigned_Site_ID + survey_year, xx))
+
+z0 <- z1 <- matrix(0, nlevels(xx$ABMI_Assigned_Site_ID), ncol(aa))
+rownames(z0) <- rownames(z1) <- levels(xx$ABMI_Assigned_Site_ID)
+colnames(z0) <- colnames(z1) <- colnames(aa)
+for (i in rownames(z0)) {
+    nn <- which(xt[i,] > 0)
+    if (length(nn) > 1) {
+        z0[i,] <- aa[paste0(i, "_", colnames(xt)[nn[1]]),]
+        z1[i,] <- aa[paste0(i, "_", colnames(xt)[nn[2]]),]
+    }
+}
+dd <- z1-z0
+
+dd1 <- dd[rowSums(abs(dd))==0,]
+dd2 <- dd[rowSums(abs(dd))>0,]
+sum(dd1[,grep("CC",colnames(dd))]==0)/prod(dim(dd1[,grep("CC",colnames(dd))]))
+table(rowSums(dd1[,grep("CC",colnames(dd))]==0))
+table(rowSums(dd2[,grep("CC",colnames(dd))]==0))
+ii <- rowSums(dd2[,grep("CC",colnames(dd))]==0)==20
+
+need to collapse age classes (that changes) and CC to get a better picture
+
+
 }
 
-save(dd_1ha, dd_150m, dd_564m, file=file.path(ROOT, VER, "data", "analysis", "site",
+
+save(dd_1ha, dd_150m, dd_564m, xx,
+    file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_siteCenter_v6-fixage0.Rdata"))
 
 ## ABMI Camera/ARU
@@ -96,20 +133,29 @@ dd$scale <- "564m circle buffer around camera/ARU locations"
 dx <- nonDuplicated(d, UID, TRUE)[rownames(dd[[1]]),]
 dd_564m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
-save(dd_10m, dd_150m, dd_564m, file=file.path(ROOT, VER, "data", "analysis", "site",
+xx <- read.csv(file.path(ROOT, VER, "data", "raw", "veghf",
+    "site_all", "CamARUBird_climate.csv"))
+xx$UID <- with(xx, interaction(Site_ID, deployment, Cam_ARU_Bird_Location, survey_year,
+    sep="_", drop=TRUE))
+rownames(xx) <- xx$UID
+
+compare_sets(rownames(dd_10m[[1]]), rownames(xx))
+compare_sets(rownames(dd_150m[[1]]), rownames(xx))
+compare_sets(rownames(dd_564m[[1]]), rownames(xx))
+setdiff(rownames(xx), rownames(dd_10m[[1]]))
+
+xx <- droplevels(xx[rownames(dd_10m[[1]]),])
+xx$PET <- xx$Eref
+xx$pAspen <- xx$Populus_tremuloides_brtpred_nofp
+xx$Populus_tremuloides_brtpred_nofp <- NULL
+xx$OBJECTID <- NULL
+xx$NSRNAME <- dx$NSRNAME[match(rownames(xx), rownames(dx))]
+xx$NRNAME <- dx$NRNAME[match(rownames(xx), rownames(dx))]
+xx$LUF_NAME <- dx$LUF_NAME[match(rownames(xx), rownames(dx))]
+
+save(dd_10m, dd_150m, dd_564m, xx,
+    file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_CamARUBird_v6-fixage0.Rdata"))
-
-
-
-e:/peter/AB_data_v2016/out/abmi_onoff/veg-hf-clim-reg_abmi-onoff_Birds-RF-SM_incl2015.Rdata
-e:/peter/AB_data_v2016/out/abmi_onoff/veg-hf-clim-reg_abmi-onoff_siteCentre_incl2015.Rdata
-e:/peter/AB_data_v2016/out/abmi_onoff/veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015-revisits.Rdata
-e:/peter/AB_data_v2016/out/abmi_onoff/veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0_with2015.Rdata
-e:/peter/AB_data_v2016/out/abmi_onoff/veg-hf-clim-reg_mammals-onoff_fix-fire_fix-age0.Rdata
-e:/peter/AB_data_v2016/out/abmi_onoff/veg-hf-clim-reg_abmi-onoff_fix-fire_fix-age0.Rdata
-
-
-
 
 
 
