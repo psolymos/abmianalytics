@@ -213,6 +213,42 @@ if (check.completeness) {
     }
 }
 
+## Intervals
+
+res$TBB_TIME_1ST_DETECTED <- as.character(res$TBB_TIME_1ST_DETECTED)
+table(res$TBB_TIME_1ST_DETECTED,res$YEAR)
+##  2003-2008 values range 0-600; 2009-2015 values range 0-10 (minutes)
+## FIXED NOW!
+#for (ii in 1:10) {
+#    res$TBB_TIME_1ST_DETECTED[res$TBB_TIME_1ST_DETECTED == as.character(ii) &
+#        res$YEAR >= 2009] <- as.character(ii * 60)
+#}
+res$TBB_TIME_1ST_DETECTED[res$TBB_TIME_1ST_DETECTED %in%
+    c("DNC", "NONE", "VNA")] <- NA
+res$TBB_TIME_1ST_DETECTED <- as.numeric(as.character(res$TBB_TIME_1ST_DETECTED))
+res$period1st <- as.numeric(cut(res$TBB_TIME_1ST_DETECTED, c(-1, 200, 400, 600)))
+
+res <- res[res$TBB_INTERVAL_1 %in% c("0","1"),]
+res <- res[res$TBB_INTERVAL_2 %in% c("0","1"),]
+res <- res[res$TBB_INTERVAL_3 %in% c("0","1"),]
+res$TBB_INTERVAL_1 <- as.integer(res$TBB_INTERVAL_1) - 1L
+res$TBB_INTERVAL_2 <- as.integer(res$TBB_INTERVAL_2) - 1L
+res$TBB_INTERVAL_3 <- as.integer(res$TBB_INTERVAL_3) - 1L
+
+tmp <- col(matrix(0,nrow(res),3)) *
+    res[,c("TBB_INTERVAL_1","TBB_INTERVAL_2","TBB_INTERVAL_3")]
+tmp[tmp==0] <- NA
+tmp <- cbind(999,tmp)
+res$period123 <- apply(tmp, 1, min, na.rm=TRUE)
+with(res, table(period1st, period123))
+res$period1 <- pmin(res$period1st, res$period123)
+with(res, table(period1st, period1))
+with(res, table(period123, period1))
+
+xt3 <- Xtab(~ Label + COMMON_NAME + period123, res, cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"),
+    rdrop=pcs.to.exclude, drop.unused.levels = FALSE)
+
+
 ## write static files into csv
 write.csv(res1, file=paste(D, "/OUT_", T, "_Species_PC-Counts", d, ".csv",sep=""), row.names = rntw)
 write.csv(res2, file=paste(D, "/OUT_", T, "_Species_Site-Counts", d, ".csv",sep=""), row.names = rntw)
