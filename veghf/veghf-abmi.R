@@ -58,35 +58,27 @@ xx$NSRNAME <- dx$NSRNAME[match(rownames(xx), rownames(dx))]
 xx$NRNAME <- dx$NRNAME[match(rownames(xx), rownames(dx))]
 xx$LUF_NAME <- dx$LUF_NAME[match(rownames(xx), rownames(dx))]
 
-## check revisits
+xx$OnOffGrid <- as.factor(ifelse(xx$On_Off == "On-Grid", "IG", "OG"))
+#xx$ABMI_Assigned_Site_ID[xx$On_Off != "On-Grid"]
+xx$DataProvider <- sapply(strsplit(as.character(xx$ABMI_Assigned_Site_ID), "-"),
+    function(z) {
+        if (length(z) == 1)
+            "ABMI" else z[2]
+    })
+xx$Label2 <- as.factor(with(xx, paste("T", OnOffGrid, DataProvider,
+    ABMI_Assigned_Site_ID, survey_year, 1, sep="_")))
+
 if (FALSE) {
-aa <- dd_1ha[[1]]
-xt <- as.matrix(Xtab(~ ABMI_Assigned_Site_ID + survey_year, xx))
-
-z0 <- z1 <- matrix(0, nlevels(xx$ABMI_Assigned_Site_ID), ncol(aa))
-rownames(z0) <- rownames(z1) <- levels(xx$ABMI_Assigned_Site_ID)
-colnames(z0) <- colnames(z1) <- colnames(aa)
-for (i in rownames(z0)) {
-    nn <- which(xt[i,] > 0)
-    if (length(nn) > 1) {
-        z0[i,] <- aa[paste0(i, "_", colnames(xt)[nn[1]]),]
-        z1[i,] <- aa[paste0(i, "_", colnames(xt)[nn[2]]),]
-    }
+e <- new.env()
+load(file=file.path(ROOT, VER, "data", "analysis", "species",
+    #"OUT_mites_2017-04-24.Rdata"), envir=e)
+    "OUT_vplants_2017-04-13.Rdata"), envir=e)
+zzz <- as.character(e$res2$Label2)
+zzz <- paste0(substr(zzz, 1, nchar(zzz)-2), "_1")
+compare_sets(xx$Label2, zzz)
+setdiff(xx$Label2, zzz)
+setdiff(zzz, xx$Label2)
 }
-dd <- z1-z0
-
-dd1 <- dd[rowSums(abs(dd))==0,]
-dd2 <- dd[rowSums(abs(dd))>0,]
-sum(dd1[,grep("CC",colnames(dd))]==0)/prod(dim(dd1[,grep("CC",colnames(dd))]))
-table(rowSums(dd1[,grep("CC",colnames(dd))]==0))
-table(rowSums(dd2[,grep("CC",colnames(dd))]==0))
-ii <- rowSums(dd2[,grep("CC",colnames(dd))]==0)==20
-
-need to collapse age classes (that changes) and CC to get a better picture
-
-
-}
-
 
 save(dd_1ha, dd_150m, dd_564m, xx,
     file=file.path(ROOT, VER, "data", "analysis", "site",
