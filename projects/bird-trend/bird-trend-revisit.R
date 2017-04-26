@@ -16,10 +16,7 @@ ii <- intersect(rownames(rf$x), rownames(rf$xt))
 x_rf <- data.frame(SITE=rf$x[ii,"SITE"],
     YEAR=rf$x[ii,"YEAR"],
     part="rf")
-x_rf <- rbind(x_rf, x_rf, x_rf)
-xt3_rf <- rbind(as.matrix(rf$xt3[["1"]][ii,]),
-    as.matrix(rf$xt3[["2"]][ii,]),
-    as.matrix(rf$xt3[["3"]][ii,]))
+xt3_rf <- as.matrix(rf$xt3[["1"]][ii,])
 #xt10_rf <- as.matrix(rf$xt[ii,])
 
 x_sm <- data.frame(SITE=sm$x$SITE,
@@ -105,20 +102,18 @@ COL <- c("red", "grey", "darkgreen")
 
 plot(est[,1], xi, type="n", xlim=range(est), axes=FALSE, ann=FALSE)
 abline(v=0, col="grey")
+abline(v=c(-10,-5,5,10), lty=2, col="grey")
 points(est[,1], xi, col=COL[ty+2], pch=19)
 segments(y0=xi, y1=xi, x0=est[,2], x1=est[,3], col=COL[ty+2])
 axis(1)
 title(xlab="% annual change")
 text(est[,1]-10, xi-0.1, rownames(est), pos=2, cex=0.6, col="darkgrey")
 
-## todo
-## check with LH traits (min kHz, body size, EDR)
 
 lh$Mig <- lh$Migr
 levels(lh$Mig) <- c("LD","WR","WR","SD")
 lh$Mig2 <- lh$Migr
 levels(lh$Mig2) <- c("M","W","W","M")
-vc <- unname(as.matrix(nearPD(vvv, corr=TRUE)$mat))
 
 lh$Hab4 <- lh$Hab3 <- lh$Hab2 <- lh$habitat
 #levels(lh$Hab) <- c("Forest", "Grassland", "Lake/Pond", "Marsh", "Mountains",
@@ -143,4 +138,7 @@ plot(est[,1] ~ lh$logphi);abline(h=0)
 abline(lm(est[,1] ~ lh$logphi), col=4)
 plot(est[,1] ~ lh$logtau);abline(h=0)
 abline(lm(est[,1] ~ lh$logtau), col=4)
+
+## todo
+## check with other estimates
 
