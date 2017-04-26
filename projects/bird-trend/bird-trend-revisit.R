@@ -74,9 +74,9 @@ regz <- reg[rownames(zz),]
 table(regz$NATURAL_REGIONS)
 
 id <- which(regz$NATURAL_REGIONS %in% c("Boreal", "Canadian Shield",
-    "Foothills"))
+    "Foothills", "Parkland"))
 
-B <- 199
+B <- 999
 BB <- cbind(id, replicate(B, sample(id, length(id), replace=TRUE)))
 
 res <- apply(BB, 2, lambda_fun)
@@ -89,16 +89,19 @@ table(0 %[]% est[,-1])
 summary(est)
 
 est <- est[!is.na(spp2$singing) & spp2$singing,] # RESQ is NA
+spp3 <- spp2[rownames(est),]
+lh <- read.csv("~/Dropbox/bam/lhreg2/LH-all-for-qpadv3.csv")
+lh <- lh[match(spp3$scinam, lh$scientific_name),]
+rownames(lh) <- rownames(spp3)
+Spp <- rownames(spp3)[!is.na(lh$spp)]
+est <- est[Spp,]
+spp3 <- droplevels(spp3[Spp,])
+lh <- droplevels(lh[Spp,])
 
 xi <- seq_len(nrow(est))
 ty <- sign(est[,1])
 ty[0 %[]% est[,-1]] <- 0
 COL <- c("red", "grey", "darkgreen")
-plot(xi, est[,1], type="n", ylim=range(est))
-abline(h=0, col="grey")
-abline(h=c(-5,-3,3,5), col="grey", lty=2)
-points(xi, est[,1], col=COL[ty+2], pch=19)
-segments(xi, y0=est[,2], y1=est[,3], col=COL[ty+2])
 
 plot(est[,1], xi, type="n", xlim=range(est), axes=FALSE, ann=FALSE)
 abline(v=0, col="grey")
@@ -110,3 +113,34 @@ text(est[,1]-10, xi-0.1, rownames(est), pos=2, cex=0.6, col="darkgrey")
 
 ## todo
 ## check with LH traits (min kHz, body size, EDR)
+
+lh$Mig <- lh$Migr
+levels(lh$Mig) <- c("LD","WR","WR","SD")
+lh$Mig2 <- lh$Migr
+levels(lh$Mig2) <- c("M","W","W","M")
+vc <- unname(as.matrix(nearPD(vvv, corr=TRUE)$mat))
+
+lh$Hab4 <- lh$Hab3 <- lh$Hab2 <- lh$habitat
+#levels(lh$Hab) <- c("Forest", "Grassland", "Lake/Pond", "Marsh", "Mountains",
+#    "Open Woodland", "Scrub", "Shore-line", "Town")
+levels(lh$Hab4) <- c("For", "Open", "Wet", "Wet", "Open",
+    "Wood", "Open", "Wet", "Open")
+levels(lh$Hab3) <- c("For", "Open", "Open", "Open", "Open",
+    "Wood", "Open", "Open", "Open")
+levels(lh$Hab2) <- c("Closed", "Open", "Open", "Open", "Open",
+    "Closed", "Open", "Open", "Open")
+
+par(mfrow=c(2,4))
+boxplot(est[,1] ~ lh$Mig);abline(h=0)
+boxplot(est[,1] ~ lh$food);abline(h=0)
+boxplot(est[,1] ~ lh$Hab4);abline(h=0)
+boxplot(est[,1] ~ lh$behavior);abline(h=0)
+plot(est[,1] ~ lh$MaxFreqkHz);abline(h=0)
+abline(lm(est[,1] ~ lh$MaxFreqkHz), col=4)
+plot(est[,1] ~ lh$logmass);abline(h=0)
+abline(lm(est[,1] ~ lh$logmass), col=4)
+plot(est[,1] ~ lh$logphi);abline(h=0)
+abline(lm(est[,1] ~ lh$logphi), col=4)
+plot(est[,1] ~ lh$logtau);abline(h=0)
+abline(lm(est[,1] ~ lh$logtau), col=4)
+
