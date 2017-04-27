@@ -3,6 +3,21 @@ library(intrval)
 reg <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 spp <- read.csv("~/repos/abmispecies/_data/birds.csv")
 rownames(spp) <- spp$sppid
+lh <- read.csv("~/Dropbox/bam/lhreg2/LH-all-for-qpadv3.csv")
+lh$Mig <- lh$Migr
+levels(lh$Mig) <- c("LD","WR","WR","SD")
+lh$Mig2 <- lh$Migr
+levels(lh$Mig2) <- c("M","W","W","M")
+lh$Hab4 <- lh$Hab3 <- lh$Hab2 <- lh$habitat
+#levels(lh$Hab) <- c("Forest", "Grassland", "Lake/Pond", "Marsh", "Mountains",
+#    "Open Woodland", "Scrub", "Shore-line", "Town")
+levels(lh$Hab4) <- c("For", "Open", "Wet", "Wet", "Open",
+    "Wood", "Open", "Wet", "Open")
+levels(lh$Hab3) <- c("For", "Open", "Open", "Open", "Open",
+    "Wood", "Open", "Open", "Open")
+levels(lh$Hab2) <- c("Closed", "Open", "Open", "Open", "Open",
+    "Closed", "Open", "Open", "Open")
+
 rf <- new.env()
 load(file.path("e:/peter/AB_data_v2017",
     "data", "analysis", "species", "OUT_birdsrf_2017-04-26.Rdata"),
@@ -17,7 +32,7 @@ x_rf <- data.frame(SITE=rf$x[ii,"SITE"],
     YEAR=rf$x[ii,"YEAR"],
     part="rf")
 xt3_rf <- as.matrix(rf$xt3[["1"]][ii,])
-#xt10_rf <- as.matrix(rf$xt[ii,])
+xt10_rf <- as.matrix(rf$xt[ii,])
 
 x_sm <- data.frame(SITE=sm$x$SITE,
     YEAR=sm$x$YEAR,
@@ -58,11 +73,39 @@ for (i in rownames(zz)) {
     T[i] <- diff(yrs)
 }
 
+pp <- zz
+pp[] <- 0
+for (i in rownames(pp)) {
+    for (j in colnames(pp)) {
+        tmp <- unique(x$part[x$SITE == i & x$YEAR == as.integer(j)])
+        if (length(tmp) && tmp == "sm")
+            pp[i,j] <- 1
+#        if (length(tmp) && tmp == "rf")
+#            pp[i,j] <- -1
+    }
+}
+pp_last <- pp[,"2015"]+pp[,"2016"]
+D0 <- rep(3.33, nrow(X0))
+D0[pp_last==2] <- 3
+DR <- rep(3, nrow(X0))
+DR[pp_last==0] <- 3.33
+D0 <- matrix(D0, nrow(X0), ncol(X0))
+DR <- matrix(DR, nrow(X0), ncol(X0))
+
+spp2 <- spp[colnames(X0),]
+lh <- lh[match(spp2$AOU, lh$spp),]
+phi <- exp(lh$logphi)
+phi[is.na(phi)] <- 999
+phimat <- matrix(phi, nrow(X0), ncol(X0), byrow=TRUE)
+P0 <- 1-exp(-D0*phimat)
+PR <- 1-exp(-DR*phimat)
+#P0 <- PR <- 1
+
 lambda_fun <- function(ss=NULL) {
     if (is.null(ss))
         ss <- seq_len(nrow(zz))
     WM <- colSums(T[ss]*X0[ss,]) / colSums(X0[ss,])
-    TC <- colSums(XR[ss,]) / colSums(X0[ss,])
+    TC <- colSums(XR[ss,] / PR[ss,]) / colSums(X0[ss,] / P0[ss,])
     lam <- TC^(1/WM)
     100*(lam-1)
 }
@@ -72,6 +115,7 @@ table(regz$NATURAL_REGIONS)
 
 id <- which(regz$NATURAL_REGIONS %in% c("Boreal", "Canadian Shield",
     "Foothills", "Parkland"))
+
 
 B <- 999
 BB <- cbind(id, replicate(B, sample(id, length(id), replace=TRUE)))
@@ -87,7 +131,7 @@ summary(est)
 
 est <- est[!is.na(spp2$singing) & spp2$singing,] # RESQ is NA
 spp3 <- spp2[rownames(est),]
-lh <- read.csv("~/Dropbox/bam/lhreg2/LH-all-for-qpadv3.csv")
+#lh <- read.csv("~/Dropbox/bam/lhreg2/LH-all-for-qpadv3.csv")
 lh <- lh[match(spp3$scinam, lh$scientific_name),]
 rownames(lh) <- rownames(spp3)
 Spp <- rownames(spp3)[!is.na(lh$spp)]
@@ -107,23 +151,9 @@ points(est[,1], xi, col=COL[ty+2], pch=19)
 segments(y0=xi, y1=xi, x0=est[,2], x1=est[,3], col=COL[ty+2])
 axis(1)
 title(xlab="% annual change")
-text(est[,1]-10, xi-0.1, rownames(est), pos=2, cex=0.6, col="darkgrey")
+text(est[,1]-10, xi-0.1, rownames(est), pos=2, cex=0.6, col=grey(0.3))
 
-
-lh$Mig <- lh$Migr
-levels(lh$Mig) <- c("LD","WR","WR","SD")
-lh$Mig2 <- lh$Migr
-levels(lh$Mig2) <- c("M","W","W","M")
-
-lh$Hab4 <- lh$Hab3 <- lh$Hab2 <- lh$habitat
-#levels(lh$Hab) <- c("Forest", "Grassland", "Lake/Pond", "Marsh", "Mountains",
-#    "Open Woodland", "Scrub", "Shore-line", "Town")
-levels(lh$Hab4) <- c("For", "Open", "Wet", "Wet", "Open",
-    "Wood", "Open", "Wet", "Open")
-levels(lh$Hab3) <- c("For", "Open", "Open", "Open", "Open",
-    "Wood", "Open", "Open", "Open")
-levels(lh$Hab2) <- c("Closed", "Open", "Open", "Open", "Open",
-    "Closed", "Open", "Open", "Open")
+#write.csv(est, file="BirdRevisitTrend-20170427.csv")
 
 par(mfrow=c(2,4))
 boxplot(est[,1] ~ lh$Mig);abline(h=0)
@@ -139,6 +169,22 @@ abline(lm(est[,1] ~ lh$logphi), col=4)
 plot(est[,1] ~ lh$logtau);abline(h=0)
 abline(lm(est[,1] ~ lh$logtau), col=4)
 
+qqnorm(est[,1])
+qqline(est[,1])
+
+## use SR correction
+
 ## todo
 ## check with other estimates
+
+trb <- read.csv("~/Dropbox/josm/2017/Table-bbs.csv")
+trb <- trb[match(spp3$AOU, trb$AOUcode),]
+tr <- read.csv("~/Dropbox/josm/2017/Table-res1.csv")
+tr <- tr[match(spp3$AOU, tr$AOUcode),]
+
+tmp <- data.frame(trb[,c(2,5)], tr[,c(2,5,8)], revisit=est[,1])
+tmp <- tmp[rowSums(is.na(tmp))==0,]
+plot(tmp)
+cor(tmp)
+
 

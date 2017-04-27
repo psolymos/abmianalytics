@@ -22,7 +22,7 @@ gis <- sqlFetch(con, "METADATA_GIS_SITE_SUMMARY")
 close(con)
 }
 
-res <- read.csv(file.path(ROOT, "mites-20170404.csv"))
+res <- read.csv(file.path(ROOT, "mites-20170427.csv"))
 #gis <- read.csv(file.path(ROOT, "data/sitemetadata.csv"))
 gis <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 taxo <- read.csv(file.path(ROOT, "taxonomy.csv"))
