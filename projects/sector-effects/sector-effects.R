@@ -53,23 +53,6 @@ compare_sets(vt$UseInAnalysisCoef, cn)
 all(colnames(dd1ha[[1]])==rownames(vt))
 
 aveg <- groupSums(dd1ha[[1]], 2, as.character(vt$UseInAnalysisCoef))
-pveg <- as.matrix(aveg)
-pveg <- pveg[climSite$NRNAME %in% c("Boreal", "Canadian Shield", "Foothills", "Parkland"),cn]
-pveg <- pveg / rowSums(pveg)
-pveg <- pveg[rowSums(is.na(pveg))==0,]
-mveg <- find_max(pveg)
-vveg <- as.character(mveg$index)
-nn <- colMeans(pveg)
-pveg2 <- pveg
-pveg2[] <- 0
-for (ii in 1:nrow(mveg))
-    pveg2[ii, vveg[ii]] <- 1
-
-#Population effect of agriculture sector (% of study area = 50.75%)
-#Population effect of forestry sector (% of study area = 0.71%)
-#Population effect of energy sector (% of study area = 1.99%)
-#Population effect of rural/urban sector (% of study area = 1.88%)
-#Population effect of transportation sector (% of study area = 2.55%)
 
 veg <- list()
 sef <- list()
@@ -84,6 +67,34 @@ for (i in names(fl)) {
     sef[[i]]$Species <- NULL
     sef[[i]] <- sef[[i]][rownames(veg[[i]]),]
 }
+save(sef, veg, vt, aveg, cn, cn2, fl,
+    file="~/Dropbox/abmi/10yr/sector/sector.Rdata")
+
+load("~/Dropbox/abmi/10yr/sector/sector.Rdata")
+
+pveg2 <- as.matrix(aveg)
+pveg2 <- pveg2[climSite$NRNAME %in% c("Boreal", "Canadian Shield", "Foothills", "Parkland"),cn]
+pveg2 <- pveg2 / rowSums(pveg2)
+
+pveg <- as.matrix(aveg)
+pveg <- pveg[climSite$NRNAME %in% c("Boreal", "Canadian Shield", "Foothills", "Parkland"),cn]
+pveg <- pveg / rowSums(pveg)
+pveg <- pveg[rowSums(is.na(pveg))==0,]
+pveg2 <- pveg2[rownames(pveg),]
+mveg <- find_max(pveg)
+vveg <- as.character(mveg$index)
+nn <- colMeans(pveg)
+pveg2 <- pveg
+pveg2[] <- 0
+for (ii in 1:nrow(mveg))
+    pveg2[ii, vveg[ii]] <- 1
+
+#Population effect of agriculture sector (% of study area = 50.75%)
+#Population effect of forestry sector (% of study area = 0.71%)
+#Population effect of energy sector (% of study area = 1.99%)
+#Population effect of rural/urban sector (% of study area = 1.88%)
+#Population effect of transportation sector (% of study area = 2.55%)
+
 
 pred <- list()
 pred2 <- list()
