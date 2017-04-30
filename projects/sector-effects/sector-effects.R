@@ -27,6 +27,25 @@ cn <- c("WhiteSpruce0", "WhiteSpruce10", "WhiteSpruce20",
     "MixedwoodCC0", "MixedwoodCC10", "MixedwoodCC20", "MixedwoodCC40",
     "MixedwoodCC60", "Swamp", "WetGrass", "WetShrub", "Shrub", "GrassHerb",
     "Cult", "UrbInd")
+cn1 <- c("ConR", "ConR", "ConY",
+    "ConY", "ConY", "ConO", "ConO",
+    "ConO", "ConO", "ConR", "ConR", "ConY",
+    "ConY", "ConY", "ConO", "ConO",
+    "ConO", "ConO",
+    "DecR", "DecR", "DecY", "DecY", "DecY",
+    "DecO", "DecO", "DecO", "DecO",
+    "DecR", "DecR", "DecY", "DecY", "DecY",
+    "DecO", "DecO", "DecO", "DecO",
+    "BSpR", "BSpR", "BSpY", "BSpY",
+    "BSpY", "BSpO", "BSpO", "BSpO",
+    "BSpO", "BSpR", "BSpR", "BSpY", "BSpY",
+    "BSpY", "BSpO", "BSpO", "BSpO", "BSpO", "CCConR",
+    "CCConR", "CCConY", "CCConY", "CCConY",
+    "CCConR", "CCConR", "CCConY", "CCConY", "CCConY", "CCDecR",
+    "CCDecR", "CCDecY", "CCDecY", "CCDecY",
+    "CCDecR", "CCDecR", "CCDecY", "CCDecY",
+    "CCDecY", "Wet", "Wet", "Wet", "Shrub", "Grass",
+    "Cult", "UrbInd")
 cn2 <- c("C", "C", "C",
     "C", "C", "C", "C",
     "C", "C", "C", "C", "C",
@@ -67,20 +86,23 @@ for (i in names(fl)) {
     sef[[i]]$Species <- NULL
     sef[[i]] <- sef[[i]][rownames(veg[[i]]),]
 }
-save(sef, veg, vt, aveg, cn, cn2, fl,
+save(sef, veg, vt, aveg, cn, cn2, fl, climSite,
     file="~/Dropbox/abmi/10yr/sector/sector.Rdata")
 
 load("~/Dropbox/abmi/10yr/sector/sector.Rdata")
 
-pveg2 <- as.matrix(aveg)
-pveg2 <- pveg2[climSite$NRNAME %in% c("Boreal", "Canadian Shield", "Foothills", "Parkland"),cn]
-pveg2 <- pveg2 / rowSums(pveg2)
+pveg3 <- as.matrix(aveg)
+pveg3 <- pveg3[climSite$NRNAME %in% c("Boreal", "Canadian Shield", "Foothills", "Parkland"),cn]
+pveg3 <- pveg3 / rowSums(pveg3)
+pveg3 <- pveg3[rowSums(is.na(pveg3))==0,]
+pveg3 <- groupSums(pveg3, 2, cn1)
 
 pveg <- as.matrix(aveg)
 pveg <- pveg[climSite$NRNAME %in% c("Boreal", "Canadian Shield", "Foothills", "Parkland"),cn]
 pveg <- pveg / rowSums(pveg)
 pveg <- pveg[rowSums(is.na(pveg))==0,]
-pveg2 <- pveg2[rownames(pveg),]
+#pveg3 <- pveg3[rownames(pveg),]
+all(rownames(pveg)==rownames(pveg3))
 mveg <- find_max(pveg)
 vveg <- as.character(mveg$index)
 nn <- colMeans(pveg)
@@ -88,6 +110,13 @@ pveg2 <- pveg
 pveg2[] <- 0
 for (ii in 1:nrow(mveg))
     pveg2[ii, vveg[ii]] <- 1
+mveg2 <- find_max(pveg3)
+vveg2 <- as.character(mveg2$index)
+nn2 <- colMeans(pveg3)
+pveg4 <- pveg3
+pveg4[] <- 0
+for (ii in 1:nrow(mveg))
+    pveg4[ii, vveg2[ii]] <- 1
 
 #Population effect of agriculture sector (% of study area = 50.75%)
 #Population effect of forestry sector (% of study area = 0.71%)
@@ -100,6 +129,7 @@ pred <- list()
 pred2 <- list()
 lc <- list()
 lcmat <- list()
+lcmat2 <- list()
 for (i in names(fl)) {
     pred[[i]] <- apply(veg[[i]], 1, function(z) colSums(t(pveg) * z, na.rm=TRUE))
     pred2[[i]] <- apply(veg[[i]], 1, function(z) colSums(t(pveg2) * z, na.rm=TRUE))
@@ -107,10 +137,92 @@ for (i in names(fl)) {
         unclass(summary(lorenz(as.numeric(ifelse(is.na(veg[[i]][j,]), 0, veg[[i]][j,])), nn)))))
     lcmat[[i]] <- ifelse(ifelse(is.na(as.matrix(veg[[i]])), 0,
         as.matrix(veg[[i]])) > lc[[i]][,"x[t]"], 1, 0)
+    lcmat2[[i]] <- t(sapply(1:nrow(veg[[i]]), function(j) {
+        tmp <- as.numeric(ifelse(is.na(veg[[i]][j,]), 0, veg[[i]][j,]))
+        tmp <- sum_by(tmp, cn1)
+        lc <- unclass(summary(lorenz(tmp[,"x"], nn2)))
+        ifelse(tmp[,"x"] > lc["x[t]"], 1, 0)
+    }))
+    rownames(lcmat2[[i]]) <- rownames(lcmat[[i]])
 }
 
-nn <- table(mveg$index)/length(mveg$index)
-mu <- aggregate(x, list(g), mean)
+Pairs <- function (x, ...)
+{
+    #y <- data.frame(x)
+    y <- x
+    fun.lower <- function(x1, x2, ...) {
+        COR <- cor(x1, x2)
+        text(mean(range(x1, na.rm = TRUE)), mean(range(x2, na.rm = TRUE)),
+            round(COR, 2), cex = 0.5 + 2*abs(COR))
+        box(col="grey")
+    }
+    fun.upper <- function(x1, x2, ...) {
+        if (is.factor(x1)) {
+            x1 <- as.integer(x1)
+        }
+        if (is.factor(x2)) {
+            x1 <- as.integer(x2)
+        }
+        abline(h=0, v=0, lty=1, col="grey")
+        points(x1, x2, col=ColSp)
+        #LM <- lm(x2 ~ x1)
+        #abline(LM, col="#D7191C")
+        box(col="#80B9D8")
+    }
+    panel.hist <- function(x, ...) {
+        usr <- par("usr")
+        on.exit(par(usr))
+        par(usr = c(usr[1:2], 0, 1.5))
+        h <- hist(x, plot = FALSE)
+        breaks <- h$breaks
+        nB <- length(breaks)
+        y <- h$density
+        Max <- max(y)
+        y <- y/Max
+        rect(breaks[-nB], 0, breaks[-1], y, col = "#FDC980", border = "#F07C4A",
+            ...)
+        abline(v=0, lty=1, col="grey")
+        den <- density(x)
+        den$y <- den$y/Max
+        lines(den, col="#F07C4A")
+        box(col="#F07C4A")
+    }
+    pairs.default(y, lower.panel = fun.lower, upper.panel = fun.upper,
+        diag.panel = panel.hist)
+    invisible(NULL)
+}
+fs <- function(x) 0.5*(1+x/max(abs(x)))
+
+k <- 1
+for (k in 1:5) {
+NAM <- names(fl)[k]
+obj <- t(lcmat2[[k]])
+rownames(obj) <- make.cepnames(rownames(obj))
+#colnames(obj) <- make.cepnames(colnames(obj))
+se <- t(as.matrix(sef[[k]])[,6:10]) # unit
+#se <- t(as.matrix(sef[[k]])[,1:5]) # total
+rownames(se) <- c("Agr", "For", "En", "Urb", "Tran")
+
+lcm <- t(obj)
+sem <- tanh(t(se)/100)
+m <- rda(lcm ~ ., data.frame(sem))
+s <- scores(m, 1:3)
+ColSi <- 2
+ColSp <- rgb(red=fs(s$sites[,1]),
+    green=fs(s$sites[,2]), blue=fs(s$sites[,3]))
+
+pdf(paste0("~/Dropbox/abmi/10yr/sector/triplot-", NAM, ".pdf"))
+plot(m, scaling=3, type="none", main=NAM)
+text(m, "sites", col=ColSp, cex=0.5, scaling=3)
+#points(m, "sites", col=ColSp, cex=0.5, scaling=3)
+text(m, "species", col=1, cex=1, scaling=3)
+text(m, display="bp", col=4, cex=0.8, scaling=3)
+dev.off()
+
+pdf(paste0("~/Dropbox/abmi/10yr/sector/seff-", NAM, ".pdf"))
+Pairs(data.frame(sem))
+dev.off()
+}
 
 ## use lc on predicted stuff at 1ha or pc level to
 
@@ -141,17 +253,26 @@ COL[c("Cult", "UrbInd")] <- "red"
 
 COL2 <- c(C="green1", D="green4", B="darkblue", W="cyan", O="orange", H="red")
 
-k <- 1
-obj <- t(lcmat[[k]])
-obj2 <- t(groupMeans(obj, 1, cn2))
-wm <- find_max(obj2)
-#obj <- t(veg[[k]])
-se <- t(as.matrix(sef[[k]])[,6:10])
-rownames(se) <- c("Agr", "For", "En", "Urb", "Tran")
+sty <- apply(lcmat2[[1]], 1, function(z)
+    paste(ifelse(z==1, colnames(lcmat2[[1]]), "-"), collapse=""))
+data.frame(table(sty))
+h <- grepl("H", sty)
+COLS <- rep("grey", length(sty))
+## D
+COLS[!h & grepl("D", sty)] <- "green1"
+## C & CD
+COLS[!h & (grepl("C", sty) | grepl("CD", sty))] <- "green4"
+## H+
+COLS[h] <- "red"
+## no H & W+
+COLS[!h & grepl("W", sty)] <- "cyan"
+## no H & O+
+COLS[!h & grepl("O", sty)] <- "orange"
+## no H & B+ but not CDB
+COLS[!h & grepl("B", sty)] <- "darkblue"
+## CDB
+COLS[!h & grepl("CDB", sty)] <- "green"
 
-
-rownames(obj) <- make.cepnames(rownames(obj))
-colnames(obj) <- make.cepnames(colnames(obj))
 
 o <- rda(obj)
 o2 <- rda(se)
@@ -198,8 +319,9 @@ lcm <- t(obj)
 sem <- tanh(t(se)/100)
 m2 <- rda(lcm ~ ., data.frame(sem))
 plot(m2, scaling=3, type="none")
-text(m2, "species", col=COL2[as.character(wm$index)], cex=0.4, scaling=3)
-text(m2, "sites", col=COL, cex=0.6, scaling=3)
+text(m2, "species", col=COL, cex=0.4, scaling=3)
+text(m2, "sites", col=COLS, cex=0.6, scaling=3)
+#text(m2, "sites", col=ct, cex=0.6, scaling=3)
 text(m2, display="bp", col=4, cex=0.8, scaling=3)
 
 par(mfrow=c(1,2))
@@ -208,5 +330,5 @@ text(m2, "species", col=COL, cex=0.4, scaling=3)
 text(m2, display="bp", col=4, cex=0.8, scaling=3)
 
 plot(m2, scaling=3, type="none")
-text(m2, "sites", col=COL2[as.character(wm$index)], cex=0.6, scaling=3)
+text(m2, "sites", col=COLS, cex=0.6, scaling=3)
 text(m2, display="bp", col=4, cex=0.8, scaling=3)
