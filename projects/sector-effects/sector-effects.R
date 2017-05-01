@@ -200,6 +200,8 @@ Pairs <- function (x, ...)
     invisible(NULL)
 }
 fs <- function(x) 0.5*(1+x/max(abs(x)))
+#fu <- function(x) tanh(0.549315*x/100)
+fu <- function(x) sign(x) * plogis(log(abs(x/100)))
 
 ## questions
 ## *
@@ -229,7 +231,7 @@ te[te > 200] <- 200
 te[te < -200] <- -200
 ue <- cbind(All=rowSums(te)/sum(AA), ue)
 
-uem <- tanh(0.549315*ue/100)
+uem <- fu(ue)
 m <- rda(obj ~ . - All, data.frame(uem))
 s <- scores(m, 1:3)
 ColSi <- 2
@@ -239,7 +241,7 @@ ColSp <- rgb(red=fs(s$sites[,1]),
 d <- dist(t(uem))
 h <- hclust(d)
 
-pdf(paste0("~/Dropbox/abmi/10yr/sector/triplot-", NAM, ".pdf"))
+pdf(paste0("~/Dropbox/abmi/10yr/sector/Rout/triplot-", NAM, ".pdf"))
 plot(m, scaling=3, type="none", main=NAM)
 text(m, "sites", col=ColSp, cex=0.5, scaling=3)
 #points(m, "sites", col=ColSp, cex=0.5, scaling=3)
@@ -247,24 +249,21 @@ text(m, "species", col=1, cex=1, scaling=3)
 text(m, display="bp", col=4, cex=0.8, scaling=3)
 dev.off()
 
-pdf(paste0("~/Dropbox/abmi/10yr/sector/seff-", NAM, ".pdf"))
+pdf(paste0("~/Dropbox/abmi/10yr/sector/Rout/seffunit-", NAM, ".pdf"))
 Pairs(data.frame(uem))
 dev.off()
 
-pdf(paste0("~/Dropbox/abmi/10yr/sector/sefftotal-", NAM, ".pdf"))
+pdf(paste0("~/Dropbox/abmi/10yr/sector/Rout/sefftotal-", NAM, ".pdf"))
 Pairs(data.frame(te))
 dev.off()
 }
 
 se <- do.call(rbind, sef)
-ue <- se[,6:10]
+ue <- as.matrix(se[,6:10])
 colnames(ue) <- c("Agr", "For", "En", "Urb", "Tran")
-ue <- as.matrix(tanh(0.549315*ue/100))
+ue <- fu(ue)
 g <- unlist(lapply(1:5, function(i) rep(names(fl)[i], nrow(sef[[i]]))))
-#d <- data.frame(u=as.numeric(uem), g=g, s=rep(colnames(ue), each=nrow(ue)))
 d <- data.frame(ue, g=g)
-
-#densityplot( ~ Agr + For + En + Urb + Tran | g, d)
 
 pf <- function(sector) {
     dd <- d[[sector]]
@@ -286,7 +285,7 @@ pf <- function(sector) {
 
 }
 
-par(mfrow=c(3,2), mar=c(2,2,1,1))
+par(mfrow=c(3,2), mar=c(4,4,2,2))
 pf("Agr")
 pf("Urb")
 pf("En")
