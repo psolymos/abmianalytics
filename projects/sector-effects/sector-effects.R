@@ -118,11 +118,19 @@ pveg4[] <- 0
 for (ii in 1:nrow(mveg))
     pveg4[ii, vveg2[ii]] <- 1
 
+## South
 #Population effect of agriculture sector (% of study area = 50.75%)
 #Population effect of forestry sector (% of study area = 0.71%)
 #Population effect of energy sector (% of study area = 1.99%)
 #Population effect of rural/urban sector (% of study area = 1.88%)
 #Population effect of transportation sector (% of study area = 2.55%)
+## North
+#Population effect of agriculture sector (% of study area = 2.13%)
+#Population effect of forestry sector (% of study area = 6.03%)
+#Population effect of energy sector (% of study area = 1.99%)
+#Population effect of rural/urban sector (% of study area = 0.20%)
+#Population effect of transportation sector (% of study area = 0.52%)
+AA <- c(Arg=2.13, For=6.03, En=1.99, Urb=0.20, Tran=0.52)
 
 
 pred <- list()
@@ -193,23 +201,43 @@ Pairs <- function (x, ...)
 }
 fs <- function(x) 0.5*(1+x/max(abs(x)))
 
-k <- 1
-for (k in 1:5) {
-NAM <- names(fl)[k]
-obj <- t(lcmat2[[k]])
-rownames(obj) <- make.cepnames(rownames(obj))
-#colnames(obj) <- make.cepnames(colnames(obj))
-se <- t(as.matrix(sef[[k]])[,6:10]) # unit
-#se <- t(as.matrix(sef[[k]])[,1:5]) # total
-rownames(se) <- c("Agr", "For", "En", "Urb", "Tran")
+## questions
+## *
 
-lcm <- t(obj)
-sem <- tanh(t(se)/100)
-m <- rda(lcm ~ ., data.frame(sem))
+
+k <- 1
+for (k in 0:5) {
+
+if (k==0) {
+    NAM <- "all"
+    obj <- do.call(rbind, lcmat2)
+    se <- do.call(rbind, sef)
+    ue <- as.matrix(se[,6:10])
+    te <- as.matrix(se[,1:5])
+    g <- unlist(lapply(1:5, function(i) rep(names(fl)[i], nrow(sef[[i]]))))
+} else {
+    NAM <- names(fl)[k]
+    obj <- lcmat2[[k]]
+    ue <- as.matrix(sef[[k]])[,6:10] # unit
+    te <- as.matrix(sef[[k]])[,1:5] # total
+}
+colnames(obj) <- make.cepnames(colnames(obj))
+colnames(ue) <- colnames(te) <- c("Agr", "For", "En", "Urb", "Tran")
+
+te <- cbind(All=rowSums(te), te)
+te[te > 200] <- 200
+te[te < -200] <- -200
+ue <- cbind(All=rowSums(te)/sum(AA), ue)
+
+uem <- tanh(0.549315*ue/100)
+m <- rda(obj ~ . - All, data.frame(uem))
 s <- scores(m, 1:3)
 ColSi <- 2
 ColSp <- rgb(red=fs(s$sites[,1]),
     green=fs(s$sites[,2]), blue=fs(s$sites[,3]))
+
+d <- dist(t(uem))
+h <- hclust(d)
 
 pdf(paste0("~/Dropbox/abmi/10yr/sector/triplot-", NAM, ".pdf"))
 plot(m, scaling=3, type="none", main=NAM)
@@ -220,9 +248,54 @@ text(m, display="bp", col=4, cex=0.8, scaling=3)
 dev.off()
 
 pdf(paste0("~/Dropbox/abmi/10yr/sector/seff-", NAM, ".pdf"))
-Pairs(data.frame(sem))
+Pairs(data.frame(uem))
+dev.off()
+
+pdf(paste0("~/Dropbox/abmi/10yr/sector/sefftotal-", NAM, ".pdf"))
+Pairs(data.frame(te))
 dev.off()
 }
+
+se <- do.call(rbind, sef)
+ue <- se[,6:10]
+colnames(ue) <- c("Agr", "For", "En", "Urb", "Tran")
+ue <- as.matrix(tanh(0.549315*ue/100))
+g <- unlist(lapply(1:5, function(i) rep(names(fl)[i], nrow(sef[[i]]))))
+#d <- data.frame(u=as.numeric(uem), g=g, s=rep(colnames(ue), each=nrow(ue)))
+d <- data.frame(ue, g=g)
+
+#densityplot( ~ Agr + For + En + Urb + Tran | g, d)
+
+pf <- function(sector) {
+    dd <- d[[sector]]
+    d0 <- density(dd, from=-1, to=1)
+    d1 <- density(dd[g=="birds"], from=-1, to=1)
+    d2 <- density(dd[g=="lichens"], from=-1, to=1)
+    d3 <- density(dd[g=="mites"], from=-1, to=1)
+    d4 <- density(dd[g=="mosses"], from=-1, to=1)
+    d5 <- density(dd[g=="vplants"], from=-1, to=1)
+    plot(d0, ylim=c(0, max(d0$y, d1$y, d2$y, d3$y, d4$y, d5$y)),
+        lty=3, lwd=3, xlab="Unit effect", main=sector)
+    abline(v=0, col="grey")
+    abline(v=c(-0.5, 0.5), lty=3, col="grey")
+    lines(d1, col=2, lwd=3)
+    lines(d2, col=3, lwd=3)
+    lines(d3, col=4, lwd=3)
+    lines(d4, col=5, lwd=3)
+    lines(d5, col=6, lwd=3)
+
+}
+
+par(mfrow=c(3,2), mar=c(2,2,1,1))
+pf("Agr")
+pf("Urb")
+pf("En")
+pf("Tran")
+pf("For")
+plot.new()
+legend("bottomright", col=1:6, lty=c(3,1,1,1,1,1), lwd=3, bty="n",
+    legend=c("All", names(fl)))
+
 
 ## use lc on predicted stuff at 1ha or pc level to
 
