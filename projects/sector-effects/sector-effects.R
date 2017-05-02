@@ -203,11 +203,9 @@ fs <- function(x) 0.5*(1+x/max(abs(x)))
 #fu <- function(x) tanh(0.549315*x/100)
 fu <- function(x) sign(x) * plogis(log(abs(x/100)))
 
-## questions
-## *
 
 
-k <- 1
+#k <- 1
 for (k in 0:5) {
 
 if (k==0) {
@@ -223,7 +221,7 @@ if (k==0) {
     ue <- as.matrix(sef[[k]])[,6:10] # unit
     te <- as.matrix(sef[[k]])[,1:5] # total
 }
-colnames(obj) <- make.cepnames(colnames(obj))
+rownames(obj) <- make.cepnames(rownames(obj))
 colnames(ue) <- colnames(te) <- c("Agr", "For", "En", "Urb", "Tran")
 
 te <- cbind(All=rowSums(te), te)
@@ -245,6 +243,14 @@ pdf(paste0("~/Dropbox/abmi/10yr/sector/Rout/triplot-", NAM, ".pdf"))
 plot(m, scaling=3, type="none", main=NAM)
 text(m, "sites", col=ColSp, cex=0.5, scaling=3)
 #points(m, "sites", col=ColSp, cex=0.5, scaling=3)
+text(m, "species", col=1, cex=1, scaling=3)
+text(m, display="bp", col=4, cex=0.8, scaling=3)
+dev.off()
+
+pdf(paste0("~/Dropbox/abmi/10yr/sector/Rout/triplot-pts-", NAM, ".pdf"))
+plot(m, scaling=3, type="none", main=NAM)
+#text(m, "sites", col=ColSp, cex=0.5, scaling=3)
+points(m, "sites", col=ColSp, scaling=3)
 text(m, "species", col=1, cex=1, scaling=3)
 text(m, display="bp", col=4, cex=0.8, scaling=3)
 dev.off()
