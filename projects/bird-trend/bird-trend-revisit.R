@@ -188,3 +188,6 @@ plot(tmp)
 cor(tmp)
 
 
+save(x, xt, xt10_rf, xt3_rf, xt3_sm, X0, XR, P0, PR, T, zz,
+    file="BirdRevisitData.Rdata")
+
