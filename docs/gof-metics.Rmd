@@ -1,0 +1,118 @@
+---
+title: "GoF metrics"
+author: "Peter Solymos"
+date: "May 4, 2017"
+output: pdf_document
+---
+
+## Deviance R-squared
+
+* Null deviance: 2*(ll_saturated - ll_null)
+* Null deviance df: df_sturated - df_null = n-1
+* Residual deviance: 2*(ll_saturated - ll_full)
+* Residual deviance df: df_sturated - df_full = n-(p+1)
+
+Need to further adjust when null model includes more than the intercept.
+
+p is the number of coefficients not including the intercept.
+
+H0: the null model (no predictors other than a constant term) fits 
+the data at least as well as our model.
+
+H1: full model fits the data better than the null model.
+
+```{r}
+library(ResourceSelection)
+
+fun_R2 <-
+function(observed, fitted, distr=c("binomial", "poisson"),
+size=1, null=NULL, p=0, alpha=0.05)
+{
+    distr <- match.arg(distr)
+    if (is.null(null))
+        null <- mean(observed)
+    if (distr == "poisson") {
+        ll0 <- sum(dpois(observed, null, log=TRUE))
+        lls <- sum(dpois(observed, observed, log=TRUE))
+        llf <- sum(dpois(observed, fitted, log=TRUE))
+    } else {
+        ll0 <- sum(dbinom(observed, size, null, log=TRUE))
+        lls <- sum(dbinom(observed, size, observed, log=TRUE))
+        llf <- sum(dbinom(observed, size, fitted, log=TRUE))
+    }
+    n <- length(observed)
+    R2 <- 1 - (lls - llf) / (lls - ll0)
+    R2adj <- 1 - (1 - R2) * ((n-1) / (n-(p+1)))
+    D0 <- -2 * (ll0 - lls)
+    DR <- -2 * (llf - lls)
+    p_value <- 1 - pchisq(D0 - DR, p)
+    list(R2=R2, R2adj=R2adj, Deviance=D0 - DR, Dev0=D0, DevR=DR, p=p,
+        p_value=p_value)
+}
+
+y <- c(0, 1, 2, 0, 1, 2, 7, 3, 14, 4)
+x <- 1:10
+m <- glm(y ~ x, family=poisson)
+fit <- fitted(m)
+summary(m)
+fun_R2(y, fit, "poisson", p=1)
+anova(m, test="Chisq")
+fun_R2(y, rev(fit), "poisson", p=1)
+
+y <- c(0, 0, 1, 0, 1, 0, 1, 1, 1, 1)
+x <- 1:10
+m <- glm(y ~ x, family=binomial)
+fit <- fitted(m)
+summary(m)
+fun_R2(y, fit, "binomial", p=1)
+fun_R2(y, rev(fit), "binomial", p=1)
+
+hoslem.test(y, fit) # p>0.05: no evidence for poor fit
+hoslem.test(y, rev(fit)) # p<0.05: evidence for poor fit
+
+```
+
+## ROC and AUC
+
+```{r}
+library(pROC)
+y <- c(0, 0, 1, 0, 1, 0, 1, 1, 1, 1)
+x <- 1:10
+m <- glm(y ~ x, family=binomial)
+fit <- fitted(m)
+
+ROC <- roc(y, fit)
+ROC
+plot(ROC)
+## extract AUC without the fanfare
+as.numeric(ROC$auc)
+```
+
+## Concordance
+
+```{r}
+library(epiR)
+y <- rep(c(0, 0, 1, 0, 1, 0, 1, 1, 1, 1), 10)
+x <- as.factor(rep(1:10, 10))
+m <- glm(y ~ x, family=binomial)
+
+B <- cbind(1:10, replicate(19, sample.int(10, 10, replace=TRUE)))
+fit <- apply(B, 2, function(z) 
+    fitted(glm(y ~ x, data=data.frame(y=y, x=x)[z,], family=binomial)))
+epi.occc(fit)
+```
+
+
+## References
+
+Hosmer D W, Lemeshow S 2000. Applied Logistic Regression. New York, USA: John Wiley and Sons.
+
+Hastie, T. J. and Pregibon, D. (1992) Generalized linear models. Chapter 6 of Statistical Models in S eds J. M. Chambers and T. J. Hastie, Wadsworth & Brooks/Cole.
+
+Xavier Robin, Natacha Turck, Alexandre Hainard, et al. (2011) pROC: an open-source package for R and S+ to analyze and compare ROC curves. BMC Bioinformatics, 7, 77. DOI: 10.1186/1471-2105-12-77.
+
+Barnhart H X, Haber M, Song J (2002). Overall concordance correlation coefficient for evaluating agreement among multiple observers. Biometrics 58: 1020 - 1027.
+
+Lin L (1989). A concordance correlation coefficient to evaluate reproducibility. Biometrics 45: 255 - 268.
+
+Lin L (2000). A note on the concordance correlation coefficient. Biometrics 56: 324 - 325.
