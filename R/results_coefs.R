@@ -1312,7 +1312,9 @@ smin <- apply(nn, 1, min)
 boxplot(aru[smin >= 5, ])
 plotrix::ladderplot(aru[smin >= 5, ], pch=NA)
 
-plot(density(aru[smin >= 5,"ARU3SM"]/aru[smin >= 5,"ARU3RF"]))
-summary(aru[smin >= 5,"ARU3SM"]/aru[smin >= 5,"ARU3RF"])
+MIN <- 10
+plot(density(aru[smin >= MIN,"ARU3SM"]/aru[smin >= MIN,"ARU3RF"]))
+summary(aru[smin >= MIN,"ARU3SM"]/aru[smin >= MIN,"ARU3RF"])
 
 ## this is too small -- use SVW and YIP
+
