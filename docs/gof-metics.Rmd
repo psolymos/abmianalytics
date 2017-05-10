@@ -37,7 +37,7 @@ size=1, null=NULL, p=0, alpha=0.05)
         llf <- sum(dpois(observed, fitted, log=TRUE))
     } else {
         ll0 <- sum(dbinom(observed, size, null, log=TRUE))
-        lls <- sum(dbinom(observed, size, observed, log=TRUE))
+        lls <- sum(dbinom(observed, size, observed/size, log=TRUE))
         llf <- sum(dbinom(observed, size, fitted, log=TRUE))
     }
     n <- length(observed)
@@ -116,3 +116,17 @@ Barnhart H X, Haber M, Song J (2002). Overall concordance correlation coefficien
 Lin L (1989). A concordance correlation coefficient to evaluate reproducibility. Biometrics 45: 255 - 268.
 
 Lin L (2000). A note on the concordance correlation coefficient. Biometrics 56: 324 - 325.
+
+
+```{r eval=FALSE}
+load("e:/peter/AB_data_v2017/misc/Deviance-test-data.RData")
+rownames(d) <- d$SiteYear
+all(rownames(Site.Prediction) == rownames(d))
+
+obs <- as.matrix(d[,colnames(Site.Prediction)])
+pred <- as.matrix(Site.Prediction)
+Size <- d$TotalNoOfQU
+
+i <- 1
+fun_R2(obs[,i], pred[,i], distr="binomial", size=Size, p=1)
+```
