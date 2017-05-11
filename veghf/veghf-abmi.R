@@ -149,7 +149,15 @@ save(dd_10m, dd_150m, dd_564m, xx,
     file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_CamARUBird_v6-fixage0.Rdata"))
 
+## check classes:
 
+#load(file.path(ROOT, VER, "data", "analysis", "site",
+#    "veg-hf_CamARUBird_v6-fixage0.Rdata"))
+load(file.path(ROOT, VER, "data", "analysis", "site",
+    "veg-hf_siteCenter_v6-fixage0.Rdata"))
+
+zz <- data.frame(x=colMeans(dd_1ha[[1]]))
+zz$x <- round(100 * zz$x / sum(zz$x), 2)
 
 
 d$Site_YEAR <- with(d, interaction(ABMI_ID_WithB, survey_year, sep="_", drop=TRUE))
