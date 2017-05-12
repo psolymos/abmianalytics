@@ -109,12 +109,36 @@ ch2veg$uplow <- as.factor(ifelse(ch2veg$rf %in% c("BSpr0", "BSpr1", "BSpr2", "BS
     "BSpr7", "BSpr8", "BSpr9", "BSprR", "Larch0", "Larch1", "Larch2", "Larch3",
     "Larch4", "Larch5", "Larch6", "Larch7", "Larch8", "Larch9", "LarchR",
     "WetGrassHerb", "WetShrub"), "lowland", "upland"))
+ch2veg$isHF <- ch2veg$cr %in% c("BorrowpitsDugoutsSumps",
+    "Canals", "CCConif0", "CCConif1", "CCConif2", "CCConif3", "CCConif4",
+    "CCConifR", "CCDecid0", "CCDecid1", "CCDecid2", "CCDecid3", "CCDecid4",
+    "CCDecidR", "CCMixwood0", "CCMixwood1", "CCMixwood2", "CCMixwood3",
+    "CCMixwood4", "CCMixwoodR", "CCPine0", "CCPine1", "CCPine2",
+    "CCPine3", "CCPine4", "CCPineR",
+    "CultivationCropPastureBareground", "HighDensityLivestockOperation",
+    "IndustrialSiteRural",
+    "MineSite",
+    "MunicipalWaterSewage", "OtherDisturbedVegetation",
+    "PeatMine", "Pipeline", "RailHardSurface",
+    "RailVegetatedVerge", "Reservoirs", "RoadHardSurface", "RoadTrailVegetated",
+    "RoadVegetatedVerge", "RuralResidentialIndustrial", "SeismicLine",
+    "TransmissionLine", "Urban", "WellSite",
+    "WindGenerationFacility")
 
 ch2soil <- t(sapply(strsplit(colnames(trSoil), "->"),
     function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
 ch2soil <- data.frame(ch2soil)
 colnames(ch2soil) <- c("rf","cr")
 rownames(ch2soil) <- colnames(Asoil)
+ch2soil$isHF <- ch2soil$cr %in% c("BorrowpitsDugoutsSumps", "Canals",
+    "CultivationCropPastureBareground",
+    "CutBlocks", "HighDensityLivestockOperation", "IndustrialSiteRural",
+    "MineSite", "MunicipalWaterSewage", "OtherDisturbedVegetation",
+    "PeatMine", "Pipeline", "RailHardSurface", "RailVegetatedVerge",
+    "Reservoirs", "RoadHardSurface", "RoadTrailVegetated",
+    "RoadVegetatedVerge", "RuralResidentialIndustrial",
+    "SeismicLine", "TransmissionLine",
+    "Urban", "WellSite", "WindGenerationFacility")
 
 lxn <- nonDuplicated(kgrid[,c("LUF_NAME","NRNAME","NSRNAME")], kgrid$LUFxNSR, TRUE)
 lxn$N <- lxn$NRNAME != "Grassland" & lxn$NRNAME != "Rocky Mountain" &
@@ -470,6 +494,7 @@ tr_res <- list()
 ## add col to lxn
 ## subset counter for loop
 
+restrict_to_HF <- FALSE
 
 for (spp in SPP) {
 
@@ -551,9 +576,22 @@ uplow_luf[[spp]] <- data.frame(ID=spp, Ref=round(rf), Cur=round(cr),
     SI=round(si, 2), SI200=round(si2, 2))
 }
 
+## for HF-only sector effects, only need to adjust the total
+## i.e. sum only where ch2veg$cr is HF
+keep <- rownames(ch2veg) %in% rownames(ch2veg)[ch2veg$isHF]
+hbNcr_HFonly <- hbNcr
+hbNrf_HFonly <- hbNrf
+hbNcr_HFonly[,!keep] <- 0
+hbNrf_HFonly[,!keep] <- 0
+ThbNcr_HFonly <- colSums(hbNcr_HFonly[lxn$N,])
+ThbNrf_HFonly <- colSums(hbNrf_HFonly[lxn$N,])
 ThbNcr <- colSums(hbNcr[lxn$N,])
 ThbNrf <- colSums(hbNrf[lxn$N,])
-df <- (ThbNcr - ThbNrf) / sum(ThbNrf)
+Ntot_HFonly <- sum(ThbNrf_HFonly)
+Ntot_All <- sum(ThbNrf)
+Ntot_Use <- if (restrict_to_HF)
+    Ntot_HFonly else Ntot_All
+df <- (ThbNcr - ThbNrf) / Ntot_Use
 dA <- Xtab(AvegN ~ rf + cr, ch2veg)
 if (FALSE) {
     tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
@@ -576,9 +614,20 @@ seffN <- cbind(dA=dA, dN=dN, U=U)[c("Agriculture","Forestry",
     "Energy",#"EnergySoftLin","MineWell",
     "RuralUrban","Transportation"),]
 
+keep <- rownames(ch2soil) %in% rownames(ch2soil)[ch2soil$isHF]
+hbScr_HFonly <- hbScr
+hbSrf_HFonly <- hbSrf
+hbScr_HFonly[,!keep] <- 0
+hbSrf_HFonly[,!keep] <- 0
+ThbScr_HFonly <- colSums(hbScr_HFonly[lxn$S,])
+ThbSrf_HFonly <- colSums(hbSrf_HFonly[lxn$S,])
 ThbScr <- colSums(hbScr[lxn$S,])
 ThbSrf <- colSums(hbSrf[lxn$S,])
-df <- (ThbScr - ThbSrf) / sum(ThbSrf)
+Stot_HFonly <- sum(ThbSrf_HFonly)
+Stot_All <- sum(ThbSrf)
+Stot_Use <- if (restrict_to_HF)
+    Stot_HFonly else Stot_All
+df <- (ThbScr - ThbSrf) / Stot_Use
 dA <- Xtab(AsoilS ~ rf + cr, ch2soil)
 dN <- Xtab(df ~ rf + cr, ch2soil)
 #dA <- colSums(as.matrix(groupSums(dA[,rownames(ts)], 2, ts$Sector2)))
@@ -591,15 +640,18 @@ seffS <- cbind(dA=dA, dN=dN, U=U)[c("Agriculture","Forestry",
     "RuralUrban","Transportation"),]
 seff_res[[spp]] <- list(N=seffN, S=seffS)
 tr_res[[spp]] <- list(N=cbind(rf=ThbNrf, cr=ThbNcr), S=cbind(rf=ThbSrf, cr=ThbScr),
-    NSest=NSest)
+    NSest=NSest, total=c(Ntot_All=Ntot_All, Stot_All=Stot_All,
+    Ntot_HFonly=Ntot_HFonly, Stot_HFonly=Stot_HFonly))
 #(sum(hbNcr)-sum(hbNrf))/sum(hbNrf)
 #(sum(km$CurrN)-sum(km$RefN))/sum(km$RefN)
 #100*seff
 
 }
 
-#save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects.Rdata"))
-load(file.path(ROOT, "out", "birds", "tables", "sector-effects.Rdata"))
+## -new version has the HFonly pop sizes saved
+## can be used to retro-fit the effects
+#save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects-new.Rdata"))
+load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new.Rdata"))
 
 nres <- list()
 sres <- list()
@@ -637,8 +689,14 @@ sector.names <- c("Agriculture","Forestry",
 ## The colours for each sector above
 c1 <- c("tan3","palegreen4","indianred3",#"hotpink4",
     "skyblue3","slateblue2")
-total.effect <- 100 * SEFF[sectors,"dN"]
-unit.effect <- 100 * SEFF[sectors,"U"]
+
+TOTALS <- if (WHERE=="north")
+    tr_res[[spp]]$total[c("Ntot_All", "Ntot_HFonly")] else tr_res[[spp]]$total[c("Stot_All", "Stot_HFonly")]
+SCALING <- if (restrict_to_HF)
+    TOTALS[1]/TOTALS[2] else 1
+total.effect <- 100 * SCALING * SEFF[sectors,"dN"]
+#unit.effect <- 100 * SEFF[sectors,"U"]
+unit.effect <- 100 * SCALING * SEFF[sectors,"dN"] / SEFF[sectors,"dA"]
 ## Max y-axis at 20%, 50% or 100% increments
 ## (made to be symmetrical with y-min, except if y-max is >100
 ymax <- ifelse(max(abs(unit.effect))<20,20,
@@ -653,7 +711,8 @@ ymin <- min(ymin,min(unit.effect)-0.08*(max(unit.effect,0)-min(unit.effect)))
 NAM <- as.character(tax[spp, "English_Name"])
 TAG <- ""
 
-png(file.path(ROOT, "out", "birds", "figs", paste0("sector-", WHERE),
+png(file.path(ROOT, "out", "birds", "figs",
+    paste0("sector-", if (restrict_to_HF) "HFonly-" else "", WHERE),
     paste0(as.character(tax[spp, "Spp"]), TAG, ".png")),
     width=600, height=600)
 

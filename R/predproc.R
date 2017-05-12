@@ -8,6 +8,15 @@ OUTDIR_3x7 <- "e:/peter/AB_data_v2016/out/birds/pred3x7"
 shf <- FALSE # surrounding HF
 do1 <- TRUE # do only 1st run
 doB <- TRUE # do bootstrap
+restrict_to_HF <- FALSE # if TRUE, all non-HF area is 0-ed out
+
+if (restrict_to_HF) {
+    do1 <- TRUE
+    doB <- FALSE
+    shf <- FALSE
+    OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1_HFonly"
+}
+
 
 do3x7 <- FALSE
 if (do3x7) {
@@ -245,6 +254,22 @@ ch2veg$exclude <- ch2veg$cr %in% c("Water",
 ch2veg$exclude[ch2veg$rf %in% c("Water",
     "Conif0", "Decid0", "Mixwood0", "Pine0", "BSpr0", "Larch0",
     "CCConif0", "CCDecid0", "CCMixwood0", "CCPine0")] <- TRUE
+ch2veg$isHF <- ch2veg$cr %in% c("BorrowpitsDugoutsSumps",
+    "Canals", "CCConif0", "CCConif1", "CCConif2", "CCConif3", "CCConif4",
+    "CCConifR", "CCDecid0", "CCDecid1", "CCDecid2", "CCDecid3", "CCDecid4",
+    "CCDecidR", "CCMixwood0", "CCMixwood1", "CCMixwood2", "CCMixwood3",
+    "CCMixwood4", "CCMixwoodR", "CCPine0", "CCPine1", "CCPine2",
+    "CCPine3", "CCPine4", "CCPineR",
+    "CultivationCropPastureBareground", "HighDensityLivestockOperation",
+    "IndustrialSiteRural",
+    "MineSite",
+    "MunicipalWaterSewage", "OtherDisturbedVegetation",
+    "PeatMine", "Pipeline", "RailHardSurface",
+    "RailVegetatedVerge", "Reservoirs", "RoadHardSurface", "RoadTrailVegetated",
+    "RoadVegetatedVerge", "RuralResidentialIndustrial", "SeismicLine",
+    "TransmissionLine", "Urban", "WellSite",
+    "WindGenerationFacility")
+
 
 ch2soil <- t(sapply(strsplit(colnames(trSoil), "->"),
     function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
@@ -276,6 +301,16 @@ ch2soil$exclude <- ch2soil$cr %in% c("SoilWater","SoilUnknown",
 ch2soil$exclude[ch2soil$rf %in% c("SoilWater","SoilUnknown",
     "Conif0", "Decid0", "Mixwood0", "Pine0", "BSpr0", "Larch0",
     "CCConif0", "CCDecid0", "CCMixwood0", "CCPine0")] <- TRUE
+ch2soil$isHF <- ch2soil$cr %in% c("BorrowpitsDugoutsSumps", "Canals",
+    "CultivationCropPastureBareground",
+    "CutBlocks", "HighDensityLivestockOperation", "IndustrialSiteRural",
+    "MineSite", "MunicipalWaterSewage", "OtherDisturbedVegetation",
+    "PeatMine", "Pipeline", "RailHardSurface", "RailVegetatedVerge",
+    "Reservoirs", "RoadHardSurface", "RoadTrailVegetated",
+    "RoadVegetatedVerge", "RuralResidentialIndustrial",
+    "SeismicLine", "TransmissionLine",
+    "Urban", "WellSite", "WindGenerationFacility")
+
 
 XNhab <- as.matrix(read.csv("~/repos/abmianalytics/lookup/xn-veg-noburn.csv"))
 colnames(XNhab) <- gsub("\\.", ":", colnames(XNhab))
@@ -480,6 +515,11 @@ if (do1) {
  #       D_hab_cr[ch2veg$exclude] <- 0
  #       D_hab_rf[ch2veg$exclude] <- 0
  #   }
+    if (restrict_to_HF) {
+        D_hab_cr[!ch2veg$isHF] <- 0
+        D_hab_rf[!ch2veg$isHF] <- 0
+    }
+
     AD_cr <- t(D_hab_cr * t(Aveg1)) * exp(logPNclim1[,j])
     AD_rf <- t(D_hab_rf * t(Aveg1)) * exp(logPNclim01[,j])
     pxNcr1[,j] <- rowSums(AD_cr)
@@ -503,6 +543,12 @@ if (do1) {
     ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption) --- ?????
     if (any(ch2soil$CutLine))
         D_hab_cr[ch2soil$CutLine] <- D_hab_rf[ch2soil$CutLine]
+
+    if (restrict_to_HF) {
+        D_hab_cr[!ch2soil$isHF] <- 0
+        D_hab_rf[!ch2soil$isHF] <- 0
+    }
+
     AD_cr <- t(D_hab_cr * t(Asoil1)) * exp(logPSclim1[,j])
     AD_rf <- t(D_hab_rf * t(Asoil1)) * exp(logPSclim01[,j])
     ## pAspen based weighted average
