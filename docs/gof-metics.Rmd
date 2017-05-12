@@ -16,7 +16,7 @@ Need to further adjust when null model includes more than the intercept.
 
 p is the number of coefficients not including the intercept.
 
-H0: the null model (no predictors other than a constant term) fits 
+H0: the null model (no predictors other than a constant term) fits
 the data at least as well as our model.
 
 H1: full model fits the data better than the null model.
@@ -29,13 +29,15 @@ function(observed, fitted, distr=c("binomial", "poisson"),
 size=1, null=NULL, p=0, alpha=0.05)
 {
     distr <- match.arg(distr)
-    if (is.null(null))
-        null <- mean(observed)
     if (distr == "poisson") {
+        if (is.null(null))
+            null <- mean(observed)
         ll0 <- sum(dpois(observed, null, log=TRUE))
         lls <- sum(dpois(observed, observed, log=TRUE))
         llf <- sum(dpois(observed, fitted, log=TRUE))
     } else {
+        if (is.null(null))
+            null <- mean(observed/size)
         ll0 <- sum(dbinom(observed, size, null, log=TRUE))
         lls <- sum(dbinom(observed, size, observed/size, log=TRUE))
         llf <- sum(dbinom(observed, size, fitted, log=TRUE))
@@ -97,7 +99,7 @@ x <- as.factor(rep(1:10, 10))
 m <- glm(y ~ x, family=binomial)
 
 B <- cbind(1:10, replicate(19, sample.int(10, 10, replace=TRUE)))
-fit <- apply(B, 2, function(z) 
+fit <- apply(B, 2, function(z)
     fitted(glm(y ~ x, data=data.frame(y=y, x=x)[z,], family=binomial)))
 epi.occc(fit)
 ```
