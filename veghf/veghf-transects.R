@@ -1,13 +1,56 @@
+HF_VERSION <- "2014_coarse" # load 2014 defs
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
+load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
 
 ### Snow transects -------------------------------------------------------
+
+## 1 km length (250 m buffer) mammal transect (inter level)
+fmi <- file.path(ROOT, VER, "data", "raw", "veghf", "snow", "InterLevel_allYears.csv")
+dmi <- read.csv(fmi)
+dmi$Site_YEAR_tr <- with(dmi,
+    interaction(ABMISite, year, interLevel, sep="_", drop=TRUE))
+hfdiff <- setdiff(levels(dmi$FEATURE_TY), c("", rownames(hflt)))
+cat(sort(unique(unlist(hfdiff))), sep="\n")
+ddmi <- make_vegHF_wide_v6(dmi,
+    col.label="Site_YEAR_tr",
+    col.year="year",
+    col.HFyear="year_1",
+    sparse=TRUE, HF_fine=FALSE) # don't use refined classes
+ddmi$scale <- "inter level mammal transects"
+dx <- nonDuplicated(dmi, Site_YEAR_tr, TRUE)[rownames(ddmi[[1]]),]
+ddmi <- fill_in_0ages_v6(ddmi, dx$NSRNAME, ages_list)
+
+## 9-10 km length (250 m buffer) mammal transect (full transect level)
+fmt <- file.path(ROOT, VER, "data", "raw", "veghf", "snow", "TranLevel_allYears.csv")
+dmt <- read.csv(fmt)
+dmt$Site_YEAR <- with(dmt, interaction(ABMISite, year, sep="_", drop=TRUE))
+## strange site issue: "394-2005_2005" --> "394-2005_2006"
+#levels(dmt$Site_YEAR)[levels(dmt$Site_YEAR)=="394-2005_2005"] <- "394-2005_2006"
+ddmt <- make_vegHF_wide_v6(dmt,
+    col.label="Site_YEAR",
+    col.year="year",
+    col.HFyear="year_1",
+    sparse=TRUE, HF_fine=FALSE) # don't use refined classes
+ddmt$scale <- "full transect level mammal transects"
+dx <- nonDuplicated(dmt, Site_YEAR, TRUE)[rownames(ddmt[[1]]),]
+ddmt <- fill_in_0ages_v6(ddmt, dx$NSRNAME, ages_list)
+
+save(ddmi, ddmt,
+    file=file.path(ROOT, VER, "data", "analysis",
+    "veg-hf_mammals_v6-fixage0.Rdata"))
+
+
+
+
+
+
 
 ## 1 km length (250 m buffer) mammal transect (inter level)
 fmi <- file.path(ROOT, VER, "data/veghf", "InterLevel_SRDFireFix.csv")
 dmi <- read.csv(fmi)
 dmi$Site_YEAR_tr <- with(dmi, interaction(ABMISite, survey_year, interLevel, sep="_", drop=TRUE))
 head(dmi)
-ddmi <- make_vegHF_wide(dmi, col.label = "Site_YEAR_tr", 
+ddmi <- make_vegHF_wide(dmi, col.label = "Site_YEAR_tr",
     col.year="survey_year", col.HFyear="year_")
 ddmi$scale <- "inter level mammal transects"
 
@@ -18,7 +61,7 @@ dmt$Site_YEAR <- with(dmt, interaction(ABMISite, survey_year, sep="_", drop=TRUE
 ## strange site issue: "394-2005_2005" --> "394-2005_2006"
 levels(dmt$Site_YEAR)[levels(dmt$Site_YEAR)=="394-2005_2005"] <- "394-2005_2006"
 head(dmt)
-ddmt <- make_vegHF_wide(dmt, col.label = "Site_YEAR", 
+ddmt <- make_vegHF_wide(dmt, col.label = "Site_YEAR",
     col.year="survey_year", col.HFyear="year_")
 ddmt$scale <- "full transect level mammal transects"
 
@@ -31,13 +74,13 @@ seg$Site_Inter <- with(seg, interaction(Site, Inter, sep="_", drop=TRUE))
 seg$OnOffGrid <- as.factor(ifelse(substr(sapply(tmp, "[[", 1), 1, 2) == "OG", "OG", "IG"))
 
 ## mammal stuff
-clim3 <- read.csv(file.path(ROOT, VER, "data/climate", 
+clim3 <- read.csv(file.path(ROOT, VER, "data/climate",
     "mamTrack_interLevel_latLong_climate_naturalReg_V2.csv"))
 colnames(clim3)[colnames(clim3) == "Eref"] <- "PET"
 colnames(clim3)[colnames(clim3) == "Populus_tremuloides_brtpred_nofp"] <- "pAspen"
 clim3$Site_Inter <- with(clim3, interaction(ABMISite, interLevel, sep="_", drop=TRUE))
 clim3$Year <- seg$survey_year[match(clim3$Site_Inter, seg$Site_Inter)]
-clim3$Site_Year_Inter <- with(clim3, 
+clim3$Site_Year_Inter <- with(clim3,
     interaction(ABMISite, Year, interLevel, sep="_", drop=TRUE))
 clim3$Site_Inter[is.na(clim3$Site_Year_Inter)]
 clim3 <- droplevels(clim3[!is.na(clim3$Site_Year_Inter),])
@@ -48,7 +91,7 @@ compare.sets(rownames(clim3), rownames(ddmi$veg_current))
 
 seg2 <- nonDuplicated(clim3, Site_Year, TRUE)
 seg2 <- seg2[,c("ABMISite","interLevel","Site_Inter","Year","Site_Year_Inter","Site_Year")]
-clim4 <- read.csv(file.path(ROOT, VER, "data/climate", 
+clim4 <- read.csv(file.path(ROOT, VER, "data/climate",
     "mamTrack_latLong_climate_naturalReg_V2.csv"))
 colnames(clim4)[colnames(clim4) == "Eref"] <- "PET"
 colnames(clim4)[colnames(clim4) == "Populus_tremuloides_brtpred_nofp"] <- "pAspen"
@@ -95,7 +138,7 @@ inter$YearFunny <- paste0("-", as.character(inter$Year))
 inter$YearFunny[grep("-ILM-", as.character(inter$Site))] <- ""
 inter$SiteYear <- paste0(inter$SiteFunny, inter$YearFunny)
 compare.sets(inter$SiteYear, climInter$ABMISite)
-inter$Site_Year_Inter <- with(inter, interaction(SiteYear, Year, InterSegID, 
+inter$Site_Year_Inter <- with(inter, interaction(SiteYear, Year, InterSegID,
     sep="_", drop=TRUE))
 compare.sets(inter$Site_Year_Inter, climInter$Site_Year_Inter)
 setdiff(inter$Site_Year_Inter, climInter$Site_Year_Inter)
@@ -103,12 +146,12 @@ setdiff(climInter$Site_Year_Inter, inter$Site_Year_Inter)
 
 climInter$label_int <- as.character(inter$label_int)[match(climInter$Site_Year_Inter,
     inter$Site_Year_Inter)]
-climInter$label_int[is.na(climInter$label_int)] <- 
+climInter$label_int[is.na(climInter$label_int)] <-
     as.character(climInter$Site_Year_Inter)[is.na(climInter$label_int)]
 
 climInter$label_tr <- as.character(inter$label_tr)[match(climInter$Site_Year_Inter,
     inter$Site_Year_Inter)]
-climInter$label_tr[is.na(climInter$label_tr)] <- 
+climInter$label_tr[is.na(climInter$label_tr)] <-
     as.character(climInter$Site_Year)[is.na(climInter$label_tr)]
 climInter$label_int <- as.factor(climInter$label_int)
 climInter$label_tr <- as.factor(climInter$label_tr)
@@ -126,7 +169,7 @@ all(rownames(climTr) == rownames(ddmt[[1]]))
 load(file.path(ROOT, VER, "out/kgrid", "veg-hf_avgages_fix-fire.Rdata"))
 
 ## ddmi, ddmt, climInter, climTr
-load(file.path(ROOT, VER, "out/abmi_onoff", 
+load(file.path(ROOT, VER, "out/abmi_onoff",
     "veg-hf-clim-reg_mammals-onoff_fix-fire.Rdata"))
 
 sum(ddmi[[1]][,Target0])
@@ -139,6 +182,6 @@ sum(ddmt[[1]][,Target0])
 
 if (SAVE)
     save(ddmi, ddmt, climInter, climTr,
-        file=file.path(ROOT, VER, "out/abmi_onoff", 
+        file=file.path(ROOT, VER, "out/abmi_onoff",
         "veg-hf-clim-reg_mammals-onoff_fix-fire_fix-age0.Rdata"))
 

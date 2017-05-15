@@ -653,6 +653,23 @@ tr_res[[spp]] <- list(N=cbind(rf=ThbNrf, cr=ThbNcr), S=cbind(rf=ThbSrf, cr=ThbSc
 #save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects-new.Rdata"))
 load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new.Rdata"))
 
+#spp <- "ALFL"
+seff_loc <- list()
+for (spp in names(tr_res)) {
+    seff_l <- groupSums(as.matrix(tr_res[[spp]]$N)[ch2veg$isHF,], 1,
+        as.character(ch2veg$cr[ch2veg$isHF]))
+    seff_loc[[spp]] <- groupSums(seff_l, 1, tv[rownames(seff_l), "Sector"])
+}
+seff2 <- t(sapply(seff_loc, function(z) (z[,"cr"]-z[,"rf"])/sum(z[,"rf"])))
+seff2 <- seff2[,rownames(seff_res[[1]]$N)]
+seff1 <- t(sapply(seff_res, function(z) z$N[,"dN"]))
+
+par(mfrow=c(1,2))
+boxplot(100*seff1, ylim=c(-10, 10), ylab="% change inside region");abline(h=0)
+boxplot(100*seff2, ylim=c(-100, 100), ylab="% change inside HF");abline(h=0)
+
+
+
 nres <- list()
 sres <- list()
 for (spp in names(seff_res)) {
