@@ -1,7 +1,9 @@
 HF_VERSION <- "2014_coarse" # load 2014 defs
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
-#meta <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+meta <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+
+recl <- recl[,1:2]
 
 ### ABMI on+off grid sites 1 ha ------------------------------------------------
 
@@ -79,6 +81,32 @@ compare_sets(xx$Label2, zzz)
 setdiff(xx$Label2, zzz)
 setdiff(zzz, xx$Label2)
 }
+
+## XY for sites based on nearest IG site
+xx$NearestOnGridSite <- 0
+xx$isBsite <- FALSE
+for (i in 1:nrow(xx)) {
+    tmp <- as.character(xx$ABMI_Assigned_Site_ID[i])
+    if (xx$OnOffGrid[i] == "OG") {
+        xx$NearestOnGridSite[i] <- as.integer(strsplit(tmp, "-")[[1]][3])
+    } else {
+        if (endsWith(tmp, "B")) {
+            xx$NearestOnGridSite[i] <- as.integer(substr(tmp, 1, nchar(tmp)-1))
+            xx$isBsite[i] <- TRUE
+        } else {
+            xx$NearestOnGridSite[i] <- as.integer(tmp)
+        }
+    }
+}
+summary(xx)
+xx[is.na(xx$NearestOnGridSite),]
+xx <- data.frame(xx, meta[match(xx$NearestOnGridSite, meta$SITE_ID),])
+summary(xx)
+
+#climSite$Site<-ifelse(climSite$Site=="OG-ABMI-1054-11","OG-ABMI-1054-2",climSite$Site)  # Apparent typo
+#climSite$Site<-ifelse(climSite$Site=="OG-ABMI-1122-11","OG-ABMI-1122-2",climSite$Site)  # Apparent typo
+#climSite$Site<-ifelse(climSite$Site=="OG-ABMI-1190-11","OG-ABMI-1190-2",climSite$Site)  # Apparent typo
+#climSite$Site<-ifelse(climSite$Site=="OG-ABMI-1331-11","OG-ABMI-1331-2",climSite$Site)  # Apparent typo
 
 save(dd_1ha, dd_150m, dd_564m, xx,
     file=file.path(ROOT, VER, "data", "analysis", "site",
