@@ -3,8 +3,6 @@ source("~/repos/abmianalytics/veghf/veghf-setup.R")
 load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
 meta <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 
-recl <- recl[,1:2]
-
 ### ABMI on+off grid sites 1 ha ------------------------------------------------
 
 ## ABMI sites (on+off) cetre

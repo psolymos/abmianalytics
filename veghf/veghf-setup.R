@@ -42,6 +42,7 @@ Target0 <- c("Conif0", "Decid0", "Mixwood0", "Pine0",
     "Wetland-BSpr0", "Wetland-Decid0", "Wetland-Larch0")
 
 recl <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-v6-comb.csv")
+recl <- recl[,1:2]
 
 VEG_LEVS <- c(
     "Alkali",
