@@ -668,6 +668,20 @@ par(mfrow=c(1,2))
 boxplot(100*seff1, ylim=c(-10, 10), ylab="% change inside region");abline(h=0)
 boxplot(100*seff2, ylim=c(-100, 100), ylab="% change inside HF");abline(h=0)
 
+d1 <- apply(100*seff1, 2, density, na.rm=TRUE)
+d2 <- apply(100*seff2, 2, density, na.rm=TRUE)
+for (i in 1:5) {
+    d1[[i]]$y <- d1[[i]]$y/max(d1[[i]]$y)
+    d2[[i]]$y <- d2[[i]]$y/max(d2[[i]]$y)
+}
+par(mfrow=c(1,2))
+plot(d1[[1]], xlim=c(-50,50), main="% change inside region", lwd=2)
+for (i in 2:5) lines(d1[[i]], col=i, lwd=2)
+abline(v=0)
+plot(d2[[1]], xlim=c(-50,50), main="% change inside HF", lwd=2)
+for (i in 2:5) lines(d1[[i]], col=i, lwd=2)
+abline(v=0)
+legend("topright", lty=1, col=1:5, bty="n", legend=colnames(seff2), lwd=2)
 
 
 nres <- list()
