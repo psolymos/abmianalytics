@@ -1,13 +1,18 @@
 library(mefa4)
 
 ROOT <- "e:/peter/AB_data_v2016"
-OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1"
+#OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1"
+OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1-seismic-as-ES"
+OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1-shf"
 OUTDIRB <- "e:/peter/AB_data_v2016/out/birds/predB"
 OUTDIR_3x7 <- "e:/peter/AB_data_v2016/out/birds/pred3x7"
 
-shf <- FALSE # surrounding HF
+shf <- TRUE # surrounding HF
 do1 <- TRUE # do only 1st run
-doB <- TRUE # do bootstrap
+doB <- FALSE # do bootstrap
+## seismic lines can be treated as early seral when no surrounding effects considered
+## or apply the backfilled value when surrounding hf is considered
+SEISMIC_AS_EARLY_SERAL <- FALSE
 restrict_to_HF <- FALSE # if TRUE, all non-HF area is 0-ed out
 
 if (restrict_to_HF) {
@@ -16,7 +21,6 @@ if (restrict_to_HF) {
     shf <- FALSE
     OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1_HFonly"
 }
-
 
 do3x7 <- FALSE
 if (do3x7) {
@@ -242,9 +246,12 @@ ch2veg$HardLin <- ch2veg$cr %in% c("RailHardSurface","RailVegetatedVerge",
 ch2veg$VegetatedLinear <- ch2veg$cr %in% c("RailVegetatedVerge",
     "RoadTrailVegetated","RoadVegetatedVerge",
     "SeismicLine","TransmissionLine","Pipeline")
-ch2veg$EarlySeralLinear <- ch2veg$cr %in% c("RailVegetatedVerge",
+EARLY_SERAL <- c("RailVegetatedVerge",
     "RoadTrailVegetated","RoadVegetatedVerge",
     "TransmissionLine","Pipeline")
+if (SEISMIC_AS_EARLY_SERAL)
+    EARLY_SERAL <- c(EARLY_SERAL, "SeismicLine")
+ch2veg$EarlySeralLinear <- ch2veg$cr %in% EARLY_SERAL
 ch2veg$CutLine <- ch2veg$cr == "SeismicLine"
 ## nonveg is terrestrial stratum, do not exclude here
 ## water is not terrestrial, age0 is all redistributed (so =0)
@@ -291,9 +298,7 @@ ch2soil$HardLin <- ch2soil$cr %in% c("RailHardSurface","RailVegetatedVerge",
 ch2soil$VegetatedLinear <- ch2soil$cr %in% c("RailVegetatedVerge",
     "RoadTrailVegetated","RoadVegetatedVerge",
     "SeismicLine","TransmissionLine","Pipeline")
-ch2soil$EarlySeralLinear <- ch2soil$cr %in% c("RailVegetatedVerge",
-    "RoadTrailVegetated","RoadVegetatedVerge",
-    "TransmissionLine","Pipeline")
+ch2soil$EarlySeralLinear <- ch2soil$cr %in% EARLY_SERAL
 ch2soil$CutLine <- ch2soil$cr == "SeismicLine"
 ch2soil$exclude <- ch2soil$cr %in% c("SoilWater","SoilUnknown",
     "Conif0", "Decid0", "Mixwood0", "Pine0", "BSpr0", "Larch0",
@@ -320,6 +325,7 @@ setdiff(ch2veg$cr, rownames(XNhab))
 setdiff(cnnHab, colnames(XNhab))
 
 ## vegetated stuff in linear features is early seral based on backfilled
+## and early seral means that age is 0
 XNhab_es <- XNhab
 XNhab_es[,"fCC2"] <- 0
 XNhab_es[,grepl("wtAge", colnames(XNhab_es))] <- 0
@@ -336,7 +342,11 @@ do_hsh <- FALSE
 #do_veg <- TRUE
 #spp <- SPP
 
-SPP <- union(fln, fls)
+SPP0 <- union(fln, fls)
+TAX <- read.csv("~/repos/abmispecies/_data/birds.csv")
+SPP <- as.character(TAX$AOU)[TAX$map.pred]
+compare_sets(SPP,SPP0)
+
 #SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL","RWBL")
 #SPP <- SPP[!(SPP %in% c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL","RWBL"))]
 
@@ -461,7 +471,6 @@ rs <- rowSums(AsoilB)
 rs[rs <= 0] <- 1
 AsoilB <- AsoilB / rs
 
-
 ## pixel level results, North
 pxNcr1 <- matrix(0, nrow(logPNclim1), 1)
 pxNrf1 <- matrix(0, nrow(logPNclim1), 1)
@@ -496,25 +505,21 @@ if (do1) {
     j <- 1
     ## North
     D_hab_cr <- exp(logPNhab1[match(ch2veg$cr, rownames(logPNhab1)),j])
+    D_hab_rf <- exp(logPNhab1[match(ch2veg$rf, rownames(logPNhab1)),j])
     ## vegetated linear (not cutline) treated as early seral
     if (any(ch2veg$EarlySeralLinear))
         D_hab_cr[ch2veg$EarlySeralLinear] <- exp(logPNhab_es1[match(ch2veg$rf,
             rownames(logPNhab_es1)),j][ch2veg$EarlySeralLinear])
+    ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption) --- ?????
+    if (!SEISMIC_AS_EARLY_SERAL && any(ch2veg$CutLine))
+        D_hab_cr[ch2veg$CutLine] <- D_hab_rf[ch2veg$CutLine]
     ## 0 density where either cr or rf hab is water or hard linear surface
     if (any(ch2veg$cr_zero))
         D_hab_cr[ch2veg$cr_zero] <- 0
     if (any(ch2veg$rf_zero))
         D_hab_cr[ch2veg$rf_zero] <- 0 # things like Water->Road
-    D_hab_rf <- exp(logPNhab1[match(ch2veg$rf, rownames(logPNhab1)),j])
     if (any(ch2veg$rf_zero))
         D_hab_rf[ch2veg$rf_zero] <- 0
-    ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption) --- ?????
-    if (any(ch2veg$CutLine))
-        D_hab_cr[ch2veg$CutLine] <- D_hab_rf[ch2veg$CutLine]
- #   if (any(ch2veg$exclude)) {
- #       D_hab_cr[ch2veg$exclude] <- 0
- #       D_hab_rf[ch2veg$exclude] <- 0
- #   }
     if (restrict_to_HF) {
         D_hab_cr[!ch2veg$isHF] <- 0
         D_hab_rf[!ch2veg$isHF] <- 0
@@ -529,21 +534,21 @@ if (do1) {
 
     ## South
     D_hab_cr <- exp(logPShab1[match(ch2soil$cr, rownames(logPShab1)),j])
+    D_hab_rf <- exp(logPShab1[match(ch2soil$rf, rownames(logPShab1)),j])
     ## vegetated linear (not cutline) treated as early seral
     if (any(ch2soil$EarlySeralLinear))
         D_hab_cr[ch2soil$EarlySeralLinear] <- exp(logPShab1[match(ch2soil$rf,
             rownames(logPShab1)),j][ch2soil$EarlySeralLinear])
+    ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption) --- ?????
+    if (!SEISMIC_AS_EARLY_SERAL && any(ch2soil$CutLine))
+        D_hab_cr[ch2soil$CutLine] <- D_hab_rf[ch2soil$CutLine]
+    ## 0 density where either cr or rf hab is water or hard linear surface
     if (any(ch2soil$cr_zero))
         D_hab_cr[ch2soil$cr_zero] <- 0
     if (any(ch2soil$rf_zero))
         D_hab_cr[ch2soil$rf_zero] <- 0 # things like Water->Road
-    D_hab_rf <- exp(logPShab1[match(ch2soil$rf, rownames(logPShab1)),j])
     if (any(ch2soil$rf_zero))
         D_hab_rf[ch2soil$rf_zero] <- 0
-    ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption) --- ?????
-    if (any(ch2soil$CutLine))
-        D_hab_cr[ch2soil$CutLine] <- D_hab_rf[ch2soil$CutLine]
-
     if (restrict_to_HF) {
         D_hab_cr[!ch2soil$isHF] <- 0
         D_hab_rf[!ch2soil$isHF] <- 0
