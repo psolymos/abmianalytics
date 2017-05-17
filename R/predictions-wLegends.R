@@ -660,9 +660,15 @@ for (spp in names(tr_res)) {
         as.character(ch2veg$cr[ch2veg$isHF]))
     seff_loc[[spp]] <- groupSums(seff_l, 1, tv[rownames(seff_l), "Sector"])
 }
-seff2 <- t(sapply(seff_loc, function(z) (z[,"cr"]-z[,"rf"])/sum(z[,"rf"])))
+#seff2 <- t(sapply(seff_loc, function(z) (z[,"cr"]-z[,"rf"])/sum(z[,"rf"])))
+seff2 <- t(sapply(seff_loc, function(z) (z[,"cr"]-z[,"rf"])/z[,"rf"]))
+#seff2 <- t(sapply(seff_loc, function(z) z[,"cr"]/z[,"rf"] - 1))
 seff2 <- seff2[,rownames(seff_res[[1]]$N)]
 seff1 <- t(sapply(seff_res, function(z) z$N[,"dN"]))
+
+AA <- 100*seff_res[[1]]$N[,"dA"]
+a <- round(100*seff2,1)
+aa <- round(t(t(100*seff2) / AA), 1)
 
 par(mfrow=c(1,2))
 boxplot(100*seff1, ylim=c(-10, 10), ylab="% change inside region");abline(h=0)
@@ -678,7 +684,7 @@ par(mfrow=c(1,2))
 plot(d1[[1]], xlim=c(-50,50), main="% change inside region", lwd=2)
 for (i in 2:5) lines(d1[[i]], col=i, lwd=2)
 abline(v=0)
-plot(d2[[1]], xlim=c(-50,50), main="% change inside HF", lwd=2)
+plot(d2[[1]], xlim=c(-100,200), main="% change inside HF", lwd=2)
 for (i in 2:5) lines(d1[[i]], col=i, lwd=2)
 abline(v=0)
 legend("topright", lty=1, col=1:5, bty="n", legend=colnames(seff2), lwd=2)
