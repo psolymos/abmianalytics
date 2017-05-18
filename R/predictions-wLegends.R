@@ -175,11 +175,14 @@ Col <- rev(brewer.pal(10, "RdYlGn"))
 SPP <- sort(union(fln, fls))
 #SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL")
 
+PRED_DIR_IN <- "pred1"
+PRED_DIR_OUT <- "pred1cmb"
+
 for (spp in SPP) {
 
 cat(spp, "--------------------------------------\n");flush.console()
 
-load(file.path(ROOT, "out", "birds", "pred1", spp, paste0(regs[1], ".Rdata")))
+load(file.path(ROOT, "out", "birds", PRED_DIR_IN, spp, paste0(regs[1], ".Rdata")))
 rownames(pxNcr1) <- rownames(pxNrf1) <- names(Cells)
 rownames(pxScr1) <- rownames(pxSrf1) <- names(Cells)
 pxNcr <- pxNcr1
@@ -189,7 +192,7 @@ pxSrf <- pxSrf1
 #pSoil <- pSoil1 # this is actually not used
 for (i in 2:length(regs)) {
     cat(spp, regs[i], "\n");flush.console()
-    load(file.path(ROOT, "out", "birds", "pred1", spp, paste0(regs[i], ".Rdata")))
+    load(file.path(ROOT, "out", "birds", PRED_DIR_IN, spp, paste0(regs[i], ".Rdata")))
     rownames(pxNcr1) <- rownames(pxNrf1) <- names(Cells)
     rownames(pxScr1) <- rownames(pxSrf1) <- names(Cells)
     pxNcr <- rbind(pxNcr, pxNcr1)
@@ -228,7 +231,7 @@ if (any(is.na(km)))
 #    paste0("e:/peter/sppweb2015/birds-pred/",
 #    paste0(as.character(tax[spp, "file"]), ".csv")))
 km <- as.matrix(km)
-save(km, file=file.path(ROOT, "out", "birds", "pred1cmb", paste0(spp, ".Rdata")))
+save(km, file=file.path(ROOT, "out", "birds", PRED_DIR_OUT, paste0(spp, ".Rdata")))
 }
 
 ## plots
@@ -494,14 +497,19 @@ tr_res <- list()
 ## add col to lxn
 ## subset counter for loop
 
+PRED_DIR_IN <- "pred1-shf" # "pred1-seismic-as-ES" # "pred1"
+
 restrict_to_HF <- FALSE
+
+TAX <- read.csv("~/repos/abmispecies/_data/birds.csv")
+SPP <- as.character(TAX$AOU)[TAX$map.pred]
 
 for (spp in SPP) {
 
 cat(spp, "------------------------\n");flush.console()
 
 #load(file.path(OUTDIR1, spp, paste0(regs[1], ".Rdata")))
-load(file.path(ROOT, "out", "birds", "pred1", spp, paste0(regs[1], ".Rdata")))
+load(file.path(ROOT, "out", "birds", PRED_DIR_IN, spp, paste0(regs[1], ".Rdata")))
 hbNcr <- hbNcr1[,1]
 hbNrf <- hbNrf1[,1]
 hbScr <- hbScr1[,1]
@@ -509,7 +517,7 @@ hbSrf <- hbSrf1[,1]
 for (i in 2:length(regs)) {
     cat(spp, regs[i], "\n");flush.console()
     #load(file.path(OUTDIR1, spp, paste0(regs[i], ".Rdata")))
-    load(file.path(ROOT, "out", "birds", "pred1", spp, paste0(regs[i], ".Rdata")))
+    load(file.path(ROOT, "out", "birds", PRED_DIR_IN, spp, paste0(regs[i], ".Rdata")))
     hbNcr <- rbind(hbNcr, hbNcr1[,1])
     hbNrf <- rbind(hbNrf, hbNrf1[,1])
     hbScr <- rbind(hbScr, hbScr1[,1])
@@ -650,29 +658,34 @@ tr_res[[spp]] <- list(N=cbind(rf=ThbNrf, cr=ThbNcr), S=cbind(rf=ThbSrf, cr=ThbSc
 
 ## -new version has the HFonly pop sizes saved
 ## can be used to retro-fit the effects
-#save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects-new.Rdata"))
-load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new.Rdata"))
+#save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-bf.Rdata"))
+#save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-ES.Rdata"))
+#save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects-new-shf.Rdata"))
+load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-bf.Rdata"))
+#load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-ES.Rdata"))
+#load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-shf.Rdata"))
 
 #spp <- "ALFL"
 seff_loc <- list()
+seff_lfull <- list()
 for (spp in names(tr_res)) {
-    seff_l <- groupSums(as.matrix(tr_res[[spp]]$N)[ch2veg$isHF,], 1,
+    seff_lfull[[spp]] <- groupSums(as.matrix(tr_res[[spp]]$N)[ch2veg$isHF,], 1,
         as.character(ch2veg$cr[ch2veg$isHF]))
-    seff_loc[[spp]] <- groupSums(seff_l, 1, tv[rownames(seff_l), "Sector"])
+    seff_loc[[spp]] <- groupSums(seff_lfull[[spp]], 1, tv[rownames(seff_lfull[[spp]]), "Sector"])
 }
-#seff2 <- t(sapply(seff_loc, function(z) (z[,"cr"]-z[,"rf"])/sum(z[,"rf"])))
 seff2 <- t(sapply(seff_loc, function(z) (z[,"cr"]-z[,"rf"])/z[,"rf"]))
-#seff2 <- t(sapply(seff_loc, function(z) z[,"cr"]/z[,"rf"] - 1))
 seff2 <- seff2[,rownames(seff_res[[1]]$N)]
 seff1 <- t(sapply(seff_res, function(z) z$N[,"dN"]))
+seff2 <- cbind(seff2,
+    Total=sapply(seff_loc, function(z) (sum(z[,"cr"])-sum(z[,"rf"]))/sum(z[,"rf"])))
 
-AA <- 100*seff_res[[1]]$N[,"dA"]
-a <- round(100*seff2,1)
-aa <- round(t(t(100*seff2) / AA), 1)
-
-par(mfrow=c(1,2))
-boxplot(100*seff1, ylim=c(-10, 10), ylab="% change inside region");abline(h=0)
-boxplot(100*seff2, ylim=c(-100, 100), ylab="% change inside HF");abline(h=0)
+seff2 <- seff2[!is.na(seff2[,1]),]
+seff2 <- seff2[order(rownames(seff2)),]
+seff2[seff2>2] <- 2
+round(100*seff2,1)
+#AA <- 100*seff_res[[1]]$N[,"dA"]
+#a <- round(100*seff2,1)
+#aa <- round(t(t(100*seff2) / AA), 1)
 
 d1 <- apply(100*seff1, 2, density, na.rm=TRUE)
 d2 <- apply(100*seff2, 2, density, na.rm=TRUE)
@@ -689,6 +702,13 @@ for (i in 2:5) lines(d1[[i]], col=i, lwd=2)
 abline(v=0)
 legend("topright", lty=1, col=1:5, bty="n", legend=colnames(seff2), lwd=2)
 
+par(mfrow=c(2,3))
+for (i in 1:6) {
+    hist(100*seff2[,i], main=colnames(seff2)[i], col="lightblue",
+        xlab="% population change inside HF", border=NA)
+    abline(v=0, col=4, lty=2)
+}
+write.csv(round(100*seff2,1), file="sector-effects-birds-early-seral-seismic.csv")
 
 nres <- list()
 sres <- list()
