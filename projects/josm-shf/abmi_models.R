@@ -17,7 +17,8 @@ if (!interactive())
     library(Rmpi)
 library(MASS)
 library(ResourceSelection)
-library(mefa4)
+#library(mefa4)
+library(Matrix)
 source("~/repos/bragging/R/glm_skeleton.R")
 source("~/repos/abmianalytics/R/analysis_functions.R")
 
@@ -39,7 +40,7 @@ ncl <- if (TEST) 2 else nodes*12
 if (interactive())
     setwd("e:/peter/AB_data_v2016/out/birds")
 fid <- if (interactive())
-    "north" else as.character(args[2]) # north, south, josm
+    "josmshf" else as.character(args[2]) # north, south, josm
 
 REVERSE <- if (interactive())
     FALSE else as.logical(args[3]) # FALSE or TRUE
@@ -66,7 +67,8 @@ if (!interactive())
 cat("OK\nload packages on slaves...")
 tmpcl <- clusterEvalQ(cl, library(ResourceSelection))
 tmpcl <- clusterEvalQ(cl, library(MASS))
-tmpcl <- clusterEvalQ(cl, library(mefa4))
+#tmpcl <- clusterEvalQ(cl, library(mefa4))
+tmpcl <- clusterEvalQ(cl, library(Matrix))
 tmpcl <- clusterEvalQ(cl, source("~/repos/bragging/R/glm_skeleton.R"))
 tmpcl <- clusterEvalQ(cl, source("~/repos/abmianalytics/R/analysis_functions.R"))
 

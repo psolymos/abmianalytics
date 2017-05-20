@@ -5,7 +5,7 @@
 #PBS -e run10j2.err
 #PBS -M solymos@ualberta.ca
 #PBS -m bea
-#PBS -l walltime=10:00:00
+#PBS -l walltime=20:00:00
 #PBS -l nodes=10:ppn=12
 #PBS -l pmem=2000mb
 
