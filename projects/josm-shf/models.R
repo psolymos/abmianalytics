@@ -81,8 +81,22 @@ modsVeg <- list(
     "Year"=list( # 8
         .~. + YR))
 
-modsShf <- list(
+modsHF <- list(
+    .~. + HSH_KM,
 
+    .~. + THF_KM,
+    .~. + HSH_KM + THF_KM,
+    .~. + HSH_KM + THF_KM + HSH_KM:THF_KM,
+
+    .~. + Succ_KM,
+    .~. + HSH_KM + Succ_KM,
+    .~. + HSH_KM + Succ_KM + HSH_KM:Succ_KM,
+
+    .~. + Alien_KM,
+    .~. + HSH_KM + Alien_KM,
+    .~. + HSH_KM + Alien_KM + HSH_KM:Alien_KM)
+
+modsShf <- list(
         .~. + Remn_KM,
         .~. + Remn_KM + Remn2_KM,
 
@@ -124,5 +138,4 @@ modsShf <- list(
         .~. + Remn_KM + Remn2_KM + Succ_KM + Noncult_KM + Cult_KM + Noncult2_KM,
         .~. + Remn_KM + Remn2_KM + Succ_KM + Alien_KM + Succ2_KM + Alien2_KM,
         .~. + Remn_KM + Remn2_KM + Succ_KM + Noncult_KM + Cult_KM + Succ2_KM + Noncult2_KM)
-
 
