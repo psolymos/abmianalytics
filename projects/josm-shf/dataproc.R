@@ -937,10 +937,10 @@ OFFmean <- log(rowMeans(exp(OFF)))
 #HSH <- HSH[rownames(DAT),]
 #pveghf <- pveghf[rownames(DAT),]
 #psoilhf <- psoilhf[rownames(DAT),]
-save(offdat,
-    file=file.path(ROOT2, "out", "birds", "data", "data-offset-covars.Rdata"))
+#save(offdat,
+#    file=file.path(ROOT2, "out", "birds", "data", "data-offset-covars.Rdata"))
 save(DAT, YY, OFF, OFFmean, TAX, HSH, # pveghf, psoilhf,
-    file=file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
+    file=file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit-20170520.Rdata"))
 
 ## subsets -------------------------------------------------------------
 
@@ -948,7 +948,7 @@ library(mefa4)
 #ROOT <- "e:/peter/bam/Apr2016"
 ROOT2 <- "e:/peter/AB_data_v2016"
 
-load(file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
+load(file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit-20170520.Rdata"))
 source("~/repos/abmianalytics/R/analysis_models.R")
 
 if (FALSE) {
@@ -1107,7 +1107,7 @@ YY0 <- YY
 OFF0 <- OFF
 OFFmean0 <- OFFmean
 TAX0 <- TAX
-#HSH0 <- HSH
+HSH0 <- HSH
 nmin <- 25
 
 ## south
@@ -1176,30 +1176,29 @@ dim(YY)
 save(DAT, YY, OFF, mods, BB, # HSH, OFFmean,
     file=file.path(ROOT2, "out", "birds", "data", "data-cawa.Rdata"))
 
-## JOSM 2017 update
-sptbl <- read.csv("~/repos/abmispecies/_data/bitds.csv")
-SPP <- sptbl$AOU[sptbl$veghf.north]
+## JOSM 2017 update, surrounding HF
+sptbl <- read.csv("~/repos/abmispecies/_data/birds.csv")
+SPP <- as.character(sptbl$AOU)[sptbl$veghf.north]
 SPP <- sort(SPP[SPP %in% colnames(OFF0)])
 DAT <- DATcawa
 YY <- YY0[rownames(DAT),SPP,drop=FALSE]
 YY <- YY[,colSums(YY>0) >= nmin,drop=FALSE]
-YY <- YY[,colnames(YY) %in% colnames(OFF0),drop=FALSE]
 BB <- BBcawa
 HSH <- HSH0[rownames(DAT),]
-OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY),drop=FALSE]
+OFF <- OFF0[rownames(DAT), colnames(YY), drop=FALSE]
 #OFFmean <- OFFmean0[rownames(DAT)]
 
-## FIXME !!!
-source("~/repos/abmianalytics/projects/cawa-ab/models.R")
-mods <- modsCAWA
+source("~/repos/abmianalytics/projects/josm-shf/models.R")
+mods <- modsVeg
 #mods <- c(modsVeg[c("Hab", "Age", "CC", "Contrast", "ARU", "Space")],
 #    modsCAWA[c("Wet", "Dec")],
 #    modsVeg[c("HF", "Year")])
 names(mods)
+#names(modsShf)
 
 dim(YY)
 save(DAT, YY, OFF, mods, BB, HSH, # OFFmean,
-    file=file.path(ROOT2, "out", "birds", "data", "data-cawa.Rdata"))
+    file=file.path(ROOT2, "out", "birds", "data", "data-josmshf.Rdata"))
 
 ## WRSI
 ## make data with all detections per location for useOK surveys
