@@ -16,7 +16,7 @@ echo "Node file: $PBS_NODEFILE :"
 cat $PBS_NODEFILE
 
 echo "loading R module"
-module load application/R/3.1.2
+module load application/R/3.3.1
 
 export OMPI_MCA_mpi_paffinity_alone=0
 
