@@ -550,10 +550,11 @@ for (spp in rownames(tax)) {
     cat(spp, "\n");flush.console()
     NAM <- as.character(tax[spp, "English_Name"])
 if (tax[spp, "surroundinghf_north"]) {
-    resn <- loadSPP(file.path(ROOT, "results", paste0("birds_abmi-north_", spp, ".Rdata")))
-    estn_sp <- getEst(resn, stage=stage_hab_n + 2, na.out=FALSE, Xnn)
+    resn <- loadSPP(file.path(ROOT, "results", "north",
+        paste0("birds_abmi-north_", spp, ".Rdata")))
+    estn_sp <- getEst(resn, stage=stage_hab_n + 3, na.out=FALSE, Xnn)
     fname <- file.path(ROOT, "figs", "surroundinghf-north",
-        paste0(as.character(tax[spp, "file"]), ".png"))
+        paste0(as.character(tax[spp, "Spp"]), ".png"))
     png(file=fname, width=7.5, height=5.7, units="in", res=300)
     op <- par(mai=c(0.9,1,0.2,0.3))
     fig_hf_noremn(estn_sp, Xnn, LAB=paste0(NAM, ", North"))

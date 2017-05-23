@@ -149,9 +149,27 @@ pr_fun_for_gof <- function(est, X, off=0) {
     }
 }
 
+## road effects
+roadside_bias <- list()
+Xnn_onroad <- Xnn_offroad <- Xnn[Xnn[,"ROAD01"] == 1,]
+Xnn_offroad[,c("ROAD01","habCl:ROAD01")] <- 0
+for (spp in rownames(tax)) {
+cat(spp, "\n");flush.console()
+off1sp <- if (spp %in% colnames(OFFn)) OFFn[,spp] else OFFmn
+off1sp <- off1sp[Xnn[,"ROAD01"] == 1]
+resn <- loadSPP(file.path(ROOT, "results", "josmshf",
+    paste0("birds_abmi-josmshf_", spp, ".Rdata")))
+est7 <- getEst(resn, stage=7, na.out=FALSE, Xnn)
+pr_on <- pr_fun_for_gof(est7, Xnn_onroad, off=off1sp)
+pr_off <- pr_fun_for_gof(est7, Xnn_offroad, off=off1sp)
+roadside_bias[[spp]] <- c(on=mean(pr_on), off=mean(pr_off), onoff=mean(pr_on)/mean(pr_off))
+}
+roadside_bias <- do.call(rbind, roadside_bias)
+save(roadside_bias, file=file.path(ROOT, "josmshf", "roadside_bias.Rdata"))
+
 spp <- "OVEN"
 all_acc <- list()
-for (spp in rownames(tax)[colSums(yyn[ss1,]>0) > 0][35:103]) {
+for (spp in rownames(tax)[colSums(yyn[ss1,]>0) > 0]) {
 cat(spp, "\n");flush.console()
 
 ## Deviance based pseudo R^2 (only internal)
@@ -285,35 +303,71 @@ for (spp in rownames(tax)) {
 ## means
 flam <- function(ss1) {
     c(lam_obs=mean(y1sp[ss1]),
+    lam_est=mean(prf3[ss1]),
+    p_obs=mean(y10sp[ss1]),
+    p_est=mean(1-exp(-prf3[ss1])))
+}
+lam_all <- list()
+for (spp in fln) {
+    cat(spp, "\n");flush.console()
+    y1sp <- yyn[,spp]
+    y10sp <- ifelse(y1sp > 0, 1, 0)
+    off1sp <- if (spp %in% colnames(OFFn)) OFFn[,spp] else OFFmn
+    resn <- loadSPP(file.path(ROOT, "results", "josmshf",
+        paste0("birds_abmi-josmshf_", spp, ".Rdata")))
+    #est5 <- getEst(resn, stage=5, na.out=FALSE, Xnn)
+    #est6 <- getEst(resn, stage=6, na.out=FALSE, Xnn)
+    est7 <- getEst(resn, stage=7, na.out=FALSE, Xnn)
+    #prf1 <- pr_fun_for_gof(est5, Xnn, off=off1sp)
+    #prf2 <- pr_fun_for_gof(est6, Xnn, off=off1sp)
+    prf3 <- pr_fun_for_gof(est7, Xnn, off=off1sp)
+
+    ## regional ROC analysis
+    regres <- list()
+    #REG <- "Foothills"
+    for (REG in levels(bid)) {
+        regres[[REG]] <- flam(bid == REG & !INTERNAL)
+    }
+    regres <- do.call(rbind, regres)
+    regres <- regres[c("NW", "NE", "SW", "SE", "Foothills", "Parkland", "Rocky Mountain"),]
+
+    lam_all[[spp]] <- rbind(All=flam(ss1), regres)
+}
+
+flam2 <- function(ss1) {
+    c(lam_obs=mean(y1sp[ss1]),
     lam_est=mean(prf2[ss1]),
     p_obs=mean(y10sp[ss1]),
     p_est=mean(1-exp(-prf2[ss1])))
 }
-lam_all <- list()
+lam_all6 <- list()
 for (spp in fln) {
-cat(spp, "\n");flush.console()
-y1sp <- yyn[,spp]
-y10sp <- ifelse(y1sp > 0, 1, 0)
-off1sp <- if (spp %in% colnames(OFFn)) OFFn[,spp] else OFFmn
-resn <- loadSPP(file.path(ROOT, "results", "north", paste0("birds_abmi-north_", spp, ".Rdata")))
-#est5 <- getEst(resn, stage=5, na.out=FALSE, Xnn)
-est6 <- getEst(resn, stage=6, na.out=FALSE, Xnn)
-#prf1 <- pr_fun_for_gof(est5, Xnn, off=off1sp)
-prf2 <- pr_fun_for_gof(est6, Xnn, off=off1sp)
+    cat(spp, "\n");flush.console()
+    y1sp <- yyn[,spp]
+    y10sp <- ifelse(y1sp > 0, 1, 0)
+    off1sp <- if (spp %in% colnames(OFFn)) OFFn[,spp] else OFFmn
+    resn <- loadSPP(file.path(ROOT, "results", "josmshf",
+        paste0("birds_abmi-josmshf_", spp, ".Rdata")))
+    #est5 <- getEst(resn, stage=5, na.out=FALSE, Xnn)
+    est6 <- getEst(resn, stage=6, na.out=FALSE, Xnn)
+    #est7 <- getEst(resn, stage=7, na.out=FALSE, Xnn)
+    #prf1 <- pr_fun_for_gof(est5, Xnn, off=off1sp)
+    prf2 <- pr_fun_for_gof(est6, Xnn, off=off1sp)
+    #prf3 <- pr_fun_for_gof(est7, Xnn, off=off1sp)
 
-## regional ROC analysis
-regres <- list()
-#REG <- "Foothills"
-for (REG in levels(bid)) {
-    regres[[REG]] <- flam(bid == REG & !INTERNAL)
+    ## regional ROC analysis
+    regres <- list()
+    #REG <- "Foothills"
+    for (REG in levels(bid)) {
+        regres[[REG]] <- flam2(bid == REG & !INTERNAL)
+    }
+    regres <- do.call(rbind, regres)
+    regres <- regres[c("NW", "NE", "SW", "SE", "Foothills", "Parkland", "Rocky Mountain"),]
+
+    lam_all6[[spp]] <- rbind(All=flam2(ss1), regres)
 }
-regres <- do.call(rbind, regres)
-regres <- regres[c("NW", "NE", "SW", "SE", "Foothills", "Parkland", "Rocky Mountain"),]
 
-lam_all[[spp]] <- rbind(All=flam(ss1), regres)
-}
-
-save(all_acc, occc_res, lam_all, file=file.path(ROOT, "tables", "res_acc.Rdata"))
+save(all_acc, occc_res, lam_all, lam_all6, file=file.path(ROOT, "josmshf", "res_acc.Rdata"))
 
 load(file=file.path(ROOT, "tables", "res_acc.Rdata"))
 
@@ -323,49 +377,36 @@ kreg <- t(sapply(all_acc, function(z) z$regions[,"kf2"]))
 occc <- t(sapply(occc_res, function(z) unlist(z[1:3])))
 lam <- t(sapply(lam_all, function(z) z["All", 1:2]))
 
-blt <- read.csv("~/repos/abmispecies/_data/birds.csv")
-rownames(blt) <- blt$AOU
-nmok <- blt$map.pred[match(fln, blt$AOU)]
-sing <- blt$singing[match(fln, blt$AOU)]
-names(sing) <- names(nmok) <- fln
-table(sing, nmok)
-typ <- factor(rep("OK", length(SPP)), c("OK", "Prblm", "NSng"))
-names(typ) <- SPP
-typ[!sing] <- "NSng"
-typ[sing & !nmok] <- "Prblm"
-
 plot(overall[,c("R2f2", "R212")], xlim=c(0,1), ylim=c(0,1))
 abline(0,1)
 
 overall[overall[,"R2f2"]<0,]
 
-plot(overall[,c("R211", "R212")], xlim=c(0,1), ylim=c(0,1),
-    cex=1+2*sqrt(pdet), col=as.integer(typ)+1,
-    xlab="Pseudo R^2, Habitat", ylab="Pseudo R^2, Habitat+Space")
+plot(overall[,"R2f1"], overall[,"R2f3"], xlim=c(0,1), ylim=c(0,1), col=2,
+    xlab="Pseudo R^2, Habitat", ylab="Pseudo R^2, Habitat+Space (+SHF)")
+segments(x0=overall[,"R2f1"], y0=overall[,"R2f2"], y1=overall[,"R2f3"], col=4)
+abline(0,1, lty=2, col="grey")
+
+plot(overall[,"R2f2"]-overall[,"R2f1"],
+    overall[,"R2f3"]-overall[,"R2f1"], xlim=c(0,0.3), ylim=c(0,0.3), col=2,
+    xlab="Spece-Habitat", ylab="SHF-Space")
 abline(0,1, lty=2, col="grey")
 
 plot(lam, xlim=c(0,0.5), ylim=c(0,0.5),
-    cex=1+2*sqrt(pdet), col=as.integer(typ)+1,
     xlab="Mean Observed Count", ylab="Mean Predicted # Det.")
 abline(0,1, lty=2, col="grey")
 
-plot(pdet*length(ss), overall[,"R212"], xlim=c(0,200))
+plot(pdet[rownames(overall)]*length(ss), overall[,"R2f3"])
 
-plot(overall[,c("kf1", "kf2")], xlim=c(-1,1), ylim=c(-1,1),
-    cex=1+2*sqrt(pdet), col=as.integer(typ)+1,
-    xlab="CAUC, Habitat", ylab="CAUC, Habitat+Space")
+plot(overall[,c("kf1", "kf3")], xlim=c(-1,1), ylim=c(-1,1), col=2,
+    xlab="CAUC, Habitat", ylab="CAUC, Habitat+Space (+SHF)")
+segments(x0=overall[,"kf1"], y0=overall[,"kf2"], y1=overall[,"kf3"], col=4)
 abline(0,1, lty=2, col="grey")
 abline(h=0,v=0, lty=3, col="grey")
 
-plot(overall[,c("AUCf1", "AUCf2")], xlim=c(0,1), ylim=c(0,1), cex=1+2*sqrt(pdet))
-abline(0,1)
+plot(occc[rownames(overall),"occc"], overall[,"kf3"])
+abline(h=0,v=0.5, lty=3, col="grey")
 
-boxplot(kreg[rowSums(is.na(kreg))==0,], ylim=c(-1,1), ylab="CAUC, Habitat+Space")
-abline(h=0,lty=2, col="grey")
-
-library(plotrix)
-ladderplot(kreg[rowSums(is.na(kreg))==0,], ylim=c(-1,1), pch=NA)
-abline(h=0)
 
 layout(matrix(c(1,1,1,2,1,1,1,3,1,1,1,4), 3, 4, byrow=TRUE))
 plot(occc[,2], occc[,3], xlim=c(0,1), ylim=c(0,1),
@@ -393,20 +434,12 @@ foccc <- function(spp, nn=10) {
     prr <- t(t(prr)/apply(prr,2,max))
     matplot(prr, type="l", col=sample(rainbow(length(ii))), lty=1,
         axes=FALSE, xlab="Land cover types", ylab="Relative abundance",
-        main=blt[spp,"species"], ylim=c(0,1.2))
+        main=as.character(tax[spp,"English_Name"]), ylim=c(0,1.2))
     text(1, 1.1, paste("Overall Concordance =", round(occc_res[[spp]]$occc, 3),
         "\nOverall Precision =", round(occc_res[[spp]]$oprec, 3),
         "\nOverall Accuracy =", round(occc_res[[spp]]$oaccu, 3)), pos=4)
     box()
 }
-par(mfrow=c(2,2))
-foccc("AMKE")
-foccc("BOCH")
-foccc("CITE")
-foccc("PUMA")
-
-
-
 
 
 par(mfrow=c(2,3))
@@ -424,91 +457,40 @@ ResourceSelection:::.mep(y1sp[ss1], prf1[ss1], link="log", type="unique", level=
 ResourceSelection:::.mep(y1sp[ss1], prf2[ss1], link="log", type="unique", level=0.9,
     main="External Space", ylim=c(0,ymax))
 
-#ss <- lapply(1:240, function(i) which(!(1:nrow(DAT) %in% BB[,i])))
-#ssd <- data.frame(id=unlist(ss), iter=unlist(lapply(1:240, function(i) rep(i, length(ss[[i]])))))
-#ssx <- Xtab(~iter + id, ssd)
-#ssi <- which(colSums(ssx) == 240)
-#ssc <- as.integer(colnames(ssx)[ssi])
-#compare_sets(ssc, ss1)
-
-Col <- c("blue","darkgreen","red")
-
-pdf(file.path(OUTDIR, "cawa-fig-roc.pdf"))
-op <- par(las=1)
-plot(Show[[1]], col=Col[1], lty=1)
-for (i in 2:length(Show))
-    lines(Show[[i]], col=Col[i], lty=1)
-aucx <- sapply(Show, function(z) as.numeric(z$auc))
-#txt <- paste0(names(aucx), " (AUC = ", round(aucx, 3), ")")
-txt <- paste0(c("Local (stages 1-6)",
-    "Stand level (stages 1-9)","Year (stages 1-10)"), " (AUC = ", round(aucx, 3), ")")
-legend("bottomright", bty="n", col=rev(Col),
-    lty=1, lwd=2, legend=rev(txt))
-dev.off()
-png(file.path(OUTDIR, "cawa-fig-roc.png"))
-op <- par(las=1)
-plot(Show[[1]], col=Col[1], lty=1)
-for (i in 2:length(Show))
-    lines(Show[[i]], col=Col[i], lty=1)
-aucx <- sapply(Show, function(z) as.numeric(z$auc))
-#txt <- paste0(names(aucx), " (AUC = ", round(aucx, 3), ")")
-txt <- paste0(c("Local","Spatial","Year"), " (AUC = ", round(aucx, 3), ")")
-legend("bottomright", bty="n", col=rev(Col),
-    lty=1, lwd=2, legend=rev(txt))
-dev.off()
 
 ## mean plots
 
 REGNAMS <- substr(rownames(lam_all[[1]])[-1], 1, pmin(nchar(rownames(lam_all[[1]])[-1]), 5))
-pdf(file.path("gof-figures.pdf"), width=12, height=6, onefile=TRUE)
-for (spp in fln) {
+pdf(file.path(ROOT, "josmshf", "gof-measures.pdf"), width=12, height=6, onefile=TRUE)
+for (spp in names(all_acc)) {
 cat(spp, "\n");flush.console()
 op <- par(las=1, mfrow=c(1,2))
 MAX <- max(lam_all[[spp]][,1:2])*1.2
 plot(lam_all[[spp]][-1,1:2], pch=21, ylim=c(0, MAX), xlim=c(0, MAX),
-    col=4, cex=2, main=blt[spp,"species"],
+    col=4, cex=2, main=as.character(tax[spp,"English_Name"]),
     xlab="Mean Observed Count", ylab="Mean Expected Number of Detections")
 abline(0,1)
 abline(v=lam_all[[spp]][1,1], h=lam_all[[spp]][1,2], col=4)
 text(lam_all[[spp]][-1,1], lam_all[[spp]][-1,2],
-    round(all_acc[[spp]]$regions[,"kf2"], 2), pos=4, cex=0.6)
-text(lam_all[[spp]][-1,1], lam_all[[spp]][-1,2], REGNAMS, pos=3, cex=0.4)
-STAT <- all_acc[[spp]]$overall[c("R2f2", "kf2")]
-text(0, MAX*0.9, paste0("Deviance R^2 = ", max(0, round(STAT[1],3)),
-    "\nCorrected AUC = ", round(STAT[2],3)), pos=4)
+    round(all_acc[[spp]]$regions[,"kf3"], 2), pos=4, cex=0.6, col=4)
+text(lam_all[[spp]][-1,1], lam_all[[spp]][-1,2], REGNAMS, pos=3, cex=0.4, col=4)
+
+points(lam_all6[[spp]][-1,1:2], pch=21, col=2, cex=2)
+abline(v=lam_all6[[spp]][1,1], h=lam_all6[[spp]][1,2], col=2)
+text(lam_all6[[spp]][-1,1], lam_all6[[spp]][-1,2],
+    round(all_acc[[spp]]$regions[,"kf2"], 2), pos=2, cex=0.6, col=2)
+text(lam_all6[[spp]][-1,1], lam_all6[[spp]][-1,2], REGNAMS, pos=1, cex=0.4, col=2)
+
+legend("bottomright", bty="n", col=c(4,2), lty=1, legend=c("Hab+Clim+SHF", "Hab+Clim"))
+STAT <- all_acc[[spp]]$overall[c("R2f2", "R2f3", "kf2", "kf3")]
+text(0, MAX*0.9,
+    paste0("R^2(H+C) = ", max(0, round(STAT[1],3)),
+    "\nR^2(H+C+S) = ", max(0, round(STAT[2],3)),
+    "\nCAUC(H+C) = ", round(STAT[3],3),
+    "\nCAUC(H+C+S) = ", round(STAT[4],3)), pos=4)
 foccc(spp, 25)
 par(op)
 }
 dev.off()
 
-## estimating overall ARU effect
-
-table(xnn$ARU3)
-
-aru <- list()
-for (spp in colnames(OFFn)) {
-    cat(spp, "\n");flush.console()
-    y1sp <- yyn[,spp]
-    off1sp <- if (spp %in% colnames(OFFn)) OFFn[,spp] else OFFmn
-    m0 <- glm(y1sp ~ ARU3-1, xnn, family=poisson, offset=off1sp)
-    aru[[spp]] <- exp(coef(m0))
-}
-aru <- do.call(rbind, aru)
-
-nn <- list()
-for (spp in colnames(OFFn)) {
-    cat(spp, "\n");flush.console()
-    nn[[spp]] <- table(xnn$ARU3, factor(ifelse(yyn[,spp]>0, 1, 0), 0:1))[,"1"]
-}
-nn <- do.call(rbind, nn)
-smin <- apply(nn, 1, min)
-
-boxplot(aru[smin >= 5, ])
-plotrix::ladderplot(aru[smin >= 5, ], pch=NA)
-
-MIN <- 10
-plot(density(aru[smin >= MIN,"ARU3SM"]/aru[smin >= MIN,"ARU3RF"]))
-summary(aru[smin >= MIN,"ARU3SM"]/aru[smin >= MIN,"ARU3RF"])
-
-## this is too small -- use SVW and YIP
 
