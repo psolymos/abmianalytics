@@ -1,5 +1,5 @@
 VEGHFAGE_FINE,VEGHFAGE,AGE,VEGHF,PERCENT1HA,IS_HF,ETA_UseInAnalysis
-Decid0,Decid0,Decid0,NA,Decid,0,FALSE,XXX
+Decid0,Decid0,Decid0,NA,Decid,0,FALSE,Deciduous5
 DecidR,DecidR,DecidR,R,Decid,0.51,FALSE,DeciduousR
 Decid1,Decid1,Decid1,1,Decid,0.32,FALSE,Deciduous1
 Decid2,Decid2,Decid2,2,Decid,0.37,FALSE,Deciduous2
@@ -10,7 +10,7 @@ Decid6,Decid6,Decid6,6,Decid,1.6,FALSE,Deciduous6
 Decid7,Decid7,Decid7,7,Decid,0.65,FALSE,Deciduous7
 Decid8,Decid8,Decid8,8,Decid,1.3,FALSE,Deciduous8
 Decid9,Decid9,Decid9,9,Decid,0.05,FALSE,Deciduous8
-Mixedwood0,Mixedwood0,Mixedwood0,NA,Mixedwood,0,FALSE,XXX
+Mixedwood0,Mixedwood0,Mixedwood0,NA,Mixedwood,0,FALSE,Mixedwood5
 MixedwoodR,MixedwoodR,MixedwoodR,R,Mixedwood,0.13,FALSE,MixedwoodR
 Mixedwood1,Mixedwood1,Mixedwood1,1,Mixedwood,0.21,FALSE,Mixedwood1
 Mixedwood2,Mixedwood2,Mixedwood2,2,Mixedwood,0.33,FALSE,Mixedwood2
@@ -21,7 +21,7 @@ Mixedwood6,Mixedwood6,Mixedwood6,6,Mixedwood,0.38,FALSE,Mixedwood6
 Mixedwood7,Mixedwood7,Mixedwood7,7,Mixedwood,0.2,FALSE,Mixedwood7
 Mixedwood8,Mixedwood8,Mixedwood8,8,Mixedwood,0.07,FALSE,Mixedwood8
 Mixedwood9,Mixedwood9,Mixedwood9,9,Mixedwood,0.02,FALSE,Mixedwood8
-Pine0,Pine0,Pine0,NA,Pine,0,FALSE,XXX
+Pine0,Pine0,Pine0,NA,Pine,0,FALSE,Pine5
 PineR,PineR,PineR,R,Pine,1.32,FALSE,PineR
 Pine1,Pine1,Pine1,1,Pine,0.2,FALSE,Pine1
 Pine2,Pine2,Pine2,2,Pine,0.68,FALSE,Pine2
@@ -32,7 +32,7 @@ Pine6,Pine6,Pine6,6,Pine,1.48,FALSE,Pine6
 Pine7,Pine7,Pine7,7,Pine,0.55,FALSE,Pine7
 Pine8,Pine8,Pine8,8,Pine,0.04,FALSE,Pine8
 Pine9,Pine9,Pine9,9,Pine,0.09,FALSE,Pine8
-Spruce0,Spruce0,Spruce0,NA,Spruce,0,FALSE,XXX
+Spruce0,Spruce0,Spruce0,NA,Spruce,0,FALSE,WhiteSpruce5
 SpruceR,SpruceR,SpruceR,R,Spruce,0.22,FALSE,WhiteSpruceR
 Spruce1,Spruce1,Spruce1,1,Spruce,0.17,FALSE,WhiteSpruce1
 Spruce2,Spruce2,Spruce2,2,Spruce,0.07,FALSE,WhiteSpruce2
@@ -43,7 +43,7 @@ Spruce6,Spruce6,Spruce6,6,Spruce,0.63,FALSE,WhiteSpruce6
 Spruce7,Spruce7,Spruce7,7,Spruce,0.49,FALSE,WhiteSpruce7
 Spruce8,Spruce8,Spruce8,8,Spruce,0.44,FALSE,WhiteSpruce8
 Spruce9,Spruce9,Spruce9,9,Spruce,0.37,FALSE,WhiteSpruce8
-TreedBog0,TreedBog0,TreedBog0,NA,TreedBog,0,FALSE,XXX
+TreedBog0,TreedBog0,TreedBog0,NA,TreedBog,0,FALSE,BlackSpruce5
 TreedBogR,TreedBogR,TreedBogR,R,TreedBog,0.2,FALSE,BlackSpruceR
 TreedBog1,TreedBog1,TreedBog1,1,TreedBog,0.22,FALSE,BlackSpruce1
 TreedBog2,TreedBog2,TreedBog2,2,TreedBog,0.32,FALSE,BlackSpruce2
@@ -54,7 +54,7 @@ TreedBog6,TreedBog6,TreedBog6,6,TreedBog,0.83,FALSE,BlackSpruce6
 TreedBog7,TreedBog7,TreedBog7,7,TreedBog,0.76,FALSE,BlackSpruce7
 TreedBog8,TreedBog8,TreedBog8,8,TreedBog,0.29,FALSE,BlackSpruce8
 TreedBog9,TreedBog9,TreedBog9,9,TreedBog,0.28,FALSE,BlackSpruce9
-TreedFen0,TreedFen0,TreedBog0,NA,TreedFen,0,FALSE,XXX
+TreedFen0,TreedFen0,TreedBog0,NA,TreedFen,0,FALSE,TreedFen
 TreedFenR,TreedFenR,TreedBogR,R,TreedFen,0.27,FALSE,TreedFen
 TreedFen1,TreedFen1,TreedBog1,1,TreedFen,0.17,FALSE,TreedFen
 TreedFen2,TreedFen2,TreedBog2,2,TreedFen,0.36,FALSE,TreedFen
@@ -65,7 +65,7 @@ TreedFen6,TreedFen6,TreedBog6,6,TreedFen,1.28,FALSE,TreedFen
 TreedFen7,TreedFen7,TreedBog7,7,TreedFen,0.56,FALSE,TreedFen
 TreedFen8,TreedFen8,TreedBog8,8,TreedFen,0.25,FALSE,TreedFen
 TreedFen9,TreedFen9,TreedBog9,9,TreedFen,0.11,FALSE,TreedFen
-TreedSwamp0,TreedSwamp0,TreedSwamp,NA,TreedSwamp,0,FALSE,XXX
+TreedSwamp0,TreedSwamp0,TreedSwamp,NA,TreedSwamp,0,FALSE,TreeShrubSwamp
 TreedSwampR,TreedSwampR,TreedSwamp,R,TreedSwamp,0.03,FALSE,TreeShrubSwamp
 TreedSwamp1,TreedSwamp1,TreedSwamp,1,TreedSwamp,0.01,FALSE,TreeShrubSwamp
 TreedSwamp2,TreedSwamp2,TreedSwamp,2,TreedSwamp,0,FALSE,TreeShrubSwamp
@@ -86,19 +86,19 @@ ShrubbySwamp,ShrubbySwamp,ShrubbySwamp,NA,ShrubbySwamp,2.91,FALSE,TreeShrubSwamp
 Bare,Bare,Bare,NA,Bare,0.28,FALSE,Bare
 SnowIce,SnowIce,SnowIce,NA,SnowIce,0,FALSE,SnowIce
 Water,Water,Water,NA,Water,3.44,FALSE,Water
-BorrowpitsDugoutsSumps,BorrowpitsDugoutsSumps,BorrowpitsDugoutsSumps,NA,BorrowpitsDugoutsSumps,0.12,TRUE,XXX
-Canals,Canals,Canals,NA,Canals,0,TRUE,XXX
+BorrowpitsDugoutsSumps,BorrowpitsDugoutsSumps,BorrowpitsDugoutsSumps,NA,BorrowpitsDugoutsSumps,0.12,TRUE,HWater
+Canals,Canals,Canals,NA,Canals,0,TRUE,HWater
 CultivationCropPastureBareground,CultivationCropPastureBareground,CultivationCropPastureBareground,NA,CultivationCropPastureBareground,18.17,TRUE,Cult
 HighDensityLivestockOperation,HighDensityLivestockOperation,HighDensityLivestockOperation,NA,HighDensityLivestockOperation,0,TRUE,Cult
 IndustrialSiteRural,IndustrialSiteRural,IndustrialSiteRural,NA,IndustrialSiteRural,1.02,TRUE,UrbInd
 MineSite,MineSite,MineSite,NA,MineSite,0.82,TRUE,UrbInd
-MunicipalWaterSewage,MunicipalWaterSewage,MunicipalWaterSewage,NA,MunicipalWaterSewage,0,TRUE,XXX
+MunicipalWaterSewage,MunicipalWaterSewage,MunicipalWaterSewage,NA,MunicipalWaterSewage,0,TRUE,HWater
 OtherDisturbedVegetation,OtherDisturbedVegetation,OtherDisturbedVegetation,NA,OtherDisturbedVegetation,0.12,TRUE,UrbInd
 PeatMine,PeatMine,PeatMine,NA,PeatMine,0,TRUE,UrbInd
 Pipeline,Pipeline,Pipeline,NA,Pipeline,1.07,TRUE,SoftLin
 RailHardSurface,RailHardSurface,RailHardSurface,NA,RailHardSurface,0,TRUE,HardLin
 RailVegetatedVerge,RailVegetatedVerge,RailVegetatedVerge,NA,RailVegetatedVerge,0,TRUE,SoftLin
-Reservoirs,Reservoirs,Reservoirs,NA,Reservoirs,0.31,TRUE,XXX
+Reservoirs,Reservoirs,Reservoirs,NA,Reservoirs,0.31,TRUE,HWater
 RoadHardSurface,RoadHardSurface,RoadHardSurface,NA,RoadHardSurface,0.41,TRUE,HardLin
 RoadTrailVegetated,RoadTrailVegetated,RoadTrailVegetated,NA,RoadTrailVegetated,0.41,TRUE,SoftLin
 RoadVegetatedVerge,RoadVegetatedVerge,RoadVegetatedVerge,NA,RoadVegetatedVerge,0.56,TRUE,SoftLin
