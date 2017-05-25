@@ -888,6 +888,8 @@ rownames(OFF) <- rownames(offdat)
 colnames(OFF) <- sppp
 
 #spp <- "OVEN"
+meanphi <- meantau <- meanphi0 <- meantau0 <- structure(rep(NA, length(sppp)), names=sppp)
+
 for (spp in sppp) {
 p <- rep(NA, nrow(offdat))
 A <- q <- p
@@ -922,6 +924,10 @@ p[ii] <- sra_fun(offdat$MAXDUR[ii], cf0[1])
 
 OFF[,spp] <- log(p) + log(A) + log(q)
 
+meanphi[spp] <- mean(phi1)
+meantau[spp] <- mean(tau1)
+meanphi0[spp] <- cf0[1]
+meantau0[spp] <- cf0[2]
 }
 
 (Ra <- apply(OFF, 2, range))
@@ -930,7 +936,8 @@ which(!is.finite(Ra[1,]))
 which(!is.finite(Ra[2,]))
 
 OFFmean <- log(rowMeans(exp(OFF)))
-
+qpad_vals <- data.frame(Species=sppp, phi0=meanphi0, tau0=meantau0,
+    phi=meanphi, tau=meantau)
 #YY <- YY[rownames(DAT),]
 #HSH <- HSH[rownames(DAT),]
 #pveghf <- pveghf[rownames(DAT),]
@@ -939,6 +946,8 @@ save(offdat,
     file=file.path(ROOT2, "out", "birds", "data", "data-offset-covars.Rdata"))
 save(DAT, YY, OFF, OFFmean, TAX, HSH, # pveghf, psoilhf,
     file=file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
+save(qpad_vals,
+    file=file.path(ROOT2, "out", "birds", "data", "mean-qpad-estimates.Rdata"))
 
 ## subsets -------------------------------------------------------------
 

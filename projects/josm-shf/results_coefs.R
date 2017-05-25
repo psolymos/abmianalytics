@@ -167,6 +167,22 @@ roadside_bias[[spp]] <- c(on=mean(pr_on), off=mean(pr_off), onoff=mean(pr_on)/me
 roadside_bias <- do.call(rbind, roadside_bias)
 save(roadside_bias, file=file.path(ROOT, "josmshf", "roadside_bias.Rdata"))
 
+## roadside avoidance index
+rai_data <- data.frame(HAB=xnn$hab1ec, ROAD=xnn$ROAD01)
+rai_pred <- matrix(0, nrow(Xnn), nrow(tax))
+rownames(rai_pred) <- rownames(rai_data) <- rownames(xnn)
+colnames(rai_pred) <- rownames(tax)
+for (spp in rownames(tax)) {
+cat(spp, "\n");flush.console()
+off1sp <- if (spp %in% colnames(OFFn)) OFFn[,spp] else OFFmn
+resn <- loadSPP(file.path(ROOT, "results", "josmshf",
+    paste0("birds_abmi-josmshf_", spp, ".Rdata")))
+est7 <- getEst(resn, stage=7, na.out=FALSE, Xnn)
+rai_pred[,spp] <- pr_fun_for_gof(est7, Xnn, off=off1sp)
+}
+save(rai_pred, rai_data, file=file.path(ROOT, "josmshf", "roadside_avoidance.Rdata"))
+
+
 spp <- "OVEN"
 all_acc <- list()
 for (spp in rownames(tax)[colSums(yyn[ss1,]>0) > 0]) {

@@ -1,0 +1,197 @@
+---
+title: "Avian population size estimates in BCR 6 Alberta"
+author: "Peter Solymos (solymos@ualberta.ca)"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+# Introduction
+
+Our estimates of current Boreal population sizes in Alberta ($\hat{N}^{(QPAD)}$)
+are based on an exhaustive model based prediction approach
+using province wide vegetation and footprint maps.
+Existing populations size estimates provided by
+Partners in Flight (PIF) provide another set of
+population size estimates ($\hat{N}^{(PIF)}$; we used numbers
+referring to singing individuals, i.e. dividing the 2013
+PIF estimates by the pair adjustment) for the same species
+within Birds Conservation Region 6 in Alberta.
+
+PIF used a population-size estimator based on
+species-specific counts from the roadside 
+North American Breeding Bird Survey (BBS). 
+PIF organized a peer review of the PIF approach done by Thogmartin (2006)
+to address concerns by the ornithological community.
+The criticism identified the following main assumptions that might 
+bias populations size estimates by PIF:
+
+* _Time adjustment_: factors were derived based on average counts as a function of
+  time of day and time of year to come up with a factor
+  for each species ($T$) that would adjust mean counts relative to the
+  yearly and daily maximum for counts.
+* _Maximum detection distance_: the detection-distance adjustment 
+  defines the effective area surveyed based on a species-specific 
+  maximum detection distance ($MDD$) that birds can be heard or seen by observers.
+* _Roadside counts_: roadside-survey counts are equivalent to survey counts in off-road areas.
+* _Habitat sampling_: BBS routes sample avian habitats in proportion to their availability.
+
+There is evidence that some of these assumptions are violated:
+
+* _Time adjustment_: Solymos et al. in preparation (duration ms.).
+* _Maximum detection distance_: Matsuoka et al. 2012.
+* _Roadside counts_: many papers.
+* _Habitat sampling_: Matsuoka et al. 2011, Van Wilgenburg et al. 2015.
+
+Our procedure, in contrast to the PIF approach, makes different assumptions
+and tries to improve the estimators:
+
+* _Time adjustment_: we have used offsets based on probabilities
+  derived from removal-sampling to take into account availability bias.
+* _Maximum detection distance: we have used effective detection
+  distances ($EDR$) 
+  derived from distance-sampling to take into account detectability bias.
+* _Roadside counts_: we combined roadside and off-road surveys
+  used a model based correction to account for the roadside bias.
+* _Habitat sampling_: we have used a wider set of surveys
+  in Alberta (roadside and off-road surveys) and applied
+  a model based approach (whereas the PIF approach was a design based
+  approach).
+
+We compared the 2 sets of population size estimates for 97 bird species
+in BCR 6 Alberta. We partition the differences into subsets to see
+how the different assumptions affect the estimates.
+
+# Methods
+
+The ratio of the population estimates derived from our approach and the PIF
+approach gives us the \emph{observed bias}: 
+$\Delta^{(OBS)} = \hat{N}^{(QPAD)} / \hat{N}^{(PIF)}$ (the term
+'bias' is used here without implying that any of these numbers are
+the truth).
+We expected that the magnitude and direction of the observed bias was related 
+to the different assumptions. To evaluate this, we
+compared the estimators. 
+
+The QPAD estimator is defined as:
+$\hat{N}^{(QPAD)} = A E[Y] (1/p_{3}) (1/\pi EDR^2)$.
+The PIF estimator is defined as:
+$\hat{N}^{(PIF)} = A E[Y^{(ROAD)}] T (1/\pi MDD^2)$.
+We used the inverse of the probability of singing within a 3-minutes
+survey interval ($p_{3}$) as an equivalent to the time adjustment
+because BBS surveys are 3-minutes unlimited distance counts, thus
+the correction factor for those would be defined as $1/p_{3}$.
+
+It follows that the \emph{expected bias} is
+$\Delta^{(EXP)} = (\frac{Y}{Y^{(ROAD)}}) (\frac{1/p_{3}}{T}) (\frac{\pi MDD^2}{\pi EDR^2})$
+(note that area of the study region $A$ cancels out).
+For notational simplicity, we refer to the components of the bias as:
+$\Delta^{(EXP)} = \delta^{(ROAD)} \delta^{(TIME)} \delta^{(DIST)}$.
+The time and distance components of the bias were calculated from
+our estimates. The road related component was estimated
+by the road effect from our modeling, as that represents
+the effect of road relative to an off-road point location 
+(i.e. without the habitat sampling bias).
+
+We further assumed that the observed and expected bias will differ, 
+thus we introduced the residual bias as: 
+$\Delta^{(OBS)} = \Delta^{(EXP)} \delta^{(RESID)}$.
+Bias is 1 when QPAD and PIF components equal. A larger than 1 value indicate that
+the QPAD component is larger than the PIF component.
+
+# Results
+
+```{r echo=FALSE,message=FALSE,results='hide',warning=FALSE}
+library(knitr)
+pop <- read.csv("~/Dropbox/bam/PIF-AB/qpad-pif-results.csv")
+rownames(pop) <- pop$Species_ID
+rnd <- runif(nrow(pop), -0.1, 0.1)
+```
+
+Population sizes were quite different.
+
+```{r echo=FALSE,fig.width=14,fig.height=7}
+boxplot(pop[,c("Npif", "Nqpad")], col=NA, range=0, ylab="M singing inds.")
+for (i in 1:nrow(pop))
+    lines(c(1,2), pop[i,c("Npif", "Nqpad")], col="lightgrey")
+points(1+rnd, pop[,"Npif"], col="darkgrey", pch=19)
+points(2+rnd, pop[,"Nqpad"], col="darkgrey", pch=19)
+boxplot(pop[,c("Npif", "Nqpad")], range=0, add=TRUE, col=NA)
+```
+
+The median observed bias between QPAD and PIF population estimates
+was `r round(median(pop$DeltaObs), 2)` and ranged between `r round(min(pop$DeltaObs), 2)` and 
+`r round(max(pop$DeltaObs), 2)`.
+
+```{r echo=FALSE,fig.width=14,fig.height=7}
+mat <- log(pop[,c("DeltaObs", "DeltaExp", "DeltaRoad", "DeltaTime", "DeltaDist", "DeltaRes")])
+boxplot(mat, range=0, col=NA, ylab="bias")
+for (i in 2:ncol(mat))
+    segments(x0=i+rnd-1, x1=i+rnd, y0=mat[,i-1], y1=mat[,i], col="lightgrey")
+for (i in 1:ncol(mat))
+    points(i+rnd, mat[,i], col="darkgrey", pch=19)
+abline(h=0, col=2, lwd=2)
+boxplot(mat, range=0, add=TRUE, col=NA)
+```
+
+The components of the bias showed interesting trends:
+
+* the road related bias and the residual bias showed large
+  variation across the species with a close to 0 median value,
+* the time related bias was on average positive, but relatively small,
+  compared to the other components,
+* the distance related bias was consistently higher for all species, 
+  with magnitudes between `r round(min(pop$DeltaDist), 2)` and `r round(max(pop$DeltaDist), 2)`
+  which is consistent with the expected distance related biases
+  reported by Matsuoka et al. (2012).
+
+The median of the expected bias across the 97 species was `r median(pop$DeltaExp)`,
+which is very different from the observed bias, thus the residual bias in
+considerable (and negative on the log scale, compensating for the
+large positive expected bias on the log scale).
+
+The time, distance and road components of the bias were quantified
+by estimated model parameters and published values.
+The residual bias is the only piece that was not quantified.
+Thus, the residual bias must be related to the last assumption,
+namely that BBS routes sample avian habitats in proportion to their availability.
+
+We expected large residual bias for species whose preferred habitats
+are under-sampled by roads.
+To express the relationship between roads and preferred habitats
+of the species, we calculated the road avoidance index:
+$RAI = 1-\sum^{H}_{h=1} R_{h} O_{h}$, a covariance type measure
+where $O_{i}$ is proportion of predicted population expected in habitat
+class $h$ (based on predicted abundance distributed among major land cover types).
+$R_{h}$ was the proportion of roadside samples within habitat class $h$.
+The product indicates the joint occurrence of a road and the species,
+thus the one-complement of the index refers to road avoidance.
+
+We calculated $RAI$ for road as well (as if it was a species), and the
+value was `r round(pop$RAIroad[1], 2)`. It was used to center the $RAI$ values
+so that species with negative values prefer roads dispropotionately,
+whereas species with positive values are avoiding it.
+
+We found high agreement between the value of the
+log residual bias and road avoidance index.
+Residual bias was less than one for species with small
+RAI values, whereas the residual bias was greater than one 
+for species with RAI close to 1 (high avoidance).
+
+```{r echo=FALSE,fig.width=7,fig.height=5}
+with(pop, plot(RAIc, log(DeltaRes), type="n"))
+abline(h=0, v=0, col=2, lwd=1)
+abline(lm(log(DeltaRes) ~ RAIc, pop), col=4)
+with(pop, text(RAIc, log(DeltaRes), rownames(pop), cex=0.75))
+```
+
+
+# Appendix
+
+Million singing individuals of the different species estimated in BCR 6 Alberta.
+
+```{r echo=FALSE}
+kable(pop[,c("English_Name", "Npif", "Nqpad")])
+```
+
+
