@@ -95,7 +95,14 @@ save(veg3x7_reference, veg3x7_current, gis,
     file=file.path(ROOT, VER, "data", "analysis",
     "veg-hf_3x7_1999-2015-summaries.Rdata"))
 
-
+for (i in as.character(yr)) {
+    write.csv(veg3x7_current[[i]],
+        file=file.path(ROOT, VER, "data", "analysis", "3x7tables",
+        paste0("3x7table-current-", i, ".csv")))
+    write.csv(veg3x7_reference[[i]],
+        file=file.path(ROOT, VER, "data", "analysis", "3x7tables",
+        paste0("3x7table-reference-", i, ".csv")))
+}
 
 
 
