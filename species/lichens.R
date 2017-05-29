@@ -111,7 +111,7 @@ resa$TMLIR_COLLECTION_STATUS <- factor("C", levels(resb$TMLIR_COLLECTION_STATUS)
 ccol <- c("SITE_LABEL","YEAR", "SCIENTIFIC_NAME", "COMMON_NAME",
     "OnOffGrid", "SiteLabel", "DataProvider",
     "SubType", "SubTypeID", "OGSeqenceID",
-    "Visit", "ClosestABMISite", "Label", "Label2","TMLIR_COLLECTION_STATUS")
+    "Visit", "ClosestABMISite", "Label", "Label2","TMLIR_COLLECTION_STATUS", "TSNID")
 res <- rbind(resa[,ccol], resb[,ccol])
 #res <- rbind(resa, resb)
 
