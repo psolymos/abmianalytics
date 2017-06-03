@@ -66,7 +66,7 @@ load(file.path(ROOT, VER, "data", "analysis", paste0("kgrid_table_", SCALE, ".Rd
 lu <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-V6.csv")
 su <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
 
-lu$use_tr <- as.character(lu$ETA_UseInAnalysis)
+lu$use_tr <- as.character(lu$ETA_UseInAnalysis_Sector)
 allVegTr <- unique(c(lu$use_tr[!lu$IS_HF],
     paste0(rep(lu$use_tr[!lu$IS_HF], sum(lu$IS_HF)), "->",
     rep(lu$use_tr[lu$IS_HF], each=sum(!lu$IS_HF)))))
