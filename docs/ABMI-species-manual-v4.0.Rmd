@@ -306,6 +306,8 @@ The values range between -1: avoidance, 0: neutral, +1: preference, given availa
 
 # Predictive maps
 
+### Systematic sites
+
 Habitat association models, plus models describing how species varied spatially and with climate gradients were used to predict species abundance in 1 km$^2$ spatial units under reference and current conditions.
 
 We present the following figures:
@@ -314,6 +316,16 @@ We present the following figures:
 * **Predicted relative abundance throughout Alberta under current conditions.** Habitat association models, plus models describing how species varied spatially and with climate gradients were used to predict species abundance in 1 km$^2$ spatial units under current conditions. Predictions of relative species abundance in each 1 km$^2$ unit were made based on the vegetation and human footprint present in the 1 km$^2$ unit under current conditions (in year 2012).
 * **Difference in relative abundance between current and reference conditions.** For each 1 km$^2$ unit the difference between predicted current and reference conditions was determined.
 * **Uncertainty in predicted current conditions.** To highlight the degree of uncertainty in the models, we estimated the standard error of prediction for each 10 km x 10 km units.
+
+### Wetland sites
+
+Habitat association models developed for species found at wetland sites are used to predict species intactness and abundance in wetlands under reference and current conditions. We cannot currently map wetland species or wetland abundance across the province, because we do not have accurate maps of where the types of wetlands we sample occur, and also because the models include wetland physical and chemical variables that have to be measured in the field for each wetland.
+
+We present the following figures:
+
+* **Predicted abundance at sampled wetlands under reference and current conditions.** The current and reference maps are based on the predictions for each sampled wetland (each point on the map is a sampled wetland).  The predictions include all the physiochemistry and surrounding vegetation/soil covariates, as well as the climate/spatial ones.  Predictions of reference relative abundance were made after all human footprint surrounding wetlands had been 'backfilled' based on native vegetation in the surrounding area. Predictions of current relative species abundance in wetland were made based on the vegetation/soil and human footprint present in a 250 meter buffer around each wetland under current conditions (in year 2012). Species not analysed in the South are not plotted in the soils-only area; species not analysed in the North are not plotted in the veg-only area.  For species analysed in both the North and South, the values for wetlands in the overlapping vegetation/soils zone are obtained by averaging the two predictions.  
+
+* **Difference in relative abundance between current and reference conditions.** At each wetland, the difference between predicted current and reference conditions was determined. 
 
 ### Methods
 
@@ -334,7 +346,7 @@ There are several limitations to ABMI species maps:
 * Reference maps only show the effects of statistically removing the effects of visible human footprint. They do not show how the species would have been distributed under 'pristine', 'natural' or 'pre-historic' conditions.
 * Current maps do not show effects of other human disturbances, like pollution, cattle grazing, climate change or changes on wintering grounds for migratory species.
 
-### Downloadable results
+### Downloadable results for systematic sites
 
 We provide comma separated text (CSV) files with predicted relative abundance (reference and current) for each species in 1 km$^2$ prediction grid in Alberta, Canada. The following fields are in the CSV files:
 
@@ -351,6 +363,18 @@ The Row_Col field links the raster cells to these products:
 * CSV with latitude/longitude (NAD_1983_10TM_AEP_Forest projection):
   [http://ftp.public.abmi.ca/species.abmi.ca/gis/Grid1km_working.csv.zip](http://ftp.public.abmi.ca/species.abmi.ca/gis/Grid1km_working.csv.zip)
 
+
+### Downloadable results for wetland sites
+
+We provide comma separated text (CSV) files with predicted relative abundances (reference, current, and difference) for each species at each sampled wetland.
+
+The following fields are in the CSV files:
+
+* "Site". Wetland sites sampled by the ABMI to date. 
+* "Year". Year at which the field survey was conducted at a wetland site. 
+* "Lat" and "Long": Public geographic location of a site. 
+* "NaturalRegion": Natural region in which a wetland is located.
+* "NaturalSubregion" Natural subregion in which a wetland is located.
 
 # Sector effects
 
