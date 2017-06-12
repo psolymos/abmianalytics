@@ -228,7 +228,57 @@ Limitations and caveats of the modeling described for systematic sites also appl
 
 ### Dowloadable results
 
-This is yet to be determined.
+There are separate tables of coefficients for the North and South analysis regions. The North region is the Boreal, Canadian Shield, Foothills and Parkland natural regions. The South region is anywhere that soil information is available (see soil maps on website), including: Grassland and Parkland natural regions (including Peace River), most of the Dry Mixedwood subregion of the Boreal region and smaller areas of the Central Mixedwood subregion and southern Foothills regions. There is an extensive area of overlap between these analysis regions, where results from both regions can be used. 
+Analysis of footprint effects on wetland species takes a different approach than analysis with the systematic sites, because the relevant footprint is not just in the wetland itself, but also in the surrounding habitats. Additionally, habitat classification and mapping of wetland types is less developed than for terrestrial habitats, but there are other important ecosystem variables, such as wetland depth or chemistry. 
+
+**Habitat modeling** 
+
+Habitat modeling for wetland species therefore first analyzes three sets of ecosystem covariates: 
+.	Climate and spatial variable
+.	Wetland physical and chemical variables
+.	Surrounding vegetation (North), or  soil types (South)
+
+There are multiple models within each set. Using a model selection procedure, the best sets of these covariates are chosen. Using those best covariates, the analysis then examines what effect footprint in the surrounding area has on the species' abundance. 
+We summarize the wetland models with figures showing how the predicted relative abundance of the species changes with increasing levels of each footprint type in the surrounding area, at average values of the relevant covariates, and we tabulate the coefficients of the model for use by others. 
+
+**Northern coefficients table**
+ 
+ For each species, the table gives the coefficients of the best model. For the northern analysis region, the ten habitat types are a combination of broad stand types. Unlike the analysis developed for systematic sites, the analysis for wetland sites does not differentiate forest stand based on their age classes. 
+
+The stand and habitat types are:
+- "Upland". This includes upland deciduous, mixedwood, and coniferous stands (age classes combined), upland edaphic grass areas, or herbaceous areas, and upland edaphic shrub areas.
+- "UplConif". This includes upland white spruce and pine stands (age classes combined).
+- "LowConif". This includes lowland black spruce and larch stands (age classes combined).
+- "DecidMixed". This includes deciduous and mixedwood stands (age classes combined).
+- "Deciduous". Any stand type dominated by deciduous trees, primarily upland but including some areas of lowland deciduous. 
+- "Mixedwood". Any stand mapped as mixedwood. 
+- "WhiteSpruce". Any stand mapped as white spruce.
+- "Pine". Any pine species. 
+- "BlackSpruce". Lowland conifer stands, which may including species other than black spruce, but excluding stands where the dominant tree is larch. Unlike the systematic analysis, age class of forest stands are not analysed. 
+- "LarchFen". Lowland stands with larch present. All ages classes are combined in this rare stand type, except for the birds, where more data allows separate estimates by age class. 
+
+Coefficients are also given for a set of human footprint types:
+
+- "THF". Total human footprint (successional and alienating human footprint combined).
+- "Succ". Human footprint type in which natural vegetation regenerates after the human use (SoftLin and forestry combined).
+- "Alien". Human footprint type which are maintained permanently with altered vegetation (Ag, UrbInd, HardLin combined).
+- "Ag". Human footprint including cultivated crops, pastures and forages.
+- "UrbInd". Urban areas, industrial areas (including wellsites, compressor stations, etc.) and rural residential areas. 
+- "SoftLin". Soft linear footprint, which are vegetated linear features potentially capable of succeeding to natural vegetation eventually. These include seismic lines, pipelines, powerlines and road margins. Note that these linear features are treated as areas here, like all other habitat types. If they are mapped as linear vectors, they have a buffer width assigned along their length to give them an area. 11 
+- "HardLin". Hard linear footprint, which is permanently alienated, primarily roads, but also rail lines. These linear features are treated as areas. If they are mapped as linear vectors, they have a buffer width assigned along their length to give them an area. 
+
+**Southern coefficients table**
+
+For each species, the table gives the coefficients of the best model. For the southern analysis region, the five habitat types are a combination of broad soil types (see soil map on website). The soil types modeled are:
+- "Productive" soils include loamy, silty, limy and subirrigated soils. 
+- "ClaySaline" soils include clay and saline soils.
+- "RapidDrain" soils include gravel, sand, badland, and several other rapidly draining soils ABMI has too few samples in wetland types in the south to provide coefficients for those rare types. 
+- "NonProductive" soils include ClaySaline and RapidDrain soils.
+- "NonWater" soils include ClaySaline, Productive, and RapidDrain soils.
+In addition, coefficients are given for the human footprint types (some detailed descriptions are presented under Northern coefficients table):
+- "THF"
+- "Ag"
+- "NonAg". Any human footprint types that is not mapped as agriculture (Ag). 
 
 ## Use-availability summaries for rarer species
 
