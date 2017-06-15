@@ -110,11 +110,11 @@ pvl <- list(
     ELES = c("HF", "Exposed soil or substratum"),
     ELON = c("Bare", "Other non-vegetated, undeveloped"),
     ASAS = c("HF", "artificial surface/material (including mixed surfaces, e.g. suburbia)"),
-    WSNL = c("UNK", "UNK"),
-    WALK = c("UNK", "UNK"),
-    WSMP = c("UNK", "UNK"),
-    OUHE = c("UNK", "UNK"),
-    WTMP = c("UNK", "UNK"))
+    WSNL = c("Water", "Wetland, Lentic- Seasonal"),
+    WALK = c("Water", "Wetland, Lentic-Alkali"),
+    WSMP = c("Water", "Wetland, Lentic-semi to permanent"),
+    OUHE = c("GrassHerb", "Vegetated Open Upland Herbaceous undifferentiated"),
+    WTMP = c("Water", "Wetland, Lentic- Temporary"))
 compare_sets(x$LC3, names(pvl))
 setdiff(x$LC3, names(pvl)) # "WSNL" "WALK" "WSMP" "OUHE" "WTMP"
 pvmap <- data.frame(a=names(pvl), b=sapply(pvl, "[[", 1))
@@ -168,45 +168,79 @@ save(xt_prov, xt_site, xt_nr, xt_nsr,
     xa_prov, xa_site, xa_nr, xa_nsr,
     x, file="x:/toPeter/Export_tables_NativeVeg_X_validationPoints/data-xt.Rdata")
 
+## --
+load("x:/toPeter/Export_tables_NativeVeg_X_validationPoints/data-xt.Rdata")
+library(mefa4)
 source("~/repos/opticut/extras/multiclass.R")
 f <- function(x, digits=3)
     round(as.matrix(x/sum(x)), digits)
 a <- function(x) sum(diag(x) / sum(x))
 k <- function(x) kappa(x, etable(as.matrix(x)))
-
-f(xt_prov)
-a(xt_prov)
-k(xt_prov)
-multiclass(as.matrix(xt_prov))
-k(xa_prov)
-
-write.csv(as.matrix(xt_prov), file="x:/toPeter/grid-results/Prov_Landcov.csv")
-write.csv(as.matrix(xa_prov), file="x:/toPeter/grid-results/Prov_LandcovAge.csv")
-for (i in names(xa_nr)) {
-    write.csv(as.matrix(xt_nr[[i]]),
-        file=paste0("x:/toPeter/grid-results/NR_Landcov-", gsub(" ", "", i), ".csv"))
-    write.csv(as.matrix(xa_nr[[i]]),
-        file=paste0("x:/toPeter/grid-results/NR_LandcovAge-", gsub(" ", "", i), ".csv"))
-}
-
-zz <- data.frame(noage=rbind(Prov=k(xt_prov), t(sapply(xt_nr, k))),
-    age=rbind(Prov=k(xa_prov), t(sapply(xa_nr, k))))
-write.csv(zz, file="x:/toPeter/grid-results/Accuracy-and-kappa.csv")
+m <- function(x) multiclass(as.matrix(x))$average
+s <- function(x) multiclass(as.matrix(x))$single
 
 met <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 rownames(met) <- met$SITE_ID
 AS <- t(sapply(xt_site, k))
 AA <- t(sapply(xa_site, k))
+MS <- t(sapply(xt_site, m))
+MA <- t(sapply(xa_site, m))
 met2 <- data.frame(met[rownames(AS),], AS, age=AA)
 met2 <- met2[!is.na(met2$k),]
 
-library(akima)
-k <- interp(met2$PUBLIC_LONGITUDE, met2$PUBLIC_LATTITUDE, met2$k,
-    linear=FALSE, nx = 100, ny = 100)
-image(k)
-points(met2$PUBLIC_LONGITUDE, met2$PUBLIC_LATTITUDE, cex=0.5, col="turquoise")
-contour(k, add=TRUE, levels=c(0.25, 0.5, 0.75))
-#contour(k, add=TRUE, levels=c(0.3, 0.4, 0.5, 0.6))
+## compare margins
+
+xt2 <- lapply(c(All=xt_prov, xt_nr), as.matrix)
+xa2 <- lapply(c(All=xa_prov, xa_nr), as.matrix)
+
+col <- "grey"
+cols <- colorRampPalette(c("blue","red"))(5)
+pdf("x:/toPeter/grid-results/proportions.pdf",
+    width=5.5, height=5.5, onefile=TRUE)
+for (i in 1:ncol(xt2[[1]])) {
+    j <- colnames(xt2[[1]])[i]
+    pv <- sapply(xt2, function(z) 100*sum(z[i,])/sum(z))
+    bf <- sapply(xt2, function(z) 100*sum(z[,i])/sum(z))
+    lim <- c(0, max(0.1, pv, bf))
+    d <- ceiling(abs(pv - bf))
+    d[d < 1] <- 1
+    d[d >= 5] <- 5
+    plot(pv, bf, main=j,
+        xlim=lim, ylim=lim,
+        xlab="Photoplot (%)", ylab="Backfilled V6 (%)", col=cols[d], pch=19)
+    text(pv, bf, ifelse(d > 1, names(pv), ""),
+        col=cols[d], pos=3, cex=0.4, xpd=NA)
+        abline(0,1,col=col,lty=1)
+        abline(-1,1,col=col,lty=2)
+        abline(1,1,col=col,lty=2)
+        abline(-5,1,col=col,lty=3)
+        abline(5,1,col=col,lty=3)
+}
+dev.off()
+
+pdf("x:/toPeter/grid-results/proportions-age.pdf",
+    width=5.5, height=5.5, onefile=TRUE)
+for (i in 1:ncol(xa2[[1]])) {
+    j <- colnames(xa2[[1]])[i]
+    pv <- sapply(xa2, function(z) 100*sum(z[i,])/sum(z))
+    bf <- sapply(xa2, function(z) 100*sum(z[,i])/sum(z))
+    lim <- c(0, max(0.1, pv, bf))
+    d <- ceiling(abs(pv - bf))
+    d[d < 1] <- 1
+    d[d >= 5] <- 5
+    plot(pv, bf, main=j,
+        xlim=lim, ylim=lim,
+        xlab="Photoplot (%)", ylab="Backfilled V6 (%)", col=cols[d], pch=19)
+    text(pv, bf, ifelse(d > 1, names(pv), ""),
+        col=cols[d], pos=3, cex=0.4, xpd=NA)
+        abline(0,1,col=col,lty=1)
+        abline(-1,1,col=col,lty=2)
+        abline(1,1,col=col,lty=2)
+        abline(-5,1,col=col,lty=3)
+        abline(5,1,col=col,lty=3)
+}
+dev.off()
+
 
 library(rgdal)
 library(rgeos)
@@ -218,9 +252,9 @@ met1 <- met
 coordinates(met1) <- ~ PUBLIC_LONGITUDE + PUBLIC_LATTITUDE
 proj4string(met1) <-
     CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-coordinates(met2) <- ~ PUBLIC_LONGITUDE + PUBLIC_LATTITUDE
-proj4string(met2) <-
-    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+#coordinates(met2) <- ~ PUBLIC_LONGITUDE + PUBLIC_LATTITUDE
+#proj4string(met2) <-
+#    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 xy <- met2[,c("PUBLIC_LONGITUDE", "PUBLIC_LATTITUDE")]
 coordinates(xy) <- ~ PUBLIC_LONGITUDE + PUBLIC_LATTITUDE
 proj4string(xy) <-
@@ -230,7 +264,7 @@ coordinates(xy0) <- ~ PUBLIC_LONGITUDE + PUBLIC_LATTITUDE
 proj4string(xy0) <-
     CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 
-r <- raster("~/Dropbox/courses/st-johns-2017/data/ABtopo/dem.asc")
+r <- raster("~/Dropbox/courses/st-johns-2017/data/ABrasters/dem.asc")
 xy_tm <- spTransform(xy, proj4string(r))
 setwd("~/Dropbox/courses/st-johns-2017/data/NatRegAB")
 AB <- readOGR(".", "Natural_Regions_Subregions_of_Alberta") # rgdal
@@ -238,23 +272,45 @@ AB <- spTransform(AB, proj4string(r))
 ABnr <- gUnaryUnion(AB, AB@data$NRNAME) # natural regions
 ABpr <- gUnaryUnion(AB, rep(1, nrow(AB))) # province
 
-
+setwd("x:/toPeter/grid-results")
 ## hill shade
 slope <- terrain(r, opt='slope')
 aspect <- terrain(r, opt='aspect')
 hill <- hillShade(slope, aspect, 40, 270)
+
+pdf("grid-sites.pdf",width=3.5, height=6)
 op <- par(mar=c(0,0,0,0))
 plot(hill, col=grey(0:100/100), legend=FALSE, bty="n", box=FALSE, axes=FALSE)
 plot(r, legend=FALSE, col=topo.colors(50, alpha=0.35)[26:50], add=TRUE)
-plot(xy_tm, add=TRUE)
+plot(xy_tm, add=TRUE, cex=0.4)
 par(op)
+dev.off()
 
 ## NR
+pdf("grid-sites2.pdf",width=3.5, height=6)
 COL <- c('#e6f5c9','#f4cae4','#b3e2cd','#fff2ae','#fdcdac','#cbd5e8')
 op <- par(mar=c(0,0,0,0))
 plot(ABnr, col=COL, border=COL)
-plot(xy_tm, add=TRUE, cex=0.6)
+plot(xy_tm, add=TRUE, cex=0.4)
 par(op)
+dev.off()
+
+
+
+write.csv(as.matrix(xt_prov), file="x:/toPeter/grid-results/Prov_Landcov.csv")
+write.csv(as.matrix(xa_prov), file="x:/toPeter/grid-results/Prov_LandcovAge.csv")
+for (i in names(xa_nr)) {
+    write.csv(as.matrix(xt_nr[[i]]),
+        file=paste0("x:/toPeter/grid-results/NR_Landcov-", gsub(" ", "", i), ".csv"))
+    write.csv(as.matrix(xa_nr[[i]]),
+        file=paste0("x:/toPeter/grid-results/NR_LandcovAge-", gsub(" ", "", i), ".csv"))
+}
+
+zz <- data.frame(
+    noage=rbind(Prov=c(k(xt_prov), m(xt_prov)), cbind(t(sapply(xt_nr, k)), t(sapply(xt_nr, m)))),
+    age=rbind(Prov=c(k(xa_prov), m(xa_prov)), cbind(t(sapply(xa_nr, k)), t(sapply(xa_nr, m))))
+    )
+write.csv(zz, file="x:/toPeter/grid-results/Accuracy-and-kappa.csv")
 
 
 ## kriging
@@ -268,11 +324,24 @@ proj4string(met2) <-
     CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 met2 <- spTransform(met2, proj4string(r))
 #v <- variogram(k~1, met2)
-g <- gstat(id = "k", formula = k~1, data = met2, model=NULL)
-p <- predict(g, newdata=gr)
+g1 <- gstat(id = "k", formula = k~1, data = met2, model=NULL)
+p1 <- predict(g1, newdata=gr)
 
-g <- gstat(id = "age.k", formula = age.k~1, data = met2, model=NULL)
-p <- predict(g, newdata=gr)
+g2 <- gstat(id = "age.k", formula = age.k~1, data = met2, model=NULL)
+p2 <- predict(g2, newdata=gr)
 
-plot(p)
+png("kriging-lc3.png",width=1000, height=1500)
+op <- par(mar=c(0,0,0,0))
+plot(p1)
+plot(ABnr, add=TRUE, col=NA, border="grey", lwd=0.25)
+par(op)
+dev.off()
+
+png("kriging-lc3age.png",width=1000, height=1500)
+op <- par(mar=c(0,0,0,0))
+plot(p2)
+plot(ABnr, add=TRUE, col=NA, border="grey", lwd=0.25)
+par(op)
+dev.off()
+
 
