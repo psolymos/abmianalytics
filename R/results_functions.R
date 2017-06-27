@@ -157,8 +157,10 @@ function(est, Xn, burn_included=TRUE, raw=FALSE)
     }
 
     pr <- predStat(X, est, level, n=0, ci=TRUE, raw=raw)
-    if (raw)
+    if (raw) {
+        rownames(pr) <- rownames(X)
         return(pr)
+    }
     out <- pr[,c(1,2,5,6)]
     ## Linear features
     MEAN <- mean(out[,"Median"])
@@ -180,7 +182,7 @@ function(est, Xn, burn_included=TRUE, raw=FALSE)
 
 
 pred_soilhf <-
-function(est, Xn)
+function(est, Xn, raw=FALSE)
 {
     X <- Xn[1:6,colnames(est)]
     X[,-1] <- 0
@@ -194,6 +196,11 @@ function(est, Xn)
     X0 <- X1 <- X
     X1[,"pAspen"] <- 1
 
+    if (raw) {
+        pr0 <- predStat(X0, est, level, n=0, ci=TRUE, raw=TRUE) # non-treed
+        rownames(pr0) <- rownames(X)
+        return(pr0)
+    }
     pr0 <- predStat(X0, est, level, n=0, ci=TRUE, raw=FALSE) # non-treed
     pr1 <- predStat(X1, est, level, n=0, ci=TRUE, raw=FALSE) # treed
     ## Linear features

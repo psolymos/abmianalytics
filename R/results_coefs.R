@@ -948,8 +948,35 @@ write.csv(yyy, row.names=FALSE, na = "", file="e:/peter/sppweb2016/round01/table
 
 ## GoF AUC ROC R2 and stuff
 
-library(pROC)
+#library(pROC)
 library(ResourceSelection)
+
+pr_fun_for_gof <- function(est, X, off=0) {
+    if (is.null(dim(est))) {
+        mu0 <- drop(X %*% est)
+        exp(mu0 + off)
+    } else {
+        mu0 <- apply(est, 1, function(z) X %*% z)
+        rowMeans(exp(mu0 + off))
+    }
+}
+simple_roc <- function(labels, scores){
+  labels <- labels[order(scores, decreasing=TRUE)]
+  data.frame(TPR=cumsum(labels)/sum(labels), FPR=cumsum(!labels)/sum(!labels), labels)
+}
+simple_auc <- function(ROC) {
+    ROC$inv_spec <- 1-ROC$FPR
+    dx <- diff(ROC$inv_spec)
+    sum(dx * ROC$TPR[-1]) / sum(dx)
+}
+#system.time(roc12 <- roc(y10sp[ss], pr12[ss]))
+#system.time(roczz <- simple_roc(y10sp[ss], pr12[ss]))
+#as.numeric(auc(roc12))
+#simple_auc(roczz)
+#plot(roc12)
+#lines(1-roczz[,"FPR"], roczz[,"TPR"], col=2)
+
+
 en <- new.env()
 load(file.path(ROOT, "data", "data-north.Rdata"), envir=en)
 OFFn <- en$OFF
@@ -964,23 +991,11 @@ ss <- which(INTERNAL)
 ss1 <- which(!INTERNAL)
 bid <- DATn$bootid
 levels(bid) <- sapply(strsplit(levels(bid), "\\."), "[[", 1)
-table(bid, SUB)
-
-
-pr_fun_for_gof <- function(est, X, off=0) {
-    if (is.null(dim(est))) {
-        mu0 <- drop(X %*% est)
-        exp(mu0 + off)
-    } else {
-        mu0 <- apply(est, 1, function(z) X %*% z)
-        rowMeans(exp(mu0 + off))
-    }
-}
 
 spp <- "OVEN"
-all_acc <- list()
+all_acc_N <- list()
 for (spp in fln) {
-cat(spp, "\n");flush.console()
+cat(spp, "N\n");flush.console()
 
 ## Deviance based pseudo R^2 (only internal)
 y1sp <- yyn[,spp]
@@ -989,106 +1004,143 @@ off1sp <- if (spp %in% colnames(OFFn)) OFFn[,spp] else OFFmn
 resn <- loadSPP(file.path(ROOT, "results", "north", paste0("birds_abmi-north_", spp, ".Rdata")))
 est5 <- getEst(resn, stage=5, na.out=FALSE, Xnn)
 est6 <- getEst(resn, stage=6, na.out=FALSE, Xnn)
-#pr0 <- pr_fun_for_gof(0, off=off1sp)
-## null model need to represent ARU as well
-m0 <- glm(y1sp[ss] ~ ARU3, xnn[ss,], family=poisson, offset=off1sp[ss])
-#pr0 <- exp(drop(model.matrix(~ARU3, xnn) %*% coef(m0)) + off1sp)
-pr0 <- pr_fun_for_gof(coef(m0), model.matrix(~ARU3, xnn), off=off1sp)
 ## 1st run
 pr11 <- pr_fun_for_gof(est5[1,], Xnn, off=off1sp)
 pr12 <- pr_fun_for_gof(est6[1,], Xnn, off=off1sp)
-## smooth
-prf1 <- pr_fun_for_gof(est5, Xnn, off=off1sp)
-prf2 <- pr_fun_for_gof(est6, Xnn, off=off1sp)
 ## Null model: intercept and offset
-ll0 <- sum(dpois(y1sp[ss], pr0[ss], log=TRUE))
+ll0 <- sum(dpois(y1sp[ss], mean(y1sp[ss]), log=TRUE))
 ## Saturated: one parameter per observation
 lls <- sum(dpois(y1sp[ss], y1sp[ss], log=TRUE))
-## Full: our smoothed prediction
-llf1 <- sum(dpois(y1sp[ss], prf1[ss], log=TRUE))
-llf2 <- sum(dpois(y1sp[ss], prf2[ss], log=TRUE))
 ## Full: our 1st prediction
 ll11 <- sum(dpois(y1sp[ss], pr11[ss], log=TRUE))
 ll12 <- sum(dpois(y1sp[ss], pr12[ss], log=TRUE))
-R2f1 <- 1-(lls-llf1)/(lls-ll0)
-R2f2 <- 1-(lls-llf2)/(lls-ll0)
 R211 <- 1-(lls-ll11)/(lls-ll0)
 R212 <- 1-(lls-ll12)/(lls-ll0)
 
-## ROC (only external, and 0/1)
-roc0 <- roc(y10sp[ss1], pr0[ss1])
-rocf1 <- roc(y10sp[ss1], prf1[ss1])
-rocf2 <- roc(y10sp[ss1], prf2[ss1])
-roc11 <- roc(y10sp[ss1], pr11[ss1])
-roc12 <- roc(y10sp[ss1], pr12[ss1])
-auc0 <- as.numeric(roc0$auc)
-aucf1 <- as.numeric(rocf1$auc)
-aucf2 <- as.numeric(rocf2$auc)
-auc11 <- as.numeric(roc11$auc)
-auc12 <- as.numeric(roc12$auc)
-kf1 <- (aucf1-auc0) / (1-auc0)
-kf2 <- (aucf2-auc0) / (1-auc0)
-k11 <- (auc11-auc0) / (1-auc0)
-k12 <- (auc12-auc0) / (1-auc0)
-
-spp1res <- c(R2f1=R2f1, R2f2=R2f2, R211=R211, R212=R212,
-    AUC0=auc0, AUCf1=aucf1, AUCf2=aucf2, AUC11=auc11, AUC12=auc12,
-    kf1=kf1, kf2=kf2, k11=k11, k12=k12,
-    y_in=mean(y1sp[ss]),
-    lam0_in=mean(pr0[ss]),
-    lam1_in=mean(prf1[ss]),
-    lam2_in=mean(prf2[ss]),
-    y_out=mean(y1sp[ss1]),
-    lam0_out=mean(pr0[ss1]),
-    lam1_out=mean(prf1[ss1]),
-    lam2_out=mean(prf2[ss1]))
-
-## regional ROC analysis
-regres <- list()
-#REG <- "Foothills"
-for (REG in levels(bid)) {
-    regss <- bid == REG & !INTERNAL
-    yreg <- y10sp[regss]
-    if (sum(yreg) == 0) {
-        reg1res <- c(AUC0=NA, AUCf1=NA, AUCf2=NA, AUC11=NA, AUC12=NA,
-            kf1=NA, kf2=NA, k11=NA, k12=NA)
-    } else {
-        roc0 <- roc(yreg, pr0[regss])
-        rocf1 <- roc(yreg, prf1[regss])
-        rocf2 <- roc(yreg, prf2[regss])
-        roc11 <- roc(yreg, pr11[regss])
-        roc12 <- roc(yreg, pr12[regss])
-        auc0 <- as.numeric(roc0$auc)
-        aucf1 <- as.numeric(rocf1$auc)
-        aucf2 <- as.numeric(rocf2$auc)
-        auc11 <- as.numeric(roc11$auc)
-        auc12 <- as.numeric(roc12$auc)
-        kf1 <- (aucf1-auc0) / (1-auc0)
-        kf2 <- (aucf2-auc0) / (1-auc0)
-        k11 <- (auc11-auc0) / (1-auc0)
-        k12 <- (auc12-auc0) / (1-auc0)
-        reg1res <- c(AUC0=auc0, AUCf1=aucf1, AUCf2=aucf2, AUC11=auc11, AUC12=auc12,
-            kf1=kf1, kf2=kf2, k11=k11, k12=k12)
-    }
-    regres[[REG]] <- reg1res
+## ROC
+#roc11 <- roc(y10sp[ss], pr11[ss])
+#roc12 <- roc(y10sp[ss], pr12[ss])
+#auc11 <- as.numeric(roc11$auc)
+#auc12 <- as.numeric(roc12$auc)
+roc11 <- simple_roc(y10sp[ss], pr11[ss])
+roc12 <- simple_roc(y10sp[ss], pr12[ss])
+auc11 <- simple_auc(roc11)
+auc12 <- simple_auc(roc12)
+spp1res <- c(R211=R211, R212=R212,
+    AUC11=auc11, AUC12=auc12)
+all_acc_N[[spp]] <- spp1res
 }
-regres <- do.call(rbind, regres)
-regres <- regres[c("NW", "NE", "SW", "SE", "Foothills", "Parkland", "Rocky Mountain"),]
+all_acc_N <- do.call(rbind, all_acc_N)
 
-all_acc[[spp]] <- list(overall=spp1res, regions=regres)
+es <- new.env()
+load(file.path(ROOT, "data", "data-south.Rdata"), envir=es)
+OFFs <- es$OFF
+OFFms <- es$OFFmean
+BBs <- es$BB
+DATs <- es$DAT
+rm(es)
+## out-of-sample set
+bunique <- unique(as.numeric(BBs))
+INTERNAL <- 1:nrow(DATs) %in% bunique
+ss <- which(INTERNAL)
+ss1 <- which(!INTERNAL)
+bid <- DATs$bootid
+levels(bid) <- sapply(strsplit(levels(bid), "\\."), "[[", 1)
+
+all_acc_S <- list()
+for (spp in fls) {
+cat(spp, "S\n");flush.console()
+
+## Deviance based pseudo R^2 (only internal)
+y1sp <- yys[,spp]
+y10sp <- ifelse(y1sp > 0, 1, 0)
+off1sp <- if (spp %in% colnames(OFFs)) OFFs[,spp] else OFFms
+ress <- loadSPP(file.path(ROOT, "results", "south", paste0("birds_abmi-south_", spp, ".Rdata")))
+
+est5 <- getEst(ress, stage=3, na.out=FALSE, Xns)
+est6 <- getEst(ress, stage=4, na.out=FALSE, Xns)
+## 1st run
+pr11 <- pr_fun_for_gof(est5[1,], Xns, off=off1sp)
+pr12 <- pr_fun_for_gof(est6[1,], Xns, off=off1sp)
+## Null model: intercept and offset
+ll0 <- sum(dpois(y1sp[ss], mean(y1sp[ss]), log=TRUE))
+## Saturated: one parameter per observation
+lls <- sum(dpois(y1sp[ss], y1sp[ss], log=TRUE))
+## Full: our 1st prediction
+ll11 <- sum(dpois(y1sp[ss], pr11[ss], log=TRUE))
+ll12 <- sum(dpois(y1sp[ss], pr12[ss], log=TRUE))
+R211 <- 1-(lls-ll11)/(lls-ll0)
+R212 <- 1-(lls-ll12)/(lls-ll0)
+
+## ROC
+#roc11 <- roc(y10sp[ss], pr11[ss])
+#roc12 <- roc(y10sp[ss], pr12[ss])
+#auc11 <- as.numeric(roc11$auc)
+#auc12 <- as.numeric(roc12$auc)
+roc11 <- simple_roc(y10sp[ss1], pr11[ss1])
+roc12 <- simple_roc(y10sp[ss1], pr12[ss1])
+auc11 <- simple_auc(roc11)
+auc12 <- simple_auc(roc12)
+spp1res <- c(R211=R211, R212=R212,
+    AUC11=auc11, AUC12=auc12)
+all_acc_S[[spp]] <- spp1res
+
 }
+all_acc_S <- do.call(rbind, all_acc_S)
 
 ## OCCC metrics
 library(epiR)
-occc_res <- list()
+occc_res_N <- list()
+boot_res_N <- list()
 for (spp in fln) {
-    cat(spp, "\n");flush.console()
+    cat(spp, "N\n");flush.console()
     resn <- loadSPP(file.path(ROOT, "results", "north",
         paste0("birds_abmi-north_", spp, ".Rdata")))
     estn_hab <- getEst(resn, stage=stage_hab_n, na.out=FALSE, Xnn)
     pr <- exp(pred_veghf(estn_hab, Xnn, burn_included=FALSE, raw=TRUE))
-    occc_res[[spp]] <- epi.occc(pr)
+    occc_res_N[[spp]] <- epi.occc(pr)
+    boot_res_N[[spp]] <- pr
 }
+occc_res_S <- list()
+boot_res_S <- list()
+for (spp in fls) {
+    cat(spp, "S\n");flush.console()
+    ress <- loadSPP(file.path(ROOT, "results", "south",
+        paste0("birds_abmi-south_", spp, ".Rdata")))
+    ests_hab <- getEst(ress, stage=stage_hab_s, na.out=FALSE, Xns)
+    pr <- exp(pred_soilhf(ests_hab, Xns, raw=TRUE))
+    occc_res_S[[spp]] <- epi.occc(pr)
+    boot_res_S[[spp]] <- pr
+}
+
+save(all_acc_S, all_acc_N, occc_res_N, boot_res_N, occc_res_S, boot_res_S, slt,
+    file="e:/peter/sppweb2017/birds-r2-auc-occc-boot.Rdata")
+if (FALSE) {
+
+ss <- as.character(slt[slt$veghf.north,"AOU"])
+ren <- as.character(slt[slt$veghf.north,"sppid"])
+all_acc_N <- all_acc_N[ss,]
+rownames(all_acc_N) <- ren
+occc_res_N <- occc_res_N[ss]
+names(occc_res_N) <- ren
+boot_res_N <- boot_res_N[ss]
+names(boot_res_N) <- ren
+
+ss <- as.character(slt[slt$soilhf.south,"AOU"])
+ren <- as.character(slt[slt$soilhf.south,"sppid"])
+all_acc_S <- all_acc_S[ss,]
+rownames(all_acc_S) <- ren
+occc_res_S <- occc_res_S[ss]
+names(occc_res_S) <- ren
+boot_res_S <- boot_res_S[ss]
+names(boot_res_S) <- ren
+
+save(all_acc_S, all_acc_N, occc_res_N, boot_res_N, occc_res_S, boot_res_S, slt,
+    file="e:/peter/sppweb2017/birds-r2-auc-occc-boot-subset.Rdata")
+
+}
+
+
 
 ## means
 flam <- function(ss1) {
