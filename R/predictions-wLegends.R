@@ -5,13 +5,13 @@ shf <- FALSE
 ROOT <- "e:/peter/AB_data_v2016"
 
 ## surrounding hf
-if (shf) {
-    OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-shf-1/"
-    OUTDIRB <- "e:/peter/sppweb2015/birds-pred-shf-B/"
-} else {
-    OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-1/"
-    OUTDIRB <- "e:/peter/sppweb2015/birds-pred-B/"
-}
+#if (shf) {
+#    OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-shf-1/"
+#    OUTDIRB <- "e:/peter/sppweb2015/birds-pred-shf-B/"
+#} else {
+#    OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-1/"
+#    OUTDIRB <- "e:/peter/sppweb2015/birds-pred-B/"
+#}
 #OUTDIR <- "e:/peter/AB_data_v2016/out/birds/figs"
 
 load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
@@ -175,8 +175,8 @@ Col <- rev(brewer.pal(10, "RdYlGn"))
 SPP <- sort(union(fln, fls))
 #SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL")
 
-PRED_DIR_IN <- "pred1"
-PRED_DIR_OUT <- "pred1cmb"
+PRED_DIR_IN <- "pred1-seismic-as-ES"
+PRED_DIR_OUT <- "pred1cmb-as-ES"
 
 for (spp in SPP) {
 
@@ -234,6 +234,24 @@ km <- as.matrix(km)
 save(km, file=file.path(ROOT, "out", "birds", PRED_DIR_OUT, paste0(spp, ".Rdata")))
 }
 
+si_out <- list()
+for (spp in SPP) {
+    cat(spp, "\n");flush.console()
+    e_noES <- new.env()
+    e_ES <- new.env()
+    load(file.path(ROOT, "out", "birds", "pred1combined", paste0(spp, ".Rdata")), envir=e_noES)
+    load(file.path(ROOT, "out", "birds", "pred1combined-as-ES", paste0(spp, ".Rdata")), envir=e_ES)
+    cr0 <- sum(e_noES$km2[,"Curr"])
+    rf0 <- sum(e_noES$km2[,"Ref"])
+    si0 <- min(cr0, rf0) / max(cr0, rf0)
+    cr1 <- sum(e_ES$km2[,"Curr"])
+    rf1 <- sum(e_ES$km2[,"Ref"])
+    si1 <- min(cr1, rf1) / max(cr1, rf1)
+    si_out[[spp]] <- c(cr0=cr0, rf0=rf0, si0=si0, cr1=cr1, rf1=rf1, si1=si1)
+}
+si_out <- do.call(rbind, si_out)
+plot(si_out[,c("si0", "si1")])
+
 ## plots
 
 res_luf <- list()
@@ -242,7 +260,7 @@ res_nsr <- list()
 for (spp in SPP) {
 
     cat(spp, "\t");flush.console()
-    load(file.path(ROOT, "out", "birds", "pred1cmb", paste0(spp, ".Rdata")))
+    load(file.path(ROOT, "out", "birds", "pred1cmb-as-ES", paste0(spp, ".Rdata")))
     km <- data.frame(km)
 
     TYPE <- "C" # combo
@@ -264,10 +282,10 @@ for (spp in SPP) {
     cr <- wS * km$CurrS + (1-wS) * km$CurrN
     rf <- wS * km$RefS + (1-wS) * km$RefN
 
-    #km2 <- as.matrix(cbind(Curr=cr, Ref=rf))
-    #rownames(km2) <- rownames(km)
-    #save(km2, file=file.path(ROOT, "out", "birds", "pred1combined", paste0(spp, ".Rdata")))
-    #cat("\n")
+    km2 <- as.matrix(cbind(Curr=cr, Ref=rf))
+    rownames(km2) <- rownames(km)
+    save(km2, file=file.path(ROOT, "out", "birds", "pred1combined-as-ES", paste0(spp, ".Rdata")))
+    cat("\n")
 if (FALSE) {
     ndat <- normalize_data(rf=rf, cr=cr)
 }
@@ -321,7 +339,7 @@ writeRaster(r_si, paste0(spp, "-intactness_2016-08-12.tif"), overwrite=TRUE)
     TAG <- ""
 
     cat("si\t");flush.console()
-    fname <- file.path(ROOT, "out", "birds", "figs", "map-si",
+    fname <- file.path(ROOT, "out", "birds", "figs-as-ES", "map-si",
         paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
     png(fname, width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
@@ -371,7 +389,7 @@ aggregate(100*as.matrix(dd1km_pred[[2]])[,"NonVeg"]/rowSums(dd1km_pred[[2]]),
 }
 
     cat("rf\t");flush.console()
-    fname <- file.path(ROOT, "out", "birds", "figs", "map-rf",
+    fname <- file.path(ROOT, "out", "birds", "figs-as-ES", "map-rf",
         paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
     png(fname, width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
@@ -399,7 +417,7 @@ aggregate(100*as.matrix(dd1km_pred[[2]])[,"NonVeg"]/rowSums(dd1km_pred[[2]]),
     dev.off()
 
     cat("cr\t");flush.console()
-    fname <- file.path(ROOT, "out", "birds", "figs", "map-cr",
+    fname <- file.path(ROOT, "out", "birds", "figs-as-ES", "map-cr",
         paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
     png(fname, width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
@@ -427,7 +445,7 @@ aggregate(100*as.matrix(dd1km_pred[[2]])[,"NonVeg"]/rowSums(dd1km_pred[[2]]),
     dev.off()
 
     cat("df\n");flush.console()
-    fname <- file.path(ROOT, "out", "birds", "figs", "map-df",
+    fname <- file.path(ROOT, "out", "birds", "figs-as-ES", "map-df",
         paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
     png(fname, width=W, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1)
@@ -497,7 +515,7 @@ tr_res <- list()
 ## add col to lxn
 ## subset counter for loop
 
-PRED_DIR_IN <- "pred1-shf" # "pred1-seismic-as-ES" # "pred1"
+PRED_DIR_IN <- "pred1-seismic-as-ES" # "pred1" # "pred1-shf"
 
 restrict_to_HF <- FALSE
 
@@ -724,9 +742,9 @@ sres <- data.frame(Species=tax[rownames(sres), "English_Name"], sres)
 ## keep only spp that are OK
 
 write.csv(nres, row.names=FALSE,
-    file=file.path(ROOT, "out", "birds", "tables", "Birds_SectorEffects_North.csv"))
+    file=file.path(ROOT, "out", "birds", "tables", "Birds_SectorEffects_North-as-ES.csv"))
 write.csv(sres, row.names=FALSE,
-    file=file.path(ROOT, "out", "birds", "tables", "Birds_SectorEffects_South.csv"))
+    file=file.path(ROOT, "out", "birds", "tables", "Birds_SectorEffects_South-as-ES.csv"))
 
 for (spp in SPP) {
 cat(spp, "\n");flush.console()
@@ -768,7 +786,7 @@ ymin <- min(ymin,min(unit.effect)-0.08*(max(unit.effect,0)-min(unit.effect)))
 NAM <- as.character(tax[spp, "English_Name"])
 TAG <- ""
 
-png(file.path(ROOT, "out", "birds", "figs",
+png(file.path(ROOT, "out", "birds", "figs-as-ES",
     paste0("sector-", if (restrict_to_HF) "HFonly-" else "", WHERE),
     paste0(as.character(tax[spp, "Spp"]), TAG, ".png")),
     width=600, height=600)
@@ -822,12 +840,28 @@ dev.off()
 }
 }
 
+t_noES <- read.csv("e:/peter/AB_data_v2016/out/birds/tables/Birds_SectorEffects_North.csv")
+t_ES <- read.csv("e:/peter/AB_data_v2016/out/birds/tables/Birds_SectorEffects_North-as-ES.csv")
+rownames(t_noES) <- t_noES$English_Name
+rownames(t_ES) <- t_ES$Species
+ii <- intersect(rownames(t_ES), rownames(t_noES))
+cn <- c("PopEffect.Agriculture", "PopEffect.Forestry", "PopEffect.Energy",
+    "PopEffect.RuralUrban", "PopEffect.Transportation", "UnitEffect.Agriculture",
+    "UnitEffect.Forestry", "UnitEffect.Energy", "UnitEffect.RuralUrban",
+    "UnitEffect.Transportation")
+t_ES <- t_ES[ii,cn]
+t_noES <- t_noES[ii,cn]
+d <- as.matrix(t_ES - t_noES)
+d <- ifelse(abs(d) < 10^-6, 0, d)
+summary(d)
+
+
 ## CoV
 
 results10km_list <- list()
 for (spp in SPP) {
 
-    load(file.path(ROOT, "out", "birds", "predB", spp, paste0(regs[1], ".Rdata")))
+    load(file.path(ROOT, "out", "birds", "predB-seismic-as-ES", spp, paste0(regs[1], ".Rdata")))
     rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells)[Cells == 1]
     rownames(pxScrB) <- rownames(pxSrfB) <- names(Cells)[Cells == 1]
     pxNcr0 <- pxNcrB
@@ -836,7 +870,7 @@ for (spp in SPP) {
     #pxSrf0 <- pxSrfB
     for (i in 2:length(regs)) {
         cat(spp, regs[i], "\n");flush.console()
-        load(file.path(ROOT, "out", "birds", "predB", spp, paste0(regs[i], ".Rdata")))
+        load(file.path(ROOT, "out", "birds", "predB-seismic-as-ES", spp, paste0(regs[i], ".Rdata")))
         rownames(pxNcrB) <- rownames(pxNrfB) <- names(Cells)[Cells == 1]
         rownames(pxScrB) <- rownames(pxSrfB) <- names(Cells)[Cells == 1]
         pxNcr0 <- rbind(pxNcr0, pxNcrB)
@@ -885,7 +919,7 @@ wS[ks$useN] <- 0
 results10km_list[[as.character(tax[spp,"Spp"])]] <- crveg
 }
 xy10km <- ks[,c("POINT_X","POINT_Y","Row10_Col10")]
-save(xy10km, results10km_list, file=file.path(ROOT, "out", "birds", "tables", "km10results.Rdata"))
+save(xy10km, results10km_list, file=file.path(ROOT, "out", "birds", "tables", "km10results-as-ES.Rdata"))
 
 slt <- read.csv("~/repos/abmispecies/_data/birds.csv")
 rownames(slt) <- slt$AOU
@@ -898,8 +932,8 @@ for (spp in rownames(slt)[slt$map.pred]) {
     crveg <- results10km_list[[as.character(tax[spp,"Spp"])]]
     mcrvegsd[,as.character(tax[spp,"Spp"])] <- apply(crveg, 1, sd)
 }
-write.csv(mcrvegsd, file=file.path(ROOT, "out", "birds", "tables", "birds-10x10km-SD-summary.csv"))
-write.csv(xy10km, file=file.path(ROOT, "out", "birds", "tables", "xy-for-10x10km-SD-summary.csv"))
+#write.csv(mcrvegsd, file=file.path(ROOT, "out", "birds", "tables", "birds-10x10km-SD-summary.csv"))
+#write.csv(xy10km, file=file.path(ROOT, "out", "birds", "tables", "xy-for-10x10km-SD-summary.csv"))
 
 TAG <- ""
 for (spp in SPP) {
@@ -933,7 +967,7 @@ if (FALSE) {
     zval <- as.integer(cut(covC, breaks=br))
     zval <- pmin(100, ceiling(99 * (crvegm / max(crvegm, na.rm=TRUE)))+1)
     zval <- zval[match(kgrid$Row10_Col10, rownames(crveg))]
-    fname <- file.path(ROOT, "out", "birds", "figs", "map-test",
+    fname <- file.path(ROOT, "out", "birds", "figs-as-ES", "map-test",
         paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
     png(fname, width=W*3, height=H)
     op <- par(mar=c(0, 0, 4, 0) + 0.1, mfrow=c(1,3))
@@ -956,7 +990,7 @@ if (FALSE) {
     cat("\tCoV");flush.console()
     zval <- as.integer(cut(covC, breaks=br))
     zval <- zval[match(kgrid$Row10_Col10, rownames(crveg))]
-    fname <- file.path(ROOT, "out", "birds", "figs", "map-cov-cr",
+    fname <- file.path(ROOT, "out", "birds", "figs-as-ES", "map-cov-cr",
         paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
     if (TR)
         fname <- file.path(ROOT, "out", "birds", "figs", "map-test",
@@ -990,7 +1024,7 @@ if (FALSE) {
     cat("\tSD\n");flush.console()
     zval <- as.integer(cut(crvegsd/mean(crvegm,na.rm=TRUE), breaks=br))
     zval <- zval[match(kgrid$Row10_Col10, rownames(crveg))]
-    fname <- file.path(ROOT, "out", "birds", "figs", "map-sd-cr",
+    fname <- file.path(ROOT, "out", "birds", "figs-as-ES", "map-sd-cr",
         paste0(as.character(tax[spp, "Spp"]), TAG, ".png"))
     if (TR)
         fname <- file.path(ROOT, "out", "birds", "figs", "map-test",
