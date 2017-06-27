@@ -1,0 +1,62 @@
+3x7_code,Bf_name,3x7_description
+TUFC,Conif,Forest conifer
+TUFD,Decid,Forest deciduous
+TUFM,Mixedwood,Forest mixed
+BOXC,ShrubbyBog,"Bog, Open, permafrost, collapse scar"
+BOXN,ShrubbyBog,"Bog, Open, permafrost, no internal lawns"
+BTXC,TreedBog,"Bog, Wooded, permafrost, collapse scar"
+BFXC,TreedBog,"Bog, Forested, permafrost, collapse scar"
+BTXN,TreedBog,"Bog, Wooded, permafrost, no internal lawns"
+BFXN,TreedBog,"Bog, Forested, permafrost, no internal lawns"
+BTNN,TreedBog,"Bog, Wooded, permafrost or patterning, no internal lawns"
+BTNR,TreedBog,"Bog, Wooded, permafrost or patterning, internal islands of forested peat plateau"
+BTNI,TreedBog,"Bog, Wooded, permafrost or patterning, internal lawns"
+FOPN,GraminoidFen,"Fen, Open, patterning, no internal lawns"
+FTPN,TreedFen,"Fen, Wooded, patterning, no internal lawns"
+FONS,ShrubbyFen,"Fen, Open, permafrost or patterning, shrub cover"
+FONG,GraminoidFen,"Fen, Open, permafrost or patterning, graminoid cover"
+FTNN,TreedFen,"Fen, Wooded, permafrost or patterning, no internal lawns"
+FTNR,TreedFen,"Fen, Wooded, permafrost or patterning, internal islands of forested peat plateau"
+FTNI,TreedFen,"Fen, Wooded, permafrost or patterning, internal lawns"
+MONG,Marsh,"Marsh, Open, permafrost or patterning, graminoid cover"
+MOTG,Marsh,"Marsh, Open, temporary, graminoid cover"
+MOSG,Marsh,"Marsh, Open, seasonal, graminoid cover"
+MOQG,Marsh,"Marsh, Open, semi-permanent to permanent, graminoid cover"
+MOAG,Marsh,"Marsh, Open, alkali, graminoid cover"
+MOAX,Marsh,"Marsh, Open, alkali, non-vegetated"
+SFNN,TreedSwamp,"Swamp, Forested, permafrost or patterning, no internal lawns"
+STNN,TreedSwamp,"Swap, Wooded, permafrost or patterning, no internal lawns"
+SONS,ShrubbySwamp,"Swamp, Open, permafrost or patterning, shrub cover"
+SOTS,ShrubbySwamp,"Swamp, Open, temporary, shrub cover"
+SOSS,ShrubbySwamp,"Swamp, Open, seasonal, shrub cover"
+SOQS,ShrubbySwamp,"Swamp, Open, semi-permanent to permanent, shrub cover"
+OUST,Shrub,Tall shrub
+OUSS,Shrub,Short shrub
+OUHG,GrassHerb,Herbaceous grassland
+OUHF,GrassHerb,Herbacesous forbs (non-wetland)
+OUBR,Bare,"Bryophyte (moss, non-wetland)"
+OWWL,Water,Lake
+OWWS,Water,Salt water
+OWWR,Water,River
+OWWA,HF,Reservoir
+OWWW,Water,Shallow open water
+OWWT,Water,Stream
+SISC,SnowIce,Snow cover
+SIGL,SnowIce,Glacier
+ROBR,Bare,Bedrock
+RORT,Bare,"Rubble, talus, blockfield"
+ROMO,Bare,Moraine
+ELBU,Burn,Burned area
+ELRS,Bare,River sediments
+ELLS,Bare,Pond or lake sediments
+ELCC,HF,Clearcut (fresh)
+ELRM,HF,Reservoir margin
+ELMU,Bare,Mudflat sediment
+ELES,HF,Exposed soil or substratum
+ELON,Bare,"Other non-vegetated, undeveloped"
+ASAS,HF,"artificial surface/material (including mixed surfaces, e.g. suburbia)"
+WSNL,GrassHerb,"Wetland, Lentic- Seasonal"
+WALK,Water,"Wetland, Lentic-Alkali"
+WSMP,Water,"Wetland, Lentic-semi to permanent"
+OUHE,GrassHerb,Vegetated Open Upland Herbaceous undifferentiated
+WTMP,GrassHerb,"Wetland, Lentic- Temporary"

@@ -110,11 +110,11 @@ pvl <- list(
     ELES = c("HF", "Exposed soil or substratum"),
     ELON = c("Bare", "Other non-vegetated, undeveloped"),
     ASAS = c("HF", "artificial surface/material (including mixed surfaces, e.g. suburbia)"),
-    WSNL = c("Water", "Wetland, Lentic- Seasonal"),
+    WSNL = c("GrassHerb", "Wetland, Lentic- Seasonal"),
     WALK = c("Water", "Wetland, Lentic-Alkali"),
     WSMP = c("Water", "Wetland, Lentic-semi to permanent"),
     OUHE = c("GrassHerb", "Vegetated Open Upland Herbaceous undifferentiated"),
-    WTMP = c("Water", "Wetland, Lentic- Temporary"))
+    WTMP = c("GrassHerb", "Wetland, Lentic- Temporary"))
 compare_sets(x$LC3, names(pvl))
 setdiff(x$LC3, names(pvl)) # "WSNL" "WALK" "WSMP" "OUHE" "WTMP"
 pvmap <- data.frame(a=names(pvl), b=sapply(pvl, "[[", 1))
@@ -171,7 +171,9 @@ save(xt_prov, xt_site, xt_nr, xt_nsr,
 ## --
 load("x:/toPeter/Export_tables_NativeVeg_X_validationPoints/data-xt.Rdata")
 library(mefa4)
+library(viridis)
 source("~/repos/opticut/extras/multiclass.R")
+
 f <- function(x, digits=3)
     round(as.matrix(x/sum(x)), digits)
 a <- function(x) sum(diag(x) / sum(x))
@@ -180,6 +182,7 @@ m <- function(x) multiclass(as.matrix(x))$average
 s <- function(x) multiclass(as.matrix(x))$single
 
 met <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+
 rownames(met) <- met$SITE_ID
 AS <- t(sapply(xt_site, k))
 AA <- t(sapply(xa_site, k))
@@ -247,6 +250,69 @@ library(rgeos)
 library(sp)
 library(gstat)
 library(raster)
+library(akima)
+library(mgcv)
+
+xy <- met2
+coordinates(xy) <- ~ PUBLIC_LONGITUDE + PUBLIC_LATTITUDE
+proj4string(xy) <-
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+r <- raster(file.path("~/Dropbox/courses/st-johns-2017", "data", "ABrasters", "dem.asc"))
+xy <- spTransform(xy, proj4string(r)) # make CRS identical
+## make things a bit coarser for saving some time
+## comment this out for full-scale 500m resolution
+#r <- aggregate(r, 2) # 1km resolution
+#r <- aggregate(r, 10) # 5km resolution
+r <- aggregate(r, 20) # 10km resolution
+## crop to the range of bird data points
+#r <- crop(r, extent(coordinates(x)))
+
+## spatial grid that we use for prediction
+## based on the raster coordinates
+## dropping values outside of the province (NA)
+g <- data.frame(coordinates(r)[!is.na(values(r)),])
+## making a gridded object suitable for gstat package
+gridded(g) <- ~ x + y
+proj4string(g) <- proj4string(r) # projection
+
+colnames(xy@data)
+
+
+pol3 <- krige(k ~ 1, locations=xy, newdata=g, degree=3)
+
+
+
+coords <- coordinates(xy)
+gam_fit <- gam(xy@data$k ~ s(PUBLIC_LONGITUDE, PUBLIC_LATTITUDE),
+    data=data.frame(coords), family=gaussian)
+dfpred2 <- data.frame(coordinates(g))
+colnames(dfpred2) <- c("POINT_X", "POINT_Y")
+dfpred2$pr <- predict(gam_fit, dfpred2)
+gridded(dfpred2) <- ~ POINT_X + POINT_Y
+plot(dfpred2)
+
+
+v0 <- variogram(k ~ 1, xy)
+v1 <- fit.variogram(v0,
+    model=vgm("Exp"), fit.kappa=TRUE) # exponential
+v2 <- fit.variogram(v0,
+    model=vgm("Sph"), fit.kappa=TRUE) # spherical
+v3 <- fit.variogram(v0,
+    model=vgm("Gau"), fit.kappa=TRUE) # Gaussian
+v4 <- fit.variogram(v0,
+    model=vgm("Mat"), fit.kappa=TRUE) # Matern
+## best fit is where SS error is minimal
+SSErr <- c(v1=attr(v1, "SSErr"),
+    v2=attr(v2, "SSErr"),
+    v3=attr(v3, "SSErr"),
+    v4=attr(v4, "SSErr"))
+which.min(SSErr)
+vbest <- v4
+k <- krige(k ~ 1, locations=xy, newdata=g, model=vbest)
+plot(k)
+
+
 
 met1 <- met
 coordinates(met1) <- ~ PUBLIC_LONGITUDE + PUBLIC_LATTITUDE
