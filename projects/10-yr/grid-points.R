@@ -131,8 +131,10 @@ setdiff(x$pv_veg, x$bf_veg)
 setdiff(x$bf_veg, x$pv_veg)
 
 met <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+src <- read.csv("~/repos/abmianalytics/projects/10-yr/3by7Center_VegV6_summary.csv")
 x$NR <- met$NATURAL_REGIONS[match(x$ABMI_SITE, met$SITE_ID)]
 x$NSR <- met$NATURAL_SUBREGIONS[match(x$ABMI_SITE, met$SITE_ID)]
+x$Source <- src$General_Source[match(x$ABMI_SITE, src$ABMI)]
 
 x$pv_veg <- as.factor(as.character(x$pv_veg))
 x$bf_veg <- as.factor(as.character(x$bf_veg))
@@ -156,32 +158,38 @@ all(rownames(xt_prov)==colnames(xt_prov))
 xt_site <- Xtab(~ pv_veg + bf_veg + ABMI_SITE, x)
 xt_nr <- Xtab(~ pv_veg + bf_veg + NR, x)
 xt_nsr <- Xtab(~ pv_veg + bf_veg + NSR, x)
+xt_src <- Xtab(~ pv_veg + bf_veg + Source, x)
 
 xa_prov <- Xtab(~ pv_vag + bf_vag, x)
 all(rownames(xt_prov)==colnames(xt_prov))
 xa_site <- Xtab(~ pv_vag + bf_vag + ABMI_SITE, x)
 xa_nr <- Xtab(~ pv_vag + bf_vag + NR, x)
 xa_nsr <- Xtab(~ pv_vag + bf_vag + NSR, x)
+xa_src <- Xtab(~ pv_vag + bf_vag + Source, x)
 
 
-save(xt_prov, xt_site, xt_nr, xt_nsr,
-    xa_prov, xa_site, xa_nr, xa_nsr,
-    x, file="x:/toPeter/Export_tables_NativeVeg_X_validationPoints/data-xt.Rdata")
+save(xt_prov, xt_site, xt_nr, xt_nsr, xt_src,
+    xa_prov, xa_site, xa_nr, xa_nsr, xa_src,
+    x,
+    file="x:/toPeter/Export_tables_NativeVeg_X_validationPoints/data-xt.Rdata")
 
 ## --
 load("x:/toPeter/Export_tables_NativeVeg_X_validationPoints/data-xt.Rdata")
 library(mefa4)
 library(viridis)
 source("~/repos/opticut/extras/multiclass.R")
+library(mgcv)
 
 f <- function(x, digits=3)
     round(as.matrix(x/sum(x)), digits)
 a <- function(x) sum(diag(x) / sum(x))
 k <- function(x) kappa(x, etable(as.matrix(x)))
 m <- function(x) multiclass(as.matrix(x))$average
-s <- function(x) multiclass(as.matrix(x))$single
+#ss <- function(x) multiclass(as.matrix(x))$single
 
 met <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+src <- read.csv("~/repos/abmianalytics/projects/10-yr/3by7Center_VegV6_summary.csv")
+met$BfSource <- droplevels(src$General_Source[match(met$SITE_ID, src$ABMI)])
 
 rownames(met) <- met$SITE_ID
 AS <- t(sapply(xt_site, k))
@@ -193,8 +201,12 @@ met2 <- met2[!is.na(met2$k),]
 
 ## compare margins
 
-xt2 <- lapply(c(All=xt_prov, xt_nr), as.matrix)
-xa2 <- lapply(c(All=xa_prov, xa_nr), as.matrix)
+names(xt_nr) <- paste0("NR=", names(xt_nr))
+names(xa_nr) <- paste0("NR=", names(xa_nr))
+names(xt_src) <- paste0("Src=", names(xt_src))
+names(xa_src) <- paste0("Src=", names(xa_src))
+xt2 <- lapply(c(Alberta=xt_prov, xt_nr, xt_src), as.matrix)
+xa2 <- lapply(c(Alberta=xa_prov, xa_nr, xa_src), as.matrix)
 
 col <- "grey"
 cols <- colorRampPalette(c("blue","red"))(5)
@@ -262,9 +274,10 @@ r <- raster(file.path("~/Dropbox/courses/st-johns-2017", "data", "ABrasters", "d
 xy <- spTransform(xy, proj4string(r)) # make CRS identical
 ## make things a bit coarser for saving some time
 ## comment this out for full-scale 500m resolution
-#r <- aggregate(r, 2) # 1km resolution
+r <- aggregate(r, 2) # 1km resolution
 #r <- aggregate(r, 10) # 5km resolution
-r <- aggregate(r, 20) # 10km resolution
+#r <- aggregate(r, 20) # 10km resolution
+#r <- aggregate(r, 40) # 20km resolution
 ## crop to the range of bird data points
 #r <- crop(r, extent(coordinates(x)))
 
@@ -276,62 +289,6 @@ g <- data.frame(coordinates(r)[!is.na(values(r)),])
 gridded(g) <- ~ x + y
 proj4string(g) <- proj4string(r) # projection
 
-colnames(xy@data)
-
-
-pol3 <- krige(k ~ 1, locations=xy, newdata=g, degree=3)
-
-
-
-coords <- coordinates(xy)
-gam_fit <- gam(xy@data$k ~ s(PUBLIC_LONGITUDE, PUBLIC_LATTITUDE),
-    data=data.frame(coords), family=gaussian)
-dfpred2 <- data.frame(coordinates(g))
-colnames(dfpred2) <- c("POINT_X", "POINT_Y")
-dfpred2$pr <- predict(gam_fit, dfpred2)
-gridded(dfpred2) <- ~ POINT_X + POINT_Y
-plot(dfpred2)
-
-
-v0 <- variogram(k ~ 1, xy)
-v1 <- fit.variogram(v0,
-    model=vgm("Exp"), fit.kappa=TRUE) # exponential
-v2 <- fit.variogram(v0,
-    model=vgm("Sph"), fit.kappa=TRUE) # spherical
-v3 <- fit.variogram(v0,
-    model=vgm("Gau"), fit.kappa=TRUE) # Gaussian
-v4 <- fit.variogram(v0,
-    model=vgm("Mat"), fit.kappa=TRUE) # Matern
-## best fit is where SS error is minimal
-SSErr <- c(v1=attr(v1, "SSErr"),
-    v2=attr(v2, "SSErr"),
-    v3=attr(v3, "SSErr"),
-    v4=attr(v4, "SSErr"))
-which.min(SSErr)
-vbest <- v4
-k <- krige(k ~ 1, locations=xy, newdata=g, model=vbest)
-plot(k)
-
-
-
-met1 <- met
-coordinates(met1) <- ~ PUBLIC_LONGITUDE + PUBLIC_LATTITUDE
-proj4string(met1) <-
-    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-#coordinates(met2) <- ~ PUBLIC_LONGITUDE + PUBLIC_LATTITUDE
-#proj4string(met2) <-
-#    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-xy <- met2[,c("PUBLIC_LONGITUDE", "PUBLIC_LATTITUDE")]
-coordinates(xy) <- ~ PUBLIC_LONGITUDE + PUBLIC_LATTITUDE
-proj4string(xy) <-
-    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-xy0 <- met[,c("PUBLIC_LONGITUDE", "PUBLIC_LATTITUDE")]
-coordinates(xy0) <- ~ PUBLIC_LONGITUDE + PUBLIC_LATTITUDE
-proj4string(xy0) <-
-    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-
-r <- raster("~/Dropbox/courses/st-johns-2017/data/ABrasters/dem.asc")
-xy_tm <- spTransform(xy, proj4string(r))
 setwd("~/Dropbox/courses/st-johns-2017/data/NatRegAB")
 AB <- readOGR(".", "Natural_Regions_Subregions_of_Alberta") # rgdal
 AB <- spTransform(AB, proj4string(r))
@@ -339,29 +296,81 @@ ABnr <- gUnaryUnion(AB, AB@data$NRNAME) # natural regions
 ABpr <- gUnaryUnion(AB, rep(1, nrow(AB))) # province
 
 setwd("x:/toPeter/grid-results")
-## hill shade
-slope <- terrain(r, opt='slope')
-aspect <- terrain(r, opt='aspect')
-hill <- hillShade(slope, aspect, 40, 270)
 
-pdf("grid-sites.pdf",width=3.5, height=6)
+colnames(xy@data)
+
+
+#pol3 <- krige(k ~ 1, locations=xy, newdata=g, degree=3)
+
+
+df <- data.frame(k=xy@data$k, kk=xy@data$age.k, coordinates(xy))
+colnames(df) <- c("k", "kk", "x", "y")
+gam_fit <- mgcv::gam(k ~ s(x, y, k=200), df, family=gaussian)
+dfpred2 <- data.frame(coordinates(g))
+colnames(dfpred2) <- c("x", "y")
+dfpred2$pr <- predict(gam_fit, dfpred2)
+gridded(dfpred2) <- ~ x + y
+#plot(dfpred2)
+
+gam_fita <- mgcv::gam(kk ~ s(x, y, k=200), df, family=gaussian)
+dfpred3 <- data.frame(coordinates(g))
+colnames(dfpred3) <- c("x", "y")
+dfpred3$pr <- predict(gam_fita, dfpred3)
+gridded(dfpred3) <- ~ x + y
+#plot(dfpred3)
+
+## IDW
+
+g1 <- gstat(id = "k", formula = k~1, data = xy, model=NULL)
+p1 <- predict(g1, newdata=g)
+
+g2 <- gstat(id = "age.k", formula = age.k~1, data = xy, model=NULL)
+p2 <- predict(g2, newdata=g)
+
+pch <- 1:nlevels(xy@data$BfSource)
+col <- plasma(255) # viridis(255)
+
+png("idw-lc3.png",width=1000, height=1500)
 op <- par(mar=c(0,0,0,0))
-plot(hill, col=grey(0:100/100), legend=FALSE, bty="n", box=FALSE, axes=FALSE)
-plot(r, legend=FALSE, col=topo.colors(50, alpha=0.35)[26:50], add=TRUE)
-plot(xy_tm, add=TRUE, cex=0.4)
+plot(p1, col=col)
+plot(ABnr, add=TRUE, col=NA, border="grey", lwd=0.25)
+plot(xy, pch=pch[as.integer(xy@data$BfSource)], cex=1.5, col="white", add=TRUE)
+legend("bottomleft", col=1, pch=pch, legend=levels(xy@data$BfSource), bty="n",
+    title="Backfilled Source", cex=2)
 par(op)
 dev.off()
 
-## NR
-pdf("grid-sites2.pdf",width=3.5, height=6)
-COL <- c('#e6f5c9','#f4cae4','#b3e2cd','#fff2ae','#fdcdac','#cbd5e8')
+png("idw-lc3age.png",width=1000, height=1500)
 op <- par(mar=c(0,0,0,0))
-plot(ABnr, col=COL, border=COL)
-plot(xy_tm, add=TRUE, cex=0.4)
+plot(p2, col=col)
+plot(ABnr, add=TRUE, col=NA, border="grey", lwd=0.25)
+plot(xy, pch=pch[as.integer(xy@data$BfSource)], cex=1.5, col="white", add=TRUE)
+legend("bottomleft", col=1, pch=pch, legend=levels(xy@data$BfSource), bty="n",
+    title="Backfilled Source", cex=2)
 par(op)
 dev.off()
 
+png("gam-smooth-lc3-kappa.png",width=1000, height=1500)
+op <- par(mar=c(0,0,0,0))
+plot(dfpred2, col=col)
+plot(ABnr, add=TRUE, col=NA, border="grey", lwd=0.25)
+plot(xy, pch=pch[as.integer(xy@data$BfSource)], cex=1.5, col="white", add=TRUE)
+legend("bottomleft", col=1, pch=pch, legend=levels(xy@data$BfSource), bty="n",
+    title="Backfilled Source", cex=2)
+par(op)
+dev.off()
 
+png("gam-smooth-lc3age-kappa.png",width=1000, height=1500)
+op <- par(mar=c(0,0,0,0))
+plot(dfpred3, col=col)
+plot(ABnr, add=TRUE, col=NA, border="grey", lwd=0.25)
+plot(xy, pch=pch[as.integer(xy@data$BfSource)], cex=1.5, col="white", add=TRUE)
+legend("bottomleft", col=1, pch=pch, legend=levels(xy@data$BfSource), bty="n",
+    title="Backfilled Source", cex=2)
+par(op)
+dev.off()
+
+setwd("x:/toPeter/grid-results")
 
 write.csv(as.matrix(xt_prov), file="x:/toPeter/grid-results/Prov_Landcov.csv")
 write.csv(as.matrix(xa_prov), file="x:/toPeter/grid-results/Prov_LandcovAge.csv")
@@ -371,43 +380,24 @@ for (i in names(xa_nr)) {
     write.csv(as.matrix(xa_nr[[i]]),
         file=paste0("x:/toPeter/grid-results/NR_LandcovAge-", gsub(" ", "", i), ".csv"))
 }
+for (i in names(xa_src)) {
+    write.csv(as.matrix(xt_src[[i]]),
+        file=paste0("x:/toPeter/grid-results/NR_Landcov-", gsub(" ", "", i), ".csv"))
+    write.csv(as.matrix(xa_src[[i]]),
+        file=paste0("x:/toPeter/grid-results/NR_LandcovAge-", gsub(" ", "", i), ".csv"))
+}
 
 zz <- data.frame(
-    noage=rbind(Prov=c(k(xt_prov), m(xt_prov)), cbind(t(sapply(xt_nr, k)), t(sapply(xt_nr, m)))),
-    age=rbind(Prov=c(k(xa_prov), m(xa_prov)), cbind(t(sapply(xa_nr, k)), t(sapply(xa_nr, m))))
-    )
+    noage=rbind(Prov=c(k(xt_prov), m(xt_prov)),
+        cbind(t(sapply(xt_nr, k)), t(sapply(xt_nr, m))),
+        cbind(t(sapply(xt_src, k)), t(sapply(xt_src, m)))
+    ),
+    age=rbind(Prov=c(k(xa_prov), m(xa_prov)),
+        cbind(t(sapply(xa_nr, k)), t(sapply(xa_nr, m))),
+        cbind(t(sapply(xa_src, k)), t(sapply(xa_src, m)))
+    ))
 write.csv(zz, file="x:/toPeter/grid-results/Accuracy-and-kappa.csv")
 
 
-## kriging
-gr <- data.frame(coordinates(r)[!is.na(values(r)),])
-coordinates(gr) <- ~ x + y
-proj4string(gr) <- proj4string(r)
-gr <- SpatialPixels(gr)
-
-coordinates(met2) <- ~ PUBLIC_LONGITUDE + PUBLIC_LATTITUDE
-proj4string(met2) <-
-    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-met2 <- spTransform(met2, proj4string(r))
-#v <- variogram(k~1, met2)
-g1 <- gstat(id = "k", formula = k~1, data = met2, model=NULL)
-p1 <- predict(g1, newdata=gr)
-
-g2 <- gstat(id = "age.k", formula = age.k~1, data = met2, model=NULL)
-p2 <- predict(g2, newdata=gr)
-
-png("kriging-lc3.png",width=1000, height=1500)
-op <- par(mar=c(0,0,0,0))
-plot(p1)
-plot(ABnr, add=TRUE, col=NA, border="grey", lwd=0.25)
-par(op)
-dev.off()
-
-png("kriging-lc3age.png",width=1000, height=1500)
-op <- par(mar=c(0,0,0,0))
-plot(p2)
-plot(ABnr, add=TRUE, col=NA, border="grey", lwd=0.25)
-par(op)
-dev.off()
 
 
