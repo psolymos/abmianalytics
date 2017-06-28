@@ -1140,6 +1140,47 @@ save(all_acc_S, all_acc_N, occc_res_N, boot_res_N, occc_res_S, boot_res_S, slt,
 
 }
 
+SPPn <- as.character(slt[slt$veghf.north,"AOU"])
+SPPs <- as.character(slt[slt$soilhf.south,"AOU"])
+load("e:/peter/sppweb2017/birds-r2-auc-occc-boot.Rdata")
+
+z <- all_acc_N
+SPP <- SPPn
+with(data.frame(z), plot(R211, R212, type="n", ylim=c(0,1), xlim=c(0,1)))
+abline(0,1, col="grey")
+with(data.frame(z[rownames(z) %in% SPP,]), points(R211, R212))
+with(data.frame(z[!(rownames(z) %in% SPP),]), points(R211, R212, col=2))
+
+load("e:/peter/sppweb2017/birds-r2-auc-occc-boot-subset.Rdata")
+occn <- t(sapply(occc_res_N, "[", 1:3))
+occs <- t(sapply(occc_res_S, "[", 1:3))
+
+par(mfrow=c(3,2))
+with(data.frame(all_acc_N), plot(R211, R212, ylim=c(0,1), xlim=c(0,1),
+    main="R^2, North", xlab="Habitat", ylab="Habitat + Climate"))
+abline(0,1, col="grey")
+with(data.frame(all_acc_S), plot(R211, R212, ylim=c(0,1), xlim=c(0,1),
+    main="R^2, South", xlab="Habitat", ylab="Habitat + Climate"))
+abline(0,1, col="grey")
+
+with(data.frame(all_acc_N), plot(AUC11, AUC12, ylim=c(0,1), xlim=c(0,1),
+    main="AUC, North", xlab="Habitat", ylab="Habitat + Climate"))
+abline(0,1, col="grey")
+abline(h=0.5, v=0.5, col="grey", lty=2)
+with(data.frame(all_acc_S), plot(AUC11, AUC12, ylim=c(0,1), xlim=c(0,1),
+    main="AUC, South", xlab="Habitat", ylab="Habitat + Climate"))
+abline(0,1, col="grey")
+abline(h=0.5, v=0.5, col="grey", lty=2)
+
+with(data.frame(occn), plot(oprec, oaccu , ylim=c(0,1), xlim=c(0,1),
+    main="AUC, North", xlab="Location", ylab="Scale"))
+abline(0,1, col="grey")
+with(data.frame(occs), plot(oprec, oaccu , ylim=c(0,1), xlim=c(0,1),
+    main="AUC, North", xlab="Location", ylab="Scale"))
+abline(0,1, col="grey")
+
+
+
 
 
 ## means
