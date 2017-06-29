@@ -128,3 +128,26 @@ AllIn[[TAX]] <- list(lt=lt1, usen=usen1, uses=uses1,
 }
 save(AllIn, file="~/Dropbox/abmi/10yr/R/AllTables.Rdata")
 
+
+## making sense
+
+load("~/Dropbox/abmi/10yr/R/AllTables.Rdata")
+
+get_stuff0 <- function(TAX, TABLE, COL, north=TRUE) {
+    SPP <- AllIn[[TAX]]$lt$Species
+    i <- if (north)
+        AllIn[[TAX]]$lt[,"veghf.north"] else AllIn[[TAX]]$lt[,"soilhf.south"]
+    SPP <- as.character(SPP[i])
+    z <- AllIn[[TAX]][[TABLE]]
+    rownames(z) <- z$Species
+    z[SPP, COL]
+}
+get_stuff <- function(TABLE, COL, north=TRUE)
+    sapply(names(AllIn), get_stuff0, TABLE=TABLE, COL=COL, north=north)
+get_stuff0("mites", "linn", "AverageCoef", T)
+
+lt <- AllIn$mites$lt
+linn <- AllIn$mites$linn
+
+
+
