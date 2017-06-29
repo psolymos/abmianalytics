@@ -138,6 +138,7 @@ save(AllIn, file="~/Dropbox/abmi/10yr/R/AllTables.Rdata")
 
 ## making sense
 
+library(mefa4)
 load("~/Dropbox/abmi/10yr/R/AllTables.Rdata")
 
 get_stuff0 <- function(TAX, TABLE, COL, north=TRUE) {
@@ -147,7 +148,7 @@ get_stuff0 <- function(TAX, TABLE, COL, north=TRUE) {
     SPP <- as.character(SPP[i])
     z <- AllIn[[TAX]][[TABLE]]
     rownames(z) <- z$Species
-    compare_sets(rownames(z), SPP)
+    #compare_sets(rownames(z), SPP)
     z[SPP, COL]
 }
 rugged_mat <- function(x) {
@@ -158,13 +159,40 @@ rugged_mat <- function(x) {
         out[1:length(x[[i]]),i] <- x[[i]]
     out
 }
-
 get_stuff <- function(TABLE, COL, north=TRUE)
     rugged_mat(lapply(structure(names(AllIn), names=names(AllIn)),
         get_stuff0, TABLE=TABLE, COL=COL, north=north))
-get_stuff0("mites", "linn", "AverageCoef", T)
-get_stuff0("mites", "lins", "AverageCoef", F)
+vp1 <- function(x, p=c(0, 1), ...) {
+    x2 <- x[!is.na(x)]
+    q <- quantile(x2, p)
+    x2 <- x2[x2 > q[1] & x2 < q[2]]
+    d <- density(x2, ...)
+    data.frame(h=d$x, w=d$y/max(d$y))
+}
+vp <- function(x, p=c(0,1),
+col="#FF664D80", border="#FF664D",
+#col="#40E0D180", border="#40E0D1",
+ylim, ylab="", xlab="", main="", ...) {
+    xx <- apply(x, 2, vp1, p=p, ...)
+    if (missing(ylim))
+        ylim <- range(x, na.rm=TRUE)
+    plot(0, type="n", axes=FALSE, ann=FALSE, xlim=c(0.5, ncol(x)+0.5),
+        ylim=ylim)
+    axis(1, 1:ncol(x), colnames(x), lwd=0)
+    axis(2)
+    title(ylab=ylab, xlab=xlab, main=main)
+    for (i in 1:ncol(x)) {
+        polygon(0.45*c(-xx[[i]]$w, rev(xx[[i]]$w))+i,
+            c(xx[[i]]$h, rev(xx[[i]]$h)), col=col, border=border)
+        #lines(c(i,i), range(xx[[i]]$h), col=col, lwd=2)
+        lines(c(i-0.2, i+0.2), rep(median(x[,i], na.rm=TRUE), 2), lwd=3)
+    }
+    #points(1:ncol(x), colMeans(x, na.rm=TRUE), pch=21, cex=1.5)
+    invisible(NULL)
+}
+fu <- function(x) sign(x) * plogis(log(abs(x/100)))
 
+## --- linear
 
 softn <- get_stuff("linn", "SoftLin10", TRUE) /
     get_stuff("linn", "AverageCoef", TRUE)
@@ -174,10 +202,169 @@ softs <- get_stuff("lins", "SoftLin10", FALSE) /
     get_stuff("lins", "AverageCoef", FALSE)
 hards <- get_stuff("lins", "HardLin10", FALSE) /
     get_stuff("lins", "AverageCoef", FALSE)
+softn[softn > 10] <- NA
+softs[softs > 10] <- NA
+hardn[hardn > 10] <- NA
+hards[hards > 10] <- NA
+
+## might need to calculate mean density for birds instead of current AvgCoefficient
+par(mfrow=c(2,2), las=1, yaxs="i")
+ylim <- c(0, 3)
+p <- c(0.025, 0.975)
+vp(softn, main="Soft Linear, North", ylim=ylim, p=p, ylab="Std. Effect")
+abline(h=1, lty=2)
+vp(hardn, main="Hard Linear, North", ylim=ylim, p=p, ylab="Std. Effect")
+abline(h=1, lty=2)
+vp(softs, main="Soft Linear, South", ylim=ylim, p=p, ylab="Std. Effect")
+abline(h=1, lty=2)
+vp(hards, main="Hard Linear, South", ylim=ylim, p=p, ylab="Std. Effect")
+abline(h=1, lty=2)
+
+## --- sector
+
+tnagr <- get_stuff("sectn", "PopEffect.Agriculture", TRUE)
+tnfor <- get_stuff("sectn", "PopEffect.Forestry", TRUE)
+tneng <- get_stuff("sectn", "PopEffect.Energy", TRUE)
+tnurb <- get_stuff("sectn", "PopEffect.RuralUrban", TRUE)
+tntra <- get_stuff("sectn", "PopEffect.Transportation", TRUE)
+
+tsagr <- get_stuff("sects", "PopEffect.Agriculture", FALSE)
+tsfor <- get_stuff("sects", "PopEffect.Forestry", FALSE)
+tseng <- get_stuff("sects", "PopEffect.Energy", FALSE)
+tsurb <- get_stuff("sects", "PopEffect.RuralUrban", FALSE)
+tstra <- get_stuff("sects", "PopEffect.Transportation", FALSE)
+
+unagr <- get_stuff("sectn", "UnitEffect.Agriculture", TRUE)
+unfor <- get_stuff("sectn", "UnitEffect.Forestry", TRUE)
+uneng <- get_stuff("sectn", "UnitEffect.Energy", TRUE)
+unurb <- get_stuff("sectn", "UnitEffect.RuralUrban", TRUE)
+untra <- get_stuff("sectn", "UnitEffect.Transportation", TRUE)
+
+usagr <- get_stuff("sects", "UnitEffect.Agriculture", FALSE)
+usfor <- get_stuff("sects", "UnitEffect.Forestry", FALSE)
+useng <- get_stuff("sects", "UnitEffect.Energy", FALSE)
+usurb <- get_stuff("sects", "UnitEffect.RuralUrban", FALSE)
+ustra <- get_stuff("sects", "UnitEffect.Transportation", FALSE)
+
+par(mfrow=c(3,2), las=1, yaxs="i")
+ylim <- c(-1, 1)
+p <- c(0, 1)
+vp(fu(uneng), main="Energy, North", ylim=ylim, p=p, ylab="Unit Effect")
+abline(h=0, lty=2)
+abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
+vp(fu(unagr), main="Algiculture, North", ylim=ylim, p=p, ylab="Unit Effect")
+abline(h=0, lty=2)
+abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
+vp(fu(unurb), main="Rural/Urban, North", ylim=ylim, p=p, ylab="Unit Effect")
+abline(h=0, lty=2)
+abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
+vp(fu(untra), main="Transportation, North", ylim=ylim, p=p, ylab="Unit Effect")
+abline(h=0, lty=2)
+abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
+vp(fu(unfor), main="Forestry, North", ylim=ylim, p=p, ylab="Unit Effect")
+abline(h=0, lty=2)
+abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
+plot.new()
+
+par(mfrow=c(2,2), las=1, yaxs="i")
+ylim <- c(-1, 1)
+p <- c(0, 1)
+vp(fu(useng), main="Energy, South", ylim=ylim, p=p, ylab="Unit Effect")
+abline(h=0, lty=2)
+abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
+vp(fu(usagr), main="Algiculture, South", ylim=ylim, p=p, ylab="Unit Effect")
+abline(h=0, lty=2)
+abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
+vp(fu(usurb), main="Rural/Urban, South", ylim=ylim, p=p, ylab="Unit Effect")
+abline(h=0, lty=2)
+abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
+vp(fu(ustra), main="Transportation, South", ylim=ylim, p=p, ylab="Unit Effect")
+abline(h=0, lty=2)
+abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
 
 
-lt <- AllIn$mites$lt
-linn <- AllIn$mites$linn
+par(mfrow=c(3,2), las=1, yaxs="i")
+ylim <- c(-10, 10)
+p <- c(0.025, 0.975)
+vp(tneng, main="Energy, North", ylim=ylim, p=p, ylab="Total Effect")
+abline(h=0, lty=2)
+vp(tnagr, main="Algiculture, North", ylim=ylim, p=p, ylab="Total Effect")
+abline(h=0, lty=2)
+vp(tnurb, main="Rural/Urban, North", ylim=ylim, p=p, ylab="Total Effect")
+abline(h=0, lty=2)
+vp(tntra, main="Transportation, North", ylim=ylim, p=p, ylab="Total Effect")
+abline(h=0, lty=2)
+vp(tnfor, main="Forestry, North", ylim=ylim, p=p, ylab="Total Effect")
+abline(h=0, lty=2)
+plot.new()
+
+par(mfrow=c(2,2), las=1, yaxs="i")
+ylim <- c(-20, 20)
+p <- c(0.025, 0.975)
+vp(tseng, main="Energy, South", ylim=ylim, p=p, ylab="Total Effect")
+abline(h=0, lty=2)
+vp(tsagr, main="Algiculture, South", ylim=c(-100, 100), p=p, ylab="Total Effect")
+abline(h=0, lty=2)
+vp(tsurb, main="Rural/Urban, South", ylim=ylim, p=p, ylab="Total Effect")
+abline(h=0, lty=2)
+vp(tstra, main="Transportation, South", ylim=ylim, p=p, ylab="Total Effect")
+abline(h=0, lty=2)
+
+## --- ordination
+
+ord_fun <- function(TAX, north=TRUE, scaling=2, ...) {
+    Excl <- c("WhiteSpruceCC20", "WhiteSpruceCC40", "WhiteSpruceCC60",
+        "PineCC20", "PineCC40", "PineCC60",
+        "DeciduousCC20",   "DeciduousCC40", "DeciduousCC60",
+        "MixedwoodCC20", "MixedwoodCC40",   "MixedwoodCC60")
+    z <- if (north)
+        AllIn[[TAX]]$veg else AllIn[[TAX]]$soilnt
+    rownames(z) <- z[,1]
+    z <- as.matrix(z[,-1])
+    z <- z[,!grepl("\\.", colnames(z))]
+    z <- z[,!(colnames(z) %in% Excl)]
+    cn <- colnames(z)
+    cn <- gsub("[[:digit:]]", "", cn)
+    #cn <- gsub("CC", "", cn)
+    zz <- groupMeans(z, 2, cn)
+    rownames(zz) <- make.cepnames(rownames(zz))
+    colnames(zz) <- make.cepnames(colnames(zz))
+
+    library(vegan)
+    fs <- function(x) 0.5*(1+x/max(abs(x)))
+    yy <- (t(zz))
+    m <- cca(yy)
+    s <- scores(m, 1:3)
+    ColSi <- 2
+    ColSp <- rgb(red=fs(s$species[,1]),
+        green=fs(s$species[,2]), blue=fs(s$species[,3]))
+    plot(m, scaling=scaling, type="none", ...)
+    #text(m, "species", col=ColSp, cex=0.5, scaling=3)
+    points(m, "species", col=ColSp, cex=1, pch=19, scaling=3)
+    text(m, "sites", col=1, cex=1, scaling=3)
+    invisible(NULL)
+}
+
+par(mfrow=c(2,2), las=1)
+ord_fun("birds", TRUE, main="Birds, North")
+ord_fun("birds", FALSE, main="Birds, South")
+ord_fun("mites", TRUE, main="Mites, North")
+ord_fun("mites", FALSE, main="Mites, South")
+
+par(mfrow=c(2,2), las=1)
+ord_fun("lichens", TRUE, main="Lichens, North")
+ord_fun("lichens", FALSE, main="Lichens, South")
+ord_fun("mosses", TRUE, main="Bryophytes, North")
+ord_fun("mosses", FALSE, main="Bryophytes, South")
+
+par(mfrow=c(1,2), las=1)
+ord_fun("vplants", TRUE, main="Vascular Plants, North")
+ord_fun("vplants", FALSE, main="Vascular Plants, South")
+
+## --- SI distributions: violplots, Prov/N/S  by taxon
+
+## --- SI vs HF: gam/loess splines Prov/N/S (thf, alien, succ by taxon)
 
 
+## OCCC: 10km Rdata file Coef.bs (R object Mite intactness North by 10x10km unit BS 2017 10Km2.Rdata)
 

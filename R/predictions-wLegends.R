@@ -677,10 +677,10 @@ tr_res[[spp]] <- list(N=cbind(rf=ThbNrf, cr=ThbNcr), S=cbind(rf=ThbSrf, cr=ThbSc
 ## -new version has the HFonly pop sizes saved
 ## can be used to retro-fit the effects
 #save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-bf.Rdata"))
-#save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-ES.Rdata"))
+save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-ES.Rdata"))
 #save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects-new-shf.Rdata"))
-load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-bf.Rdata"))
-#load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-ES.Rdata"))
+#load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-bf.Rdata"))
+load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-ES.Rdata"))
 #load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-shf.Rdata"))
 
 #spp <- "ALFL"
