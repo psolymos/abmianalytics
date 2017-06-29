@@ -147,11 +147,34 @@ get_stuff0 <- function(TAX, TABLE, COL, north=TRUE) {
     SPP <- as.character(SPP[i])
     z <- AllIn[[TAX]][[TABLE]]
     rownames(z) <- z$Species
+    compare_sets(rownames(z), SPP)
     z[SPP, COL]
 }
+rugged_mat <- function(x) {
+    n <- sapply(x, length)
+    out <- matrix(NA, max(n), length(x))
+    colnames(out) <- names(x)
+    for (i in 1:length(x))
+        out[1:length(x[[i]]),i] <- x[[i]]
+    out
+}
+
 get_stuff <- function(TABLE, COL, north=TRUE)
-    sapply(names(AllIn), get_stuff0, TABLE=TABLE, COL=COL, north=north)
+    rugged_mat(lapply(structure(names(AllIn), names=names(AllIn)),
+        get_stuff0, TABLE=TABLE, COL=COL, north=north))
 get_stuff0("mites", "linn", "AverageCoef", T)
+get_stuff0("mites", "lins", "AverageCoef", F)
+
+
+softn <- get_stuff("linn", "SoftLin10", TRUE) /
+    get_stuff("linn", "AverageCoef", TRUE)
+hardn <- get_stuff("linn", "HardLin10", TRUE) /
+    get_stuff("linn", "AverageCoef", TRUE)
+softs <- get_stuff("lins", "SoftLin10", FALSE) /
+    get_stuff("lins", "AverageCoef", FALSE)
+hards <- get_stuff("lins", "HardLin10", FALSE) /
+    get_stuff("lins", "AverageCoef", FALSE)
+
 
 lt <- AllIn$mites$lt
 linn <- AllIn$mites$linn
