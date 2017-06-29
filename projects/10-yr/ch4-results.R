@@ -69,12 +69,14 @@ veg1 <- veg1[,colnames(veg1) %in% vegcols$In]
 #colnames(veg1) <- vegcols$Out[match(colnames(veg1), vegcols$In)]
 veg1 <- veg1[,match(vegcols$In, colnames(veg1))]
 colnames(veg1) <- vegcols$Out
+compare_sets(lt1$Species, veg1$Species)
 
 ## lin N
 linn1 <- data.frame(Species=veg[,"Species"], linn,
     veg[,c("SoftLin","SoftLin.LCI","SoftLin.UCI","HardLin","HardLin.LCI","HardLin.UCI")])
 colnames(linn1) <- c("Species", "AverageCoef", "SoftLin10", "HardLin10", "SoftLin",
     "SoftLin.LCL", "SoftLin.UCL", "HardLin", "HardLin.LCL", "HardLin.UCL")
+compare_sets(lt1$Species, linn1$Species)
 
 ## soil, nontreed and treed
 soilnt1 <- soil
@@ -84,12 +86,14 @@ colnames(soilnt1) <- gsub(".UCI", ".UCL", colnames(soilnt1))
 soilnt1 <- soilnt1[,colnames(soilnt0)]
 soiltr1 <- data.frame(Species=soilnt1$Species,
     plogis(qlogis(as.matrix(soilnt1[,-1])) + paspen$pAspen))
+compare_sets(lt1$Species, soilnt1$Species)
 
 ## lin S
 lins1 <- data.frame(Species=soil[,"Species"], lins,
     soil[,c("SoftLin","SoftLin.LCI","SoftLin.UCI","HardLin","HardLin.LCI","HardLin.UCI")])
 colnames(lins1) <- c("Species", "AverageCoef", "SoftLin10", "HardLin10", "SoftLin",
     "SoftLin.LCL", "SoftLin.UCL", "HardLin", "HardLin.LCL", "HardLin.UCL")
+compare_sets(lt1$Species, lins1$Species)
 
 ## use-avail
 usen1 <- usen
@@ -97,6 +101,7 @@ usen1$Species <- usen1$SpLabel
 usen1$SpLabel <- NULL
 usen1 <- usen1[,!grepl("\\.WRSI", colnames(usen1))]
 colnames(usen1) <- gsub("\\.rWRSI", "", colnames(usen1))
+#compare_sets(lt1$Species, usen1$Species)
 
 uses1 <- uses
 uses1$Species <- uses1$SpLabel
@@ -111,6 +116,7 @@ sectn1$Sp <- sectn1$pcTotalProvAbundance <- sectn1$Reg_Model <- NULL
 colnames(sectn1) <- gsub("pcTotalEffect", "PopEffect", colnames(sectn1))
 colnames(sectn1) <- gsub("pcUnitEffect", "UnitEffect", colnames(sectn1))
 sectn1 <- sectn1[,colnames(sectn0)]
+compare_sets(lt1$Species, sectn1$Species)
 
 ## note: this does not have Forestry (Grassland!)
 sects1 <- sects
@@ -121,6 +127,7 @@ sects1$Sp <- sects1$pcTotalProvAbundance <- sects1$Reg_Model <- NULL
 colnames(sects1) <- gsub("pcTotalEffect", "PopEffect", colnames(sects1))
 colnames(sects1) <- gsub("pcUnitEffect", "UnitEffect", colnames(sects1))
 sects1 <- sects1[,colnames(sects0)]
+compare_sets(lt1$Species, sects1$Species)
 
 AllIn[[TAX]] <- list(lt=lt1, usen=usen1, uses=uses1,
     veg=veg1, linn=linn1, soilnt=soilnt1, soiltr=soiltr1,
