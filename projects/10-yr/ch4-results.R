@@ -16,6 +16,7 @@ soiltr0 <- read.csv(file.path(ROOT, TAX, "soilhf-treed-south.csv"))
 usen0 <- read.csv(file.path(ROOT, TAX, "useavail-north.csv"))
 uses0 <- read.csv(file.path(ROOT, TAX, "useavail-south.csv"))
 veg0 <- read.csv(file.path(ROOT, TAX, "veghf-north.csv"))
+sects0$PopEffect.Forestry <- sects0$UnitEffect.Forestry <- NULL
 AllIn[["birds"]] <- list(lt=lt0, usen=usen0, uses=uses0,
     veg=veg0, linn=linn0, soilnt=soilnt0, soiltr=soiltr0,
     lins=lins0, sectn=sectn0, sects=sects0)
@@ -107,17 +108,23 @@ colnames(uses1) <- gsub("\\.rWRSI", "", colnames(uses1))
 sectn1 <- sectn
 sectn1 <- data.frame(Species=sectn1$Sp, sectn1)
 sectn1$Sp <- sectn1$pcTotalProvAbundance <- sectn1$Reg_Model <- NULL
+colnames(sectn1) <- gsub("pcTotalEffect", "PopEffect", colnames(sectn1))
+colnames(sectn1) <- gsub("pcUnitEffect", "UnitEffect", colnames(sectn1))
+sectn1 <- sectn1[,colnames(sectn0)]
 
 ## note: this does not have Forestry (Grassland!)
 sects1 <- sects
 sects1 <- data.frame(Species=sects1$Sp, sects1)
 sects1$Sp <- sects1$pcTotalProvAbundance <- sects1$Reg_Model <- NULL
-sects1$pcTotalEffect.Forestry <- sects1$pcUnitEffect.Forestry <- 0
-sects1 <- sects1[,colnames(sectn1)]
+#sects1$pcTotalEffect.Forestry <- sects1$pcUnitEffect.Forestry <- 0
+#sects1 <- sects1[,colnames(sectn1)]
+colnames(sects1) <- gsub("pcTotalEffect", "PopEffect", colnames(sects1))
+colnames(sects1) <- gsub("pcUnitEffect", "UnitEffect", colnames(sects1))
+sects1 <- sects1[,colnames(sects0)]
 
 AllIn[[TAX]] <- list(lt=lt1, usen=usen1, uses=uses1,
     veg=veg1, linn=linn1, soilnt=soilnt1, soiltr=soiltr1,
     lins=lins1, sectn=sectn1, sects=sects1)
 }
-
+save(AllIn, file="~/Dropbox/abmi/10yr/R/AllTables.Rdata")
 
