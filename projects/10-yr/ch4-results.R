@@ -135,6 +135,295 @@ AllIn[[TAX]] <- list(lt=lt1, usen=usen1, uses=uses1,
 }
 save(AllIn, file="~/Dropbox/abmi/10yr/R/AllTables.Rdata")
 
+## summarizing intactness
+
+library(mefa4)
+
+load(file.path("e:/peter/AB_data_v2016", "out", "kgrid", "kgrid_table.Rdata"))
+
+library(rgdal)
+library(rgeos)
+library(sp)
+library(gstat)
+library(raster)
+library(viridis)
+
+xy <- kgrid
+coordinates(xy) <- ~ POINT_X + POINT_Y
+proj4string(xy) <-
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+rt <- raster(file.path("e:/peter/AB_data_v2016", "data", "kgrid", "AHM1k.asc"))
+crs <- CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+projection(rt) <- crs
+xy <- spTransform(xy, crs)
+mat0 <- as.matrix(rt)
+
+setwd("~/Dropbox/courses/st-johns-2017/data/NatRegAB")
+AB <- readOGR(".", "Natural_Regions_Subregions_of_Alberta") # rgdal
+AB <- spTransform(AB, proj4string(rt))
+ABnr <- gUnaryUnion(AB, AB@data$NRNAME) # natural regions
+ABpr <- gUnaryUnion(AB, rep(1, nrow(AB))) # province
+
+
+load("~/Dropbox/abmi/10yr/R/AllTables.Rdata")
+ROOT <- "v:/contents/2017/species"
+TAXA <- c("birds", "mites", "mosses", "lichens", "vplants")
+
+AllSI <- list()
+MatSI <- matrix(NA, nrow(kgrid), length(TAXA))
+dimnames(MatSI) <- list(rownames(kgrid), TAXA)
+
+TAX <- "birds"
+fl <- list.files(file.path(ROOT, TAX, "km2"))
+nam <- sapply(strsplit(fl, "\\."), "[[", 1)
+ext <- strsplit(fl, "\\.")[[1]][2]
+lt <- AllIn[[TAX]]$lt
+SPP <-as.character(lt$AOU[lt$map.pred])
+compare_sets(nam, SPP)
+sppSI <- list()
+simat <- matrix(NA, nrow(kgrid), length(nam))
+dimnames(simat) <- list(rownames(kgrid), nam)
+for (i in nam) {
+    cat(TAX, i, "\n");flush.console()
+    e <- new.env()
+    load(file.path(ROOT, TAX, "km2", paste0(i, ".", ext)), envir=e)
+    km <- as.data.frame(e$km2)
+    SI <- 100 * pmin(km$Curr, km$Ref) / pmax(km$Curr, km$Ref)
+    kmnr <- groupSums(as.matrix(km), 1, kgrid$NRNAME, na.rm=TRUE)
+    kmnr <- rbind(kmnr, Alberta=colSums(kmnr))
+    kmnr <- cbind(kmnr, SI=100*pmin(kmnr[,1], kmnr[,2])/pmax(kmnr[,1], kmnr[,2]))
+    sppSI[[i]] <- kmnr
+    simat[,i] <- SI
+}
+SIavg <- rowMeans(simat, na.rm=TRUE)
+#SIavg[is.na(SIavg)] <- 100
+AllSI[[TAX]] <- sppSI
+MatSI[,TAX] <- SIavg
+
+#TAX <- "mites"
+for (TAX in TAXA[-1]) {
+    fl <- list.files(file.path(ROOT, TAX, "km2"))
+    nam <- substr(fl, 1, nchar(fl)-6)
+    ext <- substr(fl[1], nchar(fl)-4, nchar(fl))
+    lt <- AllIn[[TAX]]$lt
+    SPP <-as.character(lt$SpeciesID[lt$map.pred])
+    compare_sets(nam, SPP)
+    sppSI <- list()
+    simat <- matrix(NA, nrow(kgrid), length(nam))
+    dimnames(simat) <- list(rownames(kgrid), nam)
+    for (i in nam) {
+        cat(TAX, i, "\n");flush.console()
+        e <- new.env()
+        load(file.path(ROOT, TAX, "km2", paste0(i, ".", ext)), envir=e)
+        km <- as.data.frame(e$RefCurr)
+        km <- km[match(rownames(kgrid), km$LinkID),c("Ref", "Curr")]
+        SI <- 100 * pmin(km$Curr, km$Ref) / pmax(km$Curr, km$Ref)
+        kmnr <- groupSums(as.matrix(km), 1, kgrid$NRNAME, na.rm=TRUE)
+        kmnr <- rbind(kmnr, Alberta=colSums(kmnr))
+        kmnr <- cbind(kmnr, SI=100*pmin(kmnr[,1], kmnr[,2])/pmax(kmnr[,1], kmnr[,2]))
+        sppSI[[i]] <- kmnr
+        simat[,i] <- SI
+    }
+    SIavg <- rowMeans(simat, na.rm=TRUE)
+    #SIavg[is.na(SIavg)] <- 100
+    AllSI[[TAX]] <- sppSI
+    MatSI[,TAX] <- SIavg
+}
+
+save(AllSI, MatSI, file="e:/peter/sppweb2017/all-intactness.Rdata")
+
+## plot SI
+
+
+#SI[is.na(SI)] <- -999
+#SI[is.na(SI)] <- 100 # water/ice
+
+mat <- as.matrix(Xtab(SIavg ~ Row + Col, kgrid))
+mat[is.na(mat0)] <- NA
+#mat[mat < 0] <- NA
+rout <- raster(x=mat, template=rt)
+
+col <- colorRampPalette(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF",
+"#D9EF8B", "#A6D96A", "#66BD63", "#1A9850", "#006837"))(100)
+
+plot(rout, col=col, axes=FALSE, box=FALSE)
+plot(ABnr, add=TRUE)
+
+## summarizing GoF measures
+
+coefbsn <- coefbss <- list()
+
+load("e:/peter/sppweb2017/birds-r2-auc-occc-boot-subset.Rdata")
+cfn <- array(NA, c(length(boot_res_N), nrow(boot_res_N[[1]]), 100))
+cfs <- array(NA, c(length(boot_res_S), nrow(boot_res_S[[1]]), 100))
+dimnames(cfn) <- list(names(boot_res_N), rownames(boot_res_N[[1]]), 1:100)
+dimnames(cfs) <- list(names(boot_res_S), rownames(boot_res_S[[1]]), 1:100)
+for (i in 1:length(boot_res_N))
+    cfn[i,,] <- boot_res_N[[i]][,1:100]
+for (i in 1:length(boot_res_S))
+    cfs[i,,] <- boot_res_S[[i]][,1:100]
+coefbsn$birds <- cfn
+coefbss$birds <- cfs
+
+e <- new.env()
+load("w:/All-In_One_Ver2017/Mites/Analysis north/R object Mite intactness North by 10x10km unit BS 2017 10Km2.Rdata", envir=e)
+coefbsn$mites <- e$Coef.bs
+e <- new.env()
+load("w:/All-In_One_Ver2017/Mites/Analysis south/R object Mite intactness South by 10x10km unit BS 2017 10Km2.Rdata", envir=e)
+coefbss$mites <- e$Coef.bs
+
+e <- new.env()
+load("w:/All-In_One_Ver2017/Lichen/Analysis north/R object Lichen intactness North by 10x10km unit BS 2017 10Km2.Rdata", envir=e)
+coefbsn$lichens <- e$Coef.bs
+e <- new.env()
+load("w:/All-In_One_Ver2017/Lichen/Analysis south/R object Lichen intactness South by 10x10km unit BS 2017 10Km2.Rdata", envir=e)
+coefbss$lichens <- e$Coef.bs
+
+e <- new.env()
+load("w:/All-In_One_Ver2017/Moss/Analysis north/R object Moss intactness North by 10x10km unit BS 2017 10Km2.Rdata", envir=e)
+coefbsn$mosses <- e$Coef.bs
+e <- new.env()
+load("w:/All-In_One_Ver2017/Moss/Analysis south/R object Moss intactness South by 10x10km unit BS 2017 10Km2.Rdata", envir=e)
+coefbss$mosses <- e$Coef.bs
+
+e <- new.env()
+load("w:/All-In_One_Ver2017/VPlant/Analysis north/R object Plant intactness North by 10x10km unit BS 2017 10Km2.Rdata", envir=e)
+coefbsn$vplants <- e$Coef.bs
+e <- new.env()
+load("w:/All-In_One_Ver2017/VPlant/Analysis south/R object Plant intactness South by 10x10km unit BS 2017 10Km2.Rdata", envir=e)
+coefbss$vplants <- e$Coef.bs
+
+rm(e)
+sapply(coefbsn, dim)
+sapply(coefbss, dim)
+
+x <- coefbsn$birds[1,,]
+
+occc_plot <- function(x, ...) {
+    require(epiR)
+    z <- t(x)
+    oc <- epi.occc(x)
+    cm <- apply(z, 2, median)
+    z <- z[,order(cm)]
+    z <- z / max(cm)
+    q <- apply(z, 2, quantile, c(0.05, 0.25, 0.5, 0.75, 0.95))
+    matplot(t(q), type="l", lty=1,
+        col=c("lightblue", "blue", "black", "blue", "lightblue"), axes=FALSE,
+        xlab=paste0("OCCC=", round(oc$occc,2), ", Location=", round(oc$oprec, 2),
+        ", Scale=", round(oc$oaccu, 2)),
+        ylab="Relative abundance", ...)
+    axis(2)
+    abline(h=1, col="grey")
+    invisible(NULL)
+}
+
+pdf("e:/peter/sppweb2017/occc_fig_birds_north.pdf", onefile=TRUE)
+for (i in 1:dim(coefbsn$birds)[1])
+    occc_plot(coefbsn$birds[i,,], main=dimnames(coefbsn$birds)[[1]][i])
+dev.off()
+
+pdf("e:/peter/sppweb2017/occc_fig_birds_south.pdf", onefile=TRUE)
+for (i in 1:dim(coefbss$birds)[1])
+    occc_plot(coefbss$birds[i,,], main=dimnames(coefbss$birds)[[1]][i])
+dev.off()
+
+gofs <- gofn <- list()
+gofn$birds <- cbind(all_acc_N, t(sapply(occc_res_N, function(z) unlist(z[1:3]))), Wdist=NA)
+gofs$birds <- cbind(all_acc_S, t(sapply(occc_res_S, function(z) unlist(z[1:3]))), Wdist=NA)
+
+t1 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/Mites/North/AUC, pseudoR2, and coeffcient of discrimination_Mites_North.csv")
+t2 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/Mites/North/Repeatability measures for habitat coefficients_Mites_North.csv")
+gofn$mites <- as.matrix(cbind(t1[,c("PseudoR2_VegHF", "PseudoR2_VegHF.ClimSpace", "AUC_Veg", "AUC_ALL")],
+    t2[,c("occc", "oprec", "oaccu", "Within.Agreement")]))
+
+t1 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/Mites/South/AUC, pseudoR2, and coeffcient of discrimination_Mites_South.csv")
+t2 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/Mites/South/Repeatability measures for habitat coefficients_Mites_South.csv")
+gofs$mites <- as.matrix(cbind(t1[,c("PseudoR2_VegHF", "PseudoR2_VegHF.ClimSpace", "AUC_Veg", "AUC_ALL")],
+    t2[,c("occc", "oprec", "oaccu", "Within.Agreement")]))
+
+t1 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/Lichen/North/AUC, pseudoR2, and coeffcient of discrimination_Lichen_North.csv")
+t2 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/Lichen/North/Repeatability measures for habitat coefficients_Lichen_North.csv")
+gofn$lichens <- as.matrix(cbind(t1[,c("PseudoR2_VegHF", "PseudoR2_VegHF.ClimSpace", "AUC_Veg", "AUC_ALL")],
+    t2[,c("occc", "oprec", "oaccu", "Within.Agreement")]))
+
+t1 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/Lichen/South/AUC, pseudoR2, and coeffcient of discrimination_Lichen_South.csv")
+t2 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/Lichen/South/Repeatability measures for habitat coefficients_Lichen_South.csv")
+gofs$lichens <- as.matrix(cbind(t1[,c("PseudoR2_VegHF", "PseudoR2_VegHF.ClimSpace", "AUC_Veg", "AUC_ALL")],
+    t2[,c("occc", "oprec", "oaccu", "Within.Agreement")]))
+
+t1 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/Moss/North/AUC, pseudoR2, and coeffcient of discrimination_Moss_North.csv")
+t2 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/Moss/North/Repeatability measures for habitat coefficients_Moss_North.csv")
+gofn$mosses <- as.matrix(cbind(t1[,c("PseudoR2_VegHF", "PseudoR2_VegHF.ClimSpace", "AUC_Veg", "AUC_ALL")],
+    t2[,c("occc", "oprec", "oaccu", "Within.Agreement")]))
+
+t1 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/Moss/South/AUC, pseudoR2, and coeffcient of discrimination_Moss_South.csv")
+t2 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/Moss/South/Repeatability measures for habitat coefficients_Moss_South.csv")
+gofs$mosses <- as.matrix(cbind(t1[,c("PseudoR2_VegHF", "PseudoR2_VegHF.ClimSpace", "AUC_Veg", "AUC_ALL")],
+    t2[,c("occc", "oprec", "oaccu", "Within.Agreement")]))
+
+t1 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/VPlant/North/AUC, pseudoR2, and coeffcient of discrimination_VPlant_North.csv")
+t2 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/VPlant/North/Repeatability measures of habitat coefficients_VPlant_North.csv")
+gofn$vplants <- as.matrix(cbind(t1[,c("PseudoR2_VegHF", "PseudoR2_VegHF.ClimSpace", "AUC_Veg", "AUC_ALL")],
+    t2[,c("occc", "oprec", "oaccu", "Within.Agreement")]))
+
+t1 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/VPlant/South/AUC, pseudoR2, and coeffcient of discrimination_VPlant_South.csv")
+t2 <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables for 10 Year Review/VPlant/South/Repeatability measures for habitat coefficients_VPlant_South.csv")
+gofs$vplants <- as.matrix(cbind(t1[,c("PseudoR2_VegHF", "PseudoR2_VegHF.ClimSpace", "AUC_Veg", "AUC_ALL")],
+    t2[,c("occc", "oprec", "oaccu", "Within.Agreement")]))
+
+save(gofn, gofs, coefbsn, coefbss, file="~/Dropbox/abmi/10yr/R/AllBoot.Rdata")
+
+
+gof_plot <- function(x, type=c("r2", "auc", "oc", "d"), ...) {
+    f <- function(x) {
+        x <- x-min(x)
+        x <- x/max(x)
+        x
+    }
+    x <- x[rowSums(is.na(x[,1:7]))==0,]
+    if (type=="r2") {
+        x[x[,1] < 0,1] <- 0
+        x[x[,2] < 0,2] <- 0
+        plot(x[,1:2], col=rgb(f(x[,2]-x[,1]), 1-f(x[,1]), 1-f(x[,2])), pch=19,
+        ylim=c(0,1), xlim=c(0,1), xlab=expression(R^2*(landcover)),
+        ylab=expression(R^2*(landcover+climate)), ...)
+        abline(0,1,col="grey")
+    }
+    if (type=="auc") {
+        plot(x[,3:4], col=rgb(f(x[,4]-x[,3]), 1-f(x[,3]), 1-f(x[,4])), pch=19,
+        ylim=c(0,1), xlim=c(0,1), xlab="AUC (landcover)",
+        ylab="AUC (landcover+climate)", ...)
+        abline(0,1,col="grey")
+        abline(h=0.5, v=0.5,col="grey")
+    }
+    if (type=="oc") {
+        plot(x[,6:7], col=rgb(f(x[,5]), 1-f(x[,6]), 1-f(x[,7])), pch=19,
+        ylim=c(0,1), xlim=c(0,1), xlab="Location",
+        ylab="Scale", ...)
+        abline(0,1,col="grey")
+    }
+    if (type=="d") {
+        plot(density(x[,8]), xlim=c(0,1), ...)
+    }
+    invisible(NULL)
+}
+
+gof_fig_all <- function(TAX) {
+    op <- par(mfrow=c(2,3), las=1, mar=c(5,5,2,2)+0.1)
+    gof_plot(gofn[[TAX]], "r2", main=paste(TAX, "north"))
+    gof_plot(gofn[[TAX]], "auc")
+    gof_plot(gofn[[TAX]], "oc")
+    gof_plot(gofs[[TAX]], "r2", main=paste(TAX, "south"))
+    gof_plot(gofs[[TAX]], "auc")
+    gof_plot(gofs[[TAX]], "oc")
+    par(op)
+    invisible(NULL)
+}
+pdf("e:/peter/sppweb2017/r2-auc-oc.pdf", onefile=TRUE, height=8, width=12)
+for (i in names(gofn))
+    gof_fig_all(i)
+dev.off()
 
 ## making sense
 
