@@ -365,7 +365,7 @@ gofs$vplants <- as.matrix(cbind(t1[,c("PseudoR2_VegHF", "PseudoR2_VegHF.ClimSpac
 save(gofn, gofs, coefbsn, coefbss, file="~/Dropbox/abmi/10yr/R/AllBoot.Rdata")
 load("~/Dropbox/abmi/10yr/R/AllBoot.Rdata")
 
-gof_plot <- function(x, type=c("r2", "auc", "oc", "d"), ...) {
+gof_plot <- function(x, type=c("r2", "auc", "oc", "d"), alpha=1, ...) {
     f <- function(x) {
         x <- x-min(x)
         x <- x/max(x)
@@ -375,20 +375,20 @@ gof_plot <- function(x, type=c("r2", "auc", "oc", "d"), ...) {
     if (type=="r2") {
         x[x[,1] < 0,1] <- 0
         x[x[,2] < 0,2] <- 0
-        plot(x[,1:2], col=rgb(f(x[,2]-x[,1]), 1-f(x[,1]), 1-f(x[,2])), pch=19,
+        plot(x[,1:2], col=rgb(f(x[,2]-x[,1]), 1-f(x[,1]), 1-f(x[,2]), alpha=alpha), pch=19,
         ylim=c(0,1), xlim=c(0,1), xlab=expression(R^2*(landcover)),
         ylab=expression(R^2*(landcover+climate)), ...)
         abline(0,1,col="grey")
     }
     if (type=="auc") {
-        plot(x[,3:4], col=rgb(f(x[,4]-x[,3]), 1-f(x[,3]), 1-f(x[,4])), pch=19,
+        plot(x[,3:4], col=rgb(f(x[,4]-x[,3]), 1-f(x[,3]), 1-f(x[,4]), alpha=alpha), pch=19,
         ylim=c(0,1), xlim=c(0,1), xlab="AUC (landcover)",
         ylab="AUC (landcover+climate)", ...)
         abline(0,1,col="grey")
         abline(h=0.5, v=0.5,col="grey")
     }
     if (type=="oc") {
-        plot(x[,6:7], col=rgb(f(x[,5]), 1-f(x[,6]), 1-f(x[,7])), pch=19,
+        plot(x[,6:7], col=rgb(f(x[,5]), 1-f(x[,6]), 1-f(x[,7]), alpha=alpha), pch=19,
         ylim=c(0,1), xlim=c(0,1), xlab="Location",
         ylab="Scale", ...)
         abline(0,1,col="grey")
@@ -399,20 +399,27 @@ gof_plot <- function(x, type=c("r2", "auc", "oc", "d"), ...) {
     invisible(NULL)
 }
 
-gof_fig_all <- function(TAX) {
+gof_fig_all <- function(TAX, ...) {
+    if (TAX=="All") {
+        xn <- do.call(rbind, gofn)
+        xs <- do.call(rbind, gofs)
+    } else {
+        xn <- gofn[[TAX]]
+        xs <- gofs[[TAX]]
+    }
     op <- par(mfrow=c(2,3), las=1, mar=c(5,5,2,2)+0.1)
-    gof_plot(gofn[[TAX]], "r2", main=paste(TAX, "north"))
-    gof_plot(gofn[[TAX]], "auc")
-    gof_plot(gofn[[TAX]], "oc")
-    gof_plot(gofs[[TAX]], "r2", main=paste(TAX, "south"))
-    gof_plot(gofs[[TAX]], "auc")
-    gof_plot(gofs[[TAX]], "oc")
+    gof_plot(xn, "r2", main=paste(TAX, "north"), ...)
+    gof_plot(xn, "auc", ...)
+    gof_plot(xn, "oc", ...)
+    gof_plot(xs, "r2", main=paste(TAX, "south"), ...)
+    gof_plot(xs, "auc", ...)
+    gof_plot(xs, "oc", ...)
     par(op)
     invisible(NULL)
 }
 pdf("e:/peter/sppweb2017/r2-auc-oc.pdf", onefile=TRUE, height=8, width=12)
-for (i in names(gofn))
-    gof_fig_all(i)
+for (i in c("All", names(gofn)))
+    gof_fig_all(i, alpha=0.5)
 dev.off()
 
 ## making sense
@@ -595,13 +602,19 @@ abline(h=0, lty=2)
 
 ## --- ordination
 
-ord_fun <- function(TAX, north=TRUE, scaling=2, ...) {
+ord_fun <- function(TAX, north=TRUE, scaling=2, alpha=1, col.text=1, ...) {
     Excl <- c("WhiteSpruceCC20", "WhiteSpruceCC40", "WhiteSpruceCC60",
         "PineCC20", "PineCC40", "PineCC60",
         "DeciduousCC20",   "DeciduousCC40", "DeciduousCC60",
         "MixedwoodCC20", "MixedwoodCC40",   "MixedwoodCC60")
-    z <- if (north)
-        AllIn[[TAX]]$veg else AllIn[[TAX]]$soilnt
+    if (TAX=="All") {
+        TT <- if (north)
+            "veg" else "soilnt"
+        z <- do.call(rbind, lapply(AllIn, function(zz) zz[[TT]]))
+    } else {
+        z <- if (north)
+            AllIn[[TAX]]$veg else AllIn[[TAX]]$soilnt
+    }
     rownames(z) <- z[,1]
     z <- as.matrix(z[,-1])
     z <- z[,!grepl("\\.", colnames(z))]
@@ -620,11 +633,11 @@ ord_fun <- function(TAX, north=TRUE, scaling=2, ...) {
     s <- scores(m, 1:3)
     ColSi <- 2
     ColSp <- rgb(red=fs(s$species[,1]),
-        green=fs(s$species[,2]), blue=fs(s$species[,3]))
+        green=fs(s$species[,2]), blue=fs(s$species[,3]), alpha=alpha)
     plot(m, scaling=scaling, type="none", ...)
-    #text(m, "species", col=ColSp, cex=0.5, scaling=3)
-    points(m, "species", col=ColSp, cex=1, pch=19, scaling=3)
-    text(m, "sites", col=1, cex=1, scaling=3)
+    #text(m, "species", col=ColSp, cex=0.5, scaling=scaling)
+    points(m, "species", col=ColSp, cex=1, pch=19, scaling=scaling)
+    text(m, "sites", col=col.text, cex=1, scaling=scaling)
     invisible(NULL)
 }
 
@@ -643,6 +656,10 @@ ord_fun("mosses", FALSE, main="Bryophytes, South")
 par(mfrow=c(1,2), las=1)
 ord_fun("vplants", TRUE, main="Vascular Plants, North")
 ord_fun("vplants", FALSE, main="Vascular Plants, South")
+
+par(mfrow=c(1,2), las=1)
+ord_fun("All", TRUE, main="All Species, North", alpha=0.5, scaling=0, col.text=1)
+ord_fun("All", FALSE, main="All Species, South", alpha=0.5, scaling=0, col.text=1)
 
 ## --- SI maps
 
