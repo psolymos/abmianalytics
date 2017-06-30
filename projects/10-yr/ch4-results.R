@@ -55,8 +55,11 @@ lt1 <- with(lt, data.frame(
     map.pred=Maps,
     useavail.north=UseAvailability.North,
     useavail.south=UseAvailability.South,
+    origin=NA,
     comments=NA
 ))
+if (TAX=="vplants")
+    lt1$origin <- lt$Origin
 lt1$useavail.north[lt1$veghf.north] <- FALSE
 lt1$useavail.south[lt1$soilhf.south] <- FALSE
 table(mod=lt1$veghf.north, use=lt1$useavail.north)
@@ -141,31 +144,6 @@ library(mefa4)
 
 load(file.path("e:/peter/AB_data_v2016", "out", "kgrid", "kgrid_table.Rdata"))
 
-library(rgdal)
-library(rgeos)
-library(sp)
-library(gstat)
-library(raster)
-library(viridis)
-
-xy <- kgrid
-coordinates(xy) <- ~ POINT_X + POINT_Y
-proj4string(xy) <-
-    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-
-rt <- raster(file.path("e:/peter/AB_data_v2016", "data", "kgrid", "AHM1k.asc"))
-crs <- CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
-projection(rt) <- crs
-xy <- spTransform(xy, crs)
-mat0 <- as.matrix(rt)
-
-setwd("~/Dropbox/courses/st-johns-2017/data/NatRegAB")
-AB <- readOGR(".", "Natural_Regions_Subregions_of_Alberta") # rgdal
-AB <- spTransform(AB, proj4string(rt))
-ABnr <- gUnaryUnion(AB, AB@data$NRNAME) # natural regions
-ABpr <- gUnaryUnion(AB, rep(1, nrow(AB))) # province
-
-
 load("~/Dropbox/abmi/10yr/R/AllTables.Rdata")
 ROOT <- "v:/contents/2017/species"
 TAXA <- c("birds", "mites", "mosses", "lichens", "vplants")
@@ -208,6 +186,10 @@ for (TAX in TAXA[-1]) {
     ext <- substr(fl[1], nchar(fl)-4, nchar(fl))
     lt <- AllIn[[TAX]]$lt
     SPP <-as.character(lt$SpeciesID[lt$map.pred])
+    if (TAX=="vplants") {
+        Native <- !is.na(lt$origin) & lt$origin != "Exotic"
+        SPP <-as.character(lt$SpeciesID[lt$map.pred & Native])
+    }
     compare_sets(nam, SPP)
     sppSI <- list()
     simat <- matrix(NA, nrow(kgrid), length(nam))
@@ -232,23 +214,6 @@ for (TAX in TAXA[-1]) {
 }
 
 save(AllSI, MatSI, file="e:/peter/sppweb2017/all-intactness.Rdata")
-
-## plot SI
-
-
-#SI[is.na(SI)] <- -999
-#SI[is.na(SI)] <- 100 # water/ice
-
-mat <- as.matrix(Xtab(SIavg ~ Row + Col, kgrid))
-mat[is.na(mat0)] <- NA
-#mat[mat < 0] <- NA
-rout <- raster(x=mat, template=rt)
-
-col <- colorRampPalette(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF",
-"#D9EF8B", "#A6D96A", "#66BD63", "#1A9850", "#006837"))(100)
-
-plot(rout, col=col, axes=FALSE, box=FALSE)
-plot(ABnr, add=TRUE)
 
 ## summarizing GoF measures
 
@@ -302,6 +267,7 @@ x <- coefbsn$birds[1,,]
 
 occc_plot <- function(x, ...) {
     require(epiR)
+    x <- x[!(rownames(x) %in% c("SoftLin","HardLin" )),,drop=FALSE]
     z <- t(x)
     oc <- epi.occc(x)
     cm <- apply(z, 2, median)
@@ -318,6 +284,20 @@ occc_plot <- function(x, ...) {
     invisible(NULL)
 }
 
+oc <- t(sapply(1:dim(coefbsn$vplants)[1], function(i) unlist(epi.occc(coefbsn$vplants[i,,])[1:3])))
+rownames(oc) <- dimnames(coefbsn$vplants)[[1]]
+head(oc[order(oc[,1]),])
+head(oc[order(oc[,2]),])
+head(oc[order(oc[,3]),])
+tail(oc[order(oc[,1]),])
+
+oc <- t(sapply(1:dim(coefbsn$birds)[1], function(i) unlist(epi.occc(coefbsn$birds[i,,])[1:3])))
+rownames(oc) <- dimnames(coefbsn$birds)[[1]]
+head(oc[order(oc[,1]),])
+head(oc[order(oc[,2]),])
+head(oc[order(oc[,3]),])
+tail(oc[order(oc[,1]),])
+
 pdf("e:/peter/sppweb2017/occc_fig_birds_north.pdf", onefile=TRUE)
 for (i in 1:dim(coefbsn$birds)[1])
     occc_plot(coefbsn$birds[i,,], main=dimnames(coefbsn$birds)[[1]][i])
@@ -326,6 +306,16 @@ dev.off()
 pdf("e:/peter/sppweb2017/occc_fig_birds_south.pdf", onefile=TRUE)
 for (i in 1:dim(coefbss$birds)[1])
     occc_plot(coefbss$birds[i,,], main=dimnames(coefbss$birds)[[1]][i])
+dev.off()
+
+pdf("e:/peter/sppweb2017/occc_fig_vplants_north.pdf", onefile=TRUE)
+for (i in 1:dim(coefbsn$vplants)[1])
+    occc_plot(coefbsn$vplants[i,,], main=dimnames(coefbsn$vplants)[[1]][i])
+dev.off()
+
+pdf("e:/peter/sppweb2017/occc_fig_vplants_south.pdf", onefile=TRUE)
+for (i in 1:dim(coefbss$vplants)[1])
+    occc_plot(coefbss$vplants[i,,], main=dimnames(coefbss$vplants)[[1]][i])
 dev.off()
 
 gofs <- gofn <- list()
@@ -373,7 +363,7 @@ gofs$vplants <- as.matrix(cbind(t1[,c("PseudoR2_VegHF", "PseudoR2_VegHF.ClimSpac
     t2[,c("occc", "oprec", "oaccu", "Within.Agreement")]))
 
 save(gofn, gofs, coefbsn, coefbss, file="~/Dropbox/abmi/10yr/R/AllBoot.Rdata")
-
+load("~/Dropbox/abmi/10yr/R/AllBoot.Rdata")
 
 gof_plot <- function(x, type=c("r2", "auc", "oc", "d"), ...) {
     f <- function(x) {
@@ -453,6 +443,8 @@ get_stuff <- function(TABLE, COL, north=TRUE)
         get_stuff0, TABLE=TABLE, COL=COL, north=north))
 vp1 <- function(x, p=c(0, 1), ...) {
     x2 <- x[!is.na(x)]
+    if (length(unique(x2)) < 5)
+        return(NULL)
     q <- quantile(x2, p)
     x2 <- x2[x2 > q[1] & x2 < q[2]]
     d <- density(x2, ...)
@@ -471,10 +463,12 @@ ylim, ylab="", xlab="", main="", ...) {
     axis(2)
     title(ylab=ylab, xlab=xlab, main=main)
     for (i in 1:ncol(x)) {
-        polygon(0.45*c(-xx[[i]]$w, rev(xx[[i]]$w))+i,
-            c(xx[[i]]$h, rev(xx[[i]]$h)), col=col, border=border)
-        #lines(c(i,i), range(xx[[i]]$h), col=col, lwd=2)
-        lines(c(i-0.2, i+0.2), rep(median(x[,i], na.rm=TRUE), 2), lwd=3)
+        if (!is.null(xx[[i]])) {
+            polygon(0.45*c(-xx[[i]]$w, rev(xx[[i]]$w))+i,
+                c(xx[[i]]$h, rev(xx[[i]]$h)), col=col, border=border)
+            #lines(c(i,i), range(xx[[i]]$h), col=col, lwd=2)
+            lines(c(i-0.2, i+0.2), rep(median(x[,i], na.rm=TRUE), 2), lwd=3)
+        }
     }
     #points(1:ncol(x), colMeans(x, na.rm=TRUE), pch=21, cex=1.5)
     invisible(NULL)
@@ -650,10 +644,124 @@ par(mfrow=c(1,2), las=1)
 ord_fun("vplants", TRUE, main="Vascular Plants, North")
 ord_fun("vplants", FALSE, main="Vascular Plants, South")
 
+## --- SI maps
+
+## plot SI
+
+library(mefa4)
+library(rgdal)
+library(rgeos)
+library(sp)
+library(gstat)
+library(raster)
+#library(viridis)
+load("e:/peter/sppweb2017/all-intactness.Rdata")
+load(file.path("e:/peter/AB_data_v2016", "out", "kgrid", "kgrid_table.Rdata"))
+
+xy <- kgrid
+coordinates(xy) <- ~ POINT_X + POINT_Y
+proj4string(xy) <-
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+rt <- raster(file.path("e:/peter/AB_data_v2016", "data", "kgrid", "AHM1k.asc"))
+crs <- CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+projection(rt) <- crs
+xy <- spTransform(xy, crs)
+mat0 <- as.matrix(rt)
+
+setwd("~/Dropbox/courses/st-johns-2017/data/NatRegAB")
+AB <- readOGR(".", "Natural_Regions_Subregions_of_Alberta") # rgdal
+AB <- spTransform(AB, proj4string(rt))
+ABnr <- gUnaryUnion(AB, AB@data$NRNAME) # natural regions
+ABpr <- gUnaryUnion(AB, rep(1, nrow(AB))) # province
+
+col <- colorRampPalette(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B",
+    "#FFFFBF","#D9EF8B", "#A6D96A", "#66BD63", "#1A9850", "#006837"))(100)
+
+## lichens & mosses are not OK
+pdf("e:/peter/sppweb2017/SI-maps.pdf", onefile=TRUE, height=8, width=5)
+for (i in colnames(MatSI)) {
+    cat(i, "\n");flush.console()
+    SI <- MatSI[,i]
+    SI[is.na(SI)] <- 100 # water/ice
+    mat <- as.matrix(Xtab(SI ~ Row + Col, kgrid))
+    mat[is.na(mat0)] <- NA
+    rout <- raster(x=mat, template=rt)
+    op <- par(mar=rep(1, 4))
+    plot(rout, col=col, axes=FALSE, box=FALSE, main=i)
+    plot(ABnr, add=TRUE)
+    par(op)
+}
+dev.off()
+
 ## --- SI distributions: violplots, Prov/N/S  by taxon
+
+get_stuff0si <- function(TAX, REG) {
+    SPP <- if (TAX=="birds")
+        AllIn[[TAX]]$lt$AOU else AllIn[[TAX]]$lt$SpeciesID
+    i <- AllIn[[TAX]]$lt[,"map.pred"]
+    if (TAX=="vplants")
+        i[!is.na(AllIn[[TAX]]$lt$origin) & AllIn[[TAX]]$lt$origin == "Exotic"] <- FALSE
+    SPP <- as.character(SPP[i])
+    z <- AllSI[[TAX]][SPP]
+    sapply(z, function(zz) zz[REG,"SI"])
+}
+get_stuffsi <- function(REG)
+    rugged_mat(lapply(structure(names(AllSI), names=names(AllSI)),
+        get_stuff0si, REG=REG))
+
+matSI <- lapply(structure(rownames(AllSI$birds[[1]]), names=rownames(AllSI$birds[[1]])),
+    get_stuffsi)
+
+par(mfrow=c(3,2), las=1, yaxs="i")
+ylim <- c(0, 100)
+p <- c(0, 1)
+for (i in 1:6)
+    vp(matSI[[i]], main=names(matSI)[i], ylim=ylim, p=p, ylab="Species Intactness")
+
+par(mfrow=c(1,1), las=1, yaxs="i")
+vp(matSI[["Alberta"]], main="Alberta", ylim=ylim, p=p, ylab="Species Intactness")
 
 ## --- SI vs HF: gam/loess splines Prov/N/S (thf, alien, succ by taxon)
 
+## this is 2012 HF -- might want to update to 2014?
+load(file.path("e:/peter/AB_data_v2016", "out", "kgrid", "kgrid_table.Rdata"))
+load(file.path("e:/peter/AB_data_v2016", "out", "kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata"))
 
-## OCCC: 10km Rdata file Coef.bs (R object Mite intactness North by 10x10km unit BS 2017 10Km2.Rdata)
+kgrid$THF <- rowSums(dd1km_pred$veg_current[,setdiff(colnames(dd1km_pred$veg_current),
+    colnames(dd1km_pred$veg_reference))]) / rowSums(dd1km_pred$veg_current)
+CClabs <- colnames(dd1km_pred$veg_current)[grep("CC", colnames(dd1km_pred$veg_current))]
+kgrid$Succ <- rowSums(dd1km_pred$veg_current[,c("SeismicLine","TransmissionLine","Pipeline",
+    "RailVegetatedVerge","RoadTrailVegetated","RoadVegetatedVerge",
+    CClabs)]) / rowSums(dd1km_pred$veg_current)
+kgrid$Alien <- kgrid$THF - kgrid$Succ
 
+par(mfrow=c(3,2))
+for (i in colnames(MatSI)) {
+
+SItmp <- MatSI[,i]
+SItmp[SItmp<1] <- 1
+kgrid$iSI <- log(SItmp/100)
+
+EXCL <- if (i %in% c("lichens", "mosses"))
+     c("Rocky Mountain", "Grassland") else "Rocky Mountain"
+kgrid2 <- kgrid[!(kgrid$NRNAME %in% EXCL),]
+pol <- poly(kgrid2$Succ, kgrid2$Alien, degree=3, raw=TRUE)
+m <- lm(iSI ~ pol-1, kgrid2)
+summary(m)
+
+BY <- 0.005
+Succ <- seq(0, 1, by=BY)
+Alien <- seq(0, 1, by=BY)
+nd <- expand.grid(Succ=Succ, Alien=Alien)
+nd$sum <- nd$Succ+nd$Alien
+npol <- poly(nd$Succ, nd$Alien, degree=3, raw=TRUE)
+pr <- drop(exp(npol %*% coef(m)))
+
+tmp <- matrix(nd$sum, length(Succ), length(Alien))
+tmp <- ifelse(tmp>1, NA, 1)
+l <- list(x=Succ*100, y=Alien*100, z=100*tmp*matrix(pr, length(Succ), length(Alien)))
+image(l, col=col, main=i, xlab="Successional %", ylab="Alienating %", axes=FALSE)
+contour(l, add=TRUE)
+axis(1);axis(2)
+}
