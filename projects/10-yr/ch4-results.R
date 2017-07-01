@@ -753,7 +753,7 @@ kgrid$Succ <- rowSums(dd1km_pred$veg_current[,c("SeismicLine","TransmissionLine"
     CClabs)]) / rowSums(dd1km_pred$veg_current)
 kgrid$Alien <- kgrid$THF - kgrid$Succ
 
-par(mfrow=c(3,2))
+par(mfrow=c(3,2), las=1)
 for (i in colnames(MatSI)) {
 
 SItmp <- MatSI[,i]
@@ -782,3 +782,20 @@ image(l, col=col, main=i, xlab="Successional %", ylab="Alienating %", axes=FALSE
 contour(l, add=TRUE)
 axis(1);axis(2)
 }
+
+dd <- round(100*kgrid[,c("Succ", "Alien")])+1
+dd$Succ <- factor(dd$Succ, 1:101)
+dd$Alien <- factor(dd$Alien, 1:101)
+xt <- as.matrix(Xtab(~Succ+Alien,dd))
+BY <- 0.01
+Succ <- seq(0, 1, by=BY)
+Alien <- seq(0, 1, by=BY)
+nd <- expand.grid(Succ=Succ, Alien=Alien)
+nd$sum <- nd$Succ+nd$Alien
+tmp <- matrix(nd$sum, length(Succ), length(Alien))
+tmp <- ifelse(tmp>1, NA, 1)
+l <- list(x=Succ*100, y=Alien*100, z=100*tmp*log(xt+1))
+image(l, main="Representation",
+    xlab="Successional %", ylab="Alienating %", axes=FALSE,
+    col=grey(100:0/100))
+axis(1);axis(2)
