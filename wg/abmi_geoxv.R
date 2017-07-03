@@ -4,11 +4,11 @@ library(mefa4)
 source("~/repos/bragging/R/glm_skeleton.R")
 #source("~/repos/abmianalytics/R/analysis_functions.R")
 
-#load("e:/peter/AB_data_v2016/out/birds/data/data-north-geoxv.Rdata")
-#OUTDIR <- "e:/peter/AB_data_v2016/out/birds/results/north-geoxv"
+load("e:/peter/AB_data_v2016/out/birds/data/data-north-geoxv.Rdata")
+OUTDIR <- "e:/peter/AB_data_v2016/out/birds/results/north-geoxv"
 
-load("e:/peter/AB_data_v2016/out/birds/data/data-south-geoxv.Rdata")
-OUTDIR <- "e:/peter/AB_data_v2016/out/birds/results/south-geoxv"
+#load("e:/peter/AB_data_v2016/out/birds/data/data-south-geoxv.Rdata")
+#OUTDIR <- "e:/peter/AB_data_v2016/out/birds/results/south-geoxv"
 
 BBB <- max(BB[,2])
 
@@ -16,7 +16,7 @@ do_1spec1run_geoxv <- function(j, i, mods,
 silent=FALSE, CAICalpha=1)
 {
     jj <- if (j==0)
-        BB[,1] else BB[BB[,2]==j,1] # this is geoxv
+        BB[,1] else BB[BB[,2]!=j,1] # this is geoxv
     x <- DAT[jj,]
     y <- as.numeric(YY[jj, i])
     off <- if (i %in% colnames(OFF))
@@ -86,7 +86,7 @@ for (SPP1 in SPP) {
     cat("\t", SPP1, date(), "...")
     if (interactive())
         flush.console()
-    res <- lapply(1:BBB, wg_fun, i=SPP1, mods=mods, CAICalpha=CAICalpha)
+    res <- lapply(0:BBB, wg_fun, i=SPP1, mods=mods, CAICalpha=CAICalpha)
     save(res,
         file=paste0(OUTDIR, "/birds_abmi-north-geoxv_", SPP1, ".Rdata"))
     cat("OK\n")
