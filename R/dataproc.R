@@ -1328,3 +1328,140 @@ os1b <- summary(oc1b)$summary
 data.frame(spp=rownames(os0b), o0=os0b$split, o1=os1b$split)
 data.frame(spp=rownames(os0b), b=os1b$split, p=os1p$split)
 }
+
+## --- Geographic cross-validation
+
+library(mefa4)
+#ROOT <- "e:/peter/bam/Apr2016"
+ROOT2 <- "e:/peter/AB_data_v2016"
+
+load(file.path(ROOT2, "out", "birds", "data", "data-full-withrevisit.Rdata"))
+source("~/repos/abmianalytics/R/analysis_models.R")
+
+DAT$MAXDUR <- NULL
+DAT$MAXDIS <- NULL
+DAT$JDAY <- NULL
+DAT$TSSR <- NULL
+DAT$TREE <- NULL
+DAT$HAB_NALC2 <- NULL
+DAT$HAB_NALC1 <- NULL
+DAT$AHM <- NULL
+DAT$PET <- NULL
+DAT$FFP <- NULL
+DAT$MAP <- NULL
+DAT$MAT <- NULL
+DAT$MCMT <- NULL
+DAT$MWMT <- NULL
+DAT$SLP <- NULL
+DAT$ASP <- NULL
+DAT$TRI <- NULL
+DAT$CTI <- NULL
+DAT$fCC1 <- NULL
+DAT$HSH <- NULL
+DAT$HSH2 <- NULL
+DAT$useJosm <- NULL
+
+DAT <- droplevels(DAT[DAT$keep,])
+YY <- YY[rownames(DAT),]
+OFF <- OFF[rownames(DAT),]
+OFFmean <- OFFmean[rownames(DAT)]
+
+DATs <- droplevels(DAT[DAT$useSouth & DAT$useOK,])
+DATn <- droplevels(DAT[DAT$useNorth & DAT$useOK & DAT$POINT_Y>50,])
+
+aas <- colSums(is.na(DATs))
+aan <- colSums(is.na(DATn))
+aas[aas>0]
+aan[aan>0]
+
+## bootids
+
+bbfun2 <- function(DAT1, B, out=0.1, seed=1234) {
+    set.seed(seed)
+    DAT1$SS_YR <- interaction(DAT1$SS, DAT1$YEAR, drop=TRUE)
+    DAT1$IDMAP <- seq_len(nrow(DAT1))
+    ## randomize input
+    DAT1 <- DAT1[sample.int(nrow(DAT1)),]
+#    kk <- floor(nrow(DAT1) * (1-out))
+#    DAT1k <- DAT1[1:kk,] # k as in *k*eep
+    kkk <- floor(nlevels(DAT1$SS_YR) * (1-out))
+    DAT1k <- DAT1[as.integer(DAT1$SS_YR) <= kkk,]
+    if (nlevels(droplevels(DAT1k$bootid)) != nlevels(droplevels(DAT1$bootid)))
+        stop("bootid problem: pick larger blocks for validation")
+    ## one run
+    r1fun <- function(DAT1k, replace=FALSE) {
+        ## get rid of resamples
+        DAT1k <- DAT1k[sample.int(nrow(DAT1k)),]
+        DAT1k <- nonDuplicated(DAT1k, SS_YR)
+        id2 <- list()
+        for (l in levels(DAT1k$bootid)) {
+            sset0 <- which(DAT1k$bootid == l)
+            id2[[l]] <- if (length(sset0) < 2)
+                sset0 else sample(sset0, length(sset0), replace=replace)
+        }
+        DAT1k$IDMAP[unname(unlist(id2))]
+    }
+    BB0 <- r1fun(DAT1k, replace=FALSE)
+    BB1 <- pbsapply(seq_len(B), function(i) r1fun(DAT1k, replace=TRUE))
+    cbind(BB0, BB1)
+#aa <- unique(BB1)
+#table(selected=DAT1$IDMAP %in% aa)
+#table(selected=DAT1$IDMAP %in% aa, revisit=duplicated(DAT1$SS_YR))
+}
+
+
+BBn <- bbfun2(DATn, 1, 0)
+BBs <- bbfun2(DATs, 1, 0)
+cln <- read.csv("e:/peter/AB_data_v2017/data/analysis/validation-clusters/Northern-site-clusters-for-geographical-model-validation.csv")
+cls <- read.csv("e:/peter/AB_data_v2017/data/analysis/validation-clusters/Southern-site-clusters-for-geographical-model-validation.csv")
+xyn <- aggregate(cln[,c("Lat", "Long")], list(Geo=cln$Geo_Group), mean)
+xys <- aggregate(cls[,c("Lat", "Long")], list(Geo=cls$Geo_Group), mean)
+XYn <- DATn[BBn[,1],c("POINT_X","POINT_Y")]
+XYs <- DATs[BBs[,1],c("POINT_X","POINT_Y")]
+
+dn <- matrix(0, nrow(XYn), nrow(xyn))
+ds <- matrix(0, nrow(XYs), nrow(xys))
+for (i in 1:nrow(xyn))
+    dn[,i] <- sqrt((XYn$POINT_X - xyn$Long[i])^2 + (XYn$POINT_Y - xyn$Lat[i])^2)
+for (i in 1:nrow(xys))
+    ds[,i] <- sqrt((XYs$POINT_X - xys$Long[i])^2 + (XYs$POINT_Y - xys$Lat[i])^2)
+dn <- rowSums(col(dn) * ifelse(dn - apply(dn, 1, min) == 0, 1, 0))
+ds <- rowSums(col(ds) * ifelse(ds - apply(ds, 1, min) == 0, 1, 0))
+#plot(XYn,col=dn)
+#plot(XYs,col=ds)
+BBn[,2] <- dn
+BBs[,2] <- ds
+
+## figure out sets of species to analyze
+
+lt <- read.csv("~/repos/abmispecies/_data/birds.csv")
+SPPn <- intersect(colnames(YY), lt$AOU[lt$veghf.north])
+SPPs <- intersect(colnames(YY), lt$AOU[lt$soilhf.south])
+
+DAT0 <- DAT
+YY0 <- YY
+OFF0 <- OFF
+OFFmean0 <- OFFmean
+TAX0 <- TAX
+
+## south
+DAT <- DATs
+YY <- YY0[rownames(DAT),SPPs]
+BB <- BBs
+OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
+OFFmean <- OFFmean0[rownames(DAT)]
+mods <- modsSoil[c("Hab", "Contrast", "ARU", "Space")]
+save(DAT, YY, OFF, OFFmean, mods, BB, # no HSH in the south
+    file=file.path(ROOT2, "out", "birds", "data", "data-south-geoxv.Rdata"))
+
+## north
+DAT <- DATn
+YY <- YY0[rownames(DAT),SPPn]
+BB <- BBn
+OFF <- OFF0[rownames(DAT),colnames(OFF0) %in% colnames(YY)]
+OFFmean <- OFFmean0[rownames(DAT)]
+mods <- modsVeg[c("Hab", "Age", "CC", "Contrast", "ARU", "Space")]
+save(DAT, YY, OFF, OFFmean, mods, BB, # HSH,
+    file=file.path(ROOT2, "out", "birds", "data", "data-north-geoxv.Rdata"))
+
+
