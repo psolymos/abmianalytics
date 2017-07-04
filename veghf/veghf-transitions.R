@@ -217,3 +217,263 @@ for (ii in 1:nlevels(kgrid$LUFxNSR)) {
     save(trVeg, trSoil, file=file.path(ROOT, VER, "out", "transitions",
         paste0(i, ".Rdata")))
 }
+
+## 2017 addition for OSA
+
+osagrid <- read.csv(file.path("e:/peter/AB_data_v2017", "data", "raw", "xy", "Grid1km_in3OilSandRegions.csv"))
+kgrid$OSANAME <- osagrid$SHORTNAME[match(kgrid$Row_Col, osagrid$Row_Col)]
+table(kgrid$OSANAME)
+
+ivals <- c("Athabasca Oilsand Area", "Cold Lake Oilsand Area", "Peace River Oilsand Area")
+for (i in ivals) {
+    cat("\n---------", i)
+    #j <- 4
+    units <- list()
+    sunits <- list()
+    for (j in 1:length(fl3)) {
+        cat("\n", j);flush.console()
+        load(file.path(ROOT, VER, "data", "kgrid", "long", fl3[j]))
+        flush.console()
+        ddd0$OSANAME <- kgrid$OSANAME[match(ddd0$Row_Col, kgrid$Row_Col)]
+        nsr <- as.character(kgrid[which(kgrid$OSANAME==i)[1], "NSRNAME"])
+
+        if (any(ddd0$OSANAME == i)) {
+            cat(" processing ... ")
+
+            xx <- ddd0[ddd0$OSANAME == i,,drop=FALSE]
+            xx$Row_Col <- droplevels(xx$Row_Col)
+            xx$OSANAME <- NULL
+
+            xx$soil <- su$use_tr[match(xx$SOILclass, rownames(su))]
+            xx$shf <- su$use_tr[match(xx$SOILHFclass, rownames(su))]
+
+            xx$veg <- lu$use_tr[match(xx$VEGAGEclass, rownames(lu))]
+            xx$vhf <- lu$use_tr[match(xx$VEGHFAGEclass, rownames(lu))]
+
+            xx$soilTr <- ifelse(as.character(xx$soil) == as.character(xx$shf),
+                as.character(xx$soil), paste0(as.character(xx$soil),
+                "->", as.character(xx$shf)))
+
+            xx$vegTr <- ifelse(as.character(xx$veg) == as.character(xx$vhf),
+                as.character(xx$veg), paste0(as.character(xx$veg),
+                "->", as.character(xx$vhf)))
+
+            sxt <- Xtab(Shape_Area ~ Row_Col + soilTr, xx)
+            sxxx <- Melt(sxt)
+            colnames(sxxx) <- c("Row_Col", "soilTr", "Shape_Area")
+
+            xt <- Xtab(Shape_Area ~ Row_Col + vegTr, xx)
+            xxx <- Melt(xt)
+            colnames(xxx) <- c("Row_Col", "vegTr", "Shape_Area")
+
+            ## Target0 misses `0->` transitions
+            #xxx0 <- xxx[xxx$vegTr %in% Target0,,drop=FALSE]
+            #table(xxx0$vegTr)[table(xxx0$vegTr) != 0]
+            #table(xxx0$vegTr)[grep("0", names(table(xxx0$vegTr)))]
+            ch2veg <- data.frame(t(sapply(strsplit(as.character(xxx$vegTr), "->"),
+                function(z) if (length(z)==1) z[c(1,1)] else z[1:2])))
+            colnames(ch2veg) <- c("rf","cr")
+            PROBLEM_AGE0 <- ch2veg$rf %in% Target0
+            xxx0 <- xxx[PROBLEM_AGE0,,drop=FALSE]
+            #table(xxx0$vegTr)[table(xxx0$vegTr) != 0]
+            #table(xxx0$vegTr)[grep("0", names(table(xxx0$vegTr)))]
+
+            #setdiff(names(table(xxx0$vegTr)[grep("0", names(table(xxx0$vegTr)))]),
+            #    names(table(xxx0$vegTr)[table(xxx0$vegTr) != 0]))
+            #setdiff(names(table(xxx0$vegTr)[table(xxx0$vegTr) != 0]),
+            #    names(table(xxx0$vegTr)[grep("0", names(table(xxx0$vegTr)))]))
+
+            if (nrow(xxx0)>0) {
+                cat("age0")
+                xxx1 <- xxx[!PROBLEM_AGE0,,drop=FALSE]
+                xxx0$vegTr <- as.character(xxx0$vegTr)
+                xxx0$veg <- sapply(strsplit(as.character(xxx0$vegTr), "->"), "[[", 1)
+                xxx0$vhf <- sapply(strsplit(as.character(xxx0$vegTr), "->"),
+                    function(z) z[length(z)])
+                xxx0$vhf[xxx0$vhf == xxx0$veg] <- ""
+
+                ## needs to sum to 1, include availability
+                ages <- AvgAges$reference[,,nsr]
+                areas <- AvgAges$area_rf[nsr,]
+                bf0 <- groupMeans(ages * areas, 1, recl$reclass)[,-1]
+                bf0 <- bf0 / rowSums(bf0)
+
+                tmp <- list()
+                for (k in 1:10) {
+                ## check this here ----- !!!!!
+                    tmpv <- xxx0
+                    target <- substr(tmpv$veg, 1, nchar(tmpv$veg)-1)
+                    tmpv$Shape_Area <- tmpv$Shape_Area * bf0[match(tmpv$veg, rownames(bf0)),k]
+                    tmpv$veg <- paste0(target, colnames(bf0)[k])
+                    tmpv$vegTr <- ifelse(tmpv$vhf == "", tmpv$veg,
+                        paste0(tmpv$veg, "->", tmpv$vhf))
+                    tmp[[k]] <- tmpv[,colnames(xxx1)]
+                }
+                xxx0v <- do.call(rbind, tmp)
+
+                if (any(grepl("0", as.character(xxx1$vegTr))))
+                    stop("Reference age 0 issue (1)")
+                #unique(as.character(xxx1$vegTr)[grepl("0", as.character(xxx1$vegTr))])
+                #xxx1$veg <- sapply(strsplit(as.character(xxx1$vegTr), "->"), "[[", 1)
+                #xxx1$vhf <- sapply(strsplit(as.character(xxx1$vegTr), "->"),
+                #    function(z) z[length(z)])
+                #xxx1$vhf[xxx1$vhf == xxx1$veg] <- ""
+                #unique(as.character(xxx1$veg)[grepl("0", as.character(xxx1$vegTr))])
+                if (any(grepl("0", as.character(xxx0v$vegTr))))
+                    stop("Reference age 0 issue (2)")
+                xxx <- rbind(xxx1, xxx0v)
+            }
+
+            xt <- Xtab(Shape_Area ~ Row_Col + vegTr, xxx)
+            xxx <- Melt(xt)
+            colnames(xxx) <- c("Row_Col", "vegTr", "Shape_Area")
+            units[[j]] <- xxx
+            sunits[[j]] <- sxxx
+        } else cat(" onto the next chunk")
+    }
+    units <- do.call(rbind, units)
+    levels(units$vegTr) <- c(levels(units$vegTr),
+        setdiff(allVegTr, levels(units$vegTr)))
+    sunits <- do.call(rbind, sunits)
+    levels(sunits$soilTr) <- c(levels(sunits$soilTr),
+        setdiff(allSoilTr, levels(sunits$soilTr)))
+
+    trVeg <- Xtab(Shape_Area ~ Row_Col + vegTr, units)
+    trVeg <- trVeg[,allVegTr]
+    trSoil <- Xtab(Shape_Area ~ Row_Col + soilTr, sunits)
+    trSoil <- trSoil[rownames(trVeg),allSoilTr]
+    range(rowSums(trVeg)/10^6)
+    range(rowSums(trSoil)/10^6)
+
+    if (sum(trVeg[,grep("0", colnames(trVeg)),]) > 0)
+        stop("Reference age 0 issue (3)")
+
+    cat("\nSaving", i, "\n\n")
+    flush.console()
+    save(trVeg, trSoil, file=file.path(ROOT, VER, "out", "transitions",
+        paste0("00OSA ", i, ".Rdata")))
+}
+
+    units <- list()
+    sunits <- list()
+    for (j in 1:length(fl3)) {
+        cat("\n", j);flush.console()
+        load(file.path(ROOT, VER, "data", "kgrid", "long", fl3[j]))
+        flush.console()
+        ddd0$OSANAME <- kgrid$OSANAME[match(ddd0$Row_Col, kgrid$Row_Col)]
+        nsr <- as.character(kgrid[which(kgrid$OSANAME %in% ivals)[1], "NSRNAME"])
+
+        if (any(ddd0$OSANAME %in% ivals)) {
+            cat(" processing ... ")
+
+            xx <- ddd0[ddd0$OSANAME %in% ivals,,drop=FALSE]
+            xx$Row_Col <- droplevels(xx$Row_Col)
+            xx$OSANAME <- NULL
+
+            xx$soil <- su$use_tr[match(xx$SOILclass, rownames(su))]
+            xx$shf <- su$use_tr[match(xx$SOILHFclass, rownames(su))]
+
+            xx$veg <- lu$use_tr[match(xx$VEGAGEclass, rownames(lu))]
+            xx$vhf <- lu$use_tr[match(xx$VEGHFAGEclass, rownames(lu))]
+
+            xx$soilTr <- ifelse(as.character(xx$soil) == as.character(xx$shf),
+                as.character(xx$soil), paste0(as.character(xx$soil),
+                "->", as.character(xx$shf)))
+
+            xx$vegTr <- ifelse(as.character(xx$veg) == as.character(xx$vhf),
+                as.character(xx$veg), paste0(as.character(xx$veg),
+                "->", as.character(xx$vhf)))
+
+            sxt <- Xtab(Shape_Area ~ Row_Col + soilTr, xx)
+            sxxx <- Melt(sxt)
+            colnames(sxxx) <- c("Row_Col", "soilTr", "Shape_Area")
+
+            xt <- Xtab(Shape_Area ~ Row_Col + vegTr, xx)
+            xxx <- Melt(xt)
+            colnames(xxx) <- c("Row_Col", "vegTr", "Shape_Area")
+
+            ## Target0 misses `0->` transitions
+            #xxx0 <- xxx[xxx$vegTr %in% Target0,,drop=FALSE]
+            #table(xxx0$vegTr)[table(xxx0$vegTr) != 0]
+            #table(xxx0$vegTr)[grep("0", names(table(xxx0$vegTr)))]
+            ch2veg <- data.frame(t(sapply(strsplit(as.character(xxx$vegTr), "->"),
+                function(z) if (length(z)==1) z[c(1,1)] else z[1:2])))
+            colnames(ch2veg) <- c("rf","cr")
+            PROBLEM_AGE0 <- ch2veg$rf %in% Target0
+            xxx0 <- xxx[PROBLEM_AGE0,,drop=FALSE]
+            #table(xxx0$vegTr)[table(xxx0$vegTr) != 0]
+            #table(xxx0$vegTr)[grep("0", names(table(xxx0$vegTr)))]
+
+            #setdiff(names(table(xxx0$vegTr)[grep("0", names(table(xxx0$vegTr)))]),
+            #    names(table(xxx0$vegTr)[table(xxx0$vegTr) != 0]))
+            #setdiff(names(table(xxx0$vegTr)[table(xxx0$vegTr) != 0]),
+            #    names(table(xxx0$vegTr)[grep("0", names(table(xxx0$vegTr)))]))
+
+            if (nrow(xxx0)>0) {
+                cat("age0")
+                xxx1 <- xxx[!PROBLEM_AGE0,,drop=FALSE]
+                xxx0$vegTr <- as.character(xxx0$vegTr)
+                xxx0$veg <- sapply(strsplit(as.character(xxx0$vegTr), "->"), "[[", 1)
+                xxx0$vhf <- sapply(strsplit(as.character(xxx0$vegTr), "->"),
+                    function(z) z[length(z)])
+                xxx0$vhf[xxx0$vhf == xxx0$veg] <- ""
+
+                ## needs to sum to 1, include availability
+                ages <- AvgAges$reference[,,nsr]
+                areas <- AvgAges$area_rf[nsr,]
+                bf0 <- groupMeans(ages * areas, 1, recl$reclass)[,-1]
+                bf0 <- bf0 / rowSums(bf0)
+
+                tmp <- list()
+                for (k in 1:10) {
+                ## check this here ----- !!!!!
+                    tmpv <- xxx0
+                    target <- substr(tmpv$veg, 1, nchar(tmpv$veg)-1)
+                    tmpv$Shape_Area <- tmpv$Shape_Area * bf0[match(tmpv$veg, rownames(bf0)),k]
+                    tmpv$veg <- paste0(target, colnames(bf0)[k])
+                    tmpv$vegTr <- ifelse(tmpv$vhf == "", tmpv$veg,
+                        paste0(tmpv$veg, "->", tmpv$vhf))
+                    tmp[[k]] <- tmpv[,colnames(xxx1)]
+                }
+                xxx0v <- do.call(rbind, tmp)
+
+                if (any(grepl("0", as.character(xxx1$vegTr))))
+                    stop("Reference age 0 issue (1)")
+                #unique(as.character(xxx1$vegTr)[grepl("0", as.character(xxx1$vegTr))])
+                #xxx1$veg <- sapply(strsplit(as.character(xxx1$vegTr), "->"), "[[", 1)
+                #xxx1$vhf <- sapply(strsplit(as.character(xxx1$vegTr), "->"),
+                #    function(z) z[length(z)])
+                #xxx1$vhf[xxx1$vhf == xxx1$veg] <- ""
+                #unique(as.character(xxx1$veg)[grepl("0", as.character(xxx1$vegTr))])
+                if (any(grepl("0", as.character(xxx0v$vegTr))))
+                    stop("Reference age 0 issue (2)")
+                xxx <- rbind(xxx1, xxx0v)
+            }
+
+            xt <- Xtab(Shape_Area ~ Row_Col + vegTr, xxx)
+            xxx <- Melt(xt)
+            colnames(xxx) <- c("Row_Col", "vegTr", "Shape_Area")
+            units[[j]] <- xxx
+            sunits[[j]] <- sxxx
+        } else cat(" onto the next chunk")
+    }
+    units <- do.call(rbind, units)
+    levels(units$vegTr) <- c(levels(units$vegTr),
+        setdiff(allVegTr, levels(units$vegTr)))
+    sunits <- do.call(rbind, sunits)
+    levels(sunits$soilTr) <- c(levels(sunits$soilTr),
+        setdiff(allSoilTr, levels(sunits$soilTr)))
+
+    trVeg <- Xtab(Shape_Area ~ Row_Col + vegTr, units)
+    trVeg <- trVeg[,allVegTr]
+    trSoil <- Xtab(Shape_Area ~ Row_Col + soilTr, sunits)
+    trSoil <- trSoil[rownames(trVeg),allSoilTr]
+    range(rowSums(trVeg)/10^6)
+    range(rowSums(trSoil)/10^6)
+
+    if (sum(trVeg[,grep("0", colnames(trVeg)),]) > 0)
+        stop("Reference age 0 issue (3)")
+
+    save(trVeg, trSoil, file=file.path(ROOT, VER, "out", "transitions",
+        paste0("00OSA All3.Rdata")))
+
