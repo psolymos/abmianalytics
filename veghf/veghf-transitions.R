@@ -172,7 +172,7 @@ kgrid$OSANAME <- osagrid$SHORTNAME[match(kgrid$Row_Col, osagrid$Row_Col)]
 table(kgrid$OSANAME)
 
 
-ivals <- c( "Athabasca Oilsand Area", "Cold Lake Oilsand Area", "Peace River Oilsand Area")
+ivals <- c("Athabasca Oilsand Area", "Cold Lake Oilsand Area", "Peace River Oilsand Area")
 for (i in ivals) {
     cat("\n---------", i)
     #j <- 4
@@ -248,3 +248,73 @@ for (i in ivals) {
         file=file.path(ROOT, VER, "data", "analysis", paste0("transitions_", SCALE),
         paste0("00OSA ", i, ".Rdata")))
 }
+
+    units <- list()
+    sunits <- list()
+    for (j in 1:length(fl3)) {
+        cat("\n", j);flush.console()
+        load(file.path(ROOT, VER, "data", "inter", "veghf", paste0("long_", SCALE), fl3[j]))
+        flush.console()
+        ddd0$OSANAME <- kgrid$OSANAME[match(ddd0$Row_Col, kgrid$Row_Col)]
+        #nsr <- as.character(kgrid[which(kgrid$OSANAME==i)[1], "NSRNAME"])
+
+        if (any(ddd0$OSANAME %in% ivals)) {
+            cat(" processing ... ")
+
+            xx <- ddd0[ddd0$OSANAME %in% ivals,,drop=FALSE]
+            xx$Row_Col <- droplevels(xx$Row_Col)
+            xx$OSANAME <- NULL
+
+            xx$soil <- su$use_tr[match(xx$SOILclass, rownames(su))]
+            xx$shf <- su$use_tr[match(xx$SOILHFclass, rownames(su))]
+
+            xx$veg <- lu$use_tr[match(xx$VEGAGEclass, rownames(lu))]
+            xx$vhf <- lu$use_tr[match(xx$VEGHFAGEclass, rownames(lu))]
+
+            xx$soilTr <- ifelse(as.character(xx$soil) == as.character(xx$shf),
+                as.character(xx$soil), paste0(as.character(xx$soil),
+                "->", as.character(xx$shf)))
+
+            xx$vegTr <- ifelse(as.character(xx$veg) == as.character(xx$vhf),
+                as.character(xx$veg), paste0(as.character(xx$veg),
+                "->", as.character(xx$vhf)))
+
+            sxt <- Xtab(Shape_Area ~ Row_Col + soilTr, xx)
+            sxxx <- Melt(sxt)
+            colnames(sxxx) <- c("Row_Col", "soilTr", "Shape_Area")
+
+            xt <- Xtab(Shape_Area ~ Row_Col + vegTr, xx)
+            xxx <- Melt(xt)
+            colnames(xxx) <- c("Row_Col", "vegTr", "Shape_Area")
+
+            ch2veg <- data.frame(t(sapply(strsplit(as.character(xxx$vegTr), "->"),
+                function(z) if (length(z)==1) z[c(1,1)] else z[1:2])))
+            colnames(ch2veg) <- c("rf","cr")
+
+            xt <- Xtab(Shape_Area ~ Row_Col + vegTr, xxx)
+            xxx <- Melt(xt)
+            colnames(xxx) <- c("Row_Col", "vegTr", "Shape_Area")
+            units[[j]] <- xxx
+            sunits[[j]] <- sxxx
+        } else cat(" onto the next chunk")
+    }
+    units <- do.call(rbind, units)
+    levels(units$vegTr) <- c(levels(units$vegTr),
+        setdiff(allVegTr, levels(units$vegTr)))
+    sunits <- do.call(rbind, sunits)
+    levels(sunits$soilTr) <- c(levels(sunits$soilTr),
+        setdiff(allSoilTr, levels(sunits$soilTr)))
+
+    trVeg <- Xtab(Shape_Area ~ Row_Col + vegTr, units)
+    trVeg <- trVeg[,allVegTr]
+    trSoil <- Xtab(Shape_Area ~ Row_Col + soilTr, sunits)
+    trSoil <- trSoil[rownames(trVeg),allSoilTr]
+    range(rowSums(trVeg)/10^6)
+    range(rowSums(trSoil)/10^6)
+
+    if (sum(trVeg[,grep("0", colnames(trVeg)),]) > 0)
+        stop("Reference age 0 issue (3)")
+
+    save(trVeg, trSoil,
+        file=file.path(ROOT, VER, "data", "analysis", paste0("transitions_", SCALE),
+        paste0("00OSA All3.Rdata")))
