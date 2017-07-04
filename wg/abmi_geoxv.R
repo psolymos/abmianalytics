@@ -10,6 +10,9 @@ OUTDIR <- "e:/peter/AB_data_v2016/out/birds/results/north-geoxv"
 #load("e:/peter/AB_data_v2016/out/birds/data/data-south-geoxv.Rdata")
 #OUTDIR <- "e:/peter/AB_data_v2016/out/birds/results/south-geoxv"
 
+SPP <- colnames(YY)
+SPP <- rev(SPP)
+
 BBB <- max(BB[,2])
 
 do_1spec1run_geoxv <- function(j, i, mods,
@@ -81,7 +84,6 @@ CAICalpha <- 1
 wg_fun <- function(...) try(do_1spec1run_geoxv(...))
 
 cat("OK\nstart running models:")
-SPP <- colnames(YY)
 for (SPP1 in SPP) {
     cat("\t", SPP1, date(), "...")
     if (interactive())
