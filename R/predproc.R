@@ -3,13 +3,14 @@ library(mefa4)
 ROOT <- "e:/peter/AB_data_v2016"
 #OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1"
 OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1-seismic-as-ES"
+#OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1-seismic-as-ES-OSA"
 #OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1-shf"
 OUTDIRB <- "e:/peter/AB_data_v2016/out/birds/predB-seismic-as-ES"
 OUTDIR_3x7 <- "e:/peter/AB_data_v2016/out/birds/pred3x7"
 
 shf <- FALSE # surrounding HF
-do1 <- FALSE # do only 1st run
-doB <- TRUE # do bootstrap
+do1 <- TRUE # do only 1st run
+doB <- FALSE # do bootstrap
 ## seismic lines can be treated as early seral when no surrounding effects considered
 ## or apply the backfilled value when surrounding hf is considered
 SEISMIC_AS_EARLY_SERAL <- TRUE
@@ -224,6 +225,10 @@ Xns <- model.matrix(getTerms(modss, "formula"), xns)
 colnames(Xns) <- fixNames(colnames(Xns))
 
 regs <- levels(kgrid$LUFxNSR)
+#regs <- c("00OSA Peace River Oilsand Area",
+#    "00OSA Cold Lake Oilsand Area",
+#    "00OSA Athabasca Oilsand Area", "00OSA All3")
+
 
 ## example for structure (trSoil, trVeg)
 load(file.path(ROOT, "out", "transitions", "LowerPeace_LowerBorealHighlands.Rdata"))
@@ -398,7 +403,9 @@ load(file.path(ROOT, "out", "transitions", paste0(regi,".Rdata")))
 #ks <- kgrid[rownames(trVeg),]
 #with(ks, plot(X,Y))
 
-ii <- kgrid$LUFxNSR == regi
+#ii <- kgrid$LUFxNSR == regi
+ii <- rownames(kgrid) %in% rownames(trVeg)
+
 iib <- ii & kgrid$Rnd10 <= PROP
 Xclim <- model.matrix(fclim, kgrid[ii,,drop=FALSE])
 colnames(Xclim) <- fixNames(colnames(Xclim))
