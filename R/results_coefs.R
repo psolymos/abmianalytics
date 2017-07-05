@@ -1412,3 +1412,145 @@ summary(aru[smin >= MIN,"ARU3SM"]/aru[smin >= MIN,"ARU3RF"])
 
 ## this is too small -- use SVW and YIP
 
+## Geo XV geographic cross valudation
+
+en <- new.env()
+load(file.path(ROOT, "data", "data-north-geoxv.Rdata"), envir=en)
+OFFn <- en$OFF
+OFFmn <- en$OFFmean
+BBn <- en$BB
+DATn <- en$DAT
+yyn <- en$YY
+SPP <- colnames(yyn)
+modsn <- en$mods
+
+nTerms <- getTerms(modsn, "list")
+Xnn <- model.matrix(getTerms(modsn, "formula"), DATn)
+colnames(Xnn) <- fixNames(colnames(Xnn))
+
+rm(en)
+
+pr_fun_for_geoxv <-
+function(est, X, off=0) {
+    mu0 <- apply(est, 1, function(z) X %*% z)
+    exp(mu0 + off)
+}
+
+spp <- "OVEN"
+geoxv_N <- list()
+for (spp in SPP) {
+cat(spp, "N\n");flush.console()
+
+    y1sp <- yyn[,spp]
+    y10sp <- ifelse(y1sp > 0, 1, 0)
+    off1sp <- if (spp %in% colnames(OFFn)) OFFn[,spp] else OFFmn
+    resn <- loadSPP(file.path(ROOT, "results", "north-geoxv",
+        paste0("birds_abmi-north-geoxv_", spp, ".Rdata")))
+    resn[[1]] <- NULL # iteration 0 (full)
+    est6 <- getEst(resn, stage=6, na.out=FALSE, Xnn)
+    ## 1st run
+    pr <- pr_fun_for_geoxv(est6, Xnn, off=off1sp)
+    auc <- matrix(NA, ncol(pr), 4)
+    dimnames(auc) <- list(1:ncol(pr), c("n_in", "n_out", "AUC_in", "AUC_out"))
+
+    for (jj in 1:ncol(pr)) {
+        INTERNAL <- BBn[,1] %in% BBn[BBn[,2]!=jj,1]
+        ss <- which(INTERNAL)
+        ss1 <- which(!INTERNAL)
+        roc_in <- simple_roc(y10sp[ss], pr[ss])
+        roc_out <- simple_roc(y10sp[ss1], pr[ss1])
+        auc[jj,"n_in"] <- sum(y10sp[ss])
+        auc[jj,"n_out"] <- sum(y10sp[ss1])
+        auc[jj,"AUC_in"] <- simple_auc(roc_in)
+        auc[jj,"AUC_out"] <- simple_auc(roc_out)
+    }
+    geoxv_N[[spp]] <- auc
+}
+
+en <- new.env()
+load(file.path(ROOT, "data", "data-south-geoxv.Rdata"), envir=en)
+OFFn <- en$OFF
+OFFmn <- en$OFFmean
+BBn <- en$BB
+DATn <- en$DAT
+yyn <- en$YY
+SPP <- colnames(yyn)
+modsn <- en$mods
+
+nTerms <- getTerms(modsn, "list")
+Xnn <- model.matrix(getTerms(modsn, "formula"), DATn)
+colnames(Xnn) <- fixNames(colnames(Xnn))
+
+rm(en)
+
+#spp <- "OVEN"
+geoxv_S <- list()
+for (spp in SPP) {
+cat(spp, "S\n");flush.console()
+
+    y1sp <- yyn[,spp]
+    y10sp <- ifelse(y1sp > 0, 1, 0)
+    off1sp <- if (spp %in% colnames(OFFn)) OFFn[,spp] else OFFmn
+    resn <- loadSPP(file.path(ROOT, "results", "south-geoxv",
+        paste0("birds_abmi-north-geoxv_", spp, ".Rdata")))
+    resn[[1]] <- NULL # iteration 0 (full)
+    est6 <- getEst(resn, stage=4, na.out=FALSE, Xnn)
+    ## 1st run
+    pr <- pr_fun_for_geoxv(est6, Xnn, off=off1sp)
+    auc <- matrix(NA, ncol(pr), 4)
+    dimnames(auc) <- list(1:ncol(pr), c("n_in", "n_out", "AUC_in", "AUC_out"))
+
+    for (jj in 1:ncol(pr)) {
+        INTERNAL <- BBn[,1] %in% BBn[BBn[,2]!=jj,1]
+        ss <- which(INTERNAL)
+        ss1 <- which(!INTERNAL)
+        roc_in <- simple_roc(y10sp[ss], pr[ss])
+        roc_out <- simple_roc(y10sp[ss1], pr[ss1])
+        auc[jj,"n_in"] <- sum(y10sp[ss])
+        auc[jj,"n_out"] <- sum(y10sp[ss1])
+        auc[jj,"AUC_in"] <- simple_auc(roc_in)
+        auc[jj,"AUC_out"] <- simple_auc(roc_out)
+    }
+    geoxv_S[[spp]] <- auc
+}
+
+save(geoxv_N, geoxv_S,
+    file="e:/peter/sppweb2017/birds-auc-geoxv.Rdata")
+
+gxn <- do.call(rbind, lapply(1:length(geoxv_N), function(i) {
+    data.frame(Species=names(geoxv_N)[i], Cluster=rownames(geoxv_N[[i]]), geoxv_N[[i]])
+}))
+gxnin <- data.frame(What=factor("In", c("In", "Out")), gxn[,c(1,2,3,5)])
+gxnout <- data.frame(What=factor("Out", c("In", "Out")), gxn[,c(1,2,4,6)])
+colnames(gxnin) <- colnames(gxnout) <- c("What", "Species", "Cluster", "n", "AUC")
+gxn <- rbind(gxnin, gxnout)
+gxn$Cross <- interaction(gxn$What, gxn$Cluster)
+gxn$AUC[gxn$n < 10] <- -1
+mln <- as.matrix(Xtab(AUC ~ Species + Cross, gxn))
+mln[mln < 0] <- NA
+gxn$AUC[gxn$n < 10] <- NA
+
+gxs <- do.call(rbind, lapply(1:length(geoxv_S), function(i) {
+    data.frame(Species=names(geoxv_S)[i], Cluster=rownames(geoxv_S[[i]]), geoxv_S[[i]])
+}))
+gxsin <- data.frame(What=factor("In", c("In", "Out")), gxs[,c(1,2,3,5)])
+gxsout <- data.frame(What=factor("Out", c("In", "Out")), gxs[,c(1,2,4,6)])
+colnames(gxsin) <- colnames(gxsout) <- c("What", "Species", "Cluster", "n", "AUC")
+gxs <- rbind(gxsin, gxsout)
+gxs$Cross <- interaction(gxs$What, gxs$Cluster)
+gxs$AUC[gxs$n < 10] <- -1
+mls <- as.matrix(Xtab(AUC ~ Species + Cross, gxs))
+mls[mls < 0] <- NA
+gxs$AUC[gxs$n < 10] <- NA
+
+par(mfrow=c(2,1),las=1)
+boxplot(AUC ~ Cross, gxn, range=0, ylab="AUC", ylim=c(0,1),
+    main="Birds, Geographical Cross-validation, North")
+matlines(1:nlevels(gxn$Cross), t(mln), col=rgb(0,0,0,0.25), lty=1)
+boxplot(AUC ~ Cross, gxn, range=0, add=TRUE, col=rgb(1,0.5,0.5,0.4))
+abline(h=0.5, lty=2, col="grey")
+boxplot(AUC ~ Cross, gxs, range=0, ylab="AUC", ylim=c(0,1),
+    main="Birds, Geographical Cross-validation, South")
+matlines(1:nlevels(gxs$Cross), t(mls), col=rgb(0,0,0,0.25), lty=1)
+boxplot(AUC ~ Cross, gxs, range=0, add=TRUE, col=rgb(1,0.5,0.5,0.4))
+abline(h=0.5, lty=2, col="grey")
