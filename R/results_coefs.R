@@ -1457,8 +1457,8 @@ cat(spp, "N\n");flush.console()
         INTERNAL <- BBn[,1] %in% BBn[BBn[,2]!=jj,1]
         ss <- which(INTERNAL)
         ss1 <- which(!INTERNAL)
-        roc_in <- simple_roc(y10sp[ss], pr[ss])
-        roc_out <- simple_roc(y10sp[ss1], pr[ss1])
+        roc_in <- simple_roc(y10sp[ss], pr[ss,jj])
+        roc_out <- simple_roc(y10sp[ss1], pr[ss1,jj])
         auc[jj,"n_in"] <- sum(y10sp[ss])
         auc[jj,"n_out"] <- sum(y10sp[ss1])
         auc[jj,"AUC_in"] <- simple_auc(roc_in)
@@ -1504,8 +1504,8 @@ cat(spp, "S\n");flush.console()
         INTERNAL <- BBn[,1] %in% BBn[BBn[,2]!=jj,1]
         ss <- which(INTERNAL)
         ss1 <- which(!INTERNAL)
-        roc_in <- simple_roc(y10sp[ss], pr[ss])
-        roc_out <- simple_roc(y10sp[ss1], pr[ss1])
+        roc_in <- simple_roc(y10sp[ss], pr[ss,jj])
+        roc_out <- simple_roc(y10sp[ss1], pr[ss1,jj])
         auc[jj,"n_in"] <- sum(y10sp[ss])
         auc[jj,"n_out"] <- sum(y10sp[ss1])
         auc[jj,"AUC_in"] <- simple_auc(roc_in)
@@ -1514,8 +1514,6 @@ cat(spp, "S\n");flush.console()
     geoxv_S[[spp]] <- auc
 }
 
-save(geoxv_N, geoxv_S,
-    file="e:/peter/sppweb2017/birds-auc-geoxv.Rdata")
 
 gxn <- do.call(rbind, lapply(1:length(geoxv_N), function(i) {
     data.frame(Species=names(geoxv_N)[i], Cluster=rownames(geoxv_N[[i]]), geoxv_N[[i]])
@@ -1554,3 +1552,6 @@ boxplot(AUC ~ Cross, gxs, range=0, ylab="AUC", ylim=c(0,1),
 matlines(1:nlevels(gxs$Cross), t(mls), col=rgb(0,0,0,0.25), lty=1)
 boxplot(AUC ~ Cross, gxs, range=0, add=TRUE, col=rgb(1,0.5,0.5,0.4))
 abline(h=0.5, lty=2, col="grey")
+
+save(geoxv_N, geoxv_S, gxn, mln, gxs, mls,
+    file="e:/peter/sppweb2017/birds-auc-geoxv.Rdata")
