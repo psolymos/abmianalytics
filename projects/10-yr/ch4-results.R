@@ -474,8 +474,8 @@ ylim, ylab="", xlab="", main="", ...) {
             polygon(0.45*c(-xx[[i]]$w, rev(xx[[i]]$w))+i,
                 c(xx[[i]]$h, rev(xx[[i]]$h)), col=col, border=border)
             #lines(c(i,i), range(xx[[i]]$h), col=col, lwd=2)
-            lines(c(i-0.2, i+0.2), rep(median(x[,i], na.rm=TRUE), 2), lwd=3)
         }
+        lines(c(i-0.2, i+0.2), rep(median(x[,i], na.rm=TRUE), 2), lwd=3)
     }
     #points(1:ncol(x), colMeans(x, na.rm=TRUE), pch=21, cex=1.5)
     invisible(NULL)
@@ -603,6 +603,7 @@ abline(h=0, lty=2)
 ## --- ordination
 
 ord_fun <- function(TAX, north=TRUE, scaling=2, alpha=1, col.text=1, ...) {
+    require(vegan)
     Excl <- c("WhiteSpruceCC20", "WhiteSpruceCC40", "WhiteSpruceCC60",
         "PineCC20", "PineCC40", "PineCC60",
         "DeciduousCC20",   "DeciduousCC40", "DeciduousCC60",
@@ -623,10 +624,9 @@ ord_fun <- function(TAX, north=TRUE, scaling=2, alpha=1, col.text=1, ...) {
     cn <- gsub("[[:digit:]]", "", cn)
     #cn <- gsub("CC", "", cn)
     zz <- groupMeans(z, 2, cn)
-    rownames(zz) <- make.cepnames(rownames(zz))
-    colnames(zz) <- make.cepnames(colnames(zz))
+    #rownames(zz) <- make.cepnames(rownames(zz)) # species
+    colnames(zz) <- make.cepnames(colnames(zz)) # habitats
 
-    library(vegan)
     fs <- function(x) 0.5*(1+x/max(abs(x)))
     yy <- (t(zz))
     m <- cca(yy)
@@ -638,7 +638,7 @@ ord_fun <- function(TAX, north=TRUE, scaling=2, alpha=1, col.text=1, ...) {
     #text(m, "species", col=ColSp, cex=0.5, scaling=scaling)
     points(m, "species", col=ColSp, cex=1, pch=19, scaling=scaling)
     text(m, "sites", col=col.text, cex=1, scaling=scaling)
-    invisible(NULL)
+    invisible(m)
 }
 
 par(mfrow=c(2,2), las=1)
@@ -658,8 +658,76 @@ ord_fun("vplants", TRUE, main="Vascular Plants, North")
 ord_fun("vplants", FALSE, main="Vascular Plants, South")
 
 par(mfrow=c(1,2), las=1)
-ord_fun("All", TRUE, main="All Species, North", alpha=0.5, scaling=0, col.text=1)
-ord_fun("All", FALSE, main="All Species, South", alpha=0.5, scaling=0, col.text=1)
+mn <- ord_fun("All", TRUE, main="All Species, North", alpha=0.5, scaling=0, col.text=1)
+ms <- ord_fun("All", FALSE, main="All Species, South", alpha=0.5, scaling=0, col.text=1)
+
+library(spatstat)
+dfun <- function(pp) {
+    ppp <- density(pp)
+    list(x=ppp$xcol, y=ppp$yrow, z=t(ppp$v)/pp$n)
+}
+
+mn <- ord_fun("All", TRUE, main="All Species, North", alpha=0.5, scaling=2, col.text=1)
+s <- scores(mn, 1:3)
+tax <- do.call(c, lapply(names(AllIn), function(zz) rep(zz, nrow(AllIn[[zz]][["veg"]]))))
+names(tax) <- do.call(c, lapply(AllIn, function(zz) as.character(zz[["veg"]][,1])))
+tax <- tax[rownames(s$species)]
+ppn <- lapply(structure(unique(tax), names=unique(tax)), function(i) {
+    j <- tax == i
+    as.ppp(s$species[j,1:2], c(-2,4,-2,2)) #c(range(s$species[,1]), range(s$species[,2])))
+})
+mn <- ord_fun("All", TRUE, main="All Species, North", alpha=0.5, scaling=2, col.text=1)
+for (i in 1:length(ppn))
+    contour(dfun(ppn[[i]]), levels=0.05, labels=names(ppn)[i], col=i, add=TRUE)
+legend("topright", lty=1, col=1:length(ppn), legend=names(ppn), bty="n")
+
+ms <- ord_fun("All", FALSE, main="All Species, South", alpha=0.5, scaling=2, col.text=1)
+s <- scores(ms, 1:3)
+tax <- do.call(c, lapply(names(AllIn), function(zz) rep(zz, nrow(AllIn[[zz]][["soilnt"]]))))
+names(tax) <- do.call(c, lapply(AllIn, function(zz) as.character(zz[["soilnt"]][,1])))
+tax <- tax[rownames(s$species)]
+pps <- lapply(structure(unique(tax), names=unique(tax)), function(i) {
+    j <- tax == i
+    as.ppp(s$species[j,1:2], c(-2,3,-3,2)) #c(range(s$species[,1]), range(s$species[,2])))
+})
+
+ms <- ord_fun("All", FALSE, main="All Species, South", alpha=0.5, scaling=2, col.text=1)
+for (i in 1:length(pps))
+    contour(dfun(pps[[i]]), levels=0.05, labels=names(pps)[i], col=i, add=TRUE)
+legend("topright", lty=1, col=1:length(pps), legend=names(pps), bty="n")
+
+## chull
+col1 <- RColorBrewer::brewer.pal(8, "Dark2")
+col2 <- paste0(col1,"10")
+
+par(mfrow=c(1,2), las=1)
+mn <- ord_fun("All", TRUE, main="All Species, North", alpha=0.5, scaling=2, col.text=1)
+s <- scores(mn, 1:3)
+tax <- do.call(c, lapply(names(AllIn), function(zz) rep(zz, nrow(AllIn[[zz]][["veg"]]))))
+names(tax) <- do.call(c, lapply(AllIn, function(zz) as.character(zz[["veg"]][,1])))
+tax <- tax[rownames(s$species)]
+chn <- lapply(structure(unique(tax), names=unique(tax)), function(i) {
+    j <- tax == i
+    xx <- s$species[j,1:2]
+    xx[chull(xx),]
+})
+for (i in 1:length(chn))
+    polygon(chn[[i]], border=col1[i], col=col2[i])
+legend("bottomright", lty=1, col=col1, legend=names(pps), bty="n")
+
+ms <- ord_fun("All", FALSE, main="All Species, South", alpha=0.5, scaling=2, col.text=1)
+s <- scores(ms, 1:3)
+tax <- do.call(c, lapply(names(AllIn), function(zz) rep(zz, nrow(AllIn[[zz]][["soilnt"]]))))
+names(tax) <- do.call(c, lapply(AllIn, function(zz) as.character(zz[["soilnt"]][,1])))
+tax <- tax[rownames(s$species)]
+chs <- lapply(structure(unique(tax), names=unique(tax)), function(i) {
+    j <- tax == i
+    xx <- s$species[j,1:2]
+    xx[chull(xx),]
+})
+for (i in 1:length(chs))
+    polygon(chs[[i]], border=col1[i], col=col2[i])
+legend("bottomright", lty=1, col=col1, legend=names(pps), bty="n")
 
 ## --- SI maps
 
