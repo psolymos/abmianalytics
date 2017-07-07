@@ -503,13 +503,6 @@ write.csv(NSR, row.names=FALSE,
 
 
 ## sector effects
-seff_res <- list()
-tr_res <- list()
-#seff_luf <- list()
-#seff_ns <- list()
-#uplow <- list()
-#uplow_full <- list()
-#uplow_luf <- list()
 
 ## stuff to exclude
 ## add col to lxn
@@ -522,24 +515,53 @@ restrict_to_HF <- FALSE
 TAX <- read.csv("~/repos/abmispecies/_data/birds.csv")
 SPP <- as.character(TAX$AOU)[TAX$map.pred]
 
+## OSA stuff
+if (FALSE) {
+PRED_DIR_IN <- "pred1-seismic-as-ES-OSA"
+SPP <- as.character(TAX$AOU)[TAX$veghf.north]
+regs <- "00OSA All3"
+
+load(file.path(ROOT, "out", "transitions", paste0(regs[1], ".Rdata")))
+Aveg <- rbind(colSums(trVeg))
+rownames(Aveg) <- regs[1]
+colnames(Aveg) <- colnames(trVeg)
+Asoil <- rbind(colSums(trSoil))
+rownames(Asoil) <- regs[1]
+colnames(Asoil) <- colnames(trSoil)
+Aveg <- Aveg / 10^4
+Asoil <- Asoil / 10^4
+
+lxn <- lxn[1,c("N","S"),drop=FALSE]
+lxn[] <- TRUE
+}
+
+seff_res <- list()
+tr_res <- list()
+#seff_luf <- list()
+#seff_ns <- list()
+#uplow <- list()
+#uplow_full <- list()
+#uplow_luf <- list()
 for (spp in SPP) {
 
 cat(spp, "------------------------\n");flush.console()
 
 #load(file.path(OUTDIR1, spp, paste0(regs[1], ".Rdata")))
 load(file.path(ROOT, "out", "birds", PRED_DIR_IN, spp, paste0(regs[1], ".Rdata")))
-hbNcr <- hbNcr1[,1]
-hbNrf <- hbNrf1[,1]
-hbScr <- hbScr1[,1]
-hbSrf <- hbSrf1[,1]
-for (i in 2:length(regs)) {
-    cat(spp, regs[i], "\n");flush.console()
-    #load(file.path(OUTDIR1, spp, paste0(regs[i], ".Rdata")))
-    load(file.path(ROOT, "out", "birds", PRED_DIR_IN, spp, paste0(regs[i], ".Rdata")))
-    hbNcr <- rbind(hbNcr, hbNcr1[,1])
-    hbNrf <- rbind(hbNrf, hbNrf1[,1])
-    hbScr <- rbind(hbScr, hbScr1[,1])
-    hbSrf <- rbind(hbSrf, hbSrf1[,1])
+hbNcr <- rbind(hbNcr1[,1])
+hbNrf <- rbind(hbNrf1[,1])
+hbScr <- rbind(hbScr1[,1])
+hbSrf <- rbind(hbSrf1[,1])
+if (length(regs) > 1) {
+    for (i in 2:length(regs)) {
+        cat(spp, regs[i], "\n");flush.console()
+        #load(file.path(OUTDIR1, spp, paste0(regs[i], ".Rdata")))
+        load(file.path(ROOT, "out", "birds", PRED_DIR_IN, spp, paste0(regs[i], ".Rdata")))
+        hbNcr <- rbind(hbNcr, hbNcr1[,1])
+        hbNrf <- rbind(hbNrf, hbNrf1[,1])
+        hbScr <- rbind(hbScr, hbScr1[,1])
+        hbSrf <- rbind(hbSrf, hbSrf1[,1])
+    }
 }
 
 if (!NSest["north"]) {
@@ -609,10 +631,10 @@ hbNcr_HFonly <- hbNcr
 hbNrf_HFonly <- hbNrf
 hbNcr_HFonly[,!keep] <- 0
 hbNrf_HFonly[,!keep] <- 0
-ThbNcr_HFonly <- colSums(hbNcr_HFonly[lxn$N,])
-ThbNrf_HFonly <- colSums(hbNrf_HFonly[lxn$N,])
-ThbNcr <- colSums(hbNcr[lxn$N,])
-ThbNrf <- colSums(hbNrf[lxn$N,])
+ThbNcr_HFonly <- colSums(hbNcr_HFonly[lxn$N,,drop=FALSE])
+ThbNrf_HFonly <- colSums(hbNrf_HFonly[lxn$N,,drop=FALSE])
+ThbNcr <- colSums(hbNcr[lxn$N,,drop=FALSE])
+ThbNrf <- colSums(hbNrf[lxn$N,,drop=FALSE])
 Ntot_HFonly <- sum(ThbNrf_HFonly)
 Ntot_All <- sum(ThbNrf)
 Ntot_Use <- if (restrict_to_HF)
@@ -645,10 +667,10 @@ hbScr_HFonly <- hbScr
 hbSrf_HFonly <- hbSrf
 hbScr_HFonly[,!keep] <- 0
 hbSrf_HFonly[,!keep] <- 0
-ThbScr_HFonly <- colSums(hbScr_HFonly[lxn$S,])
-ThbSrf_HFonly <- colSums(hbSrf_HFonly[lxn$S,])
-ThbScr <- colSums(hbScr[lxn$S,])
-ThbSrf <- colSums(hbSrf[lxn$S,])
+ThbScr_HFonly <- colSums(hbScr_HFonly[lxn$S,,drop=FALSE])
+ThbSrf_HFonly <- colSums(hbSrf_HFonly[lxn$S,,drop=FALSE])
+ThbScr <- colSums(hbScr[lxn$S,,drop=FALSE])
+ThbSrf <- colSums(hbSrf[lxn$S,,drop=FALSE])
 Stot_HFonly <- sum(ThbSrf_HFonly)
 Stot_All <- sum(ThbSrf)
 Stot_Use <- if (restrict_to_HF)
@@ -676,11 +698,16 @@ tr_res[[spp]] <- list(N=cbind(rf=ThbNrf, cr=ThbNcr), S=cbind(rf=ThbSrf, cr=ThbSc
 
 ## -new version has the HFonly pop sizes saved
 ## can be used to retro-fit the effects
-#save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-bf.Rdata"))
-save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-ES.Rdata"))
+#save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables",
+#    "sector-effects-new-seismic-as-bf.Rdata"))
+#save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables",
+#    "sector-effects-new-seismic-as-ES.Rdata"))
+save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables",
+    "sector-effects-new-seismic-as-ES-OSA.Rdata"))
 #save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects-new-shf.Rdata"))
 #load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-bf.Rdata"))
-load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-ES.Rdata"))
+#load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-ES.Rdata"))
+load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-ES-OSA.Rdata"))
 #load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-shf.Rdata"))
 
 #spp <- "ALFL"
@@ -694,8 +721,11 @@ for (spp in names(tr_res)) {
 seff2 <- t(sapply(seff_loc, function(z) (z[,"cr"]-z[,"rf"])/z[,"rf"]))
 seff2 <- seff2[,rownames(seff_res[[1]]$N)]
 seff1 <- t(sapply(seff_res, function(z) z$N[,"dN"]))
-seff2 <- cbind(seff2,
-    Total=sapply(seff_loc, function(z) (sum(z[,"cr"])-sum(z[,"rf"]))/sum(z[,"rf"])))
+#seff2 <- cbind(seff2,
+#    Total=sapply(seff_loc, function(z) (sum(z[,"cr"])-sum(z[,"rf"]))/sum(z[,"rf"])))
+
+#write.csv(round(100*seff1,1), file="sector-effects-birds-RefInRegion-inOSA.csv")
+#write.csv(round(100*seff2,1), file="sector-effects-birds-RefUnderHF-inOSA.csv")
 
 seff2 <- seff2[!is.na(seff2[,1]),]
 seff2 <- seff2[order(rownames(seff2)),]
@@ -726,18 +756,32 @@ for (i in 1:6) {
         xlab="% population change inside HF", border=NA)
     abline(v=0, col=4, lty=2)
 }
-write.csv(round(100*seff2,1), file="sector-effects-birds-early-seral-seismic.csv")
 
 nres <- list()
 sres <- list()
+nres_inHF <- list()
+sres_inHF <- list()
 for (spp in names(seff_res)) {
     nres[[spp]] <- 100*c(PopEffect=seff_res[[spp]]$N[,2], UnitEffect=seff_res[[spp]]$N[,3])
     sres[[spp]] <- 100*c(PopEffect=seff_res[[spp]]$S[,2], UnitEffect=seff_res[[spp]]$S[,3])
+
+    TOTALS <- if (WHERE=="north")
+        tr_res[[spp]]$total[c("Ntot_All", "Ntot_HFonly")] else tr_res[[spp]]$total[c("Stot_All", "Stot_HFonly")]
+    SCALING <- if (restrict_to_HF)
+        TOTALS[1]/TOTALS[2] else 1
+    nres_inHF[[spp]] <- 100*c(PopEffect=seff_res[[spp]]$N[,2], UnitEffect=seff_res[[spp]]$N[,3])
+    sres_inHF[[spp]] <- 100*c(PopEffect=seff_res[[spp]]$S[,2], UnitEffect=seff_res[[spp]]$S[,3])
+
 }
 nres <- do.call(rbind, nres)
 sres <- do.call(rbind, sres)
 nres <- data.frame(Species=tax[rownames(nres), "English_Name"], nres)
 sres <- data.frame(Species=tax[rownames(sres), "English_Name"], sres)
+
+nres_inHF <- do.call(rbind, nres_inHF)
+sres_inHF <- do.call(rbind, sres_inHF)
+nres_inHF <- data.frame(Species=tax[rownames(nres), "English_Name"], nres_inHF)
+sres_inHF <- data.frame(Species=tax[rownames(sres), "English_Name"], sres_inHF)
 
 ## keep only spp that are OK
 
