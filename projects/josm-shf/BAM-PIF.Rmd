@@ -1,11 +1,12 @@
 ---
 title: "Population Estimation"
 date: "July 12, 2017"
-author: "Peter Solymos & BAM Team"
+author: "Peter Solymos, Nicole Barker & BAM Team"
 fontsize: 12pt
 output:
   beamer_presentation:
     theme: "Singapore"
+    fonttheme: "structurebold"
     incremental: false
     includes:
       in_header: preamble.tex
@@ -49,6 +50,16 @@ Population estimates are conservative (Matsuoka et al. 2012)
 
 ***
 
+## Boreal Avian Modelling Project
+
+```{r echo=FALSE,out.width="240px"}
+knitr::include_graphics("images/barker-2.png")
+```
+
+Comprehensive dataset, quantitative techniques $\rightarrow$ inform broad scale policy & management for boreal birds (Barker et al. 2015).
+
+***
+
 ## QPAD -- Solymos et al. 2013
 
 1. **Time adjustment**: time varying removal sampling (availability for sampling, $p$).
@@ -62,8 +73,11 @@ $\hat{N}^{(QPAD)} = A \times E[Y] \times (1/p_{3}) \times (1/\pi EDR^2)$.
 
 ## Population sizes in Alberta
 
+```{r echo=FALSE,out.width="250px"}
+knitr::include_graphics("images/cawa-ab.png")
+```
 
-(Methodology: Ball et al. 2016)
+Predictive density modeling, Ball et al. 2016.
 
 ***
 
@@ -192,13 +206,13 @@ rownames(pop) <- pop$Species_ID
 rnd <- runif(nrow(pop), -0.1, 0.1)
 ```
 
-```{r pop-size,echo=FALSE,fig.width=8,fig.height=6}
+```{r pop-size,echo=FALSE,fig.width=6,fig.height=4}
 par(las=1)
 boxplot(pop[,c("Npif", "Nqpad")], col=NA, range=0, ylab="M singing inds.")
 for (i in 1:nrow(pop))
-    lines(c(1,2), pop[i,c("Npif", "Nqpad")], col="#00000020")
-points(1+rnd, pop[,"Npif"], col="#00000040", pch=19)
-points(2+rnd, pop[,"Nqpad"], col="#00000040", pch=19)
+    lines(c(1,2), pop[i,c("Npif", "Nqpad")], col="#FF664D40")
+points(1+rnd, pop[,"Npif"], col="#FF664D80", pch=19)
+points(2+rnd, pop[,"Nqpad"], col="#FF664D80", pch=19)
 boxplot(pop[,c("Npif", "Nqpad")], range=0, add=TRUE, col=NA)
 ```
 
@@ -209,7 +223,7 @@ boxplot(pop[,c("Npif", "Nqpad")], range=0, add=TRUE, col=NA)
 
 $\frac{\hat{N}^{(QPAD)}}{\hat{N}^{(PIF)}} = (\frac{Y}{Y^{(ROAD)}}) \times (\frac{1/p_{3}}{T}) \times (\frac{1/\pi EDR^2}{1/\pi MDD^2})$
 
-```{r echo=FALSE,fig.width=8,fig.height=6,message=FALSE,warning=FALSE}
+```{r echo=FALSE,fig.width=6,fig.height=4,message=FALSE,warning=FALSE}
 par(las=1)
 mat <- log(pop[,c("DeltaRoad", "DeltaTime", "DeltaDist", "DeltaRes")])
 if (FALSE) {
@@ -221,7 +235,7 @@ for (i in 1:ncol(mat))
 abline(h=0, col=2, lwd=2)
 boxplot(mat, range=0, add=TRUE, col=NA)
 }
-carrot(mat, ylab="bias")
+carrot(mat, ylab="log(QPAD / PIF)")
 for (i in 2:ncol(mat))
     segments(x0=i-1, x1=i, y0=mat[,i-1], y1=mat[,i], col="#00000020")
 abline(h=0, col=1, lwd=1)
@@ -254,13 +268,13 @@ class $h$,
 
 ***
 
-```{r echo=FALSE,fig.width=8,fig.height=6}
+```{r echo=FALSE,fig.width=6,fig.height=5}
 par(las=1)
 with(pop, plot(RAIc, log(DeltaRes), type="n", 
     xlab="Centered Road Avoidance Index"))
 abline(h=0, v=0, col=1, lty=2)
 abline(lm(log(DeltaRes) ~ RAIc, pop), col=1)
-with(pop, text(RAIc, log(DeltaRes), rownames(pop), cex=0.75, col=4))
+with(pop, text(RAIc, log(DeltaRes), rownames(pop), cex=0.65, col="#FF664D"))
 ```
 
 ***
@@ -274,4 +288,41 @@ ss <- c("ALFL", "AMRO", "CAWA", "YRWA")
 kable(pop[ss,c("English_Name", "Npif", "Nqpad")], digits=3)
 ```
 
+***
 
+## In progress
+
+* **Removal models**: individual heterogeneity, geographic gradients.
+* **Traits & phylogeny**: predict singing rates and EDR.
+* **Roadside bias**: numeric response, behaviour, detection process.
+* **ARU data integration**: https://www.ace-eco.org/issues/view.php?sf=5.
+* **Species with large home ranges**: density estimation when PC area $\ll$ home range
+
+***
+
+## Phylogeny and species traits predict bird detectability
+
+```{r echo=FALSE}
+knitr::include_graphics("images/Fig2.pdf")
+```
+
+Under review.
+
+***
+
+## Key references
+
+* **Matsuoka et al. 2012**. Using binomial distance-sampling models to estimate the effective detection radius of point-counts surveys across boreal Canada. _Auk_ 129:268--282.
+* **[Solymos et al. 2013](http://onlinelibrary.wiley.com/doi/10.1111/2041-210X.12106/abstract)**. Calibrating indices of avian density from non-standardized survey data: making the most of a messy situation. _Methods  Ecol. Evol._ 4:1047--1058.
+* **[Ball et al. 2016](http://www.ace-eco.org/vol11/iss2/art10/ACE-ECO-2016-916.pdf)**. Regional habitat needs of a nationally listed species, Canada Warbler *Cardellina canadensis*, in Alberta, Canada. _Avian Conserv. Ecol._ 11(2):10.
+* **Solymos 2016**. QPAD version 3 documentation. Technical Report, http://www.borealbirds.ca/.
+
+***
+
+## Acknowledgements
+
+```{r echo=FALSE}
+knitr::asis_output("\\footnotesize")
+```
+
+Boreal Avian Modelling (BAM) Project is an international research collaboration on the ecology, management, and conservation of boreal birds. We acknowledge BAM's members, avian and biophysical data partners, and funding agencies (including Environment and Climate Change Canada and the U.S. Fish & Wildlife Service), listed in full at http://www.borealbirds.ca/index.php/acknowledgements.
