@@ -218,8 +218,6 @@ ylim, ylab="", xlab="", main="", nmin=5, interval=c(-Inf, Inf), ...) {
     #points(1:ncol(x), colMeans(x, na.rm=TRUE), pch=21, cex=1.5)
     invisible(NULL)
 }
-
-
 pop <- read.csv("~/Dropbox/bam/PIF-AB/qpad-pif-results.csv")
 rownames(pop) <- pop$Species_ID
 rnd <- runif(nrow(pop), -0.1, 0.1)
@@ -227,7 +225,8 @@ rnd <- runif(nrow(pop), -0.1, 0.1)
 
 Population sizes were quite different.
 
-```{r pop-size,echo=FALSE,fig.width=10,fig.height=7}
+```{r pop-size,echo=FALSE,fig.width=8,fig.height=6}
+par(las=1)
 boxplot(pop[,c("Npif", "Nqpad")], col=NA, range=0, ylab="M singing inds.")
 for (i in 1:nrow(pop))
     lines(c(1,2), pop[i,c("Npif", "Nqpad")], col="#00000020")
@@ -240,7 +239,8 @@ The median observed bias between QPAD and PIF population estimates
 was `r round(median(pop$DeltaObs), 2)` and ranged between `r round(min(pop$DeltaObs), 2)` and 
 `r round(max(pop$DeltaObs), 2)`.
 
-```{r echo=FALSE,fig.width=10,fig.height=7}
+```{r echo=FALSE,fig.width=8,fig.height=6}
+par(las=1)
 mat <- log(pop[,c("DeltaObs", "DeltaExp", "DeltaRoad", "DeltaTime", "DeltaDist", "DeltaRes")])
 if (FALSE) {
 boxplot(mat, range=0, col=NA, ylab="bias")
@@ -301,11 +301,12 @@ Residual bias was less than one for species with small
 RAI values, whereas the residual bias was greater than one 
 for species with RAI close to 1 (high avoidance).
 
-```{r echo=FALSE,fig.width=7,fig.height=5}
+```{r echo=FALSE,fig.width=8,fig.height=6}
+par(las=1)
 with(pop, plot(RAIc, log(DeltaRes), type="n"))
-abline(h=0, v=0, col=2, lwd=1)
-abline(lm(log(DeltaRes) ~ RAIc, pop), col=4)
-with(pop, text(RAIc, log(DeltaRes), rownames(pop), cex=0.75))
+abline(h=0, v=0, col=1, lty=2)
+abline(lm(log(DeltaRes) ~ RAIc, pop), col=1)
+with(pop, text(RAIc, log(DeltaRes), rownames(pop), cex=0.75, col=4))
 ```
 
 
