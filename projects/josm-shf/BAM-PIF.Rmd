@@ -12,6 +12,19 @@ output:
       in_header: preamble.tex
 ---
 
+## Population size from point counts
+
+$\hat{N} = A_{REGION} \times D$
+
+$\hat{N} = A_{REGION} \times E[Y] \times C \times (1/\pi r^2)$
+
+* $Y$: observed count,
+* $D$: population density,
+* $r$: (effective) counting distance,
+* $C$: adjustments (time, pair).
+
+***
+
 ## PIF v1.0 -- Rosenberg & Blancher 2005
 
 0. **Pair adjustment**: $P=2$.
@@ -221,7 +234,7 @@ boxplot(pop[,c("Npif", "Nqpad")], range=0, add=TRUE, col=NA)
 ## PIF vs. QPAD Components
 
 
-$\frac{\hat{N}^{(QPAD)}}{\hat{N}^{(PIF)}} = (\frac{Y}{Y^{(ROAD)}}) \times (\frac{1/p_{3}}{T}) \times (\frac{1/\pi EDR^2}{1/\pi MDD^2})$
+$\frac{\hat{N}^{(QPAD)}}{\hat{N}^{(PIF)}} = (\frac{Y}{Y^{(ROAD)}}) \times (\frac{1/p_{3}}{T}) \times (\frac{1/\pi EDR^2}{1/\pi MDD^2}) \times \delta_{RESIDUAL}$
 
 ```{r echo=FALSE,fig.width=6,fig.height=4,message=FALSE,warning=FALSE}
 par(las=1)
@@ -268,6 +281,8 @@ class $h$,
 
 ***
 
+## Habitat sampling bias
+
 ```{r echo=FALSE,fig.width=6,fig.height=5}
 par(las=1)
 with(pop, plot(RAIc, log(DeltaRes), type="n", 
@@ -287,6 +302,23 @@ Million singing individuals estimated in BCR 6 Alberta.
 ss <- c("ALFL", "AMRO", "CAWA", "YRWA")
 kable(pop[ss,c("English_Name", "Npif", "Nqpad")], digits=3)
 ```
+
+***
+
+## Effects are not independent
+
+
++----------------+--------------+--------------+-------------------+
+| Source of bias | Density      | Area         | Other adjustments |
++================+==============+==============+===================+
+| Time           |              |              | \Checkmark        |
++----------------+--------------+--------------+-------------------+
+| Distance       |              | \Checkmark   | ($A$ known)       |
++----------------+--------------+--------------+-------------------+
+| Roadside       | \Checkmark   | \Checkmark   |    ?              |
++----------------+--------------+--------------+-------------------+
+| Habitat        | \Checkmark   | \Checkmark   |                   |
++----------------+--------------+--------------+-------------------+
 
 ***
 
@@ -312,8 +344,13 @@ Under review.
 
 ## Key references
 
+```{r echo=FALSE}
+knitr::asis_output("\\footnotesize")
+```
+
 * **Matsuoka et al. 2012**. Using binomial distance-sampling models to estimate the effective detection radius of point-counts surveys across boreal Canada. _Auk_ 129:268--282.
 * **[Solymos et al. 2013](http://onlinelibrary.wiley.com/doi/10.1111/2041-210X.12106/abstract)**. Calibrating indices of avian density from non-standardized survey data: making the most of a messy situation. _Methods  Ecol. Evol._ 4:1047--1058.
+* **[Stralberg et al. 2015](http://www.esajournals.org/doi/abs/10.1890/13-2289.1)**. Projecting boreal bird responses to climate change: the signal exceeds the noise. _Ecol. Appl._ 25:52--69.
 * **[Ball et al. 2016](http://www.ace-eco.org/vol11/iss2/art10/ACE-ECO-2016-916.pdf)**. Regional habitat needs of a nationally listed species, Canada Warbler *Cardellina canadensis*, in Alberta, Canada. _Avian Conserv. Ecol._ 11(2):10.
 * **Solymos 2016**. QPAD version 3 documentation. Technical Report, http://www.borealbirds.ca/.
 
