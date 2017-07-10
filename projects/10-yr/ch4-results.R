@@ -955,3 +955,151 @@ image(l, main="Representation",
     xlab="Successional %", ylab="Alienating %", axes=FALSE,
     col=grey(100:0/100))
 axis(1);axis(2)
+
+## geoxv results
+
+library(mefa4)
+library(rgdal)
+library(rgeos)
+library(sp)
+library(gstat)
+library(raster)
+#library(viridis)
+load("e:/peter/sppweb2017/all-intactness.Rdata")
+load(file.path("e:/peter/AB_data_v2016", "out", "kgrid", "kgrid_table.Rdata"))
+
+xy <- kgrid
+coordinates(xy) <- ~ POINT_X + POINT_Y
+proj4string(xy) <-
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+rt <- raster(file.path("e:/peter/AB_data_v2016", "data", "kgrid", "AHM1k.asc"))
+crs <- CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+projection(rt) <- crs
+xy <- spTransform(xy, crs)
+mat0 <- as.matrix(rt)
+
+setwd("~/Dropbox/courses/st-johns-2017/data/NatRegAB")
+AB <- readOGR(".", "Natural_Regions_Subregions_of_Alberta") # rgdal
+AB <- spTransform(AB, proj4string(rt))
+ABnr <- gUnaryUnion(AB, AB@data$NRNAME) # natural regions
+ABpr <- gUnaryUnion(AB, rep(1, nrow(AB))) # province
+
+load("e:/peter/sppweb2017/birds-auc-geoxv.Rdata")
+
+cln <- read.csv("e:/peter/AB_data_v2017/data/analysis/validation-clusters/Northern-site-clusters-for-geographical-model-validation.csv")
+cls <- read.csv("e:/peter/AB_data_v2017/data/analysis/validation-clusters/Southern-site-clusters-for-geographical-model-validation.csv")
+
+sxy <- read.csv("c:/Users/Peter/repos/abmianalytics/lookup/sitemetadata.csv")
+sxy$Ngeo <- cln$Geo_Group[match(sxy$SITE_ID, cln$Site)]
+sxy$Sgeo <- cls$Geo_Group[match(sxy$SITE_ID, cls$Site)]
+
+coordinates(sxy) <- ~ PUBLIC_LONGITUDE + PUBLIC_LATTITUDE
+proj4string(sxy) <-
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+sxy <- spTransform(sxy, crs)
+
+COL <- c('#e6f5c9','#f4cae4','#b3e2cd','#fff2ae','#fdcdac','#cbd5e8')
+library(RColorBrewer)
+geocol <- brewer.pal(8, "Dark2")
+geolabelN <- c("1 North-East","2 South-West","3 South","4 South-East","5 North-West",
+    "6 Central-East","7 Central-West","8 Centre")
+geolabelS <- c("1 North","2 East","3 Centre","4 West", "5 South-East","6 South-West",
+    "7 North-West")
+
+cn <- groupMeans(coordinates(sxy)[!is.na(sxy@data$Ngeo),], 1, sxy@data$Ngeo[!is.na(sxy@data$Ngeo)])
+cs <- groupMeans(coordinates(sxy)[!is.na(sxy@data$Sgeo),], 1, sxy@data$Sgeo[!is.na(sxy@data$Sgeo)])
+
+pdf("e:/peter/sppweb2017/geoxv-maps.pdf", onefile=TRUE, height=8, width=10)
+op <- par(mar=rep(1,4), mfrow=c(1,2))
+plot(ABnr, col=paste0(COL, "40"), border=paste0(COL, "80"), main="Geographic clusters, North")
+points(sxy, col=paste0(geocol, "80")[sxy@data$Ngeo], pch=19)
+plot(ABpr, border="grey", add=TRUE)
+text(cn[,1], cn[,2], geolabelN)
+
+plot(ABnr, col=paste0(COL, "40"), border=paste0(COL, "80"), main="Geographic clusters, South")
+points(sxy, col=paste0(geocol, "80")[sxy@data$Sgeo], pch=19)
+plot(ABpr, border="grey", add=TRUE)
+text(cs[,1], cs[,2], geolabelS)
+par(op)
+dev.off()
+
+## load plants results
+pn <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables and Figures for 10 Year Review/VPlant/North/GeoValidation/VPlants_North_AUC All validation and modelling regions.csv")
+ps <- read.csv("w:/ABMI 10 Year Review Tables to Peter/Result tables and Figures for 10 Year Review/VPlant/South/GeoValidation/VPlants_South_AUC All validation and modelling regions.csv")
+
+pxn <- data.frame(AUC=c(pn$ROC.mod, pn$ROC.val),
+    Cross=factor(c(paste0("In.", pn$Reg), paste0("Out.", pn$Reg)), levels(gxn$Cross)))
+pxs <- data.frame(AUC=c(ps$ROC.mod, ps$ROC.val),
+    Cross=factor(c(paste0("In.", ps$Reg), paste0("Out.", ps$Reg)), levels(gxs$Cross)))
+
+
+par(mfrow=c(2,2),las=1)
+
+boxplot(AUC ~ Cross, gxn, range=0, ylab="AUC", ylim=c(0,1),
+    main="Birds, Geographical Cross-validation, North")
+matlines(1:nlevels(gxn$Cross), t(mln), col=rgb(0,0,0,0.25), lty=1)
+boxplot(AUC ~ Cross, gxn, range=0, add=TRUE, col=rgb(1,0.5,0.5,0.4))
+abline(h=0.5, lty=2, col="grey")
+
+boxplot(AUC ~ Cross, pxn, range=0, ylab="AUC", ylim=c(0,1),
+    main="Vplants, Geographical Cross-validation, North")
+matlines(1:nlevels(gxn$Cross), t(mln), col=rgb(0,0,0,0.25), lty=1)
+boxplot(AUC ~ Cross, pxn, range=0, add=TRUE, col=rgb(1,0.5,0.5,0.4))
+abline(h=0.5, lty=2, col="grey")
+
+boxplot(AUC ~ Cross, gxs, range=0, ylab="AUC", ylim=c(0,1),
+    main="Birds, Geographical Cross-validation, South")
+matlines(1:nlevels(gxs$Cross), t(mls), col=rgb(0,0,0,0.25), lty=1)
+boxplot(AUC ~ Cross, gxs, range=0, add=TRUE, col=rgb(1,0.5,0.5,0.4))
+abline(h=0.5, lty=2, col="grey")
+
+boxplot(AUC ~ Cross, pxs, range=0, ylab="AUC", ylim=c(0,1),
+    main="Vplants, Geographical Cross-validation, South")
+matlines(1:nlevels(gxs$Cross), t(mls), col=rgb(0,0,0,0.25), lty=1)
+boxplot(AUC ~ Cross, pxs, range=0, add=TRUE, col=rgb(1,0.5,0.5,0.4))
+abline(h=0.5, lty=2, col="grey")
+
+opn<- par(mai=c(1.4,1 ,0.6,0.3), mfrow=c(2,2), las=1)
+YLIM <- c(0.4, 1)
+nn <- c(1,1.8, 3,3.8, 5,5.8, 7, 7.8, 9,9.8, 11, 11.8, 13,13.8, 15,15.8)
+boxplot(AUC ~ Cross, gxn, xaxt='n', at=nn, ylab="AUC",
+    ylim = YLIM, col = paste0(rep(geocol[1:8], each=2), rep(c("60","BB"), 8)),
+    notch = FALSE,   outline = FALSE )
+axis(1, at=seq(1.5,15.5,2), labels= FALSE)
+text(x= seq(1.5,15.5,2),par("usr")[3],labels =geolabelN, srt =60, adj = c(1.2,1.3),
+    xpd = TRUE, cex=1)
+title('Birds, North', cex.main=1)
+legend("bottomright", legend=c("Modelling data", "Validation data"), col="black",pt.bg=c("#1B9E7760","#1B9E77BB")  ,pch= 22 , cex=1,pt.cex=1.2 ,bty="n")
+
+nn <- c(1,1.8, 3,3.8, 5,5.8, 7, 7.8, 9,9.8, 11, 11.8, 13,13.8, 15,15.8)
+boxplot(AUC ~ Cross, pxn, xaxt='n', at=nn, ylab="AUC",
+    ylim = YLIM, col = paste0(rep(geocol[1:8], each=2), rep(c("60","BB"), 8)),
+    notch = FALSE,   outline = FALSE )
+axis(1, at=seq(1.5,15.5,2), labels= FALSE)
+text(x= seq(1.5,15.5,2),par("usr")[3],labels =geolabelN, srt =60, adj = c(1.2,1.3),
+    xpd = TRUE, cex=1)
+title('Vascular Plants, North', cex.main=1)
+legend("bottomright", legend=c("Modelling data", "Validation data"), col="black",pt.bg=c("#1B9E7760","#1B9E77BB")  ,pch= 22 , cex=1,pt.cex=1.2 ,bty="n")
+
+nn <- c(1,1.8, 3,3.8, 5,5.8, 7, 7.8, 9,9.8, 11, 11.8, 13,13.8 )
+boxplot(AUC ~ Cross, gxs, xaxt='n',at=nn, ylab="AUC",
+    ylim = YLIM, col = paste0(rep(geocol[1:7], each=2), rep(c("60","BB"), 7)),
+    notch = FALSE, outline = FALSE)
+axis(1, at=seq(1.5,13.5,2), labels= FALSE)
+text(x= seq(1.5,13.5,2),par("usr")[3],labels =geolabelS, srt =60, adj = c(1.2,1.3),
+    xpd = TRUE, cex=1)
+title('Birds, South', cex.main=1)
+legend("bottomright", legend=c("Modelling data", "Validation data"), col="black",pt.bg=c("#1B9E7760","#1B9E77BB")  ,pch= 22 , cex=1,pt.cex=1.2 ,bty="n")
+
+nn <- c(1,1.8, 3,3.8, 5,5.8, 7, 7.8, 9,9.8, 11, 11.8, 13,13.8 )
+boxplot(AUC ~ Cross, pxs, xaxt='n',at=nn, ylab="AUC",
+    ylim = YLIM, col = paste0(rep(geocol[1:7], each=2), rep(c("60","BB"), 7)),
+    notch = FALSE, outline = FALSE)
+axis(1, at=seq(1.5,13.5,2), labels= FALSE)
+text(x= seq(1.5,13.5,2),par("usr")[3],labels =geolabelS, srt =60, adj = c(1.2,1.3),
+    xpd = TRUE, cex=1)
+title('Vascular Plants, South', cex.main=1)
+legend("bottomright", legend=c("Modelling data", "Validation data"), col="black",pt.bg=c("#1B9E7760","#1B9E77BB")  ,pch= 22 , cex=1,pt.cex=1.2 ,bty="n")
+
+par(opn)
