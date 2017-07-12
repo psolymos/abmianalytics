@@ -718,11 +718,18 @@ for (spp in names(tr_res)) {
         as.character(ch2veg$cr[ch2veg$isHF]))
     seff_loc[[spp]] <- groupSums(seff_lfull[[spp]], 1, tv[rownames(seff_lfull[[spp]]), "Sector"])
 }
+## this compares sector specific diff to change under single sector type
 seff2 <- t(sapply(seff_loc, function(z) (z[,"cr"]-z[,"rf"])/z[,"rf"]))
 seff2 <- seff2[,rownames(seff_res[[1]]$N)]
+## this is usual sector effects (diff / regional reference)
 seff1 <- t(sapply(seff_res, function(z) z$N[,"dN"]))
 #seff2 <- cbind(seff2,
 #    Total=sapply(seff_loc, function(z) (sum(z[,"cr"])-sum(z[,"rf"]))/sum(z[,"rf"])))
+
+## this compares sector specific diff to change under ALL sector types
+Sect <- rownames(seff_res[[1]]$N)
+seff3 <- t(sapply(seff_loc, function(z)
+    (z[Sect,"cr"]-z[Sect,"rf"])/sum(z[Sect <- rownames(seff_res[[1]]$N),"rf"])))
 
 #write.csv(round(100*seff1,1), file="sector-effects-birds-RefInRegion-inOSA.csv")
 #write.csv(round(100*seff2,1), file="sector-effects-birds-RefUnderHF-inOSA.csv")

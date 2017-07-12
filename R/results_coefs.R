@@ -1555,3 +1555,5 @@ abline(h=0.5, lty=2, col="grey")
 
 save(geoxv_N, geoxv_S, gxn, mln, gxs, mls,
     file="e:/peter/sppweb2017/birds-auc-geoxv.Rdata")
+
+
