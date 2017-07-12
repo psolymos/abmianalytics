@@ -225,14 +225,17 @@ rnd <- runif(nrow(pop), -0.1, 0.1)
 
 Population sizes were quite different.
 
-```{r pop-size,echo=FALSE,fig.width=8,fig.height=6}
-par(las=1)
+```{r pop-size,echo=FALSE,fig.width=8,fig.height=4}
+par(las=1, mfrow=c(1,2))
 boxplot(pop[,c("Npif", "Nqpad")], col=NA, range=0, ylab="M singing inds.")
 for (i in 1:nrow(pop))
     lines(c(1,2), pop[i,c("Npif", "Nqpad")], col="#00000020")
 points(1+rnd, pop[,"Npif"], col="#00000040", pch=19)
 points(2+rnd, pop[,"Nqpad"], col="#00000040", pch=19)
 boxplot(pop[,c("Npif", "Nqpad")], range=0, add=TRUE, col=NA)
+
+plot(log(Nqpad) ~ log(Npif), pop)
+abline(0,1)
 ```
 
 The median observed bias between QPAD and PIF population estimates
