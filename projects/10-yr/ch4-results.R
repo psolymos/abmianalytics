@@ -851,7 +851,6 @@ ABpr <- gUnaryUnion(AB, rep(1, nrow(AB))) # province
 col <- colorRampPalette(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B",
     "#FFFFBF","#D9EF8B", "#A6D96A", "#66BD63", "#1A9850", "#006837"))(100)
 
-## lichens & mosses are not OK
 pdf("e:/peter/sppweb2017/SI-maps.pdf", onefile=TRUE, height=8, width=5)
 for (i in colnames(MatSI)) {
     cat(i, "\n");flush.console()
@@ -909,6 +908,7 @@ kgrid$Succ <- rowSums(dd1km_pred$veg_current[,c("SeismicLine","TransmissionLine"
     CClabs)]) / rowSums(dd1km_pred$veg_current)
 kgrid$Alien <- kgrid$THF - kgrid$Succ
 
+si_cf <- list()
 par(mfrow=c(3,2), las=1)
 for (i in colnames(MatSI)) {
 
@@ -916,12 +916,14 @@ SItmp <- MatSI[,i]
 SItmp[SItmp<1] <- 1
 kgrid$iSI <- log(SItmp/100)
 
-EXCL <- if (i %in% c("lichens", "mosses"))
-     c("Rocky Mountain", "Grassland") else "Rocky Mountain"
+#EXCL <- if (i %in% c("lichens", "mosses"))
+#     c("Rocky Mountain", "Grassland") else "Rocky Mountain"
+EXCL <- "Rocky Mountain"
 kgrid2 <- kgrid[!(kgrid$NRNAME %in% EXCL),]
 pol <- poly(kgrid2$Succ, kgrid2$Alien, degree=3, raw=TRUE)
 m <- lm(iSI ~ pol-1, kgrid2)
-summary(m)
+#summary(m)
+si_cf[[i]] <- coef(m)
 
 BY <- 0.005
 Succ <- seq(0, 1, by=BY)
@@ -955,6 +957,35 @@ image(l, main="Representation",
     xlab="Successional %", ylab="Alienating %", axes=FALSE,
     col=grey(100:0/100))
 axis(1);axis(2)
+
+## 1D plots
+do.call(cbind, si_cf)
+
+BY <- 0.005
+v <- seq(0, 1, by=BY)
+
+Succ <- v
+Alien <- 0
+nd <- expand.grid(Succ=Succ, Alien=Alien)
+nd$sum <- nd$Succ+nd$Alien
+npol <- poly(nd$Succ, nd$Alien, degree=3, raw=TRUE)
+lpr1 <- sapply(si_cf, function(z) drop(exp(npol %*% z)))
+
+Succ <- 0
+Alien <- v
+nd <- expand.grid(Succ=Succ, Alien=Alien)
+nd$sum <- nd$Succ+nd$Alien
+npol <- poly(nd$Succ, nd$Alien, degree=3, raw=TRUE)
+lpr2 <- sapply(si_cf, function(z) drop(exp(npol %*% z)))
+
+par(mfrow=c(1,2), las=1, yaxs="i", xaxs="i")
+matplot(v*100, lpr1*100, lty=1, type="l", ylim=c(0,100), lwd=2,
+    ylab="Intactness", xlab="Successional Footprint % (Alienating=0)")
+abline(h=c(20, 40, 60, 80), v=c(20, 40, 60, 80), col="lightgrey")
+legend("bottomleft", lty=1, lwd=2, col=1:5, legend=colnames(lpr1), bty="n")
+matplot(v*100, lpr2*100, lty=1, type="l", ylim=c(0,100), lwd=2,
+    ylab="Intactness", xlab="Alienating Footprint % (Successional=0)")
+abline(h=c(20, 40, 60, 80), v=c(20, 40, 60, 80), col="lightgrey")
 
 ## geoxv results
 
@@ -1002,25 +1033,32 @@ sxy <- spTransform(sxy, crs)
 COL <- c('#e6f5c9','#f4cae4','#b3e2cd','#fff2ae','#fdcdac','#cbd5e8')
 library(RColorBrewer)
 geocol <- brewer.pal(8, "Dark2")
+
 geolabelN <- c("1 North-East","2 South-West","3 South","4 South-East","5 North-West",
     "6 Central-East","7 Central-West","8 Centre")
 geolabelS <- c("1 North","2 East","3 Centre","4 West", "5 South-East","6 South-West",
     "7 North-West")
 
-cn <- groupMeans(coordinates(sxy)[!is.na(sxy@data$Ngeo),], 1, sxy@data$Ngeo[!is.na(sxy@data$Ngeo)])
-cs <- groupMeans(coordinates(sxy)[!is.na(sxy@data$Sgeo),], 1, sxy@data$Sgeo[!is.na(sxy@data$Sgeo)])
+cn <- groupMeans(coordinates(sxy)[!is.na(sxy@data$Ngeo),], 1,
+    as.character(sxy@data$Ngeo)[!is.na(sxy@data$Ngeo)])
+cn <- cn[order(rownames(cn)),]
+rownames(cn) <- geolabelN
+cs <- groupMeans(coordinates(sxy)[!is.na(sxy@data$Sgeo),], 1,
+    as.character(sxy@data$Sgeo)[!is.na(sxy@data$Sgeo)])
+cs <- cs[order(rownames(cs)),]
+rownames(cs) <- geolabelS
 
 pdf("e:/peter/sppweb2017/geoxv-maps.pdf", onefile=TRUE, height=8, width=10)
 op <- par(mar=rep(1,4), mfrow=c(1,2))
 plot(ABnr, col=paste0(COL, "40"), border=paste0(COL, "80"), main="Geographic clusters, North")
 points(sxy, col=paste0(geocol, "80")[sxy@data$Ngeo], pch=19)
 plot(ABpr, border="grey", add=TRUE)
-text(cn[,1], cn[,2], geolabelN)
+text(cn[,1], cn[,2], rownames(cn))
 
 plot(ABnr, col=paste0(COL, "40"), border=paste0(COL, "80"), main="Geographic clusters, South")
 points(sxy, col=paste0(geocol, "80")[sxy@data$Sgeo], pch=19)
 plot(ABpr, border="grey", add=TRUE)
-text(cs[,1], cs[,2], geolabelS)
+text(cs[,1], cs[,2], rownames(cs))
 par(op)
 dev.off()
 
