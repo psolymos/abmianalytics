@@ -1141,3 +1141,53 @@ title('Vascular Plants, South', cex.main=1)
 legend("bottomright", legend=c("Modelling data", "Validation data"), col="black",pt.bg=c("#1B9E7760","#1B9E77BB")  ,pch= 22 , cex=1,pt.cex=1.2 ,bty="n")
 
 par(opn)
+
+
+## saving Excel files
+
+library(xlsx)
+load("~/Dropbox/abmi/10yr/R/AllTables.Rdata")
+TAXA <- c("birds", "mites", "mosses", "lichens", "vplants")
+FTAXA <- c(birds="Birds",
+    mites="Soil Mites",
+    mosses="Bryophytes",
+    lichens="Lichens",
+    vplants="Vascular Plants")
+PROT <- c(birds="Terrestrial (point counts)",
+    mites="Terrestrial (soil cores)",
+    mosses="Terrestrial (1 ha plots)",
+    lichens="Terrestrial (1 ha plots)",
+    vplants="Terrestrial (1 ha plots)")
+TABS <- names(AllIn[[1]])
+SHEETS <- c(lt="TaxonomicInfo",
+    usen="UseavailNorth",
+    uses="UseavailSouth",
+    veg="VegetationNorth",
+    linn="LinearNorth",
+    soilnt="SoilNontreedSouth",
+    soiltr="SoilTreedSouth",
+    lins="LinearSouth",
+    sectn="SectorNorth",
+    sects="SectorSouth")
+SHEETS <- SHEETS[TABS]
+MET <- read.csv("e:/peter/sppweb2017/Metadata-template.csv")
+VER <- "5.0"
+
+for (i in TAXA) {
+    fn <- paste0("ABMI-species-v", VER, "_", i, "_", Sys.Date(), ".xlsx")
+    fn <- file.path("e:/peter/sppweb2017/tables", fn)
+    Descr <- data.frame(Description=c(Source="Alberta Biodiversity Monitoring Institute (2016). ABMI Species Website, version 5.0 (2017-07-12). URL: http://species.abmi.ca",
+        Taxon=unname(FTAXA[i]),
+        Protocol=unname(PROT[i]),
+        Contact="solymos@ualberta.ca",
+        License="CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/"))
+    cat(i)
+    write.xlsx(Descr, fn, sheetName="Description", row.names=TRUE)
+    for (j in TABS) {
+        cat("\t", j);flush.console()
+        write.xlsx(AllIn[[i]][[j]], fn, sheetName=unname(SHEETS[j]), append=TRUE, row.names=FALSE)
+    }
+    write.xlsx(MET, fn, sheetName="Metadata", append=TRUE, row.names=FALSE)
+    cat("\n")
+}
+
