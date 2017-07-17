@@ -979,13 +979,16 @@ npol <- poly(nd$Succ, nd$Alien, degree=3, raw=TRUE)
 lpr2 <- sapply(si_cf, function(z) drop(exp(npol %*% z)))
 
 par(mfrow=c(1,2), las=1, yaxs="i", xaxs="i")
-matplot(v*100, lpr1*100, lty=1, type="l", ylim=c(0,100), lwd=2,
+col1 <- RColorBrewer::brewer.pal(5, "Dark2")
+matplot(v*100, lpr1*100, lty=1, type="l", ylim=c(0,100), lwd=2, col=col1,
     ylab="Intactness", xlab="Successional Footprint % (Alienating=0)")
 abline(h=c(20, 40, 60, 80), v=c(20, 40, 60, 80), col="lightgrey")
-legend("bottomleft", lty=1, lwd=2, col=1:5, legend=colnames(lpr1), bty="n")
-matplot(v*100, lpr2*100, lty=1, type="l", ylim=c(0,100), lwd=2,
+matlines(v*100, lpr1*100, lty=1, lwd=3, col=col1)
+legend("bottomleft", lty=1, lwd=3, col=col1, legend=colnames(lpr1), bty="n")
+matplot(v*100, lpr2*100, lty=1, type="l", ylim=c(0,100), lwd=2, col=col1,
     ylab="Intactness", xlab="Alienating Footprint % (Successional=0)")
 abline(h=c(20, 40, 60, 80), v=c(20, 40, 60, 80), col="lightgrey")
+matlines(v*100, lpr2*100, lty=1, lwd=3, col=col1)
 
 ## geoxv results
 
