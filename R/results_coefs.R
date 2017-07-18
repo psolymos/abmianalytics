@@ -1027,7 +1027,7 @@ roc12 <- simple_roc(y10sp[ss], pr12[ss])
 auc11 <- simple_auc(roc11)
 auc12 <- simple_auc(roc12)
 spp1res <- c(R211=R211, R212=R212,
-    AUC11=auc11, AUC12=auc12)
+    AUC11=auc11, AUC12=auc12, prevalence=mean(y10sp))
 all_acc_N[[spp]] <- spp1res
 }
 all_acc_N <- do.call(rbind, all_acc_N)
@@ -1082,7 +1082,7 @@ roc12 <- simple_roc(y10sp[ss1], pr12[ss1])
 auc11 <- simple_auc(roc11)
 auc12 <- simple_auc(roc12)
 spp1res <- c(R211=R211, R212=R212,
-    AUC11=auc11, AUC12=auc12)
+    AUC11=auc11, AUC12=auc12, prevalence=mean(y10sp))
 all_acc_S[[spp]] <- spp1res
 
 }
@@ -1523,10 +1523,10 @@ gxnout <- data.frame(What=factor("Out", c("In", "Out")), gxn[,c(1,2,4,6)])
 colnames(gxnin) <- colnames(gxnout) <- c("What", "Species", "Cluster", "n", "AUC")
 gxn <- rbind(gxnin, gxnout)
 gxn$Cross <- interaction(gxn$What, gxn$Cluster)
-gxn$AUC[gxn$n < 10] <- -1
+gxn$AUC[gxn$n < 3] <- -1
 mln <- as.matrix(Xtab(AUC ~ Species + Cross, gxn))
 mln[mln < 0] <- NA
-gxn$AUC[gxn$n < 10] <- NA
+gxn$AUC[gxn$n < 3] <- NA
 
 gxs <- do.call(rbind, lapply(1:length(geoxv_S), function(i) {
     data.frame(Species=names(geoxv_S)[i], Cluster=rownames(geoxv_S[[i]]), geoxv_S[[i]])
@@ -1536,10 +1536,10 @@ gxsout <- data.frame(What=factor("Out", c("In", "Out")), gxs[,c(1,2,4,6)])
 colnames(gxsin) <- colnames(gxsout) <- c("What", "Species", "Cluster", "n", "AUC")
 gxs <- rbind(gxsin, gxsout)
 gxs$Cross <- interaction(gxs$What, gxs$Cluster)
-gxs$AUC[gxs$n < 10] <- -1
+gxs$AUC[gxs$n < 3] <- -1
 mls <- as.matrix(Xtab(AUC ~ Species + Cross, gxs))
 mls[mls < 0] <- NA
-gxs$AUC[gxs$n < 10] <- NA
+gxs$AUC[gxs$n < 3] <- NA
 
 par(mfrow=c(2,1),las=1)
 boxplot(AUC ~ Cross, gxn, range=0, ylab="AUC", ylim=c(0,1),

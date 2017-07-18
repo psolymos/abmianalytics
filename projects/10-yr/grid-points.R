@@ -199,6 +199,13 @@ MA <- t(sapply(xa_site, m))
 met2 <- data.frame(met[rownames(AS),], AS, age=AA)
 met2 <- met2[!is.na(met2$k),]
 
+fullxt <- do.call(rbind, lapply(names(xt_site), function(i) {
+    out <- xt_site[[i]]
+    rownames(out) <- paste0("Site_", i, "_Pp_", rownames(out))
+    colnames(out) <- paste0("Bf_", rownames(out))
+    as.matrix(out)
+}))
+
 ## compare margins
 
 names(xt_nr) <- paste0("NR=", names(xt_nr))
@@ -298,13 +305,16 @@ ABpr <- gUnaryUnion(AB, rep(1, nrow(AB))) # province
 setwd("x:/toPeter/grid-results")
 
 colnames(xy@data)
-
+write.csv(xy@data, row.names=FALSE, file="site-level-accuracy.csv")
+write.csv(fullxt, row.names=TRUE, file="site-level-crosstabs.csv")
 
 #pol3 <- krige(k ~ 1, locations=xy, newdata=g, degree=3)
 
 
-df <- data.frame(k=xy@data$k, kk=xy@data$age.k, coordinates(xy))
+df <- data.frame(k=xy@data$a, kk=xy@data$age.a, coordinates(xy))
+#df <- data.frame(k=xy@data$k, kk=xy@data$age.k, coordinates(xy))
 colnames(df) <- c("k", "kk", "x", "y")
+
 gam_fit <- mgcv::gam(k ~ s(x, y, k=200), df, family=gaussian)
 dfpred2 <- data.frame(coordinates(g))
 colnames(dfpred2) <- c("x", "y")
@@ -350,7 +360,8 @@ legend("bottomleft", col=1, pch=pch, legend=levels(xy@data$BfSource), bty="n",
 par(op)
 dev.off()
 
-png("gam-smooth-lc3-kappa.png",width=1000, height=1500)
+#png("gam-smooth-lc3-kappa.png",width=1000, height=1500)
+png("gam-smooth-lc3-accuracy.png",width=1000, height=1500)
 op <- par(mar=c(0,0,0,0))
 plot(dfpred2, col=col)
 plot(ABnr, add=TRUE, col=NA, border="grey", lwd=0.25)
@@ -360,7 +371,8 @@ legend("bottomleft", col=1, pch=pch, legend=levels(xy@data$BfSource), bty="n",
 par(op)
 dev.off()
 
-png("gam-smooth-lc3age-kappa.png",width=1000, height=1500)
+#png("gam-smooth-lc3age-kappa.png",width=1000, height=1500)
+png("gam-smooth-lc3age-accuracy.png",width=1000, height=1500)
 op <- par(mar=c(0,0,0,0))
 plot(dfpred3, col=col)
 plot(ABnr, add=TRUE, col=NA, border="grey", lwd=0.25)
@@ -398,6 +410,59 @@ zz <- data.frame(
     ))
 write.csv(zz, file="x:/toPeter/grid-results/Accuracy-and-kappa.csv")
 
+png("gam-smooth-lc3age-accuracy.png",width=1000, height=1500)
+op <- par(mar=c(0,0,0,0))
+plot(dfpred3, col=col)
+plot(ABnr, add=TRUE, col=NA, border="grey", lwd=0.25)
+plot(xy, pch=pch[as.integer(xy@data$BfSource)], cex=1.5, col="white", add=TRUE)
+legend("bottomleft", col=1, pch=pch, legend=levels(xy@data$BfSource), bty="n",
+    title="Backfilled Source", cex=2)
+par(op)
+dev.off()
+
+
+COL <- c('#e6f5c9','#f4cae4','#b3e2cd','#fff2ae','#fdcdac','#cbd5e8')
+library(RColorBrewer)
+geocol <- brewer.pal(7, "Dark2")
+xyz <- met[!(met$SITE_ID %in% met2$SITE_ID),]
+coordinates(xyz) <- ~ PUBLIC_LONGITUDE + PUBLIC_LATTITUDE
+proj4string(xyz) <-
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+xyz <- spTransform(xyz, proj4string(r)) # make CRS identical
+
+#png("compared-sites-map.png",width=1000, height=1500)
+pdf("compared-sites-map.pdf", height=8, width=5)
+op <- par(mar=c(0,0,0,0))
+
+plot(ABnr, col=paste0(COL, "60"), border=paste0(COL, "80"))
+plot(ABpr, border="grey", add=TRUE)
+points(xyz, col=geocol[as.integer(xyz@data$BfSource)], pch=19, cex=0.25)
+points(xy, col=geocol[as.integer(xy@data$BfSource)], pch=19, cex=0.75)
+legend("bottomleft", col=geocol, pch=19, legend=levels(xy@data$BfSource), bty="n",
+    title="Backfilled Source", cex=1)
+
+par(op)
+dev.off()
 
 
 
+geolabelN <- c("1 North-East","2 South-West","3 South","4 South-East","5 North-West",
+    "6 Central-East","7 Central-West","8 Centre")
+geolabelS <- c("1 North","2 East","3 Centre","4 West", "5 South-East","6 South-West",
+    "7 North-West")
+
+cn <- groupMeans(coordinates(sxy)[!is.na(sxy@data$Ngeo),], 1,
+    as.character(sxy@data$Ngeo)[!is.na(sxy@data$Ngeo)])
+cn <- cn[order(rownames(cn)),]
+rownames(cn) <- geolabelN
+cs <- groupMeans(coordinates(sxy)[!is.na(sxy@data$Sgeo),], 1,
+    as.character(sxy@data$Sgeo)[!is.na(sxy@data$Sgeo)])
+cs <- cs[order(rownames(cs)),]
+rownames(cs) <- geolabelS
+
+pdf("e:/peter/sppweb2017/geoxv-maps.pdf", onefile=TRUE, height=8, width=10)
+op <- par(mar=rep(1,4), mfrow=c(1,2))
+plot(ABnr, col=paste0(COL, "40"), border=paste0(COL, "80"), main="Geographic clusters, North")
+points(sxy, col=paste0(geocol, "80")[sxy@data$Ngeo], pch=19)
+plot(ABpr, border="grey", add=TRUE)
+text(cn[,1], cn[,2], rownames(cn))
