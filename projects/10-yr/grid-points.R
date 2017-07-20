@@ -216,27 +216,38 @@ xt2 <- lapply(c(Alberta=xt_prov, xt_nr, xt_src), as.matrix)
 xa2 <- lapply(c(Alberta=xa_prov, xa_nr, xa_src), as.matrix)
 
 col <- "grey"
-cols <- colorRampPalette(c("blue","red"))(5)
+cols <- colorRampPalette(c("blue","red"))(10)
+CN <- c("Conif", "Decid", "Mixedwood",
+    "TreedBog", "TreedFen", "TreedSwamp",
+    "ShrubbyBog", "ShrubbyFen", "ShrubbySwamp",
+    "GraminoidFen", "Marsh",
+    "Shrub", "GrassHerb",
+    "SnowIce", "Bare", "Water")
 pdf("x:/toPeter/grid-results/proportions.pdf",
     width=5.5, height=5.5, onefile=TRUE)
-for (i in 1:ncol(xt2[[1]])) {
-    j <- colnames(xt2[[1]])[i]
-    pv <- sapply(xt2, function(z) 100*sum(z[i,])/sum(z))
-    bf <- sapply(xt2, function(z) 100*sum(z[,i])/sum(z))
+for (j in CN) {
+    #j <- colnames(xt2[[1]])[i]
+    pv <- sapply(xt2, function(z) 100*sum(z[j,])/sum(z))
+    bf <- sapply(xt2, function(z) 100*sum(z[,j])/sum(z))
+    tp <- sapply(xt2, function(z) z[j,j]/sum(z[j,]))
     lim <- c(0, max(0.1, pv, bf))
-    d <- ceiling(abs(pv - bf))
-    d[d < 1] <- 1
-    d[d >= 5] <- 5
+    d <- pmax(1, ceiling(round(10*tp)))
+    r <- pmax(1, ceiling(round(10*(1-pmin(pv, bf) / pmax(pv, bf)))))
     plot(pv, bf, main=j,
         xlim=lim, ylim=lim,
-        xlab="Photoplot (%)", ylab="Backfilled V6 (%)", col=cols[d], pch=19)
-    text(pv, bf, ifelse(d > 1, names(pv), ""),
-        col=cols[d], pos=3, cex=0.4, xpd=NA)
-        abline(0,1,col=col,lty=1)
-        abline(-1,1,col=col,lty=2)
-        abline(1,1,col=col,lty=2)
-        abline(-5,1,col=col,lty=3)
-        abline(5,1,col=col,lty=3)
+        xlab="Photoplot (%)", ylab="'Backfilled' V6 (%)",
+        col=cols[d], pch=19, cex=1)
+    abline(0,1,col=col,lty=1)
+    abline(0,1/0.95,col=col,lty=2)
+    abline(0,0.95,col=col,lty=2)
+    abline(0,1/0.9,col=col,lty=3)
+    abline(0,0.9,col=col,lty=3)
+    text(pv, bf, ifelse(r > 0, names(pv), ""),
+        col=1, pos=3, cex=0.4, xpd=NA)
+    legend("topleft", bty="n", col=col, lty=1:3,
+        legend=c("1:1", "1:0.95", "1:0.9"), title="Guides", cex=0.6)
+    legend("bottomright", bty="n", pch=19, col=rev(cols), cex=0.6,
+        legend=rev(paste0(0:9/10, "-", 1:10/10)), title="True Positive Rate")
 }
 dev.off()
 
@@ -252,14 +263,15 @@ for (i in 1:ncol(xa2[[1]])) {
     d[d >= 5] <- 5
     plot(pv, bf, main=j,
         xlim=lim, ylim=lim,
-        xlab="Photoplot (%)", ylab="Backfilled V6 (%)", col=cols[d], pch=19)
+        xlab="Photoplot (%)", ylab="'Backfilled' V6 (%)",
+        col=cols[d], pch=19)
     text(pv, bf, ifelse(d > 1, names(pv), ""),
         col=cols[d], pos=3, cex=0.4, xpd=NA)
-        abline(0,1,col=col,lty=1)
-        abline(-1,1,col=col,lty=2)
-        abline(1,1,col=col,lty=2)
-        abline(-5,1,col=col,lty=3)
-        abline(5,1,col=col,lty=3)
+    abline(0,1,col=col,lty=1)
+    abline(-1,1,col=col,lty=2)
+    abline(1,1,col=col,lty=2)
+    abline(-5,1,col=col,lty=3)
+    abline(5,1,col=col,lty=3)
 }
 dev.off()
 

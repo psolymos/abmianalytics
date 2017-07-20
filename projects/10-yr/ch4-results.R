@@ -179,6 +179,38 @@ SIavg <- rowMeans(simat, na.rm=TRUE)
 AllSI[[TAX]] <- sppSI
 MatSI[,TAX] <- SIavg
 
+if (FALSE) {
+ByNSR <- list()
+for (i in nam) {
+    cat(TAX, i, "\n");flush.console()
+    e <- new.env()
+    load(file.path(ROOT, TAX, "km2", paste0(i, ".", ext)), envir=e)
+    km <- as.data.frame(e$km2)
+    kmnr <- groupSums(as.matrix(km), 1, kgrid$NSRNAME, na.rm=TRUE)
+    ByNSR[[i]] <- 100*kmnr # (D per ha * 100 = inds/km^2)
+}
+ToSave <- do.call(rbind, lapply(1:length(ByNSR), function(z) {
+    data.frame(Species=names(ByNSR)[z], NSR=rownames(ByNSR[[z]]), N_cr=ByNSR[[z]][,"Curr"],
+    N_rf=ByNSR[[z]][,"Ref"])
+}))
+write.csv(ToSave,row.names=FALSE,file="Alberta-PopSizes-by-NSR.csv")
+
+en <- new.env()
+load(file.path("e:/peter/AB_data_v2016/out/birds", "data", "data-north.Rdata"), envir=en)
+
+e <- new.env()
+load(file.path("e:/peter/AB_data_v2016/out/birds", "data", "data-wrsi.Rdata"), envir=e)
+TAX <- droplevels(e$TAX)
+
+zz <- read.csv("Alberta-PopSizes-by-NSR.csv")
+zz$HasOffset <- zz$Species %in% colnames(en$OFF)
+zz <- data.frame(zz,
+    TAX[match(zz$Species, rownames(TAX)),c("English_Name", "Scientific_Name",
+    "Family_Sci", "Order")])
+write.csv(zz,row.names=FALSE,file="Alberta-PopSizes-by-NSR_wStuff.csv")
+
+}
+
 #TAX <- "mites"
 for (TAX in TAXA[-1]) {
     fl <- list.files(file.path(ROOT, TAX, "km2"))
@@ -881,9 +913,16 @@ get_stuff0si <- function(TAX, REG) {
 get_stuffsi <- function(REG)
     rugged_mat(lapply(structure(names(AllSI), names=names(AllSI)),
         get_stuff0si, REG=REG))
+get_stuffsi2 <- function(TAX)
+    sapply(structure(rownames(AllSI$birds[[1]]), names=rownames(AllSI$birds[[1]])),
+        function(z) get_stuff0si(REG=z, TAX=TAX))
 
 matSI <- lapply(structure(rownames(AllSI$birds[[1]]), names=rownames(AllSI$birds[[1]])),
     get_stuffsi)
+
+SItoSave <- lapply(structure(names(AllSI), names=names(AllSI)), get_stuffsi2)
+for (i in names(SItoSave))
+    write.csv(SItoSave[[i]], file=paste0("e:/peter/sppweb2017/SI-", i, ".csv"))
 
 par(mfrow=c(3,2), las=1, yaxs="i")
 ylim <- c(0, 100)
