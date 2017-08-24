@@ -1115,6 +1115,30 @@ for (spp in fls) {
 
 save(all_acc_S, all_acc_N, occc_res_N, boot_res_N, occc_res_S, boot_res_S, slt,
     file="e:/peter/sppweb2017/birds-r2-auc-occc-boot.Rdata")
+
+## boot climate
+
+climcn <- c("xPET", "xMAT", "xAHM", "xFFP", "xMAP", "xMWMT", "xMCMT",
+    "xlat", "xlong", "xlat2", "xlong2", "xFFP:xMAP",
+    "xMAP:xPET", "xAHM:xMAT", "xlat:xlong")
+boot_clim_N <- list()
+for (spp in fln) {
+    cat(spp, "N\n");flush.console()
+    resn <- loadSPP(file.path(ROOT, "results", "north",
+        paste0("birds_abmi-north_", spp, ".Rdata")))
+    pr <- getEst(resn, stage=stage_hab_n+1, na.out=FALSE, Xnn)
+    boot_clim_N[[spp]] <- pr[,climcn]
+}
+boot_clim_S <- list()
+for (spp in fls) {
+    cat(spp, "S\n");flush.console()
+    ress <- loadSPP(file.path(ROOT, "results", "south",
+        paste0("birds_abmi-south_", spp, ".Rdata")))
+    pr <- getEst(ress, stage=stage_hab_s+1, na.out=FALSE, Xns)
+    boot_clim_S[[spp]] <- pr[,climcn]
+}
+save(boot_clim_N, boot_clim_S, file="e:/peter/sppweb2017/birds-boot-clim.Rdata")
+
 if (FALSE) {
 
 ss <- as.character(slt[slt$veghf.north,"AOU"])
