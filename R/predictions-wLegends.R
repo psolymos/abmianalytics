@@ -90,7 +90,9 @@ Col2fun <- colorRampPalette(Col2, space = "rgb") # Function to interpolate among
 C2 <- Col2fun(200)
 CW <- rgb(0.4,0.3,0.8) # water
 CE <- "lightcyan4" # exclude
-CSI <- colorRampPalette(c("red","yellow","green"), space = "rgb")(100)
+#CSI <- colorRampPalette(c("red","yellow","green"), space = "rgb")(100)
+CSI <- colorRampPalette(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B",
+    "#FFFFBF","#D9EF8B", "#A6D96A", "#66BD63", "#1A9850", "#006837"))(100)
 
 q <- 0.99
 H <- 1000
