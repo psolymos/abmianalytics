@@ -1,8 +1,25 @@
 library(mefa4)
 ROOT <- "v:/contents/2017/species"
-TAXA <- c("mites", "mosses", "lichens", "vplants")
+TAXA <- c("vplants", "mosses", "lichens", "mites")
 AllIn <- list()
 vegcols <- read.csv("c:/Users/Peter/repos/abmianalytics/projects/10-yr/veg-cols.csv")
+
+TAX <- "mammals"
+
+lt0 <- read.csv(file.path(ROOT, TAX, "lookup.csv"))
+linn0 <- read.csv(file.path(ROOT, TAX, "lin10-north.csv"))
+lins0 <- read.csv(file.path(ROOT, TAX, "lin10-south.csv"))
+sectn0 <- read.csv(file.path(ROOT, TAX, "sector-north.csv"))
+sects0 <- read.csv(file.path(ROOT, TAX, "sector-south.csv"))
+soilnt0 <- read.csv(file.path(ROOT, TAX, "soilhf-nontreed-south.csv"))
+soiltr0 <- read.csv(file.path(ROOT, TAX, "soilhf-treed-south.csv"))
+usen0 <- read.csv(file.path(ROOT, TAX, "useavail-north.csv"))
+uses0 <- read.csv(file.path(ROOT, TAX, "useavail-south.csv"))
+veg0 <- read.csv(file.path(ROOT, TAX, "veghf-north.csv"))
+sects0$PopEffect.Forestry <- sects0$UnitEffect.Forestry <- NULL
+AllIn[["mammals"]] <- list(lt=lt0, usen=usen0, uses=uses0,
+    veg=veg0, linn=linn0, soilnt=soilnt0, soiltr=soiltr0,
+    lins=lins0, sectn=sectn0, sects=sects0)
 
 TAX <- "birds"
 
@@ -146,11 +163,37 @@ load(file.path("e:/peter/AB_data_v2016", "out", "kgrid", "kgrid_table.Rdata"))
 
 load("~/Dropbox/abmi/10yr/R/AllTables.Rdata")
 ROOT <- "v:/contents/2017/species"
-TAXA <- c("birds", "mites", "mosses", "lichens", "vplants")
+TAXA <- c("mammals", "birds", "vplants", "mosses", "lichens", "mites")
 
 AllSI <- list()
 MatSI <- matrix(NA, nrow(kgrid), length(TAXA))
 dimnames(MatSI) <- list(rownames(kgrid), TAXA)
+
+TAX <- "mammals"
+fl <- list.files(file.path(ROOT, TAX, "km2"))
+nam <- sapply(strsplit(fl, "\\."), "[[", 1)
+ext <- strsplit(fl, "\\.")[[1]][2]
+lt <- AllIn[[TAX]]$lt
+SPP <-as.character(lt$SpeciesID[lt$map.pred])
+compare_sets(nam, SPP)
+sppSI <- list()
+simat <- matrix(NA, nrow(kgrid), length(nam))
+dimnames(simat) <- list(rownames(kgrid), nam)
+for (i in nam) {
+    cat(TAX, i, "\n");flush.console()
+    km <- read.csv(file.path(ROOT, TAX, "km2", paste0(i, ".", ext)))
+    km <- km[match(rownames(kgrid), km$LinkID),c("Ref", "Curr")]
+    SI <- 100 * pmin(km$Curr, km$Ref) / pmax(km$Curr, km$Ref)
+    kmnr <- groupSums(as.matrix(km), 1, kgrid$NRNAME, na.rm=TRUE)
+    kmnr <- rbind(kmnr, Alberta=colSums(kmnr))
+    kmnr <- cbind(kmnr, SI=100*pmin(kmnr[,1], kmnr[,2])/pmax(kmnr[,1], kmnr[,2]))
+    sppSI[[i]] <- kmnr
+    simat[,i] <- SI
+}
+SIavg <- rowMeans(simat, na.rm=TRUE)
+#SIavg[is.na(SIavg)] <- 100
+AllSI[[TAX]] <- sppSI
+MatSI[,TAX] <- SIavg
 
 TAX <- "birds"
 fl <- list.files(file.path(ROOT, TAX, "km2"))
@@ -212,7 +255,7 @@ write.csv(zz,row.names=FALSE,file="Alberta-PopSizes-by-NSR_wStuff.csv")
 }
 
 #TAX <- "mites"
-for (TAX in TAXA[-1]) {
+for (TAX in TAXA[-(1:2)]) {
     fl <- list.files(file.path(ROOT, TAX, "km2"))
     nam <- substr(fl, 1, nchar(fl)-6)
     ext <- substr(fl[1], nchar(fl)-4, nchar(fl))
@@ -395,7 +438,23 @@ gofs$vplants <- as.matrix(cbind(t1[,c("PseudoR2_VegHF", "PseudoR2_VegHF.ClimSpac
     t2[,c("occc", "oprec", "oaccu", "Within.Agreement")]))
 
 save(gofn, gofs, coefbsn, coefbss, file="~/Dropbox/abmi/10yr/R/AllBoot.Rdata")
+
 load("~/Dropbox/abmi/10yr/R/AllBoot.Rdata")
+if (FALSE) {
+summary(gofn$birds)
+summary(gofs$birds)
+wan <- read.csv("~/Dropbox/abmi/10yr/R/Repeatability measures_Birds_North.csv")
+was <- read.csv("~/Dropbox/abmi/10yr/R/Repeatability measures_Birds_South.csv")
+rownames(wan) <- wan$X
+rownames(was) <- was$X
+gofn$birds[intersect(wan$X,rownames(gofn$birds)),"Wdist"] <- wan[
+    intersect(wan$X,rownames(gofn$birds)), "Within.Agreement"]
+gofs$birds[intersect(was$X,rownames(gofs$birds)),"Wdist"] <- was[
+    intersect(was$X,rownames(gofs$birds)), "Within.Agreement"]
+summary(gofn$birds)
+summary(gofs$birds)
+save(gofn, gofs, coefbsn, coefbss, file="~/Dropbox/abmi/10yr/R/AllBoot.Rdata")
+}
 
 gof_plot <- function(x, type=c("r2", "auc", "oc", "d"), alpha=1, ...) {
     f <- function(x) {
@@ -457,6 +516,7 @@ dev.off()
 ## making sense
 
 library(mefa4)
+library(intrval)
 load("~/Dropbox/abmi/10yr/R/AllTables.Rdata")
 
 get_stuff0 <- function(TAX, TABLE, COL, north=TRUE) {
@@ -583,11 +643,13 @@ ylim, ylab="", xlab="", main="", nmin=5, interval=c(-Inf, Inf), ...) {
     axis(1, 1:ncol(x), colnames(x), lwd=0)
     axis(2)
     title(ylab=ylab, xlab=xlab, main=main)
+    col <- rep(col, ncol(x))[1:ncol(x)]
+    border <- rep(border, ncol(x))[1:ncol(x)]
     for (i in 1:ncol(x)) {
         if (!is.null(xx[[i]])) {
             polygon(0.45*c(-xx[[i]]$w, rev(xx[[i]]$w))+i,
-                c(xx[[i]]$h, rev(xx[[i]]$h)), col=col, border=border)
-            #lines(c(i,i), range(xx[[i]]$h), col=col, lwd=2)
+                c(xx[[i]]$h, rev(xx[[i]]$h)), col=col[i], border=border[i])
+            #lines(c(i,i), range(xx[[i]]$h), col=col[i], lwd=2)
         }
         lines(c(i-0.2, i+0.2), rep(median(x[,i], na.rm=TRUE), 2), lwd=3)
     }
@@ -595,6 +657,9 @@ ylim, ylab="", xlab="", main="", nmin=5, interval=c(-Inf, Inf), ...) {
     invisible(NULL)
 }
 fu <- function(x) sign(x) * plogis(log(abs(x/100)))
+
+colTd <- RColorBrewer::brewer.pal(6, "Dark2")
+colTl <- paste0(colTd, "80")
 
 ## --- linear
 
@@ -612,17 +677,19 @@ hardn[hardn > 10] <- NA
 hards[hards > 10] <- NA
 
 ## might need to calculate mean density for birds instead of current AvgCoefficient
+pdf("~/Dropbox/abmi/10yr/ch4/figs/lin.pdf", height=10, width=10)
 par(mfrow=c(2,2), las=1, yaxs="i")
 ylim <- c(0, 3)
 p <- c(0.025, 0.975)
-vp(softn, main="Soft Linear, North", ylim=ylim, p=p, ylab="Std. Effect")
+vp(softn, main="Soft Linear, North", ylim=ylim, p=p, ylab="Std. Effect", col=colTl, border=colTd)
 abline(h=1, lty=2)
-vp(hardn, main="Hard Linear, North", ylim=ylim, p=p, ylab="Std. Effect")
+vp(hardn, main="Hard Linear, North", ylim=ylim, p=p, ylab="Std. Effect", col=colTl, border=colTd)
 abline(h=1, lty=2)
-vp(softs, main="Soft Linear, South", ylim=ylim, p=p, ylab="Std. Effect")
+vp(softs, main="Soft Linear, South", ylim=ylim, p=p, ylab="Std. Effect", col=colTl, border=colTd)
 abline(h=1, lty=2)
-vp(hards, main="Hard Linear, South", ylim=ylim, p=p, ylab="Std. Effect")
+vp(hards, main="Hard Linear, South", ylim=ylim, p=p, ylab="Std. Effect", col=colTl, border=colTd)
 abline(h=1, lty=2)
+dev.off()
 
 ## --- sector
 
@@ -650,79 +717,88 @@ useng <- get_stuff("sects", "UnitEffect.Energy", FALSE)
 usurb <- get_stuff("sects", "UnitEffect.RuralUrban", FALSE)
 ustra <- get_stuff("sects", "UnitEffect.Transportation", FALSE)
 
+pdf("~/Dropbox/abmi/10yr/ch4/figs/sect1.pdf", height=15, width=10)
 par(mfrow=c(3,2), las=1, yaxs="i")
 ylim <- c(-1, 1)
 p <- c(0, 1)
 INT <- c(-1,1)
 vp(fu(uneng), main="Energy, North", ylim=ylim, p=p, ylab="Unit Effect",
-    interval=INT)
+    interval=INT, col=colTl, border=colTd)
 abline(h=0, lty=2)
 abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
-vp(fu(unagr), main="Algiculture, North", ylim=ylim, p=p, ylab="Unit Effect",
-    interval=INT)
+vp(fu(unagr), main="Agriculture, North", ylim=ylim, p=p, ylab="Unit Effect",
+    interval=INT, col=colTl, border=colTd)
 abline(h=0, lty=2)
 abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
 vp(fu(unurb), main="Rural/Urban, North", ylim=ylim, p=p, ylab="Unit Effect",
-    interval=INT)
+    interval=INT, col=colTl, border=colTd)
 abline(h=0, lty=2)
 abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
 vp(fu(untra), main="Transportation, North", ylim=ylim, p=p, ylab="Unit Effect",
-    interval=INT)
+    interval=INT, col=colTl, border=colTd)
 abline(h=0, lty=2)
 abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
 vp(fu(unfor), main="Forestry, North", ylim=ylim, p=p, ylab="Unit Effect",
-    interval=INT)
+    interval=INT, col=colTl, border=colTd)
 abline(h=0, lty=2)
 abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
 plot.new()
+dev.off()
 
+pdf("~/Dropbox/abmi/10yr/ch4/figs/sect2.pdf", height=10, width=10)
 par(mfrow=c(2,2), las=1, yaxs="i")
 ylim <- c(-1, 1)
 p <- c(0, 1)
-vp(fu(useng), main="Energy, South", ylim=ylim, p=p, ylab="Unit Effect")
+vp(fu(useng), main="Energy, South", ylim=ylim, p=p, ylab="Unit Effect", col=colTl, border=colTd)
 abline(h=0, lty=2)
 abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
-vp(fu(usagr), main="Algiculture, South", ylim=ylim, p=p, ylab="Unit Effect")
+vp(fu(usagr), main="Agriculture, South", ylim=ylim, p=p, ylab="Unit Effect", col=colTl, border=colTd)
 abline(h=0, lty=2)
 abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
-vp(fu(usurb), main="Rural/Urban, South", ylim=ylim, p=p, ylab="Unit Effect")
+vp(fu(usurb), main="Rural/Urban, South", ylim=ylim, p=p, ylab="Unit Effect", col=colTl, border=colTd)
 abline(h=0, lty=2)
 abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
-vp(fu(ustra), main="Transportation, South", ylim=ylim, p=p, ylab="Unit Effect")
+vp(fu(ustra), main="Transportation, South", ylim=ylim, p=p, ylab="Unit Effect", col=colTl, border=colTd)
 abline(h=0, lty=2)
 abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
+dev.off()
 
 
+pdf("~/Dropbox/abmi/10yr/ch4/figs/sect3.pdf", height=15, width=10)
 par(mfrow=c(3,2), las=1, yaxs="i")
 ylim <- c(-10, 10)
 p <- c(0.025, 0.975)
-vp(tneng, main="Energy, North", ylim=ylim, p=p, ylab="Total Effect")
+vp(tneng, main="Energy, North", ylim=ylim, p=p, ylab="Total Effect", col=colTl, border=colTd)
 abline(h=0, lty=2)
-vp(tnagr, main="Algiculture, North", ylim=ylim, p=p, ylab="Total Effect")
+vp(tnagr, main="Agriculture, North", ylim=ylim, p=p, ylab="Total Effect", col=colTl, border=colTd)
 abline(h=0, lty=2)
-vp(tnurb, main="Rural/Urban, North", ylim=ylim, p=p, ylab="Total Effect")
+vp(tnurb, main="Rural/Urban, North", ylim=ylim, p=p, ylab="Total Effect", col=colTl, border=colTd)
 abline(h=0, lty=2)
-vp(tntra, main="Transportation, North", ylim=ylim, p=p, ylab="Total Effect")
+vp(tntra, main="Transportation, North", ylim=ylim, p=p, ylab="Total Effect", col=colTl, border=colTd)
 abline(h=0, lty=2)
-vp(tnfor, main="Forestry, North", ylim=ylim, p=p, ylab="Total Effect")
+vp(tnfor, main="Forestry, North", ylim=ylim, p=p, ylab="Total Effect", col=colTl, border=colTd)
 abline(h=0, lty=2)
 plot.new()
+dev.off()
 
+pdf("~/Dropbox/abmi/10yr/ch4/figs/sect4.pdf", height=10, width=10)
 par(mfrow=c(2,2), las=1, yaxs="i")
 ylim <- c(-20, 20)
 p <- c(0.025, 0.975)
-vp(tseng, main="Energy, South", ylim=ylim, p=p, ylab="Total Effect")
+vp(tseng, main="Energy, South", ylim=ylim, p=p, ylab="Total Effect", col=colTl, border=colTd)
 abline(h=0, lty=2)
-vp(tsagr, main="Algiculture, South", ylim=c(-100, 100), p=p, ylab="Total Effect")
+vp(tsagr, main="Agriculture, South", ylim=c(-100, 100), p=p, ylab="Total Effect", col=colTl, border=colTd)
 abline(h=0, lty=2)
-vp(tsurb, main="Rural/Urban, South", ylim=ylim, p=p, ylab="Total Effect")
+vp(tsurb, main="Rural/Urban, South", ylim=ylim, p=p, ylab="Total Effect", col=colTl, border=colTd)
 abline(h=0, lty=2)
-vp(tstra, main="Transportation, South", ylim=ylim, p=p, ylab="Total Effect")
+vp(tstra, main="Transportation, South", ylim=ylim, p=p, ylab="Total Effect", col=colTl, border=colTd)
 abline(h=0, lty=2)
+dev.off()
 
 ## --- ordination
 
-ord_fun <- function(TAX, north=TRUE, scaling=2, alpha=1, col.text=1, ...) {
+ord_fun <- function(TAX, north=TRUE, scaling=2, alpha=1, col.text=1, col.pts,
+    cex.pts=1, cex.text=1, ...) {
     require(vegan)
     Excl <- c("WhiteSpruceCC20", "WhiteSpruceCC40", "WhiteSpruceCC60",
         "PineCC20", "PineCC40", "PineCC60",
@@ -754,10 +830,12 @@ ord_fun <- function(TAX, north=TRUE, scaling=2, alpha=1, col.text=1, ...) {
     ColSi <- 2
     ColSp <- rgb(red=fs(s$species[,1]),
         green=fs(s$species[,2]), blue=fs(s$species[,3]), alpha=alpha)
+    if (!missing(col.pts))
+        ColSp <- col.pts
     plot(m, scaling=scaling, type="none", ...)
     #text(m, "species", col=ColSp, cex=0.5, scaling=scaling)
-    points(m, "species", col=ColSp, cex=1, pch=19, scaling=scaling)
-    text(m, "sites", col=col.text, cex=1, scaling=scaling)
+    points(m, "species", col=ColSp, cex=cex.pts, pch=19, scaling=scaling)
+    text(m, "sites", col=col.text, cex=cex.text, scaling=scaling)
     invisible(m)
 }
 
@@ -816,38 +894,64 @@ for (i in 1:length(pps))
     contour(dfun(pps[[i]]), levels=0.05, labels=names(pps)[i], col=i, add=TRUE)
 legend("topright", lty=1, col=1:length(pps), legend=names(pps), bty="n")
 
-## chull
-col1 <- RColorBrewer::brewer.pal(8, "Dark2")
-col2 <- paste0(col1,"10")
+## chull or pp density
 
+pdf("~/Dropbox/abmi/10yr/ch4/figs/ord-ppp.pdf", height=7, width=14)
 par(mfrow=c(1,2), las=1)
-mn <- ord_fun("All", TRUE, main="All Species, North", alpha=0.5, scaling=2, col.text=1)
+mn <- ord_fun("All", TRUE, main="All Species, North", alpha=0.5, scaling=2, col.text=1,
+    col.pts=NA, cex.pts=0.5, cex.text=1)
 s <- scores(mn, 1:3)
 tax <- do.call(c, lapply(names(AllIn), function(zz) rep(zz, nrow(AllIn[[zz]][["veg"]]))))
 names(tax) <- do.call(c, lapply(AllIn, function(zz) as.character(zz[["veg"]][,1])))
 tax <- tax[rownames(s$species)]
+xy <- lapply(structure(unique(tax), names=unique(tax)), function(i) {
+    j <- tax == i
+    s$species[j,1:2]
+})
 chn <- lapply(structure(unique(tax), names=unique(tax)), function(i) {
     j <- tax == i
     xx <- s$species[j,1:2]
     xx[chull(xx),]
 })
-for (i in 1:length(chn))
-    polygon(chn[[i]], border=col1[i], col=col2[i])
-legend("bottomright", lty=1, col=col1, legend=names(pps), bty="n")
+ppn <- lapply(structure(unique(tax), names=unique(tax)), function(i) {
+    j <- tax == i
+    as.ppp(s$species[j,1:2], c(-2,4,-2,2)) #c(range(s$species[,1]), range(s$species[,2])))
+})
+for (i in 1:length(xy))
+    points(xy[[i]], col=paste0(colTd[i], "80"), pch=19, cex=0.5)
+#for (i in 1:length(chn))
+#    polygon(chn[[i]], border=colTd[i], col=paste0(colTd[i], "10"))
+for (i in 1:length(ppn))
+    contour(dfun(ppn[[i]]), levels=0.05, labels=names(ppn)[i], col=colTd[i], add=TRUE)
+#legend("topleft", lty=1, lwd=2, col=colTd, legend=names(chn), bty="n")
 
-ms <- ord_fun("All", FALSE, main="All Species, South", alpha=0.5, scaling=2, col.text=1)
+ms <- ord_fun("All", FALSE, main="All Species, South", alpha=0.5, scaling=2, col.text=1,
+    col.pts=NA, cex.pts=0.5, cex.text=1)
 s <- scores(ms, 1:3)
 tax <- do.call(c, lapply(names(AllIn), function(zz) rep(zz, nrow(AllIn[[zz]][["soilnt"]]))))
 names(tax) <- do.call(c, lapply(AllIn, function(zz) as.character(zz[["soilnt"]][,1])))
 tax <- tax[rownames(s$species)]
+xy <- lapply(structure(unique(tax), names=unique(tax)), function(i) {
+    j <- tax == i
+    s$species[j,1:2]
+})
 chs <- lapply(structure(unique(tax), names=unique(tax)), function(i) {
     j <- tax == i
     xx <- s$species[j,1:2]
     xx[chull(xx),]
 })
-for (i in 1:length(chs))
-    polygon(chs[[i]], border=col1[i], col=col2[i])
-legend("bottomright", lty=1, col=col1, legend=names(pps), bty="n")
+ppn <- lapply(structure(unique(tax), names=unique(tax)), function(i) {
+    j <- tax == i
+    as.ppp(s$species[j,1:2], c(-2,4,-2,2)) #c(range(s$species[,1]), range(s$species[,2])))
+})
+for (i in 1:length(xy))
+    points(xy[[i]], col=paste0(colTd[i], "80"), pch=19, cex=0.5)
+#for (i in 1:length(chs))
+#    polygon(chs[[i]], border=colTd[i], col=paste0(colTd[i], "10"))
+for (i in 1:length(ppn))
+    contour(dfun(ppn[[i]]), levels=0.05, labels=names(ppn)[i], col=colTd[i], add=TRUE)
+legend("bottomright", lty=1, lwd=2, col=colTd, legend=names(chn), bty="n")
+dev.off()
 
 ## --- SI maps
 
@@ -898,6 +1002,21 @@ for (i in colnames(MatSI)) {
 }
 dev.off()
 
+pdf("~/Dropbox/abmi/10yr/ch4/figs/si-map.pdf", height=16, width=15)
+op <- par(mar=c(2,1,2,6), mfrow=c(2,3))
+for (i in colnames(MatSI)) {
+    cat(i, "\n");flush.console()
+    SI <- MatSI[,i]
+    SI[is.na(SI)] <- 100 # water/ice
+    mat <- as.matrix(Xtab(SI ~ Row + Col, kgrid))
+    mat[is.na(mat0)] <- NA
+    rout <- raster(x=mat, template=rt)
+    plot(rout, col=col, axes=FALSE, box=FALSE, main=i, legend=i=="mites")
+    plot(ABnr, add=TRUE)
+}
+par(op)
+dev.off()
+
 ## --- SI distributions: violplots, Prov/N/S  by taxon
 
 get_stuff0si <- function(TAX, REG) {
@@ -924,11 +1043,14 @@ SItoSave <- lapply(structure(names(AllSI), names=names(AllSI)), get_stuffsi2)
 for (i in names(SItoSave))
     write.csv(SItoSave[[i]], file=paste0("e:/peter/sppweb2017/SI-", i, ".csv"))
 
-par(mfrow=c(3,2), las=1, yaxs="i")
 ylim <- c(0, 100)
 p <- c(0, 1)
-for (i in 1:6)
-    vp(matSI[[i]], main=names(matSI)[i], ylim=ylim, p=p, ylab="Species Intactness")
+pdf("~/Dropbox/abmi/10yr/ch4/figs/si.pdf", height=10, width=10)
+par(mfrow=c(3,2), las=1, yaxs="i")
+for (i in c(7,2,1,3,4,6))
+    vp(matSI[[i]], main=names(matSI)[i], ylim=ylim, p=p, ylab="Species Intactness",
+        col=colTl, border=colTd)
+dev.off()
 
 par(mfrow=c(1,1), las=1, yaxs="i")
 vp(matSI[["Alberta"]], main="Alberta", ylim=ylim, p=p, ylab="Species Intactness")
@@ -948,7 +1070,8 @@ kgrid$Succ <- rowSums(dd1km_pred$veg_current[,c("SeismicLine","TransmissionLine"
 kgrid$Alien <- kgrid$THF - kgrid$Succ
 
 si_cf <- list()
-par(mfrow=c(3,2), las=1)
+pdf("~/Dropbox/abmi/10yr/ch4/figs/si-tri.pdf", height=8, width=12)
+par(mfrow=c(2,3), las=1)
 for (i in colnames(MatSI)) {
 
 SItmp <- MatSI[,i]
@@ -975,13 +1098,15 @@ pr <- drop(exp(npol %*% coef(m)))
 tmp <- matrix(nd$sum, length(Succ), length(Alien))
 tmp <- ifelse(tmp>1, NA, 1)
 l <- list(x=Succ*100, y=Alien*100, z=100*tmp*matrix(pr, length(Succ), length(Alien)))
-rr <- round(min(l$z, na.rm=TRUE))
+rr <- round(range(l$z, na.rm=TRUE))
 rr[1] <- max(rr[1], 1)
 rr[2] <- min(rr[2], 100)
 image(l, col=col[rr[1]:rr[2]], main=i, xlab="Successional %", ylab="Alienating %", axes=FALSE)
 contour(l, add=TRUE)
 axis(1);axis(2)
+abline(100,-1)
 }
+dev.off()
 
 dd <- round(100*kgrid[,c("Succ", "Alien")])+1
 dd$Succ <- factor(dd$Succ, 1:101)
@@ -1020,8 +1145,9 @@ nd$sum <- nd$Succ+nd$Alien
 npol <- poly(nd$Succ, nd$Alien, degree=3, raw=TRUE)
 lpr2 <- sapply(si_cf, function(z) drop(exp(npol %*% z)))
 
+pdf("~/Dropbox/abmi/10yr/ch4/figs/si-bi.pdf", height=7, width=12)
 par(mfrow=c(1,2), las=1, yaxs="i", xaxs="i")
-col1 <- RColorBrewer::brewer.pal(5, "Dark2")
+col1 <- colTd
 matplot(v*100, lpr1*100, lty=1, type="l", ylim=c(0,100), lwd=2, col=col1,
     ylab="Intactness", xlab="Successional Footprint % (Alienating=0)")
 abline(h=c(20, 40, 60, 80), v=c(20, 40, 60, 80), col="lightgrey")
@@ -1031,6 +1157,30 @@ matplot(v*100, lpr2*100, lty=1, type="l", ylim=c(0,100), lwd=2, col=col1,
     ylab="Intactness", xlab="Alienating Footprint % (Successional=0)")
 abline(h=c(20, 40, 60, 80), v=c(20, 40, 60, 80), col="lightgrey")
 matlines(v*100, lpr2*100, lty=1, lwd=3, col=col1)
+dev.off()
+
+## carrot graphs for AUC and other validation metrics
+load("~/Dropbox/abmi/10yr/R/AllBoot.Rdata")
+
+cn <- c("birds", "vplants", "lichens", "mosses", "mites")
+r2n <- rugged_mat(lapply(gofn, function(z) z[,2]))[,cn]
+r2s <- rugged_mat(lapply(gofs, function(z) z[,2]))[,cn]
+aucn <- rugged_mat(lapply(gofn, function(z) z[,4]))[,cn]
+aucs <- rugged_mat(lapply(gofs, function(z) z[,4]))[,cn]
+dwn <- rugged_mat(lapply(gofn, function(z) z[,8]))[,cn]
+dws <- rugged_mat(lapply(gofs, function(z) z[,8]))[,cn]
+
+pdf("~/Dropbox/abmi/10yr/ch4/figs/valid.pdf", height=5, width=5, onefile=TRUE)
+par(las=1, yaxs="i")
+ylim <- c(0, 1)
+vp(r2n, main="R^2, North", ylim=ylim, p=p, ylab="R^2", col=colTl[-1], border=colTd[-1])
+vp(r2s, main="R^2, South", ylim=ylim, p=p, ylab="R^2", col=colTl[-1], border=colTd[-1])
+vp(aucn, main="AUC, North", ylim=ylim, p=p, ylab="AUC", col=colTl[-1], border=colTd[-1])
+vp(aucs, main="AUC, South", ylim=ylim, p=p, ylab="AUC", col=colTl[-1], border=colTd[-1])
+vp(dwn, main="Consistency, North", ylim=ylim, p=p, ylab="Consistency", col=colTl[-1], border=colTd[-1])
+vp(dws, main="Consistency, South", ylim=ylim, p=p, ylab="Consistency", col=colTl[-1], border=colTd[-1])
+dev.off()
+
 
 ## geoxv results
 
@@ -1192,13 +1342,17 @@ par(opn)
 
 library(xlsx)
 load("~/Dropbox/abmi/10yr/R/AllTables.Rdata")
-TAXA <- c("birds", "mites", "mosses", "lichens", "vplants")
-FTAXA <- c(birds="Birds",
+TAXA <- c("mammals", "birds", "mites", "mosses", "lichens", "vplants")
+FTAXA <- c(
+    mammals="Mammals (Winter Active)",
+    birds="Birds",
     mites="Soil Mites",
     mosses="Bryophytes",
     lichens="Lichens",
     vplants="Vascular Plants")
-PROT <- c(birds="Terrestrial (point counts)",
+PROT <- c(
+    mammals="Terrestrial (snow tracking transects)",
+    birds="Terrestrial (point counts)",
     mites="Terrestrial (soil cores)",
     mosses="Terrestrial (1 ha plots)",
     lichens="Terrestrial (1 ha plots)",
@@ -1221,7 +1375,7 @@ VER <- "5.0"
 for (i in TAXA) {
     fn <- paste0("ABMI-species-v", VER, "_", i, "_", Sys.Date(), ".xlsx")
     fn <- file.path("e:/peter/sppweb2017/tables", fn)
-    Descr <- data.frame(Description=c(Source="Alberta Biodiversity Monitoring Institute (2016). ABMI Species Website, version 5.0 (2017-07-12). URL: http://species.abmi.ca",
+    Descr <- data.frame(Description=c(Source=paste0("Alberta Biodiversity Monitoring Institute (2016). ABMI Species Website, version 5.0 (", Sys.Date(), "). URL: http://species.abmi.ca"),
         Taxon=unname(FTAXA[i]),
         Protocol=unname(PROT[i]),
         Contact="solymos@ualberta.ca",
