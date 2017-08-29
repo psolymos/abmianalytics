@@ -717,7 +717,7 @@ useng <- get_stuff("sects", "UnitEffect.Energy", FALSE)
 usurb <- get_stuff("sects", "UnitEffect.RuralUrban", FALSE)
 ustra <- get_stuff("sects", "UnitEffect.Transportation", FALSE)
 
-pdf("~/Dropbox/abmi/10yr/ch4/figs/sect1.pdf", height=15, width=10)
+pdf("~/Dropbox/abmi/10yr/ch4/figs/sect1.pdf", height=10, width=10)
 par(mfrow=c(3,2), las=1, yaxs="i")
 ylim <- c(-1, 1)
 p <- c(0, 1)
@@ -764,7 +764,7 @@ abline(h=c(-0.5,0.5), lty=3, col="darkgrey")
 dev.off()
 
 
-pdf("~/Dropbox/abmi/10yr/ch4/figs/sect3.pdf", height=15, width=10)
+pdf("~/Dropbox/abmi/10yr/ch4/figs/sect3.pdf", height=10, width=10)
 par(mfrow=c(3,2), las=1, yaxs="i")
 ylim <- c(-10, 10)
 p <- c(0.025, 0.975)
