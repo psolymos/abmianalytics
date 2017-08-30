@@ -1089,9 +1089,12 @@ ylim <- c(0, 100)
 p <- c(0, 1)
 pdf("~/Dropbox/abmi/10yr/ch4/figs/si.pdf", height=10, width=10)
 par(mfrow=c(3,2), las=1, yaxs="i")
-for (i in c(1,3,4,6,7))
-    vp(matSI[[i]], main=names(matSI)[i], ylim=ylim, p=p, ylab="Species Intactness",
+for (i in c(1,3,4,6,7)) {
+    mmm <- matSI[[i]]
+    colnames(mmm)[colnames(mmm)=="vplants"] <- "vplants\n(native)"
+    vp(mmm, main=names(matSI)[i], ylim=ylim, p=p, ylab="Species Intactness",
         col=colTl, border=colTd)
+}
 dev.off()
 
 par(mfrow=c(1,1), las=1, yaxs="i")
@@ -1186,6 +1189,9 @@ nd <- expand.grid(Succ=Succ, Alien=Alien)
 nd$sum <- nd$Succ+nd$Alien
 npol <- poly(nd$Succ, nd$Alien, degree=3, raw=TRUE)
 lpr2 <- sapply(si_cf, function(z) drop(exp(npol %*% z)))
+
+colnames(lpr1)[colnames(lpr1)=="vplants"] <- "vplants (native)"
+colnames(lpr2)[colnames(lpr2)=="vplants"] <- "vplants (native)"
 
 pdf("~/Dropbox/abmi/10yr/ch4/figs/si-bi.pdf", height=7, width=12)
 par(mfrow=c(1,2), las=1, yaxs="i", xaxs="i")
