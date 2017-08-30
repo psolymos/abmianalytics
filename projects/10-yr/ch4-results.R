@@ -518,6 +518,7 @@ dev.off()
 library(mefa4)
 library(intrval)
 load("~/Dropbox/abmi/10yr/R/AllTables.Rdata")
+AllIn$vplants$lt$pOcc <- AllIn$vplants$lt$nSites / 1598
 
 get_stuff0 <- function(TAX, TABLE, COL, north=TRUE) {
     SPP <- AllIn[[TAX]]$lt$Species
@@ -896,7 +897,7 @@ legend("topright", lty=1, col=1:length(pps), legend=names(pps), bty="n")
 
 ## chull or pp density
 
-pdf("~/Dropbox/abmi/10yr/ch4/figs/ord-ppp.pdf", height=7, width=14)
+pdf("~/Dropbox/abmi/10yr/ch4/figs/ord-ell.pdf", height=7, width=14)
 par(mfrow=c(1,2), las=1)
 mn <- ord_fun("All", TRUE, main="All Species, North", alpha=0.5, scaling=2, col.text=1,
     col.pts=NA, cex.pts=0.5, cex.text=1)
@@ -917,12 +918,22 @@ ppn <- lapply(structure(unique(tax), names=unique(tax)), function(i) {
     j <- tax == i
     as.ppp(s$species[j,1:2], c(-2,4,-2,2)) #c(range(s$species[,1]), range(s$species[,2])))
 })
+ell <- lapply(structure(unique(tax), names=unique(tax)), function(i) {
+    j <- tax == i
+    X <- s$species[j,1:2]
+    W <- weights(mn, display="species")[j]
+    mat <- cov.wt(X, W)
+    t <- sqrt(qchisq(0.95, 2))
+    xy <- vegan:::veganCovEllipse(mat$cov, mat$center, t)
+})
 for (i in 1:length(xy))
     points(xy[[i]], col=paste0(colTd[i], "80"), pch=19, cex=0.5)
 #for (i in 1:length(chn))
 #    polygon(chn[[i]], border=colTd[i], col=paste0(colTd[i], "10"))
-for (i in 1:length(ppn))
-    contour(dfun(ppn[[i]]), levels=0.05, labels=names(ppn)[i], col=colTd[i], add=TRUE)
+#for (i in 1:length(ppn))
+#    contour(dfun(ppn[[i]]), levels=0.05, labels=names(ppn)[i], col=colTd[i], add=TRUE)
+for (i in 1:length(ell))
+    lines(ell[[i]], col=colTd[i])
 #legend("topleft", lty=1, lwd=2, col=colTd, legend=names(chn), bty="n")
 
 ms <- ord_fun("All", FALSE, main="All Species, South", alpha=0.5, scaling=2, col.text=1,
@@ -944,12 +955,22 @@ ppn <- lapply(structure(unique(tax), names=unique(tax)), function(i) {
     j <- tax == i
     as.ppp(s$species[j,1:2], c(-2,4,-2,2)) #c(range(s$species[,1]), range(s$species[,2])))
 })
+ell <- lapply(structure(unique(tax), names=unique(tax)), function(i) {
+    j <- tax == i
+    X <- s$species[j,1:2]
+    W <- weights(ms, display="species")[j]
+    mat <- cov.wt(X, W)
+    t <- sqrt(qchisq(0.95, 2))
+    xy <- vegan:::veganCovEllipse(mat$cov, mat$center, t)
+})
 for (i in 1:length(xy))
     points(xy[[i]], col=paste0(colTd[i], "80"), pch=19, cex=0.5)
 #for (i in 1:length(chs))
 #    polygon(chs[[i]], border=colTd[i], col=paste0(colTd[i], "10"))
-for (i in 1:length(ppn))
-    contour(dfun(ppn[[i]]), levels=0.05, labels=names(ppn)[i], col=colTd[i], add=TRUE)
+#for (i in 1:length(ppn))
+#    contour(dfun(ppn[[i]]), levels=0.05, labels=names(ppn)[i], col=colTd[i], add=TRUE)
+for (i in 1:length(ell))
+    lines(ell[[i]], col=colTd[i])
 legend("bottomright", lty=1, lwd=2, col=colTd, legend=names(chn), bty="n")
 dev.off()
 
@@ -977,6 +998,8 @@ crs <- CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps
 projection(rt) <- crs
 xy <- spTransform(xy, crs)
 mat0 <- as.matrix(rt)
+matR <- as.matrix(Xtab(ifelse(kgrid$NRNAME=="Rocky Mountain", 1, 0) ~ Row + Col, kgrid))
+
 
 setwd("~/Dropbox/courses/st-johns-2017/data/NatRegAB")
 AB <- readOGR(".", "Natural_Regions_Subregions_of_Alberta") # rgdal
@@ -1010,9 +1033,11 @@ for (i in colnames(MatSI)) {
     SI[is.na(SI)] <- 100 # water/ice
     mat <- as.matrix(Xtab(SI ~ Row + Col, kgrid))
     mat[is.na(mat0)] <- NA
+#    mat[matR==1] <- NA
     rout <- raster(x=mat, template=rt)
-    plot(rout, col=col, axes=FALSE, box=FALSE, main=i, legend=i=="mites")
-    plot(ABnr, add=TRUE)
+    plot(rout, col=col, axes=FALSE, box=FALSE,
+        main=if(i=="vplants") paste(i, "(native)") else i, legend=i=="mites")
+    plot(ABnr, add=TRUE, col=c(NA,NA,NA,NA,NA,"grey"))
 }
 par(op)
 dev.off()
@@ -1023,11 +1048,19 @@ get_stuff0si <- function(TAX, REG) {
     SPP <- if (TAX=="birds")
         AllIn[[TAX]]$lt$AOU else AllIn[[TAX]]$lt$SpeciesID
     i <- AllIn[[TAX]]$lt[,"map.pred"]
-    if (TAX=="vplants")
-        i[!is.na(AllIn[[TAX]]$lt$origin) & AllIn[[TAX]]$lt$origin == "Exotic"] <- FALSE
+    if (TAX=="vplants") {
+        nnn <- !is.na(AllIn[[TAX]]$lt$origin) & AllIn[[TAX]]$lt$origin == "Exotic"
+        i[nnn] <- FALSE
+    }
     SPP <- as.character(SPP[i])
     z <- AllSI[[TAX]][SPP]
-    sapply(z, function(zz) zz[REG,"SI"])
+    SI <- sapply(z, function(zz) zz[REG,"SI"])
+    if (TAX=="vplants") {
+        NN <- 100*(1-AllIn[[TAX]]$lt[nnn,"pOcc"])
+        names(NN) <- AllIn[[TAX]]$lt$SpeciesID[nnn]
+#        SI <- c(SI, NN)
+    }
+    SI
 }
 get_stuffsi <- function(REG)
     rugged_mat(lapply(structure(names(AllSI), names=names(AllSI)),
@@ -1035,6 +1068,15 @@ get_stuffsi <- function(REG)
 get_stuffsi2 <- function(TAX)
     sapply(structure(rownames(AllSI$birds[[1]]), names=rownames(AllSI$birds[[1]])),
         function(z) get_stuff0si(REG=z, TAX=TAX))
+
+## knocking out regions where regional reference is <2% of AB total reference
+#for (i in names(AllSI)) {
+#    for (j in names(AllSI[[i]])) {
+#        tt <- AllSI[[i]][[j]]
+#        Less <- tt[,"Ref"] < 0.02* tt["Alberta","Ref"]
+#        AllSI[[i]][[j]][Less, "SI"] <- NA
+#    }
+#}
 
 matSI <- lapply(structure(rownames(AllSI$birds[[1]]), names=rownames(AllSI$birds[[1]])),
     get_stuffsi)
@@ -1047,7 +1089,7 @@ ylim <- c(0, 100)
 p <- c(0, 1)
 pdf("~/Dropbox/abmi/10yr/ch4/figs/si.pdf", height=10, width=10)
 par(mfrow=c(3,2), las=1, yaxs="i")
-for (i in c(7,2,1,3,4,6))
+for (i in c(1,3,4,6,7))
     vp(matSI[[i]], main=names(matSI)[i], ylim=ylim, p=p, ylab="Species Intactness",
         col=colTl, border=colTd)
 dev.off()
