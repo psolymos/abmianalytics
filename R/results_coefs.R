@@ -244,7 +244,10 @@ get_lin <- function(tp, what="veg") {
         SoftLin.UCI	=pr[4],
         HardLin	=pr[5],
         HardLin.LCI	=pr[6],
-        HardLin.UCI=pr[7])
+        HardLin.UCI=pr[7],
+        HardLinClosed	=pr[8],
+        HardLinClosed.LCI	=pr[9],
+        HardLinClosed.UCI=pr[10])
 }
 
 lin1_n <- lin1_s <- list()

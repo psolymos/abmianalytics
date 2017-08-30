@@ -167,8 +167,11 @@ function(est, Xn, burn_included=TRUE, raw=FALSE)
 #    Soft <- quantile(MEAN * exp(0.1*est[,"SoftLin_PC"]), c(0.5, (1-level)/2, 1-(1-level)/2))
 #    Hard <- quantile(MEAN * exp(est[,"ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
     Soft <- quantile(exp(est[,"SoftLin_PC"]), c(0.5, (1-level)/2, 1-(1-level)/2))
+    ## this is road effect (average or in open habitats, habCl==0)
     Hard <- quantile(exp(est[,"ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
-    attr(out, "linear") <- c(Baseline=MEAN, Soft=Soft, Hard=Hard)
+    ## this is road effect (average or in closed-canopy habitats, habCl==1)
+    HardCl <- quantile(exp(est[,"ROAD01"]+est[,"habCl:ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
+    attr(out, "linear") <- c(Baseline=MEAN, Soft=Soft, Hard=Hard, HardCl=HardCl)
     ## burn should not be shown when it is not selected (i.e. when sum == 0)
     ## REALLY: burn should be just part of young age class, and not being on its own
     if (burn_included)
@@ -209,8 +212,9 @@ function(est, Xn, raw=FALSE)
 #    Hard <- quantile(MEAN * exp(est[,"ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
     Soft <- quantile(exp(est[,"SoftLin_PC"]), c(0.5, (1-level)/2, 1-(1-level)/2))
     Hard <- quantile(exp(est[,"ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
+    HardCl <- quantile(exp(est[,"ROAD01"]+est[,"habCl:ROAD01"]), c(0.5, (1-level)/2, 1-(1-level)/2))
     list(treed=pr1[,c(1,2,5,6)], nontreed=pr0[,c(1,2,5,6)],
-        linear=c(Baseline=MEAN, Soft=Soft, Hard=Hard))
+        linear=c(Baseline=MEAN, Soft=Soft, Hard=Hard, HardCl=HardCl))
 }
 
 ## this is required for getting the axes right across figures

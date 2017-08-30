@@ -25,6 +25,11 @@ TAX <- "birds"
 
 lt0 <- read.csv(file.path(ROOT, TAX, "lookup.csv"))
 linn0 <- read.csv(file.path(ROOT, TAX, "lin10-north.csv"))
+tmp <- read.csv("e:/peter/AB_data_v2016/out/birds/tables/birds-linearfull-north.csv")
+tmp <- tmp[match(linn0$Species, tmp[,"English_Name"]),]
+linn0$HardLin <- tmp$HardLinClosed
+linn0$HardLin.LCI <- tmp$HardLinClosed.LCI
+linn0$HardLin.UCI <- tmp$HardLinClosed.UCI
 lins0 <- read.csv(file.path(ROOT, TAX, "lin10-south.csv"))
 sectn0 <- read.csv(file.path(ROOT, TAX, "sector-north.csv"))
 sects0 <- read.csv(file.path(ROOT, TAX, "sector-south.csv"))
@@ -677,7 +682,7 @@ softs[softs > 10] <- NA
 hardn[hardn > 10] <- NA
 hards[hards > 10] <- NA
 
-## might need to calculate mean density for birds instead of current AvgCoefficient
+## northern hard lin is for closed calopy surroundings
 pdf("~/Dropbox/abmi/10yr/ch4/figs/lin.pdf", height=10, width=10)
 par(mfrow=c(2,2), las=1, yaxs="i")
 ylim <- c(0, 3)
@@ -1206,6 +1211,104 @@ matplot(v*100, lpr2*100, lty=1, type="l", ylim=c(0,100), lwd=2, col=col1,
 abline(h=c(20, 40, 60, 80), v=c(20, 40, 60, 80), col="lightgrey")
 matlines(v*100, lpr2*100, lty=1, lwd=3, col=col1)
 dev.off()
+
+## separate 2D plots for N/S
+
+## this already excludes Rockies
+lxn <- nonDuplicated(kgrid[,c("LUF_NAME","NRNAME","NSRNAME")], kgrid$LUFxNSR, TRUE)
+lxn$N <- lxn$NRNAME != "Grassland" & lxn$NRNAME != "Rocky Mountain" &
+    lxn$NRNAME != "Parkland" & lxn$NSRNAME != "Dry Mixedwood"
+lxn$S <- lxn$NRNAME == "Grassland" | lxn$NRNAME == "Parkland" |
+    lxn$NSRNAME == "Dry Mixedwood"
+
+si_cf_N <- list()
+si_cf_S <- list()
+for (i in colnames(MatSI)) {
+    SItmp <- MatSI[,i]
+    SItmp[SItmp<1] <- 1
+    kgrid$iSI <- log(SItmp/100)
+
+    kgridN <- kgrid[kgrid$LUFxNSR %in% rownames(lxn)[lxn$N],]
+    pol <- poly(kgridN$Succ, kgridN$Alien, degree=3, raw=TRUE)
+    m <- lm(iSI ~ pol-1, kgridN)
+    si_cf_N[[i]] <- coef(m)
+
+    kgridS <- kgrid[kgrid$LUFxNSR %in% rownames(lxn)[lxn$S],]
+    pol <- poly(kgridS$Succ, kgridS$Alien, degree=3, raw=TRUE)
+    m <- lm(iSI ~ pol-1, kgridS)
+    si_cf_S[[i]] <- coef(m)
+}
+
+BY <- 0.005
+v <- seq(0, 1, by=BY)
+
+Succ <- v
+Alien <- 0
+nd <- expand.grid(Succ=Succ, Alien=Alien)
+nd$sum <- nd$Succ+nd$Alien
+npol <- poly(nd$Succ, nd$Alien, degree=3, raw=TRUE)
+lpr1 <- sapply(si_cf_N, function(z) drop(exp(npol %*% z)))
+
+Succ <- 0
+Alien <- v
+nd <- expand.grid(Succ=Succ, Alien=Alien)
+nd$sum <- nd$Succ+nd$Alien
+npol <- poly(nd$Succ, nd$Alien, degree=3, raw=TRUE)
+lpr2 <- sapply(si_cf_N, function(z) drop(exp(npol %*% z)))
+
+Succ <- v
+Alien <- 0
+nd <- expand.grid(Succ=Succ, Alien=Alien)
+nd$sum <- nd$Succ+nd$Alien
+npol <- poly(nd$Succ, nd$Alien, degree=3, raw=TRUE)
+lpr3 <- sapply(si_cf_S, function(z) drop(exp(npol %*% z)))
+
+Succ <- 0
+Alien <- v
+nd <- expand.grid(Succ=Succ, Alien=Alien)
+nd$sum <- nd$Succ+nd$Alien
+npol <- poly(nd$Succ, nd$Alien, degree=3, raw=TRUE)
+lpr4 <- sapply(si_cf_S, function(z) drop(exp(npol %*% z)))
+
+colnames(lpr1)[colnames(lpr1)=="vplants"] <- "vplants (native)"
+colnames(lpr2)[colnames(lpr2)=="vplants"] <- "vplants (native)"
+colnames(lpr1)[colnames(lpr3)=="vplants"] <- "vplants (native)"
+colnames(lpr2)[colnames(lpr4)=="vplants"] <- "vplants (native)"
+
+col1 <- colTd
+
+pdf("~/Dropbox/abmi/10yr/ch4/figs/si-bi4.pdf", height=10, width=10)
+par(mfrow=c(2,2), las=1, yaxs="i", xaxs="i")
+matplot(v*100, lpr1*100, lty=1, type="l", ylim=c(0,100), lwd=2, col=NA,
+    ylab="Intactness", xlab="Successional Footprint % (Alienating=0)", main="North")
+abline(h=c(20, 40, 60, 80), v=c(20, 40, 60, 80), col="lightgrey")
+matlines(v*100, lpr1*100, lty=1, lwd=3, col=col1)
+legend("bottomleft", lty=1, lwd=3, col=col1, legend=colnames(lpr1), bty="n")
+matplot(v*100, lpr2*100, lty=1, type="l", ylim=c(0,100), lwd=2, col=NA,
+    ylab="Intactness", xlab="Alienating Footprint % (Successional=0)", main="North")
+abline(h=c(20, 40, 60, 80), v=c(20, 40, 60, 80), col="lightgrey")
+matlines(v*100, lpr2*100, lty=2, lwd=1, col=col1)
+matlines(v[1:101]*100, lpr2[1:101,]*100, lty=1, lwd=3, col=col1)
+legend("bottomleft", lty=1, lwd=3, col=col1, legend=colnames(lpr2), bty="n")
+
+matplot(v*100, lpr3*100, lty=1, type="l", ylim=c(0,100), lwd=2, col=NA,
+    ylab="Intactness", xlab="Successional Footprint % (Alienating=0)", main="South")
+abline(h=c(20, 40, 60, 80), v=c(20, 40, 60, 80), col="lightgrey")
+matlines(v*100, lpr3*100, lty=2, lwd=1, col=col1)
+matlines(v[1:101]*100, lpr3[1:101,]*100, lty=1, lwd=3, col=col1)
+legend("bottomleft", lty=1, lwd=3, col=col1, legend=colnames(lpr3), bty="n")
+matplot(v*100, lpr4*100, lty=1, type="l", ylim=c(0,100), lwd=2, col=NA,
+    ylab="Intactness", xlab="Alienating Footprint % (Successional=0)", main="South")
+abline(h=c(20, 40, 60, 80), v=c(20, 40, 60, 80), col="lightgrey")
+matlines(v*100, lpr4*100, lty=1, lwd=3, col=col1)
+legend("bottomleft", lty=1, lwd=3, col=col1, legend=colnames(lpr4), bty="n")
+dev.off()
+
+
+
+
+
+
 
 ## carrot graphs for AUC and other validation metrics
 load("~/Dropbox/abmi/10yr/R/AllBoot.Rdata")
