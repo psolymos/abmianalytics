@@ -665,6 +665,7 @@ ylim, ylab="", xlab="", main="", nmin=5, interval=c(-Inf, Inf), ...) {
 fu <- function(x) sign(x) * plogis(log(abs(x/100)))
 
 colTd <- RColorBrewer::brewer.pal(6, "Dark2")
+names(colTd) <- names(AllIn)
 colTl <- paste0(colTd, "80")
 
 ## --- linear
@@ -844,6 +845,71 @@ ord_fun <- function(TAX, north=TRUE, scaling=2, alpha=1, col.text=1, col.pts,
     text(m, "sites", col=col.text, cex=cex.text, scaling=scaling)
     invisible(m)
 }
+ofun <- function(WHAT, NORTH=TRUE, SS=names(AllIn), PUT="none", LEGEND=NULL, ...) {
+    mn <- ord_fun(WHAT, NORTH, alpha=0.5, scaling=2, col.text=1,
+        col.pts=NA, cex.pts=0.5, cex.text=1, ...)
+    s <- scores(mn, 1:3)
+    TT <- if (NORTH)
+        "veg" else "soilnt"
+    tax <- do.call(c, lapply(names(AllIn), function(zz) rep(zz, nrow(AllIn[[zz]][[TT]]))))
+    names(tax) <- do.call(c, lapply(AllIn, function(zz) as.character(zz[[TT]][,1])))
+    tax <- tax[rownames(s$species)]
+    xy <- lapply(structure(SS, names=SS), function(i) {
+        j <- tax == i
+        s$species[j,1:2]
+    })
+    for (i in 1:length(xy))
+        points(xy[[i]], col=paste0(colTd[SS][i], "80"), pch=19, cex=1)
+    chn <- lapply(structure(SS, names=SS), function(i) {
+        j <- tax == i
+        xx <- s$species[j,1:2]
+        xx[chull(xx),]
+    })
+    ppn <- lapply(structure(SS, names=SS), function(i) {
+        j <- tax == i
+        as.ppp(s$species[j,1:2], c(-2,4,-2,2)) #c(range(s$species[,1]), range(s$species[,2])))
+    })
+    ell <- lapply(structure(SS, names=SS), function(i) {
+        j <- tax == i
+        X <- s$species[j,1:2]
+        W <- weights(mn, display="species")[j]
+        mat <- cov.wt(X, W)
+        t <- sqrt(qchisq(0.95, 2))
+        xy <- vegan:::veganCovEllipse(mat$cov, mat$center, t)
+    })
+    if ("chull" %in% PUT)
+        for (i in 1:length(chn))
+            polygon(chn[[i]], border=colTd[SS][i], col=paste0(colTd[SS][i], "10"))
+    if ("ppp" %in% PUT)
+        for (i in 1:length(ppn))
+            contour(dfun(ppn[[i]]), levels=0.05, labels=names(ppn)[i], col=colTd[SS][i], add=TRUE)
+    if ("ell" %in% PUT)
+        for (i in 1:length(ell))
+            lines(ell[[i]], col=colTd[SS][i])
+    if (!is.null(LEGEND))
+        legend(LEGEND, lty=1, lwd=2, col=colTd[SS], legend=names(chn), bty="n")
+    invisible(NULL)
+}
+
+pdf("~/Dropbox/abmi/10yr/ch4/figs/ord-all-N.pdf", height=10, width=15)
+par(mfrow=c(2,3), las=1)
+ofun("All", NORTH=TRUE, PUT=c("chull"), SS="mammals", main="Mammals, North")
+ofun("All", NORTH=TRUE, PUT=c("chull"), SS="birds", main="Birds, North")
+ofun("All", NORTH=TRUE, PUT=c("chull"), SS="vplants", main="Vascular Plants, North")
+ofun("All", NORTH=TRUE, PUT=c("chull"), SS="mosses", main="Bryophytes, North")
+ofun("All", NORTH=TRUE, PUT=c("chull"), SS="lichens", main="Lichens, North")
+ofun("All", NORTH=TRUE, PUT=c("chull"), SS="mites", main="Mites, North")
+dev.off()
+
+pdf("~/Dropbox/abmi/10yr/ch4/figs/ord-all-S.pdf", height=10, width=15)
+par(mfrow=c(2,3), las=1)
+ofun("All", NORTH=FALSE, PUT=c("chull"), SS="mammals", main="Mammals, South")
+ofun("All", NORTH=FALSE, PUT=c("chull"), SS="birds", main="Birds, South")
+ofun("All", NORTH=FALSE, PUT=c("chull"), SS="vplants", main="Vascular Plants, South")
+ofun("All", NORTH=FALSE, PUT=c("chull"), SS="mosses", main="Bryophytes, South")
+ofun("All", NORTH=FALSE, PUT=c("chull"), SS="lichens", main="Lichens, South")
+ofun("All", NORTH=FALSE, PUT=c("chull"), SS="mites", main="Mites, South")
+dev.off()
 
 par(mfrow=c(2,2), las=1)
 ord_fun("birds", TRUE, main="Birds, North")
