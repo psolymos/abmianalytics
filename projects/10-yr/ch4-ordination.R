@@ -1,5 +1,6 @@
 library(mefa4)
 library(intrval)
+library(MASS)
 library(spatstat)
 load("~/Dropbox/abmi/10yr/R/AllTables.Rdata")
 AllIn$vplants$lt$pOcc <- AllIn$vplants$lt$nSites / 1598
@@ -86,17 +87,26 @@ ofun1 <- function(WHAT, NORTH=TRUE, ...) {
     MM$x <- MM$x + 0.05*diff(MM$x)*c(-1,1)
     MM$y <- MM$y + 0.05*diff(MM$y)*c(-1,1)
     ppn <- as.ppp(xy, unlist(MM))
+    k <- kde2d(x=xy[,1], y=xy[,2], n=100, lims=c(MM$x, MM$y))
 
     par(yaxs="i", xaxs="i", las=1)
     plot(0, ylim=MM$y, xlim=MM$x, xlab="Axis 1", ylab="Axis 2", type="n", ...)
+    ## ppp
     plot(density(ppn), add=TRUE, col=colorRampPalette(c("#FFFFFF", colTd[WHAT]))(100))
     contour(dfun(ppn), col=colTd[WHAT], add=TRUE)
+    ## kde
+    #image(k, add=TRUE, col=colorRampPalette(c("#FFFFFF", colTd[WHAT]))(100))
+    #contour(k, col=colTd[WHAT], add=TRUE)
+#    cumz<-cumsum(sort(k$z,decreasing=TRUE))/sum(k$z)
+#    z90<-sort(k$z,decreasing=TRUE)[which.min(abs(cumz-0.9))]
+#    contour(k,levels=z90,col=colTd[WHAT],add=TRUE,labels="90%")
+
     points(xy, col="#00000040", pch=19, cex=1)
-    text(xy2*.9, labels=rownames(xy2), col=1, pch=19, cex=0.9)
+    text(xy2*0.8, labels=rownames(xy2), col=1, pch=19, cex=0.9)
     abline(h=0,v=0,lty=3)
     box()
 }
-pdf("~/Dropbox/abmi/10yr/ch4/figs/ord-one-N.pdf", height=10, width=15)
+pdf("~/Dropbox/abmi/10yr/ch4/figs/ord-one-N-ppp.pdf", height=8, width=12)
 par(mfrow=c(2,3))
 ofun1("mammals", NORTH=TRUE, main="Mammals, North")
 ofun1("birds", NORTH=TRUE, main="Birds, North")
@@ -106,12 +116,13 @@ ofun1("lichens", NORTH=TRUE, main="Lichens, North")
 ofun1("mites", NORTH=TRUE, main="Mites, North")
 dev.off()
 
-pdf("~/Dropbox/abmi/10yr/ch4/figs/ord-one-S.pdf", height=10, width=15)
+pdf("~/Dropbox/abmi/10yr/ch4/figs/ord-one-S-ppp.pdf", height=8, width=12)
 par(mfrow=c(2,3))
-ofun1("mammals", NORTH=FALSE, main="Mammals, North")
-ofun1("birds", NORTH=FALSE, main="Birds, North")
-ofun1("vplants", NORTH=FALSE, main="Vascular Plants, North")
-ofun1("mosses", NORTH=FALSE, main="Bryophytes, North")
-ofun1("lichens", NORTH=FALSE, main="Lichens, North")
-ofun1("mites", NORTH=FALSE, main="Mites, North")
+ofun1("mammals", NORTH=FALSE, main="Mammals, South")
+ofun1("birds", NORTH=FALSE, main="Birds, South")
+ofun1("vplants", NORTH=FALSE, main="Vascular Plants, South")
+ofun1("mosses", NORTH=FALSE, main="Bryophytes, South")
+ofun1("lichens", NORTH=FALSE, main="Lichens, South")
+ofun1("mites", NORTH=FALSE, main="Mites, South")
 dev.off()
+
