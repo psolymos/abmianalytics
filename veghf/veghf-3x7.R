@@ -160,3 +160,54 @@ hfplot <- function (
 }
 hfplot("Boreal", "Forest Harvest")
 hfplot("Grassland", "Vegetated Linear Industrial Features")
+
+## summary in OSA
+
+load(file.path(ROOT, VER, "data", "analysis",
+    "veg-hf_3x7_v6-fixage0.Rdata")) # yearly_vhf
+osa <- read.csv(file.path(ROOT, VER, "data", "raw",
+    "xy", "osa", "nfi_3regions.csv"))
+
+fosa <- osa$SHORTNAME[match(1:1656, osa$ABMI)]
+levels(fosa) <- c(levels(fosa), "OUT")
+fosa[is.na(fosa)] <- "OUT"
+table(fosa)
+
+compare_sets(hfgroups$HF_GROUP, colnames(aa))
+ci0 <- c("BorrowpitsDugoutsSumps",
+    "Canals", "CultivationCropPastureBareground", "CutBlocks", "HighDensityLivestockOperation",
+    "IndustrialSiteRural", "MineSite", "MunicipalWaterSewage", "OtherDisturbedVegetation",
+    "PeatMine", "Pipeline", "RailHardSurface", "RailVegetatedVerge",
+    "Reservoirs", "RoadHardSurface", "RoadTrailVegetated", "RoadVegetatedVerge",
+    "RuralResidentialIndustrial", "SeismicLine", "TransmissionLine",
+    "Urban", "WellSite", "WindGenerationFacility", "CCDecidR", "CCDecid1",
+    "CCDecid2", "CCDecid3", "CCDecid4", "CCMixedwoodR", "CCMixedwood1",
+    "CCMixedwood2", "CCMixedwood3", "CCMixedwood4", "CCPineR", "CCPine1",
+    "CCPine2", "CCPine3", "CCPine4", "CCSpruceR", "CCSpruce1", "CCSpruce2",
+    "CCSpruce3", "CCSpruce4")
+
+ci1 <- c("BorrowpitsDugoutsSumps",
+    "Canals", "CultivationCropPastureBareground", "CutBlocks", "HighDensityLivestockOperation",
+    "IndustrialSiteRural", "MineSite", "MunicipalWaterSewage", "OtherDisturbedVegetation",
+    "PeatMine", "Pipeline", "RailHardSurface", "RailVegetatedVerge",
+    "Reservoirs", "RoadHardSurface", "RoadTrailVegetated", "RoadVegetatedVerge",
+    "RuralResidentialIndustrial", "SeismicLine", "TransmissionLine",
+    "Urban", "WellSite", "WindGenerationFacility", "CutBlocks", "CutBlocks",
+    "CutBlocks", "CutBlocks", "CutBlocks", "CutBlocks", "CutBlocks",
+    "CutBlocks", "CutBlocks", "CutBlocks", "CutBlocks", "CutBlocks",
+    "CutBlocks", "CutBlocks", "CutBlocks", "CutBlocks", "CutBlocks", "CutBlocks",
+    "CutBlocks", "CutBlocks")
+sect <- hfgroups$Sector[match(ci1, hfgroups$HF_GROUP)]
+
+tmp <- do.call(rbind, lapply(names(yearly_vhf), function(z) {
+    out <- yearly_vhf[[z]]$veg_current
+    out <- as.matrix(groupSums(out, 1, fosa))
+    out <- out[rownames(out) != "OUT",]
+    out <- rbind(out, "All-OSA"=colSums(out))
+    out <- 100 * out / rowSums(out)
+    out <- groupSums(out[,ci0], 2, sect)
+    data.frame(Year=as.integer(z), Region=rownames(out), out)
+    }))
+
+write.csv(tmp, row.names=FALSE,
+    file.path(ROOT, VER, "data", "analysis", "veg-hf_3x7_v6_inOSA.csv"))
