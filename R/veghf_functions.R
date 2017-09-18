@@ -92,7 +92,8 @@ c4_fun <- function(d) {
 
 ## HF_fine T=use 2014 classification, F=use previous
 make_vegHF_wide_v6 <-
-function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE,
+function(d, col.label, col.year=NULL, col.HFyear=NULL,
+col.HABIT=NULL, col.SOIL=NULL, wide=TRUE, sparse=FALSE,
 HF_fine=TRUE) {
 
     TreedClassesCC <- c("Decid", "Mixedwood", "Pine", "Spruce")
@@ -128,11 +129,10 @@ HF_fine=TRUE) {
         c("R","1","2","3","4"))))
     HLEVS <- c(TreedClasses, NontreedClasses)
 
-    d <- droplevels(d[d$Combined_ChgByCWCS != "",])
-    d$c6 <- reclass(d$Combined_ChgByCWCS, as.matrix(recl), all=TRUE)
-#    d$c6 <- factor(as.character(d$Combined_ChgByCWCS), c(HLEVS, "TreedWetland-Mixedwood"))
-#    levels(d$c6)[levels(d$c6) == "TreedWetland-Mixedwood"] <- "TreedFen-Mixedwood"
-
+    if (is.null(d[,col.HABIT]))
+        stop("Shoot -- check the damn HABIT column...")
+    d <- droplevels(d[d[,col.HABIT] != "",])
+    d$HABIT <- reclass(d[,col.HABIT], as.matrix(recl), all=TRUE)
 
     ## designate a label column (there are different column names in use)
     d$LABEL <- d[,col.label]
@@ -147,7 +147,7 @@ HF_fine=TRUE) {
     } else {
         if (is.numeric(col.year)) {
             if (length(col.year) > 1)
-                stop("length of col.yeat > 1")
+                stop("length of col.year > 1")
             THIS_YEAR <- col.year
             d$SampleYear <- THIS_YEAR
         } else {
@@ -160,8 +160,6 @@ HF_fine=TRUE) {
 
     d$ORIGIN_YEAR <- d$Origin_Year
     #d$Origin_Year <- NULL
-    d$HABIT <- d$c6
-    #d$c4 <- NULL
 
     #### Footprint classes:
     ## check if we have all the feature types in the lookup table
@@ -332,8 +330,9 @@ HF_fine=TRUE) {
         "LenT", "LenS", "Li", "Lo", "LtcC", "LtcD", "LtcH", "LtcS", "Ov",
         "Sa", "Sb", "SL", "SwG", "Sy", "TB")
 
-    #d$SOILclass <- d$SOIL_TYPE
-    d$SOILclass <- d$Soil_Type_1
+    if (is.null(d[,col.SOIL]))
+        stop("Shoot -- check the damn SOIL column...")
+    d$SOILclass <- d[,col.SOIL]
     ## need to have the UNKnown class to be able to deal with NAs
     if (!is.factor(d$SOILclass))
         d$SOILclass <- as.factor(d$SOILclass)
