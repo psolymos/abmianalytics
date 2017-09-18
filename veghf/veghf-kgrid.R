@@ -1,8 +1,10 @@
-HF_VERSION <- "2014_fine"
+## values: 2014_fine, 2014_coarse, 2012, 2010_coarse
+HF_VERSION <- "2014v2_coarse"
 
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 
-SCALE <- "qs" # km or qs
+PIXEL <- "km" # km or qs
+SCALE <- paste0(PIXEL, HF_YEAR)
 
 ### Provincial grid (km or QS scale) ---------------------------------------
 
@@ -95,9 +97,9 @@ Start <- c(1, 51, 101, 151, 201, 251, 301, 351, 401, 451,
     501, 551, 601, 651, 701, 751, 802)
 fl <- list.files(file.path(ROOT, VER, "data", "inter", "veghf", SCALE))
 
-SCALE_NOTE <- if (SCALE == "km")
+SCALE_NOTE <- if (PIXEL == "km")
     "1 km x 1 km prediction grid cells" else "QS prediction grid cells"
-COL_LABEL <- if (SCALE == "km")
+COL_LABEL <- if (PIXEL == "km")
     "Row_Col" else "LinkID"
 tmplist <- list()
 for (s in 1:(length(Start)-1)) {
@@ -111,9 +113,14 @@ for (s in 1:(length(Start)-1)) {
     load(f, envir=e)
     d <- e$d
     ## HF year is used as base year for prediction purposes
-    dd <- make_vegHF_wide_v6(d, col.label=COL_LABEL,
-        col.year=HF_YEAR, col.HFyear="YEAR_MineCFOAgCutblock", sparse=TRUE,
-        HF_fine=HF_VERSION=="2014")
+    dd <- make_vegHF_wide_v6(d,
+        col.label=COL_LABEL,
+        col.year=HF_YEAR,
+        col.HFyear="YEAR_MineCFOAgCutblock",
+        col.HABIT="Combined",
+        col.SOIL="Soil_Type",
+        sparse=TRUE,
+        HF_fine=grepl("_fine", HF_VERSION))
     stopifnot(sum(duplicated(colnames(dd$veg_current))) < 1)
     veg_current <- dd$veg_current
     veg_reference <- dd$veg_reference
@@ -131,9 +138,14 @@ for (s in 1:(length(Start)-1)) {
         e <- new.env()
         load(f, envir=e)
         d <- e$d
-        dd <- make_vegHF_wide_v6(d, col.label=COL_LABEL,
-            col.year=HF_YEAR, col.HFyear="YEAR_MineCFOAgCutblock", sparse=TRUE,
-            HF_fine=HF_VERSION=="2014")
+        dd <- make_vegHF_wide_v6(d,
+            col.label=COL_LABEL,
+            col.year=HF_YEAR,
+            col.HFyear="YEAR_MineCFOAgCutblock",
+            col.HABIT="Combined",
+            col.SOIL="Soil_Type",
+            sparse=TRUE,
+            HF_fine=grepl("_fine", HF_VERSION))
         veg_current <- bind_fun2(veg_current, dd$veg_current)
         veg_reference <- bind_fun2(veg_reference, dd$veg_reference)
         soil_current <- bind_fun2(soil_current, dd$soil_current)

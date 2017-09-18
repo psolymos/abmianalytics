@@ -13,27 +13,40 @@ ROOT <- "e:/peter"
 VER <- "AB_data_v2017"
 ## current year
 THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
-HF_YEAR <- 2014 # HF inventory update year
+#HF_YEAR <- 2014 # HF inventory update year
 
 library(mefa4)
 source("~/repos/abmianalytics/R/veghf_functions.R")
 source("~/repos/bamanalytics/R/dataprocessing_functions.R")
 
-if (HF_VERSION == "2014_fine") {
+## this has pasture/cultivation etc differences
+if (HF_VERSION %in% c("2014_fine", "2014v2_fine")) {
     hftypes <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-type-v2014.csv")
     hftypes <- droplevels(hftypes[hftypes$Source=="W2W_HF2014",])
     hfgroups <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-class-v2014.csv")
     hflt <- hfgroups[match(hftypes$HF_GROUP_COMB, hfgroups$HF_GROUP_COMB),]
+    HF_YEAR <- 2014 # HF inventory update year
 }
-if (HF_VERSION == "2014_coarse") {
+## this has NO pasture/cultivation etc differences
+if (HF_VERSION %in% c("2014_coarse", "2014v2_coarse")) {
     hftypes <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-type-v2014.csv")
     hfgroups <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-class-v2014.csv")
     hflt <- hfgroups[match(hftypes$HF_GROUP, hfgroups$HF_GROUP),]
+    HF_YEAR <- 2014 # HF inventory update year
 }
+## this has NO pasture/cultivation etc differences
 if (HF_VERSION == "2012") {
     hftypes <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-type.csv")
     hfgroups <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-class.csv")
     hflt <- hfgroups[match(hftypes$HF_GROUP, hfgroups$HF_GROUP),]
+    HF_YEAR <- 2012 # HF inventory update year
+}
+## this has NO pasture/cultivation etc differences
+if (HF_VERSION == "2010_coarse") {
+    hftypes <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-type-v2014.csv")
+    hfgroups <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-class-v2014.csv")
+    hflt <- hfgroups[match(hftypes$HF_GROUP, hfgroups$HF_GROUP),]
+    HF_YEAR <- 2010 # HF inventory update year
 }
 rownames(hflt) <- hftypes$FEATURE_TY
 
