@@ -1,9 +1,11 @@
 ## values: 2014_fine, 2014_coarse, 2012, 2010_coarse
-HF_VERSION <- "2014v2_coarse"
+#HF_VERSION <- "2014v2_coarse"
+HF_VERSION <- "2010_coarse"
 
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 
 PIXEL <- "km" # km or qs
+#PIXEL <- "qs" # km or qs
 SCALE <- paste0(PIXEL, HF_YEAR)
 
 ### Provincial grid (km or QS scale) ---------------------------------------
@@ -15,7 +17,7 @@ SCALE <- paste0(PIXEL, HF_YEAR)
 fl0 <- list.files(file.path(ROOT, VER, "data", "raw", "veghf", SCALE))
 for (i in seq_len(length(fl0))) {
     fn <- fl0[i]
-    cat("checking", i, "/", length(fl0));flush.console()
+    cat("Saving CSV to Rdata:", i, "/", length(fl0));flush.console()
     f <- file.path(ROOT, VER, "data", "raw", "veghf", SCALE, fn)
     #d <- fread(f)
     d <- read.csv(f)
@@ -28,70 +30,28 @@ for (i in seq_len(length(fl0))) {
 ## check Rdata files
 
 fl0 <- list.files(file.path(ROOT, VER, "data", "inter", "veghf", SCALE))
-SLIVER <- numeric(length(fl0))
 HF <- character(0)
-VEG <- character(0)
-COMB <- character(0)
-VEGissue <- character(0)
-c5 <- character(0)
-A1 <- numeric(length(fl0))
-A2 <- numeric(length(fl0))
-Acomb <- numeric(length(fl0))
-Awetmix <- Awetmix0 <- numeric(length(fl0))
-Awm <- matrix(NA, length(fl0), 3)
 for (i in seq_len(length(fl0))) {
     fn <- fl0[i]
     cat("checking", i, "/", length(fl0), "\n");flush.console()
     f <- file.path(ROOT, VER, "data", "inter", "veghf", SCALE, fn)
     load(f)
-
-    d$c6 <- factor(as.character(d$Combined_ChgByCWCS), VEG_LEVS)
-
-#    Awetmix0[i] <- sum(d$Shape_Area[d$c6 == "TreedWetland-Mixedwood"])
-#    d$c6[d$c6 == "TreedWetland-Mixedwood" & d$CWCS == "Fen"] <- "TreedFen-Mixedwood"
-#    d$c6[d$c6 == "TreedWetland-Mixedwood" & d$CWCS == "Bog"] <- "TreedBog-BSpr"
-#    d$c6[d$c6 == "TreedWetland-Mixedwood" & d$CWCS == "Swamp"] <- "TreedSwamp-Mixedwood"
-#    Awetmix[i] <- sum(d$Shape_Area[d$c6 == "TreedWetland-Mixedwood"])
-    Awm[i,1] <- sum(d$Shape_Area[d$c6 == "TreedFen-Mixedwood"])
-    Awm[i,2] <- sum(d$Shape_Area[d$c6 == "TreedBog-Mixedwood"])
-    Awm[i,3] <- sum(d$Shape_Area[d$c6 == "TreedSwamp-Mixedwood"])
-
-    d2 <- c4_fun(d)
     HF <- sort(union(HF, levels(d$FEATURE_TY)))
-    VEG <- sort(union(VEG, levels(d2$c4)))
-    COMB <- sort(union(COMB, as.character(d$Combined_ChgByCWCS)))
-    A1[i] <- sum(d$Shape_Area)/10^6
-    A2[i] <- sum(d2$Shape_Area)/10^6
-    SLIVER[i] <- sum(d2$Shape_Area[d2$issue > 0])
-    Acomb[i] <- sum(d$Shape_Area[d$Combined_ChgByCWCS == ""])
-    VEGissue <- sort(union(VEGissue, as.character(d2$VEG3)[d2$issue > 0]))
-    d2$c5 <- interaction(d$Veg_Type, d$Moisture_Reg, d$PreBackfill_Source,
-        d$CWCS_Class, drop=TRUE, sep="::")
-    c5 <- sort(union(c5, levels(d2$c5)))
-    #save(d2, file=file.path(ROOT, VER, "data", "kgrid-V6dec", "tiles-rdata-x", fn))
 }
-
 setdiff(HF, c("", rownames(hflt)))
-setdiff(VEG, levels(recl$Combined))
-setdiff(COMB, levels(recl$Combined))
-setdiff(levels(recl$Combined), COMB)
-summary(A1-A2)
-sum(SLIVER,na.rm=TRUE)/10^6
-VEGissue
-sum(Awetmix0,na.rm=TRUE)/10^6
-sum(Awetmix,na.rm=TRUE)/10^6
 
 
-tmp <- strsplit(c5, "::")
-tmp <- do.call(rbind, lapply(tmp, function(z) if (length(z) < 4) c(z, "") else z))
-colnames(tmp) <- c("Veg_Type", "Moisture_Reg", "PreBackfill_Source", "CWCS_Class")
-d5 <- data.frame(Combine4=c5, tmp)
-d5$Combine3 <- interaction(d5$Veg_Type, d5$Moisture_Reg, d5$PreBackfill_Source,
-    drop=TRUE, sep="::")
-d5$Final <- recl$Combined[match(d5$Combine3, recl$Veg_Moist_preBkfSrs)]
-d5$needCWCS <- recl$need_CWCS[match(d5$Combine3, recl$Veg_Moist_preBkfSrs)]
 
 ## processing csv files in batches of 50
+
+if (HF_YEAR == 2014) {
+COL_HABIT <- "Combined"
+COL_SOIL <- "Soil_Type"
+}
+if (HF_YEAR == 2010) {
+COL_HABIT <- "Combined_ChgByCWCS"
+COL_SOIL <- "Soil_Type_1"
+}
 
 Start <- c(1, 51, 101, 151, 201, 251, 301, 351, 401, 451,
     501, 551, 601, 651, 701, 751, 802)
@@ -117,8 +77,8 @@ for (s in 1:(length(Start)-1)) {
         col.label=COL_LABEL,
         col.year=HF_YEAR,
         col.HFyear="YEAR_MineCFOAgCutblock",
-        col.HABIT="Combined",
-        col.SOIL="Soil_Type",
+        col.HABIT=COL_HABIT,
+        col.SOIL=COL_SOIL,
         sparse=TRUE,
         HF_fine=grepl("_fine", HF_VERSION))
     stopifnot(sum(duplicated(colnames(dd$veg_current))) < 1)
@@ -142,8 +102,8 @@ for (s in 1:(length(Start)-1)) {
             col.label=COL_LABEL,
             col.year=HF_YEAR,
             col.HFyear="YEAR_MineCFOAgCutblock",
-            col.HABIT="Combined",
-            col.SOIL="Soil_Type",
+            col.HABIT=COL_HABIT,
+            col.SOIL=COL_SOIL,
             sparse=TRUE,
             HF_fine=grepl("_fine", HF_VERSION))
         veg_current <- bind_fun2(veg_current, dd$veg_current)
@@ -186,14 +146,42 @@ dd1km_pred <- list(
     sample_year = tmplist[[1]]$sample_year,
     scale = SCALE_NOTE)
 
-df <- data.frame(h=colnames(dd1km_pred$veg_current), A=colSums(dd1km_pred$veg_current)/10^6)
-df$P <- round(100*df$A / sum(df$A), 2)
+#df <- data.frame(h=colnames(dd1km_pred$veg_current), A=colSums(dd1km_pred$veg_current)/10^6)
+#df$P <- round(100*df$A / sum(df$A), 2)
 #write.csv(df[,c(1,3,2)], row.names=FALSE,
 #    file=file.path(ROOT, VER, "data", "inter", "veghf","veg6_sums.csv"))
 
 save(dd1km_pred,
     file=file.path(ROOT, VER, "data", "inter", "veghf",
         paste0("veg-hf_", SCALE, "-grid_v6hf", HF_VERSION, "_unsorted.Rdata")))
+
+## fix 0 ages for QS grid
+load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
+if (PIXEL=="km")
+    load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
+if (PIXEL=="qs")
+    load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_qs.Rdata"))
+
+Target0 <- sapply(ages_list, "[[", 1)
+sum(dd1km_pred[[1]][,Target0])/10^6
+sum(dd1km_pred[[2]][,Target0])/10^6
+(Aincr <- sum(dd1km_pred[[1]])/10^6)
+(Ainrf <- sum(dd1km_pred[[2]])/10^6)
+dd1km_pred <- fill_in_0ages_v6(dd1km_pred, kgrid$NSR, ages_list)
+sum(dd1km_pred[[1]][,Target0])/10^6
+sum(dd1km_pred[[2]][,Target0])/10^6
+(Aoutcr <- sum(dd1km_pred[[1]])/10^6)
+(Aoutrf <- sum(dd1km_pred[[2]])/10^6)
+stopifnot(abs(Aincr - Aoutcr) < 0.01)
+stopifnot(abs(Ainrf - Aoutrf) < 0.01)
+
+save(dd1km_pred,
+    file=file.path(ROOT, VER, "data", "inter", "veghf",
+        paste0("veg-hf_", SCALE, "-grid_v6hf", HF_VERSION, "-fixage0.Rdata")))
+
+
+
+
 
 
 ## this has the climate stuff
