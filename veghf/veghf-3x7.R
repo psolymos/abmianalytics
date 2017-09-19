@@ -211,3 +211,20 @@ tmp <- do.call(rbind, lapply(names(yearly_vhf), function(z) {
 
 write.csv(tmp, row.names=FALSE,
     file.path(ROOT, VER, "data", "analysis", "veg-hf_3x7_v6_inOSA.csv"))
+
+## summary by nar teg groups
+
+fosa <- gis$NATURAL_REGIONS
+levels(fosa) <- c("BoShFh", "BoShFh", "BoShFh", "GrPa", "GrPa", "Rockies")
+tmp <- do.call(rbind, lapply(names(yearly_vhf), function(z) {
+    out <- yearly_vhf[[z]]$veg_current
+    out <- as.matrix(groupSums(out, 1, fosa))
+    out <- out[rownames(out) != "OUT",]
+    out <- rbind(out, "All-AB"=colSums(out))
+    out <- 100 * out / rowSums(out)
+    out <- groupSums(out[,ci0], 2, sect)
+    data.frame(Year=as.integer(z), Region=rownames(out), out)
+    }))
+
+write.csv(tmp, row.names=FALSE,
+    file.path(ROOT, VER, "data", "analysis", "veg-hf_3x7_v6_inNRegions.csv"))
