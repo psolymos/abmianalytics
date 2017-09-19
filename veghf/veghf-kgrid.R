@@ -1,6 +1,6 @@
 ## values: 2014_fine, 2014_coarse, 2012, 2010_coarse
-#HF_VERSION <- "2014v2_coarse"
-HF_VERSION <- "2010_coarse"
+HF_VERSION <- "2014v2_coarse"
+#HF_VERSION <- "2010_coarse"
 
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 
@@ -156,11 +156,17 @@ save(dd1km_pred,
         paste0("veg-hf_", SCALE, "-grid_v6hf", HF_VERSION, "_unsorted.Rdata")))
 
 ## fix 0 ages for QS grid
+load(file.path(ROOT, VER, "data", "inter", "veghf",
+    paste0("veg-hf_", SCALE, "-grid_v6hf", HF_VERSION, "_unsorted.Rdata")))
+## AvgAgesNSR, AvgAgesNSROld, AvgAgesNR, AvgAgesNROld, AvgAgesAll, AvgAgesAllOld, ages_list
 load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
 if (PIXEL=="km")
     load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
-if (PIXEL=="qs")
+if (PIXEL=="qs") {
     load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_qs.Rdata"))
+    for (i in 1:4)
+        dd1km_pred[[i]] <- dd1km_pred[[i]][rownames(kgrid),]
+}
 
 Target0 <- sapply(ages_list, "[[", 1)
 sum(dd1km_pred[[1]][,Target0])/10^6
