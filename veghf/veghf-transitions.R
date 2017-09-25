@@ -1,33 +1,51 @@
-HF_VERSION <- "2014_coarse" # load 2014 defs
+## values: 2014_fine, 2014_coarse, 2012, 2010_coarse
+HF_VERSION <- "2014v2_coarse"
+PIXEL <- "km" # km or qs
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
 meta <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
-
-SCALE <- "km"
+SCALE <- paste0(PIXEL, HF_YEAR)
 
 ### Transition for 1K grid ------------------------------------------------
 
 ## this is based on the fix-fire fix-age0 version
 ## label collapsing as desired (swamp/wetland, ages?)
 
-COL_LABEL <- if (SCALE == "km")
+COL_LABEL <- if (PIXEL == "km")
     "Row_Col" else "LinkID"
 
 source("~/repos/abmianalytics/R/veghf_functions.R")
 
-load(file.path(ROOT, VER, "data", "analysis", paste0("kgrid_table_", SCALE, ".Rdata")))
+load(file.path(ROOT, VER, "data", "analysis", paste0("kgrid_table_", PIXEL, ".Rdata")))
 fl <- list.files(file.path(ROOT, VER, "data", "inter", "veghf", SCALE))
 
 cc <- c("Row_Col","VEGAGEclass","VEGHFAGEclass","SOILclass","SOILHFclass","Shape_Area")
 
 Start <- c(0:79*10+1, 802)
 
+SCALE_NOTE <- if (PIXEL == "km")
+    "1 km x 1 km prediction grid cells" else "QS prediction grid cells"
+COL_LABEL <- if (PIXEL == "km")
+    "Row_Col" else "LinkID"
+if (HF_YEAR == 2014) {
+COL_HABIT <- "Combined"
+COL_SOIL <- "Soil_Type"
+}
+if (HF_YEAR == 2010) {
+COL_HABIT <- "Combined_ChgByCWCS"
+COL_SOIL <- "Soil_Type_1"
+}
+
 load(file.path(ROOT, VER, "data", "inter", "veghf", SCALE, fl[1]))
-dd <- make_vegHF_wide_v6(d, col.label=COL_LABEL,
-    col.year=HF_YEAR, col.HFyear="YEAR_MineCFOAgCutblock", sparse=TRUE,
-    HF_fine=HF_VERSION=="2014", wide=FALSE)
-#dd <- make_vegHF_wide(d, col.label="Row_Col",
-#    col.year=HF_YEAR, col.HFyear="CutYear", wide=FALSE)
+dd <- make_vegHF_wide_v6(d,
+        col.label=COL_LABEL,
+        col.year=HF_YEAR,
+        col.HFyear="YEAR_MineCFOAgCutblock",
+        col.HABIT=COL_HABIT,
+        col.SOIL=COL_SOIL,
+        sparse=TRUE,
+        HF_fine=grepl("_fine", HF_VERSION),
+        wide=FALSE)
 ddd0 <- dd[character(0),cc]
 xddd0 <- ddd0
 
@@ -38,11 +56,15 @@ for (s in 1:(length(Start)-1)) {
         flush.console()
         #d <- read.csv(file.path(ROOT, VER, "data", "kgrid", "tiles", fl[i]))
         load(file.path(ROOT, VER, "data", "inter", "veghf", SCALE, fl[i]))
-        dd <- make_vegHF_wide_v6(d, col.label=COL_LABEL,
-            col.year=HF_YEAR, col.HFyear="YEAR_MineCFOAgCutblock", sparse=TRUE,
-            HF_fine=HF_VERSION=="2014", wide=FALSE)
-#        dd <- make_vegHF_wide(d, col.label="Row_Col",
-#            col.year=HF_YEAR, col.HFyear="CutYear", wide=FALSE)
+        dd <- make_vegHF_wide_v6(d,
+            col.label=COL_LABEL,
+            col.year=HF_YEAR,
+            col.HFyear="YEAR_MineCFOAgCutblock",
+            col.HABIT=COL_HABIT,
+            col.SOIL=COL_SOIL,
+            sparse=TRUE,
+            HF_fine=grepl("_fine", HF_VERSION),
+            wide=FALSE)
         if (i == Start[s]) {
             dd0 <- dd[,cc]
         } else {
@@ -62,7 +84,7 @@ for (s in 1:(length(Start)-1)) {
 
 ## -- works on pre-saved chunks
 
-load(file.path(ROOT, VER, "data", "analysis", paste0("kgrid_table_", SCALE, ".Rdata")))
+load(file.path(ROOT, VER, "data", "analysis", paste0("kgrid_table_", PIXEL, ".Rdata")))
 lu <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-V6.csv")
 su <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
 
@@ -91,7 +113,7 @@ fl3 <- list.files(file.path(ROOT, VER, "data", "inter", "veghf", paste0("long_",
 #i <- "LowerAthabasca_CentralMixedwood"
 for (ii in 1:nlevels(kgrid$LUFxNSR)) {
     i <- levels(kgrid$LUFxNSR)[ii]
-    cat("\n---------", i)
+    cat("\n---------\nStarting", i, "-", ii, "of", nlevels(kgrid$LUFxNSR))
     #j <- 4
     units <- list()
     sunits <- list()
