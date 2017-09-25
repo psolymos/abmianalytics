@@ -1,8 +1,12 @@
 library(mefa4)
 
 ROOT <- "e:/peter/AB_data_v2016"
-OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1-josmshf"
-OUTDIRB <- "e:/peter/AB_data_v2016/out/birds/predB-josmshf"
+#OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1-josmshf"
+#OUTDIRB <- "e:/peter/AB_data_v2016/out/birds/predB-josmshf"
+STAGE <- list(veg = 6) # hab=5, hab+clim=6, hab+clim+shf=7
+
+OUTDIR1 <- paste0("e:/peter/josm/2017/stage", STAGE$veg, "/pred1")
+OUTDIRB <- paste0("e:/peter/josm/2017/stage", STAGE$veg, "/predB")
 
 
 load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
