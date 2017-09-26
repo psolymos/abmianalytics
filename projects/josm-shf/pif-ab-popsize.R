@@ -193,25 +193,26 @@ for (spp in SPP) {
     pr_off <- pr_fun_for_gof(est7, Xn_offroad, off=off1sp)
     roadside_bias[[spp]] <- c(on=mean(pr_on), off=mean(pr_off), onoff=mean(pr_on)/mean(pr_off))
 }
-roadside_bias <- do.call(rbind, roadside_bias)
-roadside_bias$spp <- SPP
-write.csv(roadside_bias, row.names=FALSE, file="~/Dropbox/bam/PIF-AB/results/roadside_bias.csv")
+rsb <- data.frame(do.call(rbind, roadside_bias))
+rsb$spp <- SPP
+write.csv(rsb, row.names=FALSE, file="~/Dropbox/bam/PIF-AB/results/roadside_bias.csv")
 #save(roadside_bias, file=file.path(ROOT, "josmshf", "roadside_bias.Rdata"))
 
 ## roadside avoidance index
 rai_data <- data.frame(HAB=xn$hab1ec, ROAD=xn$ROAD01)
-rai_pred <- matrix(0, nrow(Xnn), nrow(tax))
+rai_pred <- matrix(0, nrow(Xn), nrow(tax))
 rownames(rai_pred) <- rownames(rai_data) <- rownames(xn)
-colnames(rai_pred) <- rownames(tax)
+colnames(rai_pred) <- SPP
 for (spp in SPP) {
     cat(spp, "\n");flush.console()
     off1sp <- OFF[,spp]
-    resn <- loadSPP(file.path(ROOT, "results", "josmshf",
+    resn <- loadSPP(file.path(ROOT, "out", "birds", "results", "josmshf",
         paste0("birds_abmi-josmshf_", spp, ".Rdata")))
     est7 <- getEst(resn, stage=7, na.out=FALSE, Xn)
     rai_pred[,spp] <- pr_fun_for_gof(est7, Xn, off=off1sp)
 }
-save(rai_pred, rai_data, file=file.path(ROOT, "josmshf", "roadside_avoidance.Rdata"))
+save(roadside_bias, rai_pred, rai_data,
+    file="e:/peter/josm/2017/roadside_avoidance.Rdata")
 
 
 ## ---
@@ -294,4 +295,5 @@ with(pop, text(RAI, log(DeltaRes), rownames(pop), cex=0.75))
 
 boxplot(pop[,c("Npif", "Nqpad")], ylim=c(0,10))
 
+## --- making the figures ---
 
