@@ -76,7 +76,6 @@ x14v1 <- x14v1[,rownames(groups)]
 
 get_z <- function(x) {
     rs <- rowSums(x)
-    # match here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     gs <- groupSums(x[,groups$IS_HF], 2, groups$VEGHF[groups$IS_HF])
     100 * gs / rs
 }
@@ -241,3 +240,130 @@ rast_pl("Total HF", r=rr, main=paste("v2-v1\n", "Total HF"), NR=NR)
 par(op)
 dev.off()
 
+## compare km and qs based results
+
+library(mefa4)
+library(rgdal)
+library(rgeos)
+library(sp)
+library(gstat)
+library(raster)
+
+f1 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_coarse-fixage0.Rdata"
+f2 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_qs2014-grid_v6hf2014v2_coarse-fixage0.Rdata"
+#f1 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2010_coarse-fixage0.Rdata"
+#f2 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_qs2014-grid_v6hf2010_coarse-fixage0.Rdata"
+
+e <- new.env()
+load(f1, envir=e)
+v1 <- e$dd1km_pred$veg_current
+s1 <- e$dd1km_pred$soil_current
+e <- new.env()
+load(f2, envir=e)
+v2 <- e$dd1km_pred$veg_current
+s2 <- e$dd1km_pred$soil_current
+
+#CC <- grep("CC", colnames(v1))
+#v1[,"CutBlocks"] <- rowSums(v1[,CC])
+#v2[,"CutBlocks"] <- rowSums(v2[,CC])
+v1 <- v1[,colnames(v1) != "CutBlocks"]
+v2 <- v2[,colnames(v2) != "CutBlocks"]
+
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-V6.csv")
+ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
+ts <- ts[colnames(s1),]
+all(colnames(v1) == colnames(v2))
+all(colnames(v1) == rownames(tv))
+all(colnames(s1) == colnames(s2))
+all(colnames(s1) == rownames(ts))
+
+e <- new.env()
+load(file.path("e:/peter/AB_data_v2017", "data", "analysis", "kgrid_table_km.Rdata"), envir=e)
+k1 <- e$kgrid
+k1 <- k1[rownames(v1),]
+all(rownames(v1) == rownames(k1))
+all(rownames(s1) == rownames(k1))
+
+e <- new.env()
+load(file.path("e:/peter/AB_data_v2017", "data", "analysis", "kgrid_table_qs.Rdata"), envir=e)
+k2 <- e$kgrid
+all(rownames(v2) == rownames(k2))
+all(rownames(s2) == rownames(k2))
+
+xy1 <- k1
+coordinates(xy1) <- ~ POINT_X + POINT_Y
+proj4string(xy1) <-
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+xy2 <- k2
+coordinates(xy2) <- ~ POINT_X + POINT_Y
+proj4string(xy2) <-
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+rt <- raster(file.path("e:/peter/AB_data_v2016", "data", "kgrid", "AHM1k.asc"))
+crs <- CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+projection(rt) <- crs
+xy1 <- spTransform(xy1, crs)
+xy2 <- spTransform(xy2, crs)
+mat0 <- as.matrix(rt)
+#matR <- as.matrix(Xtab(ifelse(kgrid$NRNAME=="Rocky Mountain", 1, 0) ~ Row + Col, kgrid))
+
+v1 <- v1 / rowSums(v1)
+v2 <- v2 / rowSums(v2)
+s1 <- s1 / rowSums(s1)
+s2 <- s2 / rowSums(s2)
+
+dfun <- function(j) {
+    d <- sqrt((coordinates(xy2)[j,1] - coordinates(xy1)[,1])^2 +
+        (coordinates(xy2)[j,2] - coordinates(xy1)[,2])^2)
+    which.min(d)
+}
+#k2$nearest <- pbapply::pbsapply(1:nrow(k2), dfun)
+
+rast1 <- function(i, x) {
+    val <- as.numeric(x[,i])
+    mat <- as.matrix(Xtab(val ~ Row + Col, k1))
+    mat[is.na(mat0)] <- NA
+    raster(x=mat, template=rt)
+}
+
+dv <- v2
+dv[] <- 0
+#i <- "MixedwoodR"
+for (i in colnames(v1)) {
+    cat(i, which(i == colnames(v1)), "/", length(colnames(v1)), "\n")
+    flush.console()
+    rv1 <- rast1(i, v1)
+
+#    xy2@data$VALUE <- v2[,i]
+#    rv2 <- rasterize(xy2, rv1, "VALUE")
+#    rvd     <- rv2 - rv1
+
+    v1on2 <- extract(rv1, xy2)
+    d <- v2[,i] - v1on2
+    d[is.na(d)] <- 0
+    d[d < 1/100] <- 0
+    dv[,i] <- d
+}
+qv <- t(apply(dv, 2, quantile, c(0.01, 0.05, 0.1, 0.9, 0.95, 0.99)))
+
+ds <- s2
+ds[] <- 0
+for (i in colnames(s1)) {
+    cat(i, which(i == colnames(s1)), "/", length(colnames(s1)), "\n")
+    flush.console()
+    rs1 <- rast1(i, s1)
+
+#    xy2@data$VALUE <- s2[,i]
+#    rs2 <- rasterize(xy2, rs1, "VALUE")
+#    rsd <- rs2 - rs1
+
+    s1on2 <- extract(rs1, xy2)
+    d <- s2[,i] - s1on2
+    d[is.na(d)] <- 0
+    d[d < 1/100] <- 0
+    ds[,i] <- d
+}
+
+apply(ds, 2, summary)
+qs <- t(apply(ds, 2, quantile, c(0.01, 0.05, 0.1, 0.9, 0.95, 0.99)))

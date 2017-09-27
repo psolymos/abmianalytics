@@ -28,7 +28,7 @@ tax <- droplevels(TAX[SPP,])
 
 ## --- calculating total pop size based on predictions ---
 
-STAGE <- list(veg = 5) # hab=5, hab+clim=6, hab+clim+shf=7
+STAGE <- list(veg = 7) # hab=5, hab+clim=6, hab+clim+shf=7
 
 OUTDIR1 <- paste0("e:/peter/josm/2017/stage", STAGE$veg, "/pred1")
 OUTDIRB <- paste0("e:/peter/josm/2017/stage", STAGE$veg, "/predB")
@@ -45,13 +45,13 @@ kgrid$useN[kgrid$NSRNAME == "Dry Mixedwood" & kgrid$POINT_Y > 56.7] <- TRUE
 kgrid$useS <- kgrid$NRNAME == "Grassland"
 kgrid$useBCR6 <- kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS"
 
+AREA_ha <- (1-kgrid$pWater) * kgrid$Area_km2 * 100
+AREA_ha <- AREA_ha[kgrid$useBCR6]
+
 PREDS <- matrix(0, sum(kgrid$useBCR6), length(SPP))
 rownames(PREDS) <- rownames(kgrid)[kgrid$useBCR6]
 colnames(PREDS) <- SPP
 PREDS0 <- PREDS
-
-AREA_ha <- (1-kgrid$pWater) * kgrid$Area_km2 * 100
-AREA_ha <- AREA_ha[kgrid$useBCR6]
 
 for (spp in SPP) {
     cat(spp, "--------------------------------------\n");flush.console()
@@ -70,6 +70,31 @@ for (spp in SPP) {
 }
 N <- colSums(PREDS*AREA_ha) / 10^6
 save(AREA_ha, N, PREDS, PREDS0, file=file.path(OUTDIR1, "predictions.Rdata"))
+
+## getting CIs for Stage 7
+
+ssRegs <- gsub("\\.Rdata", "", list.files(file.path(OUTDIR1, SPP[1])))
+PREDSCI <- array(0, c(length(ssRegs), length(SPP), 100))
+dimnames(PREDSCI) <- list(ssRegs, SPP, NULL)
+PREDSCI0 <- PREDSCI
+AA <- (1-kgrid$pWater) * kgrid$Area_km2 * 100
+names(AA) <- rownames(kgrid)
+
+for (i in ssRegs) {
+    cat(i, "--------------------------------------\n");flush.console()
+    for (spp in SPP) {
+        cat(i, spp, "\n");flush.console()
+        e <- new.env()
+        load(file.path(OUTDIRB, spp, paste0(i, ".Rdata")), envir=e)
+        pxNcr <- e$pxNcrB
+        pxNrf <- e$pxNrfB
+        rownames(pxNcr) <- rownames(pxNrf) <- names(e$Cells)
+        PREDSCI[i,spp,] <- colSums(pxNcr*AA[names(e$Cells)])
+        PREDSCI0[i,spp,] <- colSums(pxNrf*AA[names(e$Cells)])
+    }
+}
+save(PREDSCI, PREDSCI0, file=file.path(OUTDIRB, "predictionsCI.Rdata"))
+
 
 ## looking at results
 

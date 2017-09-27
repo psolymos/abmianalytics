@@ -152,6 +152,9 @@ table(lxn$NRNAME, lxn$S)
 lxn <- lxn[regs,]
 all(rownames(Aveg) == regs)
 all(rownames(Asoil) == regs)
+
+## check Area when defining a subregion !!! ------ !!!
+
 AvegN <- colSums(Aveg[lxn$N,])
 AvegN <- AvegN / sum(AvegN)
 AsoilS <- colSums(Asoil[lxn$S,])
