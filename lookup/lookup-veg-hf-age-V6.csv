@@ -1,4 +1,4 @@
-VEGHFAGE_FINE,VEGHFAGE,AGE,VEGHF,PERCENT1HA,IS_HF,ETA_UseInAnalysis,ETA_UseInAnalysis_Sector,
+VEGHFAGE_FINE,VEGHFAGE,AGE,VEGHF,PERCENT1HA,IS_HF,ETA_UseInAnalysis,ETA_UseInAnalysis_Sector
 Decid0,Decid0,Decid0,NA,Decid,0,FALSE,Deciduous5,Deciduous5
 DecidR,DecidR,DecidR,R,Decid,0.51,FALSE,DeciduousR,DeciduousR
 Decid1,Decid1,Decid1,1,Decid,0.32,FALSE,Deciduous1,Deciduous1
@@ -53,7 +53,7 @@ TreedBog5,TreedBog5,TreedBog5,5,TreedBog,1.84,FALSE,BlackSpruce5,BlackSpruce5
 TreedBog6,TreedBog6,TreedBog6,6,TreedBog,0.83,FALSE,BlackSpruce6,BlackSpruce6
 TreedBog7,TreedBog7,TreedBog7,7,TreedBog,0.76,FALSE,BlackSpruce7,BlackSpruce7
 TreedBog8,TreedBog8,TreedBog8,8,TreedBog,0.29,FALSE,BlackSpruce8,BlackSpruce8
-TreedBog9,TreedBog9,TreedBog9,9,TreedBog,0.28,FALSE,BlackSpruce9,BlackSpruce8
+TreedBog9,TreedBog9,TreedBog9,9,TreedBog,0.28,FALSE,BlackSpruce8,BlackSpruce8
 TreedFen0,TreedFen0,TreedBog0,NA,TreedFen,0,FALSE,TreedFen,TreedFen
 TreedFenR,TreedFenR,TreedBogR,R,TreedFen,0.27,FALSE,TreedFen,TreedFen
 TreedFen1,TreedFen1,TreedBog1,1,TreedFen,0.17,FALSE,TreedFen,TreedFen
