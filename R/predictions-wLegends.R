@@ -707,9 +707,11 @@ tr_res[[spp]] <- list(N=cbind(rf=ThbNrf, cr=ThbNcr), S=cbind(rf=ThbSrf, cr=ThbSc
 save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables",
     "sector-effects-new-seismic-as-ES-OSA.Rdata"))
 #save(seff_res, tr_res, file=file.path(ROOT, "out", "birds", "tables", "sector-effects-new-shf.Rdata"))
+
+
 #load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-bf.Rdata"))
-#load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-ES.Rdata"))
-load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-ES-OSA.Rdata"))
+load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-ES.Rdata"))
+#load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-seismic-as-ES-OSA.Rdata"))
 #load(file.path(ROOT, "out", "birds", "tables", "sector-effects-new-shf.Rdata"))
 
 #spp <- "ALFL"
@@ -773,14 +775,10 @@ sres_inHF <- list()
 for (spp in names(seff_res)) {
     nres[[spp]] <- 100*c(PopEffect=seff_res[[spp]]$N[,2], UnitEffect=seff_res[[spp]]$N[,3])
     sres[[spp]] <- 100*c(PopEffect=seff_res[[spp]]$S[,2], UnitEffect=seff_res[[spp]]$S[,3])
-
-    TOTALS <- if (WHERE=="north")
-        tr_res[[spp]]$total[c("Ntot_All", "Ntot_HFonly")] else tr_res[[spp]]$total[c("Stot_All", "Stot_HFonly")]
-    SCALING <- if (restrict_to_HF)
-        TOTALS[1]/TOTALS[2] else 1
-    nres_inHF[[spp]] <- 100*c(PopEffect=seff_res[[spp]]$N[,2], UnitEffect=seff_res[[spp]]$N[,3])
-    sres_inHF[[spp]] <- 100*c(PopEffect=seff_res[[spp]]$S[,2], UnitEffect=seff_res[[spp]]$S[,3])
-
+    TOTALSn <- tr_res[[spp]]$total[c("Ntot_All", "Ntot_HFonly")]
+    TOTALSs <- tr_res[[spp]]$total[c("Stot_All", "Stot_HFonly")]
+    nres_inHF[[spp]] <- nres[[spp]] * TOTALSn[1]/TOTALSn[2]
+    sres_inHF[[spp]] <- sres[[spp]] * TOTALSs[1]/TOTALSs[2]
 }
 nres <- do.call(rbind, nres)
 sres <- do.call(rbind, sres)
@@ -793,11 +791,43 @@ nres_inHF <- data.frame(Species=tax[rownames(nres), "English_Name"], nres_inHF)
 sres_inHF <- data.frame(Species=tax[rownames(sres), "English_Name"], sres_inHF)
 
 ## keep only spp that are OK
-
-write.csv(nres, row.names=FALSE,
+splt <- read.csv("~/repos/abmispecies/_data/birds.csv")
+rownames(splt) <- splt$AOU
+splt <- splt[names(seff_res),]
+write.csv(nres[splt$veghf.north,], row.names=FALSE,
     file=file.path(ROOT, "out", "birds", "tables", "Birds_SectorEffects_North-as-ES.csv"))
-write.csv(sres, row.names=FALSE,
+write.csv(sres[splt$soilhf.south,], row.names=FALSE,
     file=file.path(ROOT, "out", "birds", "tables", "Birds_SectorEffects_South-as-ES.csv"))
+write.csv(nres_inHF[splt$veghf.north,], row.names=FALSE,
+    file=file.path(ROOT, "out", "birds", "tables", "Birds_SectorEffects_North-as-ES_inHF.csv"))
+write.csv(sres_inHF[splt$soilhf.south,], row.names=FALSE,
+    file=file.path(ROOT, "out", "birds", "tables", "Birds_SectorEffects_South-as-ES_inHF.csv"))
+
+source("~/repos/abmianalytics/projects/10-yr/ch4-functions.R")
+
+ylim=c(-100,100)
+pdf(file.path(ROOT, "out", "birds", "tables", "Birds_SectorEffects_NandS.pdf"), height=12, width=12)
+par(las=1, mfrow=c(2,2))
+tmp <- nres[splt$veghf.north,2:6]
+colnames(tmp) <- gsub("PopEffect\\.", "", colnames(tmp))
+vp(tmp, main="Sector Effects, Birds - North", ylim=ylim)
+abline(h=0, lty=2)
+
+tmp <- sres[splt$soilhf.south,2:6]
+colnames(tmp) <- gsub("PopEffect\\.", "", colnames(tmp))
+vp(tmp, main="Sector Effects, Birds - South", ylim=ylim)
+abline(h=0, lty=2)
+
+tmp <- nres_inHF[splt$veghf.north,2:6]
+colnames(tmp) <- gsub("PopEffect\\.", "", colnames(tmp))
+vp(tmp, main="Sector Effects (HF only), Birds - North", ylim=ylim)
+abline(h=0, lty=2)
+
+tmp <- sres_inHF[splt$soilhf.south,2:6]
+colnames(tmp) <- gsub("PopEffect\\.", "", colnames(tmp))
+vp(tmp, main="Sector Effects (HF only), Birds - South", ylim=ylim)
+abline(h=0, lty=2)
+dev.off()
 
 for (spp in SPP) {
 cat(spp, "\n");flush.console()
