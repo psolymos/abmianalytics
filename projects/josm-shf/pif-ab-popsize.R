@@ -26,6 +26,16 @@ fln <- sub(".Rdata", "", fln)
 SPP <- fln
 tax <- droplevels(TAX[SPP,])
 
+if (FALSE) {
+source("~/Dropbox/courses/st-johns-2017/R/diagnostics-functions.R")
+xn$counts <- as.numeric(yy[,"ALFL"])
+xn$counts01 <- ifelse(xn$counts>0, 1, 0)
+plot(counts ~ wtAge + pAspen + ClosedCanopy + pWater + X + Y +
+    xPET + xAHM + Succ_KM + Alien_KM, xn, B=0)
+siplot(counts01 ~ wtAge + pAspen + ClosedCanopy + pWater + X + Y +
+    xPET + xAHM + Succ_KM + Alien_KM, xn, B=0)
+}
+
 ## --- calculating total pop size based on predictions ---
 
 STAGE <- list(veg = 7) # hab=5, hab+clim=6, hab+clim+shf=7
@@ -200,27 +210,32 @@ AUC$k7 <- (AUC$auc7i-AUC$auc0i) / (1-AUC$auc0i)
 AUC$spp <- rownames(AUC)
 
 write.csv(AUC, row.names=FALSE, file="~/Dropbox/bam/PIF-AB/results/AUC.csv")
+write.csv(NN, row.names=FALSE, file="~/Dropbox/bam/PIF-AB/results/PopSize567.csv")
 
 
 ## road effects
 
+pr_fun_for_road <- function(est, X0, X1) {
+    lam1 <- exp(apply(est, 1, function(z) X1 %*% z))
+    Lam1 <- unname(colMeans(lam1))
+    lam0 <- exp(apply(est, 1, function(z) X0 %*% z))
+    Lam0 <- unname(colMeans(lam0))
+    out <- rbind(Lam1, Lam0, Ratio=Lam1 / Lam0)
+    cbind(mean=rowMeans(out), t(apply(out, 1, quantile, c(0.5, 0.025, 0.975))))
+}
 roadside_bias <- list()
 Xn_onroad <- Xn_offroad <- Xn[Xn[,"ROAD01"] == 1,]
 Xn_offroad[,c("ROAD01","habCl:ROAD01")] <- 0
 for (spp in SPP) {
     cat(spp, "\n");flush.console()
-    off1sp <- OFF[,spp]
-    off1sp <- off1sp[Xn[,"ROAD01"] == 1]
     resn <- loadSPP(file.path(ROOT, "out", "birds", "results", "josmshf",
         paste0("birds_abmi-josmshf_", spp, ".Rdata")))
     est7 <- getEst(resn, stage=7, na.out=FALSE, Xn)
-    pr_on <- pr_fun_for_gof(est7, Xn_onroad, off=off1sp)
-    pr_off <- pr_fun_for_gof(est7, Xn_offroad, off=off1sp)
-    roadside_bias[[spp]] <- c(on=mean(pr_on), off=mean(pr_off), onoff=mean(pr_on)/mean(pr_off))
+    roadside_bias[[spp]] <- pr_fun_for_road(est7, X0=Xn_offroad, X1=Xn_onroad)
 }
-rsb <- data.frame(do.call(rbind, roadside_bias))
-rsb$spp <- SPP
-write.csv(rsb, row.names=FALSE, file="~/Dropbox/bam/PIF-AB/results/roadside_bias.csv")
+#rsb <- data.frame(do.call(rbind, roadside_bias))
+#rsb$spp <- SPP
+#write.csv(rsb, row.names=FALSE, file="~/Dropbox/bam/PIF-AB/results/roadside_bias.csv")
 #save(roadside_bias, file=file.path(ROOT, "josmshf", "roadside_bias.Rdata"))
 
 ## roadside avoidance index
@@ -230,73 +245,104 @@ rownames(rai_pred) <- rownames(rai_data) <- rownames(xn)
 colnames(rai_pred) <- SPP
 for (spp in SPP) {
     cat(spp, "\n");flush.console()
-    off1sp <- OFF[,spp]
     resn <- loadSPP(file.path(ROOT, "out", "birds", "results", "josmshf",
         paste0("birds_abmi-josmshf_", spp, ".Rdata")))
     est7 <- getEst(resn, stage=7, na.out=FALSE, Xn)
-    rai_pred[,spp] <- pr_fun_for_gof(est7, Xn, off=off1sp)
+    rai_pred[,spp] <- pr_fun_for_gof(est7, Xn, off=0)
 }
 save(roadside_bias, rai_pred, rai_data,
     file="e:/peter/josm/2017/roadside_avoidance.Rdata")
 
 
-## ---
-
+## --- unifying the bits and pieces ---
 
 ## PIF table
 pif <- read.csv("~/Dropbox/bam/PIF-AB/popBCR-6AB_v2_22-May-2013.csv")
 mefa4::compare_sets(tax$English_Name, pif$Common_Name)
 setdiff(tax$English_Name, pif$Common_Name)
 pif <- pif[match(tax$English_Name, pif$Common_Name),]
+rownames(pif) <- rownames(tax)
 
+AUC <- read.csv("~/Dropbox/bam/PIF-AB/results/AUC.csv")
+rownames(AUC) <- AUC$spp
+AUC$spp <- NULL
+AUC <- AUC[rownames(tax),]
 
-## roadside_bias
-load(file.path(ROOT, "out", "birds", "josmshf", "roadside_bias.Rdata"))
+NN <- read.csv("~/Dropbox/bam/PIF-AB/results/PopSize567.csv")
+rownames(NN) <- NN$spp
+NN$spp <- NULL
+NN <- NN[rownames(tax),]
 
-load(file.path(ROOT, "out", "birds", "data", "mean-qpad-estimates.Rdata"))
+load("e:/peter/josm/2017/stage7/predB/predictionsCI.Rdata")
+rm(PREDSCI0)
+PREDSCI <- PREDSCI[,rownames(tax),] / 10^6
+N7B <- apply(PREDSCI, 2, colSums)
+N7CI <- t(apply(N7B, 2, quantile, c(0.5, 0.025, 0.975)))
+
+load("e:/peter/AB_data_v2016/out/birds/data/mean-qpad-estimates.Rdata")
 qpad_vals <- qpad_vals[rownames(tax),]
 
-## roadside avoidance
-library(mefa4)
-load(file.path(ROOT, "out", "birds", "josmshf", "roadside_avoidance.Rdata"))
+## roadside_bias, rai_pred, rai_data
+load("e:/peter/josm/2017/roadside_avoidance.Rdata")
+
+#rsb <- read.csv("~/Dropbox/bam/PIF-AB/results/roadside_bias.csv")
+#rownames(rsb) <- rsb$spp
+#rsb$spp <- NULL
+#rsb <- rsb[rownames(tax),]
+rsb <- t(sapply(roadside_bias, function(z) z[,1]))
+rsbCI <- t(sapply(roadside_bias, function(z) z["Ratio",]))
+
 tmp <- cbind(ROAD=rai_data$ROAD, rai_pred)
-rai <- groupSums(tmp[BBn[,1],], 1, rai_data$HAB[BBn[,1]], TRUE)
+rai <- groupSums(tmp[BB[,1],], 1, rai_data$HAB[BB[,1]], TRUE)
 rai <- t(t(rai) / colSums(rai))
-RAI <- 1 - colSums(rai[,1] * rai)
-summary(RAI)
-RAIc <- RAI-RAI["ROAD"]
+RAI0 <- 1 - colSums(rai[,1] * rai)
+summary(RAI0)
+RAI <- log(RAI0)-log(RAI0["ROAD"])
+RAIc <- RAI0-RAI0["ROAD"]
 
-#yy <- cbind(ALL=1, ROAD=xnn[BBn[,1],"ROAD01"],
-#    ifelse(as.matrix(yyn[BBn[,1],]) > 0, 1, 0))
-#rai <- groupSums(yy, 1, xnn$hab1[BBn[,1]], TRUE)
-#n <- rai[,"ALL"]
-#rai <- rai[,-1]
-#rai <- t(t(rai) / colSums(rai))
-#sai <- groupSums(yy, 1, xnn$hab1[BBn[,1]], TRUE)
-#RAI <- 1 - colSums(rai[,1] * rai)
-
+## taxonomy etc
 pop <- tax[,c("Species_ID", "English_Name", "Scientific_Name", "Spp")]
+## roadside related metrics
 pop$RAI <- RAI[match(rownames(pop), names(RAI))]
-pop$RAIc <- RAIc[match(rownames(pop), names(RAIc))]
-pop$RAIroad <- RAI["ROAD"]
-pop$Don <- roadside_bias[rownames(pop), "on"]
-pop$Doff <- roadside_bias[rownames(pop), "off"]
-pop$DeltaRoad <- roadside_bias[rownames(pop), "onoff"]
-pop$Nqpad <- colSums(PREDS*AREA_ha) / 10^6 # M males
-pop$Nqpad[pop$Nqpad > 1000] <- NA
-pop$Npif <- (pif$Pop_Est / pif$Pair_Adjust) / 10^6 # M males
-pop$DeltaObs <- pop$Nqpad / pop$Npif
+pop$RAIc <- RAIc[match(rownames(pop), names(RAI))]
+pop$Don <- rsb[,"Lam1"]
+pop$Doff <- rsb[,"Lam0"]
+pop$DeltaRoad <- rsb[,"Ratio"]
+pop$DeltaRoadLo <- rsbCI[,"2.5%"]
+pop$DeltaRoadHi <- rsbCI[,"97.5%"]
+## pop size estimates
+pop$Nqpad7mean <- NN$N7 # M males
+pop$Nqpad7median <- N7CI[,"50%"]
+pop$Nqpad7lo <- N7CI[,"2.5%"]
+pop$Nqpad7hi <- N7CI[,"97.5%"]
+pop$Npif <- (pif$Population_Estimate_unrounded / pif$Pair_Adjust) / 10^6 # M males
+## Tadj and EDR/MDD
 pop$TimeAdj <- pif$Time_Adjust
 pop$MDD <- pif$Detection_Distance_m
 pop$p3 <- 1-exp(-3 * qpad_vals$phi0)
-pop$EDR <- qpad_vals$phi0 * 100
+pop$EDR <- qpad_vals$tau * 100
+#pop$p3 <- 1-exp(-3 * qpad_vals$phi0)
+#pop$EDR <- qpad_vals$tau * 100
+## Deltas
+pop$DeltaObs <- pop$Nqpad7mean / pop$Npif
 pop$DeltaTime <- (1/pop$p3)/pop$TimeAdj
 pop$DeltaDist <- pop$MDD^2 / pop$EDR^2
 pop$DeltaExp <- pop$DeltaRoad * pop$DeltaTime * pop$DeltaDist
 pop$DeltaRes <- pop$DeltaObs / pop$DeltaExp
-pop <- pop[rowSums(is.na(pop))==0,]
+## QAQC
+pop$AUCin <- AUC$auc7i
+pop$AUCout <- AUC$auc7o
+pop$k7 <- AUC$k7
+pop$DataQ <- pif$Data_Quality_Rating
+pop$BbsVar <- pif$BBS_Variance_Rating
+pop$SpSamp <- pif$Species_Sample_Rating
 
-#write.csv(pop, row.names=FALSE, file="~/Dropbox/bam/PIF-AB/qpad-pif-results.csv")
+pop <- droplevels(pop[rowSums(is.na(pop))==0,])
+pop <- pop[sort(rownames(pop)),]
+summary(pop)
+write.csv(pop, row.names=FALSE, file="~/Dropbox/bam/PIF-AB/qpad-pif-results.csv")
+
+## --- making the figures ---
 
 boxplot(log(pop[,c("DeltaRoad", "DeltaTime", "DeltaDist", "DeltaRes")]))
 abline(h=0, col=2)
@@ -304,21 +350,58 @@ abline(h=0, col=2)
 boxplot(log(pop[,c("DeltaObs", "DeltaExp")]))
 abline(h=0, col=2)
 
+
+dots_box_plot <- function(mat, ylab="", ...) {
+    rnd <- runif(nrow(mat), -0.1, 0.1)
+    boxplot(mat, range=0, ylab=ylab)
+    for (i in 2:ncol(mat))
+        segments(x0=i+rnd-1, x1=i+rnd, y0=mat[,i-1], y1=mat[,i], col="lightgrey")
+    for (i in 1:ncol(mat))
+        points(i+rnd, mat[,i], pch=19, ...)
+    boxplot(mat, range=0, add=TRUE, col="#ff000020")
+    invisible(NULL)
+}
+
+Col <- c("beige", "yellow", "orange")[pop$DataQ]
 mat <- log(pop[,c("DeltaObs", "DeltaExp", "DeltaRoad", "DeltaTime", "DeltaDist", "DeltaRes")])
-rnd <- runif(nrow(pop), -0.1, 0.1)
-boxplot(mat, range=0)
-for (i in 2:ncol(mat))
-    segments(x0=i+rnd-1, x1=i+rnd, y0=mat[,i-1], y1=mat[,i], col="lightgrey")
-for (i in 1:ncol(mat))
-    points(i+rnd, mat[,i], col="darkgrey", pch=19)
+colnames(mat) <- c("Obs", "Exp", "Road", "Time", "Dist", "Res")
+dots_box_plot(mat, col="grey", ylab=expression(log(Delta)))
 abline(h=0, col=2, lwd=2)
-boxplot(mat, range=0, add=TRUE)
 
-with(pop, plot(RAI, log(DeltaRes), type="n"))
-abline(h=0, v=RAI["ROAD"], col=2, lwd=2)
-with(pop, text(RAI, log(DeltaRes), rownames(pop), cex=0.75))
+mat2 <- pop[,c("Npif", "Nqpad7mean")]
+colnames(mat2) <- c("PIF", "QPAD")
+dots_box_plot(mat2, col="grey", "Population Size (M singing inds.)")
 
-boxplot(pop[,c("Npif", "Nqpad")], ylim=c(0,10))
+library(intrval)
+table(OVER <- pop$Npif %[]% pop[,c("Nqpad7lo", "Nqpad7hi")])
+rownames(pop)[OVER]
 
-## --- making the figures ---
+#v <- tanh(pop$RAI * 0.5)
+#v <- plogis(pop$RAI)*2-1
+#v <- pop$RAI
+Cex <- log(pop$DeltaObs)
+names(Cex) <- rownames(pop)
+br <- c(-Inf, -2, -1, -0.1, 0.1, 1, 2, Inf)
+Col <- colorRampPalette(c("red", "black", "blue"))(7)[cut(Cex, br)]
+names(Col) <- rownames(pop)
 
+with(pop, plot(RAI, log(DeltaRes), type="n", xlim=c(-0.4, 0.4), ylim=c(-10,10),
+    ylab=expression(log(Delta[Res])), xlab="Road Avoidance Index"))
+abline(h=0, v=0, col=1, lwd=1, lty=2)
+abline(lm(log(DeltaRes) ~ RAI, pop), col=1)
+with(pop, text(RAI, log(DeltaRes), rownames(pop),
+    cex=0.8, col=Col))
+legend("topleft", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
+
+
+o <- cca(rai)
+plot(0,type="n", xlim=c(-1,1), ylim=c(-1,1))
+s1 <- scores(o)$species
+s1 <- s1 / max(abs(s1))
+text(s1[names(Col),], labels=colnames(rai),cex=0.75, col=Col)
+s2 <- scores(o)$sites
+s2 <- s2 / max(abs(s2))
+text(s2, labels=rownames(rai),cex=1,col=3)
+points(s1[1,,drop=F],pch=3,col=4,cex=5)
+abline(h=0,v=0,lty=2)
+legend("topleft", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
