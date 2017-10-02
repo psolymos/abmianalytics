@@ -57,6 +57,7 @@ kgrid$useBCR6 <- kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS"
 
 AREA_ha <- (1-kgrid$pWater) * kgrid$Area_km2 * 100
 AREA_ha <- AREA_ha[kgrid$useBCR6]
+names(AREA_ha) <- rownames(kgrid)[kgrid$useBCR6]
 
 PREDS <- matrix(0, sum(kgrid$useBCR6), length(SPP))
 rownames(PREDS) <- rownames(kgrid)[kgrid$useBCR6]
@@ -81,6 +82,73 @@ for (spp in SPP) {
 N <- colSums(PREDS*AREA_ha) / 10^6
 save(AREA_ha, N, PREDS, PREDS0, file=file.path(OUTDIR1, "predictions.Rdata"))
 
+## getting habitat stuf
+
+tv0 <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
+tv0$Sector2 <- factor(ifelse(is.na(tv0$Sector), "NATIVE", as.character(tv0$Sector)),
+    c("NATIVE", "Agriculture", "Energy", "Forestry", "Misc", "RuralUrban", "Transportation"))
+tv <- droplevels(tv0[!is.na(tv0$Sector),])
+tv0$HAB <- paste0(tv0$Type, ifelse(tv0$AGE %in% c("5", "6", "7", "8", "9"), "O", ""))
+
+ch2veg <- t(sapply(strsplit(colnames(trVeg), "->"),
+    function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
+ch2veg <- data.frame(ch2veg)
+colnames(ch2veg) <- c("rf","cr")
+rownames(ch2veg) <- colnames(Aveg)
+ch2veg$isHF <- ch2veg$cr %in% c("BorrowpitsDugoutsSumps",
+    "Canals", "CCConif0", "CCConif1", "CCConif2", "CCConif3", "CCConif4",
+    "CCConifR", "CCDecid0", "CCDecid1", "CCDecid2", "CCDecid3", "CCDecid4",
+    "CCDecidR", "CCMixwood0", "CCMixwood1", "CCMixwood2", "CCMixwood3",
+    "CCMixwood4", "CCMixwoodR", "CCPine0", "CCPine1", "CCPine2",
+    "CCPine3", "CCPine4", "CCPineR",
+    "CultivationCropPastureBareground", "HighDensityLivestockOperation",
+    "IndustrialSiteRural",
+    "MineSite",
+    "MunicipalWaterSewage", "OtherDisturbedVegetation",
+    "PeatMine", "Pipeline", "RailHardSurface",
+    "RailVegetatedVerge", "Reservoirs", "RoadHardSurface", "RoadTrailVegetated",
+    "RoadVegetatedVerge", "RuralResidentialIndustrial", "SeismicLine",
+    "TransmissionLine", "Urban", "WellSite",
+    "WindGenerationFacility")
+ch2veg$HAB <- tv0$HAB[match(ch2veg$cr, tv0$Combined)]
+ch2veg$HAB[is.na(ch2veg$HAB)] <- "Swamp"
+
+fl <- list.files(file.path(OUTDIR1, SPP[1]))
+ssRegs <- gsub("\\.Rdata", "", fl)
+Aveg <- NULL
+for (i in ssRegs) {
+    load(file.path(ROOT, "out", "transitions", paste0(i, ".Rdata")))
+    tmp <- trVeg[rownames(trVeg) %in% names(AREA_ha),]
+    ## do not need to subtract water: it was not accounted for in predictions
+    #tmp <- (1-kgrid[rownames(tmp), "pWater"]) * tmp
+    Aveg <- rbind(Aveg, colSums(tmp))
+}
+rownames(Aveg) <- ssRegs
+Aveg <- Aveg / 10^4
+AvegH <- groupSums(Aveg, 2, ch2veg$HAB)
+#sum(colSums(AvegH))/100
+#sum(AREA_ha)/100
+
+Nhab <- list()
+for (spp in SPP) {
+    cat(spp, "--------------------------------------\n");flush.console()
+#    fl <- list.files(file.path(OUTDIR1, spp))
+#    ssRegs <- gsub("\\.Rdata", "", fl)
+    hbNcr <- 0
+    for (i in ssRegs) {
+        cat(spp, i, "\n");flush.console()
+        e <- new.env()
+        load(file.path(OUTDIRB, spp, paste0(i, ".Rdata")), envir=e)
+        tmp <- e$hbNcrB
+        tmp[is.na(tmp)] <- 0
+        tmp <- groupSums(tmp, 1, ch2veg$HAB)
+        aa <- AvegH[i,]
+        hbNcr <- hbNcr + tmp * aa
+    }
+    Nhab[[spp]] <- hbNcr
+}
+save(AvegH, Nhab, file=file.path(OUTDIRB, "predictions_HAB.Rdata"))
+
 ## getting CIs for Stage 7
 
 ssRegs <- gsub("\\.Rdata", "", list.files(file.path(OUTDIR1, SPP[1])))
@@ -104,7 +172,6 @@ for (i in ssRegs) {
     }
 }
 save(PREDSCI, PREDSCI0, file=file.path(OUTDIRB, "predictionsCI.Rdata"))
-
 
 ## looking at results
 
@@ -285,6 +352,11 @@ qpad_vals <- qpad_vals[rownames(tax),]
 ## roadside_bias, rai_pred, rai_data
 load("e:/peter/josm/2017/roadside_avoidance.Rdata")
 
+P <-t(groupSums(rai_pred[BB[,1],], 1, rai_data$ROAD[BB[,1]]))
+P <- P / rowSums(P)
+PR <- mean(rai_data$ROAD[BB[,1]])
+PP <- log(P / PR)
+
 #rsb <- read.csv("~/Dropbox/bam/PIF-AB/results/roadside_bias.csv")
 #rownames(rsb) <- rsb$spp
 #rsb$spp <- NULL
@@ -336,6 +408,7 @@ pop$k7 <- AUC$k7
 pop$DataQ <- pif$Data_Quality_Rating
 pop$BbsVar <- pif$BBS_Variance_Rating
 pop$SpSamp <- pif$Species_Sample_Rating
+pop$PropRd <- PP[,"1"]
 
 pop <- droplevels(pop[rowSums(is.na(pop))==0,])
 pop <- pop[sort(rownames(pop)),]
@@ -390,6 +463,15 @@ with(pop, plot(RAI, log(DeltaRes), type="n", xlim=c(-0.4, 0.4), ylim=c(-10,10),
 abline(h=0, v=0, col=1, lwd=1, lty=2)
 abline(lm(log(DeltaRes) ~ RAI, pop), col=1)
 with(pop, text(RAI, log(DeltaRes), rownames(pop),
+    cex=0.8, col=Col))
+legend("topleft", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
+
+
+with(pop, plot(PropRd, log(DeltaRes), type="n",
+    ylab=expression(log(Delta[Res])), xlab="Road Avoidance Index"))
+abline(h=0, v=0, col=1, lwd=1, lty=2)
+abline(lm(log(DeltaRes) ~ PropRd, pop), col=1)
+with(pop, text(PropRd, log(DeltaRes), rownames(pop),
     cex=0.8, col=Col))
 legend("topleft", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
 

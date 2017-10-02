@@ -31,8 +31,8 @@ tv0 <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
 tv0$Sector2 <- factor(ifelse(is.na(tv0$Sector), "NATIVE", as.character(tv0$Sector)),
     c("NATIVE", "Agriculture", "Energy", "Forestry", "Misc", "RuralUrban", "Transportation"))
 tv <- droplevels(tv0[!is.na(tv0$Sector),])
-ts0 <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
 
+ts0 <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
 ts0$All <- as.character(ts0$HF)
 ts0$All[is.na(ts0$All)] <- as.character(ts0$Levels1)[is.na(ts0$All)]
 ts0$Sector2 <- factor(ifelse(is.na(ts0$Sector), "NATIVE", as.character(ts0$Sector)),

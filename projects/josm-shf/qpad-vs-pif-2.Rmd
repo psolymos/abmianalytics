@@ -1,0 +1,72 @@
+---
+title: "Bird population size estimates in BCR 6 Alberta"
+author: "Peter Solymos (solymos@ualberta.ca)"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+# Introduction
+
+Existing populations size estimates by
+Partners in Flight (PIF) provide a set of
+population size estimates for bird species in
+Bird Conservation Region (BCR) 6 in Alberta.
+For any given species, we refer to this estimate
+as the 'PIF estimate', $\hat{N}^{(PIF)}$.
+
+The estimator for the PIF approach is:
+
+$$ \hat{N}^{(PIF)} = E[Y_{1}] \times P \times T \times A \times \frac{1}{\pi MDD^2} \times H $$
+
+where $E[Y_{1}]$ is the stop level expected count from roadside BBS data (the original
+description used route level averages and a factor or 1/50 to account for
+differences in sampling area),
+$P$ is the pair adjustment,
+$T$ is the time adjustment,
+$A$ is the area of the geographic region,
+$MDD$ is maximum detection distance
+(making sure that unit for $MDD$ is compatible to the unit of area),
+and $H$ is adjustment for landscape/habitat sampling bias
+(takes a default value of 1 as it is currently not implemented, but recognized).
+
+Another set of estimates of current population sizes in Alberta BCR 6
+are based on a model based prediction approach
+using province wide vegetation and human footprint maps.
+We refer to these estimates for any given species
+as the 'pixel based estimates', $\hat{N}^{(PIX)}$.
+
+$$ \hat{N}^{(PIX)} = E[Y_{0}] \times P \times \frac{1}{p_3} \times A \times \frac{1}{\pi EDR^2} \times 1 $$
+
+where $E[Y_{0}]$ is the point level expected value of a count from a combination of
+on- and off-road data sources after accounting for roadside bias,
+$P$ is the pair adjustment,
+$1/p_3$ is the time adjustment based on removal sampling based availability and 3 minutes time interval,
+$A$ is the area of the geographic region,
+$EDR$ is distance sampling based effective detection radius
+(making sure that unit for $EDR$ is compatible to the unit of area),
+The adjustment for landscape/habitat sampling bias takes value of 1 as
+we don't expect sampling bias from prediction.
+
+We used the Pair adjustment to calculate number of singinsg individuals
+for both estimators, thus effectively setting $P=1$.
+We compare the two estimators and the different adjustments as ratios
+(pair adjustment and the area of the geographic area calcels out):
+
+$$ \frac{\hat{N}^{(PIX)}/P}{\hat{N}^{(PIF)}/P} = \frac{E[Y_{0}]}{E[Y_{1}]} \times \frac{1/p_3}{T} \times \frac{A}{A} \times \frac{1/EDR^2}{1/MDD^2} \times \frac{1}{H} $$
+After simplification, we get:
+
+$$ \frac{\hat{N}^{(PIX)}}{\hat{N}^{(PIF)}} = \frac{E[Y_{0}]}{E[Y_{1}]} \times \frac{1}{p_3T} \times \frac{MDD^2}{EDR^2} \times \frac{1}{H} $$
+
+For simplicity, we will refer to these components as $\Delta$. $\Delta_{OBS}$ is the observed
+ratio of the two estimators, $\Delta_{EXP} is the expected bias based on the components.
+$\Delta_{OBS} = \Delta_{EXP} + \epsilon$, where $\epsilon$ is the residual
+not accounted for by any of the $|Delta$ components:
+
+$$ \Delta_{OBS} = \Delta_{R} + \Delta_{T} + \Delta_{D} + \Delta_{H} + \epsilon $$
+
+$\Delta_{R}$ is the component related to roadside bias in counts,
+$\Delta_{T}$ is the component related to time adjustment,
+$\Delta_{A}$ is the component related to sampling area adjustments,
+$\Delta_{H}$ is the component related to habitat sampling bias.
+
