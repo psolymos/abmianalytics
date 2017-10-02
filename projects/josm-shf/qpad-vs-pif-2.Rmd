@@ -17,7 +17,7 @@ as the 'PIF estimate', $\hat{N}^{(PIF)}$.
 
 The estimator for the PIF approach is:
 
-$$ \hat{N}^{(PIF)} = E[Y_{1}] \times P \times T \times A \times \frac{1}{\pi MDD^2} \times H $$
+$$ \hat{N}^{(PIF)} = E[Y_{1}] \times P \times T \times A \times \frac{1}{\pi MDD^2} \times \frac{1}{H} $$
 
 where $E[Y_{1}]$ is the stop level expected count from roadside BBS data (the original
 description used route level averages and a factor or 1/50 to account for
@@ -53,13 +53,15 @@ for both estimators, thus effectively setting $P=1$.
 We compare the two estimators and the different adjustments as ratios
 (pair adjustment and the area of the geographic area calcels out):
 
-$$ \frac{\hat{N}^{(PIX)}/P}{\hat{N}^{(PIF)}/P} = \frac{E[Y_{0}]}{E[Y_{1}]} \times \frac{1/p_3}{T} \times \frac{A}{A} \times \frac{1/EDR^2}{1/MDD^2} \times \frac{1}{H} $$
+$$ \frac{\hat{N}^{(PIX)}/P}{\hat{N}^{(PIF)}/P} = \frac{E[Y_{0}]}{E[Y_{1}]} \times \frac{1/p_3}{T} \times \frac{A}{A} \times \frac{1/EDR^2}{1/MDD^2} \times \frac{1}{1/H} $$
+
 After simplification, we get:
 
-$$ \frac{\hat{N}^{(PIX)}}{\hat{N}^{(PIF)}} = \frac{E[Y_{0}]}{E[Y_{1}]} \times \frac{1}{p_3T} \times \frac{MDD^2}{EDR^2} \times \frac{1}{H} $$
+$$ \frac{\hat{N}^{(PIX)}}{\hat{N}^{(PIF)}} = \frac{E[Y_{0}]}{E[Y_{1}]} \times \frac{1}{p_3T} \times \frac{MDD^2}{EDR^2} \times H $$
 
-For simplicity, we will refer to these components as $\Delta$. $\Delta_{OBS}$ is the observed
-ratio of the two estimators, $\Delta_{EXP} is the expected bias based on the components.
+For simplicity, we will refer to these components as additive log ratios, $\Delta$.
+$\Delta_{OBS}$ is the observed log ratio of the two estimators:
+$\Delta_{EXP}$ is the expected log ratio based on the components.
 $\Delta_{OBS} = \Delta_{EXP} + \epsilon$, where $\epsilon$ is the residual
 not accounted for by any of the $|Delta$ components:
 

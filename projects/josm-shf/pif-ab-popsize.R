@@ -26,6 +26,14 @@ fln <- sub(".Rdata", "", fln)
 SPP <- fln
 tax <- droplevels(TAX[SPP,])
 
+tv0 <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
+tv0$Sector2 <- factor(ifelse(is.na(tv0$Sector), "NATIVE", as.character(tv0$Sector)),
+    c("NATIVE", "Agriculture", "Energy", "Forestry", "Misc", "RuralUrban", "Transportation"))
+tv0$HAB <- paste0(tv0$Type, ifelse(tv0$AGE %in% c("5", "6", "7", "8", "9"), "O", ""))
+tv0$HAB[tv0$Combined %in% c("RoadTrailVegetated", "RoadVegetatedVerge",
+    "RailVegetatedVerge")] <- "Verges"
+#tv0[tv0$HAB=="SoftLin",c("Combined", "HAB")]
+
 if (FALSE) {
 source("~/Dropbox/courses/st-johns-2017/R/diagnostics-functions.R")
 xn$counts <- as.numeric(yy[,"ALFL"])
@@ -56,6 +64,7 @@ kgrid$useS <- kgrid$NRNAME == "Grassland"
 kgrid$useBCR6 <- kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS"
 
 AREA_ha <- (1-kgrid$pWater) * kgrid$Area_km2 * 100
+#AREA_ha <- kgrid$Area_km2 * 100
 AREA_ha <- AREA_ha[kgrid$useBCR6]
 names(AREA_ha) <- rownames(kgrid)[kgrid$useBCR6]
 
@@ -68,27 +77,34 @@ for (spp in SPP) {
     cat(spp, "--------------------------------------\n");flush.console()
     fl <- list.files(file.path(OUTDIR1, spp))
     ssRegs <- gsub("\\.Rdata", "", fl)
-    pxNcr <- pxNrf <- NULL
+    pxNcr <- NULL
+    #pxNrf <- NULL
     for (i in ssRegs) {
         cat(spp, i, "\n");flush.console()
         load(file.path(OUTDIR1, spp, paste0(i, ".Rdata")))
         rownames(pxNcr1) <- rownames(pxNrf1) <- names(Cells)
         pxNcr <- rbind(pxNcr, pxNcr1)
-        pxNrf <- rbind(pxNrf, pxNrf1)
+        #pxNrf <- rbind(pxNrf, pxNrf1)
     }
     PREDS[,spp] <- pxNcr[rownames(PREDS),]
-    PREDS0[,spp] <- pxNrf[rownames(PREDS0),]
+    #PREDS0[,spp] <- pxNrf[rownames(PREDS0),]
 }
 N <- colSums(PREDS*AREA_ha) / 10^6
-save(AREA_ha, N, PREDS, PREDS0, file=file.path(OUTDIR1, "predictions.Rdata"))
+save(AREA_ha, N, PREDS, file=file.path(OUTDIR1, "predictions.Rdata"))
 
 ## getting habitat stuf
 
-tv0 <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
-tv0$Sector2 <- factor(ifelse(is.na(tv0$Sector), "NATIVE", as.character(tv0$Sector)),
-    c("NATIVE", "Agriculture", "Energy", "Forestry", "Misc", "RuralUrban", "Transportation"))
-tv <- droplevels(tv0[!is.na(tv0$Sector),])
-tv0$HAB <- paste0(tv0$Type, ifelse(tv0$AGE %in% c("5", "6", "7", "8", "9"), "O", ""))
+fl <- list.files(file.path(OUTDIR1, SPP[1]))
+ssRegs <- gsub("\\.Rdata", "", fl)
+Aveg <- NULL
+for (i in ssRegs) {
+    load(file.path(ROOT, "out", "transitions", paste0(i, ".Rdata")))
+    tmp <- trVeg[rownames(trVeg) %in% names(AREA_ha),]
+    tmp <- (1-kgrid[rownames(tmp), "pWater"]) * tmp
+    Aveg <- rbind(Aveg, colSums(tmp))
+}
+rownames(Aveg) <- ssRegs
+Aveg <- Aveg / 10^4
 
 ch2veg <- t(sapply(strsplit(colnames(trVeg), "->"),
     function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
@@ -112,22 +128,12 @@ ch2veg$isHF <- ch2veg$cr %in% c("BorrowpitsDugoutsSumps",
     "WindGenerationFacility")
 ch2veg$HAB <- tv0$HAB[match(ch2veg$cr, tv0$Combined)]
 ch2veg$HAB[is.na(ch2veg$HAB)] <- "Swamp"
-
-fl <- list.files(file.path(OUTDIR1, SPP[1]))
-ssRegs <- gsub("\\.Rdata", "", fl)
-Aveg <- NULL
-for (i in ssRegs) {
-    load(file.path(ROOT, "out", "transitions", paste0(i, ".Rdata")))
-    tmp <- trVeg[rownames(trVeg) %in% names(AREA_ha),]
-    ## do not need to subtract water: it was not accounted for in predictions
-    #tmp <- (1-kgrid[rownames(tmp), "pWater"]) * tmp
-    Aveg <- rbind(Aveg, colSums(tmp))
-}
-rownames(Aveg) <- ssRegs
-Aveg <- Aveg / 10^4
+ch2veg$HAB0 <- tv0$HAB[match(ch2veg$rf, tv0$Combined)]
+ch2veg$HAB0[is.na(ch2veg$HAB0)] <- "Swamp"
 AvegH <- groupSums(Aveg, 2, ch2veg$HAB)
-#sum(colSums(AvegH))/100
-#sum(AREA_ha)/100
+sum(colSums(AvegH))/100
+sum(AREA_ha)/100
+ch2veg$Area_ha <- colSums(Aveg)
 
 Nhab <- list()
 for (spp in SPP) {
@@ -137,13 +143,36 @@ for (spp in SPP) {
     hbNcr <- 0
     for (i in ssRegs) {
         cat(spp, i, "\n");flush.console()
+        aa <- AvegH[i,]
+        ee <- new.env()
+        load(file.path(OUTDIR1, spp, paste0(i, ".Rdata")), envir=ee)
         e <- new.env()
         load(file.path(OUTDIRB, spp, paste0(i, ".Rdata")), envir=e)
+
+if (FALSE) {
+sum(aa)
+sum(AREA_ha[names(e$Cells)])
+
+str(ee$pxNcr1)
+str(e$pxNcrB)
+sum(ee$pxNcr1[,1], na.rm=TRUE)
+sum(e$pxNcrB[,1], na.rm=TRUE)
+
+str(ee$hbNcr1)
+str(e$hbNcrB)
+sum(ee$hbNcr1[,1], na.rm=TRUE)
+sum(e$hbNcrB[,1], na.rm=TRUE)
+
+sum(ee$pxNcr1[,1]*AREA_ha[names(ee$Cells)], na.rm=TRUE)
+sum(e$pxNcrB[,1]*AREA_ha[names(e$Cells)], na.rm=TRUE)
+sum(ee$hbNcr1[,1]*Aveg[i,], na.rm=TRUE)
+sum(e$hbNcrB[,1]*Aveg[i,], na.rm=TRUE)
+}
+
         tmp <- e$hbNcrB
         tmp[is.na(tmp)] <- 0
-        tmp <- groupSums(tmp, 1, ch2veg$HAB)
-        aa <- AvegH[i,]
-        hbNcr <- hbNcr + tmp * aa
+        tmp <- groupSums(tmp*Aveg[i,], 1, ch2veg$HAB)
+        hbNcr <- hbNcr + tmp
     }
     Nhab[[spp]] <- hbNcr
 }
@@ -154,8 +183,10 @@ save(AvegH, Nhab, file=file.path(OUTDIRB, "predictions_HAB.Rdata"))
 ssRegs <- gsub("\\.Rdata", "", list.files(file.path(OUTDIR1, SPP[1])))
 PREDSCI <- array(0, c(length(ssRegs), length(SPP), 100))
 dimnames(PREDSCI) <- list(ssRegs, SPP, NULL)
-PREDSCI0 <- PREDSCI
-AA <- (1-kgrid$pWater) * kgrid$Area_km2 * 100
+#PREDSCI0 <- PREDSCI
+## do not need to subtract water: it was not accounted for in predictions
+#AA <- (1-kgrid$pWater) * kgrid$Area_km2 * 100
+AA <- kgrid$Area_km2 * 100
 names(AA) <- rownames(kgrid)
 
 for (i in ssRegs) {
@@ -165,13 +196,14 @@ for (i in ssRegs) {
         e <- new.env()
         load(file.path(OUTDIRB, spp, paste0(i, ".Rdata")), envir=e)
         pxNcr <- e$pxNcrB
-        pxNrf <- e$pxNrfB
-        rownames(pxNcr) <- rownames(pxNrf) <- names(e$Cells)
+        #pxNrf <- e$pxNrfB
+        rownames(pxNcr) <- names(e$Cells)
+        #rownames(pxNrf) <- names(e$Cells)
         PREDSCI[i,spp,] <- colSums(pxNcr*AA[names(e$Cells)])
-        PREDSCI0[i,spp,] <- colSums(pxNrf*AA[names(e$Cells)])
+        #PREDSCI0[i,spp,] <- colSums(pxNrf*AA[names(e$Cells)])
     }
 }
-save(PREDSCI, PREDSCI0, file=file.path(OUTDIRB, "predictionsCI.Rdata"))
+save(PREDSCI, file=file.path(OUTDIRB, "predictionsCI.Rdata"))
 
 ## looking at results
 
@@ -335,6 +367,7 @@ rownames(AUC) <- AUC$spp
 AUC$spp <- NULL
 AUC <- AUC[rownames(tax),]
 
+if (FALSE) {
 NN <- read.csv("~/Dropbox/bam/PIF-AB/results/PopSize567.csv")
 rownames(NN) <- NN$spp
 NN$spp <- NULL
@@ -345,62 +378,81 @@ rm(PREDSCI0)
 PREDSCI <- PREDSCI[,rownames(tax),] / 10^6
 N7B <- apply(PREDSCI, 2, colSums)
 N7CI <- t(apply(N7B, 2, quantile, c(0.5, 0.025, 0.975)))
+N7mean <- colMeans(N7B)
+}
 
 load("e:/peter/AB_data_v2016/out/birds/data/mean-qpad-estimates.Rdata")
 qpad_vals <- qpad_vals[rownames(tax),]
 
 ## roadside_bias, rai_pred, rai_data
 load("e:/peter/josm/2017/roadside_avoidance.Rdata")
-
-P <-t(groupSums(rai_pred[BB[,1],], 1, rai_data$ROAD[BB[,1]]))
-P <- P / rowSums(P)
-PR <- mean(rai_data$ROAD[BB[,1]])
-PP <- log(P / PR)
-
-#rsb <- read.csv("~/Dropbox/bam/PIF-AB/results/roadside_bias.csv")
-#rownames(rsb) <- rsb$spp
-#rsb$spp <- NULL
-#rsb <- rsb[rownames(tax),]
 rsb <- t(sapply(roadside_bias, function(z) z[,1]))
-rsbCI <- t(sapply(roadside_bias, function(z) z["Ratio",]))
 
-tmp <- cbind(ROAD=rai_data$ROAD, rai_pred)
-rai <- groupSums(tmp[BB[,1],], 1, rai_data$HAB[BB[,1]], TRUE)
-rai <- t(t(rai) / colSums(rai))
-RAI0 <- 1 - colSums(rai[,1] * rai)
-summary(RAI0)
-RAI <- log(RAI0)-log(RAI0["ROAD"])
-RAIc <- RAI0-RAI0["ROAD"]
+## AvegH, Nhab
+load("e:/peter/josm/2017/stage7/predB/predictions_HAB.Rdata")
+
+## bootstrap averaged pop size estimate
+b_fun <- function(h) {
+    N7tb <- c(Mean=mean(colSums(h) / 10^6),
+        quantile(colSums(h) / 10^6, c(0.5, 0.025, 0.975)))
+    N7hb <- t(apply(h, 1, function(z)
+        c(Mean=mean(z / 10^6), quantile(z / 10^6, c(0.5, 0.025, 0.975)))))
+    N7b <- rbind(N7hb, TOTAL=N7tb)
+    N7b
+}
+NestAll <- lapply(Nhab, b_fun)
+NestTot <- t(sapply(NestAll, function(z) z["TOTAL",]))
+
+For <- c("Decid", "Mixwood", "Pine", "Conif", "BSpr", "Larch")
+xn$HAB <- paste0(xn$hab1, ifelse(xn$hab1 %in% For & xn$wtAge*200 >= 80, "O", ""))
+compare_sets(colnames(AvegH), xn$HAB)
+setdiff(colnames(AvegH), xn$HAB)
+xnss <- nonDuplicated(xn, SS, TRUE)
+xnss <- xnss[!(xnss$PCODE != "BBSAB" & xnss$ROAD01 > 0),]
+tab <- table(xnss$HAB, xnss$ROAD01)
+
+#Rd <- c(#"RailHardSurface", "RailVegetatedVerge",
+#    "RoadHardSurface", "RoadTrailVegetated", "RoadVegetatedVerge")
+#ch2veg$ROAD <- ifelse(ch2veg$cr %in% Rd, "Roadside", "Offroad")
+#tmp <- as.matrix(Xtab(Area_ha ~ HAB0 + ROAD, ch2veg))
+#tmp <- t(t(tmp) / colSums(tmp))
+
+#Ahab <- colSums(AvegH) # ha
+#Ahab <- Ahab[rownames(tab)]
+#Ahab <- Ahab / sum(Ahab)
+Ahab <- tab[,"0"] / sum(tab[,"0"])
+Whab <- tab[,"1"] / sum(tab[,"1"])
+AWhab <- data.frame(Ahab, Whab)
+NAM <- names(Ahab)
+
+h_fun <- function(h) {
+    NN <- h[NAM, "Mean"] * 10^6 # back to individuals
+    DD <- NN / colSums(AvegH)[NAM] # density: males / ha
+    sum(DD * Whab) / sum(DD * Ahab)
+}
+H <- sapply(NestAll, h_fun)
 
 ## taxonomy etc
 pop <- tax[,c("Species_ID", "English_Name", "Scientific_Name", "Spp")]
-## roadside related metrics
-pop$RAI <- RAI[match(rownames(pop), names(RAI))]
-pop$RAIc <- RAIc[match(rownames(pop), names(RAI))]
-pop$Don <- rsb[,"Lam1"]
-pop$Doff <- rsb[,"Lam0"]
-pop$DeltaRoad <- rsb[,"Ratio"]
-pop$DeltaRoadLo <- rsbCI[,"2.5%"]
-pop$DeltaRoadHi <- rsbCI[,"97.5%"]
+
 ## pop size estimates
-pop$Nqpad7mean <- NN$N7 # M males
-pop$Nqpad7median <- N7CI[,"50%"]
-pop$Nqpad7lo <- N7CI[,"2.5%"]
-pop$Nqpad7hi <- N7CI[,"97.5%"]
+#pop$Npix <- NestTot[,"Mean"] # M males
+pop$Npix <- NestTot[,"50%"]
+pop$NpixLo <- NestTot[,"2.5%"]
+pop$NpixHi <- NestTot[,"97.5%"]
 pop$Npif <- (pif$Population_Estimate_unrounded / pif$Pair_Adjust) / 10^6 # M males
+
+## roadside related metrics
+pop$Y1 <- rsb[,"Lam1"]
+pop$Y0 <- rsb[,"Lam0"]
 ## Tadj and EDR/MDD
 pop$TimeAdj <- pif$Time_Adjust
-pop$MDD <- pif$Detection_Distance_m
 pop$p3 <- 1-exp(-3 * qpad_vals$phi0)
-pop$EDR <- qpad_vals$tau * 100
-#pop$p3 <- 1-exp(-3 * qpad_vals$phi0)
+#pop$p3 <- 1-exp(-3 * qpad_vals$phi)
+pop$MDD <- pif$Detection_Distance_m
+pop$EDR <- qpad_vals$tau0 * 100
 #pop$EDR <- qpad_vals$tau * 100
-## Deltas
-pop$DeltaObs <- pop$Nqpad7mean / pop$Npif
-pop$DeltaTime <- (1/pop$p3)/pop$TimeAdj
-pop$DeltaDist <- pop$MDD^2 / pop$EDR^2
-pop$DeltaExp <- pop$DeltaRoad * pop$DeltaTime * pop$DeltaDist
-pop$DeltaRes <- pop$DeltaObs / pop$DeltaExp
+
 ## QAQC
 pop$AUCin <- AUC$auc7i
 pop$AUCout <- AUC$auc7o
@@ -408,7 +460,16 @@ pop$k7 <- AUC$k7
 pop$DataQ <- pif$Data_Quality_Rating
 pop$BbsVar <- pif$BBS_Variance_Rating
 pop$SpSamp <- pif$Species_Sample_Rating
-pop$PropRd <- PP[,"1"]
+
+## Deltas
+pop$DeltaObs <- log(pop$Npix / pop$Npif)
+pop$DeltaR <- log(pop$Y0/pop$Y1)
+pop$DeltaT <- log((1/pop$p3)/pop$TimeAdj)
+pop$DeltaA <- log((1/pop$EDR^2) / (1/pop$MDD^2))
+pop$DeltaH <- log(H)
+pop$DeltaExp <- pop$DeltaR + pop$DeltaT + pop$DeltaA + pop$DeltaH
+pop$epsilon <- pop$DeltaObs - pop$DeltaExp
+
 
 pop <- droplevels(pop[rowSums(is.na(pop))==0,])
 pop <- pop[sort(rownames(pop)),]
@@ -417,10 +478,10 @@ write.csv(pop, row.names=FALSE, file="~/Dropbox/bam/PIF-AB/qpad-pif-results.csv"
 
 ## --- making the figures ---
 
-boxplot(log(pop[,c("DeltaRoad", "DeltaTime", "DeltaDist", "DeltaRes")]))
+boxplot(pop[,c("DeltaR", "DeltaT", "DeltaA", "DeltaH", "epsilon")])
 abline(h=0, col=2)
 
-boxplot(log(pop[,c("DeltaObs", "DeltaExp")]))
+boxplot(pop[,c("DeltaObs", "DeltaExp")])
 abline(h=0, col=2)
 
 
@@ -435,18 +496,20 @@ dots_box_plot <- function(mat, ylab="", ...) {
     invisible(NULL)
 }
 
-Col <- c("beige", "yellow", "orange")[pop$DataQ]
-mat <- log(pop[,c("DeltaObs", "DeltaExp", "DeltaRoad", "DeltaTime", "DeltaDist", "DeltaRes")])
-colnames(mat) <- c("Obs", "Exp", "Road", "Time", "Dist", "Res")
-dots_box_plot(mat, col="grey", ylab=expression(log(Delta)))
+#Col <- c("beige", "yellow", "orange")[pop$DataQ]
+par(las=1)
+mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH", "epsilon")]
+colnames(mat) <- c("Obs", "Exp", "Road", "Time", "Area", "Hab", "eps")
+dots_box_plot(mat, col="grey", ylab=expression(Delta))
 abline(h=0, col=2, lwd=2)
 
-mat2 <- pop[,c("Npif", "Nqpad7mean")]
-colnames(mat2) <- c("PIF", "QPAD")
+par(las=1)
+mat2 <- pop[,c("Npif", "Npix")]
+colnames(mat2) <- c("PIF", "'Pixel'")
 dots_box_plot(mat2, col="grey", "Population Size (M singing inds.)")
 
 library(intrval)
-table(OVER <- pop$Npif %[]% pop[,c("Nqpad7lo", "Nqpad7hi")])
+table(OVER <- pop$Npif %[]% pop[,c("NpixLo", "NpixHi")])
 rownames(pop)[OVER]
 
 #v <- tanh(pop$RAI * 0.5)
@@ -487,3 +550,60 @@ text(s2, labels=rownames(rai),cex=1,col=3)
 points(s1[1,,drop=F],pch=3,col=4,cex=5)
 abline(h=0,v=0,lty=2)
 legend("topleft", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
+
+plot(Ahab, Whab, type="n", ylim=c(0,max(AWhab)), xlim=c(0,max(AWhab)))
+abline(0,1)
+text(Ahab, Whab, names(Ahab), cex=0.7)
+
+
+
+
+## map
+
+library(mefa4)
+library(rgdal)
+library(rgeos)
+library(sp)
+library(gstat)
+library(raster)
+#library(viridis)
+load(file.path("e:/peter/AB_data_v2016", "out", "kgrid", "kgrid_table.Rdata"))
+
+xy <- xnss
+coordinates(xy) <- ~ POINT_X + POINT_Y
+proj4string(xy) <-
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+r <- raster(file.path("~/Dropbox/courses/st-johns-2017",
+    "data", "ABrasters", "dem.asc"))
+slope <- terrain(r, opt="slope")
+aspect <- terrain(r, opt="aspect")
+hill <- hillShade(slope, aspect, 40, 270)
+xy <- spTransform(xy, proj4string(r))
+
+od <- setwd("e:/peter/AB_data_v2017/data/raw/xy/bcr/")
+BCR <- readOGR(".", "BCR_Terrestrial_master") # rgdal
+BCR <- spTransform(BCR, proj4string(r))
+BCR <- gSimplify(BCR, tol=500, topologyPreserve=TRUE)
+setwd(od)
+
+od <- setwd("~/Dropbox/courses/st-johns-2017/data/NatRegAB")
+AB <- readOGR(".", "Natural_Regions_Subregions_of_Alberta") # rgdal
+AB <- spTransform(AB, proj4string(r))
+AB <- gUnaryUnion(AB, rep(1, nrow(AB))) # province
+AB <- gSimplify(AB, tol=500, topologyPreserve=TRUE)
+setwd(od)
+
+BCRtoAB <- gIntersection(AB, BCR, byid=TRUE)
+
+#op <- par(mar=c(0,0,0,0))
+plot(hill, col=grey(0:100/100), legend=FALSE, bty="n",
+    box=FALSE, axes=TRUE)
+plot(r, legend=FALSE, col=topo.colors(50, alpha=0.35)[26:50], add=TRUE)
+plot(BCRtoAB, col=c("#00000060", NA, rep("#00000060", 11)), add=TRUE)
+plot(xy[xy@data$ROAD01==0,], add=TRUE, pch=19, cex=0.5)
+plot(xy[xy@data$ROAD01==1,], add=TRUE, pch=19, col=4, cex=0.5)
+legend("bottomleft", title="Legend", pch=c(19, 21), bty="n",
+    legend=c("filled", "open"))
+#par(op)
+
