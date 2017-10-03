@@ -432,45 +432,40 @@ h_fun <- function(h) {
 }
 H <- sapply(NestAll, h_fun)
 
-## taxonomy etc
+## taxonomy etc ---
 pop <- tax[,c("Species_ID", "English_Name", "Scientific_Name", "Spp")]
-
-## pop size estimates
+## pop size estimates ---
 #pop$Npix <- NestTot[,"Mean"] # M males
 pop$Npix <- NestTot[,"50%"]
 pop$NpixLo <- NestTot[,"2.5%"]
 pop$NpixHi <- NestTot[,"97.5%"]
 pop$Npif <- (pif$Population_Estimate_unrounded / pif$Pair_Adjust) / 10^6 # M males
-
 ## roadside related metrics
 pop$Y1 <- rsb[,"Lam1"]
 pop$Y0 <- rsb[,"Lam0"]
-## Tadj and EDR/MDD
+## Tadj and EDR/MDD ---
 pop$TimeAdj <- pif$Time_Adjust
 pop$p3 <- 1-exp(-3 * qpad_vals$phi0)
 #pop$p3 <- 1-exp(-3 * qpad_vals$phi)
 pop$MDD <- pif$Detection_Distance_m
 pop$EDR <- qpad_vals$tau0 * 100
 #pop$EDR <- qpad_vals$tau * 100
-
-## QAQC
+## QAQC ---
 pop$AUCin <- AUC$auc7i
 pop$AUCout <- AUC$auc7o
 pop$k7 <- AUC$k7
 pop$DataQ <- pif$Data_Quality_Rating
 pop$BbsVar <- pif$BBS_Variance_Rating
 pop$SpSamp <- pif$Species_Sample_Rating
-
-## Deltas
+## Deltas ---
 pop$DeltaObs <- log(pop$Npix / pop$Npif)
 pop$DeltaR <- log(pop$Y0/pop$Y1)
 pop$DeltaT <- log((1/pop$p3)/pop$TimeAdj)
 pop$DeltaA <- log((1/pop$EDR^2) / (1/pop$MDD^2))
 pop$DeltaH <- log(H)
-pop$DeltaExp <- pop$DeltaR + pop$DeltaT + pop$DeltaA + pop$DeltaH
+pop$DeltaExp <- pop$DeltaR + pop$DeltaT + pop$DeltaA #+ pop$DeltaH
 pop$epsilon <- pop$DeltaObs - pop$DeltaExp
-
-
+## subset ---
 pop <- droplevels(pop[rowSums(is.na(pop))==0,])
 pop <- pop[sort(rownames(pop)),]
 summary(pop)
@@ -499,7 +494,8 @@ dots_box_plot <- function(mat, ylab="", ...) {
 #Col <- c("beige", "yellow", "orange")[pop$DataQ]
 par(las=1)
 mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH", "epsilon")]
-colnames(mat) <- c("Obs", "Exp", "Road", "Time", "Area", "Hab", "eps")
+#mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "epsilon")]
+#colnames(mat) <- c("Obs", "Exp", "Road", "Time", "Area", "Hab", "eps")
 dots_box_plot(mat, col="grey", ylab=expression(Delta))
 abline(h=0, col=2, lwd=2)
 
@@ -515,17 +511,17 @@ rownames(pop)[OVER]
 #v <- tanh(pop$RAI * 0.5)
 #v <- plogis(pop$RAI)*2-1
 #v <- pop$RAI
-Cex <- log(pop$DeltaObs)
+Cex <- pop$DeltaObs
 names(Cex) <- rownames(pop)
 br <- c(-Inf, -2, -1, -0.1, 0.1, 1, 2, Inf)
 Col <- colorRampPalette(c("red", "black", "blue"))(7)[cut(Cex, br)]
 names(Col) <- rownames(pop)
 
-with(pop, plot(RAI, log(DeltaRes), type="n", xlim=c(-0.4, 0.4), ylim=c(-10,10),
-    ylab=expression(log(Delta[Res])), xlab="Road Avoidance Index"))
+with(pop, plot(DeltaH, epsilon, type="n", #xlim=c(-0.4, 0.4), ylim=c(-10,10),
+    ylab=expression(Delta[RES]), xlab=expression(Delta[H])))
 abline(h=0, v=0, col=1, lwd=1, lty=2)
-abline(lm(log(DeltaRes) ~ RAI, pop), col=1)
-with(pop, text(RAI, log(DeltaRes), rownames(pop),
+abline(lm(epsilon ~ DeltaH, pop), col=1)
+with(pop, text(DeltaH, epsilon, rownames(pop),
     cex=0.8, col=Col))
 legend("topleft", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
 
@@ -569,17 +565,11 @@ library(raster)
 #library(viridis)
 load(file.path("e:/peter/AB_data_v2016", "out", "kgrid", "kgrid_table.Rdata"))
 
-xy <- xnss
-coordinates(xy) <- ~ POINT_X + POINT_Y
-proj4string(xy) <-
-    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-
 r <- raster(file.path("~/Dropbox/courses/st-johns-2017",
     "data", "ABrasters", "dem.asc"))
 slope <- terrain(r, opt="slope")
 aspect <- terrain(r, opt="aspect")
 hill <- hillShade(slope, aspect, 40, 270)
-xy <- spTransform(xy, proj4string(r))
 
 od <- setwd("e:/peter/AB_data_v2017/data/raw/xy/bcr/")
 BCR <- readOGR(".", "BCR_Terrestrial_master") # rgdal
@@ -594,16 +584,114 @@ AB <- gUnaryUnion(AB, rep(1, nrow(AB))) # province
 AB <- gSimplify(AB, tol=500, topologyPreserve=TRUE)
 setwd(od)
 
-BCRtoAB <- gIntersection(AB, BCR, byid=TRUE)
+BCR2AB <- gIntersection(AB, BCR, byid=TRUE)
+
+xnss <- nonDuplicated(xn, SS, TRUE)
+#xnss <- xnss[!(xnss$PCODE != "BBSAB" & xnss$ROAD01 > 0),]
+
+xy <- xnss
+coordinates(xy) <- ~ POINT_X + POINT_Y
+proj4string(xy) <-
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+xy <- spTransform(xy, proj4string(r))
+xy2BCR <- over(xy, BCR)
 
 #op <- par(mar=c(0,0,0,0))
 plot(hill, col=grey(0:100/100), legend=FALSE, bty="n",
-    box=FALSE, axes=TRUE)
+    box=FALSE, axes=FALSE)
 plot(r, legend=FALSE, col=topo.colors(50, alpha=0.35)[26:50], add=TRUE)
-plot(BCRtoAB, col=c("#00000060", NA, rep("#00000060", 11)), add=TRUE)
-plot(xy[xy@data$ROAD01==0,], add=TRUE, pch=19, cex=0.5)
-plot(xy[xy@data$ROAD01==1,], add=TRUE, pch=19, col=4, cex=0.5)
+plot(BCR2AB, col=c("#00000060", NA, rep("#00000060", 11)), add=TRUE)
+plot(xy[xy@data$PCODE!="BBSAB" & !(!is.na(xy2BCR) & xy2BCR==24),], add=TRUE, pch=19, col="white", cex=0.5)
+plot(xy[xy@data$PCODE=="BBSAB" & !(!is.na(xy2BCR) & xy2BCR==24),], add=TRUE, pch=19, col="lightblue", cex=0.5)
+plot(xy[xy@data$PCODE!="BBSAB" & !is.na(xy2BCR) & xy2BCR==24,], add=TRUE, pch=19, cex=0.5)
+plot(xy[xy@data$PCODE=="BBSAB" & !is.na(xy2BCR) & xy2BCR==24,], add=TRUE, pch=19, col=4, cex=0.5)
 legend("bottomleft", title="Legend", pch=c(19, 21), bty="n",
     legend=c("filled", "open"))
 #par(op)
+
+tab0 <- table(xy@data$HAB)
+ii1 <- xy@data$PCODE=="BBSAB" & !is.na(xy2BCR) & xy2BCR==24
+tab1 <- table(xy@data$HAB, ii1)
+summary(xnss$POINT_Y[ii1 & xnss$POINT_Y < 58]) # 56.51 latitude
+ii2 <- xnss$POINT_Y < 56.51
+tab2 <- table(xy@data$HAB, ii2)
+df <- data.frame(tab0/sum(tab0), w1=tab1[,"TRUE"]/sum(tab1[,"TRUE"]),
+    w2=tab2[,"TRUE"]/sum(tab2[,"TRUE"]))
+all(NAM==rownames(df))
+
+h_fun <- function(h, a, w) {
+    NN <- h[NAM, "50%"] * 10^6 # back to individuals
+    DD <- NN / colSums(AvegH)[NAM] # density: males / ha
+    sum(DD * w) / sum(DD * a)
+}
+H1 <- sapply(NestAll, h_fun, a=df$Freq, w=df$w1)
+H2 <- sapply(NestAll, h_fun, a=df$Freq, w=df$w2)
+H3 <- sapply(NestAll, h_fun, a=df$Freq, w=df$w1*df$w2/sum(df$w1*df$w2))
+names(H1) <- names(H2) <- names(H3) <- names(NestAll)
+
+par(mfrow=c(2,2))
+plot(H1,H2)
+plot(log(H1[rownames(pop)]), pop$epsilon)
+plot(log(H2[rownames(pop)]), pop$epsilon)
+plot(log(H3[rownames(pop)]), pop$epsilon)
+
+
+cor(cbind(pop$epsilon, H1[rownames(pop)], H2[rownames(pop)], H3[rownames(pop)]))
+
+par(mfrow=c(1,3))
+logH <- log(H1[rownames(pop)])
+with(pop, plot(logH, epsilon, type="n", #xlim=c(-0.4, 0.4), ylim=c(-10,10),
+    ylab=expression(Delta[RES]), xlab=expression(Delta[H])))
+abline(h=0, v=0, col=1, lwd=1, lty=2)
+abline(lm(epsilon ~ logH, pop), col=1)
+with(pop, text(logH, epsilon, rownames(pop),
+    cex=0.8, col=Col))
+legend("topleft", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
+
+logH <- log(H2[rownames(pop)])
+with(pop, plot(logH, epsilon, type="n", #xlim=c(-0.4, 0.4), ylim=c(-10,10),
+    ylab=expression(Delta[RES]), xlab=expression(Delta[H])))
+abline(h=0, v=0, col=1, lwd=1, lty=2)
+abline(lm(epsilon ~ logH, pop), col=1)
+with(pop, text(logH, epsilon, rownames(pop),
+    cex=0.8, col=Col))
+legend("topleft", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
+
+logH <- log(H3[rownames(pop)])
+with(pop, plot(logH, epsilon, type="n", #xlim=c(-0.4, 0.4), ylim=c(-10,10),
+    ylab=expression(Delta[RES]), xlab=expression(Delta[H])))
+abline(h=0, v=0, col=1, lwd=1, lty=2)
+abline(lm(epsilon ~ logH, pop), col=1)
+with(pop, text(logH, epsilon, rownames(pop),
+    cex=0.8, col=Col))
+legend("topleft", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
+
+par(mfrow=c(1,3))
+plot(pop$Npix, pop$Npif, ylim=c(0,7));abline(0,1)
+plot(pop$Npix, pop$Npif/H1[rownames(pop)], ylim=c(0,7));abline(0,1)
+plot(pop$Npix, pop$Npif/H2[rownames(pop)], ylim=c(0,7));abline(0,1)
+
+plot(log(pop$Npix/pop$Npif), log(H1[rownames(pop)]));abline(h=0,v=0)
+plot(pop$epsilon, log(H1[rownames(pop)]));abline(h=0,v=0)
+plot(pop$epsilon+log(H1[rownames(pop)]), log(H1[rownames(pop)]));abline(h=0,v=0)
+
+pop$DeltaH <- log(H1[rownames(pop)])
+pop$Res1 <- pop$DeltaObs - pop$DeltaT
+pop$Res2 <- pop$DeltaObs - pop$DeltaT - pop$DeltaA
+pop$Res3 <- pop$DeltaObs - pop$DeltaT - pop$DeltaA - pop$DeltaR
+pop$Res4 <- pop$DeltaObs - pop$DeltaT - pop$DeltaA - pop$DeltaR - pop$DeltaH
+
+par(mfrow=c(2,1))
+mat <- pop[,c("DeltaObs", "DeltaR", "DeltaT", "DeltaA", "DeltaH", "epsilon")]
+dots_box_plot(mat, col="grey", ylab=expression(Delta))
+abline(h=0, col=2, lwd=2)
+
+mat <- pop[,c("DeltaObs", "Res1", "Res2", "Res3", "Res4")]
+dots_box_plot(mat, col="grey", ylab=expression(Delta))
+abline(h=0, col=2, lwd=2)
+
+yyy <- as.matrix(t(groupMeans(yy, 1, xn$ROAD01)))
+r2 <- yyy[,"0"]/yyy[,"1"]
+r2 <- r2[rownames(pop)]
+plot(r2, exp(pop$DeltaR))
 
