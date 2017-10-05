@@ -352,7 +352,6 @@ for (spp in SPP) {
 save(roadside_bias, rai_pred, rai_data,
     file="e:/peter/josm/2017/roadside_avoidance.Rdata")
 
-
 ## --- unifying the bits and pieces ---
 
 ## PIF table
@@ -403,159 +402,6 @@ b_fun <- function(h) {
 NestAll <- lapply(Nhab, b_fun)
 NestTot <- t(sapply(NestAll, function(z) z["TOTAL",]))
 
-For <- c("Decid", "Mixwood", "Pine", "Conif", "BSpr", "Larch")
-xn$HAB <- paste0(xn$hab1, ifelse(xn$hab1 %in% For & xn$wtAge*200 >= 80, "O", ""))
-compare_sets(colnames(AvegH), xn$HAB)
-setdiff(colnames(AvegH), xn$HAB)
-xnss <- nonDuplicated(xn, SS, TRUE)
-xnss <- xnss[!(xnss$PCODE != "BBSAB" & xnss$ROAD01 > 0),]
-tab <- table(xnss$HAB, xnss$ROAD01)
-
-#Rd <- c(#"RailHardSurface", "RailVegetatedVerge",
-#    "RoadHardSurface", "RoadTrailVegetated", "RoadVegetatedVerge")
-#ch2veg$ROAD <- ifelse(ch2veg$cr %in% Rd, "Roadside", "Offroad")
-#tmp <- as.matrix(Xtab(Area_ha ~ HAB0 + ROAD, ch2veg))
-#tmp <- t(t(tmp) / colSums(tmp))
-
-#Ahab <- colSums(AvegH) # ha
-#Ahab <- Ahab[rownames(tab)]
-#Ahab <- Ahab / sum(Ahab)
-Ahab <- tab[,"0"] / sum(tab[,"0"])
-Whab <- tab[,"1"] / sum(tab[,"1"])
-AWhab <- data.frame(Ahab, Whab)
-NAM <- names(Ahab)
-
-h_fun <- function(h) {
-    NN <- h[NAM, "Mean"] * 10^6 # back to individuals
-    DD <- NN / colSums(AvegH)[NAM] # density: males / ha
-    sum(DD * Whab) / sum(DD * Ahab)
-}
-H <- sapply(NestAll, h_fun)
-
-## taxonomy etc ---
-pop <- tax[,c("Species_ID", "English_Name", "Scientific_Name", "Spp")]
-## pop size estimates ---
-#pop$Npix <- NestTot[,"Mean"] # M males
-pop$Npix <- NestTot[,"50%"]
-pop$NpixLo <- NestTot[,"2.5%"]
-pop$NpixHi <- NestTot[,"97.5%"]
-pop$Npif <- (pif$Population_Estimate_unrounded / pif$Pair_Adjust) / 10^6 # M males
-## roadside related metrics
-pop$Y1 <- rsb[,"Lam1"]
-pop$Y0 <- rsb[,"Lam0"]
-## Tadj and EDR/MDD ---
-pop$TimeAdj <- pif$Time_Adjust
-pop$p3 <- 1-exp(-3 * qpad_vals$phi0)
-#pop$p3 <- 1-exp(-3 * qpad_vals$phi)
-pop$MDD <- pif$Detection_Distance_m
-pop$EDR <- qpad_vals$tau0 * 100
-#pop$EDR <- qpad_vals$tau * 100
-## QAQC ---
-pop$AUCin <- AUC$auc7i
-pop$AUCout <- AUC$auc7o
-pop$k7 <- AUC$k7
-pop$DataQ <- pif$Data_Quality_Rating
-pop$BbsVar <- pif$BBS_Variance_Rating
-pop$SpSamp <- pif$Species_Sample_Rating
-## Deltas ---
-pop$DeltaObs <- log(pop$Npix / pop$Npif)
-pop$DeltaR <- log(pop$Y0/pop$Y1)
-pop$DeltaT <- log((1/pop$p3)/pop$TimeAdj)
-pop$DeltaA <- log((1/pop$EDR^2) / (1/pop$MDD^2))
-pop$DeltaH <- log(H)
-pop$DeltaExp <- pop$DeltaR + pop$DeltaT + pop$DeltaA #+ pop$DeltaH
-pop$epsilon <- pop$DeltaObs - pop$DeltaExp
-## subset ---
-pop <- droplevels(pop[rowSums(is.na(pop))==0,])
-pop <- pop[sort(rownames(pop)),]
-summary(pop)
-write.csv(pop, row.names=FALSE, file="~/Dropbox/bam/PIF-AB/qpad-pif-results.csv")
-
-## --- making the figures ---
-
-boxplot(pop[,c("DeltaR", "DeltaT", "DeltaA", "DeltaH", "epsilon")])
-abline(h=0, col=2)
-
-boxplot(pop[,c("DeltaObs", "DeltaExp")])
-abline(h=0, col=2)
-
-
-dots_box_plot <- function(mat, ylab="", ...) {
-    rnd <- runif(nrow(mat), -0.1, 0.1)
-    boxplot(mat, range=0, ylab=ylab)
-    for (i in 2:ncol(mat))
-        segments(x0=i+rnd-1, x1=i+rnd, y0=mat[,i-1], y1=mat[,i], col="lightgrey")
-    for (i in 1:ncol(mat))
-        points(i+rnd, mat[,i], pch=19, ...)
-    boxplot(mat, range=0, add=TRUE, col="#ff000020")
-    invisible(NULL)
-}
-
-#Col <- c("beige", "yellow", "orange")[pop$DataQ]
-par(las=1)
-mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH", "epsilon")]
-#mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "epsilon")]
-#colnames(mat) <- c("Obs", "Exp", "Road", "Time", "Area", "Hab", "eps")
-dots_box_plot(mat, col="grey", ylab=expression(Delta))
-abline(h=0, col=2, lwd=2)
-
-par(las=1)
-mat2 <- pop[,c("Npif", "Npix")]
-colnames(mat2) <- c("PIF", "'Pixel'")
-dots_box_plot(mat2, col="grey", "Population Size (M singing inds.)")
-
-library(intrval)
-table(OVER <- pop$Npif %[]% pop[,c("NpixLo", "NpixHi")])
-rownames(pop)[OVER]
-
-#v <- tanh(pop$RAI * 0.5)
-#v <- plogis(pop$RAI)*2-1
-#v <- pop$RAI
-Cex <- pop$DeltaObs
-names(Cex) <- rownames(pop)
-br <- c(-Inf, -2, -1, -0.1, 0.1, 1, 2, Inf)
-Col <- colorRampPalette(c("red", "black", "blue"))(7)[cut(Cex, br)]
-names(Col) <- rownames(pop)
-
-with(pop, plot(DeltaH, epsilon, type="n", #xlim=c(-0.4, 0.4), ylim=c(-10,10),
-    ylab=expression(Delta[RES]), xlab=expression(Delta[H])))
-abline(h=0, v=0, col=1, lwd=1, lty=2)
-abline(lm(epsilon ~ DeltaH, pop), col=1)
-with(pop, text(DeltaH, epsilon, rownames(pop),
-    cex=0.8, col=Col))
-legend("topleft", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
-
-
-with(pop, plot(PropRd, log(DeltaRes), type="n",
-    ylab=expression(log(Delta[Res])), xlab="Road Avoidance Index"))
-abline(h=0, v=0, col=1, lwd=1, lty=2)
-abline(lm(log(DeltaRes) ~ PropRd, pop), col=1)
-with(pop, text(PropRd, log(DeltaRes), rownames(pop),
-    cex=0.8, col=Col))
-legend("topleft", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
-
-
-o <- cca(rai)
-plot(0,type="n", xlim=c(-1,1), ylim=c(-1,1))
-s1 <- scores(o)$species
-s1 <- s1 / max(abs(s1))
-text(s1[names(Col),], labels=colnames(rai),cex=0.75, col=Col)
-s2 <- scores(o)$sites
-s2 <- s2 / max(abs(s2))
-text(s2, labels=rownames(rai),cex=1,col=3)
-points(s1[1,,drop=F],pch=3,col=4,cex=5)
-abline(h=0,v=0,lty=2)
-legend("topleft", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
-
-plot(Ahab, Whab, type="n", ylim=c(0,max(AWhab)), xlim=c(0,max(AWhab)))
-abline(0,1)
-text(Ahab, Whab, names(Ahab), cex=0.7)
-
-
-
-
-## map
-
 library(mefa4)
 library(rgdal)
 library(rgeos)
@@ -586,9 +432,11 @@ setwd(od)
 
 BCR2AB <- gIntersection(AB, BCR, byid=TRUE)
 
+For <- c("Decid", "Mixwood", "Pine", "Conif", "BSpr", "Larch")
+xn$HAB <- paste0(xn$hab1, ifelse(xn$hab1 %in% For & xn$wtAge*200 >= 80, "O", ""))
+compare_sets(colnames(AvegH), xn$HAB)
+setdiff(colnames(AvegH), xn$HAB)
 xnss <- nonDuplicated(xn, SS, TRUE)
-#xnss <- xnss[!(xnss$PCODE != "BBSAB" & xnss$ROAD01 > 0),]
-
 xy <- xnss
 coordinates(xy) <- ~ POINT_X + POINT_Y
 proj4string(xy) <-
@@ -596,7 +444,169 @@ proj4string(xy) <-
 xy <- spTransform(xy, proj4string(r))
 xy2BCR <- over(xy, BCR)
 
-#op <- par(mar=c(0,0,0,0))
+tmp <- xnss[!is.na(xy2BCR) & xy2BCR==24,]
+tmp <- tmp[!(tmp$PCODE != "BBSAB" & tmp$ROAD01 > 0),]
+tab <- table(tmp$HAB, tmp$ROAD01)
+
+#Ahab <- tab[,"0"] / sum(tab[,"0"])
+Ahab <- colSums(AvegH[,rownames(tab)]) / sum(AvegH[,rownames(tab)])
+Whab <- tab[,"1"] / sum(tab[,"1"])
+AWhab <- data.frame(Ahab, Whab)
+NAM <- names(Ahab)
+
+h_fun <- function(h) {
+    NN <- h[NAM, "Mean"] * 10^6 # back to individuals
+    DD <- NN / colSums(AvegH)[NAM] # density: males / ha
+    sum(DD * Whab) / sum(DD * Ahab)
+}
+H <- sapply(NestAll, h_fun)
+
+## taxonomy etc ---
+pop <- tax[,c("Species_ID", "English_Name", "Scientific_Name", "Spp")]
+## pop size estimates ---
+#pop$Npix <- NestTot[,"Mean"] # M males
+pop$Npix <- NestTot[,"50%"]
+pop$NpixLo <- NestTot[,"2.5%"]
+pop$NpixHi <- NestTot[,"97.5%"]
+pop$Npif <- (pif$Population_Estimate_unrounded / pif$Pair_Adjust) / 10^6 # M males
+## roadside related metrics
+pop$Y1 <- rsb[,"Lam1"]
+pop$Y0 <- rsb[,"Lam0"]
+## Tadj and EDR/MDD ---
+pop$TimeAdj <- pif$Time_Adjust
+#pop$p3 <- 1-exp(-3 * qpad_vals$phi0)
+pop$p3 <- 1-exp(-3 * qpad_vals$phi)
+pop$MDD <- pif$Detection_Distance_m
+#pop$EDR <- qpad_vals$tau0 * 100
+pop$EDR <- qpad_vals$tau * 100
+## QAQC ---
+pop$AUCin <- AUC$auc7i
+pop$AUCout <- AUC$auc7o
+pop$k7 <- AUC$k7
+pop$DataQ <- pif$Data_Quality_Rating
+pop$BbsVar <- pif$BBS_Variance_Rating
+pop$SpSamp <- pif$Species_Sample_Rating
+pop$H <- H
+## Deltas ---
+pop$DeltaObs <- log(pop$Npix / pop$Npif)
+pop$DeltaR <- log(pop$Y0/pop$Y1)
+pop$DeltaT <- log((1/pop$p3)/pop$TimeAdj)
+pop$DeltaA <- log((1/pop$EDR^2) / (1/pop$MDD^2))
+#pop$DeltaH <- -log(H) # we take inverse because H=1 is the PIF setup
+pop$DeltaExp <- pop$DeltaR + pop$DeltaT + pop$DeltaA
+pop$epsilon <- pop$DeltaObs - pop$DeltaExp
+## subset ---
+pop <- droplevels(pop[rowSums(is.na(pop))==0,])
+pop <- pop[sort(rownames(pop)),]
+summary(pop)
+write.csv(pop, row.names=FALSE, file="~/Dropbox/bam/PIF-AB/qpad-pif-results.csv")
+
+## --- making the figures ---
+
+dots_box_plot <- function(mat, ...) {
+    set.seed(1)
+    rnd <- runif(nrow(mat), -0.1, 0.1)
+    boxplot(mat, range=0, ...)
+#    for (i in 2:ncol(mat))
+#        segments(x0=i+rnd-1, x1=i+rnd, y0=mat[,i-1], y1=mat[,i], col="lightgrey")
+    for (i in 1:ncol(mat))
+        points(i+rnd, mat[,i], pch=19, col="#00000080")
+    boxplot(mat, range=0, add=TRUE, col="#ff000020", names=NA)
+    invisible(NULL)
+}
+
+mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH", "epsilon")]
+colnames(mat) <- c("OBS", "EXP", "R", "T", "A", "-H", "Residual")
+par(las=1)
+dots_box_plot(mat, ylab=expression(Delta))
+abline(h=0, col=1, lwd=1,lty=2)
+
+summary(round(rowSums(mat[,-(1:2)]) - mat[,1], 12))
+summary(round(mat[,2]+mat[,"epsilon"] - mat[,1], 12))
+
+mod <- lm(DeltaObs ~ DeltaR + DeltaT + DeltaA + DeltaH, pop)
+an <- anova(mod)
+an$Percent <- 100 * an[["Sum Sq"]] / sum(an[["Sum Sq"]])
+an <- an[c("Df", "Sum Sq", "Percent", "Mean Sq", "F value", "Pr(>F)")]
+summary(mod)
+an
+
+cf <- coef(mod)
+mat2 <- t(t(model.matrix(mod)) * cf)
+mat2 <- cbind(Obs=pop$DeltaObs, mat2[,-1], eps=pop$DeltaObs-rowSums(mat2))
+par(mfrow=c(2,1))
+dots_box_plot(mat2)
+abline(h=0, col=2, lwd=2)
+dots_box_plot(mat)
+abline(h=0, col=2, lwd=2)
+
+
+par(las=1)
+mat2 <- pop[,c("Npif", "Npix")]
+colnames(mat2) <- c("PIF", "'Pixel'")
+dots_box_plot(mat2, col="grey", "Population Size (M singing inds.)")
+
+library(intrval)
+table(OVER <- pop$Npif %[]% pop[,c("NpixLo", "NpixHi")])
+rownames(pop)[OVER]
+
+#v <- tanh(pop$RAI * 0.5)
+#v <- plogis(pop$RAI)*2-1
+#v <- pop$RAI
+Cex <- pop$DeltaObs
+names(Cex) <- rownames(pop)
+br <- c(-Inf, -2, -1, -0.1, 0.1, 1, 2, Inf)
+Col <- colorRampPalette(c("red", "black", "blue"))(7)[cut(Cex, br)]
+names(Col) <- rownames(pop)
+
+with(pop, plot(log(H), DeltaObs-DeltaExp, type="n", #xlim=c(-0.4, 0.4), ylim=c(-10,10),
+    ylab=expression(Delta[OBS]-Delta[EXP]), xlab=expression(-Delta[H])))
+abline(h=0, v=0, col=1, lwd=1, lty=2)
+abline(lm(I(DeltaObs-DeltaExp) ~ I(log(H)), pop), col=1)
+with(pop, text(log(H), DeltaObs-DeltaExp, rownames(pop),
+    cex=0.8, col=Col))
+legend("topright", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
+
+with(pop, plot(DeltaObs-log(H), DeltaExp, type="n", #xlim=c(-0.4, 0.4), ylim=c(-10,10),
+    ylab=expression(Delta[OBS]-Delta[H]), xlab=expression(Delta[R]+Delta[T]+Delta[A]+epsilon)))
+abline(h=0, v=0, col=1, lwd=1, lty=2)
+abline(0, 1)
+with(pop, text(DeltaObs-log(H), DeltaExp, rownames(pop), cex=0.8, col=Col))
+legend("bottomright", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
+
+with(pop, plot(DeltaObs, log(H)))
+with(pop, plot(epsilon, log(H)))
+
+with(pop, plot(PropRd, log(DeltaRes), type="n",
+    ylab=expression(log(Delta[Res])), xlab="Road Avoidance Index"))
+abline(h=0, v=0, col=1, lwd=1, lty=2)
+abline(lm(log(DeltaRes) ~ PropRd, pop), col=1)
+with(pop, text(PropRd, log(DeltaRes), rownames(pop),
+    cex=0.8, col=Col))
+legend("topleft", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
+
+
+o <- cca(rai)
+plot(0,type="n", xlim=c(-1,1), ylim=c(-1,1))
+s1 <- scores(o)$species
+s1 <- s1 / max(abs(s1))
+text(s1[names(Col),], labels=colnames(rai),cex=0.75, col=Col)
+s2 <- scores(o)$sites
+s2 <- s2 / max(abs(s2))
+text(s2, labels=rownames(rai),cex=1,col=3)
+points(s1[1,,drop=F],pch=3,col=4,cex=5)
+abline(h=0,v=0,lty=2)
+legend("topleft", bty="n", fill=c(4,2), border=NA, legend=c("QPAD > PIF", "QPAD < PIF"))
+
+plot(Ahab, Whab, type="n", ylim=c(0,max(AWhab)), xlim=c(0,max(AWhab)))
+abline(0,1)
+text(Ahab, Whab, names(Ahab), cex=0.7)
+
+
+
+
+
+op <- par(mar=c(1,1,1,1))
 plot(hill, col=grey(0:100/100), legend=FALSE, bty="n",
     box=FALSE, axes=FALSE)
 plot(r, legend=FALSE, col=topo.colors(50, alpha=0.35)[26:50], add=TRUE)
@@ -605,9 +615,10 @@ plot(xy[xy@data$PCODE!="BBSAB" & !(!is.na(xy2BCR) & xy2BCR==24),], add=TRUE, pch
 plot(xy[xy@data$PCODE=="BBSAB" & !(!is.na(xy2BCR) & xy2BCR==24),], add=TRUE, pch=19, col="lightblue", cex=0.5)
 plot(xy[xy@data$PCODE!="BBSAB" & !is.na(xy2BCR) & xy2BCR==24,], add=TRUE, pch=19, cex=0.5)
 plot(xy[xy@data$PCODE=="BBSAB" & !is.na(xy2BCR) & xy2BCR==24,], add=TRUE, pch=19, col=4, cex=0.5)
-legend("bottomleft", title="Legend", pch=c(19, 21), bty="n",
-    legend=c("filled", "open"))
-#par(op)
+legend("bottomleft", title="Surveys", pch=c(19, 19, 19, 21), bty="n",
+    col=c("blue", "lightblue", "black", "black"),
+    legend=c("BBS in BCR 6", "BBS outside", "Off road in BCR 6", "Off road outside"))
+par(op)
 
 tab0 <- table(xy@data$HAB)
 ii1 <- xy@data$PCODE=="BBSAB" & !is.na(xy2BCR) & xy2BCR==24
@@ -618,6 +629,15 @@ tab2 <- table(xy@data$HAB, ii2)
 df <- data.frame(tab0/sum(tab0), w1=tab1[,"TRUE"]/sum(tab1[,"TRUE"]),
     w2=tab2[,"TRUE"]/sum(tab2[,"TRUE"]))
 all(NAM==rownames(df))
+
+tmp <- t(as.matrix(df[,-1]))
+rownames(tmp)[1] <- "a"
+tmp <- tmp[,order(tmp[1,])]
+
+par(las=1, mar=c(5,6,2,2))
+barplot(100*tmp[1:2,], beside=TRUE, horiz=TRUE, xlab="% representation",
+    legend.text=TRUE)
+
 
 h_fun <- function(h, a, w) {
     NN <- h[NAM, "50%"] * 10^6 # back to individuals

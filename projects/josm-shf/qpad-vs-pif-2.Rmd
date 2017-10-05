@@ -6,7 +6,187 @@ output:
   word_document: default
 ---
 
-# Introduction
+```{r load_data,echo=FALSE,message=FALSE,warning=FALSE,results='hide'}
+library(mefa4)
+
+ROOT <- "e:/peter/AB_data_v2016"
+
+e <- new.env()
+load(file.path(ROOT, "out", "birds", "data", "data-wrsi.Rdata"), envir=e)
+TAX <- droplevels(e$TAX)
+TAX$Fn <- droplevels(TAX$English_Name)
+levels(TAX$Fn) <- nameAlnum(levels(TAX$Fn), capitalize="mixed", collapse="")
+rm(e)
+
+e <- new.env()
+load(file.path(ROOT, "out", "birds", "data", "data-josmshf.Rdata"), envir=e)
+xn <- e$DAT
+mods <- e$mods
+OFF <- e$OFF
+yy <- e$YY
+BB <- e$BB
+rm(e)
+
+fln <- list.files(file.path(ROOT, "out", "birds", "results", "josmshf"))
+fln <- sub("birds_abmi-josmshf_", "", fln)
+fln <- sub(".Rdata", "", fln)
+
+SPP <- fln
+tax <- droplevels(TAX[SPP,])
+
+tv0 <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
+tv0$Sector2 <- factor(ifelse(is.na(tv0$Sector), "NATIVE", as.character(tv0$Sector)),
+    c("NATIVE", "Agriculture", "Energy", "Forestry", "Misc", "RuralUrban", "Transportation"))
+tv0$HAB <- paste0(tv0$Type, ifelse(tv0$AGE %in% c("5", "6", "7", "8", "9"), "O", ""))
+tv0$HAB[tv0$Combined %in% c("RoadTrailVegetated", "RoadVegetatedVerge",
+    "RailVegetatedVerge")] <- "Verges"
+
+## PIF table
+pif <- read.csv("~/Dropbox/bam/PIF-AB/popBCR-6AB_v2_22-May-2013.csv")
+mefa4::compare_sets(tax$English_Name, pif$Common_Name)
+setdiff(tax$English_Name, pif$Common_Name)
+pif <- pif[match(tax$English_Name, pif$Common_Name),]
+rownames(pif) <- rownames(tax)
+
+AUC <- read.csv("~/Dropbox/bam/PIF-AB/results/AUC.csv")
+rownames(AUC) <- AUC$spp
+AUC$spp <- NULL
+AUC <- AUC[rownames(tax),]
+
+if (FALSE) {
+NN <- read.csv("~/Dropbox/bam/PIF-AB/results/PopSize567.csv")
+rownames(NN) <- NN$spp
+NN$spp <- NULL
+NN <- NN[rownames(tax),]
+
+load("e:/peter/josm/2017/stage7/predB/predictionsCI.Rdata")
+rm(PREDSCI0)
+PREDSCI <- PREDSCI[,rownames(tax),] / 10^6
+N7B <- apply(PREDSCI, 2, colSums)
+N7CI <- t(apply(N7B, 2, quantile, c(0.5, 0.025, 0.975)))
+N7mean <- colMeans(N7B)
+}
+
+load("e:/peter/AB_data_v2016/out/birds/data/mean-qpad-estimates.Rdata")
+qpad_vals <- qpad_vals[rownames(tax),]
+
+## roadside_bias, rai_pred, rai_data
+load("e:/peter/josm/2017/roadside_avoidance.Rdata")
+rsb <- t(sapply(roadside_bias, function(z) z[,1]))
+
+## AvegH, Nhab
+load("e:/peter/josm/2017/stage7/predB/predictions_HAB.Rdata")
+
+## bootstrap averaged pop size estimate
+b_fun <- function(h) {
+    N7tb <- c(Mean=mean(colSums(h) / 10^6),
+        quantile(colSums(h) / 10^6, c(0.5, 0.025, 0.975)))
+    N7hb <- t(apply(h, 1, function(z)
+        c(Mean=mean(z / 10^6), quantile(z / 10^6, c(0.5, 0.025, 0.975)))))
+    N7b <- rbind(N7hb, TOTAL=N7tb)
+    N7b
+}
+NestAll <- lapply(Nhab, b_fun)
+NestTot <- t(sapply(NestAll, function(z) z["TOTAL",]))
+
+library(mefa4)
+library(rgdal)
+library(rgeos)
+library(sp)
+library(gstat)
+library(raster)
+load(file.path("e:/peter/AB_data_v2016", "out", "kgrid", "kgrid_table.Rdata"))
+
+r <- raster(file.path("~/Dropbox/courses/st-johns-2017",
+    "data", "ABrasters", "dem.asc"))
+slope <- terrain(r, opt="slope")
+aspect <- terrain(r, opt="aspect")
+hill <- hillShade(slope, aspect, 40, 270)
+
+od <- setwd("e:/peter/AB_data_v2017/data/raw/xy/bcr/")
+BCR <- readOGR(".", "BCR_Terrestrial_master") # rgdal
+BCR <- spTransform(BCR, proj4string(r))
+BCR <- gSimplify(BCR, tol=500, topologyPreserve=TRUE)
+setwd(od)
+
+od <- setwd("~/Dropbox/courses/st-johns-2017/data/NatRegAB")
+AB <- readOGR(".", "Natural_Regions_Subregions_of_Alberta") # rgdal
+AB <- spTransform(AB, proj4string(r))
+AB <- gUnaryUnion(AB, rep(1, nrow(AB))) # province
+AB <- gSimplify(AB, tol=500, topologyPreserve=TRUE)
+setwd(od)
+
+BCR2AB <- gIntersection(AB, BCR, byid=TRUE)
+
+For <- c("Decid", "Mixwood", "Pine", "Conif", "BSpr", "Larch")
+xn$HAB <- paste0(xn$hab1, ifelse(xn$hab1 %in% For & xn$wtAge*200 >= 80, "O", ""))
+compare_sets(colnames(AvegH), xn$HAB)
+setdiff(colnames(AvegH), xn$HAB)
+xnss <- nonDuplicated(xn, SS, TRUE)
+xy <- xnss
+coordinates(xy) <- ~ POINT_X + POINT_Y
+proj4string(xy) <-
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+xy <- spTransform(xy, proj4string(r))
+xy2BCR <- over(xy, BCR)
+
+tmp <- xnss[!is.na(xy2BCR) & xy2BCR==24,]
+tmp <- tmp[!(tmp$PCODE != "BBSAB" & tmp$ROAD01 > 0),]
+tab <- table(tmp$HAB, tmp$ROAD01)
+
+#Ahab <- tab[,"0"] / sum(tab[,"0"])
+Ahab <- colSums(AvegH[,rownames(tab)]) / sum(AvegH[,rownames(tab)])
+Whab <- tab[,"1"] / sum(tab[,"1"])
+AWhab <- data.frame(Ahab, Whab)
+NAM <- names(Ahab)
+
+h_fun <- function(h) {
+    NN <- h[NAM, "Mean"] * 10^6 # back to individuals
+    DD <- NN / colSums(AvegH)[NAM] # density: males / ha
+    sum(DD * Whab) / sum(DD * Ahab)
+}
+H <- sapply(NestAll, h_fun)
+
+## taxonomy etc ---
+pop <- tax[,c("Species_ID", "English_Name", "Scientific_Name", "Spp")]
+## pop size estimates ---
+#pop$Npix <- NestTot[,"Mean"] # M males
+pop$Npix <- NestTot[,"50%"]
+pop$NpixLo <- NestTot[,"2.5%"]
+pop$NpixHi <- NestTot[,"97.5%"]
+pop$Npif <- (pif$Population_Estimate_unrounded / pif$Pair_Adjust) / 10^6 # M males
+## roadside related metrics
+pop$Y1 <- rsb[,"Lam1"]
+pop$Y0 <- rsb[,"Lam0"]
+## Tadj and EDR/MDD ---
+pop$TimeAdj <- pif$Time_Adjust
+#pop$p3 <- 1-exp(-3 * qpad_vals$phi0)
+pop$p3 <- 1-exp(-3 * qpad_vals$phi)
+pop$MDD <- pif$Detection_Distance_m
+#pop$EDR <- qpad_vals$tau0 * 100
+pop$EDR <- qpad_vals$tau * 100
+## QAQC ---
+pop$AUCin <- AUC$auc7i
+pop$AUCout <- AUC$auc7o
+pop$k7 <- AUC$k7
+pop$DataQ <- pif$Data_Quality_Rating
+pop$BbsVar <- pif$BBS_Variance_Rating
+pop$SpSamp <- pif$Species_Sample_Rating
+pop$H <- H
+## Deltas ---
+pop$DeltaObs <- log(pop$Npix / pop$Npif)
+pop$DeltaR <- log(pop$Y0/pop$Y1)
+pop$DeltaT <- log((1/pop$p3)/pop$TimeAdj)
+pop$DeltaA <- log((1/pop$EDR^2) / (1/pop$MDD^2))
+pop$DeltaH <- log(1/H) # we take inverse because H=1 is the PIF setup
+pop$DeltaExp <- pop$DeltaR + pop$DeltaT + pop$DeltaA + pop$DeltaH
+pop$epsilon <- pop$DeltaObs - pop$DeltaExp
+## subset ---
+pop <- droplevels(pop[rowSums(is.na(pop))==0,])
+pop <- pop[sort(rownames(pop)),]
+```
+
+## Introduction
 
 Existing populations size estimates by
 Partners in Flight (PIF) provide a set of
@@ -17,7 +197,7 @@ as the 'PIF estimate', $\hat{N}^{(PIF)}$.
 
 The estimator for the PIF approach is:
 
-$$ \hat{N}^{(PIF)} = E[Y_{1}] \times P \times T \times A \times \frac{1}{\pi MDD^2} \times \frac{1}{H} $$
+$$ \frac{\hat{N}^{(PIF)}}{H} = E[Y_{1}] \times P \times T \times A \times \frac{1}{\pi MDD^2} $$
 
 where $E[Y_{1}]$ is the stop level expected count from roadside BBS data (the original
 description used route level averages and a factor or 1/50 to account for
@@ -27,8 +207,10 @@ $T$ is the time adjustment,
 $A$ is the area of the geographic region,
 $MDD$ is maximum detection distance
 (making sure that unit for $MDD$ is compatible to the unit of area),
-and $H$ is adjustment for landscape/habitat sampling bias
-(takes a default value of 1 as it is currently not implemented, but recognized).
+and $1/H$ is adjustment for habitat sampling bias
+due to applying a sample based estimator for the whole geographic region.
+The habitat sampling bias $1/H$ is on the left hand side because current
+PIF estimates do not account for that (tables contain a default value of $H=1$).
 
 Another set of estimates of current population sizes in Alberta BCR 6
 are based on a model based prediction approach
@@ -36,7 +218,7 @@ using province wide vegetation and human footprint maps.
 We refer to these estimates for any given species
 as the 'pixel based estimates', $\hat{N}^{(PIX)}$.
 
-$$ \hat{N}^{(PIX)} = E[Y_{0}] \times P \times \frac{1}{p_3} \times A \times \frac{1}{\pi EDR^2} \times 1 $$
+$$ \hat{N}^{(PIX)} = E[Y_{0}] \times P \times \frac{1}{p_3} \times A \times \frac{1}{\pi EDR^2} $$
 
 where $E[Y_{0}]$ is the point level expected value of a count from a combination of
 on- and off-road data sources after accounting for roadside bias,
@@ -45,30 +227,194 @@ $1/p_3$ is the time adjustment based on removal sampling based availability and 
 $A$ is the area of the geographic region,
 $EDR$ is distance sampling based effective detection radius
 (making sure that unit for $EDR$ is compatible to the unit of area),
-The adjustment for landscape/habitat sampling bias takes value of 1 as
-we don't expect sampling bias from prediction.
+There is no adjustment for habitat sampling bias because we used 
+model based extrapolation to the whole geographic region to avoid habitat 
+related biases in population size estimation.
 
 We used the Pair adjustment to calculate number of singinsg individuals
 for both estimators, thus effectively setting $P=1$.
 We compare the two estimators and the different adjustments as ratios
 (pair adjustment and the area of the geographic area calcels out):
 
-$$ \frac{\hat{N}^{(PIX)}/P}{\hat{N}^{(PIF)}/P} = \frac{E[Y_{0}]}{E[Y_{1}]} \times \frac{1/p_3}{T} \times \frac{A}{A} \times \frac{1/EDR^2}{1/MDD^2} \times \frac{1}{1/H} $$
+$$ \frac{\hat{N}^{(PIX)}/P}{\hat{N}^{(PIF)}/(HP)} = \frac{E[Y_{0}]}{E[Y_{1}]} \times \frac{1/p_3}{T} \times \frac{A}{A} \times \frac{1/EDR^2}{1/MDD^2} $$
 
 After simplification, we get:
 
-$$ \frac{\hat{N}^{(PIX)}}{\hat{N}^{(PIF)}} = \frac{E[Y_{0}]}{E[Y_{1}]} \times \frac{1}{p_3T} \times \frac{MDD^2}{EDR^2} \times H $$
+$$ \frac{\hat{N}^{(PIX)}}{\hat{N}^{(PIF)}} = \frac{E[Y_{0}]}{E[Y_{1}]} \times \frac{1}{p_3T} \times \frac{MDD^2}{EDR^2} \times \frac{1}{H} $$
 
 For simplicity, we will refer to these components as additive log ratios, $\Delta$.
 $\Delta_{OBS}$ is the observed log ratio of the two estimators:
 $\Delta_{EXP}$ is the expected log ratio based on the components.
 $\Delta_{OBS} = \Delta_{EXP} + \epsilon$, where $\epsilon$ is the residual
-not accounted for by any of the $|Delta$ components:
+not accounted for by any of the $\Delta$ components:
 
-$$ \Delta_{OBS} = \Delta_{R} + \Delta_{T} + \Delta_{D} + \Delta_{H} + \epsilon $$
+$$ \Delta_{OBS} = \Delta_{R} + \Delta_{T} + \Delta_{D} + \Delta_{H} + \epsilon = \Delta_{EXP} + \epsilon$$
 
 $\Delta_{R}$ is the component related to roadside bias in counts,
 $\Delta_{T}$ is the component related to time adjustment,
 $\Delta_{A}$ is the component related to sampling area adjustments,
 $\Delta_{H}$ is the component related to habitat sampling bias.
+
+### PIF population size estimates
+
+We used the 2013 version of the data set, filtered for BCR 6 Alberta.
+
+### Model based population size estimates
+
+We followed the methodology outlined in Ball et al. 2016 and replicated the 
+analysis and prediction for `r nrow(pop)` species presented here.
+To apply the methodology more generally across species, we did not include
+terrain metrics as covariates, and we did not identified high suitability
+areas to be considered at larger spatial scales for each individual species.
+We only used amount of human footprint in 1 km$^2$ buffer areas.
+
+```{r map,echo=FALSE,dev='png',fig.height=10,fig.width=5}
+op <- par(mar=c(1,1,1,1))
+plot(hill, col=grey(0:100/100), legend=FALSE, bty="n",
+    box=FALSE, axes=FALSE)
+plot(r, legend=FALSE, col=topo.colors(50, alpha=0.35)[26:50], add=TRUE)
+plot(BCR2AB, col=c("#00000060", NA, rep("#00000060", 11)), add=TRUE)
+plot(xy[xy@data$PCODE!="BBSAB" & !(!is.na(xy2BCR) & xy2BCR==24),], add=TRUE, pch=19, col="white", cex=0.5)
+plot(xy[xy@data$PCODE=="BBSAB" & !(!is.na(xy2BCR) & xy2BCR==24),], add=TRUE, pch=19, col="lightblue", cex=0.5)
+plot(xy[xy@data$PCODE!="BBSAB" & !is.na(xy2BCR) & xy2BCR==24,], add=TRUE, pch=19, cex=0.5)
+plot(xy[xy@data$PCODE=="BBSAB" & !is.na(xy2BCR) & xy2BCR==24,], add=TRUE, pch=19, col=4, cex=0.5)
+legend("bottomleft", title="Surveys", pch=c(19, 19, 19, 21), bty="n",
+    col=c("blue", "lightblue", "black", "black"),
+    legend=c("BBS in BCR 6", "BBS outside", "Off road in BCR 6", "Off road outside"))
+par(op)
+```
+
+
+### Roadside count bias
+
+We estimated expected density values for roadside and off-road habitats
+given tha sample hased habitat composition along the roadside samples.
+The ratio of expected counts is the same as the ratio of the densities,
+thus we calculated the ratio of mean densities for this component.
+
+### Time adjustment
+
+We averaged the removal model based probabilities for 3-minute counts
+over the surveys used for each species.
+
+### Sampling area adjustment
+
+We averaged the distance sampling based EDR values 
+over the surveys used for each species.
+
+### Habitat sampling bias
+
+We calculated the proportion of the landbase ($a_k$, $k=1,\ldots,K$) in $K=19$ 
+habitat classes. We also calculated proportion of BBS stops ($w_k$) 
+clipped to BCR 6 within each of these $K$ classes.
+
+A sample based estimator of total abundance is $N=A \sum_{k=1}^{K} D_k w_k$, 
+where $A$ is the area of the region. If sampling is proportional to availability
+($w_k = a_k$), the estimator is unbiased. Otherwise, the sampling
+bias is characterized by the ratio 
+$H = (\sum_{k=1}^{K} D_k w_k) / (\sum_{k=1}^{K} D_k a_k)$.
+
+Here are the proportions for the whole extent of BCR 6 in Alberta (`a`) and
+the BBS stops within (`w`):
+
+```{r tab,echo=FALSE}
+tmp <- 100*AWhab
+colnames(tmp) <- c("a", "w")
+knitr::kable(tmp, digits=2)
+```
+
+## Results
+
+We found that pixel based population size estimates were on average
+`r round(mean(pop$Npix/pop$Npif), 2)` (min.: `r round(min(pop$Npix/pop$Npif), 2)`, 
+max: `r round(max(pop$Npix/pop$Npif), 2)`) times higher than PIF estimates.
+Population size estimates are provided in Appendix.
+
+```{r estimates,echo=FALSE}
+dots_box_plot <- function(mat, ...) {
+    set.seed(1)
+    rnd <- runif(nrow(mat), -0.1, 0.1)
+    boxplot(mat, range=0, ...)
+#    for (i in 2:ncol(mat))
+#        segments(x0=i+rnd-1, x1=i+rnd, y0=mat[,i-1], y1=mat[,i], col="lightgrey")
+    for (i in 1:ncol(mat))
+        points(i+rnd, mat[,i], pch=19, col="#00000080")
+    boxplot(mat, range=0, add=TRUE, col="#ff000020", names=NA)
+    invisible(NULL)
+}
+
+par(las=1)
+dots_box_plot(pop[,c("Npif", "Npix")], ylab=expression(hat(N)), names=c("PIF", "PIX"))
+```
+
+The $\Delta$ components are shown in the next figure. The roadside count 
+($\Delta_R$) and the habitat sampling component  ($\Delta_H$) had
+means close to 0 indicating a wide range of responses from
+individual species but no systematic bias.
+As opposed to this, the time  ($\Delta_T$) and area  ($\Delta_A$)
+adjustments presented a systematic bias indicating that these adjustments would
+drive pixel based population size estimates higher than PIF estimates.
+
+```{r deltas,echo=FALSE}
+
+mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH")]
+colnames(mat) <- c("OBS", "EXP", "R", "T", "A", "H")
+par(las=1)
+dots_box_plot(mat, ylab=expression(Delta))
+abline(h=0, col=1, lwd=1,lty=2)
+```
+
+We used linear regression, to see if the $\Delta$ components capture the
+whole relationship between the two sets of population size estimates.
+We expected the intercept to be close to 0, while the other coefficients to 
+be around 1.
+
+```{r model,echo=FALSE}
+mod <- lm(DeltaObs ~ DeltaR + DeltaT + DeltaA + DeltaH, pop)
+summary(mod)
+```
+
+As expected, the intercept was close to zero, and effect sizes close to 1.
+The largest deviation was detected for the sampling area ($\Delta_A$) component.
+The residual variance was `r round(summary(mod)$sigma^2, 3)`,
+and the model explained `r round(100*summary(mod)$r.squared, 1)` % of the total 
+variation. The percent variation explained by the individual
+components is shown in the following table:
+
+```{r anova,echo=FALSE}
+an <- anova(mod)
+an$Percent <- 100 * an[["Sum Sq"]] / sum(an[["Sum Sq"]])
+an <- an[c("Df", "Sum Sq", "Percent", "Mean Sq", "F value", "Pr(>F)")]
+an
+```
+
+The roadside count component ($\Delta_R$) explained the largest portion of the variation,
+followed by the habitat sampling component ($\Delta_H$),
+the area adjustment ($\Delta_A$),
+and the time adjustment component ($\Delta_T$).
+
+## Summary
+
+The following main points were identified:
+
+1. Pixel based and PIF population size estimates are (very) different.
+2. Roadside count and habitat sampling biases vary greatly across species and these are more important in terms in explaining variation in estimates across species.
+2. The effects area and time adjustments were systematic and more uniform across species explaining the average magnitude of differences among the two population size estimators.
+
+Implications:
+
+1. Roadside related biases need to be better understood, which is complicated by the fact that species responses are very different.
+2. Habitat sampling bias can lead to under- and over-sampling when using a sample based estimator without accounting for sampling bias. A stratified population size estimator can potentially account for this bias. (This could have implications for trend estimation based on BBS.)
+3. Better quantification of time and area adjustments can be easily incorporated into current PIF approach.
+
+## Appendix
+
+Population size estimates, million singing individuals. Table is ordered by
+pixel based estimates.
+
+```{r appendix,echo=FALSE}
+tmp <- pop[,c("English_Name", "Npif", "Npix", "NpixLo", "NpixHi", "DeltaObs")]
+tmp <- tmp[order(rownames(tmp)),]
+knitr::kable(tmp, digits=2)
+```
 
