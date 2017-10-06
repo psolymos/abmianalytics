@@ -331,20 +331,25 @@ max: `r round(max(pop$Npix/pop$Npif), 2)`) times higher than PIF estimates.
 Population size estimates are provided in Appendix.
 
 ```{r estimates,echo=FALSE}
-dots_box_plot <- function(mat, ...) {
+dots_box_plot <- function(mat, lines=FALSE, ...) {
     set.seed(1)
     rnd <- runif(nrow(mat), -0.1, 0.1)
     boxplot(mat, range=0, ...)
-#    for (i in 2:ncol(mat))
-#        segments(x0=i+rnd-1, x1=i+rnd, y0=mat[,i-1], y1=mat[,i], col="lightgrey")
+    if (lines)
+        for (i in 2:ncol(mat))
+            segments(x0=i+rnd-1, x1=i+rnd, y0=mat[,i-1], y1=mat[,i], col="lightgrey")
     for (i in 1:ncol(mat))
         points(i+rnd, mat[,i], pch=19, col="#00000080")
     boxplot(mat, range=0, add=TRUE, col="#ff000020", names=NA)
     invisible(NULL)
 }
 
-par(las=1)
-dots_box_plot(pop[,c("Npif", "Npix")], ylab=expression(hat(N)), names=c("PIF", "PIX"))
+op <- par(mfrow=c(1,2), las=1)
+dots_box_plot(pop[,c("Npif", "Npix")], lines=TRUE,
+    ylab="Population Size (M singing inds.)", names=c("PIF", "PIX"))
+dots_box_plot(log(pop[,c("Npif", "Npix")]), lines=TRUE,
+    ylab="log Population Size (M singing inds.)", names=c("PIF", "PIX"))
+par(op)
 ```
 
 The $\Delta$ components are shown in the next figure. The roadside count 
