@@ -344,11 +344,15 @@ dots_box_plot <- function(mat, lines=FALSE, ...) {
     invisible(NULL)
 }
 
-op <- par(mfrow=c(1,2), las=1)
+op <- par(mfrow=c(2,2), las=1)
 dots_box_plot(pop[,c("Npif", "Npix")], lines=TRUE,
     ylab="Population Size (M singing inds.)", names=c("PIF", "PIX"))
 dots_box_plot(log(pop[,c("Npif", "Npix")]), lines=TRUE,
     ylab="log Population Size (M singing inds.)", names=c("PIF", "PIX"))
+plot(pop[,c("Npif", "Npix")])
+abline(0,1)
+plot(log(pop[,c("Npif", "Npix")]))
+abline(0,1)
 par(op)
 ```
 
@@ -377,6 +381,10 @@ be around 1.
 ```{r model,echo=FALSE}
 mod <- lm(DeltaObs ~ DeltaR + DeltaT + DeltaA + DeltaH, pop)
 summary(mod)
+modx <- lm(DeltaObs ~ DeltaR + DeltaT + DeltaA + DeltaH + DeltaR:DeltaH, pop)
+summary(modx)
+mod2 <- step(lm(DeltaObs ~ (DeltaR + DeltaT + DeltaA + DeltaH)^2, pop), trace=0)
+summary(mod2)
 ```
 
 As expected, the intercept was close to zero, and effect sizes close to 1.
