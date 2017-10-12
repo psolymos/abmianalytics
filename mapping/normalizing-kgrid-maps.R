@@ -1,8 +1,8 @@
 library(mefa4)
 
-ROOT <- "e:/peter/AB_data_v2016"
+ROOT <- "e:/peter/AB_data_v2017"
 
-load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
+load(file.path(ROOT, "data", "analysis", "kgrid_table_km.Rdata"))
 source("~/repos/abmianalytics/R/maps_functions.R")
 Info0 <- readLines("~/repos/abmianalytics/mapping/README.md")
 
@@ -12,42 +12,42 @@ WEB <- TRUE
 #kgrid2 <- kgrid[,c("Row_Col", "POINT_X", "POINT_Y")]
 #write.csv(kgrid2, row.names=FALSE, file="w:/gis/Grid1km_working.csv")
 
-taxon <- "lichens"
+#taxon <- "lichens"
 #taxon <- "vplants"
 #taxon <- "mosses"
-#taxon <- "mites"
+taxon <- "mites"
 #taxon <- "mammals"
 #taxon <- "birds"
 
 if (taxon == "mammals") {
     ext <- ".csv" # csv or Rdata
-    VER <- "3.2 (2016-03-18)" # version
+    VER <- "5.0 (2017-07-13)" # version
     nam_col <- "species" # column used in README
     nam_in <- "sppid" # name used in input files
     nam_out <- "sppid" # name used in output files
 }
 if (taxon == "birds") {
     ext <- ".Rdata" # csv or Rdata
-    VER <- "4.0 (2016-09-12)" # version
+    VER <- "4.1 (2017-07-13)" # version
     nam_col <- "species" # column used in README
     nam_in <- "AOU"
     nam_out <- "sppid"
 }
 if (taxon %in% c("mites", "mosses", "lichens", "vplants")) {
     ext <- ".Rdata" # csv or Rdata
-    VER <- "4.0 (2016-09-12)" # version
+    VER <- "5.0 (2017-07-13)" # version
     nam_col <- "scinam" # column used in README
     nam_in <- "sppid" # name used in input files
     nam_out <- "sppid" # name used in output files
 }
 
-root_in <- "w:/species-v4-Rdata"
-root_out <- "w:/species-v4"
+root_in <- "v:/contents/2017/species"
+root_out <- "w:/species-2017"
 spptab <- read.csv(file.path("~/repos/abmispecies/_data", paste0(taxon, ".csv")))
 rownames(spptab) <- spptab[,nam_in]
 sppid <- sort(rownames(spptab)[spptab$map.pred])
 
-fexists <- sapply(file.path(root_in, taxon, paste0(sppid, ext)), file.exists)
+fexists <- sapply(file.path(root_in, taxon, "km2", paste0(sppid, ext)), file.exists)
 table(fexists)
 sppid[!fexists]
 stopifnot(all(fexists))
@@ -58,10 +58,10 @@ for (i in 1:length(sppid)) {
     sppout <- as.character(spptab[spp, nam_out])
     cat(taxon, spp, "\n");flush.console()
     if (ext == ".csv") {
-        km <- read.csv(file.path(root_in, taxon, paste0(spp, ext)))
+        km <- read.csv(file.path(root_in, taxon, "km2", paste0(spp, ext)))
     } else {
         e <- new.env()
-        load(file.path(root_in, taxon, paste0(spp, ext)), envir=e)
+        load(file.path(root_in, taxon, "km2", paste0(spp, ext)), envir=e)
         if (taxon == "birds") {
             km <- data.frame(e$km2)
             km$LinkID <- rownames(km)

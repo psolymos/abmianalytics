@@ -18,8 +18,8 @@ Version &version&, http://species.abmi.ca
 
 Normalized relative abundance is calculated from original values
 (Ref0, Curr0) as:
-* Ref = round(Ref0 / max(Ref0, Curr0))
-* Curr = round(Curr0 / max(Ref0, Curr0))
+* Ref = round(100 * Ref0 / max(Ref0, Curr0))
+* Curr = round(100 * Curr0 / max(Ref0, Curr0))
 
 ## Projection
 
@@ -30,4 +30,5 @@ The Row_Col field links the raster cells to these products:
 * CSV with latitude/longitude (NAD_1983_10TM_AEP_Forest projection):
   http://ftp.public.abmi.ca/species.abmi.ca/gis/Grid1km_working.csv.zip
 
-CRS: '+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs'
+Proj4: '+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs'
+See: http://spatialreference.org/ref/epsg/3402/
