@@ -50,7 +50,10 @@ for (i in 1:length(fl)) {
         col.label="ABMI",
         col.year="inventory_year",
         col.HFyear="year",
-        sparse=TRUE, HF_fine=FALSE) # don't use refined classes
+        col.HABIT="Combined_ChgByCWCS",
+        col.SOIL="Soil_Type_1",
+        sparse=TRUE,
+        HF_fine=FALSE)
     dd$scale <- "3x7 km rectangle around NSF site"
     dd$sample_year <- yr[i]
 
@@ -59,6 +62,9 @@ for (i in 1:length(fl)) {
 
     yearly_vhf[[as.character(yr[i])]] <- dd2
 }
+
+#tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-V6.csv")
+#compare_sets(colnames(dd2[[1]]), rownames(tv))
 
 save(yearly_vhf,
     file=file.path(ROOT, VER, "data", "analysis",
@@ -81,17 +87,19 @@ yr <- as.integer(names(yearly_vhf))
 
 veg3x7_current <- list()
 veg3x7_reference <- list()
+veg3x7_sector <- list()
 for (i in as.character(yr)) {
     x <- as.matrix(yearly_vhf[[i]][[1]])[,rownames(tv)]
     x <- 100 * x / rowSums(x)
     veg3x7_current[[i]] <- x[,colnames(x)[!endsWith(colnames(x),"0")]]
+    veg3x7_sector[[i]] <- groupSums(x, 2, tv$ETA_UseInAnalysis_Sector)
 
     x <- as.matrix(yearly_vhf[[i]][[2]])[,rownames(tv)[!tv$IS_HF]]
     x <- 100 * x / rowSums(x)
     veg3x7_reference[[i]] <- x[,colnames(x)[!endsWith(colnames(x),"0")]]
 }
 
-save(veg3x7_reference, veg3x7_current, gis,
+save(veg3x7_reference, veg3x7_current, gis, veg3x7_sector,
     file=file.path(ROOT, VER, "data", "analysis",
     "veg-hf_3x7_1999-2015-summaries.Rdata"))
 
