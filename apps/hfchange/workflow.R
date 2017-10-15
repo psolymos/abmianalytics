@@ -59,7 +59,6 @@ get_hplot(r, c, br)
 get_rplot(r, c, br)
 get_map(r)
 
-save(ABnr, pts, HF, file="hfchange.rda")
 
 
 # make the coordinates a numeric matrix
@@ -69,3 +68,109 @@ qk_mp <- st_multipoint(qk_mx)
 # convert the multipoint feature to sf
 qk_sf <- st_sf(st_cast(st_sfc(qk_mp), "POINT"), gis, crs=4326)
 
+## raster manipulation
+
+f14v2 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_coarse-fixage0.Rdata"
+e <- new.env()
+load(f14v2, envir=e)
+x14v2 <- e$dd1km_pred$veg_current
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v6.csv")
+
+x <- as.matrix(x14v2)[,rownames(tv)]
+x <- 100 * x / rowSums(x)
+x <- groupSums(x, 2, tv$ETA_UseInAnalysis_Sector)
+
+load(file.path("e:/peter/AB_data_v2016", "out", "kgrid", "kgrid_table.Rdata"))
+x <- x[rownames(kgrid),c("Agriculture", "Forestry", "Energy", "RuralUrban", "Transportation", "Misc")]
+colnames(x) <- c("Agriculture", "Forestry", "Energy",
+        "Urban", "Transportation", "Other")
+
+rt <- raster(file.path("e:/peter/AB_data_v2016", "data", "kgrid", "AHM1k.asc"))
+projection(rt) <- crs
+mat0 <- as.matrix(rt)
+matNR <- as.matrix(Xtab(as.integer(kgrid$NRNAME) ~ Row + Col, kgrid))
+
+
+colDiv <- colorRampPalette(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B",
+    "#FFFFBF","#D9EF8B", "#A6D96A", "#66BD63", "#1A9850", "#006837"))(100)
+colSeq <- rev(viridis::magma(100))
+
+rast_ix <- function(i, x) {
+    val <- as.numeric(x[,i])
+    mat <- as.matrix(Xtab(val ~ Row + Col, kgrid))
+    mat[is.na(mat0)] <- NA
+    r <- raster(x=mat, template=rt)
+    r <- aggregate(r, 10, fun=mean)
+    r
+}
+
+rr <- lapply(colnames(x), rast_ix, x=x)
+names(rr) <- colnames(x)
+rr <- stack(rr)
+matNR[is.na(mat0)] <- NA
+rnr <- raster(x=matNR, template=rt)
+rnr <- aggregate(rnr, 10, fun=median)
+
+get_rmap <- function(r) {
+
+    nr <- c(4, 5, 3, 1, 2, 6)
+    names(nr) <- c("Grassland", "Parkland", "Foothills", "Boreal",
+        "Canadian Shield", "Rocky Mountain")
+    Show <- nr %in% r
+
+    rrr <- rr[[r[1]]]
+    if (length(r) > 1)
+        for (i in 2:length(r))
+            rrr <- rr[[r[i]]] + rrr
+    msk <- rr[[1]]
+    msk[rnr %in% r] <- NA
+    rrr[!(rnr %in% r)] <- NA
+    op <- par(mar=c(1,1,1,1))
+    on.exit(par(op))
+    plot(rrr, col=rev(viridis::magma(100)), axes=FALSE, box=FALSE)
+    plot(msk, col="lightgrey", add=TRUE, legend=FALSE)
+    #plot(ABnr[!Show], add=TRUE, col="#808080", border=NA)
+    plot(ABnr, add=TRUE, border="darkgrey")
+
+    invisible(NULL)
+}
+
+save(ABnr, pts, HF, rr, rnr, file="hfchange.rda")
+
+rast_pl <- function(i, x, r=NULL, fact=NULL, NR=TRUE, col=NULL, ...) {
+    if (is.null(r)) {
+        r <- rast_ix(i, x)
+        if (is.null(col))
+            col <- colSeq
+    } else {
+        if (is.null(col))
+            col <- colDiv
+    }
+    if (!is.null(fact))
+        r <- aggregate(r, fact, fun=mean)
+    plot(r, axes=FALSE, box=FALSE, col=col, ...)
+    if (NR)
+        plot(ABnrS, add=TRUE, border=1, lwd=0.5)
+    invisible(r)
+}
+
+fact <- NULL
+NR <- TRUE
+
+## compares 2014v2 to 2010
+pdf(paste0("e:/peter/sppweb2017/footprint-results/hf-2014v2-vs-2010-maps_",
+    if (is.null(fact)) 1 else fact, "km-scale.pdf"),
+    onefile=TRUE, height=8, width=15)
+for (i in colnames(z10)) {
+cat(i, "\n");flush.console()
+op <- par(mar=c(1, 1, 4, 8)+0.1, mfrow=c(1,3))
+r1 <- rast_pl(i, z10, main=paste("2010\n", i), fact=fact, NR=NR)
+r2 <- rast_pl(i, z14v2, main=paste("2014v2\n", i), fact=fact, NR=NR)
+r3 <- r2-r1
+Mx <- max(abs(r3@data@values),na.rm=TRUE)
+r3@data@values[1] <- -Mx
+r3@data@values[2] <- +Mx
+rast_pl(i, r=r3, main=paste("2014-2010\n", i), NR=NR)
+par(op)
+}
+dev.off()

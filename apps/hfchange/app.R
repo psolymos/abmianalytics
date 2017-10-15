@@ -2,25 +2,34 @@ source("globals.R")
 
 ui <- fluidPage(
   titlePanel("Human Footprint in Alberta"),
-    fluidRow(
-      column(2,
-        wellPanel(
-            h3("Settings"),
-            radioButtons("byReg", label = "Summarize by",
-                choices = list("Industrial Sector" = 1, "Natural Region" = 2),
-                selected = 1),
-            checkboxGroupInput("checkRegions", label = "Natural Regions",
-                choices = list("Grassland"=1, "Parkland"=2, "Foothills"=3, "Boreal"=4,
-                "Canadian Shield"=5, "Rocky Mountain"=6),
-                selected = 1:6),
-            checkboxGroupInput("checkSectors", label = "Natural Regions",
-                choices = list("Agriculture"=1, "Forestry"=2, "Energy"=3,
-                "Urban"=4, "Transportation"=5, "Other"=6),
-                selected = 1:6)
-        )
+    wellPanel(fluidRow(
+      column(4,
+        checkboxGroupInput("checkRegions", label = "Natural Regions",
+          choices = list("Grassland"=1, "Parkland"=2, "Foothills"=3, "Boreal"=4,
+          "Canadian Shield"=5, "Rocky Mountain"=6),
+          selected = 1:6)
       ),
-      column(4, plotOutput("myMap")),
-      column(6, htmlOutput("myChart"))
+      column(4,
+        checkboxGroupInput("checkSectors", label = "Industrial Sectors",
+          choices = list("Agriculture"=1, "Forestry"=2, "Energy"=3,
+          "Urban"=4, "Transportation"=5, "Other"=6),
+          selected = 1:6)
+      ),
+      column(4,
+        radioButtons("byReg", label = "Summarize by",
+          choices = list("Industrial Sector" = 1, "Natural Region" = 2),
+          selected = 1)
+      )
+    )),
+    fluidRow(
+      column(6,
+        htmlOutput("myChart"),
+        p("Percent human footprint according to selection. Based on yearly veryfied human footprint in 3 x 7 km rectangles at ABMI site locations. Hover over the lines to see values, use Edit button to change chart settings.")
+      ),
+      column(6,
+        plotOutput("myMap"),
+        p("The map shows percent human footprint according to selection. Based on 2014 human footprint inventory at 10 x 10 km scale.")
+      )
     )
 )
 
@@ -29,12 +38,12 @@ server <- function(input, output) {
         get_gplot(as.integer(input$checkRegions),
             as.integer(input$checkSectors), input$byReg == 2)
     })
-    output$myPlot <- renderPlot({
-        get_plot(as.integer(input$checkRegions),
-            as.integer(input$checkSectors), input$byReg == 2)
-    })
+#    output$myPlot <- renderPlot({
+#        get_plot(as.integer(input$checkRegions),
+#            as.integer(input$checkSectors), input$byReg == 2)
+#    })
     output$myMap <- renderPlot({
-        get_map(input$checkRegions)
+        get_rmap(as.integer(input$checkRegions), as.integer(input$checkSectors))
     })
 }
 

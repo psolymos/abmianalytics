@@ -8,7 +8,7 @@ library(rgeos)
 library(sp)
 library(gstat)
 library(raster)
-#library(viridis)
+library(viridis)
 library(ggplot2)
 #library(rCharts)
 library(shiny)
@@ -17,6 +17,8 @@ library(googleVis)
 load("hfchange.rda")
 
 get_data0 <- function(r, c, byregion=TRUE) {
+    if (length(c) < 1)
+        stop("Select at least one industrial sector.")
     YR <- as.integer(dimnames(HF)[[3]])
     if (byregion) {
         out <- matrix(NA, length(YR), length(r))
@@ -30,7 +32,7 @@ get_data0 <- function(r, c, byregion=TRUE) {
         fun <- colSums
     }
     for (i in 1:length(YR))
-        out[i,] <- fun(HF[r,c,i])
+        out[i,] <- fun(HF[r,c,i,drop=FALSE])
     list(x=YR, y=out)
 }
 get_data <- function(r, c, byregion=TRUE) {
@@ -49,10 +51,10 @@ get_map <- function(r) {
         "Canadian Shield", "Rocky Mountain")
     Col <- ifelse(nr %in% r, "#0000FF80", "#00000020")
     Col2 <- ifelse(pts@data$NATURAL_REGIONS %in% names(nr)[r], "#0000FFFF", "#00000060")
-    op <- par(mar=c(0,0,0,0))
+    op <- par(mar=c(1,1,1,1))
+    on.exit(par(op))
     plot(ABnr, col=Col, border=Col)
     plot(pts, pch=".", col=Col2, add=TRUE)
-    par(op)
     invisible(NULL)
 }
 
@@ -104,5 +106,33 @@ get_lmap <- function(r) {
 get_gplot <- function(r, c, byregion=TRUE, ...) {
     d <- get_data0(r, c, byregion)
     gvisLineChart(data.frame(Year=d$x, d$y),
-        options=list(gvis.editor="Edit", width="100%", height="450"))
+        options=list(gvis.editor="Edit", width="100%", height="500",
+            hAxis="{title:'Year'}", vAxis="{title:'Percent'}"))
+}
+
+get_rmap <- function(r, c) {
+
+    if (length(c) < 1)
+        stop("Select at least one industrial sector.")
+    nr <- c(4, 5, 3, 1, 2, 6)
+    names(nr) <- c("Grassland", "Parkland", "Foothills", "Boreal",
+        "Canadian Shield", "Rocky Mountain")
+    Show <- nr %in% r
+
+    rrr <- rr[[c[1]]]
+    if (length(c) > 1)
+        for (i in 2:length(c))
+            rrr <- rr[[c[i]]] + rrr
+    msk <- rr[[1]]
+    OK <- rnr %in% nr[r]
+    msk[OK] <- NA
+    rrr[!OK] <- NA
+    op <- par(mar=c(1,1,1,1))
+    on.exit(par(op))
+    plot(rrr, col=rev(viridis::magma(100)), axes=FALSE, box=FALSE)
+    plot(msk, col="lightgrey", add=TRUE, legend=FALSE)
+    #plot(ABnr[!Show], add=TRUE, col="#808080", border=NA)
+    plot(ABnr, add=TRUE, border="darkgrey")
+
+    invisible(NULL)
 }
