@@ -95,21 +95,24 @@ colDiv <- colorRampPalette(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08
     "#FFFFBF","#D9EF8B", "#A6D96A", "#66BD63", "#1A9850", "#006837"))(100)
 colSeq <- rev(viridis::magma(100))
 
-rast_ix <- function(i, x) {
+rast_ix <- function(i, x, fact=1) {
     val <- as.numeric(x[,i])
     mat <- as.matrix(Xtab(val ~ Row + Col, kgrid))
     mat[is.na(mat0)] <- NA
     r <- raster(x=mat, template=rt)
-    r <- aggregate(r, 10, fun=mean)
+    if (fact > 1)
+        r <- aggregate(r, fact, fun=mean)
     r
 }
 
-rr <- lapply(colnames(x), rast_ix, x=x)
+FACT <- 4
+rr <- lapply(colnames(x), rast_ix, x=x, fact=FACT)
 names(rr) <- colnames(x)
 rr <- stack(rr)
 matNR[is.na(mat0)] <- NA
 rnr <- raster(x=matNR, template=rt)
-rnr <- aggregate(rnr, 10, fun=median)
+if (FACT > 1)
+    rnr <- aggregate(rnr, FACT, fun=median)
 
 get_rmap <- function(r) {
 
