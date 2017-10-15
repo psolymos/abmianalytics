@@ -29,7 +29,7 @@ ui <- fluidPage(
       column(6,
 #        plotOutput("myMap"),
         leafletOutput("myMap"),
-        p("The map shows percent human footprint according to selection. Based on 2014 human footprint inventory at 10 x 10 km scale.")
+        p("The map shows percent human footprint according to selection. Based on 2014 human footprint inventory at 4 x 4 km scale.")
       )
     )
 )

@@ -107,7 +107,7 @@ get_lmap <- function(r) {
 get_gplot <- function(r, c, byregion=TRUE, ...) {
     d <- get_data0(r, c, byregion)
     gvisLineChart(data.frame(Year=d$x, d$y),
-        options=list(gvis.editor="Edit", width="100%", height="500",
+        options=list(gvis.editor="Edit", width="100%", height="450",
             hAxis="{title:'Year'}", vAxis="{title:'Percent'}"))
 }
 
