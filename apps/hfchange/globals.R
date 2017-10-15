@@ -13,6 +13,7 @@ library(ggplot2)
 #library(rCharts)
 library(shiny)
 library(googleVis)
+library(mapview)
 
 load("hfchange.rda")
 
@@ -135,4 +136,27 @@ get_rmap <- function(r, c) {
     plot(ABnr, add=TRUE, border="darkgrey")
 
     invisible(NULL)
+}
+
+
+get_mape <- function(r, c) {
+
+    if (length(c) < 1)
+        stop("Select at least one industrial sector.")
+    nr <- c(4, 5, 3, 1, 2, 6)
+    names(nr) <- c("Grassland", "Parkland", "Foothills", "Boreal",
+        "Canadian Shield", "Rocky Mountain")
+    Show <- nr %in% r
+
+    Footprint <- rr[[c[1]]]
+    if (length(c) > 1)
+        for (i in 2:length(c))
+            Footprint <- rr[[c[i]]] + Footprint
+    Footprint[!(rnr %in% nr[r])] <- NA
+
+    m <- mapview(Footprint, legend=TRUE,
+        col.regions=rev(viridis::magma(256)),
+        trim = FALSE,
+        alpha.regions=0.7, legend.opacity = 0.7)
+    m@map
 }

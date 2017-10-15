@@ -27,7 +27,8 @@ ui <- fluidPage(
         p("Percent human footprint according to selection. Based on yearly veryfied human footprint in 3 x 7 km rectangles at ABMI site locations. Hover over the lines to see values, use Edit button to change chart settings.")
       ),
       column(6,
-        plotOutput("myMap"),
+#        plotOutput("myMap"),
+        leafletOutput("myMap"),
         p("The map shows percent human footprint according to selection. Based on 2014 human footprint inventory at 10 x 10 km scale.")
       )
     )
@@ -42,8 +43,11 @@ server <- function(input, output) {
 #        get_plot(as.integer(input$checkRegions),
 #            as.integer(input$checkSectors), input$byReg == 2)
 #    })
-    output$myMap <- renderPlot({
-        get_rmap(as.integer(input$checkRegions), as.integer(input$checkSectors))
+#    output$myMap <- renderPlot({
+#        get_rmap(as.integer(input$checkRegions), as.integer(input$checkSectors))
+#    })
+    output$myMap <- renderLeaflet({
+        get_mape(as.integer(input$checkRegions), as.integer(input$checkSectors))
     })
 }
 
