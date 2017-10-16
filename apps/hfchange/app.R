@@ -3,22 +3,39 @@ source("globals.R")
 ui <- fluidPage(
   titlePanel("Human Footprint in Alberta"),
     wellPanel(fluidRow(
-      column(4,
-        checkboxGroupInput("checkRegions", label = "Natural Regions",
-          choices = list("Grassland"=1, "Parkland"=2, "Foothills"=3, "Boreal"=4,
-          "Canadian Shield"=5, "Rocky Mountain"=6),
-          selected = 1:6)
+      column(3,
+        radioButtons("byReg", label = "Summarize by",
+          choices = list("Industrial Sector" = 1, "Region" = 2),
+          selected = 1)
       ),
-      column(4,
+      column(3,
         checkboxGroupInput("checkSectors", label = "Industrial Sectors",
           choices = list("Agriculture"=1, "Forestry"=2, "Energy"=3,
           "Urban"=4, "Transportation"=5, "Other"=6),
           selected = 1:6)
       ),
-      column(4,
-        radioButtons("byReg", label = "Summarize by",
-          choices = list("Industrial Sector" = 1, "Natural Region" = 2),
+      column(3,
+        radioButtons("whichReg", label = "Regions",
+          choices = list("Natural Regions" = 1, "Natural Subregions" = 2,
+          "Land Use Framework Regions" = 3),
           selected = 1)
+      ),
+      column(3,
+        conditionalPanel(condition="input.whichReg == '1'",
+          checkboxGroupInput("checkRegions", label = "Natural Regions",
+            choices = list("Grassland"=1, "Parkland"=2, "Foothills"=3, "Boreal"=4,
+            "Canadian Shield"=5, "Rocky Mountain"=6),
+            selected = 1:6)),
+        conditionalPanel(condition="input.whichReg == '2'",
+          checkboxGroupInput("checkRegions", label = "Natural Subregions",
+            choices = list("Grassland"=1, "Parkland"=2, "Foothills"=3, "Boreal"=4,
+            "Canadian Shield"=5, "Rocky Mountain"=6),
+            selected = 1:6)),
+        conditionalPanel(condition="input.whichReg == '3'",
+          checkboxGroupInput("checkRegions", label = "Land Use Framework Regions",
+            choices = list("Grassland"=1, "Parkland"=2, "Foothills"=3, "Boreal"=4,
+            "Canadian Shield"=5, "Rocky Mountain"=6),
+            selected = 1:6))
       )
     )),
     fluidRow(
