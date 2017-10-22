@@ -77,6 +77,7 @@ source("~/repos/abmianalytics/veghf/veghf-setup.R")
 load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
 gis <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 rownames(gis) <- gis$SITE_ID
+gis <- gis[as.character(1:1656),]
 
 load(file.path(ROOT, VER, "data", "analysis",
     "veg-hf_3x7_v6-fixage0.Rdata"))
@@ -98,6 +99,7 @@ for (i in as.character(yr)) {
     x <- 100 * x / rowSums(x)
     veg3x7_reference[[i]] <- x[,colnames(x)[!endsWith(colnames(x),"0")]]
 }
+stopifnot(all(rownames(veg3x7_sector[[1]])==rownames(gis)))
 
 save(veg3x7_reference, veg3x7_current, gis, veg3x7_sector,
     file=file.path(ROOT, VER, "data", "analysis",

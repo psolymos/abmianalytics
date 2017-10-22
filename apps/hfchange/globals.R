@@ -17,25 +17,61 @@ library(mapview)
 
 load("hfchange.rda")
 
-get_data0 <- function(r, c, byregion=TRUE) {
+get_data0 <- function(r, c, byregion=TRUE, which_region="nr") {
     if (length(c) < 1)
         stop("Select at least one industrial sector.")
     YR <- as.integer(dimnames(HF)[[3]])
+    n <- table(GIS[[which_region]])
+    NAM <- levels(GIS[[which_region]])
     if (byregion) {
+        hf <- lapply(dimnames(HF)[[3]], function(z)
+            groupMeans(HF[,,z], 1, GIS[[which_region]])[NAM[r],c,drop=FALSE])
         out <- matrix(NA, length(YR), length(r))
         rownames(out) <- dimnames(HF)[[3]]
-        colnames(out) <- dimnames(HF)[[1]][r]
-        fun <- rowSums
+        colnames(out) <- dimnames(hf[[1]])[[1]]
+        for (i in 1:length(YR))
+            out[i,] <- rowSums(hf[[i]])
     } else {
+        hf <- lapply(dimnames(HF)[[3]], function(z)
+            groupSums(HF[,,z], 1, GIS[[which_region]])[NAM[r],c,drop=FALSE])
         out <- matrix(NA, length(YR), length(c))
         rownames(out) <- dimnames(HF)[[3]]
-        colnames(out) <- dimnames(HF)[[2]][c]
-        fun <- colSums
+        colnames(out) <- dimnames(hf[[1]])[[2]]
+        for (i in 1:length(YR))
+            out[i,] <- colSums(hf[[i]]) / sum(n[r])
     }
-    for (i in 1:length(YR))
-        out[i,] <- fun(HF[r,c,i,drop=FALSE])
     list(x=YR, y=out)
 }
+
+get_mape <- function(r, c, which_region="nr") {
+
+    if (length(c) < 1)
+        stop("Select at least one industrial sector.")
+    nr <- seq_len(nlevels(GIS[[which_region]]))
+    names(nr) <- dimnames(HF[[which_region]])[[1]]
+    Show <- nr %in% r
+
+    Footprint <- RHF[[c[1]]]
+    if (length(c) > 1)
+        for (i in 2:length(c))
+            Footprint <- RHF[[c[i]]] + Footprint
+    Footprint[!(REG[[which_region]] %in% nr[r])] <- NA
+
+    m <- mapview(Footprint, legend=TRUE,
+        col.regions=rev(viridis::magma(256)),
+        trim = FALSE,
+        alpha.regions=0.7, legend.opacity = 0.7)
+    m@map
+}
+get_gplot <- function(r, c, byregion=TRUE, which_region="nr") {
+    d <- get_data0(r, c, byregion, which_region)
+    gvisLineChart(data.frame(Year=d$x, d$y),
+        options=list(gvis.editor="Edit", width="100%", height="450",
+            hAxis="{title:'Year'}", vAxis="{title:'Percent'}"))
+}
+
+if (FALSE) {
+
 get_data <- function(r, c, byregion=TRUE) {
     d <- get_data0(r, c, byregion)
     out <- data.frame(year=d$x, stack(data.frame(round(d$y, 2))))
@@ -46,6 +82,7 @@ get_data <- function(r, c, byregion=TRUE) {
     out$yr <- as.numeric(as.POSIXct(paste0(d$x, "-01-01")))
     out
 }
+
 get_map <- function(r) {
     nr <- c(4, 5, 3, 1, 2, 6)
     names(nr) <- c("Grassland", "Parkland", "Foothills", "Boreal",
@@ -104,12 +141,6 @@ get_lmap <- function(r) {
             color="#FF0000", opacity=0.8, stroke=FALSE)
 }
 
-get_gplot <- function(r, c, byregion=TRUE, ...) {
-    d <- get_data0(r, c, byregion)
-    gvisLineChart(data.frame(Year=d$x, d$y),
-        options=list(gvis.editor="Edit", width="100%", height="450",
-            hAxis="{title:'Year'}", vAxis="{title:'Percent'}"))
-}
 
 get_rmap <- function(r, c) {
 
@@ -138,25 +169,5 @@ get_rmap <- function(r, c) {
     invisible(NULL)
 }
 
-
-get_mape <- function(r, c) {
-
-    if (length(c) < 1)
-        stop("Select at least one industrial sector.")
-    nr <- c(4, 5, 3, 1, 2, 6)
-    names(nr) <- c("Grassland", "Parkland", "Foothills", "Boreal",
-        "Canadian Shield", "Rocky Mountain")
-    Show <- nr %in% r
-
-    Footprint <- rr[[c[1]]]
-    if (length(c) > 1)
-        for (i in 2:length(c))
-            Footprint <- rr[[c[i]]] + Footprint
-    Footprint[!(rnr %in% nr[r])] <- NA
-
-    m <- mapview(Footprint, legend=TRUE,
-        col.regions=rev(viridis::magma(256)),
-        trim = FALSE,
-        alpha.regions=0.7, legend.opacity = 0.7)
-    m@map
 }
+
