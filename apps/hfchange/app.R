@@ -8,7 +8,7 @@ ui <- fluidPage(
         p("Percent human footprint according to selection. Based on yearly veryfied human footprint in 3 x 7 km rectangles at ABMI site locations. Hover over the lines to see values, use Edit button to change chart settings.")
       ),
       column(6,
-        leafletOutput("myMap"),
+        leafletOutput("myMap", width="100%", height="450"),
         p("The map shows percent human footprint according to selection. Based on 2014 human footprint inventory at 4 x 4 km scale.")
       )
     ),

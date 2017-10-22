@@ -2,7 +2,7 @@
 
 #DIR <- "e:/peter/sppweb2017/apps/hfchange"
 
-#library(mefa4)
+library(mefa4)
 #library(rgdal)
 #library(rgeos)
 library(sp)
