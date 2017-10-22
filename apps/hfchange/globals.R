@@ -2,14 +2,14 @@
 
 #DIR <- "e:/peter/sppweb2017/apps/hfchange"
 
-library(mefa4)
-library(rgdal)
-library(rgeos)
+#library(mefa4)
+#library(rgdal)
+#library(rgeos)
 library(sp)
-library(gstat)
+#library(gstat)
 library(raster)
 library(viridis)
-library(ggplot2)
+#library(ggplot2)
 #library(rCharts)
 library(shiny)
 library(googleVis)

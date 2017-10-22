@@ -2,6 +2,16 @@ source("globals.R")
 
 ui <- fluidPage(
   titlePanel("Human Footprint in Alberta"),
+    fluidRow(
+      column(6,
+        htmlOutput("myChart"),
+        p("Percent human footprint according to selection. Based on yearly veryfied human footprint in 3 x 7 km rectangles at ABMI site locations. Hover over the lines to see values, use Edit button to change chart settings.")
+      ),
+      column(6,
+        leafletOutput("myMap"),
+        p("The map shows percent human footprint according to selection. Based on 2014 human footprint inventory at 4 x 4 km scale.")
+      )
+    ),
     wellPanel(fluidRow(
       column(3,
         radioButtons("byReg", label = "Summarize by",
@@ -75,17 +85,7 @@ ui <- fluidPage(
                 "Upper Peace"=7),
             selected = 1:7))
       )
-    )),
-    fluidRow(
-      column(6,
-        htmlOutput("myChart"),
-        p("Percent human footprint according to selection. Based on yearly veryfied human footprint in 3 x 7 km rectangles at ABMI site locations. Hover over the lines to see values, use Edit button to change chart settings.")
-      ),
-      column(6,
-        leafletOutput("myMap"),
-        p("The map shows percent human footprint according to selection. Based on 2014 human footprint inventory at 4 x 4 km scale.")
-      )
-    )
+    ))
 )
 
 server <- function(input, output) {
