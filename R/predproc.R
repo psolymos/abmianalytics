@@ -1,12 +1,11 @@
 library(mefa4)
 
 ROOT <- "e:/peter/AB_data_v2016"
-#OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1"
 OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1-seismic-as-ES"
-#OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1-seismic-as-ES-OSA"
-#OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1-shf"
 OUTDIRB <- "e:/peter/AB_data_v2016/out/birds/predB-seismic-as-ES"
 OUTDIR_3x7 <- "e:/peter/AB_data_v2016/out/birds/pred3x7"
+
+#OUTDIR1 <- "e:/peter/AB_data_v2016/out/birds/pred1method2"
 
 shf <- FALSE # surrounding HF
 do1 <- TRUE # do only 1st run
@@ -35,6 +34,7 @@ BMAX <- 100
 if (!doB)
     BMAX <- 1
 BMAX
+METHOD2 <- FALSE # this is to apply avg(exp(hab))*exp(clim) vs avg(exp(hab+clim))
 
 load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata")) # kgrid
 load(file.path(ROOT, "out", "kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata")) # dd1km_pred
@@ -532,10 +532,17 @@ if (do1) {
         D_hab_rf[!ch2veg$isHF] <- 0
     }
 
-    AD_cr <- t(D_hab_cr * t(Aveg1)) * exp(logPNclim1[,j])
-    AD_rf <- t(D_hab_rf * t(Aveg1)) * exp(logPNclim01[,j])
-    pxNcr1[,j] <- rowSums(AD_cr)
-    pxNrf1[,j] <- rowSums(AD_rf)
+    if (METHOD2) {
+        AD_cr <- t(D_hab_cr * t(Aveg1))
+        AD_rf <- t(D_hab_rf * t(Aveg1))
+        pxNcr1[,j] <- rowSums(AD_cr) * exp(logPNclim1[,j])
+        pxNrf1[,j] <- rowSums(AD_rf) * exp(logPNclim01[,j])
+    } else {
+        AD_cr <- t(D_hab_cr * t(Aveg1)) * exp(logPNclim1[,j])
+        AD_rf <- t(D_hab_rf * t(Aveg1)) * exp(logPNclim01[,j])
+        pxNcr1[,j] <- rowSums(AD_cr)
+        pxNrf1[,j] <- rowSums(AD_rf)
+    }
     hbNcr1[,j] <- colSums(AD_cr) / colSums(Aveg1)
     hbNrf1[,j] <- colSums(AD_rf) / colSums(Aveg1)
 
@@ -561,14 +568,25 @@ if (do1) {
         D_hab_rf[!ch2soil$isHF] <- 0
     }
 
-    AD_cr <- t(D_hab_cr * t(Asoil1)) * exp(logPSclim1[,j])
-    AD_rf <- t(D_hab_rf * t(Asoil1)) * exp(logPSclim01[,j])
-    ## pAspen based weighted average
-    Asp <- exp(estAsp[j] * pAspen1)
-    AD_cr <- pAspen1 * (Asp * AD_cr) + (1-pAspen1) * AD_cr
-    AD_rf <- pAspen1 * (Asp * AD_rf) + (1-pAspen1) * AD_rf
-    pxScr1[,j] <- rowSums(AD_cr)
-    pxSrf1[,j] <- rowSums(AD_rf)
+    if (METHOD2) {
+        AD_cr <- t(D_hab_cr * t(Asoil1))
+        AD_rf <- t(D_hab_rf * t(Asoil1))
+        ## pAspen based weighted average
+        Asp <- exp(estAsp[j] * pAspen1)
+        AD_cr <- pAspen1 * (Asp * AD_cr) + (1-pAspen1) * AD_cr
+        AD_rf <- pAspen1 * (Asp * AD_rf) + (1-pAspen1) * AD_rf
+        pxScr1[,j] <- rowSums(AD_cr) * exp(logPSclim1[,j])
+        pxSrf1[,j] <- rowSums(AD_rf) * exp(logPSclim01[,j])
+    } else {
+        AD_cr <- t(D_hab_cr * t(Asoil1)) * exp(logPSclim1[,j])
+        AD_rf <- t(D_hab_rf * t(Asoil1)) * exp(logPSclim01[,j])
+        ## pAspen based weighted average
+        Asp <- exp(estAsp[j] * pAspen1)
+        AD_cr <- pAspen1 * (Asp * AD_cr) + (1-pAspen1) * AD_cr
+        AD_rf <- pAspen1 * (Asp * AD_rf) + (1-pAspen1) * AD_rf
+        pxScr1[,j] <- rowSums(AD_cr)
+        pxSrf1[,j] <- rowSums(AD_rf)
+    }
     hbScr1[,j] <- colSums(AD_cr) / colSums(Asoil1)
     hbSrf1[,j] <- colSums(AD_rf) / colSums(Asoil1)
 }
