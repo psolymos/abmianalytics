@@ -1082,6 +1082,16 @@ ABpr <- gUnaryUnion(AB, rep(1, nrow(AB))) # province
 col <- colorRampPalette(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B",
     "#FFFFBF","#D9EF8B", "#A6D96A", "#66BD63", "#1A9850", "#006837"))(100)
 
+for (i in colnames(MatSI)) {
+    cat(i, "\n");flush.console()
+    SI <- MatSI[,i]
+    SI[is.na(SI)] <- 100 # water/ice
+    mat <- as.matrix(Xtab(SI ~ Row + Col, kgrid))
+    mat[is.na(mat0)] <- NA
+    rout <- raster(x=mat, template=rt)
+    writeRaster(rout, paste0("e:/peter/sppweb2017/si-maps-by-taxa/", i, ".tif"))
+}
+
 pdf("e:/peter/sppweb2017/SI-maps.pdf", onefile=TRUE, height=8, width=5)
 for (i in colnames(MatSI)) {
     cat(i, "\n");flush.console()
