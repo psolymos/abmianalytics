@@ -15,9 +15,10 @@ WEB <- TRUE
 #taxon <- "lichens"
 #taxon <- "vplants"
 #taxon <- "mosses"
-taxon <- "mites"
+#taxon <- "mites"
 #taxon <- "mammals"
 #taxon <- "birds"
+taxon <- "habitatelements"
 
 if (taxon == "mammals") {
     ext <- ".csv" # csv or Rdata
@@ -37,6 +38,13 @@ if (taxon %in% c("mites", "mosses", "lichens", "vplants")) {
     ext <- ".Rdata" # csv or Rdata
     VER <- "5.0 (2017-07-13)" # version
     nam_col <- "scinam" # column used in README
+    nam_in <- "sppid" # name used in input files
+    nam_out <- "sppid" # name used in output files
+}
+if (taxon == "habitatelements") {
+    ext <- ".csv" # csv or Rdata
+    VER <- "5.0 (2017-07-13)" # version
+    nam_col <- "species" # column used in README
     nam_in <- "sppid" # name used in input files
     nam_out <- "sppid" # name used in output files
 }
