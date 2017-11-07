@@ -1618,3 +1618,142 @@ for (i in TAXA) {
     cat("\n")
 }
 
+## stacking tables
+
+#library(xlsx)
+library(RODBC)
+libary(mefa4)
+readEx <- function(i, j) {
+    con <- odbcConnectExcel2007(file.path(ROOT, FILES[[i]]))
+    tmp <- sqlFetch(con, j)
+    colnames(tmp) <- gsub("#", ".", colnames(tmp))
+    close(con)
+    tmp
+}
+
+ROOT <- "e:/peter/sppweb2017/tables/"
+FILES <- list(
+    mammals="ABMI-species-v5.0_mammals_2017-08-28.xlsx",
+    vplants="ABMI-species-v5.0_vplants_2017-07-13.xlsx",
+    mosses="ABMI-species-v5.0_mosses_2017-07-13.xlsx",
+    mites="ABMI-species-v5.0_mites_2017-07-13.xlsx",
+    lichens="ABMI-species-v5.0_lichens_2017-07-13.xlsx",
+    birds="ABMI-species-v4.1_birds_2017-07-13.xlsx")
+#    habitatelements="ABMI-species-v5.0_habitatelements_2017-07-13.xlsx")
+TAXA <- names(FILES)
+SHEETS <- c(lt="TaxonomicInfo",
+    usen="UseavailNorth",
+    uses="UseavailSouth",
+    veg="VegetationNorth",
+    linn="LinearNorth",
+    soilnt="SoilNontreedSouth",
+    soiltr="SoilTreedSouth",
+    lins="LinearSouth",
+    sectn="SectorNorth",
+    sects="SectorSouth")
+
+TABS <- list()
+for (i in TAXA) {
+    for (j in SHEETS) {
+        cat(j, i, "\n");flush.console()
+        tmp <- try(readEx(i, j))
+        if (!inherits(tmp, "try-error"))
+            TABS[[i]][[j]] <- tmp
+            #TABS[[j]][[i]] <- tmp
+    }
+}
+
+z <- TABS[[1]]
+for (i in 2:10) {
+    zz <- z[[1]]$SpeciesID
+print(compare_sets(zz, z[[i]]$Species))
+print(setdiff(z[[i]]$Species, zz))
+}
+
+TX <- "vplants"
+zz <- match(TABS[[TX]][["UseavailNorth"]]$Species, TABS[[TX]][[1]]$SpeciesID)
+TABS[[TX]][["UseavailNorth"]]$Species <- TABS[[TX]][[1]]$Species[zz]
+zz <- match(TABS[[TX]][["UseavailSouth"]]$Species, TABS[[TX]][[1]]$SpeciesID)
+TABS[[TX]][["UseavailSouth"]]$Species <- TABS[[TX]][[1]]$Species[zz]
+
+TX <- "mosses"
+zz <- match(TABS[[TX]][["UseavailNorth"]]$Species, TABS[[TX]][[1]]$SpeciesID)
+TABS[[TX]][["UseavailNorth"]]$Species <- TABS[[TX]][[1]]$Species[zz]
+zz <- match(TABS[[TX]][["UseavailSouth"]]$Species, TABS[[TX]][[1]]$SpeciesID)
+TABS[[TX]][["UseavailSouth"]]$Species <- TABS[[TX]][[1]]$Species[zz]
+
+TX <- "lichens"
+zz <- match(TABS[[TX]][["UseavailNorth"]]$Species, TABS[[TX]][[1]]$SpeciesID)
+TABS[[TX]][["UseavailNorth"]]$Species <- TABS[[TX]][[1]]$Species[zz]
+zz <- match(TABS[[TX]][["UseavailSouth"]]$Species, TABS[[TX]][[1]]$SpeciesID)
+TABS[[TX]][["UseavailSouth"]]$Species <- TABS[[TX]][[1]]$Species[zz]
+
+TX <- "mites"
+zz <- match(TABS[[TX]][["UseavailNorth"]]$Species, TABS[[TX]][[1]]$SpeciesID)
+TABS[[TX]][["UseavailNorth"]]$Species <- TABS[[TX]][[1]]$Species[zz]
+zz <- match(TABS[[TX]][["UseavailSouth"]]$Species, TABS[[TX]][[1]]$SpeciesID)
+TABS[[TX]][["UseavailSouth"]]$Species <- TABS[[TX]][[1]]$Species[zz]
+
+TX <- "mammals"
+for (i in 2:10) {
+    zz <- match(TABS[[TX]][[i]]$Species, TABS[[TX]][[1]]$SpeciesID)
+    TABS[[TX]][[i]]$Species <- TABS[[TX]][[1]]$Species[zz]
+}
+
+for (i in 1:length(TABS)) {
+    TX <- names(TABS)[i]
+    for (j in 2:length(TABS[[i]])) {
+        zz <- TABS[[i]][[1]]$TSNID[match(TABS[[i]][[j]]$Species, TABS[[i]][[1]]$Species)]
+        TABS[[i]][[j]] <- data.frame(Species=TABS[[i]][[j]]$Species,
+            TSNID=zz, Taxon=TX, TABS[[i]][[j]][,-1])
+    }
+}
+
+cn <- Reduce(intersect, lapply(lapply(TABS, "[[", 1), colnames))
+f <- function(z) {
+    z <- z[,cn]
+    z$TSNID <- as.character(z$TSNID)
+    z
+}
+tmp <- lapply(lapply(TABS, "[[", 1), f)
+for (i in 1:length(tmp))
+    tmp[[i]]$taxon <- names(tmp)[i]
+tab1 <- do.call(rbind, tmp)
+
+h <- function(z) {
+    z$TSNID <- as.character(z$TSNID)
+    z
+}
+Tabs <- list(tab1)
+for (i in 2:10) {
+    Tabs[[i]] <- do.call(rbind, lapply(lapply(TABS, "[[", i), h))
+}
+names(Tabs) <- SHEETS
+
+save(TABS, Tabs, file=file.path(ROOT, "all-tabs-for-stacking.Rdata"))
+for (i in 1:10) {
+    write.csv(Tabs[[i]], row.names=FALSE, file=file.path(ROOT,
+        paste0("AllTaxaCombined-", names(Tabs)[i], ".csv")))
+}
+
+cn <- Reduce(intersect, lapply(TABS[[2]], colnames))
+
+for (i in 1:10) {
+cat("\n---\n")
+cat(names(TABS)[i])
+cat("\nintersect\n")
+print(sort(Reduce(intersect, lapply(TABS[[i]], colnames))))
+cat("\nunion\n")
+print(sort(Reduce(union, lapply(TABS[[i]], colnames))))
+}
+
+compare_sets(TABS[[1]][[i]]$Species, TABS[["UseavailNorth"]][[i]]$SpeciesID)
+
+UseavailSouth
+
+sort(Reduce(intersect, lapply(TABS[[2]], colnames)))
+sort(Reduce(union, lapply(TABS[[2]], colnames)))
+
+read.xlsx2(file.path(ROOT, FILES[[4]]), sheetName="LinearSouth")
+
+
