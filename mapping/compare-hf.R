@@ -56,6 +56,26 @@ x10 <- x10[rownames(kgrid),]
 x14v1 <- x14v1[rownames(kgrid),]
 x14v2 <- x14v2[rownames(kgrid),]
 
+if (FALSE) {
+
+cn <- colnames(x14v2)
+cn1 <- substr(cn, 1, nchar(cn)-1)
+CN <- ifelse(substr(cn, nchar(cn), nchar(cn)) %in% c("R", 0:9), cn1, cn)
+
+xx <- groupSums(x14v2, 2, CN)
+xx <- xx / rowSums(xx)
+xx <- xx[,colnames(xx) != "CutBlocks"]
+
+pdf("e:\\peter\\AB_data_v2017\\data\\inter\\veghf\\maps\\V6_2014HFv2-10km.pdf",
+    onefile=TRUE, height=8, width=6)
+for (i in colnames(xx)) {
+cat(i, "\n");flush.console()
+rr <- rast_pl(i, xx, main=paste(i, "\nV6_bf + 2014v2_HF"), fact=10, NR=TRUE)
+}
+dev.off()
+
+}
+
 stopifnot(all(rownames(x10)==rownames(kgrid)))
 stopifnot(all(rownames(x14v1)==rownames(kgrid)))
 stopifnot(all(rownames(x14v2)==rownames(kgrid)))
