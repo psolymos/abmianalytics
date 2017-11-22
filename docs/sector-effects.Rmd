@@ -264,7 +264,7 @@ The R code presented in the appendix takes data frames (species as rows,
 sectors as columns) or lists (varying numbers of species for different
 taxa within same sector).
 
-```{r echo=FALSE,fig.width=12,fig.height=6}
+```{r echo=FALSE,fig.width=12,fig.height=18}
 sectors <- c("Agriculture","Forestry","Energy","RuralUrban","Transportation")
 SEreg <- 100 * (VP_SectorAbundance.Curr - VP_SectorAbundance.Ref) / rowSums(VP_SectorAbundance.Ref)
 #A <- 100*CS
@@ -274,7 +274,8 @@ SEreg <- SEreg[,sectors]
 #SEunit <- SEunit[,sectors]
 SEloc <- SEloc[,sectors]
 
-plot_sector_3 <- function(x, ylab="Sector effects (%)", ...) {
+plot_sector_3 <- function(x, ylab="Sector effects (%)", type="kde", ...) {
+    type <- match.arg(type, c("kde", "fft", "hist"))
     if (!is.list(x))
         x <- as.data.frame(x)
     sectors <- c("Agriculture","Forestry","Energy","RuralUrban","Transportation")
@@ -303,10 +304,18 @@ plot_sector_3 <- function(x, ylab="Sector effects (%)", ...) {
         st <- boxplot.stats(xx)
         out[[i]] <- sum(xx > ymax)
         s <- st$stats
-        #d <- density(xx[xx >= ymin & xx <= ymax]) # uses FFT
-        d <- KernSmooth::bkde(xx[xx >= ymin & xx <= ymax]) # uses Normal kernel
-        xv <- d$x
-        yv <- d$y
+        if (type == "kde")
+            d <- KernSmooth::bkde(xx[xx >= ymin & xx <= ymax]) # uses Normal kernel
+        if (type == "fft")
+            d <- density(xx[xx >= ymin & xx <= ymax]) # uses FFT
+        if (type == "hist") {
+            h <- hist(xx[xx >= ymin & xx <= ymax], plot=FALSE)
+            xv <- rep(h$breaks, each=2)
+            yv <- c(0, rep(h$density, each=2), 0)
+        } else {
+            xv <- d$x
+            yv <- d$y
+        }
         yv <- 0.4 * yv / max(yv)
         polygon(c(-yv, rev(yv))+i, c(xv, rev(xv)), col=c1[i], border=c1[i])
         polygon(c(-v,-v,v,v)+i, s[c(2,4,4,2)], col="#40404080", border=NA)
@@ -321,9 +330,15 @@ plot_sector_3 <- function(x, ylab="Sector effects (%)", ...) {
         cex=ifelse(out==0, 0, 0.5+2*out/max(out)), col=c1)
     invisible(x)
 }
-op <- par(mfrow=c(1,2))
-plot_sector_3(SEreg, ylab="Regional (total) sector effects (%)")
-plot_sector_3(SEloc, ylab="Local (within footprint) sector effects (%)")
+op <- par(mfrow=c(3,2))
+plot_sector_3(SEreg, ylab="Regional (total) sector effects (%)", type="kde")
+plot_sector_3(SEloc, ylab="Local (within footprint) sector effects (%)", type="kde")
+
+plot_sector_3(SEreg, ylab="Regional (total) sector effects (%)", type="fft")
+plot_sector_3(SEloc, ylab="Local (within footprint) sector effects (%)", type="fft")
+
+plot_sector_3(SEreg, ylab="Regional (total) sector effects (%)", type="hist")
+plot_sector_3(SEloc, ylab="Local (within footprint) sector effects (%)", type="hist")
 par(op)
 ```
 
