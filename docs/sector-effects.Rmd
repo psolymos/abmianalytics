@@ -300,21 +300,26 @@ plot_sector_3 <- function(x, ylab="Sector effects (%)", type="kde", ...) {
     lines(c(a,b), c(0, 0), col="grey40", lwd=2)
     out <- list()
     for (i in 1:5) {
-        xx <- x[[i]]
+        xx <- sort(x[[i]])
+        k <- xx <= ymax
+        out[[i]] <- sum(!k)
         st <- boxplot.stats(xx)
-        out[[i]] <- sum(xx > ymax)
         s <- st$stats
+        k[which(!k)[1]] <- TRUE
         if (type == "kde")
-            d <- KernSmooth::bkde(xx[xx >= ymin & xx <= ymax]) # uses Normal kernel
+            d <- KernSmooth::bkde(xx[k]) # uses Normal kernel
         if (type == "fft")
-            d <- density(xx[xx >= ymin & xx <= ymax]) # uses FFT
+            d <- density(xx[k]) # uses FFT
         if (type == "hist") {
-            h <- hist(xx[xx >= ymin & xx <= ymax], plot=FALSE)
+            h <- hist(xx[k], plot=FALSE)
             xv <- rep(h$breaks, each=2)
             yv <- c(0, rep(h$density, each=2), 0)
         } else {
             xv <- d$x
             yv <- d$y
+            j <- xv >= min(xx) & xv <= max(xx)
+            xv <- xv[j]
+            yv <- yv[j]
         }
         yv <- 0.4 * yv / max(yv)
         polygon(c(-yv, rev(yv))+i, c(xv, rev(xv)), col=c1[i], border=c1[i])
@@ -517,7 +522,8 @@ plot_sector_2 <- function(Curr, Ref, regional=TRUE, main="") {
 }
 
 ## multi-species plot
-plot_sector_3 <- function(x, ylab="Sector effects (%)", ...) {
+plot_sector_3 <- function(x, ylab="Sector effects (%)", type="kde", ...) {
+    type <- match.arg(type, c("kde", "fft", "hist"))
     if (!is.list(x))
         x <- as.data.frame(x)
     sectors <- c("Agriculture","Forestry","Energy","RuralUrban","Transportation")
@@ -542,14 +548,27 @@ plot_sector_3 <- function(x, ylab="Sector effects (%)", ...) {
     lines(c(a,b), c(0, 0), col="grey40", lwd=2)
     out <- list()
     for (i in 1:5) {
-        xx <- x[[i]]
+        xx <- sort(x[[i]])
+        k <- xx <= ymax
+        out[[i]] <- sum(!k)
         st <- boxplot.stats(xx)
-        out[[i]] <- sum(xx > ymax)
         s <- st$stats
-        #d <- density(xx[xx >= ymin & xx <= ymax]) # uses FFT
-        d <- KernSmooth::bkde(xx[xx >= ymin & xx <= ymax]) # uses Normal kernel
-        xv <- d$x
-        yv <- d$y
+        k[which(!k)[1]] <- TRUE
+        if (type == "kde")
+            d <- KernSmooth::bkde(xx[k]) # uses Normal kernel
+        if (type == "fft")
+            d <- density(xx[k]) # uses FFT
+        if (type == "hist") {
+            h <- hist(xx[k], plot=FALSE)
+            xv <- rep(h$breaks, each=2)
+            yv <- c(0, rep(h$density, each=2), 0)
+        } else {
+            xv <- d$x
+            yv <- d$y
+            j <- xv >= min(xx) & xv <= max(xx)
+            xv <- xv[j]
+            yv <- yv[j]
+        }
         yv <- 0.4 * yv / max(yv)
         polygon(c(-yv, rev(yv))+i, c(xv, rev(xv)), col=c1[i], border=c1[i])
         polygon(c(-v,-v,v,v)+i, s[c(2,4,4,2)], col="#40404080", border=NA)
