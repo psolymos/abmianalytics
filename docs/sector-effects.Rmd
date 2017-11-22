@@ -41,30 +41,30 @@ Z <- droplevels(Z[Z$RANK_NAME == "Species",])
 Z$NN <- Z$Origin_Analysis != "Native"
 Y <- Y[,rownames(Z)]
 
-save(X, Y, A, Z, file="e:/peter/AB_data_v2017/data/reporting/vpalnts-2017-11-16.Rdata")
+#save(X, Y, A, Z, file="e:/peter/AB_data_v2017/data/reporting/vpalnts-2017-11-16.Rdata")
 ```
 
 
 # Intro
 
-The goal of this document is to explain/clarify the sector effects calculation 
+The goal of this document is to explain/clarify the sector effects calculation
 based on predicted relative abundances in 1 km$^2$ pixels.
-We are going to explain the prediction inputs (so that Dave can implement 
+We are going to explain the prediction inputs (so that Dave can implement
 it for mammals), the calculations, and the
 visualization. At the end we will attempt to evaluate a few options
-for calculating sector effects for non-native species. We will use 
+for calculating sector effects for non-native species. We will use
 province-wide vascular plant species data as demonstration. We provide the R
 functions for calculations and visualization in the Appendix.
 
 # Prediction
 
-We make sector ($j$) specific predictions of current ($c_{is}$) and 
-reference ($r_{is}$) abundances in each 1 km$^2$ pixel $i$ in a given reporting 
-region (full province, LUF, natural region/subregion, custom unit, $i=1,...,n$ 
+We make sector ($j$) specific predictions of current ($c_{is}$) and
+reference ($r_{is}$) abundances in each 1 km$^2$ pixel $i$ in a given reporting
+region (full province, LUF, natural region/subregion, custom unit, $i=1,...,n$
 where $n$ is the number of pixels within a particular region).
 
 We store the output as 2 combined North/South matrices (both being $n \times 7$
-in dimenstion). The columns correspond to `Native`, 
+in dimenstion). The columns correspond to `Native`,
 `Misc`, `Agriculture`, `RuralUrban`, `Energy Transportation`,
 `Transportation`, `Forestry`,
 (all native veg/soil classes make up the `Native` class, `CC` forest stands make
@@ -81,11 +81,8 @@ knitr::kable(hf[,c("HF_GROUP", "Sector")])
 2. add up the columns in the subsetted matrices (current: $C_{s}=\sum{c_{is}}$, and reference: $R_{s}=\sum{r_{is}}$),
 3. calculate proportion of landbase in each sector: $A_{s}=\sum{A_{is}}$
 4. calculate regional total sector effects: $SE^{(total)}_{s}=100 \times (C_{s} - R_{s})/\sum{R_{s}}$, and the regional unit effects: $SE^{(unit)}_{s}=100 \times SE^{(total)}_{s} / (100 \times A_{s} / \sum{A_{s}})$
-5. calculate local sector effects: $SE^{(local)}_{s}=100 \times C_{s} / R_{s}$.
+5. calculate local sector effects: $SE^{(total)}_{s}=100 \times (C_{s} - R_{s})/R_{s}$.
 
-The local sector effects resemble intactness, that is calculated from the same 
-data as $min(\sum{C_{s}}, \sum{R_{s}}) / max(\sum{C_{s}}, \sum{R_{s}})$ including
-all the columns in the 2 matrices.
 
 # Sector effect visualization
 
@@ -104,27 +101,16 @@ tv0 <- tv0[colnames(VHF),]
 CS <- colSums(groupSums(VHF/10^6, 2, tv0$Sector2))
 CS <- CS / sum(CS)
 
-#NN <- VP_SectorAbundance.Curr / rowSums(VP_SectorAbundance.Curr)
-#DD <- t(t(NN) / CS)
-
-#SE2 <- 100 * DD[,colnames(DD) != "Native"] / DD[,"Native"]
-#SE2 <- SE2[rownames(SE),]
-
-SEtot <- 100 * (VP_SectorAbundance.Curr - VP_SectorAbundance.Ref) / rowSums(VP_SectorAbundance.Ref)
-A <- 100*CS
-SEunit <- t(100 * t(SEtot) / A)
-
-
 Curr <- VP_SectorAbundance.Curr["Achillea.millefolium",]
 Ref <- VP_SectorAbundance.Ref["Achillea.millefolium",]
-Area <- A
+Area <- 100*CS
 
 ## Sector effect plot from Dave
-plot_SE_regional <- function(Curr, Ref, Area, main="") {
+plot_sector_1 <- function(Curr, Ref, Area, main="") {
     sectors <- c("Agriculture","Forestry","Energy","RuralUrban","Transportation")
     sector.names <- c("Agriculture","Forestry","Energy","RuralUrban","Transport")
     c1 <- c("tan3","palegreen4","indianred3","skyblue3","slateblue2")
-    
+
     total.effect <- (100 * (Curr - Ref) / sum(Ref))[sectors]
     unit.effect <- 100 * total.effect / Area[sectors]
     ymax <- ifelse(max(abs(unit.effect))<20,20,
@@ -139,7 +125,7 @@ plot_SE_regional <- function(Curr, Ref, Area, main="") {
         xaxt="n",cex.lab=1.3,cex.axis=1.2,tcl=0.3,
         xlim=c(0,round(sum(Area[sectors])+1,0)),
         bty="n",col.axis="grey40",col.lab="grey40",las=2)
-    
+
     rect(par("usr")[1],par("usr")[3],par("usr")[2],par("usr")[4],col = "gray88",border="gray88")
     x.at<-pretty(c(0,sum(Area[sectors])))
     axis(side=1,tck=1,at=x.at,lab=rep("",length(x.at)),col="grey95")
@@ -169,44 +155,47 @@ plot_SE_regional <- function(Curr, Ref, Area, main="") {
     mtext(side=3,line=1,at=0,adj=0, main, cex=1.4,col="grey40")
     invisible(rbind(total=total.effect, unit=unit.effect, area=Area[sectors]))
 }
-plot_SE_local <- function(Curr, Ref, main="") {
+plot_sector_2 <- function(Curr, Ref, regional=TRUE, main="") {
     sectors <- c("Agriculture","Forestry","Energy","RuralUrban","Transportation")
     sector.names <- c("Agriculture","Forestry","Energy","RuralUrban","Transport")
     c1 <- c("tan3","palegreen4","indianred3","skyblue3","slateblue2")
-    total.effect <- 100 * (Curr / Ref)[sectors]
-    Area <- total.effect
-    Area[] <- 1
-    ymax <- if (max(total.effect)<100)
-        200 else min(max(total.effect), 1000)
-    ymax <- ymax * 1.08
-    ymin <- 0
-    ## This is to leave enough space at the top of bars for the text giving the % population change
-    q <- barplot(total.effect,
-        space=0.1,col=c1,border=c1,ylim=c(ymin,ymax),
-        ylab="Local sector effect (%)",xlab="Sectors",
-        xaxt="n",cex.lab=1.3,cex.axis=1.2,tcl=0.3,
-        bty="n",col.axis="grey40",col.lab="grey40",las=2)
-    
-    rect(par("usr")[1],par("usr")[3],par("usr")[2],par("usr")[4],col = "gray88",border="gray88")
-    y.at<-pretty(c(ymin,ymax),n=6)
-    axis(side=2,tck=1,at=y.at,lab=rep("",length(y.at)),col="grey95")
-    q <- barplot(total.effect,
-        space=0.1,col=c1,border=c1,ylim=c(ymin,ymax),
-        ylab="Local sector effect (%)",xlab="Sectors",
-        xaxt="n",cex.lab=1.3,cex.axis=1.2,tcl=0.3,
-        bty="n",col.axis="grey40",col.lab="grey40",las=2,add=TRUE)
-    box(bty="l",col="grey40")
-    abline(h=c(0, 100),lwd=2,col="grey40")
-    mtext(side=1,at=q,sector.names,col=c1,cex=1.3,adj=0.5)
+    total.effect <- if (regional)
+        100 * (Curr - Ref)/sum(Ref) else 100 * (Curr - Ref)/Ref
+    total.effect <- total.effect[sectors]
+    off <- 0.25
+    a <- 1-0.5-off
+    b <- 5+0.5+off
+    ymax <- ifelse(max(abs(total.effect))<20,20,
+        ifelse(max(abs(total.effect))<50,50,round(max(abs(total.effect))+50,-2)))
+    ymin <- ifelse(ymax>50,min(-100,round(min(total.effect)-50,-2)),-ymax)
+    ymax <- max(ymax,max(total.effect)+0.08*(max(total.effect)-min(total.effect,0)))
+    ymin <- min(ymin,min(total.effect)-0.08*(max(total.effect,0)-min(total.effect)))
+    yax <- pretty(c(ymin,ymax))
+    op <- par(las=1, xpd = TRUE)
+    on.exit(par(op))
+    plot(0, type="n", xaxs="i", yaxs = "i", ylim=c(ymin,ymax), xlim=c(a, b),
+        axes=FALSE, ann=FALSE)
+    polygon(c(a,a,b,b), c(ymin, ymax, ymax, ymin), col="grey88", border="grey88")
+    segments(x0=rep(a, length(yax)), x1=rep(b,length(yax)),y0=yax, col="white")
+    axis(2, yax, paste0(ifelse(yax>0, "+", ""), yax), tick=FALSE)
+    rug(yax, side=2, ticksize=0.01, col="grey40", quiet=TRUE)
+    lines(c(a,a), c(ymin, ymax), col="grey40", lwd=1)
+    for (i in 1:5) {
+        h <- total.effect[i]
+        polygon(c(i-0.5, i-0.5, i+0.5, i+0.5), c(0,h,h,0), col=c1[i], border=NA)
+    }
+    lines(c(a,b), c(0, 0), col="grey40", lwd=2)
+    title(ylab=if (regional) "Regional sector effects (%)" else "Local sector effects (%)",
+        cex=1.3, col="grey40")
+    mtext(side=1,at=1:5,sector.names,col=c1,cex=1.3,adj=0.5,line=0.5)
 
     y <- total.effect+0.025*(ymax-ymin)*sign(total.effect)
     if (abs(y[3]-y[4])<0.05*(ymax-ymin))
         y[3:4]<-mean(y[3:4])+(c(-0.015,0.015)*(ymax-ymin))[rank(y[3:4])]
-    text(q,y,paste(sprintf("%.1f",total.effect),"%",sep=""),col="darkblue",cex=1.4)
+    text(1:5,y,paste(sprintf("%.1f",total.effect),"%",sep=""),col="darkblue",cex=1.2)
     mtext(side=3,line=1,at=0,adj=0, main, cex=1.4,col="grey40")
     invisible(total.effect)
 }
-
 ```
 
 We are making sector effect plots for yarrow (*Achillea millefolium*).
@@ -223,26 +212,119 @@ Area
 We call a function to make a plot for regional sector effects:
 
 ```{r fig.width=6,fig.height=6}
-plot_SE_regional(Curr, Ref, Area, main="Common Yarrow")
+plot_sector_1(Curr, Ref, Area, main="Common Yarrow")
 ```
 
 We call another function to make a plot for local sector effects (note,
 no need to feed in percent `Area`):
 
-```{r fig.width=6,fig.height=6}
-plot_SE_local(Curr, Ref, main="Common Yarrow")
+```{r fig.width=12,fig.height=6}
+op <- par(mfrow=c(1,2))
+plot_sector_2(Curr, Ref, regional=TRUE, main="Common Yarrow")
+plot_sector_2(Curr, Ref, regional=FALSE, main="Common Yarrow")
+par(op)
 ```
 
 In production, we loop over the species and make PNG figures as:
 
 ```{r eval=FALSE}
+png(paste0("combinedSE/", species_name, ".png")), width=600, height=600)
+plot_sector_1(Curr, Ref, Area, main=species_name)
+dev.off()
+
 png(paste0("regionalSE/", species_name, ".png")), width=600, height=600)
-plot_SE_regional(Curr, Ref, Area, main=species_name)
+plot_sector_2(Curr, Ref, regional=TRUE, main=species_name)
 dev.off()
 
 png(paste0("localSE/", species_name, ".png")), width=600, height=600)
-plot_SE_local(Curr, Ref, main=species_name)
+plot_sector_2(Curr, Ref, regional=FALSE, main=species_name)
 dev.off()
+```
+
+# Presenting sector effects for multiple species
+
+Once we have calculated the sector effects for each species in a taxon,
+we can present the distribution of sector effect values
+
+* by taxa for each sector, or
+* by sector for each taxon.
+
+We are presenting here the latter, because we are only looking at vascular
+plants.
+
+The diagram is officially called *violinplot*, but the ABMI lingo
+tends to favour carrot or vase diagram. Apart from the name,
+it is all just a nonparametric density estimation
+(based on kernel density or fast fourier transform)
+after conditioning on sector and taxon.
+It is a richer representation than boxplots, but we tend to show
+median or quartiles together with the vases.
+
+The R code presented in the appendix takes data frames (species as rows,
+sectors as columns) or lists (varying numbers of species for different
+taxa within same sector).
+
+```{r echo=FALSE,fig.width=12,fig.height=6}
+sectors <- c("Agriculture","Forestry","Energy","RuralUrban","Transportation")
+SEreg <- 100 * (VP_SectorAbundance.Curr - VP_SectorAbundance.Ref) / rowSums(VP_SectorAbundance.Ref)
+#A <- 100*CS
+#SEunit <- t(100 * t(SEreg) / A)
+SEloc <- 100 * (VP_SectorAbundance.Curr - VP_SectorAbundance.Ref) / VP_SectorAbundance.Ref
+SEreg <- SEreg[,sectors]
+#SEunit <- SEunit[,sectors]
+SEloc <- SEloc[,sectors]
+
+plot_sector_3 <- function(x, ylab="Sector effects (%)", ...) {
+    if (!is.list(x))
+        x <- as.data.frame(x)
+    sectors <- c("Agriculture","Forestry","Energy","RuralUrban","Transportation")
+    sector.names <- c("Agriculture","Forestry","Energy","RuralUrban","Transport")
+    c1 <- c("tan3","palegreen4","indianred3","skyblue3","slateblue2")
+    ymin <- -100
+    ymax <- 100
+    off <- 0.25
+    a <- 1-0.5-off
+    b <- 5+0.5+off
+    v <- 0.1
+    yax <- pretty(c(ymin,ymax))
+    op <- par(las=1)
+    on.exit(par(op))
+    plot(0, type="n", xaxs="i", yaxs = "i", ylim=c(ymin,ymax), xlim=c(a, b),
+        axes=FALSE, ann=FALSE)
+    polygon(c(a,a,b,b), c(ymin, ymax, ymax, ymin), col="grey88", border="grey88")
+    segments(x0=rep(a, length(yax)), x1=rep(b,length(yax)),y0=yax, col="white")
+    axis(2, yax, paste0(ifelse(yax>0, "+", ""), yax), tick=FALSE)
+    rug(yax, side=2, ticksize=0.01, col="grey40", quiet=TRUE)
+    lines(c(a,a), c(ymin, ymax), col="grey40", lwd=1)
+    lines(c(a,b), c(0, 0), col="grey40", lwd=2)
+    out <- list()
+    for (i in 1:5) {
+        xx <- x[[i]]
+        st <- boxplot.stats(xx)
+        out[[i]] <- sum(xx > ymax)
+        s <- st$stats
+        #d <- density(xx[xx >= ymin & xx <= ymax]) # uses FFT
+        d <- KernSmooth::bkde(xx[xx >= ymin & xx <= ymax]) # uses Normal kernel
+        xv <- d$x
+        yv <- d$y
+        yv <- 0.4 * yv / max(yv)
+        polygon(c(-yv, rev(yv))+i, c(xv, rev(xv)), col=c1[i], border=c1[i])
+        polygon(c(-v,-v,v,v)+i, s[c(2,4,4,2)], col="#40404080", border=NA)
+        lines(c(-v,v)+i, s[c(3,3)], lwd=2, col="grey30")
+    }
+    title(ylab=ylab, cex=1.3, col="grey40")
+    mtext(side=1,at=1:5,sector.names,col=c1,cex=1.3,adj=0.5,line=0.5)
+    op <- par(xpd = TRUE)
+    on.exit(par(op), add=TRUE)
+    out <- unlist(out)
+    points(1:5, rep(105, 5), pch=19,
+        cex=ifelse(out==0, 0, 0.5+2*out/max(out)), col=c1)
+    invisible(x)
+}
+op <- par(mfrow=c(1,2))
+plot_sector_3(SEreg, ylab="Regional (total) sector effects (%)")
+plot_sector_3(SEloc, ylab="Local (within footprint) sector effects (%)")
+par(op)
 ```
 
 # Options for non-native species
@@ -268,7 +350,6 @@ tmp <- rbind(data.frame(SI=SI[Z$NN], SE[Z$NN,], NN=1),
     data.frame(SI=SI[!Z$NN], SE[!Z$NN,], NN=0))
 tmp <- tmp[,colnames(tmp) != "Misc"]
 #write.csv(tmp, file="e:/peter/AB_data_v2017/data/reporting/nn-plant-sector-effects.csv")
-
 
 NN <- VP_SectorAbundance.Curr / rowSums(VP_SectorAbundance.Curr)
 DD <- t(t(NN) / CS)
@@ -305,7 +386,7 @@ or we want to pursue this 'current condition based' metric for non-native specie
 ```{r echo=FALSE,fig.width=9,fig.height=6}
 op <- par(mfrow=c(2,3))
 for (i in 2:6) {
-plot(SE[Z$NN,i], SE2[Z$NN,i], xlab="Data based", ylab="Prediction based", 
+plot(SE[Z$NN,i], SE2[Z$NN,i], xlab="Data based", ylab="Prediction based",
      ylim=c(0, 4000), xlim=c(0, 500), main=colnames(SE)[i])
 abline(0,1,col="grey")
 abline(h=100,v=100,col="grey", lty=2)
@@ -327,7 +408,8 @@ par(op)
 # Appendix: R functions
 
 ```{r eval=FALSE}
-plot_SE_regional <- function(Curr, Ref, Area, main="") {
+## old style
+plot_sector_1 <- function(Curr, Ref, Area, main="") {
     sectors <- c("Agriculture","Forestry","Energy","RuralUrban","Transportation")
     sector.names <- c("Agriculture","Forestry","Energy","RuralUrban","Transport")
     c1 <- c("tan3","palegreen4","indianred3","skyblue3","slateblue2")
@@ -376,40 +458,96 @@ plot_SE_regional <- function(Curr, Ref, Area, main="") {
     invisible(rbind(total=total.effect, unit=unit.effect, area=Area[sectors]))
 }
 
-plot_SE_local <- function(Curr, Ref, main="") {
+## new style
+plot_sector_2 <- function(Curr, Ref, regional=TRUE, main="") {
     sectors <- c("Agriculture","Forestry","Energy","RuralUrban","Transportation")
     sector.names <- c("Agriculture","Forestry","Energy","RuralUrban","Transport")
     c1 <- c("tan3","palegreen4","indianred3","skyblue3","slateblue2")
-    total.effect <- 100 * (Curr / Ref)[sectors]
-    Area <- total.effect
-    Area[] <- 1
-    ymax <- if (max(total.effect)<100)
-        200 else max(min(max(total.effect), 1000), 200)
-    ymax <- ymax * 1.08
-    ymin <- 0
-    q <- barplot(pmin(1000, total.effect),
-        space=0.1,col=c1,border=c1,ylim=c(ymin,ymax),
-        ylab="Local sector effect (%)",xlab="Sectors",
-        xaxt="n",cex.lab=1.3,cex.axis=1.2,tcl=0.3,
-        bty="n",col.axis="grey40",col.lab="grey40",las=2)
-    rect(par("usr")[1],par("usr")[3],par("usr")[2],par("usr")[4],
-         col = "gray88",border="gray88")
-    y.at<-pretty(c(ymin,ymax),n=6)
-    axis(side=2,tck=1,at=y.at,lab=rep("",length(y.at)),col="grey95")
-    q <- barplot(pmin(1000, total.effect),
-        space=0.1,col=c1,border=c1,ylim=c(ymin,ymax),
-        ylab="Local sector effect (%)",xlab="Sectors",
-        xaxt="n",cex.lab=1.3,cex.axis=1.2,tcl=0.3,
-        bty="n",col.axis="grey40",col.lab="grey40",las=2,add=TRUE)
-    box(bty="l",col="grey40")
-    abline(h=c(0, 100),lwd=2,col="grey40")
-    mtext(side=1,at=q,sector.names,col=c1,cex=1.3,adj=0.5)
-    y <- pmin(1000, total.effect)+0.025*(ymax-ymin)*sign(pmin(1000, total.effect))
+    total.effect <- if (regional)
+        100 * (Curr - Ref)/sum(Ref) else 100 * (Curr - Ref)/Ref
+    total.effect <- total.effect[sectors]
+    off <- 0.25
+    a <- 1-0.5-off
+    b <- 5+0.5+off
+    ymax <- ifelse(max(abs(total.effect))<20,20,
+        ifelse(max(abs(total.effect))<50,50,round(max(abs(total.effect))+50,-2)))
+    ymin <- ifelse(ymax>50,min(-100,round(min(total.effect)-50,-2)),-ymax)
+    ymax <- max(ymax,max(total.effect)+0.08*(max(total.effect)-min(total.effect,0)))
+    ymin <- min(ymin,min(total.effect)-0.08*(max(total.effect,0)-min(total.effect)))
+    yax <- pretty(c(ymin,ymax))
+    op <- par(las=1, xpd = TRUE)
+    on.exit(par(op))
+    plot(0, type="n", xaxs="i", yaxs = "i", ylim=c(ymin,ymax), xlim=c(a, b),
+        axes=FALSE, ann=FALSE)
+    polygon(c(a,a,b,b), c(ymin, ymax, ymax, ymin), col="grey88", border="grey88")
+    segments(x0=rep(a, length(yax)), x1=rep(b,length(yax)),y0=yax, col="white")
+    axis(2, yax, paste0(ifelse(yax>0, "+", ""), yax), tick=FALSE)
+    rug(yax, side=2, ticksize=0.01, col="grey40", quiet=TRUE)
+    lines(c(a,a), c(ymin, ymax), col="grey40", lwd=1)
+    for (i in 1:5) {
+        h <- total.effect[i]
+        polygon(c(i-0.5, i-0.5, i+0.5, i+0.5), c(0,h,h,0), col=c1[i], border=NA)
+    }
+    lines(c(a,b), c(0, 0), col="grey40", lwd=2)
+    title(ylab=if (regional) "Regional sector effects (%)" else "Local sector effects (%)",
+        cex=1.3, col="grey40")
+    mtext(side=1,at=1:5,sector.names,col=c1,cex=1.3,adj=0.5,line=0.5)
+
+    y <- total.effect+0.025*(ymax-ymin)*sign(total.effect)
     if (abs(y[3]-y[4])<0.05*(ymax-ymin))
         y[3:4]<-mean(y[3:4])+(c(-0.015,0.015)*(ymax-ymin))[rank(y[3:4])]
-    text(q,y,paste(sprintf("%.1f",total.effect),"%",sep=""),col="darkblue",cex=1.4)
+    text(1:5,y,paste(sprintf("%.1f",total.effect),"%",sep=""),col="darkblue",cex=1.2)
     mtext(side=3,line=1,at=0,adj=0, main, cex=1.4,col="grey40")
     invisible(total.effect)
+}
+
+## multi-species plot
+plot_sector_3 <- function(x, ylab="Sector effects (%)", ...) {
+    if (!is.list(x))
+        x <- as.data.frame(x)
+    sectors <- c("Agriculture","Forestry","Energy","RuralUrban","Transportation")
+    sector.names <- c("Agriculture","Forestry","Energy","RuralUrban","Transport")
+    c1 <- c("tan3","palegreen4","indianred3","skyblue3","slateblue2")
+    ymin <- -100
+    ymax <- 100
+    off <- 0.25
+    a <- 1-0.5-off
+    b <- 5+0.5+off
+    v <- 0.1
+    yax <- pretty(c(ymin,ymax))
+    op <- par(las=1)
+    on.exit(par(op))
+    plot(0, type="n", xaxs="i", yaxs = "i", ylim=c(ymin,ymax), xlim=c(a, b),
+        axes=FALSE, ann=FALSE)
+    polygon(c(a,a,b,b), c(ymin, ymax, ymax, ymin), col="grey88", border="grey88")
+    segments(x0=rep(a, length(yax)), x1=rep(b,length(yax)),y0=yax, col="white")
+    axis(2, yax, paste0(ifelse(yax>0, "+", ""), yax), tick=FALSE)
+    rug(yax, side=2, ticksize=0.01, col="grey40", quiet=TRUE)
+    lines(c(a,a), c(ymin, ymax), col="grey40", lwd=1)
+    lines(c(a,b), c(0, 0), col="grey40", lwd=2)
+    out <- list()
+    for (i in 1:5) {
+        xx <- x[[i]]
+        st <- boxplot.stats(xx)
+        out[[i]] <- sum(xx > ymax)
+        s <- st$stats
+        #d <- density(xx[xx >= ymin & xx <= ymax]) # uses FFT
+        d <- KernSmooth::bkde(xx[xx >= ymin & xx <= ymax]) # uses Normal kernel
+        xv <- d$x
+        yv <- d$y
+        yv <- 0.4 * yv / max(yv)
+        polygon(c(-yv, rev(yv))+i, c(xv, rev(xv)), col=c1[i], border=c1[i])
+        polygon(c(-v,-v,v,v)+i, s[c(2,4,4,2)], col="#40404080", border=NA)
+        lines(c(-v,v)+i, s[c(3,3)], lwd=2, col="grey30")
+    }
+    title(ylab=ylab, cex=1.3, col="grey40")
+    mtext(side=1,at=1:5,sector.names,col=c1,cex=1.3,adj=0.5,line=0.5)
+    op <- par(xpd = TRUE)
+    on.exit(par(op), add=TRUE)
+    out <- unlist(out)
+    points(1:5, rep(105, 5), pch=19,
+        cex=ifelse(out==0, 0, 0.5+2*out/max(out)), col=c1)
+    invisible(x)
 }
 ```
 
@@ -417,15 +555,16 @@ plot_SE_local <- function(Curr, Ref, main="") {
 ## producing some pdf's
 
 Area <- 100*CS
-pdf("sector-effect_local-regional.pdf", onefile=TRUE, width=20, height=8)
+pdf("sector-effect_local-regional.pdf", onefile=TRUE, width=21, height=7)
 for (spp in rownames(Z)[!Z$NN]) {
     cat(spp, "\n")
     flush.console()
     Curr <- VP_SectorAbundance.Curr[spp,]
     Ref <- VP_SectorAbundance.Ref[spp,]
-    op <- par(mfrow=c(1,2))
-    plot_SE_regional(Curr, Ref, Area, main=paste("Regional SE:", spp))
-    plot_SE_local(Curr, Ref, main=paste("Local SE:", spp))
+    op <- par(mfrow=c(1,3))
+    plot_sector_1(Curr, Ref, Area, main=paste("Combined -", spp))
+    plot_sector_2(Curr, Ref, regional=TRUE, main=paste("Regional (Total) -", spp))
+    plot_sector_2(Curr, Ref, regional=FALSE, main=paste("Local -", spp))
     par(op)
 }
 dev.off()
