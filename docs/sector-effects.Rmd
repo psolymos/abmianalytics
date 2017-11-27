@@ -255,7 +255,7 @@ plants.
 The diagram is officially called *violinplot*, but the ABMI lingo
 tends to favour carrot or vase diagram. Apart from the name,
 it is all just a nonparametric density estimation
-(based on kernel density or fast fourier transform)
+(based on kernel density, fast fourier transform, or simple binning)
 after conditioning on sector and taxon.
 It is a richer representation than boxplots, but we tend to show
 median or quartiles together with the vases.
@@ -274,7 +274,8 @@ SEreg <- SEreg[,sectors]
 #SEunit <- SEunit[,sectors]
 SEloc <- SEloc[,sectors]
 
-plot_sector_3 <- function(x, ylab="Sector effects (%)", type="kde", ...) {
+plot_sector_3 <- function(x, ylab="Sector effects (%)", type="kde",
+breaks = "Sturges", ...) {
     type <- match.arg(type, c("kde", "fft", "hist"))
     if (!is.list(x))
         x <- as.data.frame(x)
@@ -311,7 +312,7 @@ plot_sector_3 <- function(x, ylab="Sector effects (%)", type="kde", ...) {
         if (type == "fft")
             d <- density(xx[k]) # uses FFT
         if (type == "hist") {
-            h <- hist(xx[k], plot=FALSE)
+            h <- hist(xx[k], plot=FALSE, breaks=breaks)
             xv <- rep(h$breaks, each=2)
             yv <- c(0, rep(h$density, each=2), 0)
         } else {
@@ -337,13 +338,18 @@ plot_sector_3 <- function(x, ylab="Sector effects (%)", type="kde", ...) {
 }
 op <- par(mfrow=c(3,2))
 plot_sector_3(SEreg, ylab="Regional (total) sector effects (%)", type="kde")
+title(main="Kernel density")
 plot_sector_3(SEloc, ylab="Local (within footprint) sector effects (%)", type="kde")
 
 plot_sector_3(SEreg, ylab="Regional (total) sector effects (%)", type="fft")
+title(main="Fast Fourier transform based density")
 plot_sector_3(SEloc, ylab="Local (within footprint) sector effects (%)", type="fft")
 
-plot_sector_3(SEreg, ylab="Regional (total) sector effects (%)", type="hist")
-plot_sector_3(SEloc, ylab="Local (within footprint) sector effects (%)", type="hist")
+plot_sector_3(SEreg, ylab="Regional (total) sector effects (%)", type="hist",
+    breaks=20)
+title(main="Binning")
+plot_sector_3(SEloc, ylab="Local (within footprint) sector effects (%)", type="hist",
+    breaks=20)
 par(op)
 ```
 
@@ -424,6 +430,12 @@ par(op)
 
 ```
 
+# Discussion points
+
+1. Which single-species sector effect figures ('old', new total, new local) to show on the species website, in what combination, what labels etc. to use.
+2. How to align axes: [$-100$, 100] scale is good for comparing regional/local effects, but regional effects are often small and almost non visible (i.e. not great option when comparing sectors from a regional perspective, although values are printed on top of the bars).
+3. Are multi-species figures OK, of something need to be tweaked; which method to use (smooth or binned, how smal bins etc.)
+4. Stick with *status quo* for non-natives or do something different.
 
 # Appendix: R functions
 
