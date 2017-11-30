@@ -157,7 +157,7 @@ m <- Mefa(do.call(cbind, lapply(ABMI$detections, function(z) z[ii,])),
 xtab(m)[xtab(m) > 0] <- 1
 m <- m[rowSums(xtab(m)) > 0, colSums(xtab(m)) > 0]
 
-nmin <- 5
+nmin <- 1
 m <- m[, colSums(xtab(m)) >= nmin]
 m <- m[rowSums(xtab(m)) > 0,]
 taxa(m)$taxon <- as.factor(taxa(m)$taxon)
@@ -173,7 +173,7 @@ Z <- taxa(mm)
 Z$freq <- colSums(Y)
 Z$p <- colSums(Y) / nrow(Y)
 #br <- quantile(Z$freq, seq(0,1,0.1))
-br <- c(min(Z$freq),10,15,20,25,30,40,50,75,100,200,500,max(Z$freq))
+br <- sort(unique(c(min(Z$freq),5, 10,15,20,25,30,40,50,75,100,200,500,max(Z$freq))))
 q <- cut(Z$freq, br, labels=FALSE, include.lowest=TRUE)
 X$MAP <- gsub(",", "", X$MAP)
 X$MAP <- as.integer(X$MAP)
@@ -268,4 +268,6 @@ for (tt in levels(Z$taxon)) {#tt <- "birds"
     contour(d$x1, d$x2, d$cs, add=TRUE, col=1, levels=c(0.25, 0.5, 0.75))
 }
 par(op)
+
+mod1 <- metaMDS(Y, trymax=100)
 
