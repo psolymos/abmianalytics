@@ -173,16 +173,17 @@ Z <- taxa(mm)
 Z$freq <- colSums(Y)
 Z$p <- colSums(Y) / nrow(Y)
 #br <- quantile(Z$freq, seq(0,1,0.1))
-br <- c(5,10,15,20,25,30,40,50,75,100,200,500, Inf)
+br <- c(min(Z$freq),10,15,20,25,30,40,50,75,100,200,500,max(Z$freq))
 q <- cut(Z$freq, br, labels=FALSE, include.lowest=TRUE)
+X$MAP <- gsub(",", "", X$MAP)
+X$MAP <- as.integer(X$MAP)
 
-cn <- c("AHM", "MWMT", "MCMT", "MAT", "MAP", "FFP", "PET", "pAspen", "POINT_X", "POINT_Y",
+cn <- c("MWMT", "MCMT", "MAT", "MAP", "FFP", "PET",
     "Conif", "Decid", "Mixwood", "Pine", "GrassHerb",
-    "Shrub", "Swamp", "WetGrass", "WetShrub", "BSpr", "Larch", "Cult",
-    "UrbInd", "SoftLin", "HardLin", "CC")
+    "Shrub", "Swamp", "WetGrass", "WetShrub", "BSpr", "Larch",
+    "Cult", "UrbInd", "SoftLin", "HardLin", "CC", "poldfor")
 mod <- cca(Y ~ ., X[,cn])
 odp <- ordiplot(mod, type="n")
-
 
 library(KernSmooth)
 bw4bkde <- function (x, kernel = "normal", canonical = FALSE, bandwidth,
@@ -215,43 +216,56 @@ quantiles4bkde <- function(x, y) {
     d2
 }
 
-Biplot <- function(x, y, col=1, type="d", ...) {
+Biplot <- function(x, y, col=1, type="d", contour=TRUE, ...) {
     Pal <- colorRampPalette(c("#FFFFFF", col))(100)
     d <- quantiles4bkde(x, y)
     plot(x, y, type="n", xlim=range(d$x1), ylim=range(d$x2), axes=FALSE, ...)
     u <- par("usr")
     image(d$x1, d$x2, d$fhat, col=Pal[1:66], add=TRUE)
     #points(x, y, col=paste0(Pal[50], "80"), pch=".")
-    contour(d$x1, d$x2, d$cs, add=TRUE, col=Pal[100], levels=c(0.25, 0.5, 0.75))
+    if (contour)
+        contour(d$x1, d$x2, d$cs, add=TRUE, col=Pal[100], levels=c(0.25, 0.5, 0.75))
     box(col=Pal[33])
     axis(1, col=Pal[100])
     axis(2, col=Pal[100])
     invisible(NULL)
 }
 
-pal <- viridis::viridis(max(q))
+pal <- rev(viridis::viridis(max(q)))
+#pal <- colorRampPalette(c('#d7191c','#fdae61','#ffffbf','#abdda4','#2b83ba'))(max(q))
+v <- 1 * max(abs(odp$species))/max(abs(odp$biplot))
+c("MWMT", "MCMT", "MAT", "MAP", "FFP", "PET", "Conif", "Decid",
+"Mixwood", "Pine", "GrassHerb", "Shrub", "Swamp", "WetGrass",
+"WetShrub", "BSpr", "Larch", "Cult", "UrbInd", "SoftLin", "HardLin",
+"CC", "poldfor")
+
+col <- rep(2, nrow(odp$biplot))
+col[rownames(odp$biplot) %in% c("MWMT", "MCMT", "MAT", "MAP", "FFP", "PET")] <- 3
+col[rownames(odp$biplot) %in% c("Cult", "UrbInd", "SoftLin", "HardLin", "CC")] <- 4
+
+
 op <- par(mfrow=c(2,3))
 
 Biplot(odp$species[,1], odp$species[,2], xlab="CCA1", ylab="CCA2", main="All")
 abline(h=0, v=0, lty=2)
-points(odp$species, col=pal[q], pch=19)
-apply(2*odp$biplot, 1, function(z)
-    arrows(x0=0, y0=0, x1=z[1], y1=z[2], col=2, lwd=1, length = 0.1, angle = 15))
+tmp <- sapply(1:nrow(odp$biplot), function(i)
+    arrows(x0=0, y0=0, x1=v*odp$biplot[i,1], y1=v*odp$biplot[i,2], col=col[i],
+    lwd=1, length = 0.1, angle = 15))
 par(xpd=TRUE)
 tmp <- sapply(1:nrow(odp$biplot), function(i)
-    text(2.3*odp$biplot[i,1], 2.3*odp$biplot[i,2], rownames(odp$biplot)[i], col=2))
+    text(1.1*v*odp$biplot[i,1], 1.1*v*odp$biplot[i,2], rownames(odp$biplot)[i],
+    col=col[i]))
 par(xpd=FALSE)
+legend("topright", bty="n", fill=pal, legend=paste0(br[-length(br)], "-", br[-1]),
+    title="# detections")
 
 for (tt in levels(Z$taxon)) {#tt <- "birds"
-    Biplot(odp$species[,1], odp$species[,2], xlab="CCA1", ylab="CCA2", main=tt)
+    ss <- Z$taxon == tt
+    Biplot(odp$species[,1], odp$species[,2], xlab="CCA1", ylab="CCA2", main=tt, contour=FALSE)
     abline(h=0, v=0, lty=2)
-    points(odp$species[Z$taxon == tt,], col=pal[q[Z$taxon == tt]], pch=19)
-    apply(2*odp$biplot, 1, function(z)
-        arrows(x0=0, y0=0, x1=z[1], y1=z[2], col=2, lwd=1, length = 0.1, angle = 15))
-    par(xpd=TRUE)
-    tmp <- sapply(1:nrow(odp$biplot), function(i)
-        text(2.3*odp$biplot[i,1], 2.3*odp$biplot[i,2], rownames(odp$biplot)[i], col=2))
-    par(xpd=FALSE)
+    d <- quantiles4bkde(odp$species[ss,1], odp$species[ss,2])
+    points(odp$species[ss,], col=pal[q[ss]], pch=19)
+    contour(d$x1, d$x2, d$cs, add=TRUE, col=1, levels=c(0.25, 0.5, 0.75))
 }
 par(op)
 
