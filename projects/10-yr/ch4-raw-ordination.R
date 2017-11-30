@@ -22,6 +22,9 @@ v <- rbind(v1, v2)
 compare_sets(rownames(sm), rownames(v))
 v <- v[rownames(sm),]
 vv <- groupSums(v, 2, lt[colnames(v), "TypeCC"])
+tmp <- vv / rowSums(vv)
+sm <- data.frame(sm, tmp)
+sm$XXX <- NULL
 
 cn <- c("Conif", "Decid", "Mixwood", "Pine", "BSpr", "Larch", "CC")
 tmp <- rowSums(vv[, cn]) / rowSums(vv)
@@ -52,7 +55,7 @@ tmp <- rowSums(v[, cn]) / rowSums(v)
 sm$poldfor <- tmp
 
 tmp <- vv[, c("Cult", "UrbInd", "SoftLin", "HardLin", "CC")] / rowSums(vv)
-sm <- data.frame(sm, tmp)
+#sm <- data.frame(sm, tmp)
 rownames(sm) <- sm$s_y
 sm$Alien <- sm$Cult + sm$UrbInd + sm$HardLin
 sm$Succ <- sm$CC + sm$SoftLin
@@ -125,66 +128,7 @@ yy <- d2[intersect(rownames(d2), sm$s_y),spp]
 tax <- slt[,c("sppid","scinam","family","species","singing","tsnid")]
 birds <- list(y=as.matrix(yy), tax=tax)
 
-
-## birds vegHF piece: dd150m, dd1km
-#load("~/Dropbox/collaborations/opticut/R/abmi-data/abmi-data.Rdata")
-load(file.path("e:/peter/AB_data_v2016", "out", "birds", "data", "data-full-veghf.Rdata"))
-
-v <- as.matrix(dd150m$veg_current)
-rn <- rownames(v)
-tmp <- strsplit(rn, ":")
-table(sapply(tmp, length)) # 1: ABMI RF, 3: ABMI SM
-rn <- rn[sapply(tmp, length) == 1]
-tmp <- data.frame(do.call(rbind, strsplit(rn, "_")))
-rownames(tmp) <- rn
-tmp$s_y <- paste0(tmp$X4, "_", tmp$X5)
-tmp <- tmp[tmp$X8 == "1",] # center point
-v <- v[rownames(tmp),]
-rownames(v) <- tmp$s_y
-compare_sets(tmp$s_y, sm2$s_y)
-rownames(sm2) <- sm2$s_y
-compare_sets(rownames(v), rownames(sm2))
-isect <- intersect(rownames(v), rownames(sm2))
-sm2 <- sm2[isect,]
-
-v <- v[rownames(sm2),]
-vv <- groupSums(v, 2, lt[colnames(v), "TypeCC"])
-
-cn <- c("Conif", "Decid", "Mixwood", "Pine", "BSpr", "Larch", "CC")
-tmp <- rowSums(vv[, cn]) / rowSums(vv)
-sm2$pforest <- tmp
-
-cn <- c("Conif", "Pine", "BSpr", "Larch")
-cn2 <- c("CCConif0", "CCConifR", "CCConif1", "CCConif2", "CCConif3", "CCConif4",
-    "CCPine0", "CCPineR", "CCPine1", "CCPine2", "CCPine3", "CCPine4")
-tmp <- (rowSums(vv[, cn]) + rowSums(v[, cn2])) / rowSums(vv)
-sm2$pconif <- tmp
-
-cn <- c("Swamp", "WetGrass", "WetShrub", "BSpr", "Larch")
-tmp <- rowSums(vv[, cn]) / rowSums(vv)
-sm2$pwet <- tmp
-
-cn <- c("Conif5", "Conif6", "Conif7", "Conif8", "Conif9",
-    "Decid5", "Decid6", "Decid7", "Decid8", "Decid9",
-    "Mixwood5", "Mixwood6", "Mixwood7", "Mixwood8", "Mixwood9",
-    "Pine5", "Pine6", "Pine7", "Pine8", "Pine9",
-    "Swamp-Conif5", "Swamp-Conif6", "Swamp-Conif7", "Swamp-Conif8", "Swamp-Conif9",
-    "Swamp-Decid5", "Swamp-Decid6", "Swamp-Decid7", "Swamp-Decid8", "Swamp-Decid9",
-    "Swamp-Mixwood5", "Swamp-Mixwood6", "Swamp-Mixwood7", "Swamp-Mixwood8", "Swamp-Mixwood9",
-    "Swamp-Pine5", "Swamp-Pine6", "Swamp-Pine7", "Swamp-Pine8", "Swamp-Pine9",
-    "Wetland-BSpr5", "Wetland-BSpr6", "Wetland-BSpr7", "Wetland-BSpr8", "Wetland-BSpr9",
-    "Wetland-Decid5", "Wetland-Decid6", "Wetland-Decid7", "Wetland-Decid8", "Wetland-Decid9",
-    "Wetland-Larch5", "Wetland-Larch6", "Wetland-Larch7", "Wetland-Larch8", "Wetland-Larch9")
-tmp <- rowSums(v[, cn]) / rowSums(v)
-sm2$poldfor <- tmp
-
-tmp <- vv[, c("Cult", "UrbInd", "SoftLin", "HardLin", "CC")] / rowSums(vv)
-sm2 <- data.frame(sm2, tmp)
-sm2$Alien <- sm2$Cult + sm2$UrbInd + sm2$HardLin
-sm2$Succ <- sm2$CC + sm2$SoftLin
-sm2$THF <- sm2$Alien + sm2$Succ
-
-ABMI <- list(sites=sm, sites_pc=sm2,
+ABMI <- list(sites=sm,
     species=list(birds=birds$tax, mites=mites$tax,
         vascular_plants=vplants$tax, bryophytes=mosses$tax, lichens=lichens$tax),
     detections=list(birds=birds$y, mites=mites$y,
@@ -216,32 +160,98 @@ m <- m[rowSums(xtab(m)) > 0, colSums(xtab(m)) > 0]
 nmin <- 5
 m <- m[, colSums(xtab(m)) >= nmin]
 m <- m[rowSums(xtab(m)) > 0,]
+taxa(m)$taxon <- as.factor(taxa(m)$taxon)
 
 library(vegan)
 
-Y <- as.matrix(xtab(m))
-X <- samp(m)
-Z <- taxa(m)
+mm <- m
+#mm <- m[,taxa(m)$taxon=="vascular_plants"]
+
+Y <- as.matrix(xtab(mm))
+X <- samp(mm)
+Z <- taxa(mm)
 Z$freq <- colSums(Y)
 Z$p <- colSums(Y) / nrow(Y)
-Z$taxon <- as.factor(Z$taxon)
+#br <- quantile(Z$freq, seq(0,1,0.1))
+br <- c(5,10,15,20,25,30,40,50,75,100,200,500, Inf)
+q <- cut(Z$freq, br, labels=FALSE, include.lowest=TRUE)
 
-m1 <- rda(Y ~ pforest + pconif + pwet + poldfor +
-    AHM + PET + MWMT + MCMT +
-    Cult + UrbInd + SoftLin + HardLin + CC, X)
+cn <- c("AHM", "MWMT", "MCMT", "MAT", "MAP", "FFP", "PET", "pAspen", "POINT_X", "POINT_Y",
+    "Conif", "Decid", "Mixwood", "Pine", "GrassHerb",
+    "Shrub", "Swamp", "WetGrass", "WetShrub", "BSpr", "Larch", "Cult",
+    "UrbInd", "SoftLin", "HardLin", "CC")
+mod <- cca(Y ~ ., X[,cn])
+odp <- ordiplot(mod, type="n")
 
-m2 <- cca(Y ~ pforest + pconif + pwet + poldfor +
-    AHM + PET + MWMT + MCMT +
-    Cult + UrbInd + SoftLin + HardLin + CC, X)
 
-op <- ordiplot(m1, type="n")
-points(op, "species")
-points(op, "biplot", col=2)
+library(KernSmooth)
+bw4bkde <- function (x, kernel = "normal", canonical = FALSE, bandwidth,
+gridsize = 401L, range.x, truncate = TRUE) {
+    if (!missing(bandwidth) && bandwidth <= 0)
+        stop("'bandwidth' must be strictly positive")
+    kernel <- match.arg(kernel, c("normal", "box", "epanech",
+        "biweight", "triweight"))
+    n <- length(x)
+    del0 <- switch(kernel, normal = (1/(4 * pi))^(1/10), box = (9/2)^(1/5),
+        epanech = 15^(1/5), biweight = 35^(1/5), triweight = (9450/143)^(1/5))
+    h <- if (missing(bandwidth))
+        del0 * (243/(35 * n))^(1/5) * sqrt(var(x))
+    else if (canonical)
+        del0 * bandwidth
+    else bandwidth
+    h
+}
+quantiles4bkde <- function(x, y) {
+    bw <- c(x=bw4bkde(x), y=bw4bkde(y))
+    d2 <- bkde2D(cbind(x, y), bandwidth=bw)
+    o <- order(d2$fhat)
+    i <- order(o)
+    f <- d2$fhat
+    f <- f/sum(f)
+    cs <- cumsum(f[o])[i]
+    dim(cs) <- dim(d2$fhat)
+    d2$cs <- cs
+    d2$bw <- bw
+    d2
+}
 
-pal <- colorRampPalette(c("red","blue"))(100)
-plot(op$species, pch=c(3,4,5,6)[Z$taxon], col=pal[ceiling(100*sqrt(Z$p))])
+Biplot <- function(x, y, col=1, type="d", ...) {
+    Pal <- colorRampPalette(c("#FFFFFF", col))(100)
+    d <- quantiles4bkde(x, y)
+    plot(x, y, type="n", xlim=range(d$x1), ylim=range(d$x2), axes=FALSE, ...)
+    u <- par("usr")
+    image(d$x1, d$x2, d$fhat, col=Pal[1:66], add=TRUE)
+    #points(x, y, col=paste0(Pal[50], "80"), pch=".")
+    contour(d$x1, d$x2, d$cs, add=TRUE, col=Pal[100], levels=c(0.25, 0.5, 0.75))
+    box(col=Pal[33])
+    axis(1, col=Pal[100])
+    axis(2, col=Pal[100])
+    invisible(NULL)
+}
 
-sc <- scores(m1)
+pal <- viridis::viridis(max(q))
+op <- par(mfrow=c(2,3))
 
-m3 <- metaMDS(Y)
+Biplot(odp$species[,1], odp$species[,2], xlab="CCA1", ylab="CCA2", main="All")
+abline(h=0, v=0, lty=2)
+points(odp$species, col=pal[q], pch=19)
+apply(2*odp$biplot, 1, function(z)
+    arrows(x0=0, y0=0, x1=z[1], y1=z[2], col=2, lwd=1, length = 0.1, angle = 15))
+par(xpd=TRUE)
+tmp <- sapply(1:nrow(odp$biplot), function(i)
+    text(2.3*odp$biplot[i,1], 2.3*odp$biplot[i,2], rownames(odp$biplot)[i], col=2))
+par(xpd=FALSE)
+
+for (tt in levels(Z$taxon)) {#tt <- "birds"
+    Biplot(odp$species[,1], odp$species[,2], xlab="CCA1", ylab="CCA2", main=tt)
+    abline(h=0, v=0, lty=2)
+    points(odp$species[Z$taxon == tt,], col=pal[q[Z$taxon == tt]], pch=19)
+    apply(2*odp$biplot, 1, function(z)
+        arrows(x0=0, y0=0, x1=z[1], y1=z[2], col=2, lwd=1, length = 0.1, angle = 15))
+    par(xpd=TRUE)
+    tmp <- sapply(1:nrow(odp$biplot), function(i)
+        text(2.3*odp$biplot[i,1], 2.3*odp$biplot[i,2], rownames(odp$biplot)[i], col=2))
+    par(xpd=FALSE)
+}
+par(op)
 
