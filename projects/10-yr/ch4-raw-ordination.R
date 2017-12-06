@@ -183,6 +183,8 @@ cn <- c("MWMT", "MCMT", "MAT", "MAP", "FFP", "PET",
     "Shrub", "Swamp", "WetGrass", "WetShrub", "BSpr", "Larch",
     "Cult", "UrbInd", "SoftLin", "HardLin", "CC", "poldfor")
 mod <- cca(Y ~ ., X[,cn])
+#mod <- rda(Y ~ ., X[,cn], scale=FALSE)
+#mod <- rda(Y ~ ., X[,cn], scale=TRUE)
 odp <- ordiplot(mod, type="n")
 
 library(KernSmooth)
@@ -216,28 +218,30 @@ quantiles4bkde <- function(x, y) {
     d2
 }
 
-Biplot <- function(x, y, col=1, type="d", contour=TRUE, ...) {
+Biplot <- function(x, y, col=1, type="d", contour=TRUE, image=TRUE, points=FALSE,
+levels=c(0.25, 0.5, 0.75), add=FALSE, line_col=1, lty=1, drawlabels=TRUE, ...) {
     Pal <- colorRampPalette(c("#FFFFFF", col))(100)
     d <- quantiles4bkde(x, y)
-    plot(x, y, type="n", xlim=range(d$x1), ylim=range(d$x2), axes=FALSE, ...)
+    if (!add)
+        plot(x, y, type="n", xlim=range(d$x1), ylim=range(d$x2), axes=FALSE, ...)
     u <- par("usr")
-    image(d$x1, d$x2, d$fhat, col=Pal[1:66], add=TRUE)
-    #points(x, y, col=paste0(Pal[50], "80"), pch=".")
+    if (image)
+        image(d$x1, d$x2, d$fhat, col=Pal[1:66], add=TRUE)
+    if (points)
+        points(x, y, col=paste0(Pal[50], "80"), pch=".")
     if (contour)
-        contour(d$x1, d$x2, d$cs, add=TRUE, col=Pal[100], levels=c(0.25, 0.5, 0.75))
+        contour(d$x1, d$x2, d$cs, add=TRUE, levels=levels,
+            col=line_col, lty=lty, drawlabels=drawlabels)
     box(col=Pal[33])
     axis(1, col=Pal[100])
     axis(2, col=Pal[100])
     invisible(NULL)
 }
 
-pal <- rev(viridis::viridis(max(q)))
+pal0 <- rev(viridis::viridis(max(q)))
+pal <- paste0(substr(pal0, 1, 7), "60")
 #pal <- colorRampPalette(c('#d7191c','#fdae61','#ffffbf','#abdda4','#2b83ba'))(max(q))
-v <- 1 * max(abs(odp$species))/max(abs(odp$biplot))
-c("MWMT", "MCMT", "MAT", "MAP", "FFP", "PET", "Conif", "Decid",
-"Mixwood", "Pine", "GrassHerb", "Shrub", "Swamp", "WetGrass",
-"WetShrub", "BSpr", "Larch", "Cult", "UrbInd", "SoftLin", "HardLin",
-"CC", "poldfor")
+v <- 0.75 * max(abs(odp$species))/max(abs(odp$biplot))
 
 col <- rep(2, nrow(odp$biplot))
 col[rownames(odp$biplot) %in% c("MWMT", "MCMT", "MAT", "MAP", "FFP", "PET")] <- 3
@@ -256,7 +260,7 @@ tmp <- sapply(1:nrow(odp$biplot), function(i)
     text(1.1*v*odp$biplot[i,1], 1.1*v*odp$biplot[i,2], rownames(odp$biplot)[i],
     col=col[i]))
 par(xpd=FALSE)
-legend("topright", bty="n", fill=pal, legend=paste0(br[-length(br)], "-", br[-1]),
+legend("topright", bty="n", fill=pal0, legend=paste0(br[-length(br)], "-", br[-1]),
     title="# detections")
 
 for (tt in levels(Z$taxon)) {#tt <- "birds"
@@ -269,5 +273,25 @@ for (tt in levels(Z$taxon)) {#tt <- "birds"
 }
 par(op)
 
-mod1 <- metaMDS(Y, trymax=100)
+v <- 1 * max(abs(odp$species))/max(abs(odp$biplot))
+Biplot(odp$species[,1], odp$species[,2], xlab="CCA1", ylab="CCA2", contour=FALSE, col="tomato")
+Biplot(odp$species[q <= 4,1], odp$species[q <= 4,2],
+    add=TRUE, image=FALSE, levels=0.1, lty=2, drawlabels=FALSE)
+Biplot(odp$species[q > 4,1], odp$species[q > 4,2],
+    add=TRUE, image=FALSE, levels=0.1, lty=1, drawlabels=FALSE)
+abline(h=0, v=0, lty=2)
+points(odp$species, col=pal[q], pch=19)
+tmp <- sapply(1:nrow(odp$biplot), function(i)
+    arrows(x0=0, y0=0, x1=v*odp$biplot[i,1], y1=v*odp$biplot[i,2], col=col[i],
+    lwd=2, length = 0.1, angle = 20))
+par(xpd=TRUE)
+tmp <- sapply(1:nrow(odp$biplot), function(i)
+    text(1.1*v*odp$biplot[i,1], 1.1*v*odp$biplot[i,2],
+    if (rownames(odp$biplot)[i] == "poldfor") "OldFor" else rownames(odp$biplot)[i],
+    col=col[i]))
+par(xpd=FALSE)
+legend("topleft", bty="n", fill=pal0, legend=paste0(br[-length(br)], "-", br[-1]),
+    title="# detections", border=pal0, y.intersp=0.75, cex=0.8)
+
+
 
