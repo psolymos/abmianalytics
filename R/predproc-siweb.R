@@ -665,50 +665,14 @@ if (doB) {
 
 ## ----------------- assembling starts here ----------
 
-EST <- TAX[,c("veghf.north", "soilhf.south")]
+EST <- TAX[,c("veghf.north", "soilhf.south", "sppid")]
 rownames(EST) <- TAX$AOU
-A10 <- as.matrix(Xtab(Area_km2 ~ Row10_Col10 + LUFxNSR, kgrid0))
 
 #spp <- "ALFL"
-What <- "do10"
 for (spp in SPP) {
+    What <- "doB"
     fl <- list.files(file.path(OUTDIR, What, spp))
-    regs2 <- gsub("\\.Rdata", "", fl)
-    OUTcr <- matrix(0, nlevels(kgrid0$Row10_Col10), 100)
-    rownames(OUTcr) <- rownames(kgrid)
-    OUTrf <- OUTcr
-    for (i in 1:length(fl)) {
-        cat(spp, i, "/", length(fl), "\n");flush.console()
-        e <- new.env()
-        load(file.path(OUTDIR, What, spp, fl[i]), envir=e)
-        Cells <- names(e$Cells)
-        ## combine N & S
-        TYPE <- "C" # combo
-        if (!EST[spp, "veghf.north"])
-            TYPE <- "S"
-        if (!EST[spp, "soilhf.south"])
-            TYPE <- "N"
-        wS <- 1-kgrid[Cells, "pAspen"]
-        if (TYPE == "S")
-            wS[] <- 1
-        if (TYPE == "N")
-            wS[] <- 0
-        cr <- wS * e$pxScrB + (1-wS) * e$pxNcrB
-        rf <- wS * e$pxSrfB + (1-wS) * e$pxNrfB
-        ## multiply with number of cells
-        a10 <- A10[Cells, regs2[i]]
-        OUTcr[Cells,] <- OUTcr[Cells,] + cr*a10
-        OUTrf[Cells,] <- OUTrf[Cells,] + rf*a10
-    }
-    OUTcr <- OUTcr / rowSums(A10)
-    OUTrf <- OUTrf / rowSums(A10)
-    stop("need to store stuff")
-}
-
-What <- "doB"
-spp <- "ALFL"
-    fl <- list.files(file.path(OUTDIR, What, spp))
-    regs2 <- gsub("\\.Rdata", "", fl)
+    #regs2 <- gsub("\\.Rdata", "", fl)
     OUTcr <- matrix(0, nrow(kgrid), 100)
     rownames(OUTcr) <- rownames(kgrid)
     OUTrf <- OUTcr
@@ -731,14 +695,91 @@ spp <- "ALFL"
         OUTcr[Cells,] <- wS * e$pxScrB + (1-wS) * e$pxNcrB
         OUTrf[Cells,] <- wS * e$pxSrfB + (1-wS) * e$pxNrfB
     }
-for (i in 1:100) {
-    q <- quantile(OUTcr[,i], 0.99)
-    OUTcr[OUTcr[,i] > q,i] <- q
-    q <- quantile(OUTrf[,i], 0.99)
-    OUTrf[OUTrf[,i] > q,i] <- q
+    if (any(is.na(OUTcr))) {
+        id <- which(is.na(OUTcr))
+        rid <- row(OUTcr)[id]
+        for (j in seq_along(id)) {
+            OUTcr[id[j]] <- median(OUTcr[rid[j],], na.rm=TRUE)
+        }
+    }
+    if (any(is.na(OUTrf))) {
+        id <- which(is.na(OUTrf))
+        rid <- row(OUTrf)[id]
+        for (j in seq_along(id)) {
+            OUTrf[id[j]] <- median(OUTrf[rid[j],], na.rm=TRUE)
+        }
+    }
+    for (i in 1:100) {
+        q <- quantile(OUTcr[,i], 0.99)
+        OUTcr[OUTcr[,i] > q,i] <- q
+        q <- quantile(OUTrf[,i], 0.99)
+        OUTrf[OUTrf[,i] > q,i] <- q
+    }
+    OUTcr10 <- groupMeans(OUTcr, 1, kgrid$Row10_Col10)
+    attr(OUTcr10, "species") <- spp
+    attr(OUTcr10, "taxon") <- "birds"
+    attr(OUTcr10, "scale") <- "10km_x10km"
+    OUTrf10 <- groupMeans(OUTrf, 1, kgrid$Row10_Col10)
+    attr(OUTrf10, "species") <- spp
+    attr(OUTrf10, "taxon") <- "birds"
+    attr(OUTrf10, "scale") <- "10km_x10km"
+    Curr.Boot <- OUTcr10[rowSums(OUTcr10) > 0,,drop=FALSE]
+    Ref.Boot <- OUTrf10[rowSums(OUTrf10) > 0,,drop=FALSE]
+    save(Ref.Boot, Curr.Boot,
+        file=file.path("w:/reports/2017/results/birds", "boot",
+        paste0(as.character(EST[spp, "sppid"]), ".RData")))
+
+    What <- "do1"
+    fl <- list.files(file.path(OUTDIR, What, spp))
+    #regs2 <- gsub("\\.Rdata", "", fl)
+    OUTcr <- matrix(0, nrow(kgrid), 7)
+    rownames(OUTcr) <- rownames(kgrid)
+    OUTrf <- OUTcr
+    for (i in 1:length(fl)) {
+        cat(spp, i, "/", length(fl), "\n");flush.console()
+        e <- new.env()
+        load(file.path(OUTDIR, What, spp, fl[i]), envir=e)
+        Cells <- names(e$Cells)
+        ## combine N & S
+        TYPE <- "C" # combo
+        if (!EST[spp, "veghf.north"])
+            TYPE <- "S"
+        if (!EST[spp, "soilhf.south"])
+            TYPE <- "N"
+        wS <- 1-kgrid[Cells, "pAspen"]
+        if (TYPE == "S")
+            wS[] <- 1
+        if (TYPE == "N")
+            wS[] <- 0
+        OUTcr[Cells,] <- as.matrix(wS * e$pxScrS + (1-wS) * e$pxNcrS)
+        OUTrf[Cells,] <- as.matrix(wS * e$pxSrfS + (1-wS) * e$pxNrfS)
+        if (i == 1) {
+            colnames(OUTcr) <- colnames(e$pxScrS)
+            colnames(OUTrf) <- colnames(e$pxSrfS)
+        }
+    }
+    for (i in 1:7) {
+        q <- quantile(OUTcr[,i], 0.99)
+        OUTcr[OUTcr[,i] > q,i] <- q
+        q <- quantile(OUTrf[,i], 0.99)
+        OUTrf[OUTrf[,i] > q,i] <- q
+    }
+    attr(OUTcr, "species") <- spp
+    attr(OUTcr, "taxon") <- "birds"
+    attr(OUTcr, "scale") <- "1km_x1km"
+    attr(OUTrf, "species") <- spp
+    attr(OUTrf, "taxon") <- "birds"
+    attr(OUTrf, "scale") <- "1km_x1km"
+    colnames(OUTcr)[colnames(OUTcr) == "NATIVE"] <- "Native"
+    colnames(OUTrf)[colnames(OUTrf) == "NATIVE"] <- "Native"
+    SA.Curr <- OUTcr[rowSums(OUTcr) > 0,,drop=FALSE]
+    SA.Ref <- OUTrf[rowSums(OUTrf) > 0,,drop=FALSE]
+    save(SA.Curr, SA.Ref,
+        file=file.path("w:/reports/2017/results/birds", "sector",
+        paste0(as.character(EST[spp, "sppid"]), ".RData")))
 }
-#    OUTcr10 <- groupMeans(OUTcr, 1, kgrid0$Row10_Col10)
-#    OUTrf10 <- groupMeans(OUTrf, 1, kgrid0$Row10_Col10)
+
+
 
 f_id10 <- function(n10)
 
