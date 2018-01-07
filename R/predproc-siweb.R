@@ -733,8 +733,11 @@ for (spp in SPP) {
     What <- "do1"
     fl <- list.files(file.path(OUTDIR, What, spp))
     #regs2 <- gsub("\\.Rdata", "", fl)
+    cn <- c("NATIVE", "Misc", "Agriculture", "RuralUrban", "Energy", "Transportation",
+        "Forestry")
     OUTcr <- matrix(0, nrow(kgrid), 7)
     rownames(OUTcr) <- rownames(kgrid)
+    colnames(OUTcr) <- cn
     OUTrf <- OUTcr
     for (i in 1:length(fl)) {
         cat(spp, i, "/", length(fl), "\n");flush.console()
@@ -752,12 +755,8 @@ for (spp in SPP) {
             wS[] <- 1
         if (TYPE == "N")
             wS[] <- 0
-        OUTcr[Cells,] <- as.matrix(wS * e$pxScrS + (1-wS) * e$pxNcrS)
-        OUTrf[Cells,] <- as.matrix(wS * e$pxSrfS + (1-wS) * e$pxNrfS)
-        if (i == 1) {
-            colnames(OUTcr) <- colnames(e$pxScrS)
-            colnames(OUTrf) <- colnames(e$pxSrfS)
-        }
+        OUTcr[Cells,] <- as.matrix(wS * e$pxScrS[,cn] + (1-wS) * e$pxNcrS[,cn])
+        OUTrf[Cells,] <- as.matrix(wS * e$pxSrfS[,cn] + (1-wS) * e$pxNrfS[,cn])
     }
     for (i in 1:7) {
         q <- quantile(OUTcr[,i], 0.99)
