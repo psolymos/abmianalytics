@@ -718,13 +718,14 @@ for (spp in SPP) {
     OUTcr10 <- groupMeans(OUTcr, 1, kgrid$Row10_Col10)
     attr(OUTcr10, "species") <- spp
     attr(OUTcr10, "taxon") <- "birds"
-    attr(OUTcr10, "scale") <- "10km_x10km"
+    attr(OUTcr10, "scale") <- "10km_x_10km"
     OUTrf10 <- groupMeans(OUTrf, 1, kgrid$Row10_Col10)
     attr(OUTrf10, "species") <- spp
     attr(OUTrf10, "taxon") <- "birds"
-    attr(OUTrf10, "scale") <- "10km_x10km"
-    Curr.Boot <- OUTcr10[rowSums(OUTcr10) > 0,,drop=FALSE]
-    Ref.Boot <- OUTrf10[rowSums(OUTrf10) > 0,,drop=FALSE]
+    attr(OUTrf10, "scale") <- "10km_x_10km"
+    keep <- rowSums(OUTcr10) > 0 & rowSums(OUTrf10) > 0
+    Curr.Boot <- OUTcr10[keep,,drop=FALSE]
+    Ref.Boot <- OUTrf10[keep,,drop=FALSE]
     save(Ref.Boot, Curr.Boot,
         file=file.path("w:/reports/2017/results/birds", "boot",
         paste0(as.character(EST[spp, "sppid"]), ".RData")))
@@ -766,14 +767,15 @@ for (spp in SPP) {
     }
     attr(OUTcr, "species") <- spp
     attr(OUTcr, "taxon") <- "birds"
-    attr(OUTcr, "scale") <- "1km_x1km"
+    attr(OUTcr, "scale") <- "1km_x_1km"
     attr(OUTrf, "species") <- spp
     attr(OUTrf, "taxon") <- "birds"
-    attr(OUTrf, "scale") <- "1km_x1km"
+    attr(OUTrf, "scale") <- "1km_x_1km"
     colnames(OUTcr)[colnames(OUTcr) == "NATIVE"] <- "Native"
     colnames(OUTrf)[colnames(OUTrf) == "NATIVE"] <- "Native"
-    SA.Curr <- OUTcr[rowSums(OUTcr) > 0,,drop=FALSE]
-    SA.Ref <- OUTrf[rowSums(OUTrf) > 0,,drop=FALSE]
+    keep <- rowSums(OUTcr) > 0 & rowSums(OUTrf) > 0
+    SA.Curr <- OUTcr[keep,,drop=FALSE]
+    SA.Ref <- OUTrf[keep,,drop=FALSE]
     save(SA.Curr, SA.Ref,
         file=file.path("w:/reports/2017/results/birds", "sector",
         paste0(as.character(EST[spp, "sppid"]), ".RData")))
