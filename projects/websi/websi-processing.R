@@ -60,6 +60,7 @@ table(SP$infoOK, SP$taxon)
 
 SP <- SP[SP$infoOK,]
 SP$infoOK <- NULL
+rownames(SP) <- SP$SpeciesID
 save(KA_2012, KA_2014, KT, XY, SP,
     file="w:/reports/2017/data/kgrid_areas_by_sector.RData")
 
