@@ -35,13 +35,13 @@ load("e:/peter/AB_data_v2017/data/analysis/kgrid_table_km.Rdata")
 stopifnot(all(rownames(kgrid) == rownames(KA_2012)))
 stopifnot(all(rownames(kgrid) == rownames(KA_2014)))
 
-KT <- kgrid[,"Row10_Col10",drop=FALSE]
+KT <- kgrid[,c("Row", "Col", "Row10_Col10")]
 XY <- kgrid[,c("POINT_X", "POINT_Y")]
 coordinates(XY) <- ~ POINT_X + POINT_Y
 proj4string(XY) <-
     CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 
-SP <- read.csv("w:/reports/2017/data/AllTaxaCombined-TaxonomicInfo.csv")
+SP <- read.csv("w:/reports/2017/data/species-info.csv")
 SP <- droplevels(SP[SP$map.pred,])
 SP$infoOK <- TRUE
 #SP$infoOKboot <- TRUE

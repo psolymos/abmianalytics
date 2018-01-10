@@ -667,6 +667,7 @@ if (doB) {
 
 EST <- TAX[,c("veghf.north", "soilhf.south", "sppid")]
 rownames(EST) <- TAX$AOU
+drop_0sum_rows <- TRUE
 
 #spp <- "ALFL"
 for (spp in SPP) {
@@ -710,9 +711,8 @@ for (spp in SPP) {
         }
     }
     for (i in 1:100) {
-        q <- quantile(OUTcr[,i], 0.99)
+        q <- quantile(c(OUTcr[,i], OUTrf[,i]), 0.99)
         OUTcr[OUTcr[,i] > q,i] <- q
-        q <- quantile(OUTrf[,i], 0.99)
         OUTrf[OUTrf[,i] > q,i] <- q
     }
     OUTcr10 <- groupMeans(OUTcr, 1, kgrid$Row10_Col10)
@@ -723,9 +723,14 @@ for (spp in SPP) {
     attr(OUTrf10, "species") <- spp
     attr(OUTrf10, "taxon") <- "birds"
     attr(OUTrf10, "scale") <- "10km_x_10km"
-    keep <- rowSums(OUTcr10) > 0 & rowSums(OUTrf10) > 0
-    Curr.Boot <- OUTcr10[keep,,drop=FALSE]
-    Ref.Boot <- OUTrf10[keep,,drop=FALSE]
+    if (drop_0sum_rows) {
+        keep <- rowSums(OUTcr10) > 0 & rowSums(OUTrf10) > 0
+        Curr.Boot <- OUTcr10[keep,,drop=FALSE]
+        Ref.Boot <- OUTrf10[keep,,drop=FALSE]
+    } else {
+        Curr.Boot <- OUTcr10
+        Ref.Boot <- OUTrf10
+    }
     save(Ref.Boot, Curr.Boot,
         file=file.path("w:/reports/2017/results/birds", "boot",
         paste0(as.character(EST[spp, "sppid"]), ".RData")))
@@ -759,9 +764,8 @@ for (spp in SPP) {
         OUTrf[Cells,] <- as.matrix(wS * e$pxSrfS[,cn] + (1-wS) * e$pxNrfS[,cn])
     }
     for (i in 1:7) {
-        q <- quantile(OUTcr[,i], 0.99)
+        q <- quantile(c(OUTcr[,i], OUTrf[,i]), 0.99)
         OUTcr[OUTcr[,i] > q,i] <- q
-        q <- quantile(OUTrf[,i], 0.99)
         OUTrf[OUTrf[,i] > q,i] <- q
     }
     attr(OUTcr, "species") <- spp
@@ -772,9 +776,14 @@ for (spp in SPP) {
     attr(OUTrf, "scale") <- "1km_x_1km"
     colnames(OUTcr)[colnames(OUTcr) == "NATIVE"] <- "Native"
     colnames(OUTrf)[colnames(OUTrf) == "NATIVE"] <- "Native"
-    keep <- rowSums(OUTcr) > 0 & rowSums(OUTrf) > 0
-    SA.Curr <- OUTcr[keep,,drop=FALSE]
-    SA.Ref <- OUTrf[keep,,drop=FALSE]
+    if (drop_0sum_rows) {
+        keep <- rowSums(OUTcr) > 0 & rowSums(OUTrf) > 0
+        SA.Curr <- OUTcr[keep,,drop=FALSE]
+        SA.Ref <- OUTrf[keep,,drop=FALSE]
+    } else {
+        SA.Curr <- OUTcr
+        SA.Ref <- OUTrf
+    }
     save(SA.Curr, SA.Ref,
         file=file.path("w:/reports/2017/results/birds", "sector",
         paste0(as.character(EST[spp, "sppid"]), ".RData")))
