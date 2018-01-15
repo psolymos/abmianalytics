@@ -405,3 +405,36 @@ for (spp in rownames(Z)[!Z$NN]) {
     par(op)
 }
 dev.off()
+
+
+## making some polys:
+
+library(rgdal)
+library(rgeos)
+library(sp)
+
+#osa <- readOGR("e:/peter/AB_data_v2017/data/raw/xy/OilSandsBoundaries.gdb",layer='myFeatureClass')
+
+## shape files for boundary
+crs <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+od <- setwd("e:/peter/AB_data_v2017/data/raw/xy/nsr")
+AB <- readOGR(".", "Natural_Regions_Subregions_of_Alberta") # rgdal
+setwd(od)
+AB <- spTransform(AB, crs)
+AB0 <- gUnaryUnion(AB, rep(1, nrow(AB@data)))
+AB0 <- as(AB0, "SpatialPolygonsDataFrame")
+AB0@data <- data.frame(Province="Alberta")
+100*object.size(AB0)/object.size(AB)
+writeOGR(AB0, "AB_bound.geojson", layer="Alberta", driver="GeoJSON")
+
+crs <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+od <- setwd("e:/peter/AB_data_v2017/data/raw/xy/osa")
+OSA <- readOGR(".", "JOSM_Boundary_Sept2012") # rgdal
+setwd(od)
+OSA <- spTransform(OSA, crs)
+OSA0 <- gUnaryUnion(OSA, rep(1, nrow(OSA@data)))
+OSA0 <- as(OSA0, "SpatialPolygonsDataFrame")
+OSA0@data <- data.frame(Region="OSA")
+writeOGR(OSA0, "OSA_bound.geojson", layer="OSA", driver="GeoJSON")
+
+
