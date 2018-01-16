@@ -61,7 +61,191 @@ table(SP$infoOK, SP$taxon)
 SP <- SP[SP$infoOK,]
 SP$infoOK <- NULL
 rownames(SP) <- SP$SpeciesID
-save(KA_2012, KA_2014, KT, XY, SP,
+
+## species coefs
+
+
+cv <- read.csv("e:/peter/sppweb2017/tables/AllTaxaCombined-VegetationNorth.csv")
+cs <- read.csv("e:/peter/sppweb2017/tables/AllTaxaCombined-SoilNontreedSouth.csv")
+cst <- read.csv("e:/peter/sppweb2017/tables/AllTaxaCombined-SoilTreedSouth.csv")
+compare_sets(cv$Species, SP$Species[SP$veghf.north])
+compare_sets(cs$Species, SP$Species[SP$soilhf.south])
+lv <- read.csv("e:/peter/sppweb2017/tables/AllTaxaCombined-LinearNorth.csv")
+ls <- read.csv("e:/peter/sppweb2017/tables/AllTaxaCombined-LinearSouth.csv")
+
+cv <- cv[match(SP$Species[SP$veghf.north], cv$Species),]
+cs <- cs[match(SP$Species[SP$soilhf.south], cs$Species),]
+cst <- cst[match(SP$Species[SP$soilhf.south], cst$Species),]
+lv <- lv[match(SP$Species[SP$veghf.north], lv$Species),]
+ls <- ls[match(SP$Species[SP$soilhf.south], ls$Species),]
+rownames(lv) <- rownames(cv) <- rownames(SP)[SP$veghf.north]
+rownames(ls) <- rownames(cs) <- rownames(cst) <- rownames(SP)[SP$soilhf.south]
+
+cv <- as.matrix(cv[,-(1:3)])
+cs <- as.matrix(cs[,-(1:3)])
+cst <- as.matrix(cst[,-(1:3)])
+lv <- as.matrix(lv[,-(1:3)])
+ls <- as.matrix(ls[,-(1:3)])
+
+f <- function(x) {
+    cn <- colnames(x)
+    lo <- grepl("\\.LCL", cn)
+    hi <- grepl("\\.UCL", cn)
+    x0 <- x[,!hi & !lo]
+    colnames(x0) <- cn[!hi & !lo]
+    x1 <- x[,lo]
+    colnames(x1) <- gsub("\\.LCL", "", cn[lo])
+    x2 <- x[,hi]
+    colnames(x2) <- gsub("\\.UCL", "", cn[hi])
+    out <- list(coef=x0, lower=x1, higher=x2)
+    out
+}
+
+pa <- rowMeans(qlogis(f(cst)[[1]]) - qlogis(f(cs)[[1]]))
+ii <- SP[rownames(cs), "taxon"] == "birds"
+tst <- f(cst)[[1]][ii,]
+tst[tst == 0] <- 10^-6
+ts <- f(cs)[[1]][ii,]
+ts[ts == 0] <- 10^-6
+pa2 <- rowMeans(log(tst) - log(ts))
+pa[ii] <- pa2
+PA <- matrix(pa, ncol=1)
+colnames(PA) <- "pAspen"
+rownames(PA) <- names(pa)
+
+## joint model results for birds to be used with climate
+
+library(mefa4)
+ROOT <- "e:/peter/AB_data_v2016/out/birds"
+level <- 0.9
+up <- function() {
+    source("~/repos/bragging/R/glm_skeleton.R")
+    source("~/repos/abmianalytics/R/results_functions.R")
+    source("~/repos/bamanalytics/R/makingsense_functions.R")
+    invisible(NULL)
+}
+up()
+
+en <- new.env()
+load(file.path(ROOT, "data", "data-north.Rdata"), envir=en)
+xnn <- en$DAT
+modsn <- en$mods
+yyn <- en$YY
+
+es <- new.env()
+load(file.path(ROOT, "data", "data-south.Rdata"), envir=es)
+xns <- es$DAT
+modss <- es$mods
+yys <- es$YY
+
+rm(en, es)
+
+## terms and design matrices
+nTerms <- getTerms(modsn, "list")
+sTerms <- getTerms(modss, "list")
+Xnn <- model.matrix(getTerms(modsn, "formula"), xnn)
+colnames(Xnn) <- fixNames(colnames(Xnn))
+Xns <- model.matrix(getTerms(modss, "formula"), xns)
+colnames(Xns) <- fixNames(colnames(Xns))
+
+stage_hab_n <- 5
+stage_hab_s <- 3
+
+TAX <- read.csv("c:/Users/Peter/repos/abmispecies/_data/birds.csv")
+rownames(TAX) <- TAX$AOU
+
+## spp specific output
+res_coef <- list()
+for (spp in rownames(TAX)) {
+    cat(spp, "\n");flush.console()
+    NAM <- as.character(TAX[spp, "sppid"])
+    res_coef[[NAM]] <- list(
+        veg=NULL, soil=NULL, paspen=NULL,
+        vegj=NULL, soilj=NULL, paspenj=NULL)
+    if (TAX[spp, "veghf.north"]) {
+        resn <- loadSPP(file.path(ROOT, "results", "north",
+            paste0("birds_abmi-north_", spp, ".Rdata")))
+        estn_hab <- getEst(resn, stage=stage_hab_n, na.out=FALSE, Xnn)
+        estn_habj <- getEst(resn, stage=stage_hab_n+1, na.out=FALSE, Xnn)
+        tmp <- pred_veghf(estn_hab, Xnn, burn_included=FALSE, raw=TRUE)[,1]
+        tmpj <- pred_veghf(estn_habj, Xnn, burn_included=FALSE, raw=TRUE)[,1]
+        nm <- names(tmp)
+        nm <- gsub("Conif", "WhiteSpruce", nm)
+        nm <- gsub("Decid", "Deciduous", nm)
+        nm <- gsub("Mixwood", "Mixedwood", nm)
+        nm <- gsub("BSpr", "BlackSpruce", nm)
+        names(tmp) <- names(tmpj) <- nm
+        names(tmp) <- names(tmpj) <- gsub(" ", "", names(tmp))
+        res_coef[[NAM]]$veg <- tmp
+        res_coef[[NAM]]$vegj <- tmpj
+    }
+    if (TAX[spp, "soilhf.south"]) {
+        ress <- loadSPP(file.path(ROOT, "results", "south",
+            paste0("birds_abmi-south_", spp, ".Rdata")))
+        ests_hab <- getEst(ress, stage=stage_hab_s, na.out=FALSE, Xns)
+        ests_habj <- getEst(ress, stage=stage_hab_s+1, na.out=FALSE, Xns)
+        res_coef[[NAM]]$soil <- pred_soilhf(ests_hab, Xns, raw=TRUE)[,1]
+        res_coef[[NAM]]$soilj <- pred_soilhf(ests_habj, Xns, raw=TRUE)[,1]
+        res_coef[[NAM]]$paspen <- ests_hab[1,"pAspen"]
+        res_coef[[NAM]]$paspenj <- ests_habj[1,"pAspen"]
+    }
+}
+save(res_coef, file="w:/reports/2017/data/birds-coef-temp.RData")
+#compare_sets(nm, colnames(CF$marginal$veg$coef))
+#setdiff(nm, colnames(CF$marginal$veg$coef))
+#setdiff(colnames(CF$marginal$veg$coef), nm)
+
+CFall <- list(
+    veg=f(cbind(cv, lv)),
+    soil=f(cbind(cs, ls)),
+    paspen=PA)
+
+SPPv <- rownames(cv)[SP[rownames(cv), "taxon"] == "birds"]
+SPPs <- rownames(cs)[SP[rownames(cs), "taxon"] == "birds"]
+
+cf_veg_m <- t(sapply(SPPv, function(i) {
+    z <- res_coef[[i]]$veg
+    z <- z[match(colnames(CFall$veg$coef), names(z))]
+    names(z) <- colnames(CFall$veg$coef)
+    z
+}))
+cf_veg_j <- t(sapply(SPPv, function(i) {
+    z <- res_coef[[i]]$vegj
+    z <- z[match(colnames(CFall$veg$coef), names(z))]
+    names(z) <- colnames(CFall$veg$coef)
+    z
+}))
+cf_soil_m <- t(sapply(SPPs, function(i) {
+    z <- res_coef[[i]]$soil
+    z <- z[match(colnames(CFall$soil$coef), names(z))]
+    names(z) <- colnames(CFall$soil$coef)
+    z
+}))
+cf_soil_j <- t(sapply(SPPs, function(i) {
+    z <- res_coef[[i]]$soilj
+    z <- z[match(colnames(CFall$soil$coef), names(z))]
+    names(z) <- colnames(CFall$soil$coef)
+    z
+}))
+cf_pa_m <- t(sapply(SPPs, function(i) {
+    res_coef[[i]]$paspen
+}))
+cf_pa_m <- array(cf_pa_m, c(length(SPPs), 1), list(SPPs, "pAspen"))
+cf_pa_j <- t(sapply(SPPs, function(i) {
+    res_coef[[i]]$paspenj
+}))
+cf_pa_j <- array(cf_pa_j, c(length(SPPs), 1), list(SPPs, "pAspen"))
+
+CF <- list(coef=list(veg=CFall$veg$coef, soil=CFall$soil$coef, paspen=CFall$paspen),
+    lower=list(veg=CFall$veg$lower, soil=CFall$soil$lower),
+    higher=list(veg=CFall$veg$higher, soil=CFall$soil$higher))
+
+CFbirds <- list(
+    marginal=list(veg=cf_veg_m, soil=cf_soil_m, paspen=cf_pa_m),
+    joint=list(veg=cf_veg_j, soil=cf_soil_j, paspen=cf_pa_j))
+
+## save common data
+save(KA_2012, KA_2014, KT, XY, SP, CF, CFbirds,
     file="w:/reports/2017/data/kgrid_areas_by_sector.RData")
 
 ## no need to normalize files
@@ -70,11 +254,165 @@ save(KA_2012, KA_2014, KT, XY, SP,
 #"SA.Curr" "SA.Ref" -- > CS/RS
 #w:/reports/2017/Files from Ermias/Mites/Combine regions/Sector effects/Sector abundance summary/
 #Native Misc Agriculture RuralUrban Energy Transportation Forestry
+#Sectors <- c("Native", "Misc", "Agriculture", "RuralUrban", "Energy", "Transportation", "Forestry")
+
+## process the rasters for the climate piece for poly level prediction
+
+library(mefa4)
+library(cure4insect)
+
+ROOT <- "e:/peter/AB_data_v2016"
+OUTDIR <- "e:/peter/AB_data_v2016/out/birds/web"
+
+## set here if shf is wanted
+load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata")) # kgrid
+load(file.path(ROOT, "out", "kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata")) # dd1km_pred
+source("~/repos/bragging/R/glm_skeleton.R")
+source("~/repos/abmianalytics/R/results_functions.R")
+source("~/repos/bamanalytics/R/makingsense_functions.R")
+
+## climate
+transform_CLIM <- function(x, ID="PKEY") {
+    z <- x[,ID,drop=FALSE]
+    z$xlong <- (x$POINT_X - (-113.7)) / 2.15
+    z$xlat <- (x$POINT_Y - 53.8) / 2.28
+    z$xAHM <- (x$AHM - 0) / 50
+    z$xPET <- (x$PET - 0) / 800
+    z$xFFP <- (x$FFP - 0) / 130
+    z$xMAP <- (x$MAP - 0) / 2200
+    z$xMAT <- (x$MAT - 0) / 6
+    z$xMCMT <- (x$MCMT - 0) / 25
+    z$xMWMT <- (x$MWMT - 0) / 20
+
+    z$xASP <- x$ASP
+    z$xSLP <- log(x$SLP + 1)
+    z$xTRI <- log(x$TRI / 5)
+    z$xCTI <- log((x$CTI + 1) / 10)
+    z
+}
+kgrid <- data.frame(kgrid, transform_CLIM(kgrid, "Row_Col"))
+kgrid$xlong2 <- kgrid$xlong^2
+kgrid$xlat2 <- kgrid$xlat^2
+
+kgrid$Row_Col.1 <- NULL
+kgrid$OBJECTID <- NULL
+#kgrid$Row <- NULL
+#kgrid$Col <- NULL
+kgrid$AHM <- NULL
+kgrid$PET <- NULL
+kgrid$FFP <- NULL
+kgrid$MAP <- NULL
+kgrid$MAT <- NULL
+kgrid$MCMT <- NULL
+kgrid$MWMT <- NULL
+kgrid$Row10 <- NULL
+kgrid$Col10 <- NULL
+kgrid$ASP <- NULL
+kgrid$TRI <- NULL
+kgrid$SLP <- NULL
+kgrid$CTI <- NULL
+
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
+kgrid$WetKM <- rowSums(dd1km_pred$veg_current[,tv[colnames(dd1km_pred$veg_current), "WET"]==1]) / rowSums(dd1km_pred$veg_current)
+#kgrid$WaterKM <- rowSums(dd1km_pred$veg_current[,tv[colnames(dd1km_pred$veg_current), "WATER"]==1]) / rowSums(dd1km_pred$veg_current)
+kgrid$WetWaterKM <- rowSums(dd1km_pred$veg_current[,tv[colnames(dd1km_pred$veg_current), "WETWATER"]==1]) / rowSums(dd1km_pred$veg_current)
+
+## climate (North & South)
+cnClim <- c("xPET", "xMAT", "xAHM", "xFFP", "xMAP", "xMWMT",
+    "xMCMT", "xlat", "xlong", "xlat2", "xlong2", "xFFP:xMAP",
+    "xMAP:xPET", "xAHM:xMAT", "xlat:xlong", "WetKM", "WetWaterKM")
+## model matrix for Clim
+fclim <- as.formula(paste("~ - 1 +", paste(cnClim, collapse=" + ")))
+
+en <- new.env()
+load(file.path(ROOT, "out", "birds", "data", "data-north.Rdata"), envir=en)
+xnn <- en$DAT[1:500,]
+modsn <- en$mods
+yyn <- en$YY
+
+es <- new.env()
+load(file.path(ROOT, "out", "birds", "data", "data-south.Rdata"), envir=es)
+xns <- es$DAT[1:500,]
+modss <- es$mods
+yys <- es$YY
+rm(en, es)
+
+## model for species
+fln <- list.files(file.path(ROOT, "out", "birds", "results", "north"))
+fln <- sub("birds_abmi-north_", "", fln)
+fln <- sub(".Rdata", "", fln)
+fls <- list.files(file.path(ROOT, "out", "birds", "results", "south"))
+fls <- sub("birds_abmi-south_", "", fls)
+fls <- sub(".Rdata", "", fls)
+
+## terms and design matrices
+nTerms <- getTerms(modsn, "list")
+sTerms <- getTerms(modss, "list")
+Xnn <- model.matrix(getTerms(modsn, "formula"), xnn)
+colnames(Xnn) <- fixNames(colnames(Xnn))
+Xns <- model.matrix(getTerms(modss, "formula"), xns)
+colnames(Xns) <- fixNames(colnames(Xns))
+
+SPP0 <- union(fln, fls)
+TAX <- read.csv("~/repos/abmispecies/_data/birds.csv")
+rownames(TAX) <- TAX$AOU
+SPP <- sort(as.character(TAX$AOU)[TAX$map.pred])
+compare_sets(SPP,SPP0)
+
+STAGE <- list(
+    veg =which(names(modsn) == "Space"),
+    soil=which(names(modss) == "Space"))
+
+Xclim <- model.matrix(fclim, kgrid[,,drop=FALSE])
+colnames(Xclim) <- fixNames(colnames(Xclim))
+r0 <- .read_raster_template()
+
+for (spp in SPP) { # species START
+
+    ## raster is on linear predictor scale
+    cat(spp, which(spp==SPP), "/", length(SPP))
+    if (TAX[spp,"veghf.north"]) {
+        cat(" - veg")
+        flush.console()
+        fn <- file.path(ROOT, "out", "birds", "results", "north",
+            paste0("birds_abmi-north_", spp, ".Rdata"))
+        resn <- suppressWarnings(loadSPP(fn))
+        estn <- suppressWarnings(getEst(resn, stage=STAGE$veg, na.out=FALSE, Xnn))
+        ## north - current
+        estnClim <- estn[,colnames(Xclim),drop=FALSE]
+        logPNclim1 <- Xclim %*% estnClim[1,]
+        rn <- .make_raster(logPNclim1, kgrid, r0)
+        writeRaster(rn, paste0("w:/reports/2017/results/birds/clim-veg/",
+            TAX[spp, "sppid"], ".tif"), overwrite=TRUE)
+    }
+    if (TAX[spp,"soilhf.south"]) {
+        cat(" - soil")
+        flush.console()
+        fs <- file.path(ROOT, "out", "birds", "results", "south",
+            paste0("birds_abmi-south_", spp, ".Rdata"))
+        ress <- suppressWarnings(loadSPP(fs))
+        ests <- suppressWarnings(getEst(ress, stage=STAGE$soil, na.out=FALSE, Xns))
+        ## south - current
+        estsClim <- ests[,colnames(Xclim),drop=FALSE]
+        logPSclim1 <- Xclim %*% estsClim[1,]
+        rs <- .make_raster(logPSclim1, kgrid, r0)
+        writeRaster(rs, paste0("w:/reports/2017/results/birds/clim-soil/",
+            TAX[spp, "sppid"], ".tif"), overwrite=TRUE)
+    }
+    cat("\n")
+}
+## pAspen raster
+rpa <- .make_raster(kgrid$pAspen, kgrid, r0)
+writeRaster(rpa, paste0("w:/reports/2017/data/pAspen.tif"), overwrite=TRUE)
 
 
-Sectors <- c("Native", "Misc", "Agriculture", "RuralUrban", "Energy", "Transportation", "Forestry")
 
 
+
+
+
+
+## ---
 
 
 
