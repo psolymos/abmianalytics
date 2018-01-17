@@ -366,6 +366,7 @@ STAGE <- list(
 Xclim <- model.matrix(fclim, kgrid[,,drop=FALSE])
 colnames(Xclim) <- fixNames(colnames(Xclim))
 r0 <- .read_raster_template()
+rpa <- .make_raster(kgrid$pAspen, kgrid, r0)
 
 for (spp in SPP) { # species START
 
@@ -381,9 +382,11 @@ for (spp in SPP) { # species START
         ## north - current
         estnClim <- estn[,colnames(Xclim),drop=FALSE]
         logPNclim1 <- Xclim %*% estnClim[1,]
-        rn <- .make_raster(logPNclim1, kgrid, r0)
-        writeRaster(rn, paste0("w:/reports/2017/results/birds/clim-veg/",
-            TAX[spp, "sppid"], ".tif"), overwrite=TRUE)
+        rveg <- .make_raster(logPNclim1, kgrid, rpa)
+        #writeRaster(rn, paste0("w:/reports/2017/results/birds/clim-veg/",
+        #    TAX[spp, "sppid"], ".tif"), overwrite=TRUE)
+    } else {
+        rveg <- NULL
     }
     if (TAX[spp,"soilhf.south"]) {
         cat(" - soil")
@@ -393,18 +396,55 @@ for (spp in SPP) { # species START
         ress <- suppressWarnings(loadSPP(fs))
         ests <- suppressWarnings(getEst(ress, stage=STAGE$soil, na.out=FALSE, Xns))
         ## south - current
+        pA <- ests[1,"pAspen"]
         estsClim <- ests[,colnames(Xclim),drop=FALSE]
         logPSclim1 <- Xclim %*% estsClim[1,]
-        rs <- .make_raster(logPSclim1, kgrid, r0)
-        writeRaster(rs, paste0("w:/reports/2017/results/birds/clim-soil/",
-            TAX[spp, "sppid"], ".tif"), overwrite=TRUE)
+        rs <- .make_raster(logPSclim1, kgrid, rpa)
+        rsoil <- pA * rpa + rs
+        #writeRaster(rs, paste0("w:/reports/2017/results/birds/clim-soil/",
+        #    TAX[spp, "sppid"], ".tif"), overwrite=TRUE)
+    } else {
+        rsoil <- NULL
     }
+    save(rveg, rsoil, file=paste0("w:/reports/2017/results/birds/spclim/",
+        TAX[spp, "sppid"], ".RData"))
     cat("\n")
 }
+
 ## pAspen raster
-rpa <- .make_raster(kgrid$pAspen, kgrid, r0)
 writeRaster(rpa, paste0("w:/reports/2017/data/pAspen.tif"), overwrite=TRUE)
 
+load_common_data()
+SP <- cure4insect:::.c4if$SP
+PA <- cure4insect:::.c4if$CF$coef$paspen
+SPP <- rownames(SP)[SP$taxon != "birds"]
+SPPv <- rownames(SP)[SP$veghf.north & SP$taxon != "birds"]
+SPPs <- rownames(SP)[SP$soilhf.south & SP$taxon != "birds"]
+rpa <- raster("w:/reports/2017/data/pAspen.tif")
+
+a <- "w:/Files from Ermias/Climate and Space prediction/"
+for (i in SPP) {
+    cat(i, which(i==SPP), "/", length(SPP))
+    tx <- as.character(SP[i,"taxon"])
+    if (i %in% SPPv) {
+        cat(" - veg")
+        flush.console()
+        rveg <- raster(paste0(a, tx, "/clim-veg/", i, ".tif")) + 1 - 1
+    } else {
+        rveg <- NULL
+    }
+    if (i %in% SPPs) {
+        cat(" - soil")
+        flush.console()
+        rs <- raster(paste0(a, tx, "/clim-soil/", i, ".tif")) + 1 - 1
+        rsoil <- PA[i,"pAspen"] * rpa + rs
+    } else {
+        rsoil <- NULL
+    }
+    save(rveg, rsoil, file=paste0("w:/reports/2017/results/", tx, "/spclim/",
+        i, ".RData"))
+    cat("\n")
+}
 
 
 
