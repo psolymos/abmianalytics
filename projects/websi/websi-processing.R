@@ -791,8 +791,6 @@ library(rgdal)
 library(rgeos)
 library(sp)
 
-#osa <- readOGR("e:/peter/AB_data_v2017/data/raw/xy/OilSandsBoundaries.gdb",layer='myFeatureClass')
-
 ## shape files for boundary
 crs <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
 od <- setwd("e:/peter/AB_data_v2017/data/raw/xy/nsr")
@@ -815,4 +813,101 @@ OSA0 <- as(OSA0, "SpatialPolygonsDataFrame")
 OSA0@data <- data.frame(Region="OSA")
 writeOGR(OSA0, "OSA_bound.geojson", layer="OSA", driver="GeoJSON")
 
+
+input.gd <- "e:/peter/AB_data_v2017/data/raw/xy/OilSandsBoundaries.gdb"
+## List all feature classes in a file geodatabase
+subset(ogrDrivers(), grepl("GDB", name))
+fc_list <- ogrListLayers(input.gd)
+fc_list # Determine what layers you wish to load
+## Read the feature class
+os.peaceriver <- readOGR(dsn = input.gd, layer = "Oilsand3RegionDissolve10TM")
+os.area <- readOGR(dsn = input.gd, layer = "OilsandRegionDissolve10TM")
+os.minable <- readOGR(dsn = input.gd, layer = "Oilsand_Mineable10TM")
+plot(os.area)
+
+## checking bootstrap distr
+
+library(cure4insect)
+library(pbapply)
+library(mefa4)
+opar <- set_options(path = "w:/reports")
+getOption("cure4insect")
+load_common_data()
+subset_common_data(id=get_all_id(),
+    species=get_all_species())
+
+.c4if=cure4insect:::.c4if
+.c4is=cure4insect:::.c4is
+KT <- .c4if$KT
+
+spp <- "Achillea.millefolium"
+y <- load_species_data(spp)
+
+fun <- function(y, what="cr", plot=TRUE) {
+    if (what == "cr") {
+        x1 <- y$SA.Curr
+        x10 <- y$Curr.Boot
+    }
+    if (what == "rf") {
+        x1 <- y$SA.Ref
+        x10 <- y$Ref.Boot
+    }
+    x1 <- x1[match(rownames(KT), rownames(x1)),]
+    x1[is.na(x1)] <- 0
+    x1 <- groupMeans(x1, 1, KT$Row10_Col10)
+    x1 <- rowSums(x1[rownames(x10),])
+    cm <- colMeans(cbind(x1, x10))
+    names(cm) <- c("km", paste0("B", 1:100))
+    if (plot) {
+        hist(cm[-1], col="lightgrey", border="darkgrey", xlab="Mean abundance",
+            xlim=range(cm), main=paste(spp, what))
+        abline(v=mean(cm[-1]), col=1, lty=2, lwd=2)
+        abline(v=cm[1], col=2, lty=1, lwd=2)
+        legend("topright", bty="n", col=1:2,lty=2:1, lwd=2,
+            legend=c("Mean 10km B", "Mean 1km 1st"))
+    }
+    cm
+}
+
+SPP <- get_all_species()
+set_options(verbose="0")
+CR <- pbsapply(SPP, function(spp) {
+    y <- load_species_data(spp)
+    cr <- fun(y, what="cr", plot=FALSE)
+    rf <- fun(y, what="rf", plot=FALSE)
+    c(cr=cr, rf=rf)
+})
+CR <- t(CR)
+write.csv(CR, file="abundance-comparison-1vs10km.csv")
+
+tb <- get_species_table()
+cr1 <- CR[,1]
+cr10 <- rowMeans(CR[,2:101])
+rf1 <- CR[,102]
+rf10 <- rowMeans(CR[,103:202])
+
+par(mfrow=c(1,2))
+plot(cr1, cr10, col=tb$taxon, xlim=c(0,1), ylim=c(0,1), main="cr")
+abline(0,1,col="grey",lty=2)
+legend("bottomright", col=1:6, pch=19, legend=levels(tb$taxon))
+plot(rf1, rf10, col=tb$taxon, xlim=c(0,1), ylim=c(0,1), main="cr")
+abline(0,1,col="grey",lty=2)
+legend("bottomright", col=1:6, pch=19, legend=levels(tb$taxon))
+
+
+f <- function(x1, x10) {
+    x <- x[match(rownames(KT), rownames(x)),]
+    x[is.na(x)] <- 0
+
+}
+Nc1 <- y$SA.Curr[match() rowSums(
+
+
+## see how these compare
+system.time(res <- report_all(cores=1))
+#system.time(res <- report_all(cores=2))
+#system.time(res <- report_all(cores=4))
+## this is for testing only
+#system.time(res <- .report_all_by1())
+(set_options(opar)) # reset options
 
