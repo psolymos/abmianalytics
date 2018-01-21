@@ -64,3 +64,17 @@ points(1:5, h(tmp), pch=4, col=1, cex=3)
 par(op)
 
 
+plot_sector(z, "regional")
+z2 <- read.csv("~/Downloads/Custom_Report_2018-01-19.csv")
+z2$X <- NULL
+rownames(z2) <- z2$SpeciesID
+class(z2) <- class(z)
+all(rownames(z)==rownames(z2))
+
+plot_sector(z2, "regional")
+
+ss <- !is.na(z$Total_Energy) & !is.na(z2$Total_Energy)
+plot(density(z$Total_Energy[ss]), xlim=c(-100,100))
+lines(density(z2$Total_Energy[ss]), col=2)
+summary(z2$Total_Energy[ss]-z$Total_Energy[ss])
+
