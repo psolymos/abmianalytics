@@ -155,6 +155,7 @@ TAX <- read.csv("c:/Users/Peter/repos/abmispecies/_data/birds.csv")
 rownames(TAX) <- TAX$AOU
 
 ## spp specific output
+## raw=TRUE returns mu (lam=exp(mu))
 res_coef <- list()
 for (spp in rownames(TAX)) {
     cat(spp, "\n");flush.console()
