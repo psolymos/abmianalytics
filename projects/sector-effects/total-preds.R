@@ -64,17 +64,52 @@ points(1:5, h(tmp), pch=4, col=1, cex=3)
 par(op)
 
 
-plot_sector(z, "regional")
-z2 <- read.csv("~/Downloads/Custom_Report_2018-01-19.csv")
+z2 <- read.csv("~/Dropbox/abmi/Custom_Report_2018-01-19.csv")
 z2$X <- NULL
 rownames(z2) <- z2$SpeciesID
 class(z2) <- class(z)
 all(rownames(z)==rownames(z2))
 
+par(mfrow=c(3,2))
+plot_sector(z, "underhf")
+plot_sector(z2, "underhf")
+plot_sector(z, "regional")
 plot_sector(z2, "regional")
+plot_sector(z, "unit", ylim=c(-200,200))
+plot_sector(z2, "unit", ylim=c(-200,200))
 
-ss <- !is.na(z$Total_Energy) & !is.na(z2$Total_Energy)
+
+library(plotrix)
+
+ss <- !is.na(z$Total_Energy) & !is.na(z2$Total_Energy) & z$Taxon=="birds"
+WHAT <- "Total_Energy"
+ladderplot(cbind(AB=z[ss,WHAT],OSA=z2[ss,WHAT]))
+a <- z2[ss,WHAT]-z[ss,WHAT]
+names(a) <- rownames(z)[ss]
+head(a[order(abs(a), decreasing=TRUE)], 20)
+
 plot(density(z$Total_Energy[ss]), xlim=c(-100,100))
 lines(density(z2$Total_Energy[ss]), col=2)
 summary(z2$Total_Energy[ss]-z$Total_Energy[ss])
+
+
+
+
+opar <- set_options(path = "w:/reports")
+getOption("cure4insect")
+load_common_data()
+species <- c("Carex.trisperma", "Hymenoxys.richardsonii", "Lithospermum.ruderale",
+"Zigadenus.elegans")
+subset_common_data(id=get_all_id(),
+    species=species)
+## see how these compare
+system.time(res <- report_all())
+
+z <- do.call(rbind, lapply(res, flatten))
+class(z) <- c("c4idf", class(z))
+
+y <- load_species_data(species[1])
+x <- calculate_results(y)
+x
+flatten(x)
 
