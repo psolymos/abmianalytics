@@ -14,25 +14,38 @@ tv0$Sector2 <- factor(ifelse(is.na(tv0$Sector), "NATIVE", as.character(tv0$Secto
 VHF <- dd1km_pred[[1]]
 tv0 <- tv0[colnames(VHF),]
 dd1km_pred$sample_year
-KA_2012 <- groupSums(VHF/10^6, 2, tv0$Sector2) # in km^2
+VHF <- VHF/10^6
+summary(rowSums(VHF))
+#RS <- rowSums(VHF)
+#RS[RS < 1] <- 1
+#VHF <- VHF / RS
+#summary(rowSums(VHF))
+KA_2012 <- groupSums(VHF, 2, tv0$Sector2) # in km^2
 
 ## HF 2014
-load("e:/peter/AB_data_v2017/data/analysis/veg-hf_1kmgrid_v6-fixage0.Rdata")
+load("e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_coarse-fixage0.Rdata")
 tv0 <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-V6.csv")
 VHF <- dd1km_pred[[1]]
 VHF <- VHF[,colnames(VHF) != "CutBlocks"]
 cn <- colnames(VHF)
-cn[cn %in% c("UrbanIndustrial", "UrbanResidence")] <- "Urban"
-cn[cn %in% c("SeismicLineNarrow", "SeismicLineWide")] <- "SeismicLine"
-cn[cn %in% c("CultivationAbandoned", "CultivationRoughPasture",
-    "CultivationTamePasture", "CultivationCrop")] <- "CultivationCropPastureBareground"
-VHF <- groupSums(VHF, 2, cn)
+#cn[cn %in% c("UrbanIndustrial", "UrbanResidence")] <- "Urban"
+#cn[cn %in% c("SeismicLineNarrow", "SeismicLineWide")] <- "SeismicLine"
+#cn[cn %in% c("CultivationAbandoned", "CultivationRoughPasture",
+#    "CultivationTamePasture", "CultivationCrop")] <- "CultivationCropPastureBareground"
+#VHF <- groupSums(VHF, 2, cn)
 tv0 <- tv0[colnames(VHF),]
 dd1km_pred$sample_year
-KA_2014 <- groupSums(VHF/10^6, 2, tv0$ETA_UseInAnalysis_Sector) # in km^2
+VHF <- VHF/10^6
+summary(rowSums(VHF))
+RS <- rowSums(VHF)
+RS[RS < 1] <- 1
+VHF <- VHF / RS
+summary(rowSums(VHF))
+KA_2014 <- groupSums(VHF, 2, tv0$ETA_UseInAnalysis_Sector) # in km^2
 
 load("e:/peter/AB_data_v2017/data/analysis/kgrid_table_km.Rdata")
 stopifnot(all(rownames(kgrid) == rownames(KA_2012)))
+KA_2014 <- KA_2014[rownames(kgrid),]
 stopifnot(all(rownames(kgrid) == rownames(KA_2014)))
 
 KT <- kgrid[,c("Row", "Col", "Row10_Col10")]
@@ -63,7 +76,6 @@ SP$infoOK <- NULL
 rownames(SP) <- SP$SpeciesID
 
 ## species coefs
-
 
 cv <- read.csv("e:/peter/sppweb2017/tables/AllTaxaCombined-VegetationNorth.csv")
 cs <- read.csv("e:/peter/sppweb2017/tables/AllTaxaCombined-SoilNontreedSouth.csv")
@@ -879,7 +891,7 @@ CR <- pbsapply(SPP, function(spp) {
     c(cr=cr, rf=rf)
 })
 CR <- t(CR)
-write.csv(CR, file="abundance-comparison-1vs10km.csv")
+write.csv(CR, file="abundance-comparison-1vs10km_updated.csv")
 
 tb <- get_species_table()
 cr1 <- CR[,1]
