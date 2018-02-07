@@ -257,8 +257,17 @@ CFbirds <- list(
     marginal=list(veg=cf_veg_m, soil=cf_soil_m, paspen=cf_pa_m),
     joint=list(veg=cf_veg_j, soil=cf_soil_j, paspen=cf_pa_j))
 
+VER <- data.frame(
+    taxon=  c("mammals", "birds", "mites", "mosses", "lichens", "vplants"),
+    version=2017,
+    yr_first=c(2001,     1997,    2007,    2003,     2003,      2003),
+    yr_last= c(2013,     2015,    2016,    2015,     2016,      2016),
+    method=c("snow_tracking","point_count","soil_core","centre_plot","centre_plot","centre_plot"),
+    hf=     c("2014v2", "2012",   "2014v2", "2014v2", "2014v2", "2014v2"),
+    veg=    c("v6",     "v5",     "v6",     "v6",     "v6",     "v6"))
+
 ## save common data
-save(KA_2012, KA_2014, KT, XY, SP, CF, CFbirds,
+save(KA_2012, KA_2014, KT, XY, SP, CF, CFbirds, VER,
     file="w:/reports/2017/data/kgrid_areas_by_sector.RData")
 
 ## no need to normalize files
