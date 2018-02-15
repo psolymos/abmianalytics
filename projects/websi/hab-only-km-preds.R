@@ -36,6 +36,7 @@ vcf0 <- exp(veg_cf[,colnames(veg0)])
 
 mat_veg1 <- pbapply(vcf1, 1, function(z) as.numeric(veg1 %*% z))
 mat_veg0 <- pbapply(vcf0, 1, function(z) as.numeric(veg0 %*% z))
+rownames(mat_veg1) <- rownames(mat_veg0) <- rownames(veg1)
 
 for (i in 1:ncol(mat_veg1)) {
     q <- quantile(mat_veg1[,i], 0.99)
@@ -72,6 +73,7 @@ is_soil <- kgrid$pSoil > 0
 pAterm <- exp(pbsapply(pA_cf, function(z) pA[is_soil] * z))
 mat_soil1 <- pbapply(scf1, 1, function(z) as.numeric(soil1[is_soil,] %*% z)) * pAterm
 mat_soil0 <- pbapply(scf0, 1, function(z) as.numeric(soil0[is_soil,] %*% z)) * pAterm
+rownames(mat_soil1) <- rownames(mat_soil0) <- rownames(soil1[is_soil,])
 
 for (i in 1:ncol(mat_soil1)) {
     q <- quantile(mat_soil1[,i], 0.99)
