@@ -2,7 +2,6 @@
 title: "Bird population size estimates in BCR 6 Alberta"
 author: "Peter Solymos (solymos@ualberta.ca)"
 output:
-  pdf_document: default
   word_document: default
 ---
 
@@ -42,19 +41,19 @@ tv0$HAB[tv0$Combined %in% c("RoadTrailVegetated", "RoadVegetatedVerge",
     "RailVegetatedVerge")] <- "Verges"
 
 ## PIF table
-pif <- read.csv("~/Dropbox/bam/PIF-AB/popBCR-6AB_v2_22-May-2013.csv")
+pif <- read.csv("~/GoogleWork/bam/PIF-AB/popBCR-6AB_v2_22-May-2013.csv")
 mefa4::compare_sets(tax$English_Name, pif$Common_Name)
 setdiff(tax$English_Name, pif$Common_Name)
 pif <- pif[match(tax$English_Name, pif$Common_Name),]
 rownames(pif) <- rownames(tax)
 
-AUC <- read.csv("~/Dropbox/bam/PIF-AB/results/AUC.csv")
+AUC <- read.csv("~/GoogleWork/bam/PIF-AB/results/AUC.csv")
 rownames(AUC) <- AUC$spp
 AUC$spp <- NULL
 AUC <- AUC[rownames(tax),]
 
 if (FALSE) {
-NN <- read.csv("~/Dropbox/bam/PIF-AB/results/PopSize567.csv")
+NN <- read.csv("~/GoogleWork/bam/PIF-AB/results/PopSize567.csv")
 rownames(NN) <- NN$spp
 NN$spp <- NULL
 NN <- NN[rownames(tax),]
@@ -141,7 +140,7 @@ AWhab <- data.frame(Ahab, Whab)
 NAM <- names(Ahab)
 
 h_fun <- function(h) {
-    NN <- h[NAM, "Mean"] * 10^6 # back to individuals
+    NN <- h[NAM, "50%"] * 10^6 # back to individuals
     DD <- NN / colSums(AvegH)[NAM] # density: males / ha
     sum(DD * Whab) / sum(DD * Ahab)
 }
@@ -193,11 +192,11 @@ Partners in Flight (PIF) provide a set of
 population size estimates for bird species in
 Bird Conservation Region (BCR) 6 in Alberta.
 For any given species, we refer to this estimate
-as the 'PIF estimate', $\hat{N}^{(PIF)}$.
+as the 'PIF estimate', $\hat{N}_{PIF}$.
 
 The estimator for the PIF approach is:
 
-$$ \frac{\hat{N}^{(PIF)}}{H} = E[Y_{1}] \times P \times T \times A \times \frac{1}{\pi MDD^2} $$
+$$ \frac{\hat{N}_{PIF}}{H} = E[Y_{1}] \times P \times T \times A \times \frac{1}{\pi MDD^2} $$
 
 where $E[Y_{1}]$ is the stop level expected count from roadside BBS data (the original
 description used route level averages and a factor or 1/50 to account for
@@ -216,9 +215,9 @@ Another set of estimates of current population sizes in Alberta BCR 6
 are based on a model based prediction approach
 using province wide vegetation and human footprint maps.
 We refer to these estimates for any given species
-as the 'pixel based estimates', $\hat{N}^{(PIX)}$.
+as the 'pixel based estimates', $\hat{N}_{PIX}$.
 
-$$ \hat{N}^{(PIX)} = E[Y_{0}] \times P \times \frac{1}{p_3} \times A \times \frac{1}{\pi EDR^2} $$
+$$ \hat{N}_{PIX} = E[Y_{0}] \times P \times \frac{1}{p_3} \times A \times \frac{1}{\pi EDR^2} $$
 
 where $E[Y_{0}]$ is the point level expected value of a count from a combination of
 on- and off-road data sources after accounting for roadside bias,
@@ -227,8 +226,8 @@ $1/p_3$ is the time adjustment based on removal sampling based availability and 
 $A$ is the area of the geographic region,
 $EDR$ is distance sampling based effective detection radius
 (making sure that unit for $EDR$ is compatible to the unit of area),
-There is no adjustment for habitat sampling bias because we used 
-model based extrapolation to the whole geographic region to avoid habitat 
+There is no adjustment for habitat sampling bias because we used
+model based extrapolation to the whole geographic region to avoid habitat
 related biases in population size estimation.
 
 We used the Pair adjustment to calculate number of singinsg individuals
@@ -236,11 +235,11 @@ for both estimators, thus effectively setting $P=1$.
 We compare the two estimators and the different adjustments as ratios
 (pair adjustment and the area of the geographic area calcels out):
 
-$$ \frac{\hat{N}^{(PIX)}/P}{\hat{N}^{(PIF)}/(HP)} = \frac{E[Y_{0}]}{E[Y_{1}]} \times \frac{1/p_3}{T} \times \frac{A}{A} \times \frac{1/EDR^2}{1/MDD^2} $$
+$$ \frac{\hat{N}_{PIX}/P}{\hat{N}_{PIF}/(HP)} = \frac{E[Y_{0}]}{E[Y_{1}]} \times \frac{1/p_3}{T} \times \frac{A}{A} \times \frac{1/EDR^2}{1/MDD^2} $$
 
 After simplification, we get:
 
-$$ \frac{\hat{N}^{(PIX)}}{\hat{N}^{(PIF)}} = \frac{E[Y_{0}]}{E[Y_{1}]} \times \frac{1}{p_3T} \times \frac{MDD^2}{EDR^2} \times \frac{1}{H} $$
+$$ \frac{\hat{N}_{PIX}}{\hat{N}_{PIF}} = \frac{E[Y_{0}]}{E[Y_{1}]} \times \frac{1}{p_3T} \times \frac{MDD^2}{EDR^2} \times \frac{1}{H} $$
 
 For simplicity, we will refer to these components as additive log ratios, $\Delta$.
 $\Delta_{OBS}$ is the observed log ratio of the two estimators:
@@ -261,7 +260,7 @@ We used the 2013 version of the data set, filtered for BCR 6 Alberta.
 
 ### Model based population size estimates
 
-We followed the methodology outlined in Ball et al. 2016 and replicated the 
+We followed the methodology outlined in Ball et al. 2016 and replicated the
 analysis and prediction for `r nrow(pop)` species presented here.
 To apply the methodology more generally across species, we did not include
 terrain metrics as covariates, and we did not identified high suitability
@@ -299,19 +298,19 @@ over the surveys used for each species.
 
 ### Sampling area adjustment
 
-We averaged the distance sampling based EDR values 
+We averaged the distance sampling based EDR values
 over the surveys used for each species.
 
 ### Habitat sampling bias
 
-We calculated the proportion of the landbase ($a_k$, $k=1,\ldots,K$) in $K=19$ 
-habitat classes. We also calculated proportion of BBS stops ($w_k$) 
+We calculated the proportion of the landbase ($a_k$, $k=1,\ldots,K$) in $K=19$
+habitat classes. We also calculated proportion of BBS stops ($w_k$)
 clipped to BCR 6 within each of these $K$ classes.
 
-A sample based estimator of total abundance is $N=A \sum_{k=1}^{K} D_k w_k$, 
+A sample based estimator of total abundance is $N=A \sum_{k=1}^{K} D_k w_k$,
 where $A$ is the area of the region. If sampling is proportional to availability
 ($w_k = a_k$), the estimator is unbiased. Otherwise, the sampling
-bias is characterized by the ratio 
+bias is characterized by the ratio
 $H = (\sum_{k=1}^{K} D_k w_k) / (\sum_{k=1}^{K} D_k a_k)$.
 
 Here are the proportions for the whole extent of BCR 6 in Alberta (`a`) and
@@ -326,7 +325,7 @@ knitr::kable(tmp, digits=2)
 ## Results
 
 We found that pixel based population size estimates were on average
-`r round(mean(pop$Npix/pop$Npif), 2)` (min.: `r round(min(pop$Npix/pop$Npif), 2)`, 
+`r round(mean(pop$Npix/pop$Npif), 2)` (min.: `r round(min(pop$Npix/pop$Npif), 2)`,
 max: `r round(max(pop$Npix/pop$Npif), 2)`) times higher than PIF estimates.
 Population size estimates are provided in Appendix.
 
@@ -356,7 +355,7 @@ abline(0,1)
 par(op)
 ```
 
-The $\Delta$ components are shown in the next figure. The roadside count 
+The $\Delta$ components are shown in the next figure. The roadside count
 ($\Delta_R$) and the habitat sampling component  ($\Delta_H$) had
 means close to 0 indicating a wide range of responses from
 individual species but no systematic bias.
@@ -365,7 +364,6 @@ adjustments presented a systematic bias indicating that these adjustments would
 drive pixel based population size estimates higher than PIF estimates.
 
 ```{r deltas,echo=FALSE}
-
 mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH")]
 colnames(mat) <- c("OBS", "EXP", "R", "T", "A", "H")
 par(las=1)
@@ -375,14 +373,12 @@ abline(h=0, col=1, lwd=1,lty=2)
 
 We used linear regression, to see if the $\Delta$ components capture the
 whole relationship between the two sets of population size estimates.
-We expected the intercept to be close to 0, while the other coefficients to 
+We expected the intercept to be close to 0, while the other coefficients to
 be around 1.
 
 ```{r model,echo=FALSE}
 mod <- lm(DeltaObs ~ DeltaR + DeltaT + DeltaA + DeltaH, pop)
 summary(mod)
-modx <- lm(DeltaObs ~ DeltaR + DeltaT + DeltaA + DeltaH + DeltaR:DeltaH, pop)
-summary(modx)
 mod2 <- step(lm(DeltaObs ~ (DeltaR + DeltaT + DeltaA + DeltaH)^2, pop), trace=0)
 summary(mod2)
 ```
@@ -390,7 +386,7 @@ summary(mod2)
 As expected, the intercept was close to zero, and effect sizes close to 1.
 The largest deviation was detected for the sampling area ($\Delta_A$) component.
 The residual variance was `r round(summary(mod)$sigma^2, 3)`,
-and the model explained `r round(100*summary(mod)$r.squared, 1)` % of the total 
+and the model explained `r round(100*summary(mod)$r.squared, 1)` % of the total
 variation. The percent variation explained by the individual
 components is shown in the following table:
 
@@ -399,6 +395,11 @@ an <- anova(mod)
 an$Percent <- 100 * an[["Sum Sq"]] / sum(an[["Sum Sq"]])
 an <- an[c("Df", "Sum Sq", "Percent", "Mean Sq", "F value", "Pr(>F)")]
 an
+
+an2 <- anova(mod2)
+an2$Percent <- 100 * an2[["Sum Sq"]] / sum(an2[["Sum Sq"]])
+an2 <- an2[c("Df", "Sum Sq", "Percent", "Mean Sq", "F value", "Pr(>F)")]
+an2
 ```
 
 The roadside count component ($\Delta_R$) explained the largest portion of the variation,

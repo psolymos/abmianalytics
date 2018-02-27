@@ -17,6 +17,8 @@ tv0 <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
 veg_cf <- .c4if$CFbirds$marginal$veg
 veg1 <- groupSums(dd1km_pred[[1]], 2, tv0[colnames(dd1km_pred[[1]]), "UseInAnalysisCoef"])
 veg0 <- groupSums(dd1km_pred[[2]], 2, tv0[colnames(dd1km_pred[[2]]), "UseInAnalysisCoef"])
+veg10 <- veg1[,colnames(veg0)]
+
 veg_cf[is.na(veg_cf)] <- 0
 veg_cf[,"SoftLin"] <- log(rowMeans(exp(veg_cf[,c("Shrub", "GrassHerb")])))
 veg_cf[,"HardLin"] <- -10
@@ -24,25 +26,32 @@ cn1 <- intersect(colnames(veg1), colnames(veg_cf))
 cn0 <- intersect(colnames(veg0), colnames(veg_cf))
 veg1 <- veg1[,cn1]
 veg0 <- veg0[,cn0]
+veg10 <- veg10[,cn0]
 rs1 <- rowSums(veg1)
 rs1[rs1==0] <- 1
 rs0 <- rowSums(veg0)
 rs0[rs0==0] <- 1
+rs10 <- rowSums(veg10)
+rs10[rs10==0] <- 1
 veg1 <- veg1/rs1
 veg0 <- veg0/rs1
+veg10 <- veg10/rs10
 vcf1 <- exp(veg_cf[,colnames(veg1)])
 vcf0 <- exp(veg_cf[,colnames(veg0)])
-
+vcf10 <- exp(veg_cf[,colnames(veg10)])
 
 mat_veg1 <- pbapply(vcf1, 1, function(z) as.numeric(veg1 %*% z))
 mat_veg0 <- pbapply(vcf0, 1, function(z) as.numeric(veg0 %*% z))
-rownames(mat_veg1) <- rownames(mat_veg0) <- rownames(veg1)
+mat_veg10 <- pbapply(vcf10, 1, function(z) as.numeric(veg10 %*% z))
+rownames(mat_veg1) <- rownames(mat_veg0) <- rownames(mat_veg10) <- rownames(veg1)
 
 for (i in 1:ncol(mat_veg1)) {
     q <- quantile(mat_veg1[,i], 0.99)
     mat_veg1[mat_veg1[,i] > q,i] <- q
     q <- quantile(mat_veg0[,i], 0.99)
     mat_veg0[mat_veg0[,i] > q,i] <- q
+    q <- quantile(mat_veg10[,i], 0.99)
+    mat_veg10[mat_veg10[,i] > q,i] <- q
 }
 
 ## do soils
@@ -60,27 +69,39 @@ cn1 <- intersect(colnames(soil1), colnames(soil_cf))
 cn0 <- intersect(colnames(soil0), colnames(soil_cf))
 soil1 <- soil1[,cn1]
 soil0 <- soil0[,cn0]
+soil10 <- soil1[,cn0]
 rs1 <- rowSums(soil1)
 rs1[rs1==0] <- 1
 rs0 <- rowSums(soil0)
 rs0[rs0==0] <- 1
+rs10 <- rowSums(soil10)
+rs10[rs10==0] <- 1
 soil1 <- soil1/rs1
-soil0 <- soil0/rs1
+soil0 <- soil0/rs0
+soil10 <- soil10/rs10
 scf1 <- exp(soil_cf[,colnames(soil1)])
 scf0 <- exp(soil_cf[,colnames(soil0)])
+scf10 <- exp(soil_cf[,colnames(soil10)])
 
 is_soil <- kgrid$pSoil > 0
 pAterm <- exp(pbsapply(pA_cf, function(z) pA[is_soil] * z))
 mat_soil1 <- pbapply(scf1, 1, function(z) as.numeric(soil1[is_soil,] %*% z)) * pAterm
 mat_soil0 <- pbapply(scf0, 1, function(z) as.numeric(soil0[is_soil,] %*% z)) * pAterm
-rownames(mat_soil1) <- rownames(mat_soil0) <- rownames(soil1[is_soil,])
+mat_soil10 <- pbapply(scf10, 1, function(z) as.numeric(soil10[is_soil,] %*% z)) * pAterm
+rownames(mat_soil1) <- rownames(mat_soil0) <- rownames(mat_soil10) <- rownames(soil1[is_soil,])
 
 for (i in 1:ncol(mat_soil1)) {
     q <- quantile(mat_soil1[,i], 0.99)
     mat_soil1[mat_soil1[,i] > q,i] <- q
     q <- quantile(mat_soil0[,i], 0.99)
     mat_soil0[mat_soil0[,i] > q,i] <- q
+    q <- quantile(mat_soil10[,i], 0.99)
+    mat_soil10[mat_soil10[,i] > q,i] <- q
 }
 
-save(mat_veg1, mat_veg0, mat_soil1, mat_soil0,
-    file="e:/peter/AB_data_v2017/data/analysis/birds-hab-only-km-preds.Rdata")
+save(mat_veg1, mat_soil1,
+    file="e:/peter/AB_data_v2017/data/analysis/birds-hab-only-km-preds_Current.Rdata")
+save(mat_veg0, mat_soil0,
+    file="e:/peter/AB_data_v2017/data/analysis/birds-hab-only-km-preds_Reference.Rdata")
+save(mat_veg10, mat_soil10,
+    file="e:/peter/AB_data_v2017/data/analysis/birds-hab-only-km-preds_CurrNoHF.Rdata")

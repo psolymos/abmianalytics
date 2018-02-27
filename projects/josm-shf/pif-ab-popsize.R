@@ -355,19 +355,19 @@ save(roadside_bias, rai_pred, rai_data,
 ## --- unifying the bits and pieces ---
 
 ## PIF table
-pif <- read.csv("~/Dropbox/bam/PIF-AB/popBCR-6AB_v2_22-May-2013.csv")
+pif <- read.csv("~/GoogleWork/bam/PIF-AB/popBCR-6AB_v2_22-May-2013.csv")
 mefa4::compare_sets(tax$English_Name, pif$Common_Name)
 setdiff(tax$English_Name, pif$Common_Name)
 pif <- pif[match(tax$English_Name, pif$Common_Name),]
 rownames(pif) <- rownames(tax)
 
-AUC <- read.csv("~/Dropbox/bam/PIF-AB/results/AUC.csv")
+AUC <- read.csv("~/GoogleWork/bam/PIF-AB/results/AUC.csv")
 rownames(AUC) <- AUC$spp
 AUC$spp <- NULL
 AUC <- AUC[rownames(tax),]
 
 if (FALSE) {
-NN <- read.csv("~/Dropbox/bam/PIF-AB/results/PopSize567.csv")
+NN <- read.csv("~/GoogleWork/bam/PIF-AB/results/PopSize567.csv")
 rownames(NN) <- NN$spp
 NN$spp <- NULL
 NN <- NN[rownames(tax),]
@@ -455,11 +455,17 @@ AWhab <- data.frame(Ahab, Whab)
 NAM <- names(Ahab)
 
 h_fun <- function(h) {
-    NN <- h[NAM, "Mean"] * 10^6 # back to individuals
+    NN <- h[NAM, "50%"] * 10^6 # back to individuals
     DD <- NN / colSums(AvegH)[NAM] # density: males / ha
     sum(DD * Whab) / sum(DD * Ahab)
 }
 H <- sapply(NestAll, h_fun)
+
+d_fun <- function(h) {
+    NN <- h[NAM, "50%"] * 10^6 # back to individuals
+    DD <- NN / colSums(AvegH)[NAM] # density: males / ha
+    DD
+}
 
 ## taxonomy etc ---
 pop <- tax[,c("Species_ID", "English_Name", "Scientific_Name", "Spp")]
@@ -492,34 +498,133 @@ pop$DeltaObs <- log(pop$Npix / pop$Npif)
 pop$DeltaR <- log(pop$Y0/pop$Y1)
 pop$DeltaT <- log((1/pop$p3)/pop$TimeAdj)
 pop$DeltaA <- log((1/pop$EDR^2) / (1/pop$MDD^2))
-#pop$DeltaH <- -log(H) # we take inverse because H=1 is the PIF setup
-pop$DeltaExp <- pop$DeltaR + pop$DeltaT + pop$DeltaA
+pop$DeltaH <- log(1/H) # we take inverse because H=1 is the PIF setup
+pop$DeltaExp <- pop$DeltaR + pop$DeltaT + pop$DeltaA + pop$DeltaH
 pop$epsilon <- pop$DeltaObs - pop$DeltaExp
 ## subset ---
 pop <- droplevels(pop[rowSums(is.na(pop))==0,])
 pop <- pop[sort(rownames(pop)),]
-summary(pop)
-write.csv(pop, row.names=FALSE, file="~/Dropbox/bam/PIF-AB/qpad-pif-results.csv")
+Dall <- data.frame(Ahab=100*Ahab, Whab=100*Whab, sapply(NestAll, d_fun)[,rownames(pop)])
+
+write.csv(pop, row.names=FALSE, file="~/GoogleWork/bam/PIF-AB/draft1/Table1-estimates.csv")
+write.csv(100*Dall[,1:2], file="~/GoogleWork/bam/PIF-AB/draft1/Table2-habitats.csv")
+write.csv(Dall, file="~/GoogleWork/bam/PIF-AB/draft1/Table3-densities.csv")
 
 ## --- making the figures ---
 
-dots_box_plot <- function(mat, ...) {
+## maps
+pdf("~/GoogleWork/bam/PIF-AB/draft1/Fig1-maps.pdf", width=12, height=9)
+op <- par(mfrow=c(1,2), mar=c(1,1,1,1))
+plot(BCR2AB, col=c(NA, "grey", rep(NA, 11)), border=NA, main="Roadside surveys")
+plot(AB, col=NA, border=1,add=TRUE)
+plot(xy[xy@data$PCODE=="BBSAB",], add=TRUE, pch=19, col=1, cex=0.25)
+
+plot(BCR2AB, col=c(NA, "grey", rep(NA, 11)), border=NA, main="Off-road surveys")
+plot(AB, col=NA, border=1,add=TRUE)
+plot(xy[xy@data$PCODE!="BBSAB",], add=TRUE, pch=19, col=1, cex=0.25)
+par(op)
+dev.off()
+
+xylonlat <- spTransform(xy, CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+plot(density(coordinates(xylonlat)[,2]), type="n")
+lines(density(coordinates(xylonlat)[xylonlat@data$PCODE!="BBSAB",2]), col=2)
+lines(density(coordinates(xylonlat)[xylonlat@data$PCODE=="BBSAB",2]), col=4)
+
+dots_box_plot <- function(mat, lines=FALSE, ...) {
     set.seed(1)
     rnd <- runif(nrow(mat), -0.1, 0.1)
     boxplot(mat, range=0, ...)
-#    for (i in 2:ncol(mat))
-#        segments(x0=i+rnd-1, x1=i+rnd, y0=mat[,i-1], y1=mat[,i], col="lightgrey")
+    if (lines)
+        for (i in 2:ncol(mat))
+            segments(x0=i+rnd-1, x1=i+rnd, y0=mat[,i-1], y1=mat[,i], col="lightgrey")
     for (i in 1:ncol(mat))
         points(i+rnd, mat[,i], pch=19, col="#00000080")
     boxplot(mat, range=0, add=TRUE, col="#ff000020", names=NA)
     invisible(NULL)
 }
 
-mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH", "epsilon")]
-colnames(mat) <- c("OBS", "EXP", "R", "T", "A", "-H", "Residual")
+pdf("~/GoogleWork/bam/PIF-AB/draft1/Fig2-popsize.pdf", width=8, height=8)
+op <- par(mfrow=c(2,2), las=1, mar=c(4,4,1,2))
+dots_box_plot(pop[,c("Npif", "Npix")], lines=TRUE,
+    ylab="Population Size (M singing inds.)", names=c("PIF", "PIX"))
+dots_box_plot(log(pop[,c("Npif", "Npix")]), lines=TRUE,
+    ylab="log Population Size (M singing inds.)", names=c("PIF", "PIX"))
+plot(pop[,c("Npif", "Npix")], xlab=expression(N[PIF]), ylab=expression(N[PIX]),
+    pch=19, col="#00000080", xlim=c(0, max(pop[,c("Npif", "Npix")])),
+    ylim=c(0, max(pop[,c("Npif", "Npix")])))
+abline(0,1)
+plot(log(pop[,c("Npif", "Npix")]), xlab=expression(log(N[PIF])), ylab=expression(log(N[PIX])),
+    pch=19, col="#00000080", xlim=range(log(pop[,c("Npif", "Npix")])),
+    ylim=range(log(pop[,c("Npif", "Npix")])))
+abline(0,1)
+par(op)
+dev.off()
+
+pdf("~/GoogleWork/bam/PIF-AB/draft1/Fig3-components.pdf", width=8, height=6)
+op <- par(las=1)
+mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH")]
+colnames(mat) <- c("OBS", "EXP", "R", "T", "A", "H")
 par(las=1)
 dots_box_plot(mat, ylab=expression(Delta))
 abline(h=0, col=1, lwd=1,lty=2)
+par(op)
+dev.off()
+
+mod <- lm(DeltaObs ~ DeltaR + DeltaT + DeltaA + DeltaH, pop)
+summary(mod)
+an <- anova(mod)
+an$Percent <- 100 * an[["Sum Sq"]] / sum(an[["Sum Sq"]])
+an <- an[c("Df", "Sum Sq", "Percent", "Mean Sq", "F value", "Pr(>F)")]
+an
+summary(mod)$sigma^2
+
+mod2 <- step(lm(DeltaObs ~ (DeltaR + DeltaT + DeltaA + DeltaH)^2, pop), trace=0)
+summary(mod2)
+an2 <- anova(mod2)
+an2$Percent <- 100 * an2[["Sum Sq"]] / sum(an2[["Sum Sq"]])
+an2 <- an2[c("Df", "Sum Sq", "Percent", "Mean Sq", "F value", "Pr(>F)")]
+an2
+
+## road avoidance and ordination
+library(vegan)
+DD <- as.matrix(t(Dall[,-(1:2)]))
+NN <- t(t(DD) * Dall$Ahab)
+NN <- t(NN / rowSums(NN))
+Cex <- pop$DeltaObs
+names(Cex) <- rownames(pop)
+br <- c(-Inf, -2, -1, -0.1, 0.1, 1, 2, Inf)
+Col0 <- colorRampPalette(c("red", "darkgrey", "blue"))(7)
+Col <- Col0[cut(Cex, br)]
+names(Col) <- names(Cex)
+o <- cca(NN)
+
+pdf("~/GoogleWork/bam/PIF-AB/draft1/Fig4-ordination.pdf", width=9, height=9)
+op <- par(las=1)
+plot(0, type="n", xlim=c(-0.8,1.2), ylim=c(-1,1), xlab="Axis 1", ylab="Axis 2")
+s2 <- scores(o)$sites
+s2 <- s2 / max(abs(s2))
+for (i in 1:nrow(s2))
+    arrows(x0=0,y0=0,x1=s2[i,1],y1=s2[i,2], angle=20, length = 0.1, col="darkgrey")
+text(s2*1.05, labels=rownames(NN),cex=1,col=1)
+abline(h=0,v=0,lty=2)
+s1 <- scores(o)$species
+s1 <- s1 / max(abs(s1))
+text(s1[names(Col),]*0.8, labels=colnames(NN),cex=0.75, col=Col)
+legend("bottomright", bty="n", fill=Col0[c(1,4,7)], border=NA,
+    legend=c(expression(N[PIX] < N[PIF]),expression(N[PIX] == N[PIF]),expression(N[PIX] > N[PIF])))
+par(op)
+dev.off()
+
+
+
+# ---
+
+
+plot(Ahab, Whab, type="n", ylim=c(0,max(AWhab)), xlim=c(0,max(AWhab)))
+abline(0,1)
+text(Ahab, Whab, names(Ahab), cex=0.7)
+
+
 
 summary(round(rowSums(mat[,-(1:2)]) - mat[,1], 12))
 summary(round(mat[,2]+mat[,"epsilon"] - mat[,1], 12))
