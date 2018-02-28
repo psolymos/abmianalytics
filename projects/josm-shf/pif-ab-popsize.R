@@ -539,11 +539,12 @@ dots_box_plot <- function(mat, lines=FALSE, ...) {
             segments(x0=i+rnd-1, x1=i+rnd, y0=mat[,i-1], y1=mat[,i], col="lightgrey")
     for (i in 1:ncol(mat))
         points(i+rnd, mat[,i], pch=19, col="#00000080")
-    boxplot(mat, range=0, add=TRUE, col="#ff000020", names=NA)
+    #boxplot(mat, range=0, add=TRUE, col="#ff000020", names=NA)
+    boxplot(mat, range=0, add=TRUE, col="#00000020", names=NA)
     invisible(NULL)
 }
 
-pdf("~/GoogleWork/bam/PIF-AB/draft1/Fig2-popsize.pdf", width=8, height=8)
+pdf("~/GoogleWork/bam/PIF-AB/draft1/Fig2-popsize-old.pdf", width=8, height=8)
 op <- par(mfrow=c(2,2), las=1, mar=c(4,4,1,2))
 dots_box_plot(pop[,c("Npif", "Npix")], lines=TRUE,
     ylab="Population Size (M singing inds.)", names=c("PIF", "PIX"))
@@ -560,12 +561,42 @@ abline(0,1)
 par(op)
 dev.off()
 
+
+pdf("~/GoogleWork/bam/PIF-AB/draft1/Fig2-popsize.pdf", width=7, height=7)
+op <- par(mfrow=c(1,1), las=1, mar=c(4,4,1,2))
+plot(pop[,c("Npif", "Npix")], xlab=expression(N[PIF]), ylab=expression(N[PIX]),
+    type="n",
+    pch=19, col="#00000080", xlim=c(0, max(pop[,c("Npif", "Npix")])),
+    ylim=c(0, max(pop[,c("Npif", "Npix")])))
+abline(0,1, lty=2)
+Min <- 3
+Siz <- 18
+di <- sqrt(pop[,"Npif"]^2+pop[,"Npix"]^2) > Min
+pp <- pop[pop[,"Npif"] < Min & pop[,"Npix"] < Min, c("Npif", "Npix")]
+di2 <- sqrt(pp[,"Npif"]^2+pp[,"Npix"]^2) > 1
+pp <- pp*Siz/Min
+pp[,1] <- pp[,1] + (30-Siz)
+lines(c(0,30-Siz), c(0, 0), col="grey")
+lines(c(0,30-Siz), c(Min, Siz), col="grey")
+rect(0, 0, Min, Min)
+rect(30-Siz, 0, 30-Siz+Min*Siz/Min, Min*Siz/Min, col="white")
+lines(c(30-Siz, 30), c(0, Siz), col=1, lty=2)
+points(pp, pch=19, col="#00000080")
+points(pop[,c("Npif", "Npix")], pch=19, col="#00000080")
+text(pop[,"Npif"]+1.2, pop[,"Npix"]+0, labels=ifelse(di, rownames(pop), ""), cex=0.4)
+text(pp[,"Npif"]+1.2, pp[,"Npix"]+0, labels=ifelse(di2, rownames(pp), ""), cex=0.4)
+segments(x0=c(30-Siz+c(0, 1, 2, 3)*Siz/3), y0=rep(Siz, 4), y1=rep(Siz, 4)+0.5)
+text(c(30-Siz+c(0, 1, 2, 3)*Siz/3), rep(Siz, 4)+1, 0:3)
+par(op)
+dev.off()
+
+
 pdf("~/GoogleWork/bam/PIF-AB/draft1/Fig3-components.pdf", width=8, height=6)
 op <- par(las=1)
 mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH")]
 colnames(mat) <- c("OBS", "EXP", "R", "T", "A", "H")
 par(las=1)
-dots_box_plot(mat, ylab=expression(Delta))
+dots_box_plot(mat, ylab="Log Ratio")
 abline(h=0, col=1, lwd=1,lty=2)
 par(op)
 dev.off()
