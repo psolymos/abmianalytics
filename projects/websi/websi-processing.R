@@ -54,19 +54,19 @@ coordinates(XY) <- ~ POINT_X + POINT_Y
 proj4string(XY) <-
     CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 
-SP <- read.csv("w:/reports/2017/data/species-info.csv")
+SP <- read.csv("e:/peter/sppweb2017/tables/AllTaxaCombined-TaxonomicInfo.csv")
 SP <- droplevels(SP[SP$map.pred,])
 SP$infoOK <- TRUE
 #SP$infoOKboot <- TRUE
 for (i in 1:nrow(SP)) {
-fn1 <- file.path("w:/reports/2017/results", as.character(SP[i,"taxon"]), "sector",
-    paste0(as.character(SP[i,"SpeciesID"]), ".RData"))
-#fn2 <- file.path("w:/reports/2017/results", as.character(SP[i,"taxon"]), "sector",
-#    paste0(as.character(SP[i,"SpeciesID"]), ".RData"))
-if (!file.exists(fn1))
-    SP$infoOK[i] <- FALSE
-#if (!file.exists(fn2))
-#    SP$infoOKboot[i] <- FALSE
+    fn1 <- file.path("w:/reports/2017/results", as.character(SP[i,"taxon"]), "sector",
+        paste0(as.character(SP[i,"SpeciesID"]), ".RData"))
+    #fn2 <- file.path("w:/reports/2017/results", as.character(SP[i,"taxon"]), "sector",
+    #    paste0(as.character(SP[i,"SpeciesID"]), ".RData"))
+    if (!file.exists(fn1))
+        SP$infoOK[i] <- FALSE
+    #if (!file.exists(fn2))
+    #    SP$infoOKboot[i] <- FALSE
 }
 #table(SP$infoOK, SP$infoOKboot)
 table(SP$infoOK, SP$taxon)
@@ -74,6 +74,20 @@ table(SP$infoOK, SP$taxon)
 SP <- SP[SP$infoOK,]
 SP$infoOK <- NULL
 rownames(SP) <- SP$SpeciesID
+
+SP$model_region <- ""
+SP$model_region[SP$veghf.north] <- "North"
+SP$model_region[SP$soilhf.south] <- "South"
+SP$model_region[SP$veghf.north & SP$soilhf.south] <- "North and South"
+SP$model_region <- as.factor(SP$model_region)
+table(SP$taxon, SP$model_region, useNA="a")
+SP <- SP[order(SP$taxon, SP$SpeciesID),]
+
+SP$model_north <- SP$veghf.north
+SP$model_south <- SP$soilhf.south
+SP <- SP[,c("SpeciesID", "taxon",
+    "Species", "CommonName", "ScientificName", "TSNID",
+    "model_north", "model_south", "model_region")]
 
 ## species coefs
 
@@ -85,19 +99,61 @@ compare_sets(cs$Species, SP$Species[SP$soilhf.south])
 lv <- read.csv("e:/peter/sppweb2017/tables/AllTaxaCombined-LinearNorth.csv")
 ls <- read.csv("e:/peter/sppweb2017/tables/AllTaxaCombined-LinearSouth.csv")
 
-cv <- cv[match(SP$Species[SP$veghf.north], cv$Species),]
-cs <- cs[match(SP$Species[SP$soilhf.south], cs$Species),]
-cst <- cst[match(SP$Species[SP$soilhf.south], cst$Species),]
-lv <- lv[match(SP$Species[SP$veghf.north], lv$Species),]
-ls <- ls[match(SP$Species[SP$soilhf.south], ls$Species),]
-rownames(lv) <- rownames(cv) <- rownames(SP)[SP$veghf.north]
-rownames(ls) <- rownames(cs) <- rownames(cst) <- rownames(SP)[SP$soilhf.south]
+cv <- cv[match(SP$Species[SP$model_north], cv$Species),]
+cs <- cs[match(SP$Species[SP$model_south], cs$Species),]
+cst <- cst[match(SP$Species[SP$model_south], cst$Species),]
+lv <- lv[match(SP$Species[SP$model_north], lv$Species),]
+ls <- ls[match(SP$Species[SP$model_south], ls$Species),]
+rownames(lv) <- rownames(cv) <- rownames(SP)[SP$model_north]
+rownames(ls) <- rownames(cs) <- rownames(cst) <- rownames(SP)[SP$model_south]
 
 cv <- as.matrix(cv[,-(1:3)])
 cs <- as.matrix(cs[,-(1:3)])
 cst <- as.matrix(cst[,-(1:3)])
 lv <- as.matrix(lv[,-(1:3)])
 ls <- as.matrix(ls[,-(1:3)])
+
+## insert updated mammal results
+
+MP <- "e:/peter/sppweb2017/tables/mammal_latest"
+msp <- rownames(SP)[SP$taxon=="mammals"]
+
+m_s <- read.csv(file.path(MP, "soilhf.csv"))
+m_ls <- read.csv(file.path(MP, "slin.csv"))
+m_pa <- read.csv(file.path(MP, "pA.csv"))
+compare_sets(msp, rownames(m_s))
+compare_sets(msp, rownames(m_ls))
+compare_sets(msp, rownames(m_pa))
+
+m_km <- read.csv(file.path(MP, "kmdays.csv"))
+m_km <- m_km[rownames(m_km) != "DomesticDog",]
+m_v <- read.csv(file.path(MP, "veghf.csv"))
+m_v <- m_v[rownames(m_v) != "DomesticDog",]
+m_ln <- read.csv(file.path(MP, "nlin.csv"))
+m_ln <- m_ln[rownames(m_ln) != "DomesticDog",]
+compare_sets(msp, rownames(m_km))
+compare_sets(msp, rownames(m_v))
+compare_sets(msp, rownames(m_ln))
+
+## kmdays
+kmd <- structure(c(m_km$kmd*5 + m_km$kmd2*5^2), names=rownames(m_km))
+m_s <- plogis(qlogis(as.matrix(m_s)) + kmd[rownames(m_s)])
+m_v <- plogis(qlogis(as.matrix(m_v)) + kmd[rownames(m_v)])
+m_ls <- plogis(qlogis(as.matrix(m_ls)) + kmd[rownames(m_ls)])
+m_ln <- plogis(qlogis(as.matrix(m_ln)) + kmd[rownames(m_ln)])
+## treed south
+m_st <- plogis(qlogis(as.matrix(m_s)) + m_pa[rownames(m_s),])
+
+c(sum(rownames(cv) %in% msp), nrow(m_v))
+c(sum(rownames(cs) %in% msp), nrow(m_s))
+
+cv[rownames(m_v),] <- m_v[,colnames(cv)]
+cs[rownames(m_s),] <- m_s[,colnames(cs)]
+cst[rownames(m_st),] <- m_st[,colnames(cst)]
+lv[rownames(m_ln),] <- m_ln[,colnames(lv)]
+ls[rownames(m_ls),] <- m_ls[,colnames(ls)]
+
+## restructure
 
 f <- function(x) {
     cn <- colnames(x)
@@ -121,12 +177,13 @@ ts <- f(cs)[[1]][ii,]
 ts[ts == 0] <- 10^-6
 pa2 <- rowMeans(log(tst) - log(ts))
 pa[ii] <- pa2
+pa[rownames(m_pa)] <- m_pa[,1] # not really necessary...
 PA <- matrix(pa, ncol=1)
 colnames(PA) <- "pAspen"
 rownames(PA) <- names(pa)
 
 ## joint model results for birds to be used with climate
-
+if (FALSE) {
 library(mefa4)
 ROOT <- "e:/peter/AB_data_v2016/out/birds"
 level <- 0.9
@@ -207,6 +264,9 @@ save(res_coef, file="w:/reports/2017/data/birds-coef-temp.RData")
 #compare_sets(nm, colnames(CF$marginal$veg$coef))
 #setdiff(nm, colnames(CF$marginal$veg$coef))
 #setdiff(colnames(CF$marginal$veg$coef), nm)
+}
+
+load("w:/reports/2017/data/birds-coef-temp.RData")
 
 CFall <- list(
     veg=f(cbind(cv, lv)),
@@ -264,11 +324,14 @@ VER <- data.frame(
     yr_last= c(2013,     2015,    2016,    2015,     2016,      2016),
     method=c("snow_tracking","point_count","soil_core","centre_plot","centre_plot","centre_plot"),
     hf=     c("2014v2", "2012",   "2014v2", "2014v2", "2014v2", "2014v2"),
-    veg=    c("v6",     "v5",     "v6",     "v6",     "v6",     "v6"))
+    veg=    c("v6",     "v5",     "v6",     "v6",     "v6",     "v6"),
+    model=c("binomial_logit", "poisson_log", "binomial_logit", "binomial_logit", "binomial_logit", "binomial_logit"))
 
 ## save common data
 save(KA_2012, KA_2014, KT, XY, SP, CF, CFbirds, VER,
     file="w:/reports/2017/data/kgrid_areas_by_sector.RData")
+write.csv(SP, row.names=FALSE, file="w:/reports/2017/data/species-info.csv")
+
 
 ## no need to normalize files
 #"Curr.Boot" "Ref.Boot" -- > CB/RB
