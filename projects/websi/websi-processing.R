@@ -54,6 +54,39 @@ coordinates(XY) <- ~ POINT_X + POINT_Y
 proj4string(XY) <-
     CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 
+## QS lookups
+e <- new.env()
+load("e:/peter/AB_data_v2017/data/analysis/kgrid_table_qs.Rdata", envir=e)
+kqs <- e$kgrid
+
+kxy <- spTransform(XY, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))
+
+qxy <- kqs[,c("POINT_X", "POINT_Y")]
+coordinates(qxy) <- ~ POINT_X + POINT_Y
+proj4string(qxy) <-
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+qxy <- spTransform(qxy, CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))
+
+## extract
+library(cure4insect)
+rt <- .read_raster_template()
+kid <- 1:nrow(kgrid)
+rkid <- .make_raster(kid, kgrid, rt)
+stopifnot(identicalCRS(rkid, qxy))
+eqs <- extract(rkid, qxy)
+kqs$Row_Col <- factor(levels(kgrid$Row_Col)[eqs], levels(kgrid$Row_Col))
+## process the NAs
+kc <- coordinates(kxy)
+qc <- coordinates(qxy)
+for (i in which(is.na(eqs))) {
+    d <- sqrt((qc[i,1]-kc[,1])^2 + (qc[i,2]-kc[,2])^2)
+    kqs$Row_Col[i] <- rownames(kc)[which.min(d)]
+}
+summary(kqs$Row_Col)
+QT2KT <- kqs$Row_Col
+names(QT2KT) <- rownames(kqs)
+
+
 SP <- read.csv("e:/peter/sppweb2017/tables/AllTaxaCombined-TaxonomicInfo.csv")
 SP <- droplevels(SP[SP$map.pred,])
 SP$infoOK <- TRUE
@@ -88,6 +121,20 @@ SP$model_south <- SP$soilhf.south
 SP <- SP[,c("SpeciesID", "taxon",
     "Species", "CommonName", "ScientificName", "TSNID",
     "model_north", "model_south", "model_region")]
+
+uplo <- read.csv("e:/peter/AB_data_v2017/data/analysis/Species-c4i-2018-03-14_BA.csv")
+uplo <- uplo[match(SP$SpeciesID, uplo$SpeciesID),]
+table(uplo$habitat_assoc, uplo$status,useNA="a")
+uplo[is.na(uplo$habitat_assoc) & is.na(uplo$status),]
+uplo$keep <- !(is.na(uplo$habitat_assoc) & is.na(uplo$status))
+uplo$native <- uplo$status=="Native"
+levels(uplo$habitat_assoc) <- c("Lowland", "Upland", "NotAssessed")
+uplo$habitat_assoc[is.na(uplo$habitat_assoc)] <- "NotAssessed"
+table(uplo$habitat_assoc, uplo$native,useNA="a")
+
+SP$habitat_assoc <- uplo$habitat_assoc
+SP$native <- uplo$native
+SP <- SP[uplo$keep,]
 
 ## species coefs
 
@@ -318,7 +365,7 @@ CFbirds <- list(
     joint=list(veg=cf_veg_j, soil=cf_soil_j, paspen=cf_pa_j))
 
 VER <- data.frame(
-    taxon=  c("mammals", "birds", "mites", "mosses", "lichens", "vplants"),
+    #taxon=  c("Mammals", "Birds", "Soil mites", "Bryophytes", "Lichens", "Vasculer plants"),
     version=2017,
     yr_first=c(2001,     1997,    2007,    2003,     2003,      2003),
     yr_last= c(2013,     2015,    2016,    2015,     2016,      2016),
@@ -326,9 +373,10 @@ VER <- data.frame(
     hf=     c("2014v2", "2012",   "2014v2", "2014v2", "2014v2", "2014v2"),
     veg=    c("v6",     "v5",     "v6",     "v6",     "v6",     "v6"),
     model=c("binomial_logit", "poisson_log", "binomial_logit", "binomial_logit", "binomial_logit", "binomial_logit"))
+rownames(VER) <- c("mammals", "birds", "mites", "mosses", "lichens", "vplants")
 
 ## save common data
-save(KA_2012, KA_2014, KT, XY, SP, CF, CFbirds, VER,
+save(KA_2012, KA_2014, KT, XY, SP, CF, CFbirds, VER, QT2KT,
     file="w:/reports/2017/data/kgrid_areas_by_sector.RData")
 write.csv(SP, row.names=FALSE, file="w:/reports/2017/data/species-info.csv")
 
@@ -503,8 +551,11 @@ load_common_data()
 SP <- cure4insect:::.c4if$SP
 PA <- cure4insect:::.c4if$CF$coef$paspen
 SPP <- rownames(SP)[SP$taxon != "birds"]
-SPPv <- rownames(SP)[SP$veghf.north & SP$taxon != "birds"]
-SPPs <- rownames(SP)[SP$soilhf.south & SP$taxon != "birds"]
+SPPv <- rownames(SP)[SP$model_north & SP$taxon != "birds"]
+SPPs <- rownames(SP)[SP$model_south & SP$taxon != "birds"]
+SPP <- rownames(SP)[SP$taxon == "mammals"]
+SPPv <- rownames(SP)[SP$model_north & SP$taxon == "mammals"]
+SPPs <- rownames(SP)[SP$model_south & SP$taxon == "mammals"]
 rpa <- raster("w:/reports/2017/data/pAspen.tif")
 
 a <- "w:/Files from Ermias/Climate and Space prediction/"
