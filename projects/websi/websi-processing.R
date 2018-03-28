@@ -49,6 +49,10 @@ KA_2014 <- KA_2014[rownames(kgrid),]
 stopifnot(all(rownames(kgrid) == rownames(KA_2014)))
 
 KT <- kgrid[,c("Row", "Col", "Row10_Col10")]
+KT$reg_nr <- kgrid$NRNAME
+KT$reg_nsr <- kgrid$NSRNAME
+KT$reg_luf <- kgrid$LUF_NAME
+
 XY <- kgrid[,c("POINT_X", "POINT_Y")]
 coordinates(XY) <- ~ POINT_X + POINT_Y
 proj4string(XY) <-
