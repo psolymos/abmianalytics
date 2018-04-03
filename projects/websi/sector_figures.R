@@ -1,3 +1,62 @@
+## producing sector effects figures
+library(cure4insect)
+library(intrval)
+
+region <- "South" # "North" or "South"
+
+opar <- set_options(path = "w:/reports")
+load_common_data()
+
+TAB <- get_id_table()
+XY <- get_id_locations()
+if (region == "North") {
+    i <- TAB$reg_nr %ni% c("Grassland", "Rocky Mountain", "Parkland") &
+        TAB$reg_nsr != "Dry Mixedwood"
+    i[TAB$reg_nsr == "Dry Mixedwood" & coordinates(XY)[,2] > 56.7] <- TRUE
+    ID <- rownames(TAB)[i]
+} else {
+    ID <- rownames(TAB)[TAB$reg_nr %in% c("Grassland", "Parkland") |
+        (TAB$reg_nsr == "Dry Mixedwood" & coordinates(XY)[,2] <= 56.7)]
+}
+
+SPP <- get_all_species(mregion=tolower(region))
+subset_common_data(id=ID, species=SPP) # all species
+#plot(make_subset_map())
+get_subset_info()
+
+base <- "v:/contents/2017/species"
+resol <- 2
+
+for (i in seq_len(length(SPP))) {
+    cat(i, SPP[i], "\n");flush.console()
+    y <- load_species_data(SPP[i])
+    x <- calculate_results(y)
+    z <- flatten(x)
+    display <- ifelse(is.na(z$CommonName),
+        paste0(z$ScientificName), paste0(z$CommonName))
+    display <- paste(display, "-", region)
+
+        png(file.path(base, x$taxon, paste0("sector-", tolower(region)),
+            "regional", paste0(SPP[i], ".png")),
+            width=1000, height=1000, res=72*resol)
+        plot_sector(x, type="regional", main=display, ylim=c(-100, 100))
+        dev.off()
+
+        png(file.path(base, x$taxon, paste0("sector-", tolower(region)),
+            "underhf", paste0(SPP[i], ".png")),
+            width=1000, height=1000, res=72*resol)
+        plot_sector(x, type="underhf", main=display, ylim=c(-100, 100))
+        dev.off()
+
+        png(file.path(base, x$taxon, paste0("sector-", tolower(region)),
+            "unit", paste0(SPP[i], ".png")),
+            width=1000, height=1000, res=72*resol)
+        plot_sector(x, type="unit", main=display)
+        dev.off()
+
+}
+
+
 ## old style
 plot_sector_1 <- function(Curr, Ref, Area, main="") {
     sectors <- c("Agriculture","Forestry","Energy","RuralUrban","Transportation")
