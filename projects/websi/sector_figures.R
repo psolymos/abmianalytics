@@ -2,7 +2,7 @@
 library(cure4insect)
 library(intrval)
 
-region <- "South" # "North" or "South"
+region <- "North" # "North" or "South"
 
 opar <- set_options(path = "w:/reports")
 load_common_data()
@@ -12,11 +12,12 @@ XY <- get_id_locations()
 if (region == "North") {
     i <- TAB$reg_nr %ni% c("Grassland", "Rocky Mountain", "Parkland") &
         TAB$reg_nsr != "Dry Mixedwood"
-    i[TAB$reg_nsr == "Dry Mixedwood" & coordinates(XY)[,2] > 56.7] <- TRUE
+#    i[TAB$reg_nsr == "Dry Mixedwood" & coordinates(XY)[,2] > 56.7] <- TRUE
     ID <- rownames(TAB)[i]
 } else {
     ID <- rownames(TAB)[TAB$reg_nr %in% c("Grassland", "Parkland") |
-        (TAB$reg_nsr == "Dry Mixedwood" & coordinates(XY)[,2] <= 56.7)]
+        TAB$reg_nsr == "Dry Mixedwood"]
+        #(TAB$reg_nsr == "Dry Mixedwood" & coordinates(XY)[,2] <= 56.7)]
 }
 
 SPP <- get_all_species(mregion=tolower(region))
@@ -28,7 +29,7 @@ base <- "v:/contents/2017/species"
 resol <- 2
 
 for (i in seq_len(length(SPP))) {
-    cat(i, SPP[i], "\n");flush.console()
+    cat(i, "/", length(SPP), SPP[i], "\n");flush.console()
     y <- load_species_data(SPP[i])
     x <- calculate_results(y)
     z <- flatten(x)
