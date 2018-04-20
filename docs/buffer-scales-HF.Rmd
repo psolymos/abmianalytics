@@ -1,0 +1,29 @@
+---
+title: "Buffers for veg/soil/HF summaries"
+author: P. Solymos
+date: 2018-04-20
+output: word_document
+---
+
+## For modeling
+
+| Scale/shape   | HF inventory  | Location |
+| ------------------------------ |--------------------------| ----------------|
+| 3 km x 7 km rectangles      | Verified in each yr (1999--)    | All ABMI systematic (on grid) sites    |
+| 1 ha square      | Verified in yr of sampling   | Sampled ABMI on and off grid sites    |
+| 150 m radius circle      |    ditto | Bird points, Camera/ARU locations: on and off grid + BU/BAM/BBS points    |
+| 564 m radius circle      |    ditto | Sampled site centres, Bird points, Camera/ARU locations: on and off grid + BU/BAM/BBS points    |
+| Point intersection      |    ditto | Camera/ARU locations: on and off grid    |
+| 1 km long 250 m half-width (inter level) snow transect segments (ends rounded)  |    ditto | Snow transect segments: on and off grid    |
+| 9--10 km long 250 m half-width (full) snow transects (ends rounded) |    ditto | Snow transects: on and off grid    |
+| Wetland zones (0--20--100-250 m nested buffers)  |    ditto | Around wetlands: on and off grid    |
+| Wetland catchments  |    ditto | Around wetlands: on and off grid    |
+
+
+## For prediction
+
+| Scale/shape   | HF inventory  | Location |
+| ------------------------------ |--------------------------| ----------------|
+| 1 km x 1 km cells      | w2w HF in a given year    | All cells in AB    |
+| QS polys      | w2w HF in a given year    | All QSs in AB    |
+
