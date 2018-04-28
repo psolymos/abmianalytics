@@ -1,5 +1,6 @@
 ## values: 2014_fine, 2014_coarse, 2012, 2010_coarse
-HF_VERSION <- "2014v2_coarse"
+#HF_VERSION <- "2014v2_coarse"
+HF_VERSION <- "2010_coarse"
 PIXEL <- "km" # km or qs
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
@@ -65,6 +66,21 @@ for (s in 1:(length(Start)-1)) {
             sparse=TRUE,
             HF_fine=grepl("_fine", HF_VERSION),
             wide=FALSE)
+        a0 <- levels(droplevels(dd$VEGAGEclass))[endsWith(levels(droplevels(dd$VEGAGEclass)), "0")]
+        if (length(a0) > 0) {
+            dd0x <- dd[dd$VEGAGEclass %in% a0,,drop=FALSE]
+            dd <- dd[!(dd$VEGAGEclass %in% a0),,drop=FALSE]
+            dd00 <- dd0x[rep(1:nrow(dd0x), each=5),]
+            rf0 <- paste0(as.character(dd00$VEGclass)[rep(1:nrow(dd0x), each=5)], 5:9)
+            cr0 <- paste0(as.character(dd00$VEGHFclass)[rep(1:nrow(dd0x), each=5)], 5:9)
+            cr0[!(dd00$VEGHFclass %in% a0)] <- as.character(
+                dd00$VEGHFclass[!(dd00$VEGHFclass %in% a0)])
+            dd00$VEGAGEclass <- rf0
+            dd00$VEGHFAGEclass <- cr0
+            dd00$Shape_Area <- rep(dd0x$Shape_Area/5, each=5)
+            dd <- rbind(dd, dd00)
+        }
+
         if (i == Start[s]) {
             dd0 <- dd[,cc]
         } else {
@@ -88,7 +104,8 @@ load(file.path(ROOT, VER, "data", "analysis", paste0("kgrid_table_", PIXEL, ".Rd
 lu <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-V6.csv")
 su <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
 
-lu$use_tr <- as.character(lu$ETA_UseInAnalysis_Sector)
+#lu$use_tr <- as.character(lu$ETA_UseInAnalysis_Sector)
+lu$use_tr <- as.character(lu$StepBack)
 allVegTr <- unique(c(lu$use_tr[!lu$IS_HF],
     paste0(rep(lu$use_tr[!lu$IS_HF], sum(lu$IS_HF)), "->",
     rep(lu$use_tr[lu$IS_HF], each=sum(!lu$IS_HF)))))
