@@ -3,10 +3,10 @@ library(mefa4)
 
 ROOT <- "e:/peter/AB_data_v2016"
 ROOTtr <- "e:/peter/AB_data_v2017/data/analysis/transitions_km2010/"
-OUTDIR <- "e:/peter/AB_data_v2016/out/birds/web"
+OUTDIR <- "e:/peter/AB_data_v2016/out/birds/pred1-hf2010"
 
 do1 <- TRUE # do only 1st run (100%)
-doB <- TRUE # do bootstrap (10%)
+doB <- FALSE # do bootstrap (10%)
 ## seismic lines can be treated as early seral when no surrounding effects considered
 ## or apply the backfilled value when surrounding hf is considered
 SEISMIC_AS_EARLY_SERAL <- TRUE
@@ -103,16 +103,6 @@ kgrid$WetWaterKM <- rowSums(dd1km_pred$veg_current[,tv[colnames(dd1km_pred$veg_c
 kgrid$WetKM0 <- rowSums(dd1km_pred$veg_reference[,tv[colnames(dd1km_pred$veg_reference), "WET"]==1]) / rowSums(dd1km_pred$veg_reference)
 kgrid$WetWaterKM0 <- rowSums(dd1km_pred$veg_reference[,tv[colnames(dd1km_pred$veg_reference), "WETWATER"]==1]) / rowSums(dd1km_pred$veg_reference)
 
-## 10x10km units
-kgrid0 <- NULL
-regs <- levels(kgrid$LUFxNSR)
-if (do10) {
-    kgrid0 <- kgrid
-    kgrid <- as.matrix(kgrid[,sapply(kgrid, is.numeric)])
-    #kgrid <- data.frame(groupMeans(kgrid, 1, kgrid0$id10))
-    kgrid <- data.frame(groupMeans(kgrid, 1, kgrid0$Row10_Col10))
-}
-
 rm(dd1km_pred)
 
 ## design matrices
@@ -183,9 +173,9 @@ Xns <- model.matrix(getTerms(modss, "formula"), xns)
 colnames(Xns) <- fixNames(colnames(Xns))
 
 ## example for structure (trSoil, trVeg)
-load(file.path(ROOT, "out", "transitions", "LowerPeace_LowerBorealHighlands.Rdata"))
-#load(file.path(ROOTtr, "LowerPeace_LowerBorealHighlands.Rdata"))
-
+#load(file.path(ROOT, "out", "transitions", "LowerPeace_LowerBorealHighlands.Rdata"))
+load(file.path(ROOTtr, "LowerPeace_LowerBorealHighlands.Rdata"))
+colnames(trVeg) <- gsub("Wetland-", "", colnames(trVeg))
 
 tv$Sector2 <- factor(ifelse(is.na(tv$Sector), "NATIVE", as.character(tv$Sector)),
     c("NATIVE", "Agriculture", "Energy", "Forestry", "Misc", "RuralUrban", "Transportation"))
@@ -307,6 +297,7 @@ setdiff(rownames(XShab), ch2soil$cr)
 setdiff(ch2soil$cr, rownames(XShab))
 setdiff(cnsHab, colnames(XShab))
 
+regs <- levels(kgrid$LUFxNSR)
 
 SPP0 <- union(fln, fls)
 TAX <- read.csv("~/repos/abmispecies/_data/birds.csv")
@@ -345,19 +336,12 @@ cat(spp, regi, which(regs==regi), "/", length(regs), "\n")
 flush.console()
 gc()
 
-load(file.path(ROOT, "out", "transitions", paste0(regi,".Rdata")))
-
-if (do10) {
-    #trVeg <- groupMeans(trVeg, 1, kgrid0[rownames(trVeg), "id10"])
-    #trSoil <- groupMeans(trSoil, 1, kgrid0[rownames(trSoil), "id10"])
-    trVeg <- groupMeans(trVeg, 1, kgrid0[rownames(trVeg), "Row10_Col10"])
-    trSoil <- groupMeans(trSoil, 1, kgrid0[rownames(trSoil), "Row10_Col10"])
-}
+#load(file.path(ROOT, "out", "transitions", paste0(regi,".Rdata")))
+load(file.path(ROOTtr, paste0(regi,".Rdata")))
+colnames(trVeg) <- gsub("Wetland-", "", colnames(trVeg))
 
 ii <- rownames(kgrid) %in% rownames(trVeg)
-
-iib <- if (do10)
-    ii else ii & kgrid$Rnd10 <= PROP
+iib <- ii & kgrid$Rnd10 <= PROP
 
 Xclim <- model.matrix(fclim, kgrid[ii,,drop=FALSE])
 colnames(Xclim) <- fixNames(colnames(Xclim))
@@ -530,7 +514,7 @@ if (do1) {
 }
 
 ## BMAX runs
-if (doB || do10) {
+if (doB) {
     for (j in 1:BMAX) {
         if (NSest["north"]) {
             ## North
