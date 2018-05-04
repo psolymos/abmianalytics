@@ -1,6 +1,7 @@
 ## producing sector effects figures
 library(cure4insect)
 library(intrval)
+library(rgdal)
 
 region <- "North" # "North" or "South"
 
@@ -9,6 +10,8 @@ load_common_data()
 
 TAB <- get_id_table()
 XY <- get_id_locations()
+
+## NR/NSR based def
 if (region == "North") {
     i <- TAB$reg_nr %ni% c("Grassland", "Rocky Mountain", "Parkland") &
         TAB$reg_nsr != "Dry Mixedwood"
@@ -19,6 +22,20 @@ if (region == "North") {
         TAB$reg_nsr == "Dry Mixedwood"]
         #(TAB$reg_nsr == "Dry Mixedwood" & coordinates(XY)[,2] <= 56.7)]
 }
+
+## Green/White zone based def
+ply <- readOGR("e:/peter/AB_data_v2017/data/raw/xy/green-white-shapefile_2018-05-03",
+    "BF_GREEN_WHITE_POLYGON")
+White <- ply[ply@data$GWA_NAME == "White Area",]
+IDwhite <- unique(overlay_polygon(White))
+IDwhite <- IDwhite[!is.na(IDwhite)]
+
+if (region == "North") {
+    ID <- rownames(TAB)[rownames(TAB) %ni% IDwhite & TAB$reg_nr != "Rocky Mountain"]
+} else {
+    ID <- rownames(TAB)[rownames(TAB) %in% IDwhite & TAB$reg_nr != "Rocky Mountain"]
+}
+
 
 SPP <- get_all_species(mregion=tolower(region))
 subset_common_data(id=ID, species=SPP) # all species
@@ -36,23 +53,24 @@ for (i in seq_len(length(SPP))) {
     display <- ifelse(is.na(z$CommonName),
         paste0(z$ScientificName), paste0(z$CommonName))
     display <- paste(display, "-", region)
+    ss <- switch(region, "North"=1:5, "South"=c(1,3,4,5))
 
         png(file.path(base, x$taxon, paste0("sector-", tolower(region)),
             "regional", paste0(SPP[i], ".png")),
             width=1000, height=1000, res=72*resol)
-        plot_sector(x, type="regional", main=display, ylim=c(-100, 100))
+        plot_sector(x, type="regional", main=display, ylim=c(-100, 100), subset=ss)
         dev.off()
 
         png(file.path(base, x$taxon, paste0("sector-", tolower(region)),
             "underhf", paste0(SPP[i], ".png")),
             width=1000, height=1000, res=72*resol)
-        plot_sector(x, type="underhf", main=display, ylim=c(-100, 100))
+        plot_sector(x, type="underhf", main=display, ylim=c(-100, 100), subset=ss)
         dev.off()
 
         png(file.path(base, x$taxon, paste0("sector-", tolower(region)),
             "unit", paste0(SPP[i], ".png")),
             width=1000, height=1000, res=72*resol)
-        plot_sector(x, type="unit", main=display)
+        plot_sector(x, type="unit", main=display, subset=ss)
         dev.off()
 
 }
