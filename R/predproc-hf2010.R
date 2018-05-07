@@ -630,10 +630,11 @@ if (doB) {
 
 EST <- TAX[,c("veghf.north", "soilhf.south", "sppid")]
 rownames(EST) <- TAX$AOU
-drop_0sum_rows <- TRUE
+drop_0sum_rows <- FALSE
 
 #spp <- "ALFL"
 for (spp in SPP) {
+    if (doB) {
     What <- "doB"
     fl <- list.files(file.path(OUTDIR, What, spp))
     #regs2 <- gsub("\\.Rdata", "", fl)
@@ -697,7 +698,9 @@ for (spp in SPP) {
     save(Ref.Boot, Curr.Boot,
         file=file.path("w:/reports/2017/results/birds", "boot",
         paste0(as.character(EST[spp, "sppid"]), ".RData")))
+    }
 
+    if (do1) {
     What <- "do1"
     fl <- list.files(file.path(OUTDIR, What, spp))
     #regs2 <- gsub("\\.Rdata", "", fl)
@@ -748,78 +751,21 @@ for (spp in SPP) {
         SA.Ref <- OUTrf
     }
     save(SA.Curr, SA.Ref,
-        file=file.path("w:/reports/2017/results/birds", "sector",
+        file=file.path(OUTDIR, "sector",
         paste0(as.character(EST[spp, "sppid"]), ".RData")))
-}
-
-
-
-f_id10 <- function(n10)
-
-f_id <- function(ID, size=100, fixed=TRUE) {
-    nn <- table(kgrid$Row10_Col10)[ID]
-    sizes <- pmin(size, nn)
-    id <- list()
-    for (i in 1:length(ID)) {
-        if (fixed) {
-            id[[i]] <- which(kgrid$Row10_Col10 == ID[i] & kgrid$Rnd10 <= sizes[i])
-        } else {
-            id[[i]] <- sample(which(kgrid$Row10_Col10 == ID[i]), sizes[i])
-        }
     }
-    id
-}
-f_si <- function(ID, size=100, fixed=TRUE) {
-    id <- unlist(f_id(ID, size, fixed))
-    cr <- colSums(OUTcr[id,,drop=FALSE])
-    rf <- colSums(OUTrf[id,,drop=FALSE])
-    si <- 100*pmin(cr, rf) / pmax(cr, rf)
-    f <- function(x) {
-        c(first=x[1], mean=mean(x, na.rm=TRUE),
-            quantile(x, c(0.5, 0.05, 0.95), na.rm=TRUE))
-    }
-    rbind(cr=f(cr), rf=f(rf), si=f(si))
-}
-f_run <- function(ID, B=10, n10=1, size=100, fixed=TRUE) {
-    lapply(1:B, function(i) f_si(ID[1:n10], size, fixed))
 }
 
 
-plotf <- function(n10, ID) {
-    plot(0, type="n", main=spp, axes=FALSE, xlab="% resampled",
-        ylab="SI", xlim=c(0.5,4.5), ylim=c(0,100),
-        sub=paste("Region size:", n10, "10x10"))
-    axis(1, 1:4, c(10, 25, 50, 100), lwd=0, lwd.ticks=1)
-    axis(2)
-    o <- 0.8*(1:10/10 - 0.55)
-    z <- f_run(ID, B=1, n10=n10, size=100, fixed=TRUE)
-    abline(h=z[[1]]["si", 1], lty=1)
-    abline(h=z[[1]]["si", 4:5], lty=2)
-    points(4, z[[1]]["si", "first"], col=4, pch=19)
-    lines(rep(4, 2), z[[1]]["si", 4:5], col=4)
-    for (j in 1:3) {
-        z <- f_run(ID, B=10, n10=n10, size=c(10,25,50)[j], fixed=FALSE)
-        z[[1]] <- f_si(ID[1:n10], size=c(10,25,50)[j], fixed=TRUE)
-        for (i in 1:10) {
-            points(o[i] + j, z[[i]]["si", "first"], col=2, pch=if (i==1) 19 else 21)
-            lines(rep(o[i] + j, 2), z[[i]]["si", 4:5], col=2)
-        }
-    }
-    invisible(NULL)
-}
-
-par(mfrow=c(3,5))
-for (i in 1:3) {
-ID <- sample(levels(kgrid$Row10_Col10), 16)
-plotf(1, ID)
-plotf(2, ID)
-plotf(4, ID)
-plotf(8, ID)
-plotf(16, ID)
-}
 
 
 library(raster)
+library(cure4insect)
+opar <- set_options(path = "w:/reports")
+load_common_data()
+subset_common_data(id=get_all_id(),
+    species=get_all_species("birds"))
+
 xy <- kgrid
 coordinates(xy) <- ~ POINT_X + POINT_Y
 proj4string(xy) <-
@@ -835,34 +781,59 @@ Rize <- function(val) {
     mat[is.na(mat0)] <- NA
     raster(x=mat, template=rt)
 }
-
-r1 <- Rize(OUTcr[,1])
-r2 <- Rize(rowMeans(OUTcr))
-r3 <- Rize(OUTcr10[match(kgrid$Row10_Col10, rownames(OUTcr10)),1])
-r4 <- Rize(rowMeans(OUTcr10[match(kgrid$Row10_Col10, rownames(OUTcr10)),]))
-
 colSeq <- rev(viridis::magma(100))
 colDiv <- colorRampPalette(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B",
     "#FFFFBF","#D9EF8B", "#A6D96A", "#66BD63", "#1A9850", "#006837"))(100)
 
-q <- quantile(r1, 0.99)
-r1[r1>q] <- q
-plot(r1, axes=FALSE, box=FALSE, col=colSeq)
+for (spp in SPP) {
+    cat(spp, "\n");flush.console()
+    NAM <- as.character(EST[spp, "sppid"])
+    y <- load_species_data(NAM)
+    r <- rasterize_results(y)
+    fn <- file.path(OUTDIR, "sector", paste0(as.character(EST[spp, "sppid"]), ".RData"))
+    load(fn)
 
-q <- quantile(r2, 0.99)
-r2[r2>q] <- q
-plot(r2, axes=FALSE, box=FALSE, col=colSeq)
+    cr <- rowSums(SA.Curr[rownames(kgrid),])
+    q <- quantile(cr, 0.99)
+    cr[cr>q] <- q
+    cr <- Rize(cr)
 
-plot(r1-r2, axes=FALSE, box=FALSE, col=colDiv)
+    rf <- rowSums(SA.Ref[rownames(kgrid),])
+    q <- quantile(rf, 0.99)
+    rf[rf>q] <- q
+    rf <- Rize(rf)
 
-q <- quantile(r3, 0.99)
-r3[r3>q] <- q
-plot(r3, axes=FALSE, box=FALSE, col=colSeq)
+    Max <- max(values(cr), values(rf), na.rm=TRUE)
+    df <- (cr-rf) / Max
+    df <- sign(df) * abs(df)^0.5
+#    df <- pmin(200, ceiling(99 * df)+100)
+#    df[df==0] <- 1
+    values(cr)[which.max(values(cr))] <- Max
+    values(rf)[which.max(values(rf))] <- Max
+    V <- max(abs(values(df)), na.rm=TRUE)
+    values(df)[which.max(values(df))] <- V
+    values(df)[which.min(values(df))] <- (-V)
 
-q <- quantile(r4, 0.99)
-r4[r4>q] <- q
-plot(r4, axes=FALSE, box=FALSE, col=colSeq)
+    Max <- max(values(r[["NR"]]), values(r[["NC"]]), na.rm=TRUE)
+    df2 <- (r[["NC"]]-r[["NR"]]) / Max
+    df2 <- sign(df2) * abs(df2)^0.5
 
-plot(r3-r4, axes=FALSE, box=FALSE, col=colDiv)
+    values(r[["NC"]])[which.max(values(r[["NC"]]))] <- Max
+    values(r[["NR"]])[which.max(values(r[["NR"]]))] <- Max
+    V <- max(abs(values(df2)), na.rm=TRUE)
+    values(df2)[which.max(values(df2))] <- V
+    values(df2)[which.min(values(df2))] <- (-V)
 
-plot(r3-r1, axes=FALSE, box=FALSE, col=colDiv)
+    png(file.path(OUTDIR, "png", paste0(NAM, ".png")),
+        height=1200, width=1200)
+    op <- par(mfrow=c(2,3), mar=c(4, 4, 4, 4) + 0.1)
+    plot(rf, axes=FALSE, box=FALSE, col=colSeq, main=paste(spp, "ref 2010"))
+    plot(cr, axes=FALSE, box=FALSE, col=colSeq, main=paste(spp, "curr 2010"))
+    plot(df, axes=FALSE, box=FALSE, col=colDiv, main="diff curr 2010")
+    plot(r[["NR"]], axes=FALSE, box=FALSE, col=colSeq, main=paste(spp, "ref 2012"))
+    plot(r[["NC"]], axes=FALSE, box=FALSE, col=colSeq, main=paste(spp, "curr 2012"))
+    plot(df2, axes=FALSE, box=FALSE, col=colDiv, main="diff curr 2012")
+    par(op)
+    dev.off()
+
+}
