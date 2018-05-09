@@ -656,12 +656,15 @@ NN <- t(NN / rowSums(NN))
 Cex <- pop$DeltaObs
 names(Cex) <- rownames(pop)
 br <- c(-Inf, -2, -1, -0.1, 0.1, 1, 2, Inf)
-Col0 <- colorRampPalette(c("red", "darkgrey", "blue"))(7)
+#c00 <- c('#d7191c','#fdae61','#ffffbf','#abdda4','#2b83ba')
+c00 <- c('#d7191c','darkgrey','#2b83ba')
+#c00 <- c("red", "darkgrey", "blue")
+Col0 <- colorRampPalette(c00)(7)
 Col <- Col0[cut(Cex, br)]
 names(Col) <- names(Cex)
 o <- cca(NN)
 
-pdf("~/GoogleWork/bam/PIF-AB/draft1/Fig4-ordination.pdf", width=9, height=9)
+pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig4-ordination.pdf", width=9, height=9)
 op <- par(las=1)
 plot(0, type="n", xlim=c(-0.8,1.2), ylim=c(-1,1), xlab="Axis 1", ylab="Axis 2")
 s2 <- scores(o)$sites
@@ -673,8 +676,12 @@ abline(h=0,v=0,lty=2)
 s1 <- scores(o)$species
 s1 <- s1 / max(abs(s1))
 text(s1[names(Col),]*0.8, labels=colnames(NN),cex=0.75, col=Col)
-legend("bottomright", bty="n", fill=Col0[c(1,4,7)], border=NA,
-    legend=c(expression(N[PIX] < N[PIF]),expression(N[PIX] == N[PIF]),expression(N[PIX] > N[PIF])))
+#legend("bottomright", bty="n", fill=Col0[c(1,4,7)], border=NA,
+#    legend=c(expression(N[PIX] < N[PIF]),expression(N[PIX] == N[PIF]),expression(N[PIX] > N[PIF])))
+for (ii in 1:200)
+    lines(c(0.85, 0.9), rep(seq(-0.55, -0.95, len=200)[ii], 2), col=colorRampPalette(c00)(200)[ii])
+text(c(1,1,1)+0.1, c(-0.6, -0.75, -0.9),
+    c(expression(N[PIX] < N[PIF]),expression(N[PIX] == N[PIF]),expression(N[PIX] > N[PIF])))
 par(op)
 dev.off()
 
