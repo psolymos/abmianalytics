@@ -530,21 +530,53 @@ plot(density(coordinates(xylonlat)[,2]), type="n")
 lines(density(coordinates(xylonlat)[xylonlat@data$PCODE!="BBSAB",2]), col=2)
 lines(density(coordinates(xylonlat)[xylonlat@data$PCODE=="BBSAB",2]), col=4)
 
-dots_box_plot <- function(mat, lines=FALSE, ...) {
+library(MASS)
+library(KernSmooth)
+dots_box_plot <- function(mat, lines=FALSE, method="box", ...) {
     set.seed(1)
-    rnd <- runif(nrow(mat), -0.1, 0.1)
-    boxplot(mat, range=0, ...)
+    rnd <- runif(nrow(mat), -0.05, 0.05)
+    boxplot(mat, range=0, border="white",...)
     if (lines)
         for (i in 2:ncol(mat))
             segments(x0=i+rnd-1, x1=i+rnd, y0=mat[,i-1], y1=mat[,i], col="lightgrey")
     for (i in 1:ncol(mat))
         points(i+rnd, mat[,i], pch=19, col="#00000080")
-    #boxplot(mat, range=0, add=TRUE, col="#ff000020", names=NA)
-    boxplot(mat, range=0, add=TRUE, col="#00000020", names=NA)
+
+    if (method == "box") {
+        #boxplot(mat, range=0, add=TRUE, col="#ff000020", names=NA)
+        boxplot(mat, range=0, add=TRUE, col="#00000020", names=NA)
+    } else {
+        v <- 0.2
+        for (i in 1:ncol(mat)) {
+            xx <- sort(mat[,i])
+            st <- boxplot.stats(xx)
+            s <- st$stats
+            if (method == "kde")
+                d <- bkde(xx) # uses Normal kernel
+            if (method == "fft")
+                d <- density(xx) # uses FFT
+            if (method == "hist") {
+                h <- hist(xx, plot=FALSE)
+                xv <- rep(h$breaks, each=2)
+                yv <- c(0, rep(h$density, each=2), 0)
+            } else {
+                xv <- d$x
+                yv <- d$y
+                jj <- xv >= min(xx) & xv <= max(xx)
+                xv <- xv[jj]
+                yv <- yv[jj]
+            }
+            yv <- 0.4 * yv / max(yv)
+            polygon(c(-yv, rev(yv))+i, c(xv, rev(xv)), col="#00000020", border="#40404080")
+            polygon(c(-v,-v,v,v)+i, s[c(2,4,4,2)], col="#40404080", border=NA)
+            lines(c(-v,v)+i, s[c(3,3)], lwd=2, col="#00000020")
+        }
+    }
+
     invisible(NULL)
 }
 
-pdf("~/GoogleWork/bam/PIF-AB/draft1/Fig2-popsize-old.pdf", width=8, height=8)
+pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig2-popsize-old.pdf", width=8, height=8)
 op <- par(mfrow=c(2,2), las=1, mar=c(4,4,1,2))
 dots_box_plot(pop[,c("Npif", "Npix")], lines=TRUE,
     ylab="Population Size (M singing inds.)", names=c("PIF", "PIX"))
@@ -562,7 +594,7 @@ par(op)
 dev.off()
 
 
-pdf("~/GoogleWork/bam/PIF-AB/draft1/Fig2-popsize.pdf", width=7, height=7)
+pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig2-popsize.pdf", width=7, height=7)
 op <- par(mfrow=c(1,1), las=1, mar=c(4,4,1,2))
 plot(pop[,c("Npif", "Npix")], xlab=expression(N[PIF]), ylab=expression(N[PIX]),
     type="n",
@@ -591,12 +623,12 @@ par(op)
 dev.off()
 
 
-pdf("~/GoogleWork/bam/PIF-AB/draft1/Fig3-components.pdf", width=8, height=6)
+pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig3-components.pdf", width=8, height=6)
 op <- par(las=1)
 mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH")]
 colnames(mat) <- c("OBS", "EXP", "R", "T", "A", "H")
 par(las=1)
-dots_box_plot(mat, ylab="Log Ratio")
+dots_box_plot(mat, ylab="Log Ratio", method="kde")
 abline(h=0, col=1, lwd=1,lty=2)
 par(op)
 dev.off()
