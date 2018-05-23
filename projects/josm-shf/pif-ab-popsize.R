@@ -467,8 +467,28 @@ d_fun <- function(h) {
     DD
 }
 
+## forest classes
+NAM_for <- c("BSpr", "BSprO", "Conif", "ConifO", "Decid", "DecidO",
+    "Larch", "LarchO", "Mixwood", "MixwoodO", "Pine", "PineO")
+pref_fun <- function(h) {
+    NN <- h[NAM, "50%"] * 10^6 # back to individuals
+    NN_for <- h[NAM[NAM %in% NAM_for], "50%"] * 10^6 # back to individuals
+    sum(NN_for) / sum(NN)
+}
+pref <- sapply(NestAll, pref_fun)
+quantiles(pref,seq(0,1,0.25))
+
 ## taxonomy etc ---
 pop <- tax[,c("Species_ID", "English_Name", "Scientific_Name", "Spp")]
+
+## LH stuff
+library(lhreg)
+data(lhreg_data)
+compare_sets(lhreg_data$spp, rownames(pop))
+setdiff(rownames(pop), lhreg_data$spp)
+pop <- data.frame(pop, lhreg_data[match(rownames(pop), lhreg_data$spp),
+    c("Mig", "Mig2", "Hab2", "Hab3", "Hab4")])
+
 ## pop size estimates ---
 #pop$Npix <- NestTot[,"Mean"] # M males
 pop$Npix <- NestTot[,"50%"]
@@ -506,14 +526,14 @@ pop <- droplevels(pop[rowSums(is.na(pop))==0,])
 pop <- pop[sort(rownames(pop)),]
 Dall <- data.frame(Ahab=100*Ahab, Whab=100*Whab, sapply(NestAll, d_fun)[,rownames(pop)])
 
-write.csv(pop, row.names=FALSE, file="~/GoogleWork/bam/PIF-AB/draft1/Table1-estimates.csv")
-write.csv(100*Dall[,1:2], file="~/GoogleWork/bam/PIF-AB/draft1/Table2-habitats.csv")
-write.csv(Dall, file="~/GoogleWork/bam/PIF-AB/draft1/Table3-densities.csv")
+write.csv(pop, row.names=FALSE, file="~/GoogleWork/bam/PIF-AB/draft2/Table1-estimates.csv")
+write.csv(100*Dall[,1:2], file="~/GoogleWork/bam/PIF-AB/draft2/Table2-habitats.csv")
+write.csv(Dall, file="~/GoogleWork/bam/PIF-AB/draft2/Table3-densities.csv")
 
 ## --- making the figures ---
 
 ## maps
-pdf("~/GoogleWork/bam/PIF-AB/draft1/Fig1-maps.pdf", width=12, height=9)
+pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig1-maps.pdf", width=12, height=9)
 op <- par(mfrow=c(1,2), mar=c(1,1,1,1))
 plot(BCR2AB, col=c(NA, "grey", rep(NA, 11)), border=NA, main="Roadside surveys")
 plot(AB, col=NA, border=1,add=TRUE)
@@ -594,8 +614,8 @@ par(op)
 dev.off()
 
 
-pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig2-popsize.pdf", width=7, height=7)
-op <- par(mfrow=c(1,1), las=1, mar=c(4,4,1,2))
+pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig2-popsize.pdf", width=14, height=7)
+op <- par(mfrow=c(1,2), las=1, mar=c(4,4,1,2))
 plot(pop[,c("Npif", "Npix")], xlab=expression(N[PIF]), ylab=expression(N[PIX]),
     type="n",
     pch=19, col="#00000080", xlim=c(0, max(pop[,c("Npif", "Npix")])),
@@ -619,6 +639,18 @@ text(pop[,"Npif"]+1.2, pop[,"Npix"]+0, labels=ifelse(di, rownames(pop), ""), cex
 text(pp[,"Npif"]+1.2, pp[,"Npix"]+0, labels=ifelse(di2, rownames(pp), ""), cex=0.4)
 segments(x0=c(30-Siz+c(0, 1, 2, 3)*Siz/3), y0=rep(Siz, 4), y1=rep(Siz, 4)+0.5)
 text(c(30-Siz+c(0, 1, 2, 3)*Siz/3), rep(Siz, 4)+1, 0:3)
+
+c00 <- c('#d7191c','darkgrey','#2b83ba')
+Col0 <- colorRampPalette(c00)(3)
+plot(rank(pop$Npif), rank(pop$Npix), xlab="PIF rank", ylab="PIX rank",
+    type="n",
+    pch=19, col="#00000080",
+    ylim=c(0, nrow(pop)), xlim=c(0, nrow(pop)))
+abline(0,1, lty=2)
+abline(h=c(24,48,72),v=c(24,48,72))
+text(rank(pop$Npif), rank(pop$Npix), labels=rownames(pop), cex=0.8,
+    col=Col0[as.integer(cut(pref, c(0, 0.33, 0.66, 1)))])
+
 par(op)
 dev.off()
 
@@ -684,6 +716,27 @@ text(c(1,1,1)+0.1, c(-0.6, -0.75, -0.9),
     c(expression(N[PIX] < N[PIF]),expression(N[PIX] == N[PIF]),expression(N[PIX] > N[PIF])))
 par(op)
 dev.off()
+
+## ranking
+
+pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig2-popsize.pdf", width=7, height=7)
+op <- par(mfrow=c(1,1), las=1, mar=c(4,4,1,2))
+plot(rank(pop$Npif), rank(pop$Npix), xlab="PIF rank", ylab="PIX rank",
+    type="n",
+    pch=19, col="#00000080",
+    ylim=c(0, nrow(pop)), xlim=c(0, nrow(pop)))
+abline(0,1, lty=2)
+text(rank(pop$Npif), rank(pop$Npix), labels=rownames(pop), cex=0.4)
+par(op)
+dev.off()
+
+
+
+
+
+
+
+
 
 
 
