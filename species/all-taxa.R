@@ -151,3 +151,30 @@ for (taxon in TAXA) {
     cat(" --- OK\n")
     flush.console()
 }
+
+if (FALSE) {
+
+    tn <- c("T19A Moss Identification (2003-2008)",
+        "T19B Moss Identification (since 2009)",
+        "T20A Lichen Identification (2003-2008)",
+        "T20B Lichen Identification (since 2009)",
+        "T24A Soil Arthropods (Mites) Identification",
+        "T15 Vascular Plants",
+
+        "T26A Breeding Birds",
+        "T26B Breeding Birds (ARUs)",
+        "T26C ARU Deployment and Retrieval",
+        "T26D Breeding Birds (ARU) Abiotic")
+    names(tn) <- tn
+    tn <- sapply(strsplit(tn, " "), "[[", 1)
+
+    x <- list()
+    for (tt in tn) {
+        cat(tt, "\n");flush.console()
+        try(x[[tt]] <- get_table(table = tt))
+    }
+
+    lapply(x, colnames)
+    lapply(x, function(z) max(z$Year))
+
+}
