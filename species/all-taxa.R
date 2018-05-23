@@ -1,5 +1,5 @@
 library(mefa4)
-source("~/repos/rabmi/R/rabmi.R")
+source("~/abmianalytics/R/abmi-r-api.R")
 
 ROOT <- "e:/peter/AB_data_v2018"
 DATE <- as.Date(Sys.time(), tz=Sys.timezone(location = TRUE))
