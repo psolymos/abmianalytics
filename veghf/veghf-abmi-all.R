@@ -52,6 +52,9 @@ dd$scale <- "1 ha square around site centre"
 dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_1ha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
+sum(d$Shape_Area[d$Site_YEAR=="OG-ABMI-583-21_2015"]) # this is overlap -- GIS end: 186.8%
+sum(d$Shape_Area[d$Site_YEAR=="OG-ABMI-669-41_2017"]) # this is issue on my end: 67.8%
+rowSums(dd[[1]])["OG-ABMI-669-41_2017"]
 
 ## 150m
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",

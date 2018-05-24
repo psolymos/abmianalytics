@@ -374,6 +374,11 @@ HF_fine=TRUE) {
     ## soils (`current`, soil + HF)
     SoilCr <- Xtab(Shape_Area ~ LABEL + SOILHFclass, d)
 
+    stopifnot(all(colnames(VegRf) %in% RfLab))
+    stopifnot(all(colnames(VegCr) %in% AllLabels))
+    stopifnot(all(colnames(SoilRf) %in% SoilLab))
+    stopifnot(all(colnames(SoilCr) %in% SoilHFLab))
+
     rn <- rownames(VegRf) # make sure row labels are identical across tables
     VegRf <- VegRf[rn, RfLab, drop=FALSE]
     VegCr <- VegCr[rn, AllLabels, drop=FALSE]
