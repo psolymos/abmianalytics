@@ -102,7 +102,7 @@ HF_fine=TRUE) {
         "GraminoidFen", "Marsh",
         "ShrubbyBog", "ShrubbyFen", "ShrubbySwamp",
         "Bare", "SnowIce", "Water")
-    if (!HF_fine)
+    if (!HF_fine) {
         HFLab <- c("BorrowpitsDugoutsSumps", "Canals", "CultivationCropPastureBareground",
             "CutBlocks", "HighDensityLivestockOperation", "IndustrialSiteRural",
             "MineSite", "MunicipalWaterSewage", "OtherDisturbedVegetation",
@@ -110,7 +110,7 @@ HF_fine=TRUE) {
             "Reservoirs", "RoadHardSurface", "RoadTrailVegetated", "RoadVegetatedVerge",
             "RuralResidentialIndustrial", "SeismicLine", "TransmissionLine",
             "Urban", "WellSite", "WindGenerationFacility")
-    if (HF_fine)
+    } else {
         HFLab <- c("UrbanIndustrial", "UrbanResidence", "RuralResidentialIndustrial",
             "IndustrialSiteRural", "WindGenerationFacility", "OtherDisturbedVegetation",
             "MineSite", "PeatMine", "WellSite", "Pipeline", "TransmissionLine",
@@ -120,6 +120,7 @@ HF_fine=TRUE) {
             "CultivationTamePasture", "HighDensityLivestockOperation",
             "CutBlocks", "BorrowpitsDugoutsSumps", "MunicipalWaterSewage",
             "Reservoirs", "Canals")
+    }
     RfLab <- c(paste0(rep(TreedClasses, each=11),
         c("0","R","1","2","3","4","5","6","7","8","9")),
         NontreedClasses)
@@ -814,7 +815,7 @@ function(x, NSR)
 }
 
 fill_in_0ages_v6 <-
-function(x, NSR, ages_list)
+function(x, NSR, ages_list, rm0=TRUE)
 {
     Target <- names(ages_list)
 
@@ -857,6 +858,12 @@ function(x, NSR, ages_list)
         } else {
             x$veg_reference <- as(xx, "dgCMatrix")
         }
+    }
+    if (rm0) {
+        excl <- c("Decid0", "Mixedwood0", "Pine0", "Spruce0", "TreedBog0", "TreedFen0",
+            "TreedSwamp0", "CutBlocks")
+        x$veg_current <- x$veg_current[,!(colnames(x$veg_current) %in% excl)]
+        x$veg_reference <- x$veg_reference[,!(colnames(x$veg_reference) %in% excl)]
     }
     x
 }

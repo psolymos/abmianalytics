@@ -10,7 +10,7 @@ SAVE <- TRUE
 ## root directory
 ROOT <- "e:/peter"
 ## version (structure is still in change, so not really useful)
-VER <- "AB_data_v2017"
+VER <- "AB_data_v2018"
 ## current year
 THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
 #HF_YEAR <- 2014 # HF inventory update year
@@ -19,6 +19,14 @@ library(mefa4)
 source("~/repos/abmianalytics/R/veghf_functions.R")
 source("~/repos/bamanalytics/R/dataprocessing_functions.R")
 
+## this has pasture/cultivation etc differences
+if (HF_VERSION %in% c("2016_fine")) {
+    hftypes <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-type-v2014.csv")
+    hftypes <- droplevels(hftypes[!is.na(hftypes$HF_GROUP_COMB),])
+    hfgroups <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-class-v2014.csv")
+    hflt <- hfgroups[match(hftypes$HF_GROUP_COMB, hfgroups$HF_GROUP_COMB),]
+    HF_YEAR <- 2016 # HF inventory update year
+}
 ## this has pasture/cultivation etc differences
 if (HF_VERSION %in% c("2014_fine", "2014v2_fine")) {
     hftypes <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-type-v2014.csv")
