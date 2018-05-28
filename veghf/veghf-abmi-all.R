@@ -1,15 +1,11 @@
 #e:/peter/AB_data_v2018/data/raw/veghf/abmi
 
-#Summary_2003_2017_CamARUBird_point.csv
-#Summary_2003_2017_CamARUBird_buf150m_rev01.csv
-#Summary_2003_2017_CamARUBird_buf564m_rev01.csv
-
 HF_VERSION <- "2016_fine"
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
 meta <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 
-## ABMI sites (on+off) cetre
+## ABMI sites (on+off) cetre -----------------------------------------------
 
 ## point intersections
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
@@ -110,6 +106,59 @@ data.frame(percent=rs[which(rs < 99 | rs > 101)])
 save(dd_point, dd_qha, dd_1ha, dd_150m, dd_564m, #xx,
     file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_SiteCenter_v6verified.Rdata"))
+
+## Cam/ARU/Bird -----------------------------------------------
+
+## point intersections
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
+    "Summary_2003_2017_CamARUBird_point_rev03.csv")
+d <- read.csv(f)
+d$UID <- with(d, interaction(Site_ID, deployment, Cam_ARU_Bird_Location, survey_year,
+    sep="_", drop=TRUE))
+dd_point <- make_vegHF_wide_v6(d,
+    col.label="UID",
+    col.year="survey_year",
+    col.HFyear="year",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE, wide=FALSE) # use refined classes
+
+## 150m
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
+    "Summary_2003_2017_CamARUBird_buf150m_rev04.csv")
+d <- read.csv(f)
+levels(d$Cam_ARU_Bird_Location) <- c(levels(d$Cam_ARU_Bird_Location), "UNKNOWN")
+d$Cam_ARU_Bird_Location[is.na(d$Cam_ARU_Bird_Location)] <- "UNKNOWN"
+d$UID <- with(d, interaction(Site_ID, deployment, Cam_ARU_Bird_Location, survey_year,
+    sep="_", drop=TRUE))
+dd <- make_vegHF_wide_v6(d,
+    col.label="UID",
+    col.year="survey_year",
+    col.HFyear="year",
+    sparse=TRUE, HF_fine=FALSE) # don't use refined classes
+dd$scale <- "150m circle buffer around camera/ARU locations"
+dx <- nonDuplicated(d, UID, TRUE)[rownames(dd[[1]]),]
+dd_150m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+## 564m
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
+    "Summary_2003_2017_CamARUBird_buf564m_rev04.csv")
+d <- read.csv(f)
+levels(d$Cam_ARU_Bird_Location) <- c(levels(d$Cam_ARU_Bird_Location), "UNKNOWN")
+d$Cam_ARU_Bird_Location[is.na(d$Cam_ARU_Bird_Location)] <- "UNKNOWN"
+d$UID <- with(d, interaction(Site_ID, deployment, Cam_ARU_Bird_Location, survey_year,
+    sep="_", drop=TRUE))
+dd <- make_vegHF_wide_v6(d,
+    col.label="UID",
+    col.year="survey_year",
+    col.HFyear="year",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE, wide=TRUE) # use refined classes
+dd$scale <- "564m circle buffer around camera/ARU locations"
+dx <- nonDuplicated(d, UID, TRUE)[rownames(dd[[1]]),]
+dd_564m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+
 
 ## comparing with previous years
 if (FALSE) {
