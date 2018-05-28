@@ -13,7 +13,7 @@ meta <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 
 ## point intersections
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
-    "Summary_2003_2017_SiteCentre_point_rev01.csv")
+    "Summary_2003_2017_SiteCentre_point_rev02.csv")
 d <- read.csv(f)
 dd_point <- make_vegHF_wide_v6(d,
     col.label="Site_YEAR",
@@ -25,7 +25,7 @@ dd_point <- make_vegHF_wide_v6(d,
 
 ## 1 ha in 4 x 0.25ha quadrants
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
-    "Summary_2003_2017_SiteCentre_1ha_4quad_rev01.csv")
+    "Summary_2003_2017_SiteCentre_1ha_4quad_rev04.csv")
 d <- read.csv(f)
 d$QID <- with(d, interaction(Site_YEAR, Section, sep="_", drop=TRUE))
 
@@ -52,13 +52,9 @@ dd$scale <- "1 ha square around site centre"
 dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_1ha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
-sum(d$Shape_Area[d$Site_YEAR=="OG-ABMI-583-21_2015"]) # this is overlap -- GIS end: 186.8%
-sum(d$Shape_Area[d$Site_YEAR=="OG-ABMI-669-41_2017"]) # this is issue on my end: 67.8%
-rowSums(dd[[1]])["OG-ABMI-669-41_2017"]
-
 ## 150m
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
-    "Summary_2003_2017_SiteCentre_buf150m_rev01.csv")
+    "Summary_2003_2017_SiteCentre_buf150m_rev03.csv")
 d <- read.csv(f)
 dd <- make_vegHF_wide_v6(d,
     col.label="Site_YEAR",
@@ -73,7 +69,7 @@ dd_150m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
 ## 564m
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
-    "Summary_2003_2017_SiteCentre_buf564m_rev01.csv")
+    "Summary_2003_2017_SiteCentre_buf564m_rev03.csv")
 d <- read.csv(f)
 dd <- make_vegHF_wide_v6(d,
     col.label="Site_YEAR",

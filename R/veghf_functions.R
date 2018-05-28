@@ -374,10 +374,22 @@ HF_fine=TRUE) {
     ## soils (`current`, soil + HF)
     SoilCr <- Xtab(Shape_Area ~ LABEL + SOILHFclass, d)
 
-    stopifnot(all(colnames(VegRf) %in% RfLab))
-    stopifnot(all(colnames(VegCr) %in% AllLabels))
-    stopifnot(all(colnames(SoilRf) %in% SoilLab))
-    stopifnot(all(colnames(SoilCr) %in% SoilHFLab))
+    if (!all(colnames(VegRf) %in% RfLab)) {
+        cat(colnames(VegRf)[!(colnames(VegRf) %in% RfLab)], sep="\n")
+        stop("Unexpected VegRf label")
+    }
+    if (!all(colnames(VegCr) %in% AllLabels)) {
+        cat(colnames(VegCr)[!(colnames(VegCr) %in% AllLabels)], sep="\n")
+        stop("Unexpected VegCr label")
+    }
+    if (!all(colnames(SoilRf) %in% SoilLab)) {
+        cat(colnames(SoilRf)[!(colnames(SoilRf) %in% SoilLab)], sep="\n")
+        stop("Unexpected SoilRf label")
+    }
+    if (!all(colnames(SoilCr) %in% SoilHFLab)) {
+        cat(colnames(SoilCr)[!(colnames(SoilCr) %in% SoilHFLab)], sep="\n")
+        stop("Unexpected SoilCr label")
+    }
 
     rn <- rownames(VegRf) # make sure row labels are identical across tables
     VegRf <- VegRf[rn, RfLab, drop=FALSE]
