@@ -24,15 +24,20 @@ add_labels <- function(res, sub_col) {
     res
 }
 normalize_species <- function(res) {
+#    res$ScientificName0 <- res$ScientificName
     levels(res$ScientificName) <- gsub("X ", "", levels(res$ScientificName))
     levels(res$ScientificName) <- gsub(" x ", " ", levels(res$ScientificName))
     levels(res$ScientificName) <- sapply(strsplit(levels(res$ScientificName), " "), function(z) {
         paste(z[1:min(2, length(z))], collapse=" ")
     })
 
+    levels(res$TaxonomicResolution)[levels(res$TaxonomicResolution) %in%
+        c("Subspecies", "Variety")] <- "Species"
+
     res$SpeciesID <- res$ScientificName
     levels(res$SpeciesID) <- nameAlnum(levels(res$SpeciesID), capitalize="mixed", collapse="")
     res$SpeciesID <- droplevels(res$SpeciesID)
+
     res
 }
 cn1 <- c("ABMISite", "Year", "subunit", "site_year", "site_year_sub", "offgrid", "nearest")
