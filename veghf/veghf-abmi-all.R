@@ -9,7 +9,7 @@ meta <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 
 ## point intersections
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
-    "Summary_2003_2017_SiteCentre_point_rev02.csv")
+    "Summary_2003_2017_SiteCentre_point_rev03.csv")
 d <- read.csv(f)
 dd_point <- make_vegHF_wide_v6(d,
     col.label="Site_YEAR",
@@ -21,7 +21,7 @@ dd_point <- make_vegHF_wide_v6(d,
 
 ## 1 ha in 4 x 0.25ha quadrants
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
-    "Summary_2003_2017_SiteCentre_1ha_4quad_rev04.csv")
+    "Summary_2003_2017_SiteCentre_1ha_4quad_rev05.csv")
 d <- read.csv(f)
 d$QID <- with(d, interaction(Site_YEAR, Section, sep="_", drop=TRUE))
 
@@ -50,7 +50,7 @@ dd_1ha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
 ## 150m
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
-    "Summary_2003_2017_SiteCentre_buf150m_rev03.csv")
+    "Summary_2003_2017_SiteCentre_buf150m_rev04.csv")
 d <- read.csv(f)
 dd <- make_vegHF_wide_v6(d,
     col.label="Site_YEAR",
@@ -65,7 +65,7 @@ dd_150m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
 ## 564m
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
-    "Summary_2003_2017_SiteCentre_buf564m_rev03.csv")
+    "Summary_2003_2017_SiteCentre_buf564m_rev04.csv")
 d <- read.csv(f)
 dd <- make_vegHF_wide_v6(d,
     col.label="Site_YEAR",
@@ -103,7 +103,34 @@ summary(rs)
 table(cut(rs, c(0, 99, 101, Inf)))
 data.frame(percent=rs[which(rs < 99 | rs > 101)])
 
-save(dd_point, dd_qha, dd_1ha, dd_150m, dd_564m, #xx,
+f1 <- file.path(ROOT, VER, "data", "raw", "clim",
+    "site-center-2003-2016.csv")
+f2 <- file.path(ROOT, VER, "data", "raw", "clim",
+    "1_SiteCentre2017_Summary_Climate_data.csv")
+xx1 <- read.csv(f1)
+xx2 <- read.csv(f2)
+rownames(xx2) <- xx2$Site_YEAR
+rownames(xx1) <- xx1$Site_YEAR
+xx2$PET <- xx2$Eref
+xx2$pAspen <- xx2$Populus_tremuloides_brtpred_nofp
+
+tmp <- strsplit(as.character(xx2$ABMI_ASSIGNED__SITE_ID), "-")
+xx2$NearestOnGridSite <- sapply(tmp, function(z) {
+    zz <- if (length(z) > 1) z[3] else z[1]
+    as.integer(gsub("\\D+", "", zz))
+})
+xx2$ABMI_Assigned_Site_ID <- xx2$ABMI_ASSIGNED__SITE_ID
+cn <- intersect(colnames(xx1), colnames(xx2))
+xx <- rbind(xx1[,cn], xx2[,cn])
+xx <- data.frame(xx, meta[match(xx$NearestOnGridSite, meta$SITE_ID),])
+rownames(xx) <- xx$Site_YEAR
+
+compare_sets(dd_point$Site_YEAR, rownames(xx))
+compare_sets(rownames(dd_1ha[[1]]), rownames(xx))
+compare_sets(rownames(dd_150m[[1]]), rownames(xx))
+compare_sets(rownames(dd_564m[[1]]), rownames(xx))
+
+save(dd_point, dd_qha, dd_1ha, dd_150m, dd_564m, xx,
     file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_SiteCenter_v6verified.Rdata"))
 
