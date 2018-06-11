@@ -1,7 +1,12 @@
+## HSH matrix needs to be based on (partial) backfilled info
+## this eval on subregion level based transitions
+## use hab1ec in ch2veg to define the levels and get it calculated
+## add HSH05_km to spatial terms etc
+
 library(mefa4)
 
 ROOT <- "e:/peter/AB_data_v2016"
-OUTDIR <- paste0("e:/peter/josm/2018")
+OUTDIR <- paste0("e:/peter/josm/2018/earlyseralTRUE")
 
 STAGE <- list(veg = 7) # hab=5, hab+clim=6, hab+clim+shf=7
 shf <- TRUE # surrounding HF
@@ -9,7 +14,7 @@ do1 <- TRUE # do only 1st run
 doB <- FALSE # do bootstrap
 ## seismic lines can be treated as early seral when no surrounding effects considered
 ## or apply the backfilled value (age set to 0) when surrounding hf is considered
-SEISMIC_AS_EARLY_SERAL <- FALSE
+SEISMIC_AS_EARLY_SERAL <- TRUE
 
 PROP <- 100
 BMAX <- 100
@@ -17,6 +22,7 @@ if (!doB)
     BMAX <- 1
 BMAX
 
+## surrounding HF only includes `sectors` only
 sect <- "All"
 #sect <- "Agriculture"
 #sect <- "EnergyLin"
@@ -36,6 +42,22 @@ load(file.path(ROOT, "out", "kgrid", "veg-hf_1kmgrid_fix-fire_fix-age0.Rdata")) 
 source("~/repos/bragging/R/glm_skeleton.R")
 source("~/repos/abmianalytics/R/results_functions.R")
 source("~/repos/bamanalytics/R/makingsense_functions.R")
+
+en <- new.env()
+load(file.path(ROOT, "out", "birds", "data", "data-josmshf.Rdata"), envir=en)
+xnn <- en$DAT[1:500,]
+modsn <- en$mods
+yyn <- en$YY
+
+## model for species
+fln <- list.files(file.path(ROOT, "out", "birds", "results", "josmshf"))
+fln <- sub("birds_abmi-josmshf_", "", fln)
+fln <- sub(".Rdata", "", fln)
+
+## terms and design matrices
+nTerms <- getTerms(modsn, "list")
+Xnn <- model.matrix(getTerms(modsn, "formula"), xnn)
+colnames(Xnn) <- fixNames(colnames(Xnn))
 
 ## climate
 transform_CLIM <- function(x, ID="PKEY") {
@@ -77,12 +99,13 @@ kgrid$ASP <- NULL
 kgrid$TRI <- NULL
 kgrid$SLP <- NULL
 kgrid$CTI <- NULL
-all(rownames(kgrid) == rownames(dd1km_pred$veg_current))
+stopifnot(all(rownames(kgrid) == rownames(dd1km_pred$veg_current)))
 
 tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age.csv")
 tv$SectorForSeMs <- factor(ifelse(is.na(tv$SectorForSeMs), "NATIVE", as.character(tv$SectorForSeMs)),
     c("NATIVE", "Agriculture", "EnergyLin", "EnergyMW",
     "Forestry", "Misc", "RuralUrban","Transportation"))
+tv$hab1ec <- paste0(tv$Type, tv$EC_AGE)
 
 VEGALL <- dd1km_pred$veg_current
 VEGALL0 <- dd1km_pred$veg_reference
@@ -156,23 +179,6 @@ cnClimHF <- c(cnClim, cnHF)
 
 ## model matrix for Clim & SurroundingHF
 fclim <- as.formula(paste("~ - 1 +", paste(cnClimHF, collapse=" + ")))
-
-
-en <- new.env()
-load(file.path(ROOT, "out", "birds", "data", "data-josmshf.Rdata"), envir=en)
-xnn <- en$DAT[1:500,]
-modsn <- en$mods
-yyn <- en$YY
-
-## model for species
-fln <- list.files(file.path(ROOT, "out", "birds", "results", "josmshf"))
-fln <- sub("birds_abmi-josmshf_", "", fln)
-fln <- sub(".Rdata", "", fln)
-
-## terms and design matrices
-nTerms <- getTerms(modsn, "list")
-Xnn <- model.matrix(getTerms(modsn, "formula"), xnn)
-colnames(Xnn) <- fixNames(colnames(Xnn))
 
 regtmp <- nonDuplicated(kgrid[,c("LUFxNSR", "NRNAME", "NSRNAME")], kgrid$LUFxNSR, TRUE)
 #regs <- rownames(regtmp)[regtmp$NRNAME != "Grassland"]
@@ -261,7 +267,7 @@ do_hsh <- FALSE
 SPP <- fln
 
 #SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL","RWBL")
-#SPP <- SPP[!(SPP %in% c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL","RWBL"))]
+SPP <- SPP[!(SPP %in% c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL","RWBL"))]
 
 
 for (spp in SPP) { # species START
@@ -274,6 +280,8 @@ resn <- loadSPP(fn)
 estn <- suppressWarnings(getEst(resn, stage=STAGE$veg, na.out=FALSE, Xnn))
 estn <- if (is.null(resn))
     estn[rep(1, BMAX),,drop=FALSE] else estn[1:BMAX,,drop=FALSE]
+
+#paste0("e:/peter/josm/2018/hsh-estimates/", spp, ".Rdata")
 
     #regi <- "LowerAthabasca_CentralMixedwood"
     #date()
@@ -450,17 +458,19 @@ estn <- if (is.null(resn))
         OUTcr[Cells,] <- as.matrix(e$pxNcrS[,cn])
         OUTrf[Cells,] <- as.matrix(e$pxNrfS[,cn])
     }
-    for (i in 1:length(cn)) {
-        q <- quantile(c(OUTcr[,i], OUTrf[,i]), 0.99)
-        OUTcr[OUTcr[,i] > q,i] <- q
-        OUTrf[OUTrf[,i] > q,i] <- q
-    }
+#    for (i in 1:length(cn)) {
+#        q <- quantile(c(OUTcr[,i], OUTrf[,i]), 0.99)
+#        OUTcr[OUTcr[,i] > q,i] <- q
+#        OUTrf[OUTrf[,i] > q,i] <- q
+#    }
     colnames(OUTcr)[colnames(OUTcr) == "NATIVE"] <- "Native"
     colnames(OUTrf)[colnames(OUTrf) == "NATIVE"] <- "Native"
     SA.Curr <- OUTcr
     SA.Ref <- OUTrf
     save(SA.Curr, SA.Ref,
         file=file.path(OUTDIR, sect, paste0(spp, ".RData")))
+
+    unlink(file.path(OUTDIR, sect, spp), recursive=TRUE, force=TRUE)
 
 } # species END
 
