@@ -1,9 +1,10 @@
 library(mefa4)
-library(cure4insect)
+#library(cure4insect)
 
 ROOT <- "e:/peter/AB_data_v2016"
-INDIR <- paste0("e:/peter/josm/2018/earlyseralTRUE")
+#INDIR <- paste0("e:/peter/josm/2018/earlyseralTRUE")
 #INDIR <- paste0("e:/peter/josm/2018/earlyseralFALSE")
+INDIR <- paste0("e:/peter/josm/2018/hshfix")
 
 sectors_all <- c("Agriculture", "EnergyLin", "EnergyMW", "Forestry", "Misc",
     "RuralUrban","Transportation")
@@ -55,14 +56,14 @@ Nref <- Nsect[[1]][,2]
 Diffs <- sapply(Nsect, function(z) z[,1]-Nref)
 
 ## treating all indirects (over native and not)
-Tots <- cbind(All=Diffs[,1],
-    Conversion=c(0, diag(Diffs[-1,-1])), # direct
-    Disturbance=colSums(Diffs)-c(0, diag(Diffs[-1,-1]))) # indirect
+#Tots <- cbind(All=Diffs[,1],
+#    Conversion=c(0, diag(Diffs[-1,-1])), # direct
+#    Disturbance=colSums(Diffs)-c(0, diag(Diffs[-1,-1]))) # indirect
 ## treating only native indirects
 Tots <- cbind(All=Diffs[,1],
     Conversion=c(0, diag(Diffs[-1,-1])), # direct
     Disturbance=c(0, Diffs[1,-1])) # indirect
-Tots["Native","Disturbance"] <- sum(Tots[,"All"])-sum(Tots[-1,-1])
+Tots["Native","Disturbance"] <- sum(Tots[,"All"])-sum(Tots[-1,-1]) # synergy
 Tots <- rbind(Tots, Total=colSums(Tots))
 round(100*Tots/sum(Nref), 2)
 

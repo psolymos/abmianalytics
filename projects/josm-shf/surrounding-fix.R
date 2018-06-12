@@ -22,17 +22,15 @@ fl <- list.files(file.path(ROOT, "out", "birds", "results", "josmshf"))
 SPP <- gsub(".Rdata", "", gsub("birds_abmi-josmshf_", "", fl))
 
 #spp <- "CAWA"
+j <- 1
 for (spp in SPP) {
-    cat(spp, "\n");flush.console()
+    cat(spp);flush.console()
 
     fn <- file.path(ROOT, "out", "birds", "results", "josmshf",
         paste0("birds_abmi-josmshf_", spp, ".Rdata"))
     res <- loadSPP(fn)
-    estSp <- suppressWarnings(getEst(res, stage=which(names(mods)=="Space"), na.out=FALSE, Xn))
-    prSp <- exp(drop(Xn %*% estSp[1,]))
-    estHf <- suppressWarnings(getEst(res, stage=which(names(mods)=="HF"), na.out=FALSE, Xn))[1,]
 
-    mid <- res[[1]]$mid
+    mid <- res[[j]]$mid
     names(mid) <- names(mods)
     mid <- mid[names(mid) != "Year"]
     f1 <- y ~ 1
@@ -42,27 +40,42 @@ for (spp in SPP) {
     }
     f2 <- update(f1, . ~ . + HSH05_KM)
 
-    g <- sum_by(prSp, DAT$hab1ec)
+    estHf <- suppressWarnings(getEst(res, stage=which(names(mods)=="HF"), na.out=FALSE, Xn))[j,]
+    estSp <- suppressWarnings(getEst(res, stage=which(names(mods)=="Space"), na.out=FALSE, Xn))
+    Xn2 <- Xn[BB[,j],]
+    Xn2[,grep("ROAD01",colnames(Xn2))] <- 0
+
+    prSp <- exp(drop(Xn2 %*% estSp[j,]))
+
+    g <- sum_by(prSp, DAT[BB[,j],"hab1ec"])
     l <- lorenz(g[,"x"]/g[,"by"], g[,"by"])
-    (s <- summary(l))
+    s <- summary(l)
     lab <- rownames(l[l[,"x"] >= s["x[t]"],])
     DAT$HSH_KM <- rowSums(HSH[,lab,drop=FALSE])
     #DAT$HSH2_KM <- DAT$HSH_KM^2
     DAT$HSH05_KM <- sqrt(DAT$HSH_KM)
 
-    y <- as.numeric(YY[BB[,1], spp])
+    y <- as.numeric(YY[BB[,j], spp])
     M <- glm(f2,
-        DAT[BB[,1],],
+        DAT[BB[,j],],
         family=poisson(),
-        offset=OFF[BB[,1], spp],
+        offset=OFF[BB[,j], spp],
         x=FALSE, y=FALSE, model=FALSE)
     mod <- glm_skeleton(M, CAICalpha=attr(res,"CAICalpha"))
-    mod$hsh_coef <- coef(mod)
+    mod$hsh_coef <- mod$coef
+    names(mod$hsh_coef) <- fixNames(names(mod$hsh_coef))
     mod$no_hsh_coef <- estHf[estHf != 0]
     mod$lc_input <- g
     mod$lc <- l
     mod$hsh_labels <- lab
-    names(mod$hsh_coef) <- fixNames(names(mod$hsh_coef))
+    AIC0 <- if (mid[which(names(mods)=="HF")] == 0) {
+        attr(res[[j]]$caic[[which(names(mods)=="HF")]], "StartCAIC")
+    } else {
+        res[[j]]$caic[[which(names(mods)=="HF")]][mid[which(names(mods)=="HF")]]
+    }
+    mod$delta <- mod$caic - AIC0
+    cat("\t", mod$delta, "\n")
+    cat(lab, "\n")
 
     save(mod, file=paste0("e:/peter/josm/2018/hsh-estimates/", spp, ".Rdata"))
 }

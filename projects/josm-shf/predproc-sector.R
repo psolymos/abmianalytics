@@ -1,12 +1,7 @@
-## HSH matrix needs to be based on (partial) backfilled info
-## this eval on subregion level based transitions
-## use hab1ec in ch2veg to define the levels and get it calculated
-## add HSH05_km to spatial terms etc
-
 library(mefa4)
 
 ROOT <- "e:/peter/AB_data_v2016"
-OUTDIR <- paste0("e:/peter/josm/2018/earlyseralTRUE")
+OUTDIR <- paste0("e:/peter/josm/2018/hshfix")
 
 STAGE <- list(veg = 7) # hab=5, hab+clim=6, hab+clim+shf=7
 shf <- TRUE # surrounding HF
@@ -22,8 +17,10 @@ if (!doB)
     BMAX <- 1
 BMAX
 
+#SPP <- "CAWA"
+
 ## surrounding HF only includes `sectors` only
-sect <- "All"
+#sect <- "All"
 #sect <- "Agriculture"
 #sect <- "EnergyLin"
 #sect <- "EnergyMW"
@@ -31,9 +28,12 @@ sect <- "All"
 #sect <- "Misc"
 #sect <- "RuralUrban"
 #sect <- "Transportation"
-stopifnot(length(sect)==1)
 sectors_all <- c("Agriculture", "EnergyLin", "EnergyMW", "Forestry", "Misc",
     "RuralUrban","Transportation")
+
+for (sect in c("All", sectors_all)) { # sect start
+
+stopifnot(length(sect)==1)
 sectors <- if (sect != "All")
     sect else sectors_all
 
@@ -202,6 +202,10 @@ hfcn <- ch2veg$Sector %in% sectors_all & !(ch2veg$Sector %in% sectors)
 addmargins(table(ch2veg$Sector,hfcn))
 ch2veg$cr[hfcn] <- ch2veg$rf[hfcn]
 
+## hsh definitions
+ch2veg$hsh_cr <- tv$hab1ec[match(ch2veg$cr, tv$Combined)]
+ch2veg$hsh_rf <- tv$hab1ec[match(ch2veg$rf, tv$Combined)]
+
 ## strata where abundance is assumed to be 0
 ch2veg$rf_zero <- ch2veg$rf %in% c("NonVeg","Water")
 ch2veg$cr_zero <- ch2veg$cr %in% c("NonVeg","Water",
@@ -267,8 +271,7 @@ do_hsh <- FALSE
 SPP <- fln
 
 #SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL","RWBL")
-SPP <- SPP[!(SPP %in% c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL","RWBL"))]
-
+#SPP <- SPP[!(SPP %in% c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL","RWBL"))]
 
 for (spp in SPP) { # species START
 
@@ -281,7 +284,15 @@ estn <- suppressWarnings(getEst(resn, stage=STAGE$veg, na.out=FALSE, Xnn))
 estn <- if (is.null(resn))
     estn[rep(1, BMAX),,drop=FALSE] else estn[1:BMAX,,drop=FALSE]
 
-#paste0("e:/peter/josm/2018/hsh-estimates/", spp, ".Rdata")
+de <- new.env()
+load(paste0("e:/peter/josm/2018/hsh-estimates/", spp, ".Rdata"), envir=de)
+est1 <- c(estn[1,], "HSH05_KM"=0)
+hsh_lab <- NULL
+if (de$mod$delta < 0) {
+    est1[] <- 0
+    est1[names(de$mod$hsh_coef)] <- de$mod$hsh_coef
+    hsh_lab <- de$mod$hsh_labels
+}
 
     #regi <- "LowerAthabasca_CentralMixedwood"
     #date()
@@ -295,60 +306,39 @@ estn <- if (is.null(resn))
         load(file.path(ROOT, "out", "transitions", paste0(regi,".Rdata")))
         ii <- kgrid$LUFxNSR == regi
 
-        iib <- ii & kgrid$Rnd10 <= PROP
-
-        Xclim <- model.matrix(fclim, kgrid[ii,,drop=FALSE])
-        colnames(Xclim) <- fixNames(colnames(Xclim))
-        XclimB <- model.matrix(fclim, kgrid[iib,,drop=FALSE])
-        colnames(XclimB) <- fixNames(colnames(XclimB))
-        ## reference has 0 surrounding HF
-        ## but not surrounding Wet etc, which needs to reflect backfilled
-        Xclim0 <- Xclim
-        Xclim0[,cnHF] <- 0
-        XclimB0 <- XclimB
-        XclimB0[,cnHF] <- 0
-        estnClim <- estn[,colnames(Xclim),drop=FALSE]
-
-        ## north - current
-        logPNclim1 <- Xclim %*% estnClim[1,]
-        logPNclimB <- apply(estnClim, 1, function(z) XclimB %*% z)
-        ## north - reference
-        logPNclim01 <- Xclim0 %*% estnClim[1,]
-        logPNclim0B <- apply(estnClim, 1, function(z) XclimB0 %*% z)
-
-        estnHab <- estn[,colnames(XNhab),drop=FALSE]
-        logPNhab1 <- XNhab %*% estnHab[1,]
-        logPNhabB <- apply(estnHab, 1, function(z) XNhab %*% z)
-        rownames(logPNhabB) <- rownames(logPNhab1)
-        logPNhab_es1 <- XNhab_es %*% estnHab[1,]
-        logPNhab_esB <- apply(estnHab, 1, function(z) XNhab_es %*% z)
-        rownames(logPNhab_esB) <- rownames(logPNhab_es1)
-
         Aveg1 <- trVeg[rownames(kgrid)[ii],,drop=FALSE]
         #Aveg1all <- Aveg1
         Aveg1[,ch2veg$exclude] <- 0
         rs <- rowSums(Aveg1)
         rs[rs <= 0] <- 1
         Aveg1 <- Aveg1 / rs
-        AvegB <- trVeg[rownames(kgrid)[iib],,drop=FALSE]
-        AvegB[,ch2veg$exclude] <- 0
-        rs <- rowSums(AvegB)
-        rs[rs <= 0] <- 1
-        AvegB <- AvegB / rs
 
-        ## pixel level results, North
-    #    pxNcr1 <- matrix(0, nrow(logPNclim1), 1)
-    #    pxNrf1 <- matrix(0, nrow(logPNclim1), 1)
-        pxNcrB <- matrix(0, nrow(logPNclimB), BMAX)
-        pxNrfB <- matrix(0, nrow(logPNclimB), BMAX)
-        ## habitat level results, North
-    #    hbNcr1 <- matrix(0, nrow(ch2veg), 1)
-    #    hbNrf1 <- matrix(0, nrow(ch2veg), 1)
-        hbNcrB <- matrix(0, nrow(ch2veg), BMAX)
-        hbNrfB <- matrix(0, nrow(ch2veg), BMAX)
+        ## HSH definition
+        PhshCr <- rowSums(Aveg1[, ch2veg$hsh_cr %in% hsh_lab])
+        PhshRf <- rowSums(Aveg1[, ch2veg$hsh_rf %in% hsh_lab])
+
+        Xclim <- model.matrix(fclim, kgrid[ii,,drop=FALSE])
+        Xclim <- cbind(Xclim, HSH05_KM=PhshCr)
+        colnames(Xclim) <- fixNames(colnames(Xclim))
+
+        ## reference has 0 surrounding HF
+        ## but not surrounding Wet etc, which needs to reflect backfilled
+        Xclim0 <- Xclim
+        Xclim0[,cnHF] <- 0
+        Xclim0[,"HSH05_KM"] <- PhshRf
+        estnClim <- est1[colnames(Xclim)]
+
+        ## north - current
+        logPNclim1 <- Xclim %*% estnClim
+        ## north - reference
+        logPNclim01 <- Xclim0 %*% estnClim
+
+        estnHab <- est1[colnames(XNhab)]
+        logPNhab1 <- XNhab %*% estnHab
+        logPNhab_es1 <- XNhab_es %*% estnHab
 
         ## keeping track of cells
-        Cells <- ifelse(iib, 1L, 0L)[ii]
+        Cells <- rep(1L, sum(ii))
         names(Cells) <- rownames(kgrid)[ii]
 
         ## 1st run
@@ -374,41 +364,9 @@ estn <- if (is.null(resn))
 
             AD_cr <- t(D_hab_cr * t(Aveg1)) * exp(logPNclim1[,j])
             AD_rf <- t(D_hab_rf * t(Aveg1)) * exp(logPNclim01[,j])
-            #pxNcr1[,j] <- rowSums(AD_cr)
-            #pxNrf1[,j] <- rowSums(AD_rf)
-            #hbNcr1[,j] <- colSums(AD_cr) / colSums(Aveg1)
-            #hbNrf1[,j] <- colSums(AD_rf) / colSums(Aveg1)
             pxNcrS <- groupSums(AD_cr, 2, ch2veg$Sector)
             pxNrfS <- groupSums(AD_rf, 2, ch2veg$Sector)
 
-        }
-
-        ## BMAX runs
-        if (doB) {
-            for (j in 1:BMAX) {
-                ## North
-                D_hab_cr <- exp(logPNhabB[match(ch2veg$cr, rownames(logPNhabB)),j])
-                ## vegetated linear (not cutline) treated as early seral
-                if (any(ch2veg$EarlySeralLinear))
-                    D_hab_cr[ch2veg$EarlySeralLinear] <- exp(logPNhab_esB[match(ch2veg$rf,
-                        rownames(logPNhab_esB)),j][ch2veg$EarlySeralLinear])
-                if (any(ch2veg$cr_zero))
-                    D_hab_cr[ch2veg$cr_zero] <- 0
-                if (any(ch2veg$rf_zero))
-                    D_hab_cr[ch2veg$rf_zero] <- 0 # things like Water->Road
-                D_hab_rf <- exp(logPNhabB[match(ch2veg$rf, rownames(logPNhabB)),j])
-                if (any(ch2veg$rf_zero))
-                    D_hab_rf[ch2veg$rf_zero] <- 0
-                ## cutlines are backfilled (surrounding HF effect applies, + behavioural assumption)
-                if (any(ch2veg$CutLine))
-                    D_hab_cr[ch2veg$CutLine] <- D_hab_rf[ch2veg$CutLine]
-                AD_cr <- t(D_hab_cr * t(AvegB)) * exp(logPNclimB[,j])
-                AD_rf <- t(D_hab_rf * t(AvegB)) * exp(logPNclim0B[,j])
-                pxNcrB[,j] <- rowSums(AD_cr)
-                pxNrfB[,j] <- rowSums(AD_rf)
-                hbNcrB[,j] <- colSums(AD_cr) / colSums(AvegB)
-                hbNrfB[,j] <- colSums(AD_rf) / colSums(AvegB)
-            }
         }
 
         TIME <- proc.time() - t0
@@ -420,24 +378,9 @@ estn <- if (is.null(resn))
             if (!dir.exists(file.path(OUTDIR, sect, spp)))
                 dir.create(file.path(OUTDIR, sect, spp))
             save(TIME, #NSest,
-                #pxNcr1,pxNrf1,
-                #pxScr1,pxSrf1,
-                #hbNcr1,hbNrf1,
-                #hbScr1,hbSrf1,
-                #pAspen1,pSoil1,
                 pxNcrS,pxNrfS,
                 Cells, #SubsetInside,
                 file=file.path(OUTDIR, sect, spp, paste0(regi, ".Rdata")))
-        }
-        if (doB) {
-            save(TIME, #NSest,
-                pxNcrB,pxNrfB,
-                #pxScrB,pxSrfB,
-                hbNcrB,hbNrfB,
-                #hbScrB,hbSrfB,
-                #pAspenB,pSoilB,
-                Cells, #SubsetInside,
-                file=file.path(OUTDIRB, sect, "doB", spp, paste0(regi, ".Rdata")))
         }
 
 
@@ -474,3 +417,11 @@ estn <- if (is.null(resn))
 
 } # species END
 
+} # end sect
+
+library(sendmailR)
+sendmail(sprintf("<%s>", "bot@abmi.ca"),
+            sprintf("<%s>", "psolymos@gmail.com"),
+            "prediction done",
+            list("done"),
+            control=list(smtpServer="ASPMX.L.GOOGLE.COM"))
