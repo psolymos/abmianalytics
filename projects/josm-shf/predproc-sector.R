@@ -284,14 +284,15 @@ estn <- suppressWarnings(getEst(resn, stage=STAGE$veg, na.out=FALSE, Xnn))
 estn <- if (is.null(resn))
     estn[rep(1, BMAX),,drop=FALSE] else estn[1:BMAX,,drop=FALSE]
 
+est1 <- c(estn[1,], "HSH_KM"=0, "HSH2_KM"=0, "HSH05_KM"=0)
 de <- new.env()
-load(paste0("e:/peter/josm/2018/hsh-estimates/", spp, ".Rdata"), envir=de)
-est1 <- c(estn[1,], "HSH05_KM"=0)
+load(paste0("e:/peter/josm/2018/hsh-estimates4x/", spp, ".Rdata"), envir=de)
 hsh_lab <- NULL
-if (de$mod$delta < 0) {
+if (de$out$mid > 0) {
+    # 1: HSH, 2: HSH05, 3: HSH+HSH2, 4: HSH05+HSH
     est1[] <- 0
-    est1[names(de$mod$hsh_coef)] <- de$mod$hsh_coef
-    hsh_lab <- de$mod$hsh_labels
+    est1[names(de$out$hsh_coef[[de$out$mid]])] <- de$out$hsh_coef[[de$out$mid]]
+    hsh_lab <- de$out$hsh_labels
 }
 
     #regi <- "LowerAthabasca_CentralMixedwood"
@@ -318,14 +319,16 @@ if (de$mod$delta < 0) {
         PhshRf <- rowSums(Aveg1[, ch2veg$hsh_rf %in% hsh_lab])
 
         Xclim <- model.matrix(fclim, kgrid[ii,,drop=FALSE])
-        Xclim <- cbind(Xclim, HSH05_KM=PhshCr)
+        Xclim <- cbind(Xclim, HSH_KM=PhshCr, HSH2_KM=PhshCr^2, HSH05_KM=sqrt(PhshCr))
         colnames(Xclim) <- fixNames(colnames(Xclim))
 
         ## reference has 0 surrounding HF
         ## but not surrounding Wet etc, which needs to reflect backfilled
         Xclim0 <- Xclim
         Xclim0[,cnHF] <- 0
-        Xclim0[,"HSH05_KM"] <- PhshRf
+        Xclim0[,"HSH_KM"] <- PhshRf
+        Xclim0[,"HSH2_KM"] <- PhshRf^2
+        Xclim0[,"HSH05_KM"] <- sqrt(PhshRf)
         estnClim <- est1[colnames(Xclim)]
 
         ## north - current

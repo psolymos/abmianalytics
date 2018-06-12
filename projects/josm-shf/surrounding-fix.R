@@ -33,12 +33,15 @@ for (spp in SPP) {
     mid <- res[[j]]$mid
     names(mid) <- names(mods)
     mid <- mid[names(mid) != "Year"]
-    f1 <- y ~ 1
+    f0 <- y ~ 1
     for (k in names(mid)) {
         if (mid[k] > 0)
-            f1 <- update(f1, mods[[k]][[mid[k]]])
+            f0 <- update(f0, mods[[k]][[mid[k]]])
     }
-    f2 <- update(f1, . ~ . + HSH05_KM)
+    f1 <- update(f0, . ~ . + HSH_KM)
+    f2 <- update(f0, . ~ . + HSH05_KM)
+    f3 <- update(f0, . ~ . + HSH_KM + HSH2_KM)
+    f4 <- update(f0, . ~ . + HSH05_KM + HSH_KM)
 
     estHf <- suppressWarnings(getEst(res, stage=which(names(mods)=="HF"), na.out=FALSE, Xn))[j,]
     estSp <- suppressWarnings(getEst(res, stage=which(names(mods)=="Space"), na.out=FALSE, Xn))
@@ -52,34 +55,56 @@ for (spp in SPP) {
     s <- summary(l)
     lab <- rownames(l[l[,"x"] >= s["x[t]"],])
     DAT$HSH_KM <- rowSums(HSH[,lab,drop=FALSE])
-    #DAT$HSH2_KM <- DAT$HSH_KM^2
+    DAT$HSH2_KM <- DAT$HSH_KM^2
     DAT$HSH05_KM <- sqrt(DAT$HSH_KM)
 
     y <- as.numeric(YY[BB[,j], spp])
-    M <- glm(f2,
+    M1 <- glm(f1,
         DAT[BB[,j],],
         family=poisson(),
         offset=OFF[BB[,j], spp],
         x=FALSE, y=FALSE, model=FALSE)
-    mod <- glm_skeleton(M, CAICalpha=attr(res,"CAICalpha"))
-    mod$hsh_coef <- mod$coef
-    names(mod$hsh_coef) <- fixNames(names(mod$hsh_coef))
-    mod$no_hsh_coef <- estHf[estHf != 0]
-    mod$lc_input <- g
-    mod$lc <- l
-    mod$hsh_labels <- lab
+    M2 <- glm(f2,
+        DAT[BB[,j],],
+        family=poisson(),
+        offset=OFF[BB[,j], spp],
+        x=FALSE, y=FALSE, model=FALSE)
+    M3 <- glm(f3,
+        DAT[BB[,j],],
+        family=poisson(),
+        offset=OFF[BB[,j], spp],
+        x=FALSE, y=FALSE, model=FALSE)
+    M4 <- glm(f4,
+        DAT[BB[,j],],
+        family=poisson(),
+        offset=OFF[BB[,j], spp],
+        x=FALSE, y=FALSE, model=FALSE)
+    mod <- lapply(list(M1, M2, M3, M4), function(z)
+        glm_skeleton(z, CAICalpha=attr(res,"CAICalpha")))
     AIC0 <- if (mid[which(names(mods)=="HF")] == 0) {
         attr(res[[j]]$caic[[which(names(mods)=="HF")]], "StartCAIC")
     } else {
         res[[j]]$caic[[which(names(mods)=="HF")]][mid[which(names(mods)=="HF")]]
     }
-    mod$delta <- mod$caic - AIC0
-    cat("\t", mod$delta, "\n")
+    caic <- sapply(mod, function(z) z$caic)
+    delta <- caic - AIC0
+    hsh_coef <- lapply(mod, function(z) {
+        o <- z$coef
+        names(o) <- fixNames(names(o))
+        o
+    })
+
+    out <- list(caic=caic, delta=delta, caic0=AIC0,
+        mid=if (delta[which.min(delta)] < 0) which.min(delta) else 0L,
+        no_hsh_coef = estHf[estHf != 0],
+        hsh_coef=hsh_coef,
+        lc_input= g,
+        lc = l,
+        hsh_labels = lab,
+        formula=list(f0, f1, f2, f3, f4))
+    cat("\t", out$mid, "\n")
     cat(lab, "\n")
 
-    save(mod, file=paste0("e:/peter/josm/2018/hsh-estimates/", spp, ".Rdata"))
+    save(out, file=paste0("e:/peter/josm/2018/hsh-estimates4x/", spp, ".Rdata"))
 }
-
-mod$no_hsh_coef[grep("_KM", names(mod$no_hsh_coef))]
-mod$coef[grep("_KM", names(mod$coef))]
 
