@@ -28,7 +28,8 @@ kgrid$subset <- kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS"
 #rsub <- .make_raster(as.integer(kgrid$subset), kgrid, rt)
 #plor(rsub)
 
-## model for species
+Ahf <- colSums(HFarea[kgrid$subset,])
+
 fln <- list.files(file.path(ROOT, "out", "birds", "results", "josmshf"))
 fln <- sub("birds_abmi-josmshf_", "", fln)
 fln <- sub(".Rdata", "", fln)
@@ -36,34 +37,55 @@ fln <- sub(".Rdata", "", fln)
 SPP <- fln
 #SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL","RWBL")
 
-spp <- "CAWA"
+spp <- "BTNW"
+sector_res <- list()
+for (spp in SPP) {
+    cat(spp, "\n");flush.console()
+    Nsect <- list()
+    for (sect in c("All", sectors_all)) {
+        e <- new.env()
+        load(file.path(INDIR, sect, paste0(spp, ".RData")), envir=e)
+        #stopifnot(all(rownames(kgrid) == rownames(e$SA.Curr)))
+        Nsect[[sect]] <- cbind(cr=colSums(e$SA.Curr[kgrid$subset,]),
+            rf=colSums(e$SA.Ref[kgrid$subset,]))
+    }
 
-Ahf <- colSums(HFarea[kgrid$subset,])
-Nsect <- list()
-for (sect in c("All", sectors_all)) {
-    e <- new.env()
-    load(file.path(INDIR, sect, paste0(spp, ".RData")), envir=e)
-    #stopifnot(all(rownames(kgrid) == rownames(e$SA.Curr)))
-    Nsect[[sect]] <- cbind(cr=colSums(e$SA.Curr[kgrid$subset,]),
-        rf=colSums(e$SA.Ref[kgrid$subset,]))
+    ## reference abundance should not differ (much?)
+    round(100*sapply(Nsect, function(z) (z[,2]-Nsect[[1]][,2])/sum(Nsect[[1]][,2])), 3)
+    max(abs(round(100*sapply(Nsect, function(z) (z[,2]-Nsect[[1]][,2])/sum(Nsect[[1]][,2])), 3)))
+
+    Nref <- Nsect[[1]][,2]
+    Diffs <- sapply(Nsect, function(z) z[,1]-Nref)
+
+    ## treating all indirects (over native and not)
+    Tots <- cbind(All=Diffs[,1],
+        Conversion=c(0, diag(Diffs[-1,-1])), # direct
+        Disturbance=colSums(Diffs)-c(0, diag(Diffs[-1,-1]))) # indirect
+    Tots["Native","Disturbance"] <- sum(Tots[,"All"])-sum(Tots[-1,-1]) # synergy
+    Tots <- rbind(Tots, Total=colSums(Tots))
+    Tots1 <- Tots
+    ## treating only native indirects
+    Tots <- cbind(All=Diffs[,1],
+        Conversion=c(0, diag(Diffs[-1,-1])), # direct
+        Disturbance=c(0, Diffs[1,-1])) # indirect
+    Tots["Native","Disturbance"] <- sum(Tots[,"All"])-sum(Tots[-1,-1]) # synergy
+    Tots <- rbind(Tots, Total=colSums(Tots))
+    Tots2 <- Tots
+
+    Tots1 <- 100*Tots1/sum(Nref)
+    attr(Tots1, "Nref") <- sum(Nref)
+    sector_res[[spp]] <- Tots1
 }
 
-## reference abundance should not differ (much?)
-round(100*sapply(Nsect, function(z) (z[,2]-Nsect[[1]][,2])/sum(Nsect[[1]][,2])), 3)
-max(abs(round(100*sapply(Nsect, function(z) (z[,2]-Nsect[[1]][,2])/sum(Nsect[[1]][,2])), 3)))
+save(sector_res, Ahf, file=file.path(INDIR, "sector_res.RData"))
 
-Nref <- Nsect[[1]][,2]
-Diffs <- sapply(Nsect, function(z) z[,1]-Nref)
+summary(sapply(sector_res, function(z) z[1,3]))
+summary(t(sapply(sector_res, function(z) z["Total",])))
 
-## treating all indirects (over native and not)
-#Tots <- cbind(All=Diffs[,1],
-#    Conversion=c(0, diag(Diffs[-1,-1])), # direct
-#    Disturbance=colSums(Diffs)-c(0, diag(Diffs[-1,-1]))) # indirect
-## treating only native indirects
-Tots <- cbind(All=Diffs[,1],
-    Conversion=c(0, diag(Diffs[-1,-1])), # direct
-    Disturbance=c(0, Diffs[1,-1])) # indirect
-Tots["Native","Disturbance"] <- sum(Tots[,"All"])-sum(Tots[-1,-1]) # synergy
-Tots <- rbind(Tots, Total=colSums(Tots))
-round(100*Tots/sum(Nref), 2)
+plot(t(sapply(sector_res, function(z) z["Total",-1])), xlim=c(-50,50), ylim=c(-50,50))
+summary(t(sapply(sector_res, function(z) z["EnergyLin",])))
+
+boxplot(t(sapply(sector_res, function(z) z[2:8,1])), main="Joint", ylim=c(-50,50))
+boxplot(t(sapply(sector_res, function(z) z[2:8,2])), main="Direct", ylim=c(-50,50))
+boxplot(t(sapply(sector_res, function(z) z[2:8,3])), main="Indirect", ylim=c(-50,50))
 
