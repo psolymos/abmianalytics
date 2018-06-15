@@ -36,6 +36,8 @@ dd$scale <- "1/4 ha quadrant at site centre"
 dx <- nonDuplicated(d, QID, TRUE)[rownames(dd[[1]]),]
 dd_qha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
+dw_qha <- Xtab(Shape_Area ~ QID + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
+
 ## 1 ha
 dd <- make_vegHF_wide_v6(d,
     col.label="Site_YEAR",
@@ -47,6 +49,8 @@ dd <- make_vegHF_wide_v6(d,
 dd$scale <- "1 ha square around site centre"
 dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_1ha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+dw_1ha <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
 
 ## 150m
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
@@ -63,6 +67,8 @@ dd$scale <- "150m circle buffer around site centre"
 dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_150m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
+dw_150m <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
+
 ## 564m
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
     "Summary_2003_2017_SiteCentre_buf564m_rev04.csv")
@@ -77,6 +83,8 @@ dd <- make_vegHF_wide_v6(d,
 dd$scale <- "564m circle buffer around site centre"
 dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_564m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+dw_564m <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
 
 sapply(dd_1ha[1:4], function(z) summary(rowSums(z)))
 sapply(dd_qha[1:4], function(z) summary(rowSums(z)))
@@ -131,6 +139,7 @@ compare_sets(rownames(dd_150m[[1]]), rownames(xx))
 compare_sets(rownames(dd_564m[[1]]), rownames(xx))
 
 save(dd_point, dd_qha, dd_1ha, dd_150m, dd_564m, xx,
+    dw_qha, dw_1ha, dw_150m, dw_564m,
     file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_SiteCenter_v6verified.Rdata"))
 
