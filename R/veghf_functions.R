@@ -327,7 +327,8 @@ HF_fine=TRUE) {
     levels(d$VEGHFAGEclass) <- c(levels(d$VEGHFAGEclass), setdiff(AllLabels, levels(d$VEGHFAGEclass)))
 
     #### soils:
-    SoilLab <- c("UNK", "Water", "Wetland", "BdL", "BlO", "CS", "Cy", "Gr", "LenA", "LenSP",
+    SoilLab <- c("UNK", "Water", #"Wetland",
+        "BdL", "BlO", "CS", "Cy", "Gr", "LenA", "LenSP",
         "LenT", "LenS", "Li", "Lo", "LtcC", "LtcD", "LtcH", "LtcS", "Ov",
         "Sa", "Sb", "SL", "SwG", "Sy", "TB")
 
@@ -350,8 +351,8 @@ HF_fine=TRUE) {
     levels(d$SOILclass) <- c(levels(d$SOILclass), "Water")
 
     ## treat these as Water or Wetland?
-#    levels(d$SOILclass)[levels(d$SOILclass) %in% c("Len","LenW","Ltc","LtcR")] <- "Water"
-    levels(d$SOILclass)[levels(d$SOILclass) %in% c("Len","LenW","Ltc","LtcR")] <- "Wetland"
+    levels(d$SOILclass)[levels(d$SOILclass) %in% c("Len","LenW","Ltc","LtcR")] <- "Water"
+#    levels(d$SOILclass)[levels(d$SOILclass) %in% c("Len","LenW","Ltc","LtcR")] <- "Wetland"
     ## DEM/EC based Water class overrides soil
     d$SOILclass[d$VEGclass == "Water"] <- "Water"
 

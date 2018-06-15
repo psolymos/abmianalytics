@@ -36,7 +36,8 @@ dd$scale <- "1/4 ha quadrant at site centre"
 dx <- nonDuplicated(d, QID, TRUE)[rownames(dd[[1]]),]
 dd_qha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
-dw_qha <- Xtab(Shape_Area ~ QID + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
+#dw_qha <- Xtab(Shape_Area ~ QID + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
+dw_qha <- Xtab(Shape_Area ~ QID + Soil_Type_1, d)
 
 ## 1 ha
 dd <- make_vegHF_wide_v6(d,
@@ -50,7 +51,8 @@ dd$scale <- "1 ha square around site centre"
 dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_1ha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
-dw_1ha <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
+#dw_1ha <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
+dw_1ha <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d)
 
 ## 150m
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
@@ -67,7 +69,8 @@ dd$scale <- "150m circle buffer around site centre"
 dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_150m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
-dw_150m <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
+#dw_150m <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
+dw_150m <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d)
 
 ## 564m
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
@@ -84,7 +87,8 @@ dd$scale <- "564m circle buffer around site centre"
 dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_564m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
-dw_564m <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
+#dw_564m <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
+dw_564m <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d)
 
 sapply(dd_1ha[1:4], function(z) summary(rowSums(z)))
 sapply(dd_qha[1:4], function(z) summary(rowSums(z)))
