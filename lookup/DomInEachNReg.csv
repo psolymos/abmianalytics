@@ -1,0 +1,22 @@
+OID,NSRName,Vegetation,UplandFore,Moist,MoistUplan,UplandGene
+-1,Alpine,Rock/Rubble,Engelmann spruce,dry-derived,mesic-derived,Spruce
+-1,Athabasca Plain,Pine,Pine,dry-derived,dry-derived,Pine
+-1,Boreal Subarctic,Shrub,Coniferous,mesic-derived,mesic-derived,Conif
+-1,Central Mixedwood,Black spruce,Trembling aspen,wet-derived,mesic-derived,Decid
+-1,Central Parkland,Deciduous,Deciduous,mesic-derived,mesic-derived,Decid
+-1,Dry Mixedgrass,Grass/Herb,Trembling aspen,dry-derived,mesic-derived,Decid
+-1,Dry Mixedwood,Mixedwood,Mixedwood,mesic-derived,mesic-derived,Mixedwood
+-1,Foothills Fescue,Grass/Herb,Trembling aspen,dry-derived,mesic-derived,Decid
+-1,Foothills Parkland,Deciduous,Deciduous,mesic-derived,mesic-derived,Decid
+-1,Kazan Uplands,Pine,Pine,dry-derived,dry-derived,Pine
+-1,Lower Boreal Highlands,Black Spruce,Trembling aspen,wet-derived,mesic-derived,Decid
+-1,Lower Foothills,Trembling aspen,Trembling aspen,mesic-derived,mesic-derived,Decid
+-1,Mixedgrass,Grass/Herb,Balsam poplar,dry-derived,mesic-derived,Decid
+-1,Montane,Lodgepole pine,Lodgepole pine,dry-derived,dry-derived,Pine
+-1,Northern Fescue,Grass/Herb,Deciduous,dry-derived,mesic-derived,Decid
+-1,Northern Mixedwood,Black Spruce,Jack pine,wet-derived,dry-derived,Pine
+-1,Peace River Parkland,Shrub,Deciduous,mesic-derived,mesic-derived,Decid
+-1,Peace-Athabasca Delta,Marsh,Balsam popular,wet-derived,mesic-derived,Decid
+-1,Subalpine,Lodgepole pine,Lodgepole pine,dry-derived,dry-derived,Pine
+-1,Upper Boreal Highlands,Black spruce,Coniferous,wet-derived,mesic-derived,Conif
+-1,Upper Foothills,Lodgepole pine,Lodgepole pine,dry-derived,dry-derived,Pine
