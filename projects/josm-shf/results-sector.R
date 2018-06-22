@@ -37,7 +37,7 @@ fln <- sub(".Rdata", "", fln)
 SPP <- fln
 #SPP <- c("BOCH","ALFL","BTNW","CAWA","OVEN","OSFL","RWBL")
 
-spp <- "BTNW"
+spp <- "CAWA"
 sector_res <- list()
 for (spp in SPP) {
     cat(spp, "\n");flush.console()
@@ -77,7 +77,17 @@ for (spp in SPP) {
     sector_res[[spp]] <- Tots1
 }
 
-save(sector_res, Ahf, file=file.path(INDIR, "sector_res.RData"))
+names(Ahf)[1] <- "Native"
+Ahf <- Ahf[rownames(sector_res[[1]])[-9]]
+
+unit_res <- lapply(sector_res, function(z) {
+    (z[-9,]/100) / (Ahf/sum(Ahf))
+})
+save(unit_res, sector_res, Ahf, file=file.path(INDIR, "sector_res.RData"))
+
+
+
+load(file.path(INDIR, "sector_res.RData"))
 
 summary(sapply(sector_res, function(z) z[1,3]))
 summary(t(sapply(sector_res, function(z) z["Total",])))
@@ -88,4 +98,57 @@ summary(t(sapply(sector_res, function(z) z["EnergyLin",])))
 boxplot(t(sapply(sector_res, function(z) z[2:8,1])), main="Joint", ylim=c(-50,50))
 boxplot(t(sapply(sector_res, function(z) z[2:8,2])), main="Direct", ylim=c(-50,50))
 boxplot(t(sapply(sector_res, function(z) z[2:8,3])), main="Indirect", ylim=c(-50,50))
+
+## unit
+fu <- function(x) sign(x) * plogis(log(abs(x)))
+
+par(mfrow=c(3,1))
+z1 <- t(sapply(unit_res, function(z) z[2:8,1]))
+boxplot(fu(z1), main="Joint", ylim=c(-1,1), col="gold")
+abline(h=0,col=2);abline(h=c(-0.5,0.5),col=2,lty=2)
+z2 <- t(sapply(unit_res, function(z) z[2:8,2]))
+boxplot(fu(z2), main="Direct", ylim=c(-1,1), col="gold")
+abline(h=0,col=2);abline(h=c(-0.5,0.5),col=2,lty=2)
+z3 <- t(sapply(unit_res, function(z) z[2:8,3]))
+boxplot(fu(z3), main="Indirect", ylim=c(-1,1), col="gold")
+abline(h=0,col=2);abline(h=c(-0.5,0.5),col=2,lty=2)
+
+zzz <- matrix(NA, nrow(z1), 3*7+6)
+for (i in 1:3) {
+    for (j in 1:7) {
+        if (i==1)
+            z <- z1
+        if (i==2)
+            z <- z2
+        if (i==3)
+            z <- z3
+        if (j==1)
+            k <- 1:3
+        if (j==2)
+            k <- 5:7
+        if (j==3)
+            k <- 9:11
+        if (j==4)
+            k <- 13:15
+        if (j==5)
+            k <- 17:19
+        if (j==6)
+            k <- 21:23
+        if (j==7)
+            k <- 25:27
+        zzz[,k[i]] <- fu(z[,j])
+    }
+}
+summary(zzz)
+
+plot(0, type="n", xlim=c(0.5,27.5), ylim=c(-1,1), axes=FALSE, ann=FALSE)
+axis(2)
+title(ylab="Scaled unit effect")
+abline(h=0,col='#6a3d9a');abline(h=c(-0.5,0.5),col='#6a3d9a',lty=2)
+boxplot(zzz, add=TRUE,axes=FALSE, col=c('#1f78b4', '#e31a1c', '#fb9a99', '#a6cee3'))
+axis(1, c(2,6,10,14,18,22,26), c("Agr", "EnLin", "EnMW", "For", "Misc",
+    "RurUrb", "Transp"))
+box()
+legend("bottomleft",bty="n",pch=19,col=c('#1f78b4', '#e31a1c', '#fb9a99'),
+    legend=c("joint", "direct","indirect"))
 

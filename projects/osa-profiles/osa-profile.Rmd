@@ -1,0 +1,130 @@
+---
+title: 'OSR report regulatory support profiles'
+author: "Alberta Biodiversity Monitoring Institute"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output: word_document
+---
+
+```{r preamble,results='hide',echo=FALSE,warning=FALSE,message=FALSE}
+species <- "Ovenbird"
+#devtools::install_github("ABbiodiversity/cure4insect")
+library(cure4insect)
+library(knitr)
+library(rgdal)
+set_options(verbose=0, path = "w:/reports")
+load_common_data()
+info <- as.list(get_species_table()[species, c("SpeciesID", "CommonName", "ScientificName", "TSNID")])
+info <- lapply(info, as.character)
+y <- load_species_data(species)
+r <- rasterize_results(y)
+subset_common_data(id=NULL, species=species)
+x <- calculate_results(y)
+col1 <- colorRampPalette(rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8","#91BFDB","#4575B4")))(100)
+col2 <- colorRampPalette(rev(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B", "#D9EF8B",
+    "#A6D96A", "#66BD63", "#1A9850", "#006837")))(100)
+col3 <- colorRampPalette(c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0","#A1D76A","#4D9221"))(100)
+ply <- readOGR(dsn=system.file("extdata/OSA_bound.geojson", package="cure4insect"))
+ID <- overlay_polygon(ply)
+## write IDs into a text file
+#write.table(data.frame(SpatialID=ID), row.names=FALSE, file="SpatialID.txt")
+AB <- readOGR(dsn=system.file("extdata/AB_bound.geojson", package="cure4insect"))
+AB <- spTransform(AB, proj4string(r))
+ply <- spTransform(ply, proj4string(r))
+## calculate regional stats
+subset_common_data(id=ID, species)
+xreg <- calculate_results(y)
+## clip raster
+rreg <- crop(r, ply)
+rreg <- mask(rreg, ply)
+```
+
+# `r paste0(info$CommonName, " (_", info$ScientificName, "_)")`
+
+## Conservation Status
+
+Put here conservation status.
+
+## Introduction
+
+Managing human footprint in `r info$CommonName` breeding range.
+
+## At Issue:
+
+The `r info$CommonName` prefers **FIXME habitat needed** for breeding. 
+In the OSR, these habitats are being altered and fragmented due to 
+anthropogenic activities such as forestry and energy development 
+which may be negatively impacting `r info$CommonName` populations 
+(**FIXME citation needed**).
+
+## Management Goal
+
+Address knowledge gaps for `r info$CommonName`, including identification of preferred habitat in the OSR.
+
+## Management Strategies
+
+- Identify and monitor `r info$CommonName` distribution and habitat-use in breeding range,
+- develop habitat-use models for `r info$CommonName`???s breeding grounds,
+- avoid or mitigate the effects of new development in undisturbed `r info$CommonName` habitats,
+- identify and mitigate threats to `r info$CommonName` in breeding range (determine the impacts of habitat changes on abundance, survival, and reproductive success),
+- identify, encourage, and facilitate conservation of key sites (e.g. area of high nesting abundance).
+
+**FIXME Figure 1. Provincial map of detections -- to be added.**
+
+## Planning Tools:
+
+### 1. Identify Preferred Habitat
+
+#### 1a. Habitat Associations
+
+```{r hab-veg,echo=FALSE,fig.height=6,fig.width=12,fig.cap="Figure 2. Predicted relative abundance (bars) of `r info$CommonName` as a function of vegetation and human footprint type in the Boreal Forest and Foothills Natural Regions. Dots are added to forest types where harvesting occurs and show the predicted species abundance in cutblocks of various ages. Vertical lines represent 90% confidence intervals."}
+plot_abundance(species, type="veg_coef")
+```
+
+#### 1b. Predict Relative Abundance
+
+The ABMI predicted the current relative abundance of `r info$CommonName` within the OSR using the following variables: vegetation, soil type, human footprint, geographic location, and climate (Figure 3). Predicted areas of high relative abundance can be used to prioritize future surveying efforts for this species, or as a constraint layer to mitigate the impact of human footprint on this species.
+
+```{r raster-plots,echo=FALSE,fig.height=6,fig.width=12,fig.cap="Figure 3. Areas of high (red) to low (blue) relative abundance predicted by the ABMI within the OSR. The predictions were made within 1 km^2 units. Uncertainty and two-sided intactness also shown."}
+op <- par(mfrow=c(1,3), mar=c(1,1,1,1))
+plot(r[["NC"]], col=col1, axes=FALSE, box=FALSE, main="Current abundance")
+plot(r[["SE"]], col=col2, axes=FALSE, box=FALSE, main="Stadard error")
+plot(r[["SI2"]], col=col3, axes=FALSE, box=FALSE, main="Species intactness")
+par(op)
+```
+
+
+### 2. Regionally Important Areas
+
+**FIXME Figure 4. Regional map of detections -- to be added.**
+
+
+
+```{r raster-plots-reg,echo=FALSE,fig.height=12,fig.width=12,fig.cap="Figure 4. Relative abundance, uncertainty and two-sided intactness in the OSA."}
+op <- par(mfrow=c(2,2), mar=2*c(1,1,1,1))
+plot(rreg[["NC"]], col=col1, axes=FALSE, box=FALSE, main="Current abundance in OSA")
+plot(rreg[["SE"]], col=col2, axes=FALSE, box=FALSE, main="Stadard error in OSA")
+plot(rreg[["SI2"]], col=col3, axes=FALSE, box=FALSE, main="Species intactness in OSA")
+plot.new()
+par(op)
+```
+
+```{r intactness-table-reg,echo=FALSE,results='asis'}
+df3 <- data.frame(xreg$intactness)
+colnames(df3)[2:3] <- c("Lower", "Upper")
+kable(df3, digits=2, caption="Table 1. Species intactness results in the OSA.")
+```
+
+```{r secor-plot-reg,echo=FALSE,fig.height=6,fig.width=12}
+op <- par(mfrow=c(1,2))
+plot_sector(xreg, type="regional", main="Regional in OSA")
+plot_sector(xreg, type="underhf", "Under HF in OSA")
+par(op)
+```
+
+
+```{r sector-table-reg,echo=FALSE,results='asis'}
+df4 <- data.frame(xreg$sector)[,-1]
+kable(df4, digits=2, caption="Table 2. Sector effects results in the OSA.")
+```
+
+
