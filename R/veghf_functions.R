@@ -178,7 +178,8 @@ HF_fine=TRUE) {
     } else {
         d$HFclass <- hflt$HF_GROUP[match(d$FEATURE_TY, rownames(hflt))]
     }
-    ## HFclass inhgerits all levels from hflt[,hf.level]
+    d$HFclass <- as.factor(d$HFclass)
+    ## HFclass inherits all levels from hflt[,hf.level]
     ## need to add in the blank for further parsing
     levels(d$HFclass) <- c(levels(d$HFclass), "")
     d$HFclass[is.na(d$HFclass)] <- ""
@@ -886,5 +887,88 @@ function(x, NSR, ages_list, rm0=TRUE)
         x$veg_current <- x$veg_current[,!(colnames(x$veg_current) %in% excl)]
         x$veg_reference <- x$veg_reference[,!(colnames(x$veg_reference) %in% excl)]
     }
+    x
+}
+
+## ruleset for Combined_ChgByCWCS
+Combine_ChgByCWCS <- function(df) {
+    df2 <- df %>%
+      left_join(lut,c("Veg_Type","Moisture_Reg","PreBackfill_Source"))%>%
+      left_join(DomInEachNReg,c("NSRNAME"="NSRName"))
+    df2$CWCS_Class <- as.character(df2$CWCS_Class)
+    df2 <- df2 %>%
+      mutate(
+        Larch = Pct_of_Larch > 0,
+        CWCS_Class2 = CWCS_Class,
+        CWCS_Class = if_else(
+          is.na(CWCS_Class),
+          "Not Wetland",
+          CWCS_Class
+          ),
+        Combined2 = ""
+        )
+
+    ## Rule 1
+    df2 <- df2 %>% mutate(
+      Combined2 = if_else(
+        Larch & Combined == "TreedBog-BSpr",
+        "TreedFen-Larch",
+        Combined2
+        # Combined
+      )
+    )
+    ## Rule 2
+    cc <- "TreedWetland-Mixedwood"
+    df2$Combined2[df2$Combined==cc & df2$CWCS_Class== "Fen"] <- "TreedFen-Mixedwood"
+    df2$Combined2[df2$Combined==cc & df2$CWCS_Class== "Bog"] <- "TreedBog-BSpr"
+    df2$Combined2[df2$Combined==cc & df2$CWCS_Class== "Swamp"] <- "TreedSwamp-Mixedwood"
+    df2$Combined2[df2$Combined==cc & !(df2$CWCS_Class %in%
+        c("Fen","Bog","Swamp"))] <-     "TreedFen-Mixedwood"
+    zo <- df2 %>% filter(Combined == cc)
+    # Rule 3
+    cc <- "GraminoidWetland"
+    df2$Combined2[df2$Combined==cc & df2$CWCS_Class== "Bog"] <- "ShrubbyBog"
+    df2$Combined2[df2$Combined==cc & df2$CWCS_Class== "Marsh"] <- "Marsh"
+    df2$Combined2[df2$Combined==cc & df2$CWCS_Class== "Fen"] <- "GraminoidFen"
+    df2$Combined2[df2$Combined==cc & !(df2$CWCS_Class %in%
+        c("Fen","Bog","Marsh"))] <- "Marsh"
+    zo <- df2 %>% filter(Combined == cc)
+    ## Rule 4
+    cc <- "ShrubbyWetland"
+    df2$Combined2[df2$Combined==cc & df2$CWCS_Class== "Fen"] <- "ShrubbyFen"
+    df2$Combined2[df2$Combined==cc & df2$CWCS_Class== "Bog"] <- "ShrubbyBog"
+    df2$Combined2[df2$Combined==cc & !(df2$CWCS_Class %in%
+        c("Fen","Bog"))] <- "ShrubbySwamp"
+    zo <- df2 %>% filter(Combined == cc)
+    ## Rule 5
+    cc <- "Muskeg"
+    df2$Combined2[df2$Combined==cc & df2$CWCS_Class== "Fen"] <- "GraminoidFen"
+    df2$Combined2[ df2$Combined==cc &  !(df2$CWCS_Class %in% c("Swamp","Fen","Bog")) &
+        df2$PostBackfill_Source != "WBNP"] <-  "GraminoidFen"
+    df2$Combined2[df2$Combined==cc & df2$CWCS_Class== "Fen" &
+        df2$PostBackfill_Source == "Phase1" ] <- "TreedFen-BSpr"
+    df2$Combined2[df2$Combined==cc & df2$CWCS_Class != "Fen" &
+        df2$PostBackfill_Source == "Phase1" ] <- "TreedBog-BSpr"
+    df2$Combined2[df2$Combined==cc & df2$Combined2=="" ] <- "TreedFen-BSpr"
+    zo <- df2 %>% filter(Combined == cc)
+    ## No more rule
+    selection <- df2$Combined2==""
+    df2$Combined2[ selection ] <- df2$Combined[ selection ]
+    ## Cutblock not on upland additional rule
+    selection <- df2$FEATURE_TY %in% Harvest_Area &  !(df2$Combined2 %in% upland)
+    df2$Combined2[selection] <- df2$UplandGene[selection]
+    ## cleaning and saving
+
+    df2$CWCS_Class <- df2$CWCS_Class2
+    df3 <- df2 %>%
+      select(-Combined:-CWCS_Class2) %>%
+      rename(Combined_ChgByCWCS = Combined2)
+    df3$Combined_ChgByCWCS[is.na(df3$Combined_ChgByCWCS)] <- ""
+    df3$Combined_ChgByCWCS
+}
+
+make_older <- function(x, old="5") {
+    for (i in c("Decid","Mixedwood","Pine","Spruce","TreedBog","TreedFen","TreedSwamp"))
+        x[x == paste0(i, "0")] <- paste0(i, old)
     x
 }
