@@ -29,6 +29,8 @@ kgrid$subset <- kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS"
 #plor(rsub)
 
 Ahf <- colSums(HFarea[kgrid$subset,])
+names(Ahf)[1] <- "Native"
+
 
 fln <- list.files(file.path(ROOT, "out", "birds", "results", "josmshf"))
 fln <- sub("birds_abmi-josmshf_", "", fln)
@@ -50,13 +52,26 @@ for (spp in SPP) {
             rf=colSums(e$SA.Ref[kgrid$subset,]))
     }
 
-    ## reference abundance should not differ (much?)
-    round(100*sapply(Nsect, function(z) (z[,2]-Nsect[[1]][,2])/sum(Nsect[[1]][,2])), 3)
-    max(abs(round(100*sapply(Nsect, function(z) (z[,2]-Nsect[[1]][,2])/sum(Nsect[[1]][,2])), 3)))
+    ## reference abundance should not differ
+    #round(100*sapply(Nsect, function(z) (z[,2]-Nsect[[1]][,2])/sum(Nsect[[1]][,2])), 3)
+    #max(abs(round(100*sapply(Nsect, function(z) (z[,2]-Nsect[[1]][,2])/sum(Nsect[[1]][,2])), 3)))
 
     Nref <- Nsect[[1]][,2]
     Diffs <- sapply(Nsect, function(z) z[,1]-Nref)
+    Ahf <- Ahf[rownames(Diffs)]
 
+    Df2 <- cbind(Native=0,Diffs[,-1])
+    Tots <- cbind(#All=Diffs[,1],
+        Conversion=diag(Df2), # direct
+        Disturbance=colSums(Df2)-diag(Df2)) # indirect
+    Tots <- 100*Tots/sum(Nref)
+    U <- (Tots/100) / (Ahf/sum(Ahf))
+    attr(Tots, "Nref") <- sum(Nref)
+    attr(Tots, "synergy") <- 100*(sum(Diffs[,1])-sum(Df2))/sum(Nref)
+
+    sector_res[[spp]] <- list(diff=Diffs, total=Tots, unit=U, ref=Nref, ahf=Ahf)
+
+    if (FALSE) {
     ## treating all indirects (over native and not)
     Tots <- cbind(All=Diffs[,1],
         Conversion=c(0, diag(Diffs[-1,-1])), # direct
@@ -71,47 +86,31 @@ for (spp in SPP) {
     Tots["Native","Disturbance"] <- sum(Tots[,"All"])-sum(Tots[-1,-1]) # synergy
     Tots <- rbind(Tots, Total=colSums(Tots))
     Tots2 <- Tots
-
     Tots1 <- 100*Tots1/sum(Nref)
     attr(Tots1, "Nref") <- sum(Nref)
+
     sector_res[[spp]] <- Tots1
+    }
 }
 
-names(Ahf)[1] <- "Native"
-Ahf <- Ahf[rownames(sector_res[[1]])[-9]]
+save(sector_res, Ahf, file=file.path(INDIR, "sector_res.RData"))
 
-unit_res <- lapply(sector_res, function(z) {
-    (z[-9,]/100) / (Ahf/sum(Ahf))
-})
-save(unit_res, sector_res, Ahf, file=file.path(INDIR, "sector_res.RData"))
-
-
+## looking at results
 
 load(file.path(INDIR, "sector_res.RData"))
 
-summary(sapply(sector_res, function(z) z[1,3]))
-summary(t(sapply(sector_res, function(z) z["Total",])))
-
-plot(t(sapply(sector_res, function(z) z["Total",-1])), xlim=c(-50,50), ylim=c(-50,50))
-summary(t(sapply(sector_res, function(z) z["EnergyLin",])))
-
-boxplot(t(sapply(sector_res, function(z) z[2:8,1])), main="Joint", ylim=c(-50,50))
-boxplot(t(sapply(sector_res, function(z) z[2:8,2])), main="Direct", ylim=c(-50,50))
-boxplot(t(sapply(sector_res, function(z) z[2:8,3])), main="Indirect", ylim=c(-50,50))
-
-## unit
-fu <- function(x) sign(x) * plogis(log(abs(x)))
-
-par(mfrow=c(3,1))
-z1 <- t(sapply(unit_res, function(z) z[2:8,1]))
-boxplot(fu(z1), main="Joint", ylim=c(-1,1), col="gold")
-abline(h=0,col=2);abline(h=c(-0.5,0.5),col=2,lty=2)
-z2 <- t(sapply(unit_res, function(z) z[2:8,2]))
-boxplot(fu(z2), main="Direct", ylim=c(-1,1), col="gold")
-abline(h=0,col=2);abline(h=c(-0.5,0.5),col=2,lty=2)
-z3 <- t(sapply(unit_res, function(z) z[2:8,3]))
-boxplot(fu(z3), main="Indirect", ylim=c(-1,1), col="gold")
-abline(h=0,col=2);abline(h=c(-0.5,0.5),col=2,lty=2)
+## total
+op <- par(mfrow=c(3,1))
+z1 <- t(sapply(sector_res, function(z) z$total[-1,1]))
+boxplot(z1, main="Direct", ylim=c(-20,20))
+abline(h=0, col=4)
+z2 <- t(sapply(sector_res, function(z) z$total[-1,2]))
+boxplot(z2, main="Indirect", ylim=c(-20,20))
+abline(h=0, col=4)
+z3 <- t(sapply(sector_res, function(z) rowSums(z$total[-1,])))
+boxplot(z3, main="Combined", ylim=c(-20,20))
+abline(h=0, col=4)
+par(op)
 
 zzz <- matrix(NA, nrow(z1), 3*7+6)
 for (i in 1:3) {
@@ -136,7 +135,63 @@ for (i in 1:3) {
             k <- 21:23
         if (j==7)
             k <- 25:27
-        zzz[,k[i]] <- fu(z[,j])
+        zzz[,k[i]] <- z[,j]
+    }
+}
+summary(zzz)
+
+plot(0, type="n", xlim=c(0.5,27.5), ylim=c(-20,20), axes=FALSE, ann=FALSE)
+axis(2)
+title(ylab="Regional total effect")
+abline(h=0,col='#6a3d9a')#;abline(h=c(-0.5,0.5),col='#6a3d9a',lty=2)
+boxplot(zzz, add=TRUE,axes=FALSE, #range=0,
+    col=c('#1f78b4', '#e31a1c', '#fb9a99', '#a6cee3'))
+axis(1, c(2,6,10,14,18,22,26), c("Agr", "EnLin", "EnMW", "For", "Misc",
+    "RurUrb", "Transp"))
+box()
+legend("bottomleft",bty="n",pch=19,col=c('#1f78b4', '#e31a1c', '#fb9a99'),
+    legend=c("direct","indirect","combined"))
+
+## unit
+fu <- function(x) sign(x) * plogis(log(abs(x)))
+ppp <- (sector_res[[1]]$ahf/sum(sector_res[[1]]$ahf))
+
+op <- par(mfrow=c(3,1))
+z1 <- fu(t(sapply(sector_res, function(z) z$unit[-1,1])))
+boxplot(z1, main="Direct", ylim=c(-1,1), col="gold")
+abline(h=0,col=2);abline(h=c(-0.5,0.5),col=2,lty=2)
+z2 <- fu(t(sapply(sector_res, function(z) z$unit[-1,2])))
+boxplot(z2, main="Indirect", ylim=c(-1,1), col="gold")
+abline(h=0,col=2);abline(h=c(-0.5,0.5),col=2,lty=2)
+z3 <- fu(t(sapply(sector_res, function(z) (rowSums(z$total[-1,])/100)/ppp[-1])))
+boxplot(z3, main="Combined", ylim=c(-1,1), col="gold")
+abline(h=0,col=2);abline(h=c(-0.5,0.5),col=2,lty=2)
+par(op)
+
+zzz <- matrix(NA, nrow(z1), 3*7+6)
+for (i in 1:3) {
+    for (j in 1:7) {
+        if (i==1)
+            z <- z1
+        if (i==2)
+            z <- z2
+        if (i==3)
+            z <- z3
+        if (j==1)
+            k <- 1:3
+        if (j==2)
+            k <- 5:7
+        if (j==3)
+            k <- 9:11
+        if (j==4)
+            k <- 13:15
+        if (j==5)
+            k <- 17:19
+        if (j==6)
+            k <- 21:23
+        if (j==7)
+            k <- 25:27
+        zzz[,k[i]] <- z[,j]
     }
 }
 summary(zzz)
@@ -150,5 +205,50 @@ axis(1, c(2,6,10,14,18,22,26), c("Agr", "EnLin", "EnMW", "For", "Misc",
     "RurUrb", "Transp"))
 box()
 legend("bottomleft",bty="n",pch=19,col=c('#1f78b4', '#e31a1c', '#fb9a99'),
-    legend=c("joint", "direct","indirect"))
+    legend=c("direct","indirect","combined"))
 
+## interaction effects
+effs <- data.frame(
+    interact = sapply(sector_res, function(z) attr(z$total, "synergy")),
+    direct = sapply(sector_res, function(z) sum(z$total[,1])),
+    indirect = sapply(sector_res, function(z) sum(z$total[,2])))
+effs$combined <- effs$direct + effs$indirect
+effs$total <- effs$combined + effs$interact
+
+plot(effs[abs(effs$total)<=100,])
+summary(effs)
+
+
+## species
+
+Plot <- function(spp) {
+
+    Col <- c('#d95f02','#1b9e77','#7570b3','#e7298a','#66a61e','#e6ab02','#a6761d')
+    f <- function(v, ...) {
+        v[v > 3] <- 3.5
+        v[v < -3] <- -3.5
+        barplot(v, width=ppp[-1], space=0, border=NA, col=Col, axes=FALSE, ann=FALSE,
+            names.arg=NA, ylim=c(-3,3), ...)
+        abline(h=0, col=4)
+        abline(h=c(-1,1), col=4, lty=2)
+        box(col="lightgrey")
+        axis(2)
+        invisible()
+    }
+    op <- par(mfrow=c(2,2))
+    f(sector_res[[spp]]$unit[-1,1], main="Direct") # direct
+    f(sector_res[[spp]]$unit[-1,2], main="Indirect") # indirect
+    f((rowSums(sector_res[[spp]]$total[-1,])/100)/ppp[-1], main="Combined") # combined
+    plot.new()
+    title(sub=spp)
+    legend("topleft", bty="n", fill=Col, legend=rownames(z), border=NA,
+        text.col=Col, cex=1.5)
+    par(op)
+
+    invisible()
+}
+
+pdf(file.path(INDIR, "species.pdf"), onefile=TRUE, width=8, height=8)
+for (spp in names(sector_res))
+    Plot(spp)
+dev.off()
