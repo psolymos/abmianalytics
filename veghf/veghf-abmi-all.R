@@ -37,7 +37,21 @@ dx <- nonDuplicated(d, QID, TRUE)[rownames(dd[[1]]),]
 dd_qha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
 #dw_qha <- Xtab(Shape_Area ~ QID + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
-dw_qha <- Xtab(Shape_Area ~ QID + Soil_Type_1, d)
+#dw_qha <- Xtab(Shape_Area ~ QID + Soil_Type_1, d)
+tmp <- make_vegHF_wide_v6(d,
+    col.label="QID",
+    col.year="survey_year",
+    col.HFyear="year",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE, wide=FALSE) # use refined classes
+tmp$Soil_Type_2 <- as.character(tmp$SOILHFclass)
+tmp$Soil_Type_2[tmp$SOILHFclass == "Water"] <-
+    as.character(tmp$Soil_Type_1[tmp$SOILHFclass == "Water"])
+tmp$Soil_Type_2 <- factor(tmp$Soil_Type_2, unique(c(levels(tmp$Soil_Type_1),
+    levels(tmp$SOILHFclass))))
+dw_qha <- Xtab(Shape_Area ~ QID + Soil_Type_2, tmp)
+
 
 ## 1 ha
 dd <- make_vegHF_wide_v6(d,
@@ -52,7 +66,8 @@ dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_1ha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
 #dw_1ha <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
-dw_1ha <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d)
+#dw_1ha <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d)
+dw_1ha <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_2, tmp)
 
 ## 150m
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
@@ -70,7 +85,7 @@ dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_150m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
 #dw_150m <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
-dw_150m <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d)
+#dw_150m <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d)
 
 ## 564m
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
@@ -88,7 +103,7 @@ dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_564m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
 #dw_564m <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d[d$Combined_ChgByCWCS == "Water",])
-dw_564m <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d)
+#dw_564m <- Xtab(Shape_Area ~ Site_YEAR + Soil_Type_1, d)
 
 sapply(dd_1ha[1:4], function(z) summary(rowSums(z)))
 sapply(dd_qha[1:4], function(z) summary(rowSums(z)))
@@ -143,7 +158,7 @@ compare_sets(rownames(dd_150m[[1]]), rownames(xx))
 compare_sets(rownames(dd_564m[[1]]), rownames(xx))
 
 save(dd_point, dd_qha, dd_1ha, dd_150m, dd_564m, xx,
-    dw_qha, dw_1ha, dw_150m, dw_564m,
+    dw_qha, dw_1ha, #dw_150m, dw_564m,
     file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_SiteCenter_v6verified.Rdata"))
 
