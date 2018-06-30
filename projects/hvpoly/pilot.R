@@ -7,15 +7,24 @@ library(rgdal)
 library(mefa4)
 load_common_data()
 set_options(path = "w:/reports")
+#source("~/repos/abmianalytics/R/veghf_functions.R")
+
+make_younger <- function(z) {
+    for (i in rev(as.character(c(10, 20, 40, 60, 80, 100, 120, 140, 160)))) {
+        z[grep(i, z)] <- gsub(i, "0", z[grep(i, z)])
+    }
+    z
+}
 
 veg <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-V6.csv")
 veg_mapping <- cbind(V6=as.character(veg$VEGHFAGE_FINE), V5=as.character(veg$PolyReclass))
 soil <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v2014.csv")
-soil_mapping <- cbind(In=as.character(soil$SOILHF_FINE), Out=as.character(soil$UseInAnalysis))
+soil_mapping <- cbind(In=as.character(soil$SOILHF_FINE), Out=as.character(soil$PolyReclass))
 
 f <- file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
     "Backfilled100kmtestarea","polygon-tool-pilot.sqlite")
-Taxa <- c("lichens", "mammals", "mites", "mosses", "vplants")# "birds")
+Taxa <- c("lichens", "mammals", "mites", "mosses", "vplants", "birds")
+#Taxa <- "birds"
 
 ## species density
 
@@ -23,7 +32,7 @@ Taxa <- c("lichens", "mammals", "mites", "mosses", "vplants")# "birds")
 for (PilotArea in c("south", "north")) {
 
     db <- dbConnect(RSQLite::SQLite(), f)
-    dbListTables(db)
+    #dbListTables(db)
     if (PilotArea == "south") {
         x <- dbReadTable(db, "south")
     } else {
@@ -35,15 +44,15 @@ for (PilotArea in c("south", "north")) {
         if (is.character(x[,i]))
             x[,i] <- as.factor(x[,i])
 
-    x$VEGAGEclass2 <- reclass(x$VEGAGEclass, veg_mapping)
+    x$VEGAGEclass2 <- reclass(x$VEGAGEclass, veg_mapping, all=TRUE)
     #setdiff(x$VEGAGEclass2, get_levels()$veg)
-    x$VEGHFAGEclass2 <- reclass(x$VEGHFAGEclass, veg_mapping)
-    #setdiff(x$VEGHFAGEclass2, get_levels()$veg)
+    x$VEGHFAGEclass2 <- reclass(x$VEGHFAGEclass, veg_mapping, all=TRUE)
+    #setdiff(x$VEGHFAGEclass2, get_levels()$veg) # Zero is 0 abundance
 
-    x$SOILclass2 <- reclass(x$SOILclass, soil_mapping)
+    x$SOILclass2 <- reclass(x$SOILclass, soil_mapping, all=TRUE)
     #setdiff(x$SOILclass2, get_levels()$soil)
-    x$SOILHFclass2 <- reclass(x$SOILHFclass, soil_mapping)
-    #setdiff(x$SOILHFclass, soil_mapping[,1])
+    x$SOILHFclass2 <- reclass(x$SOILHFclass, soil_mapping, all=TRUE)
+    #setdiff(x$SOILHFclass, soil_mapping[,1]) # Zero is 0 abundance
 
     xy <- x[,c("xcoord", "ycoord")]
     coordinates(xy) <- ~ xcoord + ycoord
@@ -57,9 +66,14 @@ for (PilotArea in c("south", "north")) {
         x$VEGHFAGEclass3 <- x$VEGHFAGEclass2
         x$SOILHFclass3 <- x$SOILHFclass2
         if (taxon == "birds") {
-            stop("fix linear!")
-        #    x$VEGHFAGEclass3[lin] <- x$VEGAGEclass[lin]
-        #    x$SOILHFclass3[lin] <- x$SOILclass2
+            lin1 <- x$VEGHFAGEclass2 %in% c("SoftLin", "HardLin")
+            repl1 <- reclass(x$VEGAGEclass[lin1], veg_mapping, all=TRUE)
+            repl1 <- make_younger(repl1)
+            x$VEGHFAGEclass3[lin1] <- repl1
+
+            lin2 <- x$SOILHFclass2 %in% c("SoftLin", "HardLin")
+            repl2 <- reclass(x$SOILclass[lin2], soil_mapping, all=TRUE)
+            x$SOILHFclass3[lin2] <- repl2
         }
 
         #species <- "Achillea.millefolium"
