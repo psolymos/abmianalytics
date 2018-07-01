@@ -1,5 +1,3 @@
-## todo: linear feature stuff for birds: ise backfill with age R
-
 ## using the polygon tool
 library(DBI)
 library(cure4insect)
@@ -16,6 +14,9 @@ make_younger <- function(z) {
     z
 }
 
+#Job <- "sppden"
+Job <- "ofbirds"
+
 veg <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-V6.csv")
 veg_mapping <- cbind(V6=as.character(veg$VEGHFAGE_FINE), V5=as.character(veg$PolyReclass))
 soil <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v2014.csv")
@@ -23,13 +24,17 @@ soil_mapping <- cbind(In=as.character(soil$SOILHF_FINE), Out=as.character(soil$P
 
 f <- file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
     "Backfilled100kmtestarea","polygon-tool-pilot.sqlite")
-Taxa <- c("lichens", "mammals", "mites", "mosses", "vplants", "birds")
-#Taxa <- "birds"
+if (Job == "sppden")
+    Taxa <- c("lichens", "mammals", "mites", "mosses", "vplants", "birds")
+if (Job == "ofbirds")
+    Taxa <- "birds"
 
 ## species density
 
+PilotAreas <- if (Job == "sppden")
+    c("south", "north") else "north"
 #PilotArea <- "south"
-for (PilotArea in c("south", "north")) {
+for (PilotArea in PilotAreas) {
 
     db <- dbConnect(RSQLite::SQLite(), f)
     #dbListTables(db)
@@ -60,9 +65,10 @@ for (PilotArea in c("south", "north")) {
 
     #taxon <- "mammals"
     for (taxon in Taxa) {
-        Species <- get_all_species(taxon=taxon)
+        Species <- if (Job == "sppden")
+            get_all_species(taxon=taxon) else get_all_species(taxon, mregion="north")
         N <- length(Species)
-        SPDEN <- list()
+        #SPDEN <- list()
         x$VEGHFAGEclass3 <- x$VEGHFAGEclass2
         x$SOILHFclass3 <- x$SOILHFclass2
         if (taxon == "birds") {
@@ -77,23 +83,33 @@ for (PilotArea in c("south", "north")) {
         }
 
         #species <- "Achillea.millefolium"
-        OUT <- 0
+        OUT <- if (Job == "sppden")
+            0 else list()
         n <- 1
         for (species in Species) {
-            cat(PilotArea, taxon, species, "---", n, "/", N, "\n")
+            cat(Job, PilotArea, taxon, species, "---", n, "/", N, "\n")
             flush.console()
             object <- load_spclim_data(species)
             pred_curr <- suppressWarnings(predict(object, xy=xy,
                 veg=x$VEGHFAGEclass3, soil=x$SOILHFclass3))
             pred_curr[is.na(pred_curr)] <- 0 # water and non-veg
-            if (taxon == "birds")
-                pred_curr <- 1-exp(-pred_curr)
-            #OUT <- ((n-1)/N) * OUT  + (1/N) * pred_curr
-            OUT <- OUT + pred_curr
+            if (Job == "sppden") {
+                if (taxon == "birds")
+                    pred_curr <- 1-exp(-pred_curr)
+                #OUT <- ((n-1)/N) * OUT  + (1/N) * pred_curr
+                OUT <- OUT + pred_curr
+            } else {
+                OUT[[species]] <- pred_curr[,1,drop=FALSE]
+            }
             n <- n + 1
         }
-        SPDEN[[taxon]] <- OUT
-        save(OUT, file=file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
-            paste0("SpeciesDensity-", PilotArea, "-", taxon, ".RData")))
+        #SPDEN[[taxon]] <- OUT
+        if (Job == "sppden") {
+            save(OUT, file=file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+                paste0("SpeciesDensity-", PilotArea, "-", taxon, ".RData")))
+        } else {
+            save(OUT, file=file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+                paste0("OFbirds-", PilotArea, ".RData")))
+        }
     }
 }
