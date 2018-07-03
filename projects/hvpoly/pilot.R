@@ -113,3 +113,89 @@ for (PilotArea in PilotAreas) {
         }
     }
 }
+
+## processing raw output for final layer values
+fb <- "e:/peter/AB_data_v2018/data/raw/hvpoly/OFbirds-north.RData"
+
+fn <- c("e:/peter/AB_data_v2018/data/raw/hvpoly/SpeciesDensity-north-birds.RData",
+    "e:/peter/AB_data_v2018/data/raw/hvpoly/SpeciesDensity-north-vplants.RData",
+    "e:/peter/AB_data_v2018/data/raw/hvpoly/SpeciesDensity-north-mosses.RData",
+    "e:/peter/AB_data_v2018/data/raw/hvpoly/SpeciesDensity-north-mites.RData",
+    "e:/peter/AB_data_v2018/data/raw/hvpoly/SpeciesDensity-north-mammals.RData",
+    "e:/peter/AB_data_v2018/data/raw/hvpoly/SpeciesDensity-north-lichens.RData")
+
+
+## using the polygon tool
+library(DBI)
+library(cure4insect)
+library(rgdal)
+library(mefa4)
+f <- file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+    "Backfilled100kmtestarea","polygon-tool-pilot.sqlite")
+rt <- .read_raster_template()
+#rt200 <- disaggregate(rt, 5)
+Taxa <- c("lichens", "mammals", "mites", "mosses", "vplants", "birds")
+PilotArea <- "north"
+#PilotArea <- "south"
+
+db <- dbConnect(RSQLite::SQLite(), f)
+if (PilotArea == "south") {
+    x <- dbReadTable(db, "south")
+} else {
+    x <- dbReadTable(db, "north")
+}
+dbDisconnect(db)
+xy <- x[,c("xcoord", "ycoord")]
+coordinates(xy) <- ~ xcoord + ycoord
+proj4string(xy) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+xy <- spTransform(xy, proj4string(rt))
+
+#scaled <- TRUE
+for (scaled in c(TRUE, FALSE)) {
+#taxon <- "birds"
+ALL <- 0
+pdf(paste0("~/GoogleWork/abmi/hvpoly/results/species-density-", PilotArea,
+    "-", if (scaled) "scaled" else "unscaled", ".pdf"), onefile=TRUE)
+for (taxon in Taxa) {
+    cat(taxon, "\n");flush.console()
+    fn <- paste0("e:/peter/AB_data_v2018/data/raw/hvpoly/SpeciesDensity-",
+        PilotArea, "-", taxon, ".RData")
+    e <- new.env()
+    load(fn, envir=e)
+    OUT <- e$OUT
+    is0 <- OUT[,"soil"] == 0
+    OUT[is0,"soil"] <- OUT[is0,"veg"]
+    OUT[is0,"comb"] <- OUT[is0,"veg"]
+    rm(e)
+    if (scaled) {
+        for (i in 1:3)
+            OUT[,i] <- round(100*OUT[,i]/max(OUT[,i]))
+    }
+    ALL <- ALL + OUT
+
+    rrVeg <- trim(rasterize(xy, rt, OUT[,"veg"], fun=mean), values=NA)
+    rrSoil <- trim(rasterize(xy, rt, OUT[,"soil"], fun=mean), values=NA)
+    rrComb <- trim(rasterize(xy, rt, OUT[,"comb"], fun=mean), values=NA)
+    List <- list(rrVeg, rrSoil, rrComb)
+    names(List) <- paste(c("Veg", "Soil", "Combined"), taxon)
+    plot(stack(List),
+        colNA="grey", col=viridis::viridis(101), axes=FALSE, box=FALSE)
+}
+
+if (scaled) {
+    ALL <- ALL / length(Taxa)
+    for (i in 1:3)
+        ALL[,i] <- round(100*ALL[,i]/max(ALL[,i]))
+}
+
+rrVeg <- trim(rasterize(xy, rt, ALL[,"veg"], fun=mean), values=NA)
+rrSoil <- trim(rasterize(xy, rt, ALL[,"soil"], fun=mean), values=NA)
+rrComb <- trim(rasterize(xy, rt, ALL[,"comb"], fun=mean), values=NA)
+List <- list(rrVeg, rrSoil, rrComb)
+names(List) <- paste(c("Veg", "Soil", "Combined"), "All")
+plot(stack(List),
+    colNA="grey", col=viridis::viridis(101), axes=FALSE, box=FALSE)
+
+dev.off()
+}
+
