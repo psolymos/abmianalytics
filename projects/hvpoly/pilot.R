@@ -14,8 +14,8 @@ make_younger <- function(z) {
     z
 }
 
-#Job <- "sppden"
-Job <- "ofbirds"
+Job <- "sppden"
+#Job <- "ofbirds"
 
 veg <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-V6.csv")
 veg_mapping <- cbind(V6=as.character(veg$VEGHFAGE_FINE), V5=as.character(veg$PolyReclass))
@@ -62,11 +62,23 @@ for (PilotArea in PilotAreas) {
     xy <- x[,c("xcoord", "ycoord")]
     coordinates(xy) <- ~ xcoord + ycoord
     proj4string(xy) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    rpa <- raster(system.file("extdata/pAspen.tif", package="cure4insect"))
+    xy <- spTransform(xy, proj4string(rpa))
+    x$pAspen <- extract(rpa, xy)
+
+    ## use N/S
+    x$useN <- !(x$NRNAME %in% c("Grassland", "Parkland") | x$NSRNAME == "Dry Mixedwood")
+    x$useN[x$NSRNAME == "Dry Mixedwood" & x$POINT_Y > 56.7] <- TRUE
+    x$useS <- x$NRNAME == "Grassland"
+
 
     #taxon <- "mammals"
     for (taxon in Taxa) {
         Species <- if (Job == "sppden")
             get_all_species(taxon=taxon) else get_all_species(taxon, mregion="north")
+        SPPS <- get_all_species(taxon, mregion="south")
+        SPPN <- get_all_species(taxon, mregion="north")
+
         N <- length(Species)
         #SPDEN <- list()
         x$VEGHFAGEclass3 <- x$VEGHFAGEclass2
@@ -82,23 +94,40 @@ for (PilotArea in PilotAreas) {
             x$SOILHFclass3[lin2] <- repl2
         }
 
-        #species <- "Achillea.millefolium"
         OUT <- if (Job == "sppden")
             0 else list()
         n <- 1
+        #species <- "Achillea.millefolium"
         for (species in Species) {
             cat(Job, PilotArea, taxon, species, "---", n, "/", N, "\n")
             flush.console()
             object <- load_spclim_data(species)
             pred_curr <- suppressWarnings(predict(object, xy=xy,
                 veg=x$VEGHFAGEclass3, soil=x$SOILHFclass3))
-            pred_curr[is.na(pred_curr)] <- 0 # water and non-veg
+
             if (Job == "sppden") {
+                TYPE <- "C" # combo
+                if (!(species %in% SPPN))
+                    TYPE <- "S"
+                if (!(species %in% SPPS))
+                    TYPE <- "N"
+
+                wS <- 1-x$pAspen
+                if (TYPE == "S")
+                    wS[] <- 1
+                if (TYPE == "N")
+                    wS[] <- 0
+                wS[x$useS] <- 1
+                wS[x$useN] <- 0
+
+                cr <- wS * pred_curr[,"soil"] + (1-wS) * pred_curr[,"veg"]
+
                 if (taxon == "birds")
-                    pred_curr <- 1-exp(-pred_curr)
-                #OUT <- ((n-1)/N) * OUT  + (1/N) * pred_curr
-                OUT <- OUT + pred_curr
+                    cr <- 1-exp(-cr)
+                cr[is.na(cr)] <- 0 # water and non-veg
+                OUT <- OUT + cr
             } else {
+                pred_curr[is.na(pred_curr)] <- 0 # water and non-veg
                 OUT[[species]] <- pred_curr[,1,drop=FALSE]
             }
             n <- n + 1
