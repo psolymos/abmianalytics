@@ -169,10 +169,10 @@ coordinates(xy) <- ~ xcoord + ycoord
 proj4string(xy) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 xy <- spTransform(xy, proj4string(rt))
 
-#scaled <- TRUE
-for (scaled in c(TRUE, FALSE)) {
+scaled <- TRUE
 #taxon <- "birds"
 ALL <- 0
+TAB <- data.frame(OBJECTID=x$OBJECTID)
 pdf(paste0("~/GoogleWork/abmi/hvpoly/results/species-density-", PilotArea,
     "-", if (scaled) "scaled" else "unscaled", ".pdf"), onefile=TRUE)
 for (taxon in Taxa) {
@@ -184,6 +184,7 @@ for (taxon in Taxa) {
         OUT <- round(100*OUT/max(OUT))
     }
     ALL <- ALL + OUT
+    TAB[[taxon]] <- if (scaled) as.integer(OUT) else OUT
 
     rr <- trim(rasterize(xy, rt, OUT, fun=mean), values=NA)
     op <- par(mar=c(2,2,2,2))
@@ -197,6 +198,7 @@ if (scaled) {
     for (i in 1:3)
         ALL <- round(100*ALL/max(ALL))
 }
+TAB[["all"]] <- if (scaled) as.integer(ALL) else ALL
 
 rr <- trim(rasterize(xy, rt, ALL, fun=mean), values=NA)
 op <- par(mar=c(2,2,2,2))
@@ -205,5 +207,15 @@ plot(rr, main=paste("all -", PilotArea, "pilot,", if (scaled) "scaled" else "uns
 par(op)
 
 dev.off()
+
+fout <- file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+    "polygon-tool-pilot-results.sqlite")
+con <- dbConnect(RSQLite::SQLite(), fout)
+if (PilotArea == "south") {
+    dbWriteTable(con, "spden_south", TAB, overwrite = TRUE)
+} else {
+    dbWriteTable(con, "spden_north", TAB, overwrite = TRUE)
 }
+dbListTables(con)
+dbDisconnect(con)
 
