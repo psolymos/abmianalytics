@@ -104,6 +104,7 @@ for (PilotArea in PilotAreas) {
             object <- load_spclim_data(species)
             pred_curr <- suppressWarnings(predict(object, xy=xy,
                 veg=x$VEGHFAGEclass3, soil=x$SOILHFclass3))
+            pred_curr[is.na(pred_curr)] <- 0 # water and non-veg
 
             if (Job == "sppden") {
                 TYPE <- "C" # combo
@@ -124,7 +125,7 @@ for (PilotArea in PilotAreas) {
 
                 if (taxon == "birds")
                     cr <- 1-exp(-cr)
-                cr[is.na(cr)] <- 0 # water and non-veg
+                #cr[is.na(cr)] <- 0 # water and non-veg
                 OUT <- OUT + cr
             } else {
                 pred_curr[is.na(pred_curr)] <- 0 # water and non-veg
@@ -154,68 +155,106 @@ f <- file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
 rt <- .read_raster_template()
 #rt200 <- disaggregate(rt, 5)
 Taxa <- c("lichens", "mammals", "mites", "mosses", "vplants", "birds")
-#PilotArea <- "north"
-PilotArea <- "south"
-
-db <- dbConnect(RSQLite::SQLite(), f)
-if (PilotArea == "south") {
-    x <- dbReadTable(db, "south")
-} else {
-    x <- dbReadTable(db, "north")
-}
-dbDisconnect(db)
-xy <- x[,c("xcoord", "ycoord")]
-coordinates(xy) <- ~ xcoord + ycoord
-proj4string(xy) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-xy <- spTransform(xy, proj4string(rt))
-
 scaled <- TRUE
-#taxon <- "birds"
-ALL <- 0
-TAB <- data.frame(OBJECTID=x$OBJECTID)
-pdf(paste0("~/GoogleWork/abmi/hvpoly/results/species-density-", PilotArea,
-    "-", if (scaled) "scaled" else "unscaled", ".pdf"), onefile=TRUE)
-for (taxon in Taxa) {
-    cat(taxon, "\n");flush.console()
-    fn <- paste0("e:/peter/AB_data_v2018/data/raw/hvpoly/SpeciesDensity-",
-        PilotArea, "-", taxon, ".RData")
-    load(fn)
-    if (scaled) {
-        OUT <- round(100*OUT/max(OUT))
+
+
+#PilotArea <- "north"
+for (PilotArea in c("south", "north")) {
+
+    db <- dbConnect(RSQLite::SQLite(), f)
+    if (PilotArea == "south") {
+        x <- dbReadTable(db, "south")
+    } else {
+        x <- dbReadTable(db, "north")
     }
-    ALL <- ALL + OUT
-    TAB[[taxon]] <- if (scaled) as.integer(OUT) else OUT
+    dbDisconnect(db)
+    #xy <- x[,c("xcoord", "ycoord")]
+    #coordinates(xy) <- ~ xcoord + ycoord
+    #proj4string(xy) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    #xy <- spTransform(xy, proj4string(rt))
 
-    rr <- trim(rasterize(xy, rt, OUT, fun=mean), values=NA)
-    op <- par(mar=c(2,2,2,2))
-    plot(rr, main=paste(taxon, "-", PilotArea, "pilot,", if (scaled) "scaled" else "unscaled"),
-        colNA="grey", col=viridis::viridis(101), axes=FALSE, box=FALSE)
-    par(op)
+    #taxon <- "birds"
+    ALL <- 0
+    TAB <- data.frame(OBJECTID=x$OBJECTID)
+    for (taxon in Taxa) {
+        cat(PilotArea, taxon, "\n")
+        flush.console()
+        fn <- paste0("e:/peter/AB_data_v2018/data/raw/hvpoly/SpeciesDensity-",
+            PilotArea, "-", taxon, ".RData")
+        load(fn)
+        if (scaled) {
+            OUT <- round(100*OUT/max(OUT))
+        }
+        ALL <- ALL + OUT
+        TAB[[taxon]] <- if (scaled) as.integer(OUT) else OUT
+    }
+    if (scaled) {
+        ALL <- ALL / length(Taxa)
+        for (i in 1:3)
+            ALL <- round(100*ALL/max(ALL))
+    }
+    TAB[["all"]] <- if (scaled) as.integer(ALL) else ALL
+
+
+    fout <- file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+        "polygon-tool-pilot-results.sqlite")
+    con <- dbConnect(RSQLite::SQLite(), fout)
+    if (PilotArea == "south") {
+        dbWriteTable(con, "spden_south", TAB, overwrite = TRUE)
+    } else {
+        dbWriteTable(con, "spden_north", TAB, overwrite = TRUE)
+    }
+    #dbListTables(con)
+    dbDisconnect(con)
 }
 
-if (scaled) {
-    ALL <- ALL / length(Taxa)
-    for (i in 1:3)
-        ALL <- round(100*ALL/max(ALL))
+
+f2 <- file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+    "polygon-tool-pilot-results.sqlite")
+db <- dbConnect(RSQLite::SQLite(), f2)
+zs <- dbReadTable(db, "spden_south")
+zn <- dbReadTable(db, "spden_north")
+dbDisconnect(db)
+db <- dbConnect(RSQLite::SQLite(), f)
+xs <- dbReadTable(db, "south")
+xn <- dbReadTable(db, "north")
+dbDisconnect(db)
+xys <- xs[,c("xcoord", "ycoord")]
+coordinates(xys) <- ~ xcoord + ycoord
+proj4string(xys) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+xys <- spTransform(xys, proj4string(rt))
+xyn <- xn[,c("xcoord", "ycoord")]
+coordinates(xyn) <- ~ xcoord + ycoord
+proj4string(xyn) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+xyn <- spTransform(xys, proj4string(rt))
+zs <- zs[,-1]
+zn <- zn[,-1]
+
+ls <- list()
+for (i in colnames(zs)) {
+    rrN <- trim(rasterize(xys, rt, zs[,i] * xs$Shape_Area, fun=sum), values=NA)
+    rrA <- trim(rasterize(xys, rt, xs$Shape_Area, fun=sum), values=NA)
+    rr <- rrN/rrA
+    values(rr)[!is.na(values(rr)) & values(rr) == max(values(rr), na.rm=TRUE)] <- 100
+    ls[[i]] <- rr
 }
-TAB[["all"]] <- if (scaled) as.integer(ALL) else ALL
+ls <- stack(ls)
 
-rr <- trim(rasterize(xy, rt, ALL, fun=mean), values=NA)
-op <- par(mar=c(2,2,2,2))
-plot(rr, main=paste("all -", PilotArea, "pilot,", if (scaled) "scaled" else "unscaled"),
-    colNA="grey", col=viridis::viridis(101), axes=FALSE, box=FALSE)
-par(op)
+ln <- list()
+for (i in colnames(zn)) {
+    rrN <- trim(rasterize(xyn, rt, zn[,i] * xn$Shape_Area, fun=sum), values=NA)
+    rrA <- trim(rasterize(xyn, rt, xn$Shape_Area, fun=sum), values=NA)
+    rr <- rrN/rrA
+    values(rr)[!is.na(values(rr)) & values(rr) == max(values(rr), na.rm=TRUE)] <- 100
+    ln[[i]] <- rr
+}
+ln <- stack(ln)
 
+pdf("~/GoogleWork/abmi/hvpoly/results/species-density-south.pdf")
+plot(ls, colNA="grey", col=viridis::viridis(101), axes=FALSE, box=FALSE)
 dev.off()
 
-fout <- file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
-    "polygon-tool-pilot-results.sqlite")
-con <- dbConnect(RSQLite::SQLite(), fout)
-if (PilotArea == "south") {
-    dbWriteTable(con, "spden_south", TAB, overwrite = TRUE)
-} else {
-    dbWriteTable(con, "spden_north", TAB, overwrite = TRUE)
-}
-dbListTables(con)
-dbDisconnect(con)
+pdf("~/GoogleWork/abmi/hvpoly/results/species-density-north.pdf")
+plot(ln, colNA="grey", col=viridis::viridis(101), axes=FALSE, box=FALSE)
+dev.off()
 
