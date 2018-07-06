@@ -226,7 +226,7 @@ xys <- spTransform(xys, proj4string(rt))
 xyn <- xn[,c("xcoord", "ycoord")]
 coordinates(xyn) <- ~ xcoord + ycoord
 proj4string(xyn) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-xyn <- spTransform(xys, proj4string(rt))
+xyn <- spTransform(xyn, proj4string(rt))
 zs <- zs[,-1]
 zn <- zn[,-1]
 
