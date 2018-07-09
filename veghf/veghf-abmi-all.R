@@ -162,6 +162,67 @@ save(dd_point, dd_qha, dd_1ha, dd_150m, dd_564m, xx,
     file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_SiteCenter_v6verified.Rdata"))
 
+## All sites -----------------------------------------------
+
+library(DBI)
+
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
+    "20180706_All_Sites.sqlite")
+db <- dbConnect(RSQLite::SQLite(), f)
+dbListTables(db)
+d0 <- dbReadTable(db, "All_Sites_SiteCentre")
+d1 <- dbReadTable(db, "All_Sites_1ha")
+d2 <- dbReadTable(db, "All_Sites_buffer564m")
+dbDisconnect(db)
+
+d0$ABMI <- as.integer(d0$ABMI)
+d1$ABMI <- as.integer(d1$ABMI)
+d2$ABMI <- as.integer(d2$ABMI)
+
+dd_point <- make_vegHF_wide_v6(d0,
+    col.label="ABMI",
+    col.year=2016,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE, wide=FALSE) # use refined classes
+
+dd <- make_vegHF_wide_v6(d1,
+    col.label="ABMI",
+    col.year=2016,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "1 ha square around site centre"
+dx <- nonDuplicated(d1, ABMI, TRUE)[rownames(dd[[1]]),]
+dd_1ha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+dd <- make_vegHF_wide_v6(d2,
+    col.label="ABMI",
+    col.year=2016,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "564m circle buffer around site centre"
+dx <- nonDuplicated(d2, ABMI, TRUE)[rownames(dd[[1]]),]
+dd_564m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+save(dd_point, dd_1ha, dd_564m,
+    file=file.path(ROOT, VER, "data", "analysis", "site",
+    "veg-hf_allSites_v6hfi2016.Rdata"))
+
+x1 <- as.matrix(dd_1ha[[1]])
+x1 <- round(100*x1 / rowSums(x1), 4)
+write.csv(x1, file=file.path(ROOT, VER, "data", "analysis", "site",
+    "veg-hf_allSites_v6hfi2016-1ha.csv"))
+x2 <- as.matrix(dd_564m[[1]])
+x2 <- round(100*x2 / rowSums(x2), 4)
+write.csv(x2, file=file.path(ROOT, VER, "data", "analysis", "site",
+    "veg-hf_allSites_v6hfi2016-564m.csv"))
+
+
 ## Cam/ARU/Bird -----------------------------------------------
 
 ## point intersections
