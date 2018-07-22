@@ -323,6 +323,7 @@ pr_fun_for_road <- function(est, X0, X1) {
     cbind(mean=rowMeans(out), t(apply(out, 1, quantile, c(0.5, 0.025, 0.975))))
 }
 roadside_bias <- list()
+xn$BCR6
 Xn_onroad <- Xn_offroad <- Xn[Xn[,"ROAD01"] == 1,]
 Xn_offroad[,c("ROAD01","habCl:ROAD01")] <- 0
 for (spp in SPP) {
@@ -380,12 +381,12 @@ N7CI <- t(apply(N7B, 2, quantile, c(0.5, 0.025, 0.975)))
 N7mean <- colMeans(N7B)
 }
 
-load("e:/peter/AB_data_v2016/out/birds/data/mean-qpad-estimates.Rdata")
-qpad_vals <- qpad_vals[rownames(tax),]
+#load("e:/peter/AB_data_v2016/out/birds/data/mean-qpad-estimates.Rdata")
+#qpad_vals <- qpad_vals[rownames(tax),]
 
 ## roadside_bias, rai_pred, rai_data
-load("e:/peter/josm/2017/roadside_avoidance.Rdata")
-rsb <- t(sapply(roadside_bias, function(z) z[,1]))
+#load("e:/peter/josm/2017/roadside_avoidance.Rdata")
+#rsb <- t(sapply(roadside_bias, function(z) z[,1]))
 
 ## AvegH, Nhab
 load("e:/peter/josm/2017/stage7/predB/predictions_HAB.Rdata")
@@ -448,6 +449,16 @@ tmp <- xnss[!is.na(xy2BCR) & xy2BCR==24,]
 tmp <- tmp[!(tmp$PCODE != "BBSAB" & tmp$ROAD01 > 0),]
 tab <- table(tmp$HAB, tmp$ROAD01)
 
+xypt <- xn
+coordinates(xypt) <- ~ POINT_X + POINT_Y
+proj4string(xypt) <-
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+xypt <- spTransform(xypt, proj4string(r))
+xypt2BCR <- over(xypt, BCR)
+
+tabpt <- table(xn$HAB)
+
+
 #Ahab <- tab[,"0"] / sum(tab[,"0"])
 Ahab <- colSums(AvegH[,rownames(tab)]) / sum(AvegH[,rownames(tab)])
 Whab <- tab[,"1"] / sum(tab[,"1"])
@@ -476,7 +487,66 @@ pref_fun <- function(h) {
     sum(NN_for) / sum(NN)
 }
 pref <- sapply(NestAll, pref_fun)
-quantiles(pref,seq(0,1,0.25))
+quantile(pref,seq(0,1,0.25))
+
+## roadside count effect within BCR 6
+pr_fun_for_road <- function(est, X0, X1) {
+    lam1 <- exp(apply(est, 1, function(z) X1 %*% z))
+    Lam1 <- unname(colMeans(lam1))
+    lam0 <- exp(apply(est, 1, function(z) X0 %*% z))
+    Lam0 <- unname(colMeans(lam0))
+    out <- rbind(Lam1, Lam0, Ratio=Lam1 / Lam0)
+    cbind(mean=rowMeans(out), t(apply(out, 1, quantile, c(0.5, 0.025, 0.975))))
+}
+roadside_bias <- list()
+tmp <- xn[!is.na(xypt2BCR) & xypt2BCR==24,]
+tmp <- tmp[tmp$PCODE == "BBSAB",]
+Xn_offroad <- model.matrix(getTerms(mods, "formula"), tmp)
+colnames(Xn_offroad) <- fixNames(colnames(Xn_offroad))
+Xn_onroad <- Xn_offroad
+Xn_offroad[,c("ROAD01","habCl:ROAD01")] <- 0
+for (spp in SPP) {
+    cat(spp, "\n");flush.console()
+    resn <- loadSPP(file.path(ROOT, "out", "birds", "results", "josmshf",
+        paste0("birds_abmi-josmshf_", spp, ".Rdata")))
+    est7 <- getEst(resn, stage=7, na.out=FALSE, Xn_offroad)
+    roadside_bias[[spp]] <- pr_fun_for_road(est7, X0=Xn_offroad, X1=Xn_onroad)
+}
+rsb <- t(sapply(roadside_bias, function(z) z[,1]))
+
+## offsets
+
+load("e:/peter/AB_data_v2016/out/birds/data/data-offset-covars.Rdata")
+tmp <- xn[!is.na(xypt2BCR) & xypt2BCR==24,]
+offdat <- offdat[rownames(offdat) %in% rownames(tmp),]
+Xp <- cbind("(Intercept)"=1, as.matrix(offdat[,c("TSSR","JDAY","TSSR2","JDAY2")]))
+Xq <- cbind("(Intercept)"=1, TREE=offdat$TREE,
+    LCC2OpenWet=ifelse(offdat$LCC2=="OpenWet", 1, 0),
+    LCC4Conif=ifelse(offdat$LCC4=="Conif", 1, 0),
+    LCC4Open=ifelse(offdat$LCC4=="Open", 1, 0),
+    LCC4Wet=ifelse(offdat$LCC4=="Wet", 1, 0))
+library(QPAD)
+load_BAM_QPAD(3)
+getBAMversion()
+meanphi <- meantau <- meanphi0 <- meantau0 <- structure(rep(NA, length(SPP)), names=SPP)
+for (spp in SPP) {
+    cf0 <- exp(unlist(coefBAMspecies(spp, 0, 0)))
+    mi <- bestmodelBAMspecies(spp, type="BIC", model.sra=0:8)
+    cat(spp, unlist(mi), "\n");flush.console()
+    cfi <- coefBAMspecies(spp, mi$sra, mi$edr)
+    Xp2 <- Xp[,names(cfi$sra),drop=FALSE]
+    OKp <- rowSums(is.na(Xp2)) == 0
+    Xq2 <- Xq[,names(cfi$edr),drop=FALSE]
+    OKq <- rowSums(is.na(Xq2)) == 0
+    phi1 <- exp(drop(Xp2[OKp,,drop=FALSE] %*% cfi$sra))
+    tau1 <- exp(drop(Xq2[OKq,,drop=FALSE] %*% cfi$edr))
+    meanphi[spp] <- mean(phi1)
+    meantau[spp] <- mean(tau1)
+    meanphi0[spp] <- cf0[1]
+    meantau0[spp] <- cf0[2]
+}
+qpad_vals <- data.frame(Species=SPP, phi0=meanphi0, tau0=meantau0,
+    phi=meanphi, tau=meantau)
 
 ## taxonomy etc ---
 pop <- tax[,c("Species_ID", "English_Name", "Scientific_Name", "Spp")]
@@ -491,10 +561,14 @@ pop <- data.frame(pop, lhreg_data[match(rownames(pop), lhreg_data$spp),
 
 ## pop size estimates ---
 #pop$Npix <- NestTot[,"Mean"] # M males
-pop$Npix <- NestTot[,"50%"]
-pop$NpixLo <- NestTot[,"2.5%"]
-pop$NpixHi <- NestTot[,"97.5%"]
-pop$Npif <- (pif$Population_Estimate_unrounded / pif$Pair_Adjust) / 10^6 # M males
+#pop$Npix <- NestTot[,"50%"]
+#pop$NpixLo <- NestTot[,"2.5%"]
+#pop$NpixHi <- NestTot[,"97.5%"]
+#pop$Npif <- (pif$Population_Estimate_unrounded / pif$Pair_Adjust) / 10^6 # M males
+pop$Npix <- NestTot[,"50%"] * pif$Pair_Adjust # M inds
+pop$NpixLo <- NestTot[,"2.5%"] * pif$Pair_Adjust
+pop$NpixHi <- NestTot[,"97.5%"] * pif$Pair_Adjust
+pop$Npif <- pif$Population_Estimate_unrounded / 10^6 # M inds
 ## roadside related metrics
 pop$Y1 <- rsb[,"Lam1"]
 pop$Y0 <- rsb[,"Lam0"]
@@ -523,12 +597,13 @@ pop$DeltaExp <- pop$DeltaR + pop$DeltaT + pop$DeltaA + pop$DeltaH
 pop$epsilon <- pop$DeltaObs - pop$DeltaExp
 ## subset ---
 pop <- droplevels(pop[rowSums(is.na(pop))==0,])
+#pop <- droplevels(pop[!is.na(pop$Npif),])
 pop <- pop[sort(rownames(pop)),]
 Dall <- data.frame(Ahab=100*Ahab, Whab=100*Whab, sapply(NestAll, d_fun)[,rownames(pop)])
 
 write.csv(pop, row.names=FALSE, file="~/GoogleWork/bam/PIF-AB/draft2/Table1-estimates.csv")
-write.csv(100*Dall[,1:2], file="~/GoogleWork/bam/PIF-AB/draft2/Table2-habitats.csv")
 write.csv(Dall, file="~/GoogleWork/bam/PIF-AB/draft2/Table3-densities.csv")
+write.csv(cbind(Dall[,1:2], n=tabpt), file="~/GoogleWork/bam/PIF-AB/draft2/Table2-habitats.csv")
 
 ## --- making the figures ---
 
@@ -616,62 +691,98 @@ dev.off()
 
 pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig2-popsize.pdf", width=14, height=7)
 op <- par(mfrow=c(1,2), las=1, mar=c(4,4,1,2))
+pch <- 19 # ifelse(pop$Npif %[]% list(pop$NpixLo, pop$NpixHi), 21, 19)
 plot(pop[,c("Npif", "Npix")], xlab=expression(N[PIF]), ylab=expression(N[PIX]),
     type="n",
-    pch=19, col="#00000080", xlim=c(0, max(pop[,c("Npif", "Npix")])),
+    pch=pch, col="#00000080", xlim=c(0, max(pop[,c("Npif", "Npix")])),
     ylim=c(0, max(pop[,c("Npif", "Npix")])))
 abline(0,1, lty=2)
-Min <- 3
-Siz <- 18
+Min <- 3*2
+Siz <- 18*2
 di <- sqrt(pop[,"Npif"]^2+pop[,"Npix"]^2) > Min
 pp <- pop[pop[,"Npif"] < Min & pop[,"Npix"] < Min, c("Npif", "Npix")]
+ppp <- pop[pop[,"Npif"] < Min & pop[,"Npix"] < Min, ]
+pch2 <- 19 # ifelse(ppp$Npif %[]% list(ppp$NpixLo, ppp$NpixHi), 21, 19)
 di2 <- sqrt(pp[,"Npif"]^2+pp[,"Npix"]^2) > 1
 pp <- pp*Siz/Min
-pp[,1] <- pp[,1] + (30-Siz)
-lines(c(0,30-Siz), c(0, 0), col="grey")
-lines(c(0,30-Siz), c(Min, Siz), col="grey")
+pp[,1] <- pp[,1] + (60-Siz)
+lines(c(0,60-Siz), c(0, 0), col="grey")
+lines(c(0,60-Siz), c(Min, Siz), col="grey")
 rect(0, 0, Min, Min)
-rect(30-Siz, 0, 30-Siz+Min*Siz/Min, Min*Siz/Min, col="white")
-lines(c(30-Siz, 30), c(0, Siz), col=1, lty=2)
-points(pp, pch=19, col="#00000080")
-points(pop[,c("Npif", "Npix")], pch=19, col="#00000080")
-text(pop[,"Npif"]+1.2, pop[,"Npix"]+0, labels=ifelse(di, rownames(pop), ""), cex=0.4)
-text(pp[,"Npif"]+1.2, pp[,"Npix"]+0, labels=ifelse(di2, rownames(pp), ""), cex=0.4)
-segments(x0=c(30-Siz+c(0, 1, 2, 3)*Siz/3), y0=rep(Siz, 4), y1=rep(Siz, 4)+0.5)
-text(c(30-Siz+c(0, 1, 2, 3)*Siz/3), rep(Siz, 4)+1, 0:3)
+rect(60-Siz, 0, 60-Siz+Min*Siz/Min, Min*Siz/Min, col="white")
+lines(c(60-Siz, 60), c(0, Siz), col=1, lty=2)
+points(pp, pch=pch2, col="#00000080")
+points(pop[,c("Npif", "Npix")], pch=pch, col="#00000080")
+text(pop[,"Npif"]+1.2*2, pop[,"Npix"]+0, labels=ifelse(di, rownames(pop), ""), cex=0.4)
+text(pp[,"Npif"]+1.2*2, pp[,"Npix"]+0, labels=ifelse(di2, rownames(pp), ""), cex=0.4)
+segments(x0=c(60-Siz+c(0, 1, 2, 3)*Siz/3), y0=rep(Siz, 4), y1=rep(Siz, 4)+0.5)
+text(c(60-Siz+c(0, 1, 2, 3)*Siz/3), rep(Siz, 4)+1, 0:3)
 
-c00 <- c('#d7191c','darkgrey','#2b83ba')
-Col0 <- colorRampPalette(c00)(3)
-plot(rank(pop$Npif), rank(pop$Npix), xlab="PIF rank", ylab="PIX rank",
-    type="n",
-    pch=19, col="#00000080",
-    ylim=c(0, nrow(pop)), xlim=c(0, nrow(pop)))
+rnk <- cbind(rank(pop$Npif), rank(pop$Npix))
+rnk <- 100 * rnk / max(rnk)
+plot(rnk, xlab="PIF rank quantile (%)", ylab="PIX rank quantile (%)",
+    xlim=c(0,100), ylim=c(0,100), type="n")
 abline(0,1, lty=2)
-abline(h=c(24,48,72),v=c(24,48,72))
-text(rank(pop$Npif), rank(pop$Npix), labels=rownames(pop), cex=0.8,
-    col=Col0[as.integer(cut(pref, c(0, 0.33, 0.66, 1)))])
+text(rnk, labels=rownames(pop), cex=0.8)
+#abline(h=c(24,48,72),v=c(24,48,72))
 
 par(op)
 dev.off()
 
 
-pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig3-components.pdf", width=8, height=6)
+pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig3-components.pdf", width=10, height=7)
 op <- par(las=1)
 mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH")]
 colnames(mat) <- c("OBS", "EXP", "R", "T", "A", "H")
 par(las=1)
 dots_box_plot(mat, ylab="Log Ratio", method="kde")
 abline(h=0, col=1, lwd=1,lty=2)
+
+off <- 0.2
+i <- 1
+z <- mat[order(mat[,i], decreasing=TRUE),]
+text(i+off, head(z[,i], 1), cex=0.8, rownames(z)[1])
+text(i+off, tail(z[,i], 2), cex=0.8, rownames(z)[(nrow(z)-1):nrow(z)])
+
+i <- 2
+z <- mat[order(mat[,i], decreasing=TRUE),]
+text(i+off, head(z[,i], 1), cex=0.8, rownames(z)[1])
+text(i+off, tail(z[,i], 1), cex=0.8, rownames(z)[nrow(z)])
+
+i <- 3
+z <- mat[order(mat[,i], decreasing=TRUE),]
+text(i+off, head(z[,i], 2), cex=0.8, rownames(z)[1:2])
+text(i+off, tail(z[,i], 3), cex=0.8, rownames(z)[(nrow(z)-2):nrow(z)])
+
+i <- 5
+z <- mat[order(mat[,i], decreasing=TRUE),]
+text(i+off, head(z[,i], 1), cex=0.8, rownames(z)[1])
+text(i+off, tail(z[,i], 1), cex=0.8, rownames(z)[nrow(z)])
+
+i <- 6
+z <- mat[order(mat[,i], decreasing=TRUE),]
+text(i+off, head(z[,i], 1), cex=0.8, rownames(z)[1])
+#text(i+off, tail(z[,i], 1), cex=0.8, rownames(z)[nrow(z)])
+
+for (i in 1:6) {
+    zz1 <- format(mean(mat[,i]), trim = TRUE, scientific = FALSE, digits = 2)
+    zz2 <- format(sd(mat[,i]), trim = TRUE, scientific = FALSE, digits = 2)
+    mtext(paste("Mean =", zz1), side=1,at=i,line=3, cex=0.8)
+    mtext(paste("SD =", zz2), side=1,at=i,line=4, cex=0.8)
+}
 par(op)
 dev.off()
 
 mod <- lm(DeltaObs ~ DeltaR + DeltaT + DeltaA + DeltaH, pop)
-summary(mod)
 an <- anova(mod)
 an$Percent <- 100 * an[["Sum Sq"]] / sum(an[["Sum Sq"]])
 an <- an[c("Df", "Sum Sq", "Percent", "Mean Sq", "F value", "Pr(>F)")]
 an
+summary(mod)
 summary(mod)$sigma^2
+zval <- c(coef(summary(mod))[,1] - c(0, 1, 1, 1, 1))/coef(summary(mod))[,2]
+round(cbind(coef(summary(mod))[,1:2], ph=2 * pnorm(-abs(zval))), 3)
+round(an$Percent,1)
 
 mod2 <- step(lm(DeltaObs ~ (DeltaR + DeltaT + DeltaA + DeltaH)^2, pop), trace=0)
 summary(mod2)
@@ -679,6 +790,7 @@ an2 <- anova(mod2)
 an2$Percent <- 100 * an2[["Sum Sq"]] / sum(an2[["Sum Sq"]])
 an2 <- an2[c("Df", "Sum Sq", "Percent", "Mean Sq", "F value", "Pr(>F)")]
 an2
+
 
 ## road avoidance and ordination
 library(vegan)
@@ -730,10 +842,17 @@ par(op)
 dev.off()
 
 
+## results numbers
+summary(exp(pop$DeltaObs))
+table(pop$Npif < pop$NpixLo)
+table(pop$Npif > pop$NpixHi)
+table(pop$Npif %[]% list(pop$NpixLo, pop$NpixHi))
 
+# AMCR AMGO AMRO BARS BBMA BRBL CCSP EAPH EUST HOSP HOWR SAVS SOSP VESP
+rownames(pop)[pop$Npif > pop$NpixHi]
+# BANS BAOR CLSW EAKI GRCA LCSP MODO NESP RWBL TRESVEER YHBL
 
-
-
+rownames(pop)[pop$Npif %[]% list(pop$NpixLo, pop$NpixHi)]
 
 
 

@@ -36,6 +36,14 @@ xreg <- calculate_results(y)
 ## clip raster
 rreg <- crop(r, ply)
 rreg <- mask(rreg, ply)
+Max <- max(values(rreg[["NC"]]), values(rreg[["NR"]]), na.rm=TRUE)
+df <- (rreg[["NC"]] - rreg[["NR"]]) / Max
+df <- sign(df) * abs(df)^0.5
+df <- 100*df
+df[!is.na(values(df)) & values(df) > 100] <- 100
+Rng <- range(values(df), na.rm=TRUE)
+df[!is.na(values(df)) & values(df) == Rng[1]] <- -100
+df[!is.na(values(df)) & values(df) == Rng[2]] <- 100
 ```
 
 # `r paste0(info$CommonName, " (_", info$ScientificName, "_)")`
@@ -50,10 +58,10 @@ Managing human footprint in `r info$CommonName` breeding range.
 
 ## At Issue:
 
-The `r info$CommonName` prefers **FIXME habitat needed** for breeding. 
-In the OSR, these habitats are being altered and fragmented due to 
-anthropogenic activities such as forestry and energy development 
-which may be negatively impacting `r info$CommonName` populations 
+The `r info$CommonName` prefers **FIXME habitat needed** for breeding.
+In the OSR, these habitats are being altered and fragmented due to
+anthropogenic activities such as forestry and energy development
+which may be negatively impacting `r info$CommonName` populations
 (**FIXME citation needed**).
 
 ## Management Goal
@@ -104,7 +112,7 @@ op <- par(mfrow=c(2,2), mar=2*c(1,1,1,1))
 plot(rreg[["NC"]], col=col1, axes=FALSE, box=FALSE, main="Current abundance in OSA")
 plot(rreg[["SE"]], col=col2, axes=FALSE, box=FALSE, main="Stadard error in OSA")
 plot(rreg[["SI2"]], col=col3, axes=FALSE, box=FALSE, main="Species intactness in OSA")
-plot.new()
+plot(df, col=col3, axes=FALSE, box=FALSE, main="Difference in OSA")
 par(op)
 ```
 
