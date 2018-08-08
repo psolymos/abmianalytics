@@ -208,12 +208,67 @@ for (PilotArea in c("south", "north")) {
     dbDisconnect(con)
 }
 
+## OF birds
+
+library(DBI)
+
+load("e:/peter/AB_data_v2018/data/raw/hvpoly/OFbirds-north.RData")
+tab <- read.csv("~/repos/abmispecies/_data/birds.csv")
+rownames(tab) <- tab$sppid
+ofs <- read.csv("~/repos/abmianalytics/lookup/OF-specificity.csv")
+tab$ofspec <- ofs$ofspec[match(tab$AOU,ofs$species)]
+tabn <- tab[tab$modelN & !is.na(tab$ofspec),]
+boxplot(ofspec ~ oldforest, tabn)
+
+SPP1 <- rownames(tabn)[tabn$oldforest == 1]
+SPP2 <- rownames(tabn)[tabn$ofspec > 0.5]
+
+of1 <- 0
+for (spp in SPP1) {
+    v <- OUT[[spp]]$veg
+    v <- 100*v/max(v)
+    of1 <- of1 + v
+}
+of1 <- 100 * of1 / max(of1)
+
+of2 <- 0
+for (spp in SPP2) {
+    v <- OUT[[spp]]$veg
+    v <- 100*v/max(v)
+    of2 <- of2 + v
+}
+of2 <- 100 * of2 / max(of2)
+
+plot(of1,of2)
+
+fout <- file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+        "polygon-tool-pilot-results.sqlite")
+db <- dbConnect(RSQLite::SQLite(), fout)
+dbListTables(db)
+
+tmp <- dbReadTable(db, "spden_north")
+ofb <- data.frame(OBJECTID=tmp$OBJECTID, ofb_list=of1, ofb_spec=of2)
+dbWriteTable(db, "ofbirds_north", ofb, overwrite = TRUE)
+
+dbDisconnect(db)
+
+## plot results
+
+library(DBI)
+library(cure4insect)
+library(rgdal)
+library(mefa4)
+f <- file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+    "Backfilled100kmtestarea","polygon-tool-pilot.sqlite")
+rt <- .read_raster_template()
+#rt200 <- disaggregate(rt, 5)
 
 f2 <- file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
     "polygon-tool-pilot-results.sqlite")
 db <- dbConnect(RSQLite::SQLite(), f2)
 zs <- dbReadTable(db, "spden_south")
 zn <- dbReadTable(db, "spden_north")
+zb <- dbReadTable(db, "ofbirds_north")
 dbDisconnect(db)
 db <- dbConnect(RSQLite::SQLite(), f)
 xs <- dbReadTable(db, "south")
@@ -229,6 +284,7 @@ proj4string(xyn) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
 xyn <- spTransform(xyn, proj4string(rt))
 zs <- zs[,-1]
 zn <- zn[,-1]
+zb <- zb[,-1]
 
 ls <- list()
 for (i in colnames(zs)) {
@@ -258,3 +314,24 @@ pdf("~/GoogleWork/abmi/hvpoly/results/species-density-north.pdf")
 plot(ln, colNA="grey", col=viridis::viridis(101), axes=FALSE, box=FALSE)
 dev.off()
 
+lb <- list()
+for (i in colnames(zb)) {
+    rrN <- trim(rasterize(xyn, rt, zb[,i] * xn$Shape_Area, fun=sum), values=NA)
+    rrA <- trim(rasterize(xyn, rt, xn$Shape_Area, fun=sum), values=NA)
+    rr <- rrN/rrA
+    values(rr)[!is.na(values(rr)) & values(rr) == max(values(rr), na.rm=TRUE)] <- 100
+    lb[[i]] <- rr
+}
+lb <- stack(lb)
+
+pdf("~/GoogleWork/abmi/hvpoly/results/ofbirds-north.pdf", width=14)
+plot(lb, colNA="grey", col=viridis::viridis(101), axes=FALSE, box=FALSE)
+dev.off()
+
+datn <- data.frame(OBJECTID=xn$OBJECTID, zn, zb)
+datn$ofb_list <- as.integer(round(datn$ofb_list))
+datn$ofb_spec <- as.integer(round(datn$ofb_spec))
+dats <- data.frame(OBJECTID=xs$OBJECTID, zs)
+
+save(datn, dats, file=file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+    "peter-results.RData"))
