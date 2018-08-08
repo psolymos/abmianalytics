@@ -41,5 +41,3 @@ for (i in SPP[which(SPP == i):length(SPP)]) {
     unzip(file.path(ROOT, i, "future", "tmp.zip"), exdir=file.path(ROOT, i, "future"))
     unlink(file.path(ROOT, i, "future", "tmp.zip"))
 }
-
-# GCFL PIWA WCSP -- 403 Forbidden
