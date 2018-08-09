@@ -3,7 +3,7 @@ source("~/repos/abmianalytics/species/abmi-r-api.R")
 #data.frame(table=get_table_names())
 
 ## settings
-TAXA <- c("vplants", "mosses")
+TAXA <- c("vplants", "mosses", "mites")
 ROOT <- "e:/peter/AB_data_v2018"
 
 ## common stuff
@@ -89,6 +89,22 @@ for (taxon in TAXA) {
 
         tmp <- intersect(colnames(res1), colnames(res2))
         res <- rbind(res1[,tmp], res2[,tmp])
+    }
+
+    ## mites -------------------------
+    if (taxon == "mites") {
+        tab <- "T24A"
+        sub_col <- "Quadrant"
+        allowed_subunits <- c("NE", "NW", "SE", "SW")
+        sub_max <- 4
+
+        res <- get_table(tab)
+        res0 <- res
+        save_list <- "res0"
+
+        colnames(res) <- gsub(" ", "", colnames(res))
+        res <- add_labels(res, sub_col=sub_col)
+        res <- normalize_species(res)
     }
 
     cat(" --- OK\n  - processing attributes and x-tabs")
