@@ -105,6 +105,7 @@ for (taxon in TAXA) {
         colnames(res) <- gsub(" ", "", colnames(res))
         res <- add_labels(res, sub_col=sub_col)
         res <- normalize_species(res)
+        res$CommonName <- NA
     }
 
     cat(" --- OK\n  - processing attributes and x-tabs")
@@ -123,15 +124,21 @@ for (taxon in TAXA) {
     ## sample-species cross tabs
     y_site_year_sub <- Xtab(~ site_year_sub + SpeciesID, res,
         cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"))
-    y_site_year_sub[y_site_year_sub > 0] <- 1
+    y_site_year_sub01 <- y_site_year_sub
+    y_site_year_sub01[y_site_year_sub01 > 0] <- 1
+    if (taxon %in% c("vplants", "mosses", "lichens"))
+        y_site_year_sub <- y_site_year_sub01
 
     ## mefa bundles for sample/subunits
     m_site_year_sub <- Mefa(y_site_year_sub, x_site_year_sub, z)
     m_site_year_sub <- m_site_year_sub[,taxa(m_site_year_sub)$TaxonomicResolution %in%
         c("Genus", "Species")]
+    m_site_year_sub01 <- Mefa(y_site_year_sub01, x_site_year_sub, z)
+    m_site_year_sub01 <- m_site_year_sub01[,taxa(m_site_year_sub)$TaxonomicResolution %in%
+        c("Genus", "Species")]
 
-    ## aggregated cross tabs
-    tmp <- m_site_year_sub[samp(m_site_year_sub)$subunit %in% allowed_subunits]
+    ## aggregated cross tabs for binomial tables
+    tmp <- m_site_year_sub01[samp(m_site_year_sub01)$subunit %in% allowed_subunits]
     nn <- sum_by(rep(1, nrow(tmp)), droplevels(samp(tmp)$site_year))
     y_site_year <- groupSums(xtab(tmp), 1, droplevels(samp(tmp)$site_year))
     stopifnot(max(y_site_year) == sub_max)
