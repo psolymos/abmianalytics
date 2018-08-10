@@ -426,7 +426,8 @@ if (de$out$mid > 0) {
     save(SA.Curr, SA.Ref,
         file=file.path(OUTDIR, sect, paste0(spp, ".RData")))
 
-    unlink(file.path(OUTDIR, sect, spp), recursive=TRUE, force=TRUE)
+    if (sect == "All")
+        unlink(file.path(OUTDIR, sect, spp), recursive=TRUE, force=TRUE)
 
 } # species END
 
