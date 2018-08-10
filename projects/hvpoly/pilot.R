@@ -223,23 +223,32 @@ boxplot(ofspec ~ oldforest, tabn)
 SPP1 <- rownames(tabn)[tabn$oldforest == 1]
 SPP2 <- rownames(tabn)[tabn$ofspec > 0.5]
 
+load(system.file("extdata/raw_all.rda", package="cure4insect"))
+MAX1 <- sapply(res, "[[", "max")[SPP1]
+MAX2 <- sapply(res, "[[", "max")[SPP2]
+
 of1 <- 0
 for (spp in SPP1) {
     v <- OUT[[spp]]$veg
-    v <- 100*v/max(v)
+    v <- 100 * v / MAX1[spp]
     of1 <- of1 + v
 }
-of1 <- 100 * of1 / max(of1)
+#of1 <- 100 * of1 / max(of1)
+of1 <- of1 / length(SPP1)
 
 of2 <- 0
 for (spp in SPP2) {
     v <- OUT[[spp]]$veg
-    v <- 100*v/max(v)
+    v <- 100 * v / MAX2[spp]
     of2 <- of2 + v
 }
-of2 <- 100 * of2 / max(of2)
+#of2 <- 100 * of2 / max(of2)
+of2 <- of2 / length(SPP2)
 
-plot(of1,of2)
+ss <- sample(1:length(of1), 10^5)
+plot(of1[ss], of2[ss],col="#0000FF20",pch=19,
+    xlab="OF bird index (list)", ylab="OF bird index (specificity)")
+abline(0,1,col=2)
 
 fout <- file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
         "polygon-tool-pilot-results.sqlite")
@@ -251,6 +260,10 @@ ofb <- data.frame(OBJECTID=tmp$OBJECTID, ofb_list=of1, ofb_spec=of2)
 dbWriteTable(db, "ofbirds_north", ofb, overwrite = TRUE)
 
 dbDisconnect(db)
+
+tmp <- tabn[,c("species","oldforest","ofspec")]
+tmp <- tmp[order(tmp$ofspec, decreasing=TRUE),]
+write.csv(tmp,row.names=FALSE,file="OF-specificity.csv")
 
 ## plot results
 
