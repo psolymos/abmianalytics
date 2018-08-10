@@ -307,8 +307,8 @@ if (de$out$mid > 0) {
         load(file.path(ROOT, "out", "transitions", paste0(regi,".Rdata")))
         ii <- kgrid$LUFxNSR == regi
 
-        Aveg1 <- trVeg[rownames(kgrid)[ii],,drop=FALSE]
-        #Aveg1all <- Aveg1
+        Aveg1all <- trVeg[rownames(kgrid)[ii],,drop=FALSE]
+        Aveg1    <- trVeg[rownames(kgrid)[ii],,drop=FALSE]
         Aveg1[,ch2veg$exclude] <- 0
         rs <- rowSums(Aveg1)
         rs[rs <= 0] <- 1
@@ -369,6 +369,15 @@ if (de$out$mid > 0) {
             AD_rf <- t(D_hab_rf * t(Aveg1)) * exp(logPNclim01[,j])
             pxNcrS <- groupSums(AD_cr, 2, ch2veg$Sector)
             pxNrfS <- groupSums(AD_rf, 2, ch2veg$Sector)
+            if (sect == "All") {
+                abund <- list(
+                    Ntr=colSums(100 * AD_cr),
+                    Ncr=colSums(groupSums(100 * AD_cr, 2, ch2veg$cr)),
+                    Nrf=colSums(groupSums(100 * AD_rf, 2, ch2veg$rf)),
+                    Atr=colSums(Aveg1all/10^6),
+                    Acr=colSums(groupSums(Aveg1all/10^6, 2, ch2veg$cr)),
+                    Arf=colSums(groupSums(Aveg1all/10^6, 2, ch2veg$rf)))
+            }
 
         }
 
@@ -380,9 +389,10 @@ if (de$out$mid > 0) {
                 dir.create(file.path(OUTDIR, sect, spp))
             if (!dir.exists(file.path(OUTDIR, sect, spp)))
                 dir.create(file.path(OUTDIR, sect, spp))
-            save(TIME, #NSest,
-                pxNcrS,pxNrfS,
-                Cells, #SubsetInside,
+            toSave <- c("TIME", "pxNcrS", "pxNrfS", "Cells")
+            if (sect == "All")
+                toSave <- c(toSave, "abund")
+            save(list=toSave,
                 file=file.path(OUTDIR, sect, spp, paste0(regi, ".Rdata")))
         }
 
