@@ -439,3 +439,60 @@ sendmail(sprintf("<%s>", "bot@abmi.ca"),
             "prediction done",
             list("done"),
             control=list(smtpServer="ASPMX.L.GOOGLE.COM"))
+
+if (sect == "All") {
+    NAD <- list()
+    for (spp in SPP) {
+        fl <- list.files(file.path(OUTDIR, sect, spp))
+        NOUTtr <- matrix(0, length(fl), length(abund$Ntr))
+        NOUTcr <- matrix(0, length(fl), length(abund$Ncr))
+        NOUTrf <- matrix(0, length(fl), length(abund$Nrf))
+        rownames(NOUTtr) <- rownames(NOUTcr) <- rownames(NOUTrf) <- gsub(".Rdata", "", fl)
+        colnames(NOUTtr) <- names(abund$Ntr)
+        colnames(NOUTcr) <- names(abund$Ncr)
+        colnames(NOUTrf) <- names(abund$Nrf)
+        AOUTtr <- NOUTtr
+        AOUTcr <- NOUTcr
+        AOUTrf <- NOUTrf
+        for (i in 1:length(fl)) {
+            cat("Combine -", sect, spp, i, "/", length(fl), "\n");flush.console()
+            e <- new.env()
+            load(file.path(OUTDIR, sect, spp, fl[i]), envir=e)
+            j <- gsub(".Rdata", "", fl[i])
+            NOUTtr[j,] <- e$abund$Ntr
+            NOUTcr[j,] <- e$abund$Ncr
+            NOUTrf[j,] <- e$abund$Nrf
+            AOUTtr[j,] <- e$abund$Atr
+            AOUTcr[j,] <- e$abund$Acr
+            AOUTrf[j,] <- e$abund$Arf
+        }
+        ## N in males, A in km^2, D in males/ha
+        NOUTtr <- colSums(NOUTtr)
+        NOUTcr <- colSums(NOUTcr)
+        NOUTrf <- colSums(NOUTrf)
+        AOUTtr <- colSums(AOUTtr)
+        AOUTcr <- colSums(AOUTcr)
+        AOUTrf <- colSums(AOUTrf)
+        DOUTtr <- NOUTtr / (100 * AOUTtr)
+        DOUTcr <- NOUTcr / (100 * AOUTcr)
+        DOUTrf <- NOUTrf / (100 * AOUTrf)
+
+        NAD[[spp]] <- list(
+            tr=cbind(N=NOUTtr, A=AOUTtr, D=DOUTtr),
+            cr=cbind(N=NOUTcr, A=AOUTcr, D=DOUTcr),
+            rf=cbind(N=NOUTrf, A=AOUTrf, D=DOUTrf))
+    }
+}
+
+save(NAD, file=file.path(OUTDIR, "NAD.RData"))
+
+Dcr <- sapply(NAD, function(z) z$cr[,"D"])
+Dcr <- Dcr[!grepl("0", rownames(Dcr)),]
+Ncr <- sapply(NAD, function(z) z$cr[,"N"])
+Ncr <- Ncr[!grepl("0", rownames(Ncr)),]
+Acr <- NAD[[1]]$cr[,"A"] * 100 # ha
+Acr <- Acr[!grepl("0", names(Acr))]
+write.csv(data.frame(LC=rownames(Dcr), Dcr),
+    row.names=FALSE, file=file.path(OUTDIR, "pop-density-by-landcover.csv"))
+write.csv(data.frame(LC=rownames(Ncr), Area_ha=Acr, Ncr),
+    row.names=FALSE, file=file.path(OUTDIR, "pop-abundance-by-landcover.csv"))
