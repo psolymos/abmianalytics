@@ -29,7 +29,7 @@ if (Job == "sppden")
 if (Job == "ofbirds")
     Taxa <- "birds"
 
-## species density
+## species density --------------------------------------------------
 
 PilotAreas <- if (Job == "sppden")
     c("south", "north") else "north"
@@ -128,7 +128,6 @@ for (PilotArea in PilotAreas) {
                 #cr[is.na(cr)] <- 0 # water and non-veg
                 OUT <- OUT + cr
             } else {
-                pred_curr[is.na(pred_curr)] <- 0 # water and non-veg
                 OUT[[species]] <- pred_curr[,1,drop=FALSE]
             }
             n <- n + 1
@@ -265,7 +264,162 @@ tmp <- tabn[,c("species","oldforest","ofspec")]
 tmp <- tmp[order(tmp$ofspec, decreasing=TRUE),]
 write.csv(tmp,row.names=FALSE,file="OF-specificity.csv")
 
-## plot results
+## responsibility --------------------------------------
+
+#lt <- read.csv("~/repos/abmispecies/_data/birds.csv")
+#rt <- read.csv("~/repos/abmianalytics/lookup/birds-global-responsibility.csv")
+#rt$sppid <- lt$sppid[match(rt$Species, lt$species)]
+#rt$AOU <- lt$AOU[match(rt$Species, lt$species)]
+#write.csv(rt,row.names=FALSE,file="~/repos/abmianalytics/lookup/birds-global-responsibility.csv")
+
+library(DBI)
+library(cure4insect)
+library(rgdal)
+library(mefa4)
+set_options(path = "w:/reports")
+load_common_data()
+#source("~/repos/abmianalytics/R/veghf_functions.R")
+
+make_younger <- function(z) {
+    for (i in rev(as.character(c(10, 20, 40, 60, 80, 100, 120, 140, 160)))) {
+        z[grep(i, z)] <- gsub(i, "0", z[grep(i, z)])
+    }
+    z
+}
+
+rt <- read.csv("~/repos/abmianalytics/lookup/birds-global-responsibility.csv")
+rownames(rt) <- rt$sppid
+load(system.file("extdata/raw_all.rda", package="cure4insect"))
+
+veg <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-V6.csv")
+veg_mapping <- cbind(V6=as.character(veg$VEGHFAGE_FINE), V5=as.character(veg$PolyReclass))
+soil <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v2014.csv")
+soil_mapping <- cbind(In=as.character(soil$SOILHF_FINE), Out=as.character(soil$PolyReclass))
+
+f <- file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+    "Backfilled100kmtestarea","polygon-tool-pilot.sqlite")
+Taxa <- "birds"
+PilotAreas <- c("south", "north")
+#PilotArea <- "south"
+for (PilotArea in PilotAreas) {
+
+    db <- dbConnect(RSQLite::SQLite(), f)
+    if (PilotArea == "south") {
+        x <- dbReadTable(db, "south")
+    } else {
+        x <- dbReadTable(db, "north")
+    }
+    dbDisconnect(db)
+    for (i in 1:ncol(x))
+        if (is.character(x[,i]))
+            x[,i] <- as.factor(x[,i])
+
+    x$VEGAGEclass2 <- reclass(x$VEGAGEclass, veg_mapping, all=TRUE)
+    x$VEGHFAGEclass2 <- reclass(x$VEGHFAGEclass, veg_mapping, all=TRUE)
+    x$SOILclass2 <- reclass(x$SOILclass, soil_mapping, all=TRUE)
+    x$SOILHFclass2 <- reclass(x$SOILHFclass, soil_mapping, all=TRUE)
+
+    xy <- x[,c("xcoord", "ycoord")]
+    coordinates(xy) <- ~ xcoord + ycoord
+    proj4string(xy) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    rpa <- raster(system.file("extdata/pAspen.tif", package="cure4insect"))
+    xy <- spTransform(xy, proj4string(rpa))
+    x$pAspen <- extract(rpa, xy)
+
+    ## use N/S
+    x$useN <- !(x$NRNAME %in% c("Grassland", "Parkland") | x$NSRNAME == "Dry Mixedwood")
+    x$useN[x$NSRNAME == "Dry Mixedwood" & x$POINT_Y > 56.7] <- TRUE
+    x$useS <- x$NRNAME == "Grassland"
+
+    for (taxon in Taxa) {
+        Species <- get_all_species(taxon=taxon)
+        SPPS <- get_all_species(taxon, mregion="south")
+        SPPN <- get_all_species(taxon, mregion="north")
+
+        N <- length(Species)
+        x$VEGHFAGEclass3 <- x$VEGHFAGEclass2
+        x$SOILHFclass3 <- x$SOILHFclass2
+        if (taxon == "birds") {
+            lin1 <- x$VEGHFAGEclass2 %in% c("SoftLin", "HardLin")
+            repl1 <- reclass(x$VEGAGEclass[lin1], veg_mapping, all=TRUE)
+            repl1 <- make_younger(repl1)
+            x$VEGHFAGEclass3[lin1] <- repl1
+
+            lin2 <- x$SOILHFclass2 %in% c("SoftLin", "HardLin")
+            repl2 <- reclass(x$SOILclass[lin2], soil_mapping, all=TRUE)
+            x$SOILHFclass3[lin2] <- repl2
+        }
+
+        OUT <- 0
+        n <- 1
+        #species <- Species[1]
+        for (species in Species) {
+            cat("Responsibility", PilotArea, taxon, species, "---", n, "/", N, "\n")
+            flush.console()
+            object <- load_spclim_data(species)
+            pred_curr <- suppressWarnings(predict(object, xy=xy,
+                veg=x$VEGHFAGEclass3, soil=x$SOILHFclass3))
+            pred_curr[is.na(pred_curr)] <- 0 # water and non-veg
+            w <- rt[species, "Weighting"] # needs to sum to 1 over Species
+            MAX <- sapply(res, "[[", "max")[species]
+
+            TYPE <- "C" # combo
+            if (!(species %in% SPPN))
+                TYPE <- "S"
+            if (!(species %in% SPPS))
+                TYPE <- "N"
+
+            wS <- 1-x$pAspen
+            if (TYPE == "S")
+                wS[] <- 1
+            if (TYPE == "N")
+                wS[] <- 0
+            wS[x$useS] <- 1
+            wS[x$useN] <- 0
+
+            cr <- wS * pred_curr[,"soil"] + (1-wS) * pred_curr[,"veg"]
+
+            ## provincial 1km^2 max might be lower than poly level max
+            OUT <- OUT + (w * 100 * pmin(cr, MAX) / MAX)
+
+            n <- n + 1
+        }
+        save(OUT, file=file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+            paste0("birds-responsibility-", PilotArea, ".RData")))
+    }
+}
+
+library(DBI)
+load(file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+    paste0("peter-results.RData")))
+fout <- file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+        "polygon-tool-pilot-results.sqlite")
+db <- dbConnect(RSQLite::SQLite(), fout)
+dbListTables(db)
+
+e <- new.env()
+load(file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+    paste0("birds-responsibility-north.RData")), envir=e)
+tmp <- dbReadTable(db, "spden_north")
+df <- data.frame(OBJECTID=tmp$OBJECTID, resp_birds=e$OUT)
+datn$resp_birds <- e$OUT
+dbWriteTable(db, "resp_birds_north", df, overwrite = TRUE)
+
+e <- new.env()
+load(file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+    paste0("birds-responsibility-south.RData")), envir=e)
+tmp <- dbReadTable(db, "spden_south")
+df <- data.frame(OBJECTID=tmp$OBJECTID, resp_birds=e$OUT)
+dats$resp_birds <- e$OUT
+dbWriteTable(db, "resp_birds_south", df, overwrite = TRUE)
+
+dbDisconnect(db)
+
+save(datn, dats, file=file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
+    paste0("peter-results.RData")))
+
+
+## plot results ------------------------------------------------
 
 library(DBI)
 library(cure4insect)
@@ -348,3 +502,4 @@ dats <- data.frame(OBJECTID=xs$OBJECTID, zs)
 
 save(datn, dats, file=file.path("e:/peter", "AB_data_v2018", "data", "raw", "hvpoly",
     "peter-results.RData"))
+

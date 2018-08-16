@@ -8,6 +8,9 @@ ROOT <- "e:/peter/bam/climate-preds"
 fma <- readOGR(dsn="e:/peter/AB_data_v2018/data/raw/xy/alpac", "AlpacFMA2018")
 rr <- raster("e:/peter/bam/climate-preds/OVEN/current/OVEN_currmean.asc")
 fma <- spTransform(fma, proj4string(rr))
+AB <- readOGR(dsn=system.file("extdata/AB_bound.geojson", package="cure4insect"))
+AB <- spTransform(AB, proj4string(rr))
+
 ## Bird species list
 SPP <- list.files(ROOT)
 
@@ -59,6 +62,7 @@ dev.off()
 ## save maps as pdf
 
 col1 <- colorRampPalette(rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8","#91BFDB","#4575B4")))(100)
+
 pdf("e:/peter/bam/climate-preds/AlPacFMA_bird-climate-maps.pdf",
     height=10, width=18, onefile=TRUE)
 for (spp in SPP) {
@@ -86,3 +90,73 @@ for (spp in SPP) {
     par(op)
 }
 dev.off()
+
+for (spp in SPP) {
+    cat("\n", spp);flush.console()
+
+    fl <- structure(sprintf(c("e:/peter/bam/climate-preds/%s/current/%s_currmean.asc",
+        "e:/peter/bam/climate-preds/%s/future/%s_2020mean.asc",
+        "e:/peter/bam/climate-preds/%s/future/%s_2050mean.asc",
+        "e:/peter/bam/climate-preds/%s/future/%s_2080mean.asc"), spp, spp),
+        .Names = c("Baseline", "Yr_2020", "Yr_2050", "Yr_2080"))
+
+    r <- list()
+    for (i in 1:4)
+        r[[i]] <- raster(fl[i])
+    r[[1]] <- resample(r[[1]], r[[2]])
+    r[[1]] <- mask(r[[1]], r[[2]])
+    names(r) <- paste0(spp, c("_Baseline", "_2020", "_2050", "_2080"))
+    r <- stack(r)
+#    r <- mask(r, AB)
+#    r <- trim(r)
+
+    MAX <- quantile(c(values(r[[1]]), values(r[[2]]), values(r[[3]]), values(r[[4]])),
+        0.99, na.rm=TRUE)
+    for (i in 1:4) {
+        v <- values(r[[i]])
+        v[!is.na(v) & v > MAX] <- MAX
+        v[1] <- MAX
+        values(r[[i]]) <- v
+    }
+
+    png(paste0("e:/peter/bam/climate-preds/00/bird-climate-map-boreal-", spp, ".png"),
+        height=500, width=1000)
+    op <- par(mfrow=c(2,2), mar=c(1,1,1,1))
+    plot(r[[1]], col=col1, axes=FALSE, box=FALSE, main=names(r)[1], legend=FALSE)
+    plot(fma, add=TRUE)
+    plot(r[[2]], col=col1, axes=FALSE, box=FALSE, main=names(r)[2], legend=FALSE)
+    plot(fma, add=TRUE)
+    plot(r[[3]], col=col1, axes=FALSE, box=FALSE, main=names(r)[3], legend=FALSE)
+    plot(fma, add=TRUE)
+    plot(r[[4]], col=col1, axes=FALSE, box=FALSE, main=names(r)[4], legend=FALSE)
+    plot(fma, add=TRUE)
+    par(op)
+    dev.off()
+
+    r <- mask(r, AB)
+    r <- trim(r)
+
+    MAX <- quantile(c(values(r[[1]]), values(r[[2]]), values(r[[3]]), values(r[[4]])),
+        0.99, na.rm=TRUE)
+    for (i in 1:4) {
+        v <- values(r[[i]])
+        v[!is.na(v) & v > MAX] <- MAX
+        v[1] <- MAX
+        values(r[[i]]) <- v
+    }
+
+    png(paste0("e:/peter/bam/climate-preds/00/bird-climate-map-alberta-", spp, ".png"),
+        height=1000, width=1000)
+    op <- par(mfrow=c(2,2), mar=c(1,1,1,1))
+    plot(r[[1]], col=col1, axes=FALSE, box=FALSE, main=names(r)[1], legend=FALSE)
+    plot(fma, add=TRUE)
+    plot(r[[2]], col=col1, axes=FALSE, box=FALSE, main=names(r)[2], legend=FALSE)
+    plot(fma, add=TRUE)
+    plot(r[[3]], col=col1, axes=FALSE, box=FALSE, main=names(r)[3], legend=FALSE)
+    plot(fma, add=TRUE)
+    plot(r[[4]], col=col1, axes=FALSE, box=FALSE, main=names(r)[4], legend=FALSE)
+    plot(fma, add=TRUE)
+    par(op)
+    dev.off()
+
+}
