@@ -16,6 +16,7 @@ THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
 #HF_YEAR <- 2014 # HF inventory update year
 
 library(mefa4)
+library(DBI)
 source("~/repos/abmianalytics/R/veghf_functions.R")
 source("~/repos/bamanalytics/R/dataprocessing_functions.R")
 

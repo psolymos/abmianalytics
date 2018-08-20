@@ -132,7 +132,7 @@ HF_fine=TRUE) {
 
     if (is.null(d[,col.HABIT]))
         stop("Shoot -- check the damn HABIT column...")
-    d <- droplevels(d[d[,col.HABIT] != "",])
+    d <- droplevels(d[!is.na(d[,col.HABIT]) & d[,col.HABIT] != "",])
     d$HABIT <- reclass(d[,col.HABIT], as.matrix(recl), all=TRUE)
 
     ## designate a label column (there are different column names in use)
@@ -219,6 +219,8 @@ HF_fine=TRUE) {
     d$AgeRf <- as.integer(sign(d$ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$ORIGIN_YEAR) / 20)))
     ## truncate reference age classes at 9 = 160+
     d$AgeRf[d$AgeRf > 9L] <- 9L
+    ## catching origin_year > sample_year instances: this defaults to old
+    d$AgeRf[d$AgeRf < 1] <- 9L
     ## placeholder for recent burn (0-9 years)
     tmp <- as.integer(sign(d$ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$ORIGIN_YEAR) / 10)))
     d$AgeRf[tmp == 1L] <- 999L
@@ -238,6 +240,8 @@ HF_fine=TRUE) {
     d$AgeCr <- as.integer(sign(d$CC_ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$CC_ORIGIN_YEAR) / 20)))
     ## truncate current age classes at 9
     d$AgeCr[d$AgeCr > 9L] <- 9L
+    ## catching origin_year > sample_year instances: this defaults to old
+    d$AgeCr[d$AgeCr < 1] <- 9L
     ## placeholder for recent CC (0-9 years)
     tmp <- as.integer(sign(d$CC_ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$CC_ORIGIN_YEAR) / 10)))
     d$AgeCr[tmp == 1L] <- 999L

@@ -164,8 +164,6 @@ save(dd_point, dd_qha, dd_1ha, dd_150m, dd_564m, xx,
 
 ## All sites -----------------------------------------------
 
-library(DBI)
-
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
     "20180706_All_Sites.sqlite")
 db <- dbConnect(RSQLite::SQLite(), f)
@@ -221,6 +219,102 @@ x2 <- as.matrix(dd_564m[[1]])
 x2 <- round(100*x2 / rowSums(x2), 4)
 write.csv(x2, file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_allSites_v6hfi2016-564m.csv"))
+
+## Wetlands ----------------------------
+
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "wetlands",
+    "20180820_Wetlands_2018.sqlite")
+db <- dbConnect(RSQLite::SQLite(), f)
+tabs <- list()
+for (i in dbListTables(db))
+    tabs[[i]] <- dbReadTable(db, i)
+dbDisconnect(db)
+str(tabs)
+
+nm_ci <- c("AGGC_CI_2009", "AGGC_CI_2010", "AGGC_CI_2011", "AGGC_CI_2012",
+    "AGGC_CI_2013", "AGGC_CI_2014", "AGGC_CI_2015", "AGGC_CI_2016",
+    "AGGC_CI_2017")
+nm_clim <- c("Climate_AHM", "Climate_Eref", "Climate_FFP",
+    "Climate_MAP", "Climate_MAT", "Climate_MCMT", "Climate_MWMT",
+    "Climate_Populus_tremuloides_brtpred_nofp")
+nm_buff <- "SummaryTableInBuffers"
+nm_catch <- "SummaryTableInCatchments_rev01"
+
+## climate stuff
+t(sapply(nm_clim, function(i)
+    sapply(1:3, function(j) all(tabs[[nm_clim[1]]][,j] == tabs[[i]][,j]))))
+clim <- data.frame(tabs[[nm_clim[1]]][,1:3],
+    sapply(tabs[nm_clim], "[[", "RASTERVALU"))
+clim$SiteYear <- paste0(clim$Site_ID_Ref, "_", clim$year)
+for (i in 1:ncol(clim))
+    if (is.character(clim[,i]))
+        clim[,i] <- as.factor(clim[,i])
+
+## catchment level veg/hf/soil, veg61 and HFI2014
+d <- tabs[[nm_catch]]
+sum(is.na(d$Combined_ChgByCWCS))
+#d <- d[!is.na(d$Combined_ChgByCWCS),]
+d$SiteYear <- paste0(d$Site_ID, "_", d$Year)
+for (i in 1:ncol(d))
+    if (is.character(d[,i]))
+        d[,i] <- as.factor(d[,i])
+
+dd <- make_vegHF_wide_v6(d,
+    col.label="SiteYear",
+    col.year="Year",
+    col.HFyear="YEAR_1",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "Catchment area around wetland [V6 backfilled + 2014v2 HFI]"
+dx <- nonDuplicated(d, SiteYear, TRUE)[rownames(dd[[1]]),]
+ddw_catch <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+## buffer level veg/hf/soil, 0-20, 20-100 and 100-250 m buffer
+d <- tabs[[nm_buff]]
+#d <- d[!is.na(d$Combined_ChgByCWCS),]
+d$SiteYear <- paste0(d$Site_ID, "_", d$Year)
+for (i in 1:ncol(d))
+    if (is.character(d[,i]))
+        d[,i] <- as.factor(d[,i])
+
+dd <- make_vegHF_wide_v6(d[d$buffer == "20m",],
+    col.label="SiteYear",
+    col.year="Year",
+    col.HFyear="YEAR_1",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "0-20 m buffer area around wetland [V6 backfilled + verified HF]"
+dx <- nonDuplicated(d, SiteYear, TRUE)[rownames(dd[[1]]),]
+ddw_20m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+dd <- make_vegHF_wide_v6(d[d$buffer %in% c("20m", "20_100m"),],
+    col.label="SiteYear",
+    col.year="Year",
+    col.HFyear="YEAR_1",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "0-100 m buffer area around wetland [V6 backfilled + verified HF]"
+dx <- nonDuplicated(d, SiteYear, TRUE)[rownames(dd[[1]]),]
+ddw_100m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+dd <- make_vegHF_wide_v6(d,
+    col.label="SiteYear",
+    col.year="Year",
+    col.HFyear="YEAR_1",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "0-250 m buffer area around wetland [V6 backfilled + verified HF]"
+dx <- nonDuplicated(d, SiteYear, TRUE)[rownames(dd[[1]]),]
+ddw_250m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+save(clim, ddw_catch, ddw_20m, ddw_100m, ddw_250m,
+    file=file.path(ROOT, VER, "data", "analysis", "site",
+    "veg-hf_wetlands_v6x.Rdata"))
+
 
 
 ## Cam/ARU/Bird -----------------------------------------------
