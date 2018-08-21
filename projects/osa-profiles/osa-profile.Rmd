@@ -5,8 +5,27 @@ date: "`r format(Sys.time(), '%Y-%m-%d')`"
 output: word_document
 ---
 
+```{r include=FALSE}
+## preprocessing stuff
+library(rgdal)
+ogrListLayers(dsn="e:/peter/AB_data_v2018/data/raw/xy/Oilsands-Boundaries.gdb")
+z1 <- readOGR(dsn="e:/peter/AB_data_v2018/data/raw/xy/Oilsands-Boundaries.gdb",
+              "Oilsand_Mineable10TM")
+z2 <- readOGR(dsn="e:/peter/AB_data_v2018/data/raw/xy/Oilsands-Boundaries.gdb",
+              "OilsandRegionDissolve10TM")
+z3 <- readOGR(dsn="e:/peter/AB_data_v2018/data/raw/xy/Oilsands-Boundaries.gdb",
+              "Oilsand3RegionDissolve10TM")
+plot(z3, col=c("yellow","orange","tan"), border=c("yellow", "orange", "tan"))
+plot(z2, add=TRUE)
+plot(z1, add=TRUE, col=2, border=2)
+```
+
 ```{r preamble,results='hide',echo=FALSE,warning=FALSE,message=FALSE}
 species <- "Ovenbird"
+#species <- "BlackthroatedGreenWarbler"
+#species <- "CanadaWarbler"
+#species <- "BrownCreeper"
+#species <- "BaybreastedWarbler"
 #devtools::install_github("ABbiodiversity/cure4insect")
 library(cure4insect)
 library(knitr)
@@ -23,7 +42,9 @@ col1 <- colorRampPalette(rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8","#91BFDB"
 col2 <- colorRampPalette(rev(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B", "#D9EF8B",
     "#A6D96A", "#66BD63", "#1A9850", "#006837")))(100)
 col3 <- colorRampPalette(c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0","#A1D76A","#4D9221"))(100)
-ply <- readOGR(dsn=system.file("extdata/OSA_bound.geojson", package="cure4insect"))
+#ply <- readOGR(dsn=system.file("extdata/OSA_bound.geojson", package="cure4insect"))
+ply <- readOGR(dsn="e:/peter/AB_data_v2018/data/raw/xy/Oilsands-Boundaries.gdb",
+              "OilsandRegionDissolve10TM")
 ID <- overlay_polygon(ply)
 ## write IDs into a text file
 #write.table(data.frame(SpatialID=ID), row.names=FALSE, file="SpatialID.txt")
