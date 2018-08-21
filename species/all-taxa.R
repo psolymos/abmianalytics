@@ -23,17 +23,18 @@ add_labels <- function(res, sub_col) {
     })
     res
 }
-normalize_species <- function(res) {
-#    res$ScientificName0 <- res$ScientificName
-    levels(res$ScientificName) <- gsub("X ", "", levels(res$ScientificName))
-    levels(res$ScientificName) <- gsub(" x ", " ", levels(res$ScientificName))
-    levels(res$ScientificName) <- sapply(strsplit(levels(res$ScientificName), " "), function(z) {
-        paste(z[1:min(2, length(z))], collapse=" ")
-    })
+normalize_species <- function(res, spgen_only=TRUE) {
+    if (spgen_only) {
+#        res$ScientificName0 <- res$ScientificName
+        levels(res$ScientificName) <- gsub("X ", "", levels(res$ScientificName))
+        levels(res$ScientificName) <- gsub(" x ", " ", levels(res$ScientificName))
+        levels(res$ScientificName) <- sapply(strsplit(levels(res$ScientificName), " "), function(z) {
+            paste(z[1:min(2, length(z))], collapse=" ")
+        })
 
-    levels(res$TaxonomicResolution)[levels(res$TaxonomicResolution) %in%
-        c("Subspecies", "Variety")] <- "Species"
-
+        levels(res$TaxonomicResolution)[levels(res$TaxonomicResolution) %in%
+            c("Subspecies", "Variety")] <- "Species"
+    }
     res$SpeciesID <- res$ScientificName
     levels(res$SpeciesID) <- nameAlnum(levels(res$SpeciesID), capitalize="mixed", collapse="")
     res$SpeciesID <- droplevels(res$SpeciesID)
@@ -104,7 +105,7 @@ for (taxon in TAXA) {
 
         colnames(res) <- gsub(" ", "", colnames(res))
         res <- add_labels(res, sub_col=sub_col)
-        res <- normalize_species(res)
+        res <- normalize_species(res, spgen_only=FALSE) # keep spp names as is
         res$CommonName <- NA
     }
 
