@@ -15,6 +15,20 @@ Species <- c("Ovenbird",
     "BrownCreeper",
     "BaybreastedWarbler")
 
+col1 <- colorRampPalette(rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8","#91BFDB","#4575B4")))(100)
+col2 <- colorRampPalette(rev(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B", "#D9EF8B",
+    "#A6D96A", "#66BD63", "#1A9850", "#006837")))(100)
+col3 <- colorRampPalette(c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0","#A1D76A","#4D9221"))(100)
+#ply <- readOGR(dsn=system.file("extdata/OSA_bound.geojson", package="cure4insect"))
+ply <- readOGR(dsn="e:/peter/AB_data_v2018/data/raw/xy/Oilsands-Boundaries.gdb",
+    "OilsandRegionDissolve10TM")
+ID <- overlay_polygon(ply)
+## write IDs into a text file
+#write.table(data.frame(SpatialID=ID), row.names=FALSE, file="SpatialID.txt")
+AB <- readOGR(dsn=system.file("extdata/AB_bound.geojson", package="cure4insect"))
+AB <- spTransform(AB, proj4string(r))
+ply <- spTransform(ply, proj4string(r))
+
 #species <- "Ovenbird"
 #species <- "BlackthroatedGreenWarbler"
 #species <- "CanadaWarbler"
@@ -29,19 +43,7 @@ for (species in Species) {
     r <- rasterize_results(y)
     subset_common_data(id=NULL, species=species)
     x <- calculate_results(y)
-    col1 <- colorRampPalette(rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8","#91BFDB","#4575B4")))(100)
-    col2 <- colorRampPalette(rev(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B", "#D9EF8B",
-        "#A6D96A", "#66BD63", "#1A9850", "#006837")))(100)
-    col3 <- colorRampPalette(c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0","#A1D76A","#4D9221"))(100)
-    #ply <- readOGR(dsn=system.file("extdata/OSA_bound.geojson", package="cure4insect"))
-    ply <- readOGR(dsn="e:/peter/AB_data_v2018/data/raw/xy/Oilsands-Boundaries.gdb",
-                "OilsandRegionDissolve10TM")
-    ID <- overlay_polygon(ply)
-    ## write IDs into a text file
-    #write.table(data.frame(SpatialID=ID), row.names=FALSE, file="SpatialID.txt")
-    AB <- readOGR(dsn=system.file("extdata/AB_bound.geojson", package="cure4insect"))
-    AB <- spTransform(AB, proj4string(r))
-    ply <- spTransform(ply, proj4string(r))
+
     ## calculate regional stats
     subset_common_data(id=ID, species)
     xreg <- calculate_results(y)
