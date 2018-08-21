@@ -54,6 +54,7 @@ for (taxon in TAXA) {
         tab <- "T15"
         sub_col <- "Quadrant"
         allowed_subunits <- c("NE", "NW", "SE", "SW")
+        allowed_resolution <- c("Genus", "Species")
         sub_max <- 4
 
         res <- get_table(tab)
@@ -71,6 +72,7 @@ for (taxon in TAXA) {
         tab2 <- "T19B" # T19B Moss Identification (since 2009)
         sub_col <- "Quadrant"
         allowed_subunits <- c("NE", "NW", "SE", "SW", "1ha")
+        allowed_resolution <- c("Genus", "Species")
         sub_max <- 4
 
         res1 <- get_table(tab1)
@@ -97,6 +99,7 @@ for (taxon in TAXA) {
         tab <- "T24A"
         sub_col <- "Quadrant"
         allowed_subunits <- c("NE", "NW", "SE", "SW")
+        allowed_resolution <- c("Genus", "Species", "Subspecies")
         sub_max <- 4
 
         res <- get_table(tab)
@@ -133,10 +136,10 @@ for (taxon in TAXA) {
     ## mefa bundles for sample/subunits
     m_site_year_sub <- Mefa(y_site_year_sub, x_site_year_sub, z)
     m_site_year_sub <- m_site_year_sub[,taxa(m_site_year_sub)$TaxonomicResolution %in%
-        c("Genus", "Species")]
+        allowed_resolution]
     m_site_year_sub01 <- Mefa(y_site_year_sub01, x_site_year_sub, z)
     m_site_year_sub01 <- m_site_year_sub01[,taxa(m_site_year_sub)$TaxonomicResolution %in%
-        c("Genus", "Species")]
+        allowed_resolution]
 
     ## aggregated cross tabs for binomial tables
     tmp <- m_site_year_sub01[samp(m_site_year_sub01)$subunit %in% allowed_subunits]
