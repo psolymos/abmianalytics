@@ -32,7 +32,7 @@ dd <- make_vegHF_wide_v6(d,
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     sparse=TRUE, HF_fine=TRUE) # use refined classes
-dd$scale <- "1/4 ha quadrant at site centre"
+dd$scale <- "1/4 ha quadrant at site centre [V6 backfilled + verified HF]"
 dx <- nonDuplicated(d, QID, TRUE)[rownames(dd[[1]]),]
 dd_qha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
@@ -61,7 +61,7 @@ dd <- make_vegHF_wide_v6(d,
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     sparse=TRUE, HF_fine=TRUE) # use refined classes
-dd$scale <- "1 ha square around site centre"
+dd$scale <- "1 ha square around site centre [V6 backfilled + verified HF]"
 dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_1ha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
@@ -80,7 +80,7 @@ dd <- make_vegHF_wide_v6(d,
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     sparse=TRUE, HF_fine=TRUE) # use refined classes
-dd$scale <- "150m circle buffer around site centre"
+dd$scale <- "150m circle buffer around site centre [V6 backfilled + verified HF]"
 dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_150m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
@@ -98,7 +98,7 @@ dd <- make_vegHF_wide_v6(d,
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     sparse=TRUE, HF_fine=TRUE) # use refined classes
-dd$scale <- "564m circle buffer around site centre"
+dd$scale <- "564m circle buffer around site centre [V6 backfilled + verified HF]"
 dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
 dd_564m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
@@ -192,7 +192,7 @@ dd <- make_vegHF_wide_v6(d1,
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     sparse=TRUE, HF_fine=TRUE) # use refined classes
-dd$scale <- "1 ha square around site centre"
+dd$scale <- "1 ha square around site centre [V6 backfilled + 2016 HF]"
 dx <- nonDuplicated(d1, ABMI, TRUE)[rownames(dd[[1]]),]
 dd_1ha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
@@ -203,7 +203,7 @@ dd <- make_vegHF_wide_v6(d2,
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     sparse=TRUE, HF_fine=TRUE) # use refined classes
-dd$scale <- "564m circle buffer around site centre"
+dd$scale <- "564m circle buffer around site centre [V6 backfilled + 2016 HF]"
 dx <- nonDuplicated(d2, ABMI, TRUE)[rownames(dd[[1]]),]
 dd_564m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
@@ -315,7 +315,168 @@ save(clim, ddw_catch, ddw_20m, ddw_100m, ddw_250m,
     file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_wetlands_v6x.Rdata"))
 
+## Mammal inter level transects --------------------------------
 
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "mammals",
+    "20180822_MammalTransects_VEG61_2018.sqlite")
+db <- dbConnect(RSQLite::SQLite(), f)
+d <- dbReadTable(db, "MammalTransects_Interlevel")
+dbDisconnect(db)
+
+for (cn in c("year", "Origin_Year", "Pct_of_Larch", "year_1", "Shape_Area"))
+    d[,cn] <- as.numeric(d[,cn])
+for (i in 1:ncol(d))
+    if (is.character(d[,i]))
+        d[,i] <- as.factor(d[,i])
+d$UID <- as.factor(paste0(d$ABMISite, "_", d$interLevel, "_", d$year))
+
+dd <- make_vegHF_wide_v6(d,
+    col.label="UID",
+    col.year="year",
+    col.HFyear="year_1",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "0-250(?) m buffer area around inter level snow track segments [V6 backfilled + verified HF]"
+dx <- nonDuplicated(d, UID, TRUE)[rownames(dd[[1]]),]
+dd_inter <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+save(dd_inter,
+    file=file.path(ROOT, VER, "data", "analysis", "site",
+    "veg-hf_mammals_v6verifiedHF.Rdata"))
+
+## w2w 1km^2 scale --------------------------------------
+
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    "20180821_Grid_1sqkm_VEG61HFI2016v3.sqlite")
+db <- dbConnect(RSQLite::SQLite(), f)
+dbListTables(db) # "Summary_1sqkm_grid"
+
+hd <- dbGetQuery(db, 'SELECT * FROM Summary_1sqkm_grid LIMIT 5')
+d <- dbGetQuery(db,
+    "SELECT
+      Origin_Year,
+      Pct_of_Larch,
+      NSRNAME,
+      Soil_Type_1,
+      GRID_LABEL,
+      MineCFOAgCutblock,
+      Combined_ChgByCWCS,
+      Year_MineCFOAgCutblock,
+      Shape_Area
+    FROM
+      Summary_1sqkm_grid LIMIT 10000000;"
+)
+
+d <- dbGetQuery(db, "SELECT GRID_LABEL FROM Summary_1sqkm_grid;")
+d[,1] <- as.factor(d[,1])
+d0 <- dbGetQuery(db, "SELECT NSRNAME FROM Summary_1sqkm_grid;")
+d$NSRNAME <- as.factor(d0[,1])
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, "SELECT Combined_ChgByCWCS FROM Summary_1sqkm_grid;")
+d$Combined_ChgByCWCS <- as.factor(d0[,1])
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, "SELECT Soil_Type_1 FROM Summary_1sqkm_grid;")
+d$Soil_Type_1 <- as.factor(d0[,1])
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, "SELECT MineCFOAgCutblock FROM Summary_1sqkm_grid;")
+d$FEATURE_TY <- as.factor(d0[,1]) # rename
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, "SELECT Origin_Year FROM Summary_1sqkm_grid;")
+d$Origin_Year <- d0[,1]
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, "SELECT Pct_of_Larch FROM Summary_1sqkm_grid;")
+d$Pct_of_Larch <- d0[,1]
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, "SELECT Year_MineCFOAgCutblock FROM Summary_1sqkm_grid;")
+d$Year_MineCFOAgCutblock <- d0[,1]
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, "SELECT Shape_Area FROM Summary_1sqkm_grid;")
+d$Shape_Area <- d0[,1]
+rm(d0)
+gc()
+
+dbDisconnect(db)
+
+save(d, file=file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    "20180821_Grid_1sqkm_VEG61HFI2016v3.RData"))
+
+## long format first, in chunks
+
+cn <- c("VEGAGEclass", "VEGHFAGEclass", "SOILclass", "SOILHFclass")
+d1 <- make_vegHF_wide_v6(d[1:20000000,],
+    col.label="GRID_LABEL",
+    col.year=2016,
+    col.HFyear="Year_MineCFOAgCutblock",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    HF_fine=TRUE, wide=FALSE) # use refined classes
+d0 <- d1[,cn]
+rm(d1)
+gc()
+
+d1 <- make_vegHF_wide_v6(d[20000001:40000000,],
+    col.label="GRID_LABEL",
+    col.year=2016,
+    col.HFyear="Year_MineCFOAgCutblock",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    HF_fine=TRUE, wide=FALSE) # use refined classes
+d0 <- rbind(d0, d1[,cn])
+rm(d1)
+gc()
+
+d1 <- make_vegHF_wide_v6(d[40000001:60000000,],
+    col.label="GRID_LABEL",
+    col.year=2016,
+    col.HFyear="Year_MineCFOAgCutblock",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    HF_fine=TRUE, wide=FALSE) # use refined classes
+d0 <- rbind(d0, d1[,cn])
+rm(d1)
+gc()
+
+d1 <- make_vegHF_wide_v6(d[60000001:nrow(d),],
+    col.label="GRID_LABEL",
+    col.year=2016,
+    col.HFyear="Year_MineCFOAgCutblock",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    HF_fine=TRUE, wide=FALSE) # use refined classes
+d0 <- rbind(d0, d1[,cn])
+rm(d1)
+gc()
+
+d0$GRID_LABEL <- d$GRID_LABEL
+d0$NSRNAME <- d$NSRNAME
+d0$Shape_Area <- d$Shape_Area
+save(d0, file=file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    "20180821_Grid_1sqkm_VEG61HFI2016v3-longformat.RData"))
+
+## wide format (taking preprocessed d0 and widen_only=TRUE)
+
+load(file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    "20180821_Grid_1sqkm_VEG61HFI2016v3-longformat.RData"))
+dd <- make_vegHF_wide_v6(d0,
+    col.label="GRID_LABEL",
+    widen_only=TRUE)
+dd$scale <- "1 km^2 areas [V6 backfilled + 2016 w2w HFI]"
+dx <- nonDuplicated(d0, GRID_LABEL, TRUE)[rownames(dd[[1]]),]
+dd_kgrid <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+save(dd_kgrid,
+    file=file.path(ROOT, VER, "data", "analysis", "grid",
+    "veg-hf_grid_v6hf2016.Rdata"))
+
+## add here transformations
 
 ## Cam/ARU/Bird -----------------------------------------------
 

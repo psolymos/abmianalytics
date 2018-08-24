@@ -94,7 +94,7 @@ c4_fun <- function(d) {
 make_vegHF_wide_v6 <-
 function(d, col.label, col.year=NULL, col.HFyear=NULL,
 col.HABIT=NULL, col.SOIL=NULL, wide=TRUE, sparse=FALSE,
-HF_fine=TRUE) {
+HF_fine=TRUE, widen_only=FALSE) {
 
     TreedClassesCC <- c("Decid", "Mixedwood", "Pine", "Spruce")
     TreedClasses   <- c(TreedClassesCC, "TreedBog", "TreedFen", "TreedSwamp")
@@ -129,250 +129,254 @@ HF_fine=TRUE) {
         paste0("CC", paste0(rep(TreedClassesCC, each=5),
         c("R","1","2","3","4"))))
     HLEVS <- c(TreedClasses, NontreedClasses)
-
-    if (is.null(d[,col.HABIT]))
-        stop("Shoot -- check the damn HABIT column...")
-    d <- droplevels(d[!is.na(d[,col.HABIT]) & d[,col.HABIT] != "",])
-    d$HABIT <- reclass(d[,col.HABIT], as.matrix(recl), all=TRUE)
-
-    ## designate a label column (there are different column names in use)
-    d$LABEL <- d[,col.label]
-    d$HF_Year <- d[,col.HFyear]
-    if (any(is.na(d$LABEL)))
-        stop("missing LABEL")
-    #    d <- d[!is.na(d$LABEL),]
-    ## designate a year column
-    if (is.null(col.year)) {
-        THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
-        d$SampleYear <- THIS_YEAR
-    } else {
-        if (is.numeric(col.year)) {
-            if (length(col.year) > 1)
-                stop("length of col.year > 1")
-            THIS_YEAR <- col.year
-            d$SampleYear <- THIS_YEAR
-        } else {
-            THIS_YEAR <- NA
-            d$SampleYear <- d[,col.year]
-        }
-    }
-    ## use upper-case labels for FEATURE_TY
-    levels(d$FEATURE_TY) <- toupper(levels(d$FEATURE_TY))
-
-    d$ORIGIN_YEAR <- d$Origin_Year
-    #d$Origin_Year <- NULL
-
-    #### Footprint classes:
-    ## check if we have all the feature types in the lookup table
-    ## "" blank is for non-HF classes in current veg
-    levels(d$FEATURE_TY)[levels(d$FEATURE_TY) == "''"] <- ""
-    levels(d$FEATURE_TY)[levels(d$FEATURE_TY) == " "] <- ""
-    if (!all(setdiff(levels(d$FEATURE_TY), rownames(hflt)) == "")) {
-        print(setdiff(levels(d$FEATURE_TY), c("", rownames(hflt))))
-        stop("HF diff found, see above")
-    }
-    ## classify feature types according to the chosen level of HF designation
-    ## which comes from hf.level column of hflt (HF lookup table)
-    if (HF_fine) {
-        d$HFclass <- hflt$HF_GROUP_COMB[match(d$FEATURE_TY, rownames(hflt))]
-    } else {
-        d$HFclass <- hflt$HF_GROUP[match(d$FEATURE_TY, rownames(hflt))]
-    }
-    d$HFclass <- as.factor(d$HFclass)
-    ## HFclass inherits all levels from hflt[,hf.level]
-    ## need to add in the blank for further parsing
-    levels(d$HFclass) <- c(levels(d$HFclass), "")
-    d$HFclass[is.na(d$HFclass)] <- ""
-
-    ## slivers (tiny polys with no veg info):
-    #stopifnot(max(d$Shape_Area[d$VEGclass == ""]) < 1)
-    if (any(d$HABIT == ""))
-        warning(paste("blank HABIT:", sum(d$Shape_Area[d$HABIT == ""]), "m^2"))
-    #d <- d[d$HABIT != "",]
-    d$HABIT <- droplevels(d$HABIT)
-
-    #### HABIT/EC classes:
-    ## follow HABIT/EC classes, but there are few oddities when outside of AVI
-    #d$VEGclass <- d$EC_Type
-    d$VEGclass <- d$HABIT
-#    levels(d$VEGclass)[levels(d$VEGclass) == "Non-Veg"] <- "NonVeg"
-#    levels(d$VEGclass) <- gsub("/", "", levels(d$VEGclass))
-
-    if (length(setdiff(d$VEGclass, HLEVS)) > 0)
-        stop(paste("check HABIT classes", setdiff(d$VEGclass, HLEVS)))
-    #tb <- cbind(c("", HLEVS), c("", HLEVS))
-#return(setdiff(levels(d$VEGclass), tb[,1]))
-    #levels(d$VEGclass) <- tb[match(levels(d$VEGclass), tb[,1]),2]
-
-    #tmp <- aggregate(d$Shape_Area, list(lcc=d$EC_Type), sum)
-    #tmp$p <- round(100*tmp$x/sum(tmp$x),2)
-    #tmp2 <- aggregate(d$Shape_Area, list(lcc=d$VEGclass), sum)
-    #tmp2$p <- round(100*tmp2$x/sum(tmp2$x),2)
-
-
-#    NontreedClasses <- setdiff(levels(d$VEGclass), TreedClasses)
-#    NontreedClasses <- NontreedClasses[NontreedClasses != ""]
-
-    #### Age info for backfilled (Rf) and current (Cr)
-    ## reference age class 0=no age (either not forest or no info)
-    ## 1=0-19, 2=20-39, etc.
-    d$AgeRf <- as.integer(sign(d$ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$ORIGIN_YEAR) / 20)))
-    ## truncate reference age classes at 9 = 160+
-    d$AgeRf[d$AgeRf > 9L] <- 9L
-    ## catching origin_year > sample_year instances: this defaults to old
-    d$AgeRf[d$AgeRf < 1] <- 9L
-    ## placeholder for recent burn (0-9 years)
-    tmp <- as.integer(sign(d$ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$ORIGIN_YEAR) / 10)))
-    d$AgeRf[tmp == 1L] <- 999L
-    ## set 0 year in treed habitats as max (assumed old forest)
-#    d$AgeRf[d$AgeRf == 0L & d$VEGclass %in% TreedClasses] <- 9L
-    ## unknown age is set to 0
-    #table(d$AgeRf, d$VEGclass, useNA="a") # check NA ORIGIN_YEAR values
-    #d$AgeRf[is.na(d$AgeRf)] <- 0L
-
-    ## incorporate HF year for cutblocks
-    d$CC_ORIGIN_YEAR <- d$ORIGIN_YEAR
-    ii <- d$HFclass == "CutBlocks"
-    ii[ii & !is.na(d$ORIGIN_YEAR) & d$HF_Year >= d$ORIGIN_YEAR] <- TRUE
-    ii[ii & is.na(d$ORIGIN_YEAR)] <- TRUE
-    d$CC_ORIGIN_YEAR[ii] <- d$HF_Year[ii]
-    ## age for current with cutblock ages
-    d$AgeCr <- as.integer(sign(d$CC_ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$CC_ORIGIN_YEAR) / 20)))
-    ## truncate current age classes at 9
-    d$AgeCr[d$AgeCr > 9L] <- 9L
-    ## catching origin_year > sample_year instances: this defaults to old
-    d$AgeCr[d$AgeCr < 1] <- 9L
-    ## placeholder for recent CC (0-9 years)
-    tmp <- as.integer(sign(d$CC_ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$CC_ORIGIN_YEAR) / 10)))
-    d$AgeCr[tmp == 1L] <- 999L
-    ## unknown age is set to 0
-    #table(d$AgeCr, d$VEGclass, useNA="a") # check NA ORIGIN_YEAR values
-    #d$AgeCr[is.na(d$AgeCr)] <- 0L
-    #table(d$AgeCr,useNA="a")
-
-    ## correcting reference age class based on cutblock info:
-    ## these happened as a result of backfilling, so we accept HF age instead
-    ## but this should be rare (ref age must be >= current)
-    #ii <- !is.na(d$AgeCr) & d$AgeCr > d$AgeRf & d$AgeCr < 999L
-    #if (sum(ii)>0)
-    #    warning(paste("AgeCr > AgeRf for this many cases:", sum(ii)))
-    #d$AgeRf[ii] <- d$AgeCr[ii]
-    d$AgeRf[is.na(d$AgeRf)] <- 0L
-    #table(rf=d$AgeRf,cr=d$AgeCr,useNA="a")
-    ## turning age values into factor:
-    ## 0=no age info,
-    ## 1:9=valid age classes for treed veg types,
-    ## ""=non-treed
-    ## 999=placeholder for _R_ecent burn "R"
-    d$AgeRf <- factor(d$AgeRf, levels=c(as.character(c(0:9, 999)), ""))
-    ## NA --> "0" as unknown age class
-    d$AgeRf[is.na(d$AgeRf)] <- "0"
-    ## age is not relevant in non-treed veg types
-    d$AgeRf[!(d$VEGclass %in% TreedClasses)] <- ""
-    ## burn
-    levels(d$AgeRf)[levels(d$AgeRf)=="999"] <- "R"
-
-    ## making current age as factor
-    d$AgeCr <- factor(d$AgeCr, levels=c(as.character(c(0:9, 999)), ""))
-    ## NA --> "0" as unknown age class
-    d$AgeCr[is.na(d$AgeCr)] <- "0"
-    ## age is not relevant in non-treed veg types (no HF)
-    d$AgeCr[d$VEGclass %in% NontreedClasses & d$HFclass == ""] <- ""
-    ## age is not relevant outside of cutblocks
-    d$AgeCr[!(d$HFclass %in% c("", "CutBlocks"))] <- ""
-    ## recent CC
-    levels(d$AgeCr)[levels(d$AgeCr)=="999"] <- "R"
-    #table(current=d$AgeCr, reference=d$AgeRf)
-
-    #### Combining VEG, HF and Age:
-    ## reference VEG + Age labels:
-    d$VEGAGEclass <- interaction(d$VEGclass, d$AgeRf, drop=TRUE, sep="", lex.order=TRUE)
-    levels(d$VEGAGEclass) <- c(levels(d$VEGAGEclass),
-        setdiff(RfLab, levels(d$VEGAGEclass)))
-
-    ## manage CC labels
-    ## current veg+hf
-    d$VEGHFclass <- d$VEGclass
-    #CClabels <- paste0("CC", levels(d$VEGclass)[levels(d$VEGclass) != ""])
-    CClabels <- paste0("CC", levels(d$VEGclass))
-    tmp <- setdiff(levels(d$HFclass), levels(d$VEGclass))
-    tmp <- tmp[!(tmp %in% c("", "CutBlocks"))]
-    levels(d$VEGHFclass) <- c(levels(d$VEGHFclass), tmp, CClabels)
-    ## add non-CC HF types
-    d$VEGHFclass[!(d$HFclass %in% c("", "CutBlocks"))] <- d$HFclass[!(d$HFclass %in% c("", "CutBlocks"))]
-    ## should later the non-merchendisable forests with CC should be redistributed?
-    ## e.g. after producing the wide format
-    ## update CC labels obly for <= 80 yr CC (usually this does not happen
-    ## just to make sure labels are OK)
-    ## anything above age class >4 is turned into 4 to avoid labeling issues (shrubland)
-    d$AgeCr[d$HFclass == "CutBlocks" & d$AgeCr %in% c("5","6","7","8","9")] <- "4"
-    ii <- d$HFclass == "CutBlocks" & d$AgeCr %in% c("0","R","1","2","3","4")
-    if (sum(ii) > 0)
-        d$VEGHFclass[ii] <- paste0("CC", as.character(d$VEGclass[ii]))
-
-    ## labels where backfilled cutblock label is not forested habitat
-    ## right now I just collapse them to see % of the areas
-    ## it is usually < 10% at this scale so it might be safe to ignore them
-    ## usually young ages, but ranges R-1-2-3
-    #ii <- unlist(lapply(paste0("CC", NontreedClasses), grep, x=levels(d$VEGHFclass)))
-    #levels(d$VEGHFclass)[ii] <- "CCOpenTypes"
-    ## unknown types under 'CC' considered as 'CCOpenTypes'
-    #levels(d$VEGHFclass)[levels(d$VEGHFclass) == "CC"] <- "CCOpenTypes"
-    ## treed wetlands
-    #ii <- unlist(lapply(paste0("CC", TreedWetClasses), grep, x=levels(d$VEGHFclass)))
-    #levels(d$VEGHFclass)[ii] <- "CCWetTypes"
-
-    ## current VEG + HF + Age labels:
-    d$VEGHFAGEclass <- interaction(d$VEGHFclass, d$AgeCr, drop=TRUE, sep="", lex.order=TRUE)
-    ## labels with 0 age category are also to be fixed later ------> hard stuff
-    #ii <- unlist(lapply(paste0(TreedClasses, 0), grep, x=levels(d$VEGHFAGEclass)))
-    #levels(d$VEGHFAGEclass)[ii] <- "CCproblem"
-    ## Labels for output columns
     AllLabels <- c(RfLab, CrOnlyLab)
-    levels(d$VEGHFAGEclass) <- c(levels(d$VEGHFAGEclass), setdiff(AllLabels, levels(d$VEGHFAGEclass)))
 
-    #### soils:
     SoilLab <- c("UNK", "Water", #"Wetland",
         "BdL", "BlO", "CS", "Cy", "Gr", "LenA", "LenSP",
         "LenT", "LenS", "Li", "Lo", "LtcC", "LtcD", "LtcH", "LtcS", "Ov",
         "Sa", "Sb", "SL", "SwG", "Sy", "TB")
 
-    if (is.null(d[,col.SOIL]))
-        stop("Shoot -- check the damn SOIL column...")
-    d$SOILclass <- d[,col.SOIL]
-    ## need to have the UNKnown class to be able to deal with NAs
-    if (!is.factor(d$SOILclass))
-        d$SOILclass <- as.factor(d$SOILclass)
-    if (!any(levels(d$SOILclass) == ""))
-        levels(d$SOILclass) <- c(levels(d$SOILclass), "")
-    ## dealing with NAs
-    d$SOILclass[is.na(d$SOILclass)] <- ""
-    ## unknown soil type outside of GVI and Dry Mixedwood
-    levels(d$SOILclass)[levels(d$SOILclass) == ""] <- "UNK"
-    levels(d$SOILclass)[levels(d$SOILclass) == " "] <- "UNK"
-    ## get rid of modifiers
-    levels(d$SOILclass) <- sapply(strsplit(levels(d$SOILclass), "-"), function(z) z[1L])
-    ## add in Water label
-    levels(d$SOILclass) <- c(levels(d$SOILclass), "Water")
+    ## designate a label column (there are different column names in use)
+    d$LABEL <- d[,col.label]
 
-    ## treat these as Water or Wetland?
-    levels(d$SOILclass)[levels(d$SOILclass) %in% c("Len","LenW","Ltc","LtcR")] <- "Water"
-#    levels(d$SOILclass)[levels(d$SOILclass) %in% c("Len","LenW","Ltc","LtcR")] <- "Wetland"
-    ## DEM/EC based Water class overrides soil
-    d$SOILclass[d$VEGclass == "Water"] <- "Water"
+    if (!widen_only) {
 
-    levels(d$SOILclass) <- c(levels(d$SOILclass), setdiff(SoilLab, levels(d$SOILclass)))
-    d$SOILHFclass <- d$SOILclass
-    levels(d$SOILHFclass) <- c(levels(d$SOILHFclass), levels(d$HFclass)[levels(d$HFclass) != ""])
-    d$SOILHFclass[d$HFclass != ""] <- d$HFclass[d$HFclass != ""]
+        if (is.null(d[,col.HABIT]))
+            stop("Shoot -- check the damn HABIT column...")
+        d <- droplevels(d[!is.na(d[,col.HABIT]) & d[,col.HABIT] != "",])
+        d$HABIT <- reclass(d[,col.HABIT], as.matrix(recl), all=TRUE)
+
+        d$HF_Year <- d[,col.HFyear]
+        if (any(is.na(d$LABEL)))
+            stop("missing LABEL")
+        #    d <- d[!is.na(d$LABEL),]
+        ## designate a year column
+        if (is.null(col.year)) {
+            THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
+            d$SampleYear <- THIS_YEAR
+        } else {
+            if (is.numeric(col.year)) {
+                if (length(col.year) > 1)
+                    stop("length of col.year > 1")
+                THIS_YEAR <- col.year
+                d$SampleYear <- THIS_YEAR
+            } else {
+                THIS_YEAR <- NA
+                d$SampleYear <- d[,col.year]
+            }
+        }
+        ## use upper-case labels for FEATURE_TY
+        levels(d$FEATURE_TY) <- toupper(levels(d$FEATURE_TY))
+
+        d$ORIGIN_YEAR <- d$Origin_Year
+        #d$Origin_Year <- NULL
+
+        #### Footprint classes:
+        ## check if we have all the feature types in the lookup table
+        ## "" blank is for non-HF classes in current veg
+        levels(d$FEATURE_TY)[levels(d$FEATURE_TY) == "''"] <- ""
+        levels(d$FEATURE_TY)[levels(d$FEATURE_TY) == " "] <- ""
+        if (!all(setdiff(levels(d$FEATURE_TY), rownames(hflt)) == "")) {
+            print(setdiff(levels(d$FEATURE_TY), c("", rownames(hflt))))
+            stop("HF diff found, see above")
+        }
+        ## classify feature types according to the chosen level of HF designation
+        ## which comes from hf.level column of hflt (HF lookup table)
+        if (HF_fine) {
+            d$HFclass <- hflt$HF_GROUP_COMB[match(d$FEATURE_TY, rownames(hflt))]
+        } else {
+            d$HFclass <- hflt$HF_GROUP[match(d$FEATURE_TY, rownames(hflt))]
+        }
+        d$HFclass <- as.factor(d$HFclass)
+        ## HFclass inherits all levels from hflt[,hf.level]
+        ## need to add in the blank for further parsing
+        levels(d$HFclass) <- c(levels(d$HFclass), "")
+        d$HFclass[is.na(d$HFclass)] <- ""
+
+        ## slivers (tiny polys with no veg info):
+        #stopifnot(max(d$Shape_Area[d$VEGclass == ""]) < 1)
+        if (any(d$HABIT == ""))
+            warning(paste("blank HABIT:", sum(d$Shape_Area[d$HABIT == ""]), "m^2"))
+        #d <- d[d$HABIT != "",]
+        d$HABIT <- droplevels(d$HABIT)
+
+        #### HABIT/EC classes:
+        ## follow HABIT/EC classes, but there are few oddities when outside of AVI
+        #d$VEGclass <- d$EC_Type
+        d$VEGclass <- d$HABIT
+    #    levels(d$VEGclass)[levels(d$VEGclass) == "Non-Veg"] <- "NonVeg"
+    #    levels(d$VEGclass) <- gsub("/", "", levels(d$VEGclass))
+
+        if (length(setdiff(d$VEGclass, HLEVS)) > 0)
+            stop(paste("check HABIT classes", setdiff(d$VEGclass, HLEVS)))
+        #tb <- cbind(c("", HLEVS), c("", HLEVS))
+    #return(setdiff(levels(d$VEGclass), tb[,1]))
+        #levels(d$VEGclass) <- tb[match(levels(d$VEGclass), tb[,1]),2]
+
+        #tmp <- aggregate(d$Shape_Area, list(lcc=d$EC_Type), sum)
+        #tmp$p <- round(100*tmp$x/sum(tmp$x),2)
+        #tmp2 <- aggregate(d$Shape_Area, list(lcc=d$VEGclass), sum)
+        #tmp2$p <- round(100*tmp2$x/sum(tmp2$x),2)
+
+
+    #    NontreedClasses <- setdiff(levels(d$VEGclass), TreedClasses)
+    #    NontreedClasses <- NontreedClasses[NontreedClasses != ""]
+
+        #### Age info for backfilled (Rf) and current (Cr)
+        ## reference age class 0=no age (either not forest or no info)
+        ## 1=0-19, 2=20-39, etc.
+        d$AgeRf <- as.integer(sign(d$ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$ORIGIN_YEAR) / 20)))
+        ## truncate reference age classes at 9 = 160+
+        d$AgeRf[d$AgeRf > 9L] <- 9L
+        ## catching origin_year > sample_year instances: this defaults to old
+        d$AgeRf[d$AgeRf < 1] <- 9L
+        ## placeholder for recent burn (0-9 years)
+        tmp <- as.integer(sign(d$ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$ORIGIN_YEAR) / 10)))
+        d$AgeRf[tmp == 1L] <- 999L
+        ## set 0 year in treed habitats as max (assumed old forest)
+    #    d$AgeRf[d$AgeRf == 0L & d$VEGclass %in% TreedClasses] <- 9L
+        ## unknown age is set to 0
+        #table(d$AgeRf, d$VEGclass, useNA="a") # check NA ORIGIN_YEAR values
+        #d$AgeRf[is.na(d$AgeRf)] <- 0L
+
+        ## incorporate HF year for cutblocks
+        d$CC_ORIGIN_YEAR <- d$ORIGIN_YEAR
+        ii <- d$HFclass == "CutBlocks"
+        ii[ii & !is.na(d$ORIGIN_YEAR) & d$HF_Year >= d$ORIGIN_YEAR] <- TRUE
+        ii[ii & is.na(d$ORIGIN_YEAR)] <- TRUE
+        d$CC_ORIGIN_YEAR[ii] <- d$HF_Year[ii]
+        ## age for current with cutblock ages
+        d$AgeCr <- as.integer(sign(d$CC_ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$CC_ORIGIN_YEAR) / 20)))
+        ## truncate current age classes at 9
+        d$AgeCr[d$AgeCr > 9L] <- 9L
+        ## catching origin_year > sample_year instances: this defaults to old
+        d$AgeCr[d$AgeCr < 1] <- 9L
+        ## placeholder for recent CC (0-9 years)
+        tmp <- as.integer(sign(d$CC_ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$CC_ORIGIN_YEAR) / 10)))
+        d$AgeCr[tmp == 1L] <- 999L
+        ## unknown age is set to 0
+        #table(d$AgeCr, d$VEGclass, useNA="a") # check NA ORIGIN_YEAR values
+        #d$AgeCr[is.na(d$AgeCr)] <- 0L
+        #table(d$AgeCr,useNA="a")
+
+        ## correcting reference age class based on cutblock info:
+        ## these happened as a result of backfilling, so we accept HF age instead
+        ## but this should be rare (ref age must be >= current)
+        #ii <- !is.na(d$AgeCr) & d$AgeCr > d$AgeRf & d$AgeCr < 999L
+        #if (sum(ii)>0)
+        #    warning(paste("AgeCr > AgeRf for this many cases:", sum(ii)))
+        #d$AgeRf[ii] <- d$AgeCr[ii]
+        d$AgeRf[is.na(d$AgeRf)] <- 0L
+        #table(rf=d$AgeRf,cr=d$AgeCr,useNA="a")
+        ## turning age values into factor:
+        ## 0=no age info,
+        ## 1:9=valid age classes for treed veg types,
+        ## ""=non-treed
+        ## 999=placeholder for _R_ecent burn "R"
+        d$AgeRf <- factor(d$AgeRf, levels=c(as.character(c(0:9, 999)), ""))
+        ## NA --> "0" as unknown age class
+        d$AgeRf[is.na(d$AgeRf)] <- "0"
+        ## age is not relevant in non-treed veg types
+        d$AgeRf[!(d$VEGclass %in% TreedClasses)] <- ""
+        ## burn
+        levels(d$AgeRf)[levels(d$AgeRf)=="999"] <- "R"
+
+        ## making current age as factor
+        d$AgeCr <- factor(d$AgeCr, levels=c(as.character(c(0:9, 999)), ""))
+        ## NA --> "0" as unknown age class
+        d$AgeCr[is.na(d$AgeCr)] <- "0"
+        ## age is not relevant in non-treed veg types (no HF)
+        d$AgeCr[d$VEGclass %in% NontreedClasses & d$HFclass == ""] <- ""
+        ## age is not relevant outside of cutblocks
+        d$AgeCr[!(d$HFclass %in% c("", "CutBlocks"))] <- ""
+        ## recent CC
+        levels(d$AgeCr)[levels(d$AgeCr)=="999"] <- "R"
+        #table(current=d$AgeCr, reference=d$AgeRf)
+
+        #### Combining VEG, HF and Age:
+        ## reference VEG + Age labels:
+        d$VEGAGEclass <- interaction(d$VEGclass, d$AgeRf, drop=TRUE, sep="", lex.order=TRUE)
+        levels(d$VEGAGEclass) <- c(levels(d$VEGAGEclass),
+            setdiff(RfLab, levels(d$VEGAGEclass)))
+
+        ## manage CC labels
+        ## current veg+hf
+        d$VEGHFclass <- d$VEGclass
+        #CClabels <- paste0("CC", levels(d$VEGclass)[levels(d$VEGclass) != ""])
+        CClabels <- paste0("CC", levels(d$VEGclass))
+        tmp <- setdiff(levels(d$HFclass), levels(d$VEGclass))
+        tmp <- tmp[!(tmp %in% c("", "CutBlocks"))]
+        levels(d$VEGHFclass) <- c(levels(d$VEGHFclass), tmp, CClabels)
+        ## add non-CC HF types
+        d$VEGHFclass[!(d$HFclass %in% c("", "CutBlocks"))] <- d$HFclass[!(d$HFclass %in% c("", "CutBlocks"))]
+        ## should later the non-merchendisable forests with CC should be redistributed?
+        ## e.g. after producing the wide format
+        ## update CC labels obly for <= 80 yr CC (usually this does not happen
+        ## just to make sure labels are OK)
+        ## anything above age class >4 is turned into 4 to avoid labeling issues (shrubland)
+        d$AgeCr[d$HFclass == "CutBlocks" & d$AgeCr %in% c("5","6","7","8","9")] <- "4"
+        ii <- d$HFclass == "CutBlocks" & d$AgeCr %in% c("0","R","1","2","3","4")
+        if (sum(ii) > 0)
+            d$VEGHFclass[ii] <- paste0("CC", as.character(d$VEGclass[ii]))
+
+        ## labels where backfilled cutblock label is not forested habitat
+        ## right now I just collapse them to see % of the areas
+        ## it is usually < 10% at this scale so it might be safe to ignore them
+        ## usually young ages, but ranges R-1-2-3
+        #ii <- unlist(lapply(paste0("CC", NontreedClasses), grep, x=levels(d$VEGHFclass)))
+        #levels(d$VEGHFclass)[ii] <- "CCOpenTypes"
+        ## unknown types under 'CC' considered as 'CCOpenTypes'
+        #levels(d$VEGHFclass)[levels(d$VEGHFclass) == "CC"] <- "CCOpenTypes"
+        ## treed wetlands
+        #ii <- unlist(lapply(paste0("CC", TreedWetClasses), grep, x=levels(d$VEGHFclass)))
+        #levels(d$VEGHFclass)[ii] <- "CCWetTypes"
+
+        ## current VEG + HF + Age labels:
+        d$VEGHFAGEclass <- interaction(d$VEGHFclass, d$AgeCr, drop=TRUE, sep="", lex.order=TRUE)
+        ## labels with 0 age category are also to be fixed later ------> hard stuff
+        #ii <- unlist(lapply(paste0(TreedClasses, 0), grep, x=levels(d$VEGHFAGEclass)))
+        #levels(d$VEGHFAGEclass)[ii] <- "CCproblem"
+        ## Labels for output columns
+        levels(d$VEGHFAGEclass) <- c(levels(d$VEGHFAGEclass), setdiff(AllLabels, levels(d$VEGHFAGEclass)))
+
+        #### soils:
+        if (is.null(d[,col.SOIL]))
+            stop("Shoot -- check the damn SOIL column...")
+        d$SOILclass <- d[,col.SOIL]
+        ## need to have the UNKnown class to be able to deal with NAs
+        if (!is.factor(d$SOILclass))
+            d$SOILclass <- as.factor(d$SOILclass)
+        if (!any(levels(d$SOILclass) == ""))
+            levels(d$SOILclass) <- c(levels(d$SOILclass), "")
+        ## dealing with NAs
+        d$SOILclass[is.na(d$SOILclass)] <- ""
+        ## unknown soil type outside of GVI and Dry Mixedwood
+        levels(d$SOILclass)[levels(d$SOILclass) == ""] <- "UNK"
+        levels(d$SOILclass)[levels(d$SOILclass) == " "] <- "UNK"
+        ## get rid of modifiers
+        levels(d$SOILclass) <- sapply(strsplit(levels(d$SOILclass), "-"), function(z) z[1L])
+        ## add in Water label
+        levels(d$SOILclass) <- c(levels(d$SOILclass), "Water")
+
+        ## treat these as Water or Wetland?
+        levels(d$SOILclass)[levels(d$SOILclass) %in% c("Len","LenW","Ltc","LtcR")] <- "Water"
+    #    levels(d$SOILclass)[levels(d$SOILclass) %in% c("Len","LenW","Ltc","LtcR")] <- "Wetland"
+        ## DEM/EC based Water class overrides soil
+        d$SOILclass[d$VEGclass == "Water"] <- "Water"
+
+        levels(d$SOILclass) <- c(levels(d$SOILclass), setdiff(SoilLab, levels(d$SOILclass)))
+        d$SOILHFclass <- d$SOILclass
+        levels(d$SOILHFclass) <- c(levels(d$SOILHFclass), levels(d$HFclass)[levels(d$HFclass) != ""])
+        d$SOILHFclass[d$HFclass != ""] <- d$HFclass[d$HFclass != ""]
+        ## NOTE: current UNK can be smaller than reference UNK, it can be turned into HF
+        ## currently this is not tracked
+
+        ## for point intersection or transition matrix processing, etc.
+        if (!wide)
+            return(d)
+    }
+
     SoilHFLab <- levels(d$SOILHFclass)
-    ## NOTE: current UNK can be smaller than reference UNK, it can be turned into HF
-    ## currently this is not tracked
-
-    ## for point intersection or transition matrix processing, etc.
-    if (!wide)
-        return(d)
-
     #### crosstabs
     ## veg reference
     VegRf <- Xtab(Shape_Area ~ LABEL + VEGAGEclass, d)
