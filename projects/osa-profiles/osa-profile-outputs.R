@@ -120,3 +120,47 @@ par(op)
 #kable(df4, digits=2, caption="Table 2. Sector effects results in the OSA.")
 
 
+## HF transitions
+library(mefa4)
+library(jsonlite)
+library(cure4insect)
+opar <- set_options(path = "w:/reports")
+load_common_data()
+library(rgdal)
+load("E:\\peter\\AB_data_v2017\\data\\analysis\\kgrid_table_km.Rdata")
+ply <- readOGR(dsn="e:/peter/AB_data_v2018/data/raw/xy/Oilsands-Boundaries.gdb",
+    "OilsandRegionDissolve10TM")
+id <- overlay_polygon(ply)
+regs <- levels(kgrid$LUFxNSR)
+
+e <- new.env()
+load(paste0("e:/peter/AB_data_v2017/data/analysis/transitions_km2014/",
+    regs[1], ".Rdata"), envir=e)
+tr <- e$trVeg
+for (i in 2:length(regs)) {
+    cat(i, "\n");flush.console()
+    e <- new.env()
+    load(paste0("e:/peter/AB_data_v2017/data/analysis/transitions_km2014/",
+        regs[i], ".Rdata"), envir=e)
+    tr <- rbind(tr, e$trVeg)
+}
+tr <- tr[id,]
+colnames(tr)[grep("Mix",colnames(tr))]
+
+ch2veg <- t(sapply(strsplit(colnames(tr), "->"),
+    function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
+ch2veg <- data.frame(ch2veg)
+colnames(ch2veg) <- c("rf","cr")
+rownames(ch2veg) <- colnames(tr)
+ch2veg$perc <- 100*colSums(tr)/sum(tr)
+
+levels(ch2veg$cr) <- gsub("[[:digit:]]", "", levels(ch2veg$cr))
+levels(ch2veg$rf) <- gsub("[[:digit:]]", "", levels(ch2veg$rf))
+levels(ch2veg$cr)[endsWith(levels(ch2veg$cr), "R")] <-
+    gsub("R", "", levels(ch2veg$cr)[endsWith(levels(ch2veg$cr), "R")])
+levels(ch2veg$rf)[endsWith(levels(ch2veg$rf), "R")] <-
+    gsub("R", "", levels(ch2veg$rf)[endsWith(levels(ch2veg$rf), "R")])
+levels(ch2veg$cr)[startsWith(levels(ch2veg$cr), "CC")] <- "CutBlocks"
+xt <- as.matrix(Xtab(perc ~ rf + cr, ch2veg))
+
+write.csv(round(xt, 2), file="c:/Users/Peter/GoogleWork/abmi/osa-profile/transitions-in-osa-hf2014.csv")
