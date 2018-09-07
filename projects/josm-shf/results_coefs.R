@@ -30,6 +30,10 @@ xnn <- en$DAT
 modsn <- en$mods
 yyn <- en$YY
 tax <- droplevels(TAX[colnames(yyn),])
+HSH <- en$HSH
+OFF <- en$OFF
+BB <- en$BB
+DAT <- en$DAT
 
 #rm(e, en)
 
@@ -38,7 +42,7 @@ fln <- list.files(file.path(ROOT, "results", "josmshf"))
 fln <- sub("birds_abmi-josmshf_", "", fln)
 fln <- sub(".Rdata", "", fln)
 
-SPP <- colnames(yys)
+SPP <- colnames(yyn)
 
 ## terms and design matrices
 nTerms <- getTerms(modsn, "list")
@@ -46,11 +50,217 @@ Xnn <- model.matrix(getTerms(modsn, "formula"), xnn)
 colnames(Xnn) <- fixNames(colnames(Xnn))
 
 names(modsn)
-stage_hab_n <- 5
+#stage_hab_n <- 5
+STAGE <- list(veg = 7) # hab=5, hab+clim=6, hab+clim+shf=7
+BMAX <- 100
+
+## out-of-sample set
+bunique <- unique(BB)
+INTERNAL <- 1:nrow(DAT) %in% bunique
+ss1 <- which(!INTERNAL) # test portion
+ss2 <- which(INTERNAL) # non-test portion
 
 ## spp specific output
 
 spp <- "BTNW"
+
+## coefs & GoF
+
+out <- list()
+for (spp in SPP) {
+cat(spp, "\n");flush.console()
+
+fn <- file.path("e:/peter/AB_data_v2016", "out", "birds", "results", "josmshf",
+    paste0("birds_abmi-josmshf_", spp, ".Rdata"))
+resn <- loadSPP(fn)
+estn <- suppressWarnings(getEst(resn, stage=STAGE$veg, na.out=FALSE, Xnn))
+estn <- if (is.null(resn))
+    estn[rep(1, BMAX),,drop=FALSE] else estn[1:BMAX,,drop=FALSE]
+est0 <- suppressWarnings(getEst(resn, stage=0, na.out=FALSE, Xnn))
+est0 <- if (is.null(resn))
+    est0[rep(1, BMAX),,drop=FALSE] else est0[1:BMAX,,drop=FALSE]
+estHab <- suppressWarnings(getEst(resn, stage=5, na.out=FALSE, Xnn))
+estHab <- if (is.null(resn))
+    estHab[rep(1, BMAX),,drop=FALSE] else estHab[1:BMAX,,drop=FALSE]
+estClim <- suppressWarnings(getEst(resn, stage=5, na.out=FALSE, Xnn))
+estClim <- if (is.null(resn))
+    estClim[rep(1, BMAX),,drop=FALSE] else estClim[1:BMAX,,drop=FALSE]
+estHsh <- c(estn[1,], "HSH_KM"=0, "HSH2_KM"=0, "HSH05_KM"=0)
+de <- new.env()
+load(paste0("e:/peter/josm/2018/hsh-estimates4x/", spp, ".Rdata"), envir=de)
+hsh_lab <- NULL
+if (de$out$mid > 0) {
+    # 1: HSH, 2: HSH05, 3: HSH+HSH2, 4: HSH05+HSH
+    estHsh[] <- 0
+    estHsh[names(de$out$hsh_coef[[de$out$mid]])] <- de$out$hsh_coef[[de$out$mid]]
+    hsh_lab <- de$out$hsh_labels
+}
+Phsh <- rowSums(HSH[, hsh_lab])
+Xn <- cbind(Xnn, HSH_KM=Phsh, HSH2_KM=Phsh^2, HSH05_KM=sqrt(Phsh))[,names(estHsh)]
+
+
+## pseudo R^2
+
+## predictions for internal points
+mn_in <- matrix(0, length(ss2), 4)
+colnames(mn_in) <- c("Null", "Hab", "Clim", "Hsh")
+rownames(mn_in) <- rownames(DAT)[ss2]
+for (i in colnames(mn_in)) {
+    est_i <- switch(i,
+        "Null"=est0[1,],
+        "Hab"=estHab[1,],
+        "Clim"=estClim[1,],
+        "Hsh"=estHsh)
+    col_keep <- names(abs(est_i) > 0) != 0
+    pr <- Xn[ss2,names(est_i[col_keep]),drop=FALSE] %*% est_i[col_keep]
+    mn_in[,i] <- pr
+}
+
+## POISSON
+## Null model: intercept and offset
+ll0 <- sum(dpois(yyn[ss2,spp], exp(mn_in[,"Null"]) * exp(OFF[ss2,spp]), log=TRUE))
+## Saturated: one parameter per observation
+lls <- sum(dpois(yyn[ss2,spp], yyn[ss2,spp], log=TRUE))
+## Full: our prediction
+llfHab <- sum(dpois(yyn[ss2,spp], exp(mn_in[,"Hab"]) * exp(OFF[ss2,spp]), log=TRUE))
+llfClim <- sum(dpois(yyn[ss2,spp], exp(mn_in[,"Clim"]) * exp(OFF[ss2,spp]), log=TRUE))
+llfHsh <- sum(dpois(yyn[ss2,spp], exp(mn_in[,"Hsh"]) * exp(OFF[ss2,spp]), log=TRUE))
+
+R2D <- c(Hab = 1-(lls-llfHab)/(lls-ll0),
+    Clim = 1-(lls-llfClim)/(lls-ll0),
+    Hsh = 1-(lls-llfHsh)/(lls-ll0))
+names(R2D) <- colnames(mn_in)[-1]
+
+
+## ROC curves and AUC
+
+simple_roc <- function(labels, scores){
+  labels <- labels[order(scores, decreasing=TRUE)]
+  data.frame(TPR=cumsum(labels)/sum(labels), FPR=cumsum(!labels)/sum(!labels), labels)
+}
+simple_auc <- function(ROC) {
+    ROC$inv_spec <- 1-ROC$FPR
+    dx <- diff(ROC$inv_spec)
+    sum(dx * ROC$TPR[-1]) / sum(dx)
+}
+
+## predictions for external points
+mn <- matrix(0, length(ss1), 4)
+colnames(mn) <- c("Null", "Hab", "Clim", "Hsh")
+rownames(mn) <- rownames(DAT)[ss1]
+for (i in colnames(mn_in)) {
+    est_i <- switch(i,
+        "Null"=est0[1,],
+        "Hab"=estHab[1,],
+        "Clim"=estClim[1,],
+        "Hsh"=estHsh)
+    col_keep <- names(abs(est_i) > 0) != 0
+    pr <- Xn[ss1,names(est_i[col_keep]),drop=FALSE] %*% est_i[col_keep]
+    mn[,i] <- pr
+}
+## ROC/AUC
+rocAll1 <- lapply(1:ncol(mn), function(i) {
+      pp <- exp(mn[,i]) * exp(OFF[ss1,spp])
+      simple_roc(yyn[ss1,spp], pp)
+  })
+names(rocAll1) <- colnames(mn)
+auc <- sapply(rocAll1, simple_auc)
+k <- (auc-auc[1])/(1-auc[1])
+
+out[[spp]] <- list(
+    counts=addmargins(table(species=yyn[,spp],internal=INTERNAL)),
+    R2D=R2D,
+    AUC=auc,
+    kappa=k,
+    estimates=list(null=est0[1,],hab=estHab[1,],clim=estClim[1,],hsh=estHsh))
+}
+
+save(out, file="e:/peter/josm/2018/hshfix/GoF.RData")
+
+gof_table <- data.frame(t(sapply(out, function(z) {
+    c(ndet.in=sum(z$counts[2:(nrow(z$count)-1),2]),
+    ndet.out=sum(z$counts[2:(nrow(z$count)-1),1]),
+    unlist(z[2:4]),
+    df=sapply(z$estimates, function(zz) sum(abs(zz)>0)))
+})))
+
+
+#load("e:/peter/josm/2018/hshfix/NAD.RData")
+D <- read.csv("e:/peter/josm/2018/hshfix/pop-density-by-landcover.csv")
+rownames(D) <- D$LC
+D$LC <- NULL
+Ds <- D[,names(which(apply(D,2,max)>2))]
+Ds <- Ds[apply(Ds,1,max)>10,]
+
+## correlation between c4i coefs and D estimates
+
+library(cure4insect)
+load_common_data()
+tmp <- read.csv("e:/peter/josm/2018/hshfix/tmp.csv")
+tt <- read.csv("~/repos/abmispecies/_data/birds.csv")
+
+gof_table$cor <- 0
+pdf("e:/peter/josm/2018/hshfix/compare-coefs.pdf",onefile=TRUE)
+for (spp in SPP) {
+cf <- plot_abundance(as.character(tt[tt$AOU==spp,"sppid"]), "veg_coef", plot=FALSE)
+cf1 <- cf[as.character(tmp$CoefName[tmp$Compare]),]
+cf2 <- D[as.character(tmp$Dname[tmp$Compare]),spp]
+
+gof_table[spp,"cor"] <- cor(cf1[,1], cf2)
+plot(cf1[,1], cf2, main=spp, sub=paste("cor =", round(gof_table[spp,"cor"],4)),
+    pch=3, xlab="web coef", ylab="post-stratified D", col="grey")
+text(cf1[,1], cf2, as.character(tmp$Dname[tmp$Compare]), cex=0.7, col=2)
+abline(0,1)
+abline(0,1.5,lty=2)
+abline(0,1/1.5,lty=2)
+abline(0,2,lty=3)
+abline(0,1/2,lty=3)
+}
+dev.off()
+
+gof_table$Dmax <- sapply(rownames(gof_table), function(i) max(D[,i]))
+
+## comparing pixel levels agreement
+library(KernSmooth)
+load("e:/peter/josm/2018/hshfix/pixel-level-values.RData")
+KT <- cure4insect:::.c4if$KT
+
+cor.pix <- list()
+pdf("e:/peter/josm/2018/hshfix/compare-preds.pdf",onefile=TRUE)
+for (spp in SPP) {
+cat(spp, "\n");flush.console()
+y <- load_species_data(as.character(tt[tt$AOU==spp,"sppid"]))
+mat <- cbind(old=rowSums(y$SA.Curr)[match(rownames(KT), rownames(y$SA.Curr))],
+    new = distr[[spp]][match(rownames(KT), names(distr[[spp]]))])
+mat <- mat[rowSums(is.na(mat))==0,]
+k <- bkde2D(sqrt(mat), max(mat)/50)
+names(k) <- c("x", "y", "z")
+
+cor.pix[[spp]] <- cor(mat)[2,1]
+image(k, col=viridis::viridis(100),
+    xlab="web pred", ylab="hsh pred",
+    main=spp, sub=paste("cor =", round(cor.pix[[spp]],4)))
+abline(0,1, col="white")
+abline(0,1.5,lty=2, col="white")
+abline(0,1/1.5,lty=2, col="white")
+abline(0,2,lty=3, col="white")
+abline(0,1/2,lty=3, col="white")
+}
+dev.off()
+
+## todo:
+## - redo kde: check how to estimate bandwidth, some figs are crappy
+## - maybe use hexbin?
+## - cut off <0 values
+## - add cor.pred to gof table
+## - prepare 1x3 maps with old, new, difference maps (take veghf code)
+
+
+write.csv(gof_table,file="e:/peter/josm/2018/hshfix/GoF.csv")
+
+rownames(gof_table)[gof_table$ndet.in<gof_table$df.hsh*5]
+rownames(gof_table)[gof_table$ndet.in<235]
+
 
 ## all N & S data for plots
 res_coef <- list()

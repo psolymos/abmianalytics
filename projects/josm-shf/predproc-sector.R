@@ -442,6 +442,7 @@ sendmail(sprintf("<%s>", "bot@abmi.ca"),
 
 if (sect == "All") {
     NAD <- list()
+    load(file.path(OUTDIR, "All", "OVEN", "LowerAthabasca_AthabascaPlain.Rdata"))
     for (spp in SPP) {
         fl <- list.files(file.path(OUTDIR, sect, spp))
         NOUTtr <- matrix(0, length(fl), length(abund$Ntr))
@@ -496,3 +497,34 @@ write.csv(data.frame(LC=rownames(Dcr), Dcr),
     row.names=FALSE, file=file.path(OUTDIR, "pop-density-by-landcover.csv"))
 write.csv(data.frame(LC=rownames(Ncr), Area_ha=Acr, Ncr),
     row.names=FALSE, file=file.path(OUTDIR, "pop-abundance-by-landcover.csv"))
+
+
+SPP <- c("ALFL", "AMCR", "AMGO", "AMRE", "AMRO", "ATTW", "BANS", "BAOR",
+    "BARS", "BAWW", "BBMA", "BBWA", "BBWO", "BCCH", "BHCO", "BHVI",
+    "BLJA", "BLPW", "BOCH", "BRBL", "BRCR", "BTNW", "CAWA", "CCSP",
+    "CEDW", "CHSP", "CLSW", "CMWA", "COGR", "CONW", "CORA", "COYE",
+    "DEJU", "DOWO", "DUFL", "EAKI", "EAPH", "EUST", "EVGR", "FOSP",
+    "GCKI", "GRAJ", "GRCA", "GRYE", "HAWO", "HETH", "HOSP", "HOWR",
+    "KILL", "LCSP", "LEFL", "LEYE", "LISP", "MAWA", "MOBL", "MODO",
+    "MOWA", "NESP", "NOFL", "NOWA", "OCWA", "OSFL", "OVEN", "PAWA",
+    "PHVI", "PIGR", "PISI", "PIWO", "PUFI", "RBGR", "RBNU", "RCKI",
+    "RECR", "REVI", "ROPI", "RUBL", "RUGR", "RWBL", "SAVS", "SOSA",
+    "SOSP", "SPSA", "SWSP", "SWTH", "TEWA", "TOSO", "TRES", "VATH",
+    "VEER", "VESP", "WAVI", "WBNU", "WCSP", "WETA", "WEWP", "WISN",
+    "WIWA", "WIWR", "WTSP", "WWCR", "YBFL", "YBSA", "YEWA", "YHBL",
+    "YRWA")
+
+distr <- list()
+
+for (spp in SPP) {
+   fl <- list.files(file.path(OUTDIR, "All", spp))
+   d <- numeric(0)
+   for (i in 1:length(fl)) {
+        cat("Combine -", sect, spp, i, "/", length(fl), "\n");flush.console()
+        e <- new.env()
+        load(file.path(OUTDIR, sect, spp, fl[i]), envir=e)
+        d <- c(d, rowSums(e$pxNcrS))
+    }
+    distr[[spp]] <- d
+}
+save(distr, file=file.path(OUTDIR, "pixel-level-values.RData"))
