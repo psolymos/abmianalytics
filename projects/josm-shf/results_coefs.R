@@ -195,6 +195,7 @@ Ds <- Ds[apply(Ds,1,max)>10,]
 ## correlation between c4i coefs and D estimates
 
 library(cure4insect)
+opar <- set_options(path = "w:/reports")
 load_common_data()
 tmp <- read.csv("e:/peter/josm/2018/hshfix/tmp.csv")
 tt <- read.csv("~/repos/abmispecies/_data/birds.csv")
@@ -221,39 +222,69 @@ dev.off()
 gof_table$Dmax <- sapply(rownames(gof_table), function(i) max(D[,i]))
 
 ## comparing pixel levels agreement
-library(KernSmooth)
 load("e:/peter/josm/2018/hshfix/pixel-level-values.RData")
 KT <- cure4insect:::.c4if$KT
+library(hexbin)
+cf <- function(n) rev(viridis::viridis(2*n)[(1+n):(n*2)])
 
 cor.pix <- list()
 pdf("e:/peter/josm/2018/hshfix/compare-preds.pdf",onefile=TRUE)
 for (spp in SPP) {
 cat(spp, "\n");flush.console()
 y <- load_species_data(as.character(tt[tt$AOU==spp,"sppid"]))
-mat <- cbind(old=rowSums(y$SA.Curr)[match(rownames(KT), rownames(y$SA.Curr))],
+mat0 <- cbind(old=rowSums(y$SA.Curr)[match(rownames(KT), rownames(y$SA.Curr))],
     new = distr[[spp]][match(rownames(KT), names(distr[[spp]]))])
-mat <- mat[rowSums(is.na(mat))==0,]
-k <- bkde2D(sqrt(mat), max(mat)/50)
-names(k) <- c("x", "y", "z")
+mat0 <- mat0[rowSums(is.na(mat0))==0,]
+q1 <- quantile(mat0[,1], 0.99)
+q2 <- quantile(mat0[,2], 0.99)
+mat0[mat0[,1]>q1,1] <- q1
+mat0[mat0[,2]>q2,2] <- q2
 
-cor.pix[[spp]] <- cor(mat)[2,1]
-image(k, col=viridis::viridis(100),
-    xlab="web pred", ylab="hsh pred",
-    main=spp, sub=paste("cor =", round(cor.pix[[spp]],4)))
-abline(0,1, col="white")
-abline(0,1.5,lty=2, col="white")
-abline(0,1/1.5,lty=2, col="white")
-abline(0,2,lty=3, col="white")
-abline(0,1/2,lty=3, col="white")
+plot(hexbin(sqrt(mat0)), colramp=cf, main=spp)
 }
 dev.off()
 
-## todo:
-## - redo kde: check how to estimate bandwidth, some figs are crappy
-## - maybe use hexbin?
-## - cut off <0 values
-## - add cor.pred to gof table
-## - prepare 1x3 maps with old, new, difference maps (take veghf code)
+rt <- .read_raster_template()
+r0 <- .make_raster(ifelse(KT$reg_nr!="Grassland" &
+    coordinates(cure4insect:::.c4if$XY)[,2] > 50, 1, 0), KT, rt)
+v <- values(r0)
+values(r0)[!is.na(v) & v==0] <- NA
+xy0 <- DAT[,c("POINT_X","POINT_Y")]
+coordinates(xy0) <- ~POINT_X+POINT_Y
+proj4string(xy0) <- proj4string(cure4insect:::.c4if$XY)
+xy0 <- spTransform(xy0, proj4string(rt))
+
+pdf("e:/peter/josm/2018/hshfix/compare-maps.pdf",onefile=TRUE, width=18, height=9)
+for (spp in SPP) {
+cat(spp, "\n");flush.console()
+y <- load_species_data(as.character(tt[tt$AOU==spp,"sppid"]))
+mat <- cbind(old=rowSums(y$SA.Curr)[match(rownames(KT), rownames(y$SA.Curr))],
+    new = distr[[spp]][match(rownames(KT), names(distr[[spp]]))])
+mat[is.na(mat)] <- 0
+q1 <- quantile(mat[,1], 0.99)
+q2 <- quantile(mat[,2], 0.99)
+mat[mat[,1]>q1,1] <- q1
+mat[mat[,2]>q2,2] <- q2
+r1 <- .make_raster(mat[,1], KT, rt)
+r2 <- .make_raster(mat[,2], KT, rt)
+#MAX <- max(values(r1), values(r2), na.rm=TRUE)
+#values(r1)[1] <- MAX
+#values(r2)[1] <- MAX
+
+op <- par(mfrow=c(1,3))
+plot(r0,col="grey", axes=FALSE, box=FALSE, main=paste(spp, "detections"), legend=FALSE)
+#plot(r0,col="lightgrey", add=TRUE)
+points(xy0[yyn[,spp]>0,],pch=3, cex=0.5)
+plot(mask(r1, r0), col=cf(100), axes=FALSE, box=FALSE, main=paste(spp, "old"))
+plot(mask(r2, r0), col=cf(100), axes=FALSE, box=FALSE, main=paste(spp, "new"))
+#plot(rt, col="grey", axes=FALSE, box=FALSE, main=paste(spp, "old"), legend=FALSE)
+#plot(mask(r1, r0), col=cf(100), add=TRUE)
+#plot(rt, col="grey", axes=FALSE, box=FALSE, main=paste(spp, "new"), legend=FALSE)
+#plot(mask(r2, r0), col=cf(100), add=TRUE)
+par(op)
+}
+dev.off()
+
 
 
 write.csv(gof_table,file="e:/peter/josm/2018/hshfix/GoF.csv")
