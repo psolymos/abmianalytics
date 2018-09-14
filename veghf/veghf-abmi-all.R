@@ -410,6 +410,9 @@ save(d, file=file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
 
 ## long format first, in chunks
 
+load(file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    "20180821_Grid_1sqkm_VEG61HFI2016v3.RData"))
+
 cn <- c("VEGAGEclass", "VEGHFAGEclass", "SOILclass", "SOILHFclass")
 d1 <- make_vegHF_wide_v6(d[1:20000000,],
     col.label="GRID_LABEL",
