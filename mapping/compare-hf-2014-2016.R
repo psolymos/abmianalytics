@@ -22,12 +22,14 @@ e <- new.env()
 load(f14, envir=e)
 dd <- fill_in_0ages_v6(e$dd1km_pred, kgrid[rownames(e$dd1km_pred$veg_current),"NSRNAME"], ages_list)
 x14 <- dd$veg_current
+#x14 <- dd[[2]]
 x14 <- x14[rownames(kgrid),]
 stopifnot(all(rownames(kgrid) == rownames(x14)))
 
 e <- new.env()
 load(f16, envir=e)
 x16 <- e$dd_kgrid$veg_current
+#x16 <- dd[[2]]
 x16 <- x16[rownames(kgrid),]
 stopifnot(all(rownames(kgrid) == rownames(x16)))
 
@@ -63,6 +65,7 @@ perc <- data.frame(x2014=colMeans(x14), x2016=colMeans(x16))
 round(perc, 2)
 plot(perc)
 abline(0,1)
+
 
 cn <- colnames(x14)
 cn1 <- substr(cn, 1, nchar(cn)-1)

@@ -12,12 +12,14 @@ load_common_data()
 
 ## specify spatial subset
 library(rgdal)
+ogrListLayers(dsn="e:/peter/AB_data_v2018/data/raw/xy/Oilsands-Boundaries.gdb")
 ply <- readOGR(dsn="e:/peter/AB_data_v2018/data/raw/xy/Oilsands-Boundaries.gdb",
-    "OilsandRegionDissolve10TM")
+#    "OilsandRegionDissolve10TM")
+    "Oilsand_Mineable10TM")
 id <- overlay_polygon(ply)
 
 ## specify species subset
-species <- get_all_species() # all birds
+species <- get_all_species("birds") # all birds
 
 ## FALSE --> no single species maps/plots are saved
 save_spp_figs <- TRUE
@@ -31,7 +33,7 @@ regs <- interaction(TAB$reg_luf, TAB$reg_nsr, sep="_", drop=TRUE)
 #regs <- TAB$reg_nsr
 
 ## specify output folder
-base <- "./_site" # this folder is created
+base <- "./_site_mineable" # this folder is created
 zipbase <- "." # put here the zipped results
 if (.verbose()) cat("output directory", base, "\n")
 if (dir.exists(base))
@@ -315,7 +317,7 @@ writeRaster(rr, file.path(base, "data", "multispecies_results.tif"))
 zz <- do.call(rbind, res)
 class(zz) <- c("c4idf", class(z))
 rept <- list(species=unname(sub_info[1]), pixels=unname(sub_info[2]),
-    intactness=mean(zz$SI_Est))
+    intactness=mean(zz$SI_Est[zz$Keep]))
 write.csv(zz, row.names=FALSE, file=file.path(base, "data", "species_results.csv"))
 sel_tab <- data.frame(ID=get_subset_id())
 write.csv(sel_tab, row.names=FALSE, file=file.path(base, "data", "spatial_subset_id.csv"))
