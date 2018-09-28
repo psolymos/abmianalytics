@@ -1347,3 +1347,44 @@ compare_sets(zz, x$SITE_LABEL)
 setdiff(zz, x$SITE_LABEL)
 setdiff(x$SITE_LABEL, zz)
 
+## -- requests --
+
+## 2018-09-28
+## a) Verified Human Footprint (in the year of sampling) summarized tabular
+## data for a 564m buffer zone (1 km2) surrounding sampled terrestrial ABMI
+## systematic grid site centres in the Oil Sands Monitoring Region.
+## b) Verified Human Footprint (in the year of sampling) summarized tabular
+## data for a 250m buffer zone surrounding open water at sampled wetland ABMI
+## systematic grid sites in the Oils Sands Monitoring Region.
+
+id <- readLines(file.path(ROOT, VER, "data", "raw", "xy", "ABMISites_InOSM.txt"))
+ss <- as.character(xx$ABMI_Assigned_Site_ID) %in% id
+
+## dd_564m, xx
+load(file.path(ROOT, VER, "data", "analysis", "site", "veg-hf_SiteCenter_v6verified.Rdata"))
+
+xxs <- xx[ss,]
+vhs <- as.matrix(dd_564m[[1]][ss,setdiff(colnames(dd_564m[[1]]), colnames(dd_564m[[2]]))])
+vhs <- vhs / rowSums(dd_564m[[1]])[ss]
+For <- rowSums(vhs[,startsWith(colnames(vhs), "CC")])
+vhs <- cbind(vhs[,!startsWith(colnames(vhs), "CC")], "ForestHarvest"=For)
+vhs_terr <- vhs
+
+## clim, ddw_250m
+load(file.path(ROOT, VER, "data", "analysis", "site", "veg-hf_wetlands_v6x.Rdata"))
+
+rownames(clim) <- clim$SiteYear
+xx <- clim[rownames(ddw_250m[[1]]),]
+ss <- as.character(xx$Site_ID_Ref) %in% paste0("W", id)
+xxs <- xx[ss,]
+vhs <- as.matrix(ddw_250m[[1]][ss,setdiff(colnames(ddw_250m[[1]]), colnames(ddw_250m[[2]]))])
+vhs <- vhs / rowSums(ddw_250m[[1]])[ss]
+For <- rowSums(vhs[,startsWith(colnames(vhs), "CC")])
+vhs <- cbind(vhs[,!startsWith(colnames(vhs), "CC")], "ForestHarvest"=For)
+vhs_wet <- vhs
+
+write.csv(vhs_terr, file=file.path(ROOT, VER, "data", "misc", "requests",
+    "2018-09-28", "Terrestrial-ABMI-sites-in-OSM-HF-564mBuffer.csv"))
+write.csv(vhs_wet, file=file.path(ROOT, VER, "data", "misc", "requests",
+    "2018-09-28", "Wetland-ABMI-sites-in-OSM-HF-250mBuffer.csv"))
+
