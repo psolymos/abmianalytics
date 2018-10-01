@@ -92,6 +92,53 @@ for (spp in SPP) {
 N <- colSums(PREDS*AREA_ha) / 10^6
 save(AREA_ha, N, PREDS, file=file.path(OUTDIR1, "predictions.Rdata"))
 
+## making pretty maps
+
+
+library(sp)
+library(rgeos)
+library(raster)
+library(cure4insect)
+opar <- set_options(path = "w:/reports")
+load_common_data()
+
+stopifnot(all(rownames(KT)==rownames(kgrid)))
+KT <- cure4insect:::.c4if$KT
+rt <- cure4insect:::.read_raster_template()
+#INSIDE <- KT$reg_nr!="Grassland" & coordinates(cure4insect:::.c4if$XY)[,2] > 50
+INSIDE <- kgrid$useBCR6
+r0 <- cure4insect:::.make_raster(ifelse(INSIDE, 1, 0), KT, rt)
+v <- values(r0)
+values(r0)[!is.na(v) & v==0] <- NA
+cf <- function(n) rev(viridis::viridis(2*n)[(1+n):(n*2)])
+
+pdf(file.path(ROOT, "out", "birds", "josmshf", "BCR6-maps.pdf"),
+    onefile=TRUE, width=6, height=9)
+for (spp in SPP) {
+    cat(spp, "--------------------------------------\n");flush.console()
+    fl <- list.files(file.path(OUTDIR1, spp))
+    ssRegs <- gsub("\\.Rdata", "", fl)
+    pxNcr <- NULL
+    #pxNrf <- NULL
+    for (i in ssRegs) {
+        cat(spp, i, "\n");flush.console()
+        load(file.path(OUTDIR1, spp, paste0(i, ".Rdata")))
+        rownames(pxNcr1) <- rownames(pxNrf1) <- names(Cells)
+        pxNcr <- rbind(pxNcr, pxNcr1)
+        #pxNrf <- rbind(pxNrf, pxNrf1)
+    }
+    PREDS <- pxNcr[rownames(KT[INSIDE,]),]
+    PREDS <- PREDS[match(rownames(KT), names(PREDS))]
+    PREDS[is.na(PREDS)] <- 0
+    r1 <- .make_raster(PREDS, KT, rt)
+    r1 <- mask(r1, r0)
+    plot(rt, col="darkgrey", axes=FALSE, box=FALSE, legend=FALSE, main=spp)
+    #plot(r1, col=cf(100), axes=FALSE, box=FALSE, main=spp)
+    plot(r1, col=cf(100), add=TRUE)
+}
+dev.off()
+
+
 ## getting habitat stuf
 
 fl <- list.files(file.path(OUTDIR1, SPP[1]))
