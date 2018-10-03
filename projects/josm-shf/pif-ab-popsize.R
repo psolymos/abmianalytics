@@ -402,6 +402,8 @@ save(roadside_bias, rai_pred, rai_data,
 
 ## --- unifying the bits and pieces ---
 
+source("~/repos/bamanalytics/R/makingsense_functions.R")
+
 ## PIF table
 pif <- read.csv("~/GoogleWork/bam/PIF-AB/popBCR-6AB_v2_22-May-2013.csv")
 mefa4::compare_sets(tax$English_Name, pif$Common_Name)
@@ -537,6 +539,7 @@ pref <- sapply(NestAll, pref_fun)
 quantile(pref,seq(0,1,0.25))
 
 ## roadside count effect within BCR 6
+source("~/repos/abmianalytics/R/results_functions.R")
 pr_fun_for_road <- function(est, X0, X1) {
     lam1 <- exp(apply(est, 1, function(z) X1 %*% z))
     Lam1 <- unname(colMeans(lam1))
@@ -655,7 +658,7 @@ write.csv(cbind(Dall[,1:2], n=tabpt), file="~/GoogleWork/bam/PIF-AB/draft2/Table
 ## --- making the figures ---
 
 ## maps
-pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig1-maps.pdf", width=12, height=9)
+pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig1-maps.pdf", width=12, height=9)
 op <- par(mfrow=c(1,2), mar=c(1,1,1,1))
 plot(BCR2AB, col=c(NA, "grey", rep(NA, 11)), border=NA, main="Roadside surveys")
 plot(AB, col=NA, border=1,add=TRUE)
@@ -718,7 +721,7 @@ dots_box_plot <- function(mat, lines=FALSE, method="box", ...) {
     invisible(NULL)
 }
 
-pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig2-popsize-old.pdf", width=8, height=8)
+pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig2-popsize-old.pdf", width=8, height=8)
 op <- par(mfrow=c(2,2), las=1, mar=c(4,4,1,2))
 dots_box_plot(pop[,c("Npif", "Npix")], lines=TRUE,
     ylab="Population Size (M singing inds.)", names=c("PIF", "PIX"))
@@ -736,8 +739,8 @@ par(op)
 dev.off()
 
 
-pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig2-popsize.pdf", width=14, height=7)
-op <- par(mfrow=c(1,2), las=1, mar=c(4,4,1,2))
+pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig2-popsize.pdf", width=7, height=7)
+op <- par(mfrow=c(1,1), las=1, mar=c(4,4,1,2))
 pch <- 19 # ifelse(pop$Npif %[]% list(pop$NpixLo, pop$NpixHi), 21, 19)
 plot(pop[,c("Npif", "Npix")], xlab=expression(N[PIF]), ylab=expression(N[PIX]),
     type="n",
@@ -760,11 +763,14 @@ rect(60-Siz, 0, 60-Siz+Min*Siz/Min, Min*Siz/Min, col="white")
 lines(c(60-Siz, 60), c(0, Siz), col=1, lty=2)
 points(pp, pch=pch2, col="#00000080")
 points(pop[,c("Npif", "Npix")], pch=pch, col="#00000080")
-text(pop[,"Npif"]+1.2*2, pop[,"Npix"]+0, labels=ifelse(di, rownames(pop), ""), cex=0.4)
-text(pp[,"Npif"]+1.2*2, pp[,"Npix"]+0, labels=ifelse(di2, rownames(pp), ""), cex=0.4)
+text(pop[,"Npif"]+1.2*2, pop[,"Npix"]+0, labels=ifelse(di, rownames(pop), ""), cex=0.5)
+text(pp[,"Npif"]+1.2*2, pp[,"Npix"]+0, labels=ifelse(di2, rownames(pp), ""), cex=0.5)
 segments(x0=c(60-Siz+c(0, 1, 2, 3)*Siz/3), y0=rep(Siz, 4), y1=rep(Siz, 4)+0.5)
 text(c(60-Siz+c(0, 1, 2, 3)*Siz/3), rep(Siz, 4)+1, 0:3)
+dev.off()
 
+pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig3-poprank.pdf", width=7, height=7)
+op <- par(mfrow=c(1,1), las=1, mar=c(4,4,1,2))
 rnk <- cbind(rank(pop$Npif), rank(pop$Npix))
 rnk <- 100 * rnk / max(rnk)
 plot(rnk, xlab="PIF rank quantile (%)", ylab="PIX rank quantile (%)",
@@ -772,12 +778,11 @@ plot(rnk, xlab="PIF rank quantile (%)", ylab="PIX rank quantile (%)",
 abline(0,1, lty=2)
 text(rnk, labels=rownames(pop), cex=0.8)
 #abline(h=c(24,48,72),v=c(24,48,72))
-
 par(op)
 dev.off()
 
 
-pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig3-components.pdf", width=10, height=7)
+pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig4-components.pdf", width=10, height=7)
 op <- par(las=1)
 mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH")]
 colnames(mat) <- c("OBS", "EXP", "R", "T", "A", "H")
@@ -855,7 +860,7 @@ Col <- Col0[cut(Cex, br)]
 names(Col) <- names(Cex)
 o <- cca(NN)
 
-pdf("~/GoogleWork/bam/PIF-AB/draft2/Fig4-ordination3.pdf", width=9, height=9)
+pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig6-ordination3.pdf", width=9, height=9)
 op <- par(las=1)
 plot(0, type="n", xlim=c(-0.8,1.2), ylim=c(-1,1), xlab="Axis 1", ylab="Axis 2")
 s2 <- scores(o)$sites
@@ -874,6 +879,34 @@ text(c(1,1,1)+0.1, c(-0.6, -0.75, -0.9),
     c(expression(N[PIX] < N[PIF]),expression(N[PIX] == N[PIF]),expression(N[PIX] > N[PIF])))
 par(op)
 dev.off()
+
+## roadside count/habitat bias figure
+
+library(intrval)
+rd_over <- sapply(roadside_bias[rownames(pop)], function(z) z[1,3:4] %[o]% z[2,3:4])
+rd_roadhigher <- sapply(roadside_bias[rownames(pop)], function(z) z[1,3:4] %[<o]% z[2,3:4])
+rd_sign <- ifelse(rd_roadhigher, 1, -1)
+rd_sign[rd_over] <- 0
+table(rd_over, rd_roadhigher)
+table(rd_sign)
+plot(pop$DeltaR, pop$DeltaH, col=rd_sign+2)
+abline(h=0, v=0)
+
+pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig5-count-habitat.pdf", width=7, height=7)
+op <- par(las=1)
+cx <- 1 # pop$EDR/100
+topl <- pop[,c("DeltaR", "DeltaH")]
+plot(topl,
+    xlab="R", ylab="H",
+    pch=19, cex=cx,
+    col=c("black", "white", "grey")[rd_sign+2])
+abline(h=0,v=0,lty=2)
+points(topl, cex=cx, pch=21)
+text(topl[,1], topl[,2]-0.06,
+    labels=ifelse(pop$DeltaR %][% c(-1.5, 0.9), rownames(topl), ""), cex=0.6)
+dev.off()
+
+
 
 ## ranking
 
