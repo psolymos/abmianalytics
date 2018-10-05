@@ -662,11 +662,11 @@ pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig1-maps.pdf", width=12, height=9)
 op <- par(mfrow=c(1,2), mar=c(1,1,1,1))
 plot(BCR2AB, col=c(NA, "grey", rep(NA, 11)), border=NA, main="Roadside surveys")
 plot(AB, col=NA, border=1,add=TRUE)
-plot(xy[xy@data$PCODE=="BBSAB",], add=TRUE, pch=19, col=1, cex=0.25)
+plot(xy[xy@data$ROAD01 == 1,], add=TRUE, pch=19, col=1, cex=0.25)
 
 plot(BCR2AB, col=c(NA, "grey", rep(NA, 11)), border=NA, main="Off-road surveys")
 plot(AB, col=NA, border=1,add=TRUE)
-plot(xy[xy@data$PCODE!="BBSAB",], add=TRUE, pch=19, col=1, cex=0.25)
+plot(xy[xy@data$ROAD01 == 0,], add=TRUE, pch=19, col=1, cex=0.25)
 par(op)
 dev.off()
 
@@ -772,11 +772,17 @@ dev.off()
 pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig3-poprank.pdf", width=7, height=7)
 op <- par(mfrow=c(1,1), las=1, mar=c(4,4,1,2))
 rnk <- cbind(rank(pop$Npif), rank(pop$Npix))
-rnk <- 100 * rnk / max(rnk)
-plot(rnk, xlab="PIF rank quantile (%)", ylab="PIX rank quantile (%)",
-    xlim=c(0,100), ylim=c(0,100), type="n")
+#rnk <- 100 * rnk / max(rnk)
+plot(rnk,
+    #xlab="PIF rank quantile (%)", ylab="PIX rank quantile (%)",
+    xlab=expression(N[PIF]~rank), ylab=expression(N[PIX]~rank),
+    #xlim=c(0,100), ylim=c(0,100),
+    type="n", axes=FALSE)
 abline(0,1, lty=2)
 text(rnk, labels=rownames(pop), cex=0.8)
+axis(1, c(1, 20, 40, 60, 80, 95), c(1, 20, 40, 60, 80, 95))
+axis(2, c(1, 20, 40, 60, 80, 95), c(1, 20, 40, 60, 80, 95))
+box()
 #abline(h=c(24,48,72),v=c(24,48,72))
 par(op)
 dev.off()
@@ -784,8 +790,10 @@ dev.off()
 
 pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig4-components.pdf", width=10, height=7)
 op <- par(las=1)
-mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH")]
-colnames(mat) <- c("OBS", "EXP", "R", "T", "A", "H")
+#mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH")]
+#colnames(mat) <- c("OBS", "EXP", "R", "T", "A", "H")
+mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaT", "DeltaA", "DeltaR", "DeltaH")]
+colnames(mat) <- c("OBS", "EXP", "T", "A", "R", "H")
 par(las=1)
 dots_box_plot(mat, ylab="Log Ratio", method="kde")
 abline(h=0, col=1, lwd=1,lty=2)
@@ -801,12 +809,12 @@ z <- mat[order(mat[,i], decreasing=TRUE),]
 text(i+off, head(z[,i], 1), cex=0.8, rownames(z)[1])
 text(i+off, tail(z[,i], 1), cex=0.8, rownames(z)[nrow(z)])
 
-i <- 3
+i <- 5
 z <- mat[order(mat[,i], decreasing=TRUE),]
 text(i+off, head(z[,i], 2), cex=0.8, rownames(z)[1:2])
 text(i+off, tail(z[,i], 3), cex=0.8, rownames(z)[(nrow(z)-2):nrow(z)])
 
-i <- 5
+i <- 4
 z <- mat[order(mat[,i], decreasing=TRUE),]
 text(i+off, head(z[,i], 1), cex=0.8, rownames(z)[1])
 text(i+off, tail(z[,i], 1), cex=0.8, rownames(z)[nrow(z)])
@@ -842,6 +850,28 @@ an2 <- anova(mod2)
 an2$Percent <- 100 * an2[["Sum Sq"]] / sum(an2[["Sum Sq"]])
 an2 <- an2[c("Df", "Sum Sq", "Percent", "Mean Sq", "F value", "Pr(>F)")]
 an2
+
+## looking at shared variation
+vpfun <- function (x, cutoff = 0, digits = 1, Xnames, showNote=FALSE, ...)
+{
+    x <- x$part
+    vals <- x$indfract[, 3]
+    is.na(vals) <- vals < cutoff
+    if (cutoff >= 0)
+        vals <- round(vals, digits + 1)
+    labs <- format(vals, digits = digits, nsmall = digits + 1)
+    labs <- gsub("NA", "", labs)
+    showvarparts(x$nsets, labs, Xnames=Xnames, ...)
+    if (any(is.na(vals)) && showNote)
+        mtext(paste("Values <", cutoff, " not shown", sep = ""),
+            1)
+    invisible()
+}
+
+prt <- vegan::varpart(Y=pop$DeltaObs, ~DeltaR, ~DeltaT, ~DeltaA, ~DeltaH, data=pop)
+pdf("~/GoogleWork/bam/PIF-AB/draft3/FigX-varpart.pdf", width=6, height=6)
+vpfun(prt, cutoff = 0, digits = 2, Xnames=c("R", "T", "A", "H"))
+dev.off()
 
 
 ## road avoidance and ordination
@@ -880,6 +910,40 @@ text(c(1,1,1)+0.1, c(-0.6, -0.75, -0.9),
 par(op)
 dev.off()
 
+pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig6-ordination-all.pdf", width=9, height=9, onefile=TRUE)
+for (ii in c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH")) {
+
+    Cex <- pop[[ii]]
+    names(Cex) <- rownames(pop)
+    br <- c(-Inf, -2, -1, -0.1, 0.1, 1, 2, Inf)
+    #c00 <- c('#d7191c','#fdae61','#ffffbf','#abdda4','#2b83ba')
+    c00 <- c('#d7191c','darkgrey','#2b83ba')
+    #c00 <- c("red", "darkgrey", "blue")
+    Col0 <- colorRampPalette(c00)(7)
+    Col <- Col0[cut(Cex, br)]
+    names(Col) <- names(Cex)
+
+    op <- par(las=1)
+    plot(0, type="n", xlim=c(-0.8,1.2), ylim=c(-1,1), xlab="Axis 1", ylab="Axis 2",
+        main=ii)
+    s2 <- scores(o)$sites
+    s2 <- s2 / max(abs(s2))
+    for (i in 1:nrow(s2))
+        arrows(x0=0,y0=0,x1=s2[i,1],y1=s2[i,2], angle=20, length = 0.1, col="darkgrey")
+    text(s2*1.05, labels=rownames(NN),cex=1,col=1)
+    abline(h=0,v=0,lty=2)
+    s1 <- scores(o)$species
+    s1 <- s1 / max(abs(s1))
+    text(s1[names(Col),]*0.8, labels=colnames(NN),cex=0.75, col=Col)
+    for (ii in 1:200)
+        lines(c(0.85, 0.9), rep(seq(-0.55, -0.95, len=200)[ii], 2), col=colorRampPalette(c00)(200)[ii])
+    text(c(1,1,1)+0.1, c(-0.6, -0.75, -0.9),
+        c(expression(N[PIX] < N[PIF]),expression(N[PIX] == N[PIF]),expression(N[PIX] > N[PIF])))
+    par(op)
+}
+dev.off()
+
+
 ## roadside count/habitat bias figure
 
 library(intrval)
@@ -892,18 +956,33 @@ table(rd_sign)
 plot(pop$DeltaR, pop$DeltaH, col=rd_sign+2)
 abline(h=0, v=0)
 
+Cex <- pop$DeltaObs
+names(Cex) <- rownames(pop)
+br <- c(-Inf, -2, -1, -0.1, 0.1, 1, 2, Inf)
+#c00 <- c('#d7191c','#fdae61','#ffffbf','#abdda4','#2b83ba')
+c00 <- c('#d7191c','darkgrey','#2b83ba')
+#c00 <- c("red", "darkgrey", "blue")
+Col0 <- colorRampPalette(c00)(7)
+Col <- Col0[cut(Cex, br)]
+names(Col) <- names(Cex)
+
 pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig5-count-habitat.pdf", width=7, height=7)
 op <- par(las=1)
 cx <- 1 # pop$EDR/100
 topl <- pop[,c("DeltaR", "DeltaH")]
 plot(topl,
     xlab="R", ylab="H",
-    pch=19, cex=cx,
-    col=c("black", "white", "grey")[rd_sign+2])
+    pch=c(19, 21, 19)[rd_sign+2],
+    cex=cx,
+    col=Col)
 abline(h=0,v=0,lty=2)
-points(topl, cex=cx, pch=21)
+#points(topl, cex=cx, pch=21)
 text(topl[,1], topl[,2]-0.06,
     labels=ifelse(pop$DeltaR %][% c(-1.5, 0.9), rownames(topl), ""), cex=0.6)
+    for (ii in 1:200)
+        lines(c(1.7, 1.9), rep(seq(-0.55, -0.95, len=200)[ii], 2), col=colorRampPalette(c00)(200)[ii])
+    text(c(2.5,2.5,2.5)+0.1, c(-0.6, -0.75, -0.9),
+        c(expression(N[PIX] < N[PIF]),expression(N[PIX] == N[PIF]),expression(N[PIX] > N[PIF])))
 dev.off()
 
 
