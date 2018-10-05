@@ -278,6 +278,14 @@ for (i in 1:ncol(d))
     if (is.character(d[,i]))
         d[,i] <- as.factor(d[,i])
 
+ddw_point <- make_vegHF_wide_v6(d[d$buffer == "20m",],
+    col.label="SiteYear",
+    col.year="Year",
+    col.HFyear="YEAR_1",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE, wide=FALSE) # use refined classes
+
 dd <- make_vegHF_wide_v6(d[d$buffer == "20m",],
     col.label="SiteYear",
     col.year="Year",
@@ -311,7 +319,7 @@ dd$scale <- "0-250 m buffer area around wetland [V6 backfilled + verified HF]"
 dx <- nonDuplicated(d, SiteYear, TRUE)[rownames(dd[[1]]),]
 ddw_250m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
-save(clim, ddw_catch, ddw_20m, ddw_100m, ddw_250m,
+save(clim, ddw_catch, ddw_20m, ddw_100m, ddw_250m, ddw_point,
     file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_wetlands_v6x.Rdata"))
 
@@ -1357,34 +1365,47 @@ setdiff(x$SITE_LABEL, zz)
 ## data for a 250m buffer zone surrounding open water at sampled wetland ABMI
 ## systematic grid sites in the Oils Sands Monitoring Region.
 
-id <- readLines(file.path(ROOT, VER, "data", "raw", "xy", "ABMISites_InOSM.txt"))
-ss <- as.character(xx$ABMI_Assigned_Site_ID) %in% id
-
 ## dd_564m, xx
 load(file.path(ROOT, VER, "data", "analysis", "site", "veg-hf_SiteCenter_v6verified.Rdata"))
 
-xxs <- xx[ss,]
-vhs <- as.matrix(dd_564m[[1]][ss,setdiff(colnames(dd_564m[[1]]), colnames(dd_564m[[2]]))])
-vhs <- vhs / rowSums(dd_564m[[1]])[ss]
+id <- readLines(file.path(ROOT, VER, "data", "raw", "xy", "ABMISites_InOSM.txt"))
+ss <- as.character(xx$ABMI_Assigned_Site_ID) %in% id
+
+xxs <- xx
+xxs$inOSR <- ss
+xxs$NRNAME_real <- dd_point$NRNAME[match(xxs$Site_YEAR, dd_point$Site_YEAR)]
+xxs$NSRNAME_real <- dd_point$NSRNAME[match(xxs$Site_YEAR, dd_point$Site_YEAR)]
+xxs$LUF_NAME_real <- dd_point$LUF_NAME[match(xxs$Site_YEAR, dd_point$Site_YEAR)]
+
+vhs <- as.matrix(dd_564m[[1]][,setdiff(colnames(dd_564m[[1]]), colnames(dd_564m[[2]]))])
+vhs <- vhs / rowSums(dd_564m[[1]])
 For <- rowSums(vhs[,startsWith(colnames(vhs), "CC")])
 vhs <- cbind(vhs[,!startsWith(colnames(vhs), "CC")], "ForestHarvest"=For)
 vhs_terr <- vhs
+vhs_terr <- data.frame(xxs[,c("inOSR", "NRNAME_real", "NSRNAME_real", "LUF_NAME_real")], vhs_terr)
 
 ## clim, ddw_250m
 load(file.path(ROOT, VER, "data", "analysis", "site", "veg-hf_wetlands_v6x.Rdata"))
 
 rownames(clim) <- clim$SiteYear
-xx <- clim[rownames(ddw_250m[[1]]),]
+xx <- clim[intersect(rownames(clim), rownames(ddw_250m[[1]])),]
 ss <- as.character(xx$Site_ID_Ref) %in% paste0("W", id)
-xxs <- xx[ss,]
-vhs <- as.matrix(ddw_250m[[1]][ss,setdiff(colnames(ddw_250m[[1]]), colnames(ddw_250m[[2]]))])
-vhs <- vhs / rowSums(ddw_250m[[1]])[ss]
+
+xxs <- xx
+xxs$inOSR <- ss
+xxs$NRNAME_real <- ddw_point$NRNAME[match(xxs$SiteYear, ddw_point$SiteYear)]
+xxs$NSRNAME_real <- ddw_point$NSRNAME[match(xxs$SiteYear, ddw_point$SiteYear)]
+xxs$LUF_NAME_real <- ddw_point$LUF_NAME[match(xxs$SiteYear, ddw_point$SiteYear)]
+
+vhs <- as.matrix(ddw_250m[[1]][,setdiff(colnames(ddw_250m[[1]]), colnames(ddw_250m[[2]]))])
+vhs <- vhs / rowSums(ddw_250m[[1]])
 For <- rowSums(vhs[,startsWith(colnames(vhs), "CC")])
 vhs <- cbind(vhs[,!startsWith(colnames(vhs), "CC")], "ForestHarvest"=For)
-vhs_wet <- vhs
+vhs_wet <- vhs[rownames(xxs),]
+vhs_wet <- data.frame(xxs[,c("inOSR", "NRNAME_real", "NSRNAME_real", "LUF_NAME_real")], vhs_wet)
 
 write.csv(vhs_terr, file=file.path(ROOT, VER, "data", "misc", "requests",
-    "2018-09-28", "Terrestrial-ABMI-sites-in-OSM-HF-564mBuffer.csv"))
+    "2018-09-28", "Terrestrial-ABMI-all-sites-HF-564mBuffer.csv"))
 write.csv(vhs_wet, file=file.path(ROOT, VER, "data", "misc", "requests",
-    "2018-09-28", "Wetland-ABMI-sites-in-OSM-HF-250mBuffer.csv"))
+    "2018-09-28", "Wetland-ABMI-all-sites-HF-250mBuffer.csv"))
 
