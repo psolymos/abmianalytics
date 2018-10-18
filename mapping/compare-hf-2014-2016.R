@@ -13,26 +13,6 @@ load(file.path("e:/peter/AB_data_v2017", "data", "analysis", "kgrid_table_km.Rda
 load("e:/peter/AB_data_v2018/data/analysis/ages-by-nsr.Rdata")
 source("~/repos/abmianalytics/R/veghf_functions.R")
 
-## comparing HF inventories
-#f14 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_coarse-fixage0.Rdata"
-f14 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km-grid_v6hf2014_fine_unsorted.Rdata"
-f16 <- "e:/peter/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016.Rdata"
-
-e <- new.env()
-load(f14, envir=e)
-dd <- fill_in_0ages_v6(e$dd1km_pred, kgrid[rownames(e$dd1km_pred$veg_current),"NSRNAME"], ages_list)
-x14 <- dd$veg_current
-#x14 <- dd[[2]]
-x14 <- x14[rownames(kgrid),]
-stopifnot(all(rownames(kgrid) == rownames(x14)))
-
-e <- new.env()
-load(f16, envir=e)
-x16 <- e$dd_kgrid$veg_current
-#x16 <- dd[[2]]
-x16 <- x16[rownames(kgrid),]
-stopifnot(all(rownames(kgrid) == rownames(x16)))
-
 xy <- kgrid
 coordinates(xy) <- ~ POINT_X + POINT_Y
 proj4string(xy) <-
@@ -52,6 +32,91 @@ ABnrS <- gSimplify(ABnr, tol=500, topologyPreserve=TRUE)
 colDiv <- colorRampPalette(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B",
     "#FFFFBF","#D9EF8B", "#A6D96A", "#66BD63", "#1A9850", "#006837"))(100)
 colSeq <- rev(viridis::magma(100))
+COL <- RColorBrewer::brewer.pal(6, "Dark2")
+
+rast_ix <- function(i, x)
+    .make_raster(x[,i], kgrid, rt)
+rast_pl <- function(i, x, r=NULL, fact=NULL, NR=TRUE, col=NULL, ...) {
+    if (is.null(r)) {
+        r <- .make_raster(x[,i], kgrid, rt)
+        if (is.null(col))
+            col <- colSeq
+    } else {
+        if (is.null(col))
+            col <- colDiv
+    }
+    if (!is.null(fact))
+        r <- aggregate(r, fact, fun=mean)
+    plot(r, axes=FALSE, box=FALSE, col=col, ...)
+    if (NR)
+        plot(ABnrS, add=TRUE, border=1, lwd=0.5)
+    invisible(r)
+}
+plot_ix <- function(i) {
+    m <- cbind(zz14[,i], zz16[,i])
+    M <- max(m)
+    plot(m[,1], m[,2], xlim=c(0,M), ylim=c(0, M), main=i, xlab="% 2014", ylab="% 2016",
+        col=COL, cex=1.5, pch=3)
+    abline(0,1,lty=1,col="grey")
+    text(m[,1], m[,2], rownames(m), pos=2, col=COL)
+}
+
+fact <- 10
+NR <- TRUE
+
+## comparing HF inventories
+
+TYPE <- "baseyr2014wUnknAges"
+## 2014v2HFI base year 2014 with unknown ages
+f14 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine_unsorted.Rdata"
+## 2016v3HFI base year 2016 with unknown ages
+f16 <- "e:/peter/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3-unsorted.Rdata"
+
+TYPE <- "baseyr2014woUnknAges"
+## 2014v2HFI base year 2014 without unknown ages
+f14 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine-fixage0.Rdata"
+## 2016v3HFI base year 2016 without unknown ages
+f16 <- "e:/peter/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3.Rdata"
+
+TYPE <- "baseyr2016wUnknAges"
+## 2014v2HFI base year 2016 with unknown ages
+f14 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine_unsorted-2016ref.Rdata"
+## 2016v3HFI base year 2016 with unknown ages
+f16 <- "e:/peter/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3-unsorted.Rdata"
+
+TYPE <- "baseyr2016woUnknAges"
+## 2014v2HFI base year 2016 without unknown ages
+f14 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine-fixage0-2016ref.Rdata"
+## 2016v3HFI base year 2016 without unknown ages
+f16 <- "e:/peter/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3.Rdata"
+
+## 2014v2HFI base year 2014 with unknown ages
+"e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine_unsorted.Rdata"
+## 2014v2HFI base year 2014 without unknown ages
+"e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine-fixage0.Rdata"
+## 2014v2HFI base year 2016 with unknown ages
+"e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine_unsorted-2016ref.Rdata"
+## 2014v2HFI base year 2016 without unknown ages
+"e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine-fixage0-2016ref.Rdata"
+
+## 2016v3HFI base year 2016 with unknown ages
+"e:/peter/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3-unsorted.Rdata"
+## 2016v3HFI base year 2016 without unknown ages
+"e:/peter/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3.Rdata"
+
+e <- new.env()
+load(f14, envir=e)
+x14 <- e$dd1km_pred$veg_current
+x14 <- x14[rownames(kgrid),]
+stopifnot(all(rownames(kgrid) == rownames(x14)))
+
+e <- new.env()
+load(f16, envir=e)
+x16 <- e$dd_kgrid$veg_current
+if (is.null(x16))
+    x16 <- e$dd$veg_current
+x16 <- x16[rownames(kgrid),]
+stopifnot(all(rownames(kgrid) == rownames(x16)))
 
 compare_sets(colnames(x14), colnames(x16))
 stopifnot(all(colnames(x14) == colnames(x16)))
@@ -74,32 +139,14 @@ CN <- ifelse(substr(cn, nchar(cn), nchar(cn)) %in% c("R", 0:9), cn1, cn)
 xx14 <- groupSums(x14, 2, CN)
 xx16 <- groupSums(x16, 2, CN)
 
-
-rast_ix <- function(i, x)
-    .make_raster(x[,i], kgrid, rt)
-rast_pl <- function(i, x, r=NULL, fact=NULL, NR=TRUE, col=NULL, ...) {
-    if (is.null(r)) {
-        r <- .make_raster(x[,i], kgrid, rt)
-        if (is.null(col))
-            col <- colSeq
-    } else {
-        if (is.null(col))
-            col <- colDiv
-    }
-    if (!is.null(fact))
-        r <- aggregate(r, fact, fun=mean)
-    plot(r, axes=FALSE, box=FALSE, col=col, ...)
-    if (NR)
-        plot(ABnrS, add=TRUE, border=1, lwd=0.5)
-    invisible(r)
-}
-
-fact <- 10
-NR <- TRUE
+kgrid$NRNAMEs <- kgrid$NRNAME
+levels(kgrid$NRNAMEs) <- abbreviate(levels(kgrid$NRNAMEs),3)
+zz14 <- groupMeans(x14, 1, kgrid$NRNAMEs)
+zz16 <- groupMeans(x16, 1, kgrid$NRNAMEs)
 
 ## compares 2016 to 2014
-pdf(paste0("e:/peter/sppweb2018/footprint-results/hf-2014v2-vs-2010-maps_",
-    if (is.null(fact)) 1 else fact, "km-scale.pdf"),
+pdf(paste0("e:/peter/sppweb2018/footprint-results/hf-2014v2-vs-2016v3-maps_",
+    TYPE, "_", if (is.null(fact)) 1 else fact, "km-scale.pdf"),
     onefile=TRUE, height=8, width=15)
 for (i in colnames(xx14)) {
 cat(i, "\n");flush.console()
@@ -117,22 +164,7 @@ dev.off()
 
 ## plot regional averages etc.
 
-kgrid$NRNAMEs <- kgrid$NRNAME
-levels(kgrid$NRNAMEs) <- abbreviate(levels(kgrid$NRNAMEs),3)
-zz14 <- groupMeans(x14, 1, kgrid$NRNAMEs)
-zz16 <- groupMeans(x16, 1, kgrid$NRNAMEs)
-
-COL <- RColorBrewer::brewer.pal(6, "Dark2")
-plot_ix <- function(i) {
-    m <- cbind(zz14[,i], zz16[,i])
-    M <- max(m)
-    plot(m[,1], m[,2], xlim=c(0,M), ylim=c(0, M), main=i, xlab="% 2014", ylab="% 2016",
-        col=COL, cex=1.5, pch=3)
-    abline(0,1,lty=1,col="grey")
-    text(m[,1], m[,2], rownames(m), pos=2, col=COL)
-}
-
-pdf("e:/peter/sppweb2018/footprint-results/hf-by-regions.pdf",
+pdf(paste0("e:/peter/sppweb2018/footprint-results/hf-by-regions_", TYPE, ".pdf"),
     onefile=TRUE, height=5, width=5)
 for (i in colnames(zz14))
     plot_ix(i)

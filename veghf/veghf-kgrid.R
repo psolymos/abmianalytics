@@ -1,8 +1,10 @@
 ## values: 2014_fine, 2014_coarse, 2012, 2010_coarse
-HF_VERSION <- "2014v2_coarse"
+#HF_VERSION <- "2014v2_coarse"
 #HF_VERSION <- "2010_coarse"
+HF_VERSION <- "2014v2_fine"
 
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
+VER <- "AB_data_v2017"
 
 PIXEL <- "km" # km or qs
 #PIXEL <- "qs" # km or qs

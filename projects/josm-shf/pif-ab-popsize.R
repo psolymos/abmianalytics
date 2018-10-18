@@ -385,6 +385,20 @@ for (spp in SPP) {
 #write.csv(rsb, row.names=FALSE, file="~/Dropbox/bam/PIF-AB/results/roadside_bias.csv")
 #save(roadside_bias, file=file.path(ROOT, "josmshf", "roadside_bias.Rdata"))
 
+## not conclusive: but habCl effect pulls the contrast to more neutral for forest species
+roadside_coef <- list()
+for (spp in SPP) {
+    cat(spp, "\n");flush.console()
+    resn <- loadSPP(file.path(ROOT, "out", "birds", "results", "josmshf",
+        paste0("birds_abmi-josmshf_", spp, ".Rdata")))
+    est7 <- getEst(resn, stage=7, na.out=FALSE, Xn)
+    roadside_coef[[spp]] <- est7[,c("ROAD01","habCl:ROAD01")]
+}
+rcf <- t(exp(sapply(roadside_coef, function(z) c(RdOp=mean(z[,1]), RdCl=mean(rowSums(z))))))
+boxplot(rcf,ylim=c(0,10))
+abline(h=1,col=2)
+hist(rcf[,2]/rcf[,1])
+
 ## roadside avoidance index
 rai_data <- data.frame(HAB=xn$hab1ec, ROAD=xn$ROAD01)
 rai_pred <- matrix(0, nrow(Xn), nrow(tax))

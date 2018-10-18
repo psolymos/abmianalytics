@@ -356,57 +356,66 @@ save(dd_inter,
 ## w2w 1km^2 scale --------------------------------------
 
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
-    "20180821_Grid_1sqkm_VEG61HFI2016v3.sqlite")
+#    "20180821_Grid_1sqkm_VEG61HFI2016v3.sqlite")
+    "20181010_Grid_1sqkm_VEG61HFI2016v3fty.sqlite")
 db <- dbConnect(RSQLite::SQLite(), f)
-dbListTables(db) # "Summary_1sqkm_grid"
+tn <- dbListTables(db) # "Summary_1sqkm_grid_FTY"
 
-hd <- dbGetQuery(db, 'SELECT * FROM Summary_1sqkm_grid LIMIT 5')
+hd <- dbGetQuery(db, paste('SELECT * FROM', tn, 'LIMIT 5'))
 d <- dbGetQuery(db,
-    "SELECT
+    paste("SELECT
       Origin_Year,
       Pct_of_Larch,
       NSRNAME,
       Soil_Type_1,
       GRID_LABEL,
-      MineCFOAgCutblock,
+      FEATURE_TY,
       Combined_ChgByCWCS,
-      Year_MineCFOAgCutblock,
+      YEAR,
       Shape_Area
     FROM
-      Summary_1sqkm_grid LIMIT 10000000;"
+      ", tn, "LIMIT 1000;")
 )
+d1 <- make_vegHF_wide_v6(d,
+    col.label="GRID_LABEL",
+    col.year=2016,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    HF_fine=TRUE, wide=FALSE) # use refined classes
 
-d <- dbGetQuery(db, "SELECT GRID_LABEL FROM Summary_1sqkm_grid;")
+d <- dbGetQuery(db, paste("SELECT GRID_LABEL FROM", tn, ";"))
 d[,1] <- as.factor(d[,1])
-d0 <- dbGetQuery(db, "SELECT NSRNAME FROM Summary_1sqkm_grid;")
+gc()
+d0 <- dbGetQuery(db, paste("SELECT NSRNAME FROM", tn, ";"))
 d$NSRNAME <- as.factor(d0[,1])
 rm(d0)
 gc()
-d0 <- dbGetQuery(db, "SELECT Combined_ChgByCWCS FROM Summary_1sqkm_grid;")
+d0 <- dbGetQuery(db, paste("SELECT Combined_ChgByCWCS FROM", tn, ";"))
 d$Combined_ChgByCWCS <- as.factor(d0[,1])
 rm(d0)
 gc()
-d0 <- dbGetQuery(db, "SELECT Soil_Type_1 FROM Summary_1sqkm_grid;")
+d0 <- dbGetQuery(db, paste("SELECT Soil_Type_1 FROM", tn, ";"))
 d$Soil_Type_1 <- as.factor(d0[,1])
 rm(d0)
 gc()
-d0 <- dbGetQuery(db, "SELECT MineCFOAgCutblock FROM Summary_1sqkm_grid;")
-d$FEATURE_TY <- as.factor(d0[,1]) # rename
+d0 <- dbGetQuery(db, paste("SELECT FEATURE_TY FROM", tn, ";"))
+d$FEATURE_TY <- as.factor(d0[,1])
 rm(d0)
 gc()
-d0 <- dbGetQuery(db, "SELECT Origin_Year FROM Summary_1sqkm_grid;")
+d0 <- dbGetQuery(db, paste("SELECT Origin_Year FROM", tn, ";"))
 d$Origin_Year <- d0[,1]
 rm(d0)
 gc()
-d0 <- dbGetQuery(db, "SELECT Pct_of_Larch FROM Summary_1sqkm_grid;")
+d0 <- dbGetQuery(db, paste("SELECT Pct_of_Larch FROM", tn, ";"))
 d$Pct_of_Larch <- d0[,1]
 rm(d0)
 gc()
-d0 <- dbGetQuery(db, "SELECT Year_MineCFOAgCutblock FROM Summary_1sqkm_grid;")
-d$Year_MineCFOAgCutblock <- d0[,1]
+d0 <- dbGetQuery(db, paste("SELECT YEAR FROM", tn, ";"))
+d$YEAR <- d0[,1]
 rm(d0)
 gc()
-d0 <- dbGetQuery(db, "SELECT Shape_Area FROM Summary_1sqkm_grid;")
+d0 <- dbGetQuery(db, paste("SELECT Shape_Area FROM", tn, ";"))
 d$Shape_Area <- d0[,1]
 rm(d0)
 gc()
@@ -414,78 +423,225 @@ gc()
 dbDisconnect(db)
 
 save(d, file=file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
-    "20180821_Grid_1sqkm_VEG61HFI2016v3.RData"))
+    #"20180821_Grid_1sqkm_VEG61HFI2016v3.RData"))
+    "20181010_Grid_1sqkm_VEG61HFI2016v3fty.RData"))
 
 ## long format first, in chunks
 
 load(file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
-    "20180821_Grid_1sqkm_VEG61HFI2016v3.RData"))
+    #"20180821_Grid_1sqkm_VEG61HFI2016v3.RData"))
+    "20181010_Grid_1sqkm_VEG61HFI2016v3fty.RData"))
 
 cn <- c("VEGAGEclass", "VEGHFAGEclass", "SOILclass", "SOILHFclass")
+## 0-2
 d1 <- make_vegHF_wide_v6(d[1:20000000,],
     col.label="GRID_LABEL",
     col.year=2016,
-    col.HFyear="Year_MineCFOAgCutblock",
+    col.HFyear="YEAR",
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     HF_fine=TRUE, wide=FALSE) # use refined classes
 d0 <- d1[,cn]
+d <- d[-(1:20000000),]
 rm(d1)
 gc()
-
-d1 <- make_vegHF_wide_v6(d[20000001:40000000,],
+## 2-4
+d1 <- make_vegHF_wide_v6(d[1:20000000,],
     col.label="GRID_LABEL",
     col.year=2016,
-    col.HFyear="Year_MineCFOAgCutblock",
+    col.HFyear="YEAR",
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     HF_fine=TRUE, wide=FALSE) # use refined classes
 d0 <- rbind(d0, d1[,cn])
+d <- d[-(1:20000000),]
 rm(d1)
 gc()
-
-d1 <- make_vegHF_wide_v6(d[40000001:60000000,],
+## 4-6
+d1 <- make_vegHF_wide_v6(d[1:20000000,],
     col.label="GRID_LABEL",
     col.year=2016,
-    col.HFyear="Year_MineCFOAgCutblock",
+    col.HFyear="YEAR",
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     HF_fine=TRUE, wide=FALSE) # use refined classes
 d0 <- rbind(d0, d1[,cn])
+d <- d[-(1:20000000),]
 rm(d1)
 gc()
-
-d1 <- make_vegHF_wide_v6(d[60000001:nrow(d),],
+## 6-7
+d1 <- make_vegHF_wide_v6(d[1:10000000,],
     col.label="GRID_LABEL",
     col.year=2016,
-    col.HFyear="Year_MineCFOAgCutblock",
+    col.HFyear="YEAR",
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     HF_fine=TRUE, wide=FALSE) # use refined classes
 d0 <- rbind(d0, d1[,cn])
+d <- d[-(1:10000000),]
 rm(d1)
 gc()
+## 7-8
+d1 <- make_vegHF_wide_v6(d[1:10000000,],
+    col.label="GRID_LABEL",
+    col.year=2016,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    HF_fine=TRUE, wide=FALSE) # use refined classes
+d0 <- rbind(d0, d1[,cn])
+d <- d[-(1:10000000),]
+rm(d1)
+gc()
+## >8
+d1 <- make_vegHF_wide_v6(d[1:nrow(d),],
+    col.label="GRID_LABEL",
+    col.year=2016,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    HF_fine=TRUE, wide=FALSE) # use refined classes
+d0 <- rbind(d0, d1[,cn])
+rm(d1,d)
+gc()
 
-d0$GRID_LABEL <- d$GRID_LABEL
-d0$NSRNAME <- d$NSRNAME
-d0$Shape_Area <- d$Shape_Area
-save(d0, file=file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
-    "20180821_Grid_1sqkm_VEG61HFI2016v3-longformat.RData"))
+load(file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    #"20180821_Grid_1sqkm_VEG61HFI2016v3.RData"))
+    "20181010_Grid_1sqkm_VEG61HFI2016v3fty.RData"))
+d <- d[,c("GRID_LABEL", "NSRNAME", "Shape_Area")]
+
+save(d, file=file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    "20181010_Grid_1sqkm_common.RData"))
+d0v <- d0[,1:2]
+d0s <- d0[,3:4]
+save(d0v, file=file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    "20181010_Grid_1sqkm_veg.RData"))
+save(d0s, file=file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    "20181010_Grid_1sqkm_soil.RData"))
 
 ## wide format (taking preprocessed d0 and widen_only=TRUE)
 
-load(file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
-    "20180821_Grid_1sqkm_VEG61HFI2016v3-longformat.RData"))
-dd <- make_vegHF_wide_v6(d0,
+load(file=file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    "20181010_Grid_1sqkm_common.RData"))
+load(file=file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    "20181010_Grid_1sqkm_veg.RData"))
+d$VEGAGEclass <- d0v$VEGAGEclass
+d$VEGHFAGEclass <- d0v$VEGHFAGEclass
+rm(d0v)
+gc()
+
+load(file=file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    "20181010_Grid_1sqkm_soil.RData"))
+d$SOILclass <- d0s$SOILclass
+d$SOILHFclass <- d0s$SOILHFclass
+rm(d0s)
+gc()
+
+dd <- make_vegHF_wide_v6(d,
     col.label="GRID_LABEL",
     widen_only=TRUE)
-dd$scale <- "1 km^2 areas [V6 backfilled + 2016 w2w HFI]"
-dx <- nonDuplicated(d0, GRID_LABEL, TRUE)[rownames(dd[[1]]),]
+dd$scale <- "1 km^2 areas [V6 backfilled + 2016v3 w2w HFI]"
+gc()
+dx <- nonDuplicated(d, GRID_LABEL, TRUE)[rownames(dd[[1]]),]
 dd_kgrid <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
+load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
+for (i in 1:4) {
+    dd[[i]] <- dd[[i]][rownames(kgrid),]
+    dd_kgrid[[i]] <- dd_kgrid[[i]][rownames(kgrid),]
+}
+
+save(dd,
+    file=file.path(ROOT, VER, "data", "analysis", "grid",
+    "veg-hf_grid_v6hf2016v3-unsorted.Rdata"))
 save(dd_kgrid,
     file=file.path(ROOT, VER, "data", "analysis", "grid",
-    "veg-hf_grid_v6hf2016.Rdata"))
+    "veg-hf_grid_v6hf2016v3.Rdata"))
+
+## w2w poly tool --------------------------------------
+## easting/northing is based on 10TM forest projection
+## +proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +units=m +no_defs
+
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    "20181012_PolyTool.sqlite")
+db <- dbConnect(RSQLite::SQLite(), f)
+(tn <- dbListTables(db))
+
+hd <- dbGetQuery(db, paste('SELECT * FROM', tn, 'LIMIT 5'))
+d <- dbGetQuery(db,
+    paste("SELECT
+      Origin_Year,
+      Pct_of_Larch,
+      NSRNAME,
+      Soil_Type_1,
+      UID,
+      FEATURE_TY,
+      Combined_ChgByCWCS,
+      YEAR,
+      Shape_Area,
+      Easting, Northing
+    FROM
+      ", tn, "LIMIT 1000;")
+)
+d1 <- make_vegHF_wide_v6(d,
+    col.label="UID",
+    col.year=2016,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    HF_fine=TRUE, wide=FALSE) # use refined classes
+
+d <- dbGetQuery(db, paste("SELECT UID FROM", tn, ";"))
+d[,1] <- d[,1]
+gc()
+d0 <- dbGetQuery(db, paste("SELECT NSRNAME FROM", tn, ";"))
+d$NSRNAME <- as.factor(d0[,1])
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, paste("SELECT Combined_ChgByCWCS FROM", tn, ";"))
+d$Combined_ChgByCWCS <- as.factor(d0[,1])
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, paste("SELECT Soil_Type_1 FROM", tn, ";"))
+d$Soil_Type_1 <- as.factor(d0[,1])
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, paste("SELECT FEATURE_TY FROM", tn, ";"))
+d$FEATURE_TY <- as.factor(d0[,1])
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, paste("SELECT Origin_Year FROM", tn, ";"))
+d$Origin_Year <- d0[,1]
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, paste("SELECT Pct_of_Larch FROM", tn, ";"))
+d$Pct_of_Larch <- d0[,1]
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, paste("SELECT YEAR FROM", tn, ";"))
+d$YEAR <- d0[,1]
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, paste("SELECT Shape_Area FROM", tn, ";"))
+d$Shape_Area <- d0[,1]
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, paste("SELECT Easting FROM", tn, ";"))
+d$Easting <- d0[,1]
+rm(d0)
+gc()
+d0 <- dbGetQuery(db, paste("SELECT Northing FROM", tn, ";"))
+d$Northing <- d0[,1]
+rm(d0)
+gc()
+
+dbDisconnect(db)
+
+save(d, file=file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    #"20180821_Grid_1sqkm_VEG61HFI2016v3.RData"))
+    "20181010_Grid_1sqkm_VEG61HFI2016v3fty.RData"))
+
+
 
 ## add here transformations
 

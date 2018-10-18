@@ -23,7 +23,8 @@ source("~/repos/bamanalytics/R/dataprocessing_functions.R")
 ## this has pasture/cultivation etc differences
 if (HF_VERSION %in% c("2016_fine")) {
     hftypes <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-type-v2014.csv")
-    hftypes <- droplevels(hftypes[!is.na(hftypes$HF_GROUP_COMB),])
+    hftypes <- droplevels(hftypes[!is.na(hftypes$HF_GROUP_COMB) &
+        !duplicated(hftypes$FEATURE_TY),])
     hfgroups <- read.csv("~/repos/abmianalytics/lookup/lookup-hf-class-v2014.csv")
     hflt <- hfgroups[match(hftypes$HF_GROUP_COMB, hfgroups$HF_GROUP_COMB),]
     HF_YEAR <- 2016 # HF inventory update year
