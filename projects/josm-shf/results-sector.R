@@ -23,14 +23,11 @@ rm(dd1km_pred)
 ## subset definition
 kgrid$subset <- kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS"
 #kgrid$subset <- kgrid$POINT_Y > 50 & kgrid$NRNAME != "Grassland"
+kgrid$range <- TRUE
 
 #rt <- .read_raster_template()
 #rsub <- .make_raster(as.integer(kgrid$subset), kgrid, rt)
 #plor(rsub)
-
-Ahf <- colSums(HFarea[kgrid$subset,])
-names(Ahf)[1] <- "Native"
-
 
 fln <- list.files(file.path(ROOT, "out", "birds", "results", "josmshf"))
 fln <- sub("birds_abmi-josmshf_", "", fln)
@@ -43,13 +40,16 @@ spp <- "CAWA"
 sector_res <- list()
 for (spp in SPP) {
     cat(spp, "\n");flush.console()
+
+    ## !!! evaluate $range !!!
+
     Nsect <- list()
     for (sect in c("All", sectors_all)) {
         e <- new.env()
         load(file.path(INDIR, sect, paste0(spp, ".RData")), envir=e)
         #stopifnot(all(rownames(kgrid) == rownames(e$SA.Curr)))
-        Nsect[[sect]] <- cbind(cr=colSums(e$SA.Curr[kgrid$subset,]),
-            rf=colSums(e$SA.Ref[kgrid$subset,]))
+        Nsect[[sect]] <- cbind(cr=colSums(e$SA.Curr[kgrid$subset & kgrid$range,]),
+            rf=colSums(e$SA.Ref[kgrid$subset & kgrid$range,]))
     }
 
     ## reference abundance should not differ
@@ -58,6 +58,9 @@ for (spp in SPP) {
 
     Nref <- Nsect[[1]][,2]
     Diffs <- sapply(Nsect, function(z) z[,1]-Nref)
+
+    Ahf <- colSums(HFarea[kgrid$subset & kgrid$range,])
+    names(Ahf)[1] <- "Native"
     Ahf <- Ahf[rownames(Diffs)]
 
     Df2 <- cbind(Native=0,Diffs[,-1])
@@ -67,7 +70,7 @@ for (spp in SPP) {
     Tots <- 100*Tots/sum(Nref)
     U <- (Tots/100) / (Ahf/sum(Ahf))
     attr(Tots, "Nref") <- sum(Nref)
-    attr(Tots, "synergy") <- 100*(sum(Diffs[,1])-sum(Df2))/sum(Nref)
+    attr(Tots, "synergy") <- 100*(sum(Df2)-sum(Diffs[,1]))/sum(Nref) # (isolated-joint)/Nref
 
     sector_res[[spp]] <- list(diff=Diffs, total=Tots, unit=U, ref=Nref, ahf=Ahf)
 
