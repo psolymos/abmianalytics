@@ -162,6 +162,169 @@ save(dd_point, dd_qha, dd_1ha, dd_150m, dd_564m, xx,
     file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_SiteCenter_v6verified.Rdata"))
 
+## ABMI cam/aru -----------------------------------------------
+
+## point intersections
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
+    "Summary_2003_2017_CamARUBird_point_rev04.csv")
+d <- read.csv(f)
+d$Site_bird_year <- as.factor(paste0(
+    as.character(d$Site_ID), "_",
+    ifelse(is.na(d$Cam_ARU_Bird_Location), "NA", as.character(d$Cam_ARU_Bird_Location)),
+    "_", as.character(d$survey_year)))
+#d[is.na(d$Site_YEAR_bird),]
+dd_point <- make_vegHF_wide_v6(d,
+    col.label="Site_bird_year",
+    col.year="survey_year",
+    col.HFyear="year",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE, wide=FALSE) # use refined classes
+
+## 150m
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
+    "Summary_2003_2017_CamARUBird_buf150m_rev05.csv")
+d <- read.csv(f)
+d$Site_bird_year <- as.factor(paste0(
+    as.character(d$Site_ID), "_",
+    ifelse(is.na(d$Cam_ARU_Bird_Location), "NA", as.character(d$Cam_ARU_Bird_Location)),
+    "_", as.character(d$survey_year)))
+dd <- make_vegHF_wide_v6(d,
+    col.label="Site_bird_year",
+    col.year="survey_year",
+    col.HFyear="year",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "150m circle buffer around Camera/ARU [V6 backfilled + verified HF]"
+dx <- nonDuplicated(d, Site_bird_year, TRUE)[rownames(dd[[1]]),]
+dd_150m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+## 564m
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
+    "Summary_2003_2017_CamARUBird_buf564m_rev05.csv")
+d <- read.csv(f)
+d$Site_bird_year <- as.factor(paste0(
+    as.character(d$Site_ID), "_",
+    ifelse(is.na(d$Cam_ARU_Bird_Location), "NA", as.character(d$Cam_ARU_Bird_Location)),
+    "_", as.character(d$survey_year)))
+dd <- make_vegHF_wide_v6(d,
+    col.label="Site_bird_year",
+    col.year="survey_year",
+    col.HFyear="year",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "564m circle buffer around Camera/ARU [V6 backfilled + verified HF]"
+dx <- nonDuplicated(d, Site_bird_year, TRUE)[rownames(dd[[1]]),]
+dd_564m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+sapply(dd_150m[1:4], function(z) summary(rowSums(z)))
+sapply(dd_564m[1:4], function(z) summary(rowSums(z)))
+
+rs <- 100 * rowSums(dd_150m[[1]]) / (150^2*pi)
+summary(rs)
+table(cut(rs, c(0, 99, 101, Inf)))
+data.frame(percent=rs[which(rs < 99 | rs > 101)])
+
+rs <- 100 * rowSums(dd_564m[[1]]) / (564^2*pi)
+summary(rs)
+table(cut(rs, c(0, 99, 101, Inf)))
+data.frame(percent=rs[which(rs < 99 | rs > 101)])
+
+save(dd_point, dd_150m, dd_564m,
+    file=file.path(ROOT, VER, "data", "analysis", "site",
+    "veg-hf_CameraARU_v6verified.Rdata"))
+
+## BAM/BBS/BU -----------------------------------------------
+
+## point intersections
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "bambbs",
+    "20180627_BAMBBS_1993_2017.sqlite")
+
+db <- dbConnect(RSQLite::SQLite(), f)
+dbListTables(db)
+
+d00 <- dbReadTable(db, "BU_SiteCentre")
+#d10 <- dbReadTable(db, "BU_Devon_SiteCentre")
+d01 <- dbReadTable(db, "BU_Buffer150m")
+#d11 <- dbReadTable(db, "BU_Devon_Buffer150m")
+d02 <- dbReadTable(db, "BU_Buffer564m")
+#d12 <- dbReadTable(db, "BU_Devon_Buffer564m")
+
+dbDisconnect(db)
+
+for (i in 1:ncol(d00))
+    if (is.character(d00[,i]))
+        d00[,i] <- as.factor(d00[,i])
+dd_point <- make_vegHF_wide_v6(d00,
+    col.label="UID",
+    col.year="Survey_Year",
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE, wide=FALSE) # use refined classes
+
+## 150m
+keep <- c("Origin_Year",
+    "Pct_of_Larch",
+    "NSRNAME",
+    "Soil_Type_1",
+    "UID",
+    "Survey_Year",
+    "FEATURE_TY",
+    "Combined_ChgByCWCS",
+    "YEAR",
+    "Shape_Area")
+d01 <- d01[,keep]
+for (i in 1:ncol(d01))
+    if (is.character(d01[,i]))
+        d01[,i] <- as.factor(d01[,i])
+summary(d01[d01$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA"), "YEAR"])
+d01[d01$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA") & is.na(d01$YEAR), "YEAR"] <- 1930
+summary(d01[d01$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA"), "YEAR"])
+
+dd <- make_vegHF_wide_v6(d01,
+    col.label="UID",
+    col.year="Survey_Year",
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "150m circle buffer around bird point [V6 backfilled + verified HF]"
+dx <- nonDuplicated(d01, UID, TRUE)[rownames(dd[[1]]),]
+dd_150m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+## 564m
+dd <- make_vegHF_wide_v6(d02,
+    col.label="Site_YEAR",
+    col.year="survey_year",
+    col.HFyear="year",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "564m circle buffer around site centre [V6 backfilled + verified HF]"
+dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
+dd_564m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+sapply(dd_150m[1:4], function(z) summary(rowSums(z)))
+sapply(dd_564m[1:4], function(z) summary(rowSums(z)))
+
+rs <- 100 * rowSums(dd_150m[[1]]) / (150^2*pi)
+summary(rs)
+table(cut(rs, c(0, 99, 101, Inf)))
+data.frame(percent=rs[which(rs < 99 | rs > 101)])
+
+rs <- 100 * rowSums(dd_564m[[1]]) / (564^2*pi)
+summary(rs)
+table(cut(rs, c(0, 99, 101, Inf)))
+data.frame(percent=rs[which(rs < 99 | rs > 101)])
+
+save(dd_point, dd_150m, #dd_564m,
+    file=file.path(ROOT, VER, "data", "analysis", "site",
+    "veg-hf_BAM-BBS-BU_v6verified.Rdata"))
+
+
 ## All sites -----------------------------------------------
 
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
