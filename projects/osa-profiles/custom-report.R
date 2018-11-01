@@ -14,8 +14,8 @@ load_common_data()
 library(rgdal)
 ogrListLayers(dsn="e:/peter/AB_data_v2018/data/raw/xy/Oilsands-Boundaries.gdb")
 ply <- readOGR(dsn="e:/peter/AB_data_v2018/data/raw/xy/Oilsands-Boundaries.gdb",
-#    "OilsandRegionDissolve10TM")
-    "Oilsand_Mineable10TM")
+    "OilsandRegionDissolve10TM")
+#    "Oilsand_Mineable10TM")
 id <- overlay_polygon(ply)
 
 ## specify species subset

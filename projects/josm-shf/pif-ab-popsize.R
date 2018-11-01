@@ -903,6 +903,8 @@ Col0 <- colorRampPalette(c00)(7)
 Col <- Col0[cut(Cex, br)]
 names(Col) <- names(Cex)
 o <- cca(NN)
+round(100*eigenvals(o)/sum(eigenvals(o)), 1)
+round(cumsum(100*eigenvals(o)/sum(eigenvals(o))), 1)
 
 pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig6-ordination3.pdf", width=9, height=9)
 op <- par(las=1)

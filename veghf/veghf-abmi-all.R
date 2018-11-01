@@ -516,6 +516,35 @@ save(dd_inter,
     file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_mammals_v6verifiedHF.Rdata"))
 
+## Protected areas -------------------------------------
+
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "misc",
+    "20181030_PolyTool_Park_Protected.sqlite")
+db <- dbConnect(RSQLite::SQLite(), f)
+dbListTables(db)
+d <- dbReadTable(db, "ParkProtected_Veg61HF2016FTY_InternalUseOnly")
+dbDisconnect(db)
+
+for (i in 1:ncol(d))
+    if (is.character(d[,i]))
+        d[,i] <- as.factor(d[,i])
+
+dd <- make_vegHF_wide_v6(d,
+    col.label="NAME",
+    col.year=2016,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "ParkProtected_Veg61HF2016FTY_InternalUseOnly"
+dx <- nonDuplicated(d, NAME, TRUE)[rownames(dd[[1]]),]
+dd_inter <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+save(dd,
+    file=file.path(ROOT, VER, "data", "analysis", "site",
+    "veg-hf_protected-areas.Rdata"))
+
+
 ## w2w 1km^2 scale --------------------------------------
 
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
