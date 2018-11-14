@@ -538,11 +538,81 @@ dd <- make_vegHF_wide_v6(d,
     sparse=TRUE, HF_fine=TRUE) # use refined classes
 dd$scale <- "ParkProtected_Veg61HF2016FTY_InternalUseOnly"
 dx <- nonDuplicated(d, NAME, TRUE)[rownames(dd[[1]]),]
-dd_inter <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+dd <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
-save(dd,
+save(dd, dx,
     file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_protected-areas.Rdata"))
+
+## 3x7km yearly HF --------------------------------------
+
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "3x7",
+    "20181105_Backfill61_3x7.sqlite")
+db <- dbConnect(RSQLite::SQLite(), f)
+lt <- dbListTables(db)
+yr <- as.integer(substr(lt, nchar(lt)-3, nchar(lt)))
+
+for (iyr in seq_len(length(yr))) {
+    cat("\n\nYEAR", yr[iyr], "------------------------\n\n")
+    flush.console()
+    d <- dbReadTable(db, lt[iyr])
+
+    for (i in 1:ncol(d))
+        if (is.character(d[,i]))
+            d[,i] <- as.factor(d[,i])
+
+    summary(d[d$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA"), "YEAR"])
+    sum(d[d$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA") & is.na(d$YEAR), "Shape_Area"])/10^6
+    d[d$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA") & is.na(d$YEAR), "YEAR"] <- 1930
+    summary(d[d$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA"), "YEAR"])
+    sum(d[d$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA") & is.na(d$YEAR), "Shape_Area"])/10^6
+
+    dd <- make_vegHF_wide_v6(d,
+        col.label="ABMI_ID",
+        col.year=yr[iyr],
+        col.HFyear="YEAR",
+        col.HABIT="Combined_ChgByCWCS",
+        col.SOIL="Soil_Type_1",
+        sparse=TRUE, HF_fine=TRUE) # use refined classes
+    dd$scale <- "Backfill61 + VerifiedHF in 3x7km"
+    dx <- nonDuplicated(d, ABMI_ID, TRUE)[rownames(dd[[1]]),]
+    dd <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+    save(dd,
+        file=file.path(ROOT, VER, "data", "inter", "veghf", "3x7",
+        paste0("veg-hf_yearly-hf_", yr[iyr],"_bf61verifiedHF.Rdata")))
+
+}
+dbDisconnect(db)
+
+for (iyr in seq_len(length(yr))) {
+    cat("YEAR", yr[iyr], "\n")
+    flush.console()
+    load(file=file.path(ROOT, VER, "data", "inter", "veghf", "3x7",
+        paste0("veg-hf_yearly-hf_", yr[iyr],"_bf61verifiedHF.Rdata")))
+    if (iyr == 1) {
+        veg_curr <- array(0, c(dim(dd[[1]]), length(yr)))
+        dimnames(veg_curr) <- c(dimnames(dd[[1]]), list(yr))
+        veg_ref <- array(0, c(dim(dd[[2]]), length(yr)))
+        dimnames(veg_ref) <- c(dimnames(dd[[2]]), list(yr))
+        soil_curr <- array(0, c(dim(dd[[3]]), length(yr)))
+        dimnames(soil_curr) <- c(dimnames(dd[[3]]), list(yr))
+        soil_ref <- array(0, c(dim(dd[[4]]), length(yr)))
+        dimnames(soil_ref) <- c(dimnames(dd[[4]]), list(yr))
+        SITES <- dimnames(veg_curr)[[1]]
+    }
+    veg_curr[,,iyr] <- as.matrix(dd[[1]])[SITES,]
+    veg_ref[,,iyr] <- as.matrix(dd[[2]])[SITES,]
+    soil_curr[,,iyr] <- as.matrix(dd[[3]])[SITES,]
+    soil_ref[,,iyr] <- as.matrix(dd[[4]])[SITES,]
+}
+z=veg_curr[,"MineSite",]
+summary(z)
+matplot(yr, t(z)/(21*10^6),lty=1,type="l")
+
+save(veg_curr, veg_ref, soil_curr, soil_ref,
+    file=file.path(ROOT, VER, "data", "analysis", "yearly",
+    paste0("veg-hf_yearly-hf_all-years_bf61verifiedHF.Rdata")))
 
 
 ## w2w 1km^2 scale --------------------------------------

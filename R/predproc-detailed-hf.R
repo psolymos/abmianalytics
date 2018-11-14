@@ -22,39 +22,6 @@ source("~/repos/bragging/R/glm_skeleton.R")
 source("~/repos/abmianalytics/R/results_functions.R")
 source("~/repos/bamanalytics/R/makingsense_functions.R")
 
-if (FALSE) {
-## define 10km level predictions for alternative bootstrap
-library(raster)
-rt <- raster(file.path("e:/peter/AB_data_v2016", "data", "kgrid", "AHM1k.asc"))
-projection(rt) <- CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
-mat0 <- as.matrix(rt)
-mat1 <- as.matrix(Xtab(1:nrow(kgrid) ~ Row + Col, kgrid))
-mat1[is.na(mat0)] <- NA
-r1 <- raster(x=mat1, template=rt)
-r10 <- aggregate(r1, fact=10, fun=min)
-xy <- kgrid[,c("POINT_X", "POINT_Y")]
-coordinates(xy) <- c("POINT_X", "POINT_Y")
-proj4string(xy) <-
-    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-xy <- spTransform(xy, projection(rt))
-matx <- as.matrix(r10)
-matx <- t(matx)
-matx[!is.na(matx)] <- seq_len(sum(!is.na(matx)))
-matx <- t(matx)
-rr <- raster(x=matx, template=r10)
-kgrid$id10 <- extract(rr, xy)
-na <- is.na(kgrid$id10)
-#tb <- table(kgrid$id10)
-#tb100 <- as.integer(names(tb))[tb == 100]
-for (i in which(na)) {
-    xy0 <- coordinates(xy)[i,]
-    d <- sqrt((xy0[1]-coordinates(xy)[,1])^2+(xy0[2]-coordinates(xy)[,2])^2)
-    d[na] <- Inf
-#    d[kgrid$id10 %in% tb100] <- Inf
-    kgrid$id10[i] <- kgrid$id10[which.min(d)]
-}
-table(table(kgrid$id10))
-}
 
 ## climate
 transform_CLIM <- function(x, ID="PKEY") {
@@ -208,24 +175,12 @@ colnames(Xns) <- fixNames(colnames(Xns))
 
 ## example for structure (trSoil, trVeg)
 load(file.path(ROOT, "out", "transitions", "LowerPeace_LowerBorealHighlands.Rdata"))
-tv$Sector2 <- factor(ifelse(is.na(tv$Sector), "NATIVE", as.character(tv$Sector)),
-    c("NATIVE", "Agriculture", "Energy", "Forestry", "Misc", "RuralUrban", "Transportation"))
+tv$Sector2 <- tv$SectorRefined
 
 ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf.csv")
 ts$All <- as.character(ts$HF)
 ts$All[is.na(ts$All)] <- as.character(ts$Levels1)[is.na(ts$All)]
-ts$Sector2 <- factor(ifelse(is.na(ts$Sector), "NATIVE", as.character(ts$Sector)),
-    c("NATIVE", "Agriculture", "Energy", "Forestry", "Misc", "RuralUrban", "Transportation"))
-
-## keep native/for/agr as sector
-tv$Sector2 <- as.character(tv$Sector2)
-tv$Sector2[!(tv$Sector2 %in% c("NATIVE", "Agriculture", "Forestry"))] <-
-    as.character(tv$VEGHFAGE[!(tv$Sector2 %in% c("NATIVE", "Agriculture", "Forestry"))])
-tv$Sector2 <- as.factor(tv$Sector2)
-ts$Sector2 <- as.character(ts$Sector2)
-ts$Sector2[!(ts$Sector2 %in% c("NATIVE", "Agriculture", "Forestry"))] <-
-    as.character(ts$SOILHF[!(ts$Sector2 %in% c("NATIVE", "Agriculture", "Forestry"))])
-ts$Sector2 <- as.factor(ts$Sector2)
+ts$Sector2 <- ts$SectorRefined
 
 ch2veg <- t(sapply(strsplit(colnames(trVeg), "->"),
     function(z) if (length(z)==1) z[c(1,1)] else z[1:2]))
@@ -706,8 +661,23 @@ for (spp in SPP) {
             wS[] <- 1
         if (TYPE == "N")
             wS[] <- 0
-        OUTcr[Cells,] <- as.matrix(wS * e$pxScrS[,cn] + (1-wS) * e$pxNcrS[,cn])
-        OUTrf[Cells,] <- as.matrix(wS * e$pxSrfS[,cn] + (1-wS) * e$pxNrfS[,cn])
+        ## CC issue N/S difference: put all in decid
+        #> setdiff(colnames(e$pxScrS),colnames(e$pxNcrS))
+        #[1] "CutBlocks"
+        #> setdiff(colnames(e$pxNcrS),colnames(e$pxScrS))
+        #[1] "CCDecid"   "CCMixwood" "CCConif"   "CCPine"
+        pxScrS <- e$pxNcrS
+        pxScrS[] <- 0
+        pxScrS[,intersect(colnames(e$pxScrS),colnames(e$pxNcrS))] <-
+            e$pxScrS[,intersect(colnames(e$pxScrS),colnames(e$pxNcrS))]
+        pxScrS[,c("CCDecid")] <- e$pxScrS[,"CutBlocks"]
+        OUTcr[Cells,] <- as.matrix(wS * pxScrS[,cn] + (1-wS) * e$pxNcrS[,cn])
+        pxSrfS <- e$pxNrfS
+        pxSrfS[] <- 0
+        pxSrfS[,intersect(colnames(e$pxSrfS),colnames(e$pxNrfS))] <-
+            e$pxSrfS[,intersect(colnames(e$pxSrfS),colnames(e$pxNrfS))]
+        pxSrfS[,c("CCDecid")] <- e$pxSrfS[,"CutBlocks"]
+        OUTrf[Cells,] <- as.matrix(wS * pxSrfS[,cn] + (1-wS) * e$pxNrfS[,cn])
     }
     for (i in 1:7) {
         q <- quantile(c(OUTcr[,i], OUTrf[,i]), 0.99)
@@ -734,118 +704,3 @@ for (spp in SPP) {
         file=file.path("e:/peter/sppweb2018/detailed-hf",
         paste0(as.character(EST[spp, "sppid"]), ".RData")))
 }
-
-
-
-f_id10 <- function(n10)
-
-f_id <- function(ID, size=100, fixed=TRUE) {
-    nn <- table(kgrid$Row10_Col10)[ID]
-    sizes <- pmin(size, nn)
-    id <- list()
-    for (i in 1:length(ID)) {
-        if (fixed) {
-            id[[i]] <- which(kgrid$Row10_Col10 == ID[i] & kgrid$Rnd10 <= sizes[i])
-        } else {
-            id[[i]] <- sample(which(kgrid$Row10_Col10 == ID[i]), sizes[i])
-        }
-    }
-    id
-}
-f_si <- function(ID, size=100, fixed=TRUE) {
-    id <- unlist(f_id(ID, size, fixed))
-    cr <- colSums(OUTcr[id,,drop=FALSE])
-    rf <- colSums(OUTrf[id,,drop=FALSE])
-    si <- 100*pmin(cr, rf) / pmax(cr, rf)
-    f <- function(x) {
-        c(first=x[1], mean=mean(x, na.rm=TRUE),
-            quantile(x, c(0.5, 0.05, 0.95), na.rm=TRUE))
-    }
-    rbind(cr=f(cr), rf=f(rf), si=f(si))
-}
-f_run <- function(ID, B=10, n10=1, size=100, fixed=TRUE) {
-    lapply(1:B, function(i) f_si(ID[1:n10], size, fixed))
-}
-
-
-plotf <- function(n10, ID) {
-    plot(0, type="n", main=spp, axes=FALSE, xlab="% resampled",
-        ylab="SI", xlim=c(0.5,4.5), ylim=c(0,100),
-        sub=paste("Region size:", n10, "10x10"))
-    axis(1, 1:4, c(10, 25, 50, 100), lwd=0, lwd.ticks=1)
-    axis(2)
-    o <- 0.8*(1:10/10 - 0.55)
-    z <- f_run(ID, B=1, n10=n10, size=100, fixed=TRUE)
-    abline(h=z[[1]]["si", 1], lty=1)
-    abline(h=z[[1]]["si", 4:5], lty=2)
-    points(4, z[[1]]["si", "first"], col=4, pch=19)
-    lines(rep(4, 2), z[[1]]["si", 4:5], col=4)
-    for (j in 1:3) {
-        z <- f_run(ID, B=10, n10=n10, size=c(10,25,50)[j], fixed=FALSE)
-        z[[1]] <- f_si(ID[1:n10], size=c(10,25,50)[j], fixed=TRUE)
-        for (i in 1:10) {
-            points(o[i] + j, z[[i]]["si", "first"], col=2, pch=if (i==1) 19 else 21)
-            lines(rep(o[i] + j, 2), z[[i]]["si", 4:5], col=2)
-        }
-    }
-    invisible(NULL)
-}
-
-par(mfrow=c(3,5))
-for (i in 1:3) {
-ID <- sample(levels(kgrid$Row10_Col10), 16)
-plotf(1, ID)
-plotf(2, ID)
-plotf(4, ID)
-plotf(8, ID)
-plotf(16, ID)
-}
-
-
-library(raster)
-xy <- kgrid
-coordinates(xy) <- ~ POINT_X + POINT_Y
-proj4string(xy) <-
-    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-rt <- raster(file.path("e:/peter/AB_data_v2016", "data", "kgrid", "AHM1k.asc"))
-crs <- CRS("+proj=tmerc +lat_0=0 +lon_0=-115 +k=0.9992 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
-projection(rt) <- crs
-xy <- spTransform(xy, crs)
-mat0 <- as.matrix(rt)
-
-Rize <- function(val) {
-    mat <- as.matrix(Xtab(val ~ Row + Col, kgrid))
-    mat[is.na(mat0)] <- NA
-    raster(x=mat, template=rt)
-}
-
-r1 <- Rize(OUTcr[,1])
-r2 <- Rize(rowMeans(OUTcr))
-r3 <- Rize(OUTcr10[match(kgrid$Row10_Col10, rownames(OUTcr10)),1])
-r4 <- Rize(rowMeans(OUTcr10[match(kgrid$Row10_Col10, rownames(OUTcr10)),]))
-
-colSeq <- rev(viridis::magma(100))
-colDiv <- colorRampPalette(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B",
-    "#FFFFBF","#D9EF8B", "#A6D96A", "#66BD63", "#1A9850", "#006837"))(100)
-
-q <- quantile(r1, 0.99)
-r1[r1>q] <- q
-plot(r1, axes=FALSE, box=FALSE, col=colSeq)
-
-q <- quantile(r2, 0.99)
-r2[r2>q] <- q
-plot(r2, axes=FALSE, box=FALSE, col=colSeq)
-
-plot(r1-r2, axes=FALSE, box=FALSE, col=colDiv)
-
-q <- quantile(r3, 0.99)
-r3[r3>q] <- q
-plot(r3, axes=FALSE, box=FALSE, col=colSeq)
-
-q <- quantile(r4, 0.99)
-r4[r4>q] <- q
-plot(r4, axes=FALSE, box=FALSE, col=colSeq)
-
-plot(r3-r4, axes=FALSE, box=FALSE, col=colDiv)
-
-plot(r3-r1, axes=FALSE, box=FALSE, col=colDiv)
