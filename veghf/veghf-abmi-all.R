@@ -260,9 +260,8 @@ d02 <- dbReadTable(db, "BU_Buffer564m")
 
 dbDisconnect(db)
 
-for (i in 1:ncol(d00))
-    if (is.character(d00[,i]))
-        d00[,i] <- as.factor(d00[,i])
+d00 <- db_chr2factor(d00)
+
 dd_point <- make_vegHF_wide_v6(d00,
     col.label="UID",
     col.year="Survey_Year",
@@ -282,10 +281,7 @@ keep <- c("Origin_Year",
     "Combined_ChgByCWCS",
     "YEAR",
     "Shape_Area")
-d01 <- d01[,keep]
-for (i in 1:ncol(d01))
-    if (is.character(d01[,i]))
-        d01[,i] <- as.factor(d01[,i])
+d01 <- db_chr2factor(d01[,keep])
 summary(d01[d01$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA"), "YEAR"])
 d01[d01$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA") & is.na(d01$YEAR), "YEAR"] <- 1930
 summary(d01[d01$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA"), "YEAR"])
@@ -302,15 +298,19 @@ dx <- nonDuplicated(d01, UID, TRUE)[rownames(dd[[1]]),]
 dd_150m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
 ## 564m
+d02 <- db_chr2factor(d02[,keep])
+summary(d02[d02$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA"), "YEAR"])
+d02[d02$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA") & is.na(d02$YEAR), "YEAR"] <- 1930
+summary(d02[d02$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA"), "YEAR"])
 dd <- make_vegHF_wide_v6(d02,
-    col.label="Site_YEAR",
-    col.year="survey_year",
-    col.HFyear="year",
+    col.label="UID",
+    col.year="Survey_Year",
+    col.HFyear="YEAR",
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     sparse=TRUE, HF_fine=TRUE) # use refined classes
 dd$scale <- "564m circle buffer around site centre [V6 backfilled + verified HF]"
-dx <- nonDuplicated(d, Site_YEAR, TRUE)[rownames(dd[[1]]),]
+dx <- nonDuplicated(d02, UID, TRUE)[rownames(dd[[1]]),]
 dd_564m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
 sapply(dd_150m[1:4], function(z) summary(rowSums(z)))
@@ -326,7 +326,7 @@ summary(rs)
 table(cut(rs, c(0, 99, 101, Inf)))
 data.frame(percent=rs[which(rs < 99 | rs > 101)])
 
-save(dd_point, dd_150m, #dd_564m,
+save(dd_point, dd_150m, dd_564m,
     file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_BAM-BBS-BU_v6verified.Rdata"))
 
