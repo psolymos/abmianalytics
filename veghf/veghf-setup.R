@@ -8,7 +8,7 @@
 SAVE <- TRUE
 
 ## root directory
-ROOT <- "e:/peter"
+ROOT <- "d:/abmi"
 ## version (structure is still in change, so not really useful)
 VER <- "AB_data_v2018"
 ## current year

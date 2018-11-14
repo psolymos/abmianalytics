@@ -4,6 +4,12 @@ HF_VERSION <- "2016_fine"
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
 meta <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+db_chr2factor <- function(d) {
+  for (i in 1:ncol(d))
+      if (is.character(d[,i]))
+          d[,i] <- as.factor(d[,i])
+  d
+}
 
 ## ABMI sites (on+off) cetre -----------------------------------------------
 
@@ -525,9 +531,7 @@ dbListTables(db)
 d <- dbReadTable(db, "ParkProtected_Veg61HF2016FTY_InternalUseOnly")
 dbDisconnect(db)
 
-for (i in 1:ncol(d))
-    if (is.character(d[,i]))
-        d[,i] <- as.factor(d[,i])
+d <- db_chr2factor(d)
 
 dd <- make_vegHF_wide_v6(d,
     col.label="NAME",
@@ -540,7 +544,39 @@ dd$scale <- "ParkProtected_Veg61HF2016FTY_InternalUseOnly"
 dx <- nonDuplicated(d, NAME, TRUE)[rownames(dd[[1]]),]
 dd <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
-save(dd, dx,
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "misc",
+    "20181113_PolyTool_Crown_LarpOutsideProtectedAndCrown.sqlite")
+db <- dbConnect(RSQLite::SQLite(), f)
+dbListTables(db)
+d1 <- dbReadTable(db, "CrownReservations_Veg61HF2016FTY_InternalUseOnly")
+d2 <- dbReadTable(db, "LarpOutsideCrownAndProtected_Veg61HF2016FTY_InternalUseOnly")
+dbDisconnect(db)
+
+d1 <- db_chr2factor(d1)
+d2 <- db_chr2factor(d2)
+
+dd1 <- make_vegHF_wide_v6(d1,
+    col.label="NAME",
+    col.year=2016,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd1$scale <- "CrownReservations_Veg61HF2016FTY_InternalUseOnly"
+dx1 <- nonDuplicated(d1, NAME, TRUE)[rownames(dd1[[1]]),]
+dd1 <- fill_in_0ages_v6(dd1, dx1$NSRNAME, ages_list)
+dd2 <- make_vegHF_wide_v6(d2,
+    col.label="AreaName",
+    col.year=2016,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd2$scale <- "LarpOutsideCrownAndProtected_Veg61HF2016FTY_InternalUseOnly"
+dx2 <- nonDuplicated(d2, AreaName, TRUE)[rownames(dd2[[1]]),]
+dd2 <- fill_in_0ages_v6(dd2, dx2$NSRNAME, ages_list)
+
+save(dd, dx, dd1, dx1, dd2, dx2,
     file=file.path(ROOT, VER, "data", "analysis", "site",
     "veg-hf_protected-areas.Rdata"))
 
