@@ -651,7 +651,69 @@ save(veg_curr, veg_ref, soil_curr, soil_ref,
     paste0("veg-hf_yearly-hf_all-years_bf61verifiedHF.Rdata")))
 
 
-## w2w 1km^2 scale --------------------------------------
+## w2w 1km^2 scale ---------- short & memory hungry version ----------------------------
+
+t0 <- proc.time()
+load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+    "20181010_Grid_1sqkm_VEG61HFI2016v3fty.sqlite")
+db <- dbConnect(RSQLite::SQLite(), f)
+tn <- dbListTables(db) # "Summary_1sqkm_grid_FTY"
+
+hd <- dbGetQuery(db, paste('SELECT * FROM', tn, 'LIMIT 5'))
+d <- dbGetQuery(db,
+    paste("SELECT
+      Origin_Year,
+      Pct_of_Larch,
+      NSRNAME,
+      Soil_Type_1,
+      GRID_LABEL,
+      FEATURE_TY,
+      Combined_ChgByCWCS,
+      YEAR,
+      Shape_Area
+    FROM
+      ", tn, ";")
+)
+dbDisconnect(db)
+
+d <- db_chr2factor(d)
+
+d2 <- make_vegHF_wide_v6(d,
+    col.label="GRID_LABEL",
+    col.year=2016,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    HF_fine=TRUE, wide=FALSE) # use refined classes
+d2 <- d2[,c("GRID_LABEL", "VEGAGEclass", "VEGHFclass", 
+    "VEGHFAGEclass", "SOILclass", "SOILHFclass", "Shape_Area")]
+
+## wide format: amount
+dd <- make_vegHF_wide_v6(d2,
+    col.label="GRID_LABEL",
+    HF_fine=TRUE, wide=TRUE, widen_only=TRUE) # use refined classes
+dd$scale <- "1 km^2 areas [V6 backfilled + 2016v3 w2w HFI]"
+for (i in 1:4)
+    dd[[i]] <- dd[[i]][rownames(kgrid),]
+all(rownames(kgrid) == rownames(dd[[1]]))
+dx <- nonDuplicated(d, GRID_LABEL, TRUE)[rownames(dd[[1]]),]
+dd_kgrid <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+proc.time() - t0
+
+save(dd,
+    file=file.path(ROOT, VER, "data", "analysis", "grid",
+    "veg-hf_grid_v6hf2016v3-unsorted.Rdata"))
+save(dd_kgrid,
+    file=file.path(ROOT, VER, "data", "analysis", "grid",
+    "veg-hf_grid_v6hf2016v3.Rdata"))
+save(d2,
+    file=file.path(ROOT, VER, "data", "inter", "veghf", "grid",
+    "veg-hf_grid_v6hf2016v3-long-format.Rdata"))
+
+## wide format: transitions
+
+## w2w 1km^2 scale ---------- long version ----------------------------
 
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
 #    "20180821_Grid_1sqkm_VEG61HFI2016v3.sqlite")
