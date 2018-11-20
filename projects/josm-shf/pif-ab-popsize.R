@@ -1,6 +1,6 @@
 library(mefa4)
 
-ROOT <- "e:/peter/AB_data_v2016"
+ROOT <- "d:/abmi/AB_data_v2016"
 
 e <- new.env()
 #load(file.path(ROOT, "data", "data-full-withrevisit.Rdata"), envir=e)
