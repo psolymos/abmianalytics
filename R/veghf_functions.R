@@ -1,3 +1,10 @@
+db_chr2factor <- function(d) {
+  for (i in 1:ncol(d))
+      if (is.character(d[,i]))
+          d[,i] <- as.factor(d[,i])
+  d
+}
+
 make_vegHF_sector <- function(d, col.label, col.year=NULL, wide=TRUE, sparse=FALSE)
 {
     dd <- make_vegHF_wide2(d, col.label, col.year=NULL, wide=FALSE)

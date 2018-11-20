@@ -4,12 +4,6 @@ HF_VERSION <- "2016_fine"
 source("~/repos/abmianalytics/veghf/veghf-setup.R")
 load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
 meta <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
-db_chr2factor <- function(d) {
-  for (i in 1:ncol(d))
-      if (is.character(d[,i]))
-          d[,i] <- as.factor(d[,i])
-  d
-}
 
 ## ABMI sites (on+off) cetre -----------------------------------------------
 
@@ -532,9 +526,10 @@ d <- dbReadTable(db, "ParkProtected_Veg61HF2016FTY_InternalUseOnly")
 dbDisconnect(db)
 
 d <- db_chr2factor(d)
+d$NAME_NRNAME <- interaction(d$NAME, d$NRNAME, sep="_", drop=TRUE)
 
 dd <- make_vegHF_wide_v6(d,
-    col.label="NAME",
+    col.label="NAME_NRNAME",
     col.year=2016,
     col.HFyear="YEAR",
     col.HABIT="Combined_ChgByCWCS",
@@ -554,26 +549,28 @@ dbDisconnect(db)
 
 d1 <- db_chr2factor(d1)
 d2 <- db_chr2factor(d2)
+d1$NAME_NRNAME <- interaction(d1$NAME, d1$NRNAME, sep="_", drop=TRUE)
+d2$NAME_NRNAME <- interaction(d2$AreaName, d2$NRNAME, sep="_", drop=TRUE)
 
 dd1 <- make_vegHF_wide_v6(d1,
-    col.label="NAME",
+    col.label="NAME_NRNAME",
     col.year=2016,
     col.HFyear="YEAR",
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     sparse=TRUE, HF_fine=TRUE) # use refined classes
 dd1$scale <- "CrownReservations_Veg61HF2016FTY_InternalUseOnly"
-dx1 <- nonDuplicated(d1, NAME, TRUE)[rownames(dd1[[1]]),]
+dx1 <- nonDuplicated(d1, NAME_NRNAME, TRUE)[rownames(dd1[[1]]),]
 dd1 <- fill_in_0ages_v6(dd1, dx1$NSRNAME, ages_list)
 dd2 <- make_vegHF_wide_v6(d2,
-    col.label="AreaName",
+    col.label="NAME_NRNAME",
     col.year=2016,
     col.HFyear="YEAR",
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     sparse=TRUE, HF_fine=TRUE) # use refined classes
 dd2$scale <- "LarpOutsideCrownAndProtected_Veg61HF2016FTY_InternalUseOnly"
-dx2 <- nonDuplicated(d2, AreaName, TRUE)[rownames(dd2[[1]]),]
+dx2 <- nonDuplicated(d2, NAME_NRNAME, TRUE)[rownames(dd2[[1]]),]
 dd2 <- fill_in_0ages_v6(dd2, dx2$NSRNAME, ages_list)
 
 save(dd, dx, dd1, dx1, dd2, dx2,
@@ -711,7 +708,47 @@ save(d2,
     file=file.path(ROOT, VER, "data", "inter", "veghf", "grid",
     "veg-hf_grid_v6hf2016v3-long-format.Rdata"))
 
-## wide format: transitions
+## wide format: transitions --------------------------------------
+
+load(file.path(ROOT, VER, "data", "inter", "veghf", "grid",
+    "veg-hf_grid_v6hf2016v3-long-format.Rdata"))
+load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
+
+d2$soilTr <- as.character(d2$SOILclass) 
+ss <- as.character(d2$SOILclass) != as.character(d2$SOILHFclass)
+#table(ss)
+d2$soilTr[ss] <- paste0(as.character(d2$SOILclass[ss]),
+    "->", as.character(d2$SOILHFclass[ss]))
+d2$soilTr <- as.factor(d2$soilTr)
+trSoil <- Xtab(Shape_Area ~ GRID_LABEL + soilTr, d2)
+trSoil <- trSoil[rownames(kgrid),]
+range(rowSums(trSoil)/10^6)
+dim(trSoil)
+
+d2$vegTr <- as.character(d2$VEGAGEclass) 
+ss <- as.character(d2$VEGAGEclass) != as.character(d2$VEGHFAGEclass)
+#table(ss)
+d2$vegTr[ss] <- paste0(as.character(d2$VEGAGEclass[ss]),
+    "->", as.character(d2$VEGHFAGEclass[ss]))
+d2$vegTr <- as.factor(d2$vegTr)
+trVeg <- Xtab(Shape_Area ~ GRID_LABEL + vegTr, d2)
+trVeg <- trVeg[rownames(kgrid),]
+range(rowSums(trVeg)/10^6)
+dim(trVeg)
+
+ch2soil <- nonDuplicated(d2, soilTr, TRUE)[,c("SOILclass", "SOILHFclass")]
+colnames(ch2soil) <- c("rf","cr")
+ch2veg <- nonDuplicated(d2, vegTr, TRUE)[,c("VEGAGEclass", "VEGHFAGEclass")]
+colnames(ch2veg) <- c("rf","cr")
+
+ch2veg <- data.frame(t(sapply(strsplit(as.character(d2$vegTr), "->"),
+    function(z) if (length(z)==1) z[c(1,1)] else z[1:2])))
+colnames(ch2veg) <- c("rf","cr")
+
+save(trVeg, trSoil, ch2veg, ch2soil,
+    file=file.path(ROOT, VER, "data", "analysis", "grid",
+    "veg-hf_transitions_v6hf2016v3.Rdata"))
+
 
 ## w2w 1km^2 scale ---------- long version ----------------------------
 
