@@ -4,7 +4,7 @@ source("~/repos/abmianalytics/species/abmi-r-api.R")
 
 ## settings
 TAXA <- c("vplants", "mosses", "mites")
-ROOT <- "e:/peter/AB_data_v2018"
+ROOT <- "d:/abmi/AB_data_v2018"
 
 ## common stuff
 DATE <- as.Date(Sys.time(), tz=Sys.timezone(location = TRUE))

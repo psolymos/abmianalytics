@@ -9,7 +9,7 @@ source("~/repos/abmianalytics/species/abmi-r-api.R")
 
 ## settings
 taxon <- "birds"
-ROOT <- "e:/peter/AB_data_v2018"
+ROOT <- "d:/abmi/AB_data_v2018"
 
 ## common stuff
 DATE <- as.Date(Sys.time(), tz=Sys.timezone(location = TRUE))
@@ -74,17 +74,15 @@ cn1 <- c("ABMISite", "Year", "subunit", "site_year", "site_year_sub", "offgrid",
 cn2 <- c("SpeciesID", "CommonName", "ScientificName", "TaxonomicResolution",
     "UniqueTaxonomicIdentificationNumber")
 
-resRF <- get_table("T26A")
-resSM <- get_table("T26B")
-res17 <- read.csv(file.path(ROOT, "data", "raw", "species",
-    "T26_ABMI-CORE-2017-Transcribed-ARU-Data_CCO2.csv"))
-
+resRF0 <- get_table("T26A")
+resSM0 <- get_table("T26B")
+resRF <- resRF0
+resSM <- resSM0
 table(resRF$Year)
 table(resSM$Year)
-table(res17$Year)
 
-#save(resRF, resSM, res17, file=file.path(ROOT, "data", "raw", "species",
-#    paste0(taxon, "_", DATE, ".Rdata")))
+save(resRF0, resSM0, file=file.path(ROOT, "data", "raw", "species",
+    paste0(taxon, "_", DATE, ".Rdata")))
 
 ## River Forks, 3 intervals
 
@@ -106,18 +104,24 @@ resRF$TBB_TIME_1ST_DETECTED[resRF$TBB_TIME_1ST_DETECTED %in%
 resRF$TBB_TIME_1ST_DETECTED <- as.numeric(as.character(resRF$TBB_TIME_1ST_DETECTED))
 resRF$period1st <- as.numeric(cut(resRF$TBB_TIME_1ST_DETECTED, c(-1, 200, 400, 600)))
 
-resRF <- resRF[resRF$TBB_INTERVAL_1 %in% c("0","1"),]
-resRF <- resRF[resRF$TBB_INTERVAL_2 %in% c("0","1"),]
-resRF <- resRF[resRF$TBB_INTERVAL_3 %in% c("0","1"),]
+resRF$keep <- 
+    resRF$TBB_INTERVAL_1 %in% c("0","1") &
+    resRF$TBB_INTERVAL_2 %in% c("0","1") &
+    resRF$TBB_INTERVAL_3 %in% c("0","1")
+#resRF <- resRF[resRF$TBB_INTERVAL_1 %in% c("0","1"),]
+#resRF <- resRF[resRF$TBB_INTERVAL_2 %in% c("0","1"),]
+#resRF <- resRF[resRF$TBB_INTERVAL_3 %in% c("0","1"),]
 resRF$TBB_INTERVAL_1 <- as.integer(resRF$TBB_INTERVAL_1) - 1L
 resRF$TBB_INTERVAL_2 <- as.integer(resRF$TBB_INTERVAL_2) - 1L
 resRF$TBB_INTERVAL_3 <- as.integer(resRF$TBB_INTERVAL_3) - 1L
 
-tmp <- col(matrix(0,nrow(resRF),3)) *
-    resRF[,c("TBB_INTERVAL_1","TBB_INTERVAL_2","TBB_INTERVAL_3")]
+tmp <- col(matrix(0,sum(resRF$keep),3)) *
+    resRF[keep,c("TBB_INTERVAL_1","TBB_INTERVAL_2","TBB_INTERVAL_3")]
 tmp[tmp==0] <- NA
 tmp <- cbind(999,tmp)
-resRF$period123 <- apply(tmp, 1, min, na.rm=TRUE)
+resRF$period123 <- 999
+resRF$period123[keep] <- apply(tmp, 1, min, na.rm=TRUE)
+resRF$period123[resRF$period123 > 3] <- 999
 with(resRF, table(period1st, period123))
 resRF$period1 <- pmin(resRF$period1st, resRF$period123)
 with(resRF, table(period1st, period1))
@@ -127,57 +131,49 @@ with(resRF, table(period123, period1))
 ## SM units
 
 colnames(resSM) <- gsub(" ", "", colnames(resSM))
-colnames(res17) <- gsub(" ", "", colnames(res17))
 
-res17$ABMISite <- res17$SITE
-res17$Quadrant <- res17$STATION
-res17$`Interval1(1minute)` <- res17$X0min
-res17$`Interval2(1minute)` <- res17$X1min
-res17$`Interval3(1minute)` <- res17$X2min
-res17$CommonName <- res17$ENGLISH.NAME
-res17$RecordingDate <- res17$RECORDING_DATE
-res17$RecordingTime <- res17$RECORD_TIME
+#cn <- c("ABMISite", "Year", "Quadrant", "Method",
+#    "Interval1(1minute)", "Interval2(1minute)", "Interval3(1minute)",
+#    "CommonName", "RecordingDate", "RecordingTime")
+#resSM <- resSM[,cn]
+tmp <- paste(resSM$RecordingDate, resSM$RecordingTime)
+resSM$Start <- strptime(tmp, "%d-%b-%y %H:%M:%S")
 
-cn <- c("ABMISite", "Year", "Quadrant", "Method",
-    "Interval1(1minute)", "Interval2(1minute)", "Interval3(1minute)",
-    "CommonName", "RecordingDate", "RecordingTime")
+resSM$Duration <- NA
+resSM$Duration[resSM$Method %in% c("11", "14")] <- 3
+resSM$Duration[resSM$Method %in% c("12", "13")] <- 1
 
-res <- rbind(resSM[,cn], res17[,cn])
-tmp <- paste(res$RecordingDate, res$RecordingTime)
-res$Start <- strptime(tmp, "%d-%b-%y %H:%M:%S")
-
-res$Duration <- NA
-res$Duration[res$Method %in% c("11", "14")] <- 3
-res$Duration[res$Method %in% c("12", "13")] <- 1
-
-res <- add_labels(res, sub_col="Quadrant")
-#res <- normalize_species(res)
-res$SpeciesID <- res$CommonName
-levels(res$SpeciesID) <- nameAlnum(levels(res$SpeciesID), capitalize="mixed", collapse="")
-res$SpeciesID <- droplevels(res$SpeciesID)
+resSM <- add_labels(resSM, sub_col="Quadrant")
+#resSM <- normalize_species(resSM)
+resSM$SpeciesID <- resSM$CommonName
+levels(resSM$SpeciesID) <- nameAlnum(levels(resSM$SpeciesID), capitalize="mixed", collapse="")
+resSM$SpeciesID <- droplevels(resSM$SpeciesID)
 
 ## first detection interval
-res$int1 <- ifelse(res$`Interval1(1minute)` == "VNA", NA, as.integer(res$`Interval1(1minute)`))
-res$int2 <- ifelse(res$`Interval2(1minute)` == "VNA", NA, as.integer(res$`Interval2(1minute)`))
-res$int3 <- ifelse(res$`Interval3(1minute)` == "VNA", NA, as.integer(res$`Interval3(1minute)`))
-tmp <- col(res[,c("int1", "int2", "int3")])
-tmp[is.na(res[,c("int1", "int2", "int3")])] <- Inf
+resSM$int1 <- ifelse(resSM$`Interval1(1minute)` == "VNA", NA, as.integer(resSM$`Interval1(1minute)`))
+resSM$int2 <- ifelse(resSM$`Interval2(1minute)` == "VNA", NA, as.integer(resSM$`Interval2(1minute)`))
+resSM$int3 <- ifelse(resSM$`Interval3(1minute)` == "VNA", NA, as.integer(resSM$`Interval3(1minute)`))
+tmp <- col(resSM[,c("int1", "int2", "int3")])
+tmp[is.na(resSM[,c("int1", "int2", "int3")])] <- Inf
 tmp2 <- find_min(tmp)
 tmp2$value[is.infinite(tmp2$value)] <- NA
-res$res1 <- tmp2$value
+resSM$res1 <- tmp2$value
 
-res$ToY <- res$Start$yday
-res$ToYc <- as.integer(cut(res$ToY, c(0, 105, 120, 140, 150, 160, 170, 180, 365)))
+resSM$ToY <- resSM$Start$yday
+resSM$ToYc <- as.integer(cut(resSM$ToY, c(0, 105, 120, 140, 150, 160, 170, 180, 365)))
 
-res$visit <- interaction(res$site_year_sub, res$ToYc, drop=TRUE)
+resSM$visit <- interaction(resSM$site_year_sub, resSM$ToYc, drop=TRUE)
 
-res$ToD <- res$Start$hour + res$Start$min / 60
-res$ToDx <- round(res$ToD, 0)
-res$ToDc <- as.factor(ifelse(res$ToDx == 0, "Midnight", "Morning"))
+resSM$ToD <- resSM$Start$hour + resSM$Start$min / 60
+resSM$ToDx <- round(resSM$ToD, 0)
+resSM$ToDc <- as.factor(ifelse(resSM$ToDx == 0, "Midnight", "Morning"))
 
 ## crosstabs
 
 cd <- c("NONE","SNI", "VNA", "DNC", "PNA")
+
+xt_10 <- Xtab(~ site_year_sub + SpeciesID, 
+    resRF[resRF$period123 <= 3,], cdrop=cd)
 
 xt_pts <- Xtab(~ site_year_sub + SpeciesID + period123, resRF, cdrop=cd)[1:3]
 xt_pts[[1]] <- as.matrix(xt_pts[[1]])
@@ -186,16 +182,16 @@ xt_pts[[3]] <- as.matrix(xt_pts[[3]])
 x_pts <- nonDuplicated(resRF, site_year_sub, TRUE)
 x_pts <- x_pts[rownames(xt_pts[[1]]),]
 
-xt_stn <- as.matrix(Xtab(~ site_year_sub + SpeciesID, res, cdrop=cd))
-x_stn <- nonDuplicated(res, site_year_sub, TRUE)
+xt_stn <- as.matrix(Xtab(~ site_year_sub + SpeciesID, resSM, cdrop=cd))
+x_stn <- nonDuplicated(resSM, site_year_sub, TRUE)
 x_stn <- x_stn[rownames(xt_stn),]
 
-keep <- !is.na(res$visit)
-xt_vis <- as.matrix(Xtab(~ visit + SpeciesID, res[keep,], cdrop=cd))
-x_vis <- nonDuplicated(res[keep,], visit, TRUE)
+keep <- !is.na(resSM$visit)
+xt_vis <- as.matrix(Xtab(~ visit + SpeciesID, resSM[keep,], cdrop=cd))
+x_vis <- nonDuplicated(resSM[keep,], visit, TRUE)
 x_vis <- x_vis[rownames(xt_vis),]
 
-save(xt_pts, xt_stn, xt_vis, x_pts, x_stn, x_vis,
+save(xt_pts, xt_stn, xt_vis, x_pts, x_stn, x_vis, xt_10,
     file=file.path(ROOT, "data", "inter", "species", "birds-revisit.Rdata"))
 
 ## trend piece
