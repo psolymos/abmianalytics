@@ -683,7 +683,7 @@ d2 <- make_vegHF_wide_v6(d,
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     HF_fine=TRUE, wide=FALSE) # use refined classes
-d2 <- d2[,c("GRID_LABEL", "VEGAGEclass", "VEGHFclass", 
+d2 <- d2[,c("GRID_LABEL", "VEGAGEclass", 
     "VEGHFAGEclass", "SOILclass", "SOILHFclass", "Shape_Area")]
 
 ## wide format: amount
@@ -739,10 +739,6 @@ dim(trVeg)
 ch2soil <- nonDuplicated(d2, soilTr, TRUE)[,c("SOILclass", "SOILHFclass")]
 colnames(ch2soil) <- c("rf","cr")
 ch2veg <- nonDuplicated(d2, vegTr, TRUE)[,c("VEGAGEclass", "VEGHFAGEclass")]
-colnames(ch2veg) <- c("rf","cr")
-
-ch2veg <- data.frame(t(sapply(strsplit(as.character(d2$vegTr), "->"),
-    function(z) if (length(z)==1) z[c(1,1)] else z[1:2])))
 colnames(ch2veg) <- c("rf","cr")
 
 save(trVeg, trSoil, ch2veg, ch2soil,

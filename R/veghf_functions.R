@@ -176,7 +176,6 @@ HF_fine=TRUE, widen_only=FALSE) {
         levels(d$FEATURE_TY) <- toupper(levels(d$FEATURE_TY))
 
         d$ORIGIN_YEAR <- d$Origin_Year
-        #d$Origin_Year <- NULL
 
         #### Footprint classes:
         ## check if we have all the feature types in the lookup table
@@ -232,6 +231,7 @@ HF_fine=TRUE, widen_only=FALSE) {
         #### Age info for backfilled (Rf) and current (Cr)
         ## reference age class 0=no age (either not forest or no info)
         ## 1=0-19, 2=20-39, etc.
+        d$ORIGIN_YEAR[!is.na(d$ORIGIN_YEAR) & d$ORIGIN_YEAR == 9999] <- NA
         d$AgeRf <- as.integer(sign(d$ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$ORIGIN_YEAR) / 20)))
         ## truncate reference age classes at 9 = 160+
         d$AgeRf[d$AgeRf > 9L] <- 9L
@@ -252,6 +252,7 @@ HF_fine=TRUE, widen_only=FALSE) {
         ii[ii & !is.na(d$ORIGIN_YEAR) & d$HF_Year >= d$ORIGIN_YEAR] <- TRUE
         ii[ii & is.na(d$ORIGIN_YEAR)] <- TRUE
         d$CC_ORIGIN_YEAR[ii] <- d$HF_Year[ii]
+        d$CC_ORIGIN_YEAR[!is.na(d$CC_ORIGIN_YEAR) & d$CC_ORIGIN_YEAR == 9999] <- NA
         ## age for current with cutblock ages
         d$AgeCr <- as.integer(sign(d$CC_ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$CC_ORIGIN_YEAR) / 20)))
         ## truncate current age classes at 9
@@ -582,6 +583,7 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
     #### Age info for backfilled (Rf) and current (Cr)
     ## reference age class 0=no age (either not forest or no info)
     ## 1=0-19, 2=20-39, etc.
+    d$ORIGIN_YEAR[!is.na(d$ORIGIN_YEAR) & d$ORIGIN_YEAR == 9999] <- NA
     d$AgeRf <- as.integer(sign(d$ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$ORIGIN_YEAR) / 20)))
     ## truncate reference age classes at 9 = 160+
     d$AgeRf[d$AgeRf > 9L] <- 9L
@@ -600,6 +602,7 @@ function(d, col.label, col.year=NULL, col.HFyear=NULL, wide=TRUE, sparse=FALSE) 
     ii[ii & !is.na(d$ORIGIN_YEAR) & d$HF_Year >= d$ORIGIN_YEAR] <- TRUE
     ii[ii & is.na(d$ORIGIN_YEAR)] <- TRUE
     d$CC_ORIGIN_YEAR[ii] <- d$HF_Year[ii]
+    d$CC_ORIGIN_YEAR[!is.na(d$CC_ORIGIN_YEAR) & d$CC_ORIGIN_YEAR == 9999] <- NA
     ## age for current with cutblock ages
     d$AgeCr <- as.integer(sign(d$CC_ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$CC_ORIGIN_YEAR) / 20)))
     ## truncate current age classes at 9

@@ -9,8 +9,8 @@ library(sp)
 #library(gstat)
 library(raster)
 #library(viridis)
-load(file.path("e:/peter/AB_data_v2017", "data", "analysis", "kgrid_table_km.Rdata"))
-load("e:/peter/AB_data_v2018/data/analysis/ages-by-nsr.Rdata")
+load(file.path("d:/abmi/AB_data_v2017", "data", "analysis", "kgrid_table_km.Rdata"))
+load("d:/abmi/AB_data_v2018/data/analysis/ages-by-nsr.Rdata")
 source("~/repos/abmianalytics/R/veghf_functions.R")
 
 xy <- kgrid
@@ -68,41 +68,41 @@ NR <- TRUE
 
 TYPE <- "baseyr2014wUnknAges"
 ## 2014v2HFI base year 2014 with unknown ages
-f14 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine_unsorted.Rdata"
+f14 <- "d:/abmi/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine_unsorted.Rdata"
 ## 2016v3HFI base year 2016 with unknown ages
-f16 <- "e:/peter/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3-unsorted.Rdata"
+f16 <- "d:/abmi/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3-unsorted.Rdata"
 
 TYPE <- "baseyr2014woUnknAges"
 ## 2014v2HFI base year 2014 without unknown ages
-f14 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine-fixage0.Rdata"
+f14 <- "d:/abmi/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine-fixage0.Rdata"
 ## 2016v3HFI base year 2016 without unknown ages
-f16 <- "e:/peter/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3.Rdata"
+f16 <- "d:/abmi/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3.Rdata"
 
 TYPE <- "baseyr2016wUnknAges"
 ## 2014v2HFI base year 2016 with unknown ages
-f14 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine_unsorted-2016ref.Rdata"
+f14 <- "d:/abmi/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine_unsorted-2016ref.Rdata"
 ## 2016v3HFI base year 2016 with unknown ages
-f16 <- "e:/peter/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3-unsorted.Rdata"
+f16 <- "d:/abmi/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3-unsorted.Rdata"
 
 TYPE <- "baseyr2016woUnknAges"
 ## 2014v2HFI base year 2016 without unknown ages
-f14 <- "e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine-fixage0-2016ref.Rdata"
+f14 <- "d:/abmi/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine-fixage0-2016ref.Rdata"
 ## 2016v3HFI base year 2016 without unknown ages
-f16 <- "e:/peter/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3.Rdata"
+f16 <- "d:/abmi/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3.Rdata"
 
 ## 2014v2HFI base year 2014 with unknown ages
-"e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine_unsorted.Rdata"
+"d:/abmi/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine_unsorted.Rdata"
 ## 2014v2HFI base year 2014 without unknown ages
-"e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine-fixage0.Rdata"
+"d:/abmi/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine-fixage0.Rdata"
 ## 2014v2HFI base year 2016 with unknown ages
-"e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine_unsorted-2016ref.Rdata"
+"d:/abmi/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine_unsorted-2016ref.Rdata"
 ## 2014v2HFI base year 2016 without unknown ages
-"e:/peter/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine-fixage0-2016ref.Rdata"
+"d:/abmi/AB_data_v2017/data/inter/veghf/veg-hf_km2014-grid_v6hf2014v2_fine-fixage0-2016ref.Rdata"
 
 ## 2016v3HFI base year 2016 with unknown ages
-"e:/peter/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3-unsorted.Rdata"
+"d:/abmi/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3-unsorted.Rdata"
 ## 2016v3HFI base year 2016 without unknown ages
-"e:/peter/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3.Rdata"
+"d:/abmi/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3.Rdata"
 
 e <- new.env()
 load(f14, envir=e)
@@ -131,13 +131,18 @@ round(perc, 2)
 plot(perc)
 abline(0,1)
 
-
 cn <- colnames(x14)
 cn1 <- substr(cn, 1, nchar(cn)-1)
 CN <- ifelse(substr(cn, nchar(cn), nchar(cn)) %in% c("R", 0:9), cn1, cn)
 
-xx14 <- groupSums(x14, 2, CN)
-xx16 <- groupSums(x16, 2, CN)
+USE_AGES <- TRUE
+if (USE_AGES) {
+	xx14 <- groupSums(x14, 2, CN)
+	xx16 <- groupSums(x16, 2, CN)
+} else {
+	xx14 <- x14
+	xx16 <- x16	
+}
 
 kgrid$NRNAMEs <- kgrid$NRNAME
 levels(kgrid$NRNAMEs) <- abbreviate(levels(kgrid$NRNAMEs),3)
@@ -145,7 +150,7 @@ zz14 <- groupMeans(x14, 1, kgrid$NRNAMEs)
 zz16 <- groupMeans(x16, 1, kgrid$NRNAMEs)
 
 ## compares 2016 to 2014
-pdf(paste0("e:/peter/sppweb2018/footprint-results/hf-2014v2-vs-2016v3-maps_",
+pdf(paste0("d:/abmi/sppweb2018/footprint-results/hf-2014v2-vs-2016v3-maps_",
     TYPE, "_", if (is.null(fact)) 1 else fact, "km-scale.pdf"),
     onefile=TRUE, height=8, width=15)
 for (i in colnames(xx14)) {
@@ -164,7 +169,7 @@ dev.off()
 
 ## plot regional averages etc.
 
-pdf(paste0("e:/peter/sppweb2018/footprint-results/hf-by-regions_", TYPE, ".pdf"),
+pdf(paste0("d:/abmi/sppweb2018/footprint-results/hf-by-regions_", TYPE, ".pdf"),
     onefile=TRUE, height=5, width=5)
 for (i in colnames(zz14))
     plot_ix(i)
