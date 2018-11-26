@@ -38,17 +38,17 @@ RIS-WASTE,MineSite,,MineSite,,,,W2W_HF2014,"Identifies all areas associated with
 TAILING-PILE,MineSite,,MineSite,,,,W2W_HF2014,An area used to store waste materials produced in mining processes.
 TAILING-POND,MineSite,,MineSite,,,,W2W_HF2014,"Body of water on/in close proximity to an oil sands mine somprised of acids, benzene, hydrocarbons, residual bitumen, fine silts, and water."
 LAGOON,MunicipalWaterSewage,,MunicipalWaterSewage,,,,W2W_HF2014,Artificial holding or treatment ponds for agricultural or municipal wastewater. Human made water and sewage lagoons used for municipal purposes.
-CLEARING-UNKNOWN,OtherDisturbedVegetation,,OtherDisturbedVegetation,,,,W2W_HF2014,"A human-made clearing with unknown purposes and contains no visible buildings, fences or equipment."
-CLEARING-WELLPAD-UNCONFIRMED,OtherDisturbedVegetation,,OtherDisturbedVegetation,,,,W2W_HF2014,"Roughly square in shape clearing, roughly 90-120 meters wide (approximately 1 ha)."
-DISTURB_VEG,OtherDisturbedVegetation,,OtherDisturbedVegetation,,,,W2W_HF2014,Disturbed vegetation that does not fit any other category of human footprint.
-LANDFILL,OtherDisturbedVegetation,,OtherDisturbedVegetation,,,,W2W_HF2014,"Large area of raised land, indicating buried garbage. Some landfills have evidence of surface revegetation and garbage dispersed throughout designated extent. They may also have large perimeter berms or fences."
-RECREATION,OtherDisturbedVegetation,,OtherDisturbedVegetation,,,,W2W_HF2014,"Urban/rural greenspace and recreation that does not fit into other categories (e.g. grave yards, baseball diamonds, parks, shelterbelts, ski hills, DND exercise areas, clearings from old industrial activity that is now vegetated). This layer was also used to identify green-space features that do not fit into other categories such as storage areas and parking lots."
-RESIDENCE_CLEARING,OtherDisturbedVegetation,,OtherDisturbedVegetation,,,,W2W_HF2014,Areas cleared for building developments that do not yet have any buildings.
-RIS-CLEARING-UNKNOWN,OtherDisturbedVegetation,,OtherDisturbedVegetation,,,,W2W_HF2014,"Identifies all areas where vegetation has been removed for the purposes of preparing the land for drainage, soil removal, overburden removal, mining, etc. but where soil has been left mostly intact and relatively undisturbed.  May include any or all of tree removal, shrub removal, and/or grubbing (stump removal). Identifies areas cleared for by other industry and not for the purposes of forest harvesting or for oil sands development."
-RIS-SOIL-REPLACED,OtherDisturbedVegetation,,OtherDisturbedVegetation,,,,W2W_HF2014,Identifies areas which have had subsoil or topsoil placed and which have not been revegetated.
-RIS-SOIL-SALVAGED,OtherDisturbedVegetation,,OtherDisturbedVegetation,,,,W2W_HF2014,Identifies areas where soil salvage is occurring but where overburden removal has not commenced.
-RIS-WINDROW,OtherDisturbedVegetation,,OtherDisturbedVegetation,,,,W2W_HF2014,Includes areas where a line of reclamation material (soil or vegetation) is heaped up by a machine.
-SURROUNDING-VEG,OtherDisturbedVegetation,,OtherDisturbedVegetation,,,,W2W_HF2014,Disturbed vegetation surrounding an airport runway and other industrial features.
+CLEARING-UNKNOWN,IndustrialSiteRural,,IndustrialSiteRural,,,,W2W_HF2014,"A human-made clearing with unknown purposes and contains no visible buildings, fences or equipment."
+CLEARING-WELLPAD-UNCONFIRMED,IndustrialSiteRural,,IndustrialSiteRural,,,,W2W_HF2014,"Roughly square in shape clearing, roughly 90-120 meters wide (approximately 1 ha)."
+DISTURB_VEG,IndustrialSiteRural,,IndustrialSiteRural,,,,W2W_HF2014,Disturbed vegetation that does not fit any other category of human footprint.
+LANDFILL,IndustrialSiteRural,,IndustrialSiteRural,,,,W2W_HF2014,"Large area of raised land, indicating buried garbage. Some landfills have evidence of surface revegetation and garbage dispersed throughout designated extent. They may also have large perimeter berms or fences."
+RECREATION,RuralResidentialIndustrial,,RuralResidentialIndustrial,,,,W2W_HF2014,"Urban/rural greenspace and recreation that does not fit into other categories (e.g. grave yards, baseball diamonds, parks, shelterbelts, ski hills, DND exercise areas, clearings from old industrial activity that is now vegetated). This layer was also used to identify green-space features that do not fit into other categories such as storage areas and parking lots."
+RESIDENCE_CLEARING,IndustrialSiteRural,,IndustrialSiteRural,,,,W2W_HF2014,Areas cleared for building developments that do not yet have any buildings.
+RIS-CLEARING-UNKNOWN,IndustrialSiteRural,,IndustrialSiteRural,,,,W2W_HF2014,"Identifies all areas where vegetation has been removed for the purposes of preparing the land for drainage, soil removal, overburden removal, mining, etc. but where soil has been left mostly intact and relatively undisturbed.  May include any or all of tree removal, shrub removal, and/or grubbing (stump removal). Identifies areas cleared for by other industry and not for the purposes of forest harvesting or for oil sands development."
+RIS-SOIL-REPLACED,MineSite,,MineSite,,,,W2W_HF2014,Identifies areas which have had subsoil or topsoil placed and which have not been revegetated.
+RIS-SOIL-SALVAGED,MineSite,,MineSite,,,,W2W_HF2014,Identifies areas where soil salvage is occurring but where overburden removal has not commenced.
+RIS-WINDROW,MineSite,,MineSite,,,,W2W_HF2014,Includes areas where a line of reclamation material (soil or vegetation) is heaped up by a machine.
+SURROUNDING-VEG,IndustrialSiteRural,,IndustrialSiteRural,,,,W2W_HF2014,Disturbed vegetation surrounding an airport runway and other industrial features.
 PEAT,PeatMine,,PeatMine,,,,W2W_HF2014,"An area of surface disturbance for the purpose of mining peat, consistently open and/or expanding over multiple years, usually in bogs or fens."
 PIPELINE,Pipeline,,Pipeline,,,,W2W_HF2014,"A line of pipes, of substantial length and capacity, used for the conveyance of petrochemicals."
 RIS-PIPELINE,Pipeline,,Pipeline,,,,W2W_HF2014,Includes areas disturbed for pipelines and the right of way area designated for pipeline
@@ -162,7 +162,7 @@ AIRF-RUNWAY-ABAND,RoadHardSurface,,RoadHardSurface,,,,VerifiedHF,
 AIRF-RUNWAY-ACTIVE,RoadHardSurface,,RoadHardSurface,,,,VerifiedHF,
 MAJ-MILL,IndustrialSiteRural,,IndustrialSiteRural,,,,VerifiedHF,
 SOFT_RLWY-DBL-TRACK,RailVegetatedVerge,,RailVegetatedVerge,,,,VerifiedHF,
-DISTERB_VEG,OtherDisturbedVegetation,,OtherDisturbedVegetation,,,,WetlandBuffer,
+DISTERB_VEG,IndustrialSiteRural,,IndustrialSiteRural,,,,WetlandBuffer,
 RESIDENCE,RuralResidentialIndustrial,,RuralResidentialIndustrial,,,,WetlandBuffer,
 ROAD-PAVED-GRAVEL,RoadHardSurface,,RoadHardSurface,,,,WetlandBuffer,
 RURAL_1-5ha,RuralResidentialIndustrial,,RuralResidentialIndustrial,,,,WetlandBuffer,
@@ -195,7 +195,7 @@ WELL-NEW LICENSE,WellSite,,WellSite,,,,SnowTransect,
 WELL-OIL-SUSPENDED,WellSite,,WellSite,,,,SnowTransect,
 WELL-STANDING,WellSite,,WellSite,,,,SnowTransect,
 WELLSITES,WellSite,,WellSite,,,,SnowTransect,
-CLEARING-WELLPAD-UNKNOWN,OtherDisturbedVegetation,,OtherDisturbedVegetation,,,,W2W_HF2010,
+CLEARING-WELLPAD-UNKNOWN,IndustrialSiteRural,,IndustrialSiteRural,,,,W2W_HF2010,
 ROAD_UNIMRPOVED,RoadTrailVegetated,,RoadTrailVegetated,,,,W2W_HF2010,
 HARVEST-AREA,CutBlocks,,CutBlocks,,,,VerifiedHF_2018-05-24,
 ROAD-WINTER,RoadHardSurface,,RoadHardSurface,,,,SnowTransect,
