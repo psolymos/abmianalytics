@@ -683,8 +683,10 @@ d2 <- make_vegHF_wide_v6(d,
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     HF_fine=TRUE, wide=FALSE) # use refined classes
-d2 <- d2[,c("GRID_LABEL", "VEGAGEclass", 
-    "VEGHFAGEclass", "SOILclass", "SOILHFclass", "Shape_Area")]
+d2 <- d2[,c("GRID_LABEL", "NSRNAME",
+    "VEGAGEclass", "VEGHFAGEclass", 
+    "SOILclass", "SOILHFclass", 
+    "Shape_Area")]
 
 ## wide format: amount
 dd <- make_vegHF_wide_v6(d2,
@@ -694,24 +696,24 @@ dd$scale <- "1 km^2 areas [V6 backfilled + 2016v3 w2w HFI]"
 for (i in 1:4)
     dd[[i]] <- dd[[i]][rownames(kgrid),]
 all(rownames(kgrid) == rownames(dd[[1]]))
-dx <- nonDuplicated(d, GRID_LABEL, TRUE)[rownames(dd[[1]]),]
+dx <- nonDuplicated(d2, GRID_LABEL, TRUE)[rownames(dd[[1]]),]
 dd_kgrid <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 proc.time() - t0
 
 save(dd,
     file=file.path(ROOT, VER, "data", "analysis", "grid",
-    "veg-hf_grid_v6hf2016v3-unsorted.Rdata"))
+    "veg-hf_grid_v6hf2016v3noDistVeg-unsorted.Rdata"))
 save(dd_kgrid,
     file=file.path(ROOT, VER, "data", "analysis", "grid",
-    "veg-hf_grid_v6hf2016v3.Rdata"))
+    "veg-hf_grid_v6hf2016v3noDistVeg.Rdata"))
 save(d2,
     file=file.path(ROOT, VER, "data", "inter", "veghf", "grid",
-    "veg-hf_grid_v6hf2016v3-long-format.Rdata"))
+    "veg-hf_grid_v6hf2016v3noDistVeg-long-format.Rdata"))
 
 ## wide format: transitions --------------------------------------
 
 load(file.path(ROOT, VER, "data", "inter", "veghf", "grid",
-    "veg-hf_grid_v6hf2016v3-long-format.Rdata"))
+    "veg-hf_grid_v6hf2016v3noDistVeg-long-format.Rdata"))
 load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
 
 d2$soilTr <- as.character(d2$SOILclass) 
@@ -743,7 +745,7 @@ colnames(ch2veg) <- c("rf","cr")
 
 save(trVeg, trSoil, ch2veg, ch2soil,
     file=file.path(ROOT, VER, "data", "analysis", "grid",
-    "veg-hf_transitions_v6hf2016v3.Rdata"))
+    "veg-hf_transitions_v6hf2016v3noDistVeg.Rdata"))
 
 
 ## w2w 1km^2 scale ---------- long version ----------------------------
