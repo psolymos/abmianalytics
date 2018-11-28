@@ -84,7 +84,7 @@ table(resSM$Year)
 save(resRF0, resSM0, file=file.path(ROOT, "data", "raw", "species",
     paste0(taxon, "_", DATE, ".Rdata")))
 
-## River Forks, 3 intervals
+## River Forks, 3 intervals ------------------------------
 
 colnames(resRF) <- gsub(" ", "", colnames(resRF))
 resRF <- add_labels(resRF, sub_col="PointCountStation")
@@ -104,7 +104,7 @@ resRF$TBB_TIME_1ST_DETECTED[resRF$TBB_TIME_1ST_DETECTED %in%
 resRF$TBB_TIME_1ST_DETECTED <- as.numeric(as.character(resRF$TBB_TIME_1ST_DETECTED))
 resRF$period1st <- as.numeric(cut(resRF$TBB_TIME_1ST_DETECTED, c(-1, 200, 400, 600)))
 
-resRF$keep <- 
+resRF$keep <-
     resRF$TBB_INTERVAL_1 %in% c("0","1") &
     resRF$TBB_INTERVAL_2 %in% c("0","1") &
     resRF$TBB_INTERVAL_3 %in% c("0","1")
@@ -116,11 +116,11 @@ resRF$TBB_INTERVAL_2 <- as.integer(resRF$TBB_INTERVAL_2) - 1L
 resRF$TBB_INTERVAL_3 <- as.integer(resRF$TBB_INTERVAL_3) - 1L
 
 tmp <- col(matrix(0,sum(resRF$keep),3)) *
-    resRF[keep,c("TBB_INTERVAL_1","TBB_INTERVAL_2","TBB_INTERVAL_3")]
+    resRF[resRF$keep,c("TBB_INTERVAL_1","TBB_INTERVAL_2","TBB_INTERVAL_3")]
 tmp[tmp==0] <- NA
 tmp <- cbind(999,tmp)
 resRF$period123 <- 999
-resRF$period123[keep] <- apply(tmp, 1, min, na.rm=TRUE)
+resRF$period123[resRF$keep] <- apply(tmp, 1, min, na.rm=TRUE)
 resRF$period123[resRF$period123 > 3] <- 999
 with(resRF, table(period1st, period123))
 resRF$period1 <- pmin(resRF$period1st, resRF$period123)
@@ -128,7 +128,7 @@ with(resRF, table(period1st, period1))
 with(resRF, table(period123, period1))
 
 
-## SM units
+## SM units --------------------------------------------
 
 colnames(resSM) <- gsub(" ", "", colnames(resSM))
 
@@ -172,7 +172,7 @@ resSM$ToDc <- as.factor(ifelse(resSM$ToDx == 0, "Midnight", "Morning"))
 
 cd <- c("NONE","SNI", "VNA", "DNC", "PNA")
 
-xt_10 <- Xtab(~ site_year_sub + SpeciesID, 
+xt_10 <- Xtab(~ site_year_sub + SpeciesID,
     resRF[resRF$period123 <= 3,], cdrop=cd)
 
 xt_pts <- Xtab(~ site_year_sub + SpeciesID + period123, resRF, cdrop=cd)[1:3]
@@ -191,10 +191,10 @@ xt_vis <- as.matrix(Xtab(~ visit + SpeciesID, resSM[keep,], cdrop=cd))
 x_vis <- nonDuplicated(resSM[keep,], visit, TRUE)
 x_vis <- x_vis[rownames(xt_vis),]
 
-save(xt_pts, xt_stn, xt_vis, x_pts, x_stn, x_vis, xt_10,
+save(xt_pts, xt_stn, xt_vis, x_pts, x_stn, x_vis, xt_10, resSM, resRF,
     file=file.path(ROOT, "data", "inter", "species", "birds-revisit.Rdata"))
 
-## trend piece
+## trend piece --------------------------------------
 
 
 compare_sets(x_pts$ABMISite, x_stn$ABMISite)

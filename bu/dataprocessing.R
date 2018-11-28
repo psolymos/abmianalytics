@@ -13,6 +13,8 @@ dbl <- dbListTables(con)
 
 d0 <- dbReadTable(con, "ViewSpecies_LongFormCount")
 
+#s <- dbReadTable(con, "list Species Code")
+
 dbDisconnect(con)
 
 for (i in 1:ncol(d0))
