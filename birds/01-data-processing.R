@@ -68,7 +68,7 @@ resSM$SSYR <- resSM$site_year_sub
 tmp <- gsub(" ", "-", as.character(resSM$dati))
 resSM$PKEY <- paste0(resSM$site_year_sub, "_", tmp)
 resSM$YEAR <- resSM$Year
-resRF$CMETHOD <- "SM" # Song Meter
+resSM$CMETHOD <- "SM" # Song Meter
 y_sm <- Xtab(~ PKEY + SpeciesID, resSM, cdrop = c("NONE","SNI", "VNA", "DNC", "PNA"))
 d_sm <- droplevels(nonDuplicated(resSM, PKEY, TRUE))
 #'
@@ -78,7 +78,6 @@ e2 <- new.env()
 load(file.path("d:/bam/Apr2016/out", "data_package_2016-04-18.Rdata"),
     envir=e2)
 
-TAX <- nonDuplicated(e2$TAX, Species_ID, TRUE)
 DAT <- data.frame(e2$PKEY, e2$SS[match(e2$PKEY$SS, e2$SS$SS),])
 DAT$SS.1 <- NULL
 DAT$PCODE.1 <- NULL
@@ -90,7 +89,14 @@ DAT$DATI <- DAT$DATE
 DAT$DATE <- as.Date(DAT$DATE)
 
 y_bb <- Xtab(ABUND ~ PKEY + SPECIES_ALL, e2$PCTBL, cdrop="NONE")
+colnames(y_bb) <- normalize_sppcode(colnames(y_bb))
 d_bb <- droplevels(DAT)
+y_bb <- y_bb[rownames(y_bb) %in% rownames(d_bb),]
+## Pacific-slope Flycatcher: Western Flycatcher, Cordilleran Flycatcher
+y_bb[,"PSFL"] <- y_bb[,"PSFL"] + y_bb[,"WEFL"] + y_bb[,"COFL"]
+y_bb[,"WEFL"] <- 0
+y_bb[,"COFL"] <- 0
+y_bb <- y_bb[,colSums(y_bb)>0]
 rm(DAT)
 #'
 #' ## BU
@@ -131,57 +137,140 @@ d$PKEY <- as.factor(paste0(
     tmp1,
     "-",
     tmp2))
+d$PCODE <- "BU"
+d$CMETHOD <- "SM"
+d$DATE <- d$RECORDING_DATE
+d$SSYR <- paste0(d$SS, "_", d$YEAR)
+d$SPECIES <- normalize_sppcode(d$SPECIES)
 
 y_bu <- Xtab(Abundance ~ PKEY + SPECIES, d)
 d_bu <- droplevels(nonDuplicated(d, PKEY, TRUE))
 #'
 #' # Combining species data
 #'
-if (FALSE) {
-ii <- sort(intersect(rownames(DAT), rownames(YY)))
-DAT <- DAT[ii,]
-YY <- YY[ii,]
-#OFF <- OFF[ii,]
-#YY <- YY[,colSums(YY) > 0]
-## insert 0s into BAM+BBS:
-#    BarnOwl
-#    RedPhalarope
-YY <- cBind(YY, BANO=0, REPH=0)
-tax <- droplevels(TAX[colnames(YY),])
-tax$Spp <- tax$English_Name
-levels(tax$Spp) <- nameAlnum(levels(tax$Spp), capitalize="mixed", collapse="")
-## fix labels:
-#    MacgillivrayWarbler
-#    BlackAndWhiteWarbler
-levels(tax$Spp)[levels(tax$Spp)=="BlackandwhiteWarbler"] <- "BlackAndWhiteWarbler"
-levels(tax$Spp)[levels(tax$Spp)=="MacGillivraysWarbler"] <- "MacgillivrayWarbler"
-compare_sets(colnames(yy_abmi), levels(tax$Spp))
-sort(setdiff(colnames(yy_abmi), levels(tax$Spp)))
-#sort(setdiff(levels(tax$Spp), colnames(yy_abmi)))
+#' - `code`: AOU code
+#' - `species`: common name
+#' - `scinam`: scientific name
+#' - `family`, `order`: family and order
+#' - `sppid`: CamelCase name w/o punctuation
+#'
+## this is lookup table from previous years
+tax0 <- read.csv("~/repos/abmispecies/_data/birds.csv")
+tax0 <- tax0[,c("AOU","species","scinam","family","sppid")]
+colnames(tax0)[1] <- "code"
+tax0$code <- normalize_sppcode(tax0$code)
+rownames(tax0) <- tax0$code
+## this is BAM lookup table
+TAX <- nonDuplicated(e2$TAX, Species_ID, TRUE)
+TAX <- TAX[,c("Species_ID", "English_Name", "Scientific_Name", "Family_Sci")]
+TAX$sppid <- TAX$English_Name
+levels(TAX$sppid) <- nameAlnum(levels(TAX$sppid), capitalize="mixed", collapse="")
+colnames(TAX) <- colnames(tax0)
+TAX$code <- normalize_sppcode(TAX$code)
+rownames(TAX) <- TAX$code
+## this is BU lookup table
+st <- s0[,c("CODE", "ENGLISH.NAME")]
+st$scinam <- paste(s0$Genus, s0$Species)
+st$family <- nameAlnum(tolower(s0$Family), "first")
+st$sppid <- st$ENGLISH.NAME
+levels(st$sppid) <- nameAlnum(levels(st$sppid), capitalize="mixed", collapse="")
+colnames(st) <- colnames(tax0)
+st$code <- normalize_sppcode(st$code)
+st <- nonDuplicated(st, code, TRUE)
+## merging
+tax <- rbind(tax0, TAX[setdiff(rownames(TAX), rownames(tax0)),])
+tax <- rbind(tax, st[setdiff(rownames(st), rownames(tax)),])
+tax <- droplevels(tax)
 
-## join the 2 tables by intersecting names
-SPPx <- sort(intersect(colnames(yy_abmi), levels(tax$Spp)))
-SPPx <- SPPx[SPPx != "UnidentifiedTern"]
-TAX$Spp <- TAX$English_Name
-levels(TAX$Spp) <- nameAlnum(levels(TAX$Spp), capitalize="mixed", collapse="")
-levels(TAX$Spp)[levels(TAX$Spp)=="BlackandwhiteWarbler"] <- "BlackAndWhiteWarbler"
-levels(TAX$Spp)[levels(TAX$Spp)=="MacGillivraysWarbler"] <- "MacgillivrayWarbler"
-TAX <- TAX[TAX$Spp %in% SPPx,]
-setdiff(SPPx, TAX$Spp)
-TAX <- TAX[order(rownames(TAX)),]
+compare_sets(colnames(y_bb), rownames(tax))
+compare_sets(colnames(y_bu), rownames(tax))
+compare_sets(colnames(y_rf), tax$sppid)
+compare_sets(colnames(y_sm), tax$sppid)
 
-#OFF <- OFF[,colnames(OFF) %in% rownames(TAX)]
-YY <- YY[,rownames(TAX)]
-yy_abmi <- yy_abmi[,as.character(TAX$Spp)]
-colnames(yy_abmi) <- rownames(TAX)
-YYY <- rBind(YY, yy_abmi)
+setdiff(colnames(y_bb), rownames(tax)) # nothing here
+setdiff(colnames(y_bu), rownames(tax)) # probably OK?
+setdiff(colnames(y_rf), tax$sppid)
+setdiff(colnames(y_sm), tax$sppid)
+cn <- c("AmericanGoldenplover" = "AmericanGoldenPlover",
+    "EasternWoodpewee" = "EasternWoodPewee",
+    "EurasianCollareddove" = "EurasianCollaredDove",
+    "GraycrownedRosyfinch" = "GraycrownedRosyFinch",
+    "IndianPeafowl" = "CommonPeafowl",
+    "MccownsLongspur" = "McCownsLongspur",
+    "MyrtlesWarbler" = "YellowrumpedWarbler", # MYWA > YRWA
+    "NorthernPygmyowl" = "NorthernPygmyOwl",
+    "RossGoose" = "RosssGoose",
+    "WesternWoodpewee" = "WesternWoodPewee")
+for (i in seq_along(cn)) {
+    colnames(y_rf)[colnames(y_rf) == names(cn)[i]] <- cn[i]
+    colnames(y_sm)[colnames(y_sm) == names(cn)[i]] <- cn[i]
+}
 
-#d$SppName <- s0$ENGLISH.NAME[match(d$SPECIES, s0$CODE)]
-#d$SppeciesID <- d$SppName
-#levels(d$SpeciesID) <- nameAlnum(levels(d$SpeciesID), capitalize="mixed", collapse="")
+colnames(y_sm) <- rownames(tax)[match(colnames(y_sm), tax$sppid)]
+y_sm <- y_sm[,!is.na(colnames(y_sm))]
+colnames(y_rf) <- rownames(tax)[match(colnames(y_rf), tax$sppid)]
+y_rf <- y_rf[,!is.na(colnames(y_rf))]
 
+SPP <- unique(c(colnames(y_bb[,colSums(y_bb)>0]), colnames(y_bu[,colSums(y_bu)>0]),
+    colnames(y_sm[,colSums(y_sm)>0]), colnames(y_rf[,colSums(y_rf)>0])))
+SPP <- intersect(SPP, rownames(tax))
+SPP <- SPP[!startsWith(SPP, "UN")]
+SPP <- SPP[!endsWith(SPP, "_UNI")]
+SPP <- SPP[SPP != "NONE"]
+SPP <- sort(SPP)
+tax <- tax[SPP,]
+tax <- tax[!grepl("hybr", tolower(as.character(tax$species))),]
+tax <- tax[!grepl("uniden", tolower(as.character(tax$species))),]
 
-## VEG SOIL HF DATA =============================================
+tax$order <- as.character(e2$TAX$Order[match(rownames(tax), e2$TAX$Species_ID)])
+tax$order2 <- as.character(s0$ORDER[match(rownames(tax), s0$CODE)])
+tax$order[is.na(tax$order)] <- tax$order2[is.na(tax$order)]
+tax$order <- as.factor(nameAlnum(tolower(tax$order), "first"))
+tax <- tax[!(tax$order %in% c("Abiotic", "Anura", "Artiodactyla",
+    "Carnivora", "Chiroptera", "Coleoptera", "Lagomorpha", "Perissodactyla", "Rodentia")),]
+
+tax <- tax[!is.na(tax$scinam),]
+tax <- tax[!is.na(tax$code),]
+SPP <- sort(rownames(tax))
+tax <- droplevels(tax[SPP,c("code", "sppid", "species", "scinam", "order", "family")])
+
+#tax$bb <- colSums(y_bb>0)[match(rownames(tax), colnames(y_bb))]
+#tax$bu <- colSums(y_bu>0)[match(rownames(tax), colnames(y_bu))]
+#tax$rf <- colSums(y_rf>0)[match(rownames(tax), colnames(y_rf))]
+#tax$sm <- colSums(y_sm>0)[match(rownames(tax), colnames(y_sm))]
+#tax[,c(3,7:10)]
+
+bump <- function(y, ref) {
+    m <- Melt(y)
+    levels(m$cols) <- c(levels(m$cols), setdiff(ref, levels(m$cols)))
+    out <- Xtab(value ~ rows + cols, m)
+    out[,ref]
+}
+y_bb <- bump(y_bb, rownames(tax))
+y_bu <- bump(y_bb, rownames(tax))
+y_rf <- bump(y_bb, rownames(tax))
+y_sm <- bump(y_bb, rownames(tax))
+
+yy <- rbind(y_bb, y_bu, y_rf, y_sm)
+cn <- c("PCODE",
+    "SS",
+    "SSYR",
+    "PKEY",
+    "YEAR",
+    "DATE",
+    "DATI",
+    "MAXDUR",
+    "MAXDIS",
+    "CMETHOD")
+dd <- make_char2fact(rbind(d_bb[,cn], d_bu[,cn], d_rf[,cn], d_sm[,cn]))
+compare_sets(rownames(yy), rownames(dd))
+ii <- intersect(rownames(yy), rownames(dd))
+yy <- yy[ii,]
+dd <- droplevels(dd[ii,])
+
+#'
+#' # Veg/soil/HF data
+#'
 
 file.path("d:/abmi/AB_data_v2018", "data/analysis/site", "veg-hf_BAM-BBS-BU_v6verified.Rdata")
 file.path("d:/abmi/AB_data_v2018", "data/analysis/site", "veg-hf_CameraARU_v6verified.Rdata")
@@ -191,7 +280,9 @@ load(file.path("d:/abmi/AB_data_v2018", "data", "analysis", "site",
 
 mefa4::compare_sets(d$SS, dd_point$SS)
 
-## CLIMATE AND TERRAIN DATA =============================================
+#'
+#' # Climate data
+#'
 
 file.path("d:/abmi/AB_data_v2018", "data/raw/clim", "cam-aru-bird-2003-2016.csv")
 file.path("d:/abmi/AB_data_v2018", "data/raw/clim", "site-center-2003-2016.csv")
@@ -199,4 +290,3 @@ file.path("d:/abmi/AB_data_v2018", "data/raw/clim", "1_CamARU2017_v2_Summary_Cli
 file.path("d:/abmi/AB_data_v2018", "data/raw/clim", "1_SiteCentre2017_Summary_Climate_data.csv")
 
 
-}
