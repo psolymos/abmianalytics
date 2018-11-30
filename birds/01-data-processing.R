@@ -25,6 +25,7 @@ knitr::opts_chunk$set(eval=FALSE)
 #' - `YEAR`, `DATE`, `DATI`: year, date and date/time of the sampling event
 #' - `MAXDUR`, `MAXDIS`: maximum duration and distance for sampling event
 #' - `CMETHOD`: counting method (device etc)
+#' - `VKEY`: key to match with veg/HF info
 #'
 #' Data subsets:
 #'
@@ -46,31 +47,33 @@ tmp <- paste0(as.character(resRF$DATE), " ",
     fill_char(as.character(resRF[["StartofPointCount(24hourclock)"]]), "0"), ":00")
 tmp[grepl("NA", tmp)] <- NA
 resRF$DATI <- as.POSIXlt(tmp)
+resRF$YEAR <- resRF$Year
 resRF$MAXDUR <- 10
 resRF$MAXDIS <- Inf
 resRF$PCODE <- "ABMIRF"
 resRF$SS <- paste0(resRF$ABMISite, "_", resRF$subunit)
-resRF$SSYR <- resRF$site_year_sub
-resRF$PKEY <- resRF$site_year_sub
-resRF$YEAR <- resRF$Year
+resRF$SSYR <- paste0(resRF$ABMISite, "_", resRF$subunit, "_", resRF$YEAR)
+resRF$PKEY <- resRF$SSYR
 resRF$CMETHOD <- "RF" # River Fork
 y_rf <- Xtab(~ PKEY + SpeciesID, resRF, cdrop = c("NONE","SNI", "VNA", "DNC", "PNA"))
-d_rf <- droplevels(nonDuplicated(resRF, PKEY, TRUE))
+d_rf <- make_char2fact(droplevels(nonDuplicated(resRF, PKEY, TRUE)))
+d_rf$VKEY <- d_rf$PKEY
 
 resSM <- e1$resSM
 resSM$DATE <- strptime(as.character(resSM$RecordingDate), "%d-%b-%y")
 resSM$DATI <- resSM$Start
+resSM$YEAR <- resSM$Year
 resSM$MAXDUR <- resSM$Duration
 resSM$MAXDIS <- Inf
 resSM$PCODE <- "ABMISM"
 resSM$SS <- paste0(resSM$ABMISite, "_", resSM$subunit)
-resSM$SSYR <- resSM$site_year_sub
-tmp <- gsub(" ", "-", as.character(resSM$dati))
-resSM$PKEY <- paste0(resSM$site_year_sub, "_", tmp)
-resSM$YEAR <- resSM$Year
+resSM$SSYR <- paste0(resSM$ABMISite, "_", resSM$subunit, "_", resSM$YEAR)
+tmp <- gsub(" ", "-", as.character(resSM$DATI))
+resSM$PKEY <- paste0(resSM$SSYR, "_", tmp)
 resSM$CMETHOD <- "SM" # Song Meter
 y_sm <- Xtab(~ PKEY + SpeciesID, resSM, cdrop = c("NONE","SNI", "VNA", "DNC", "PNA"))
-d_sm <- droplevels(nonDuplicated(resSM, PKEY, TRUE))
+d_sm <- make_char2fact(droplevels(nonDuplicated(resSM, PKEY, TRUE)))
+d_sm$VKEY <- d_sm$SSYR
 #'
 #' ## BAM and BBS
 #'
@@ -90,7 +93,8 @@ DAT$DATE <- as.Date(DAT$DATE)
 
 y_bb <- Xtab(ABUND ~ PKEY + SPECIES_ALL, e2$PCTBL, cdrop="NONE")
 colnames(y_bb) <- normalize_sppcode(colnames(y_bb))
-d_bb <- droplevels(DAT)
+d_bb <- make_char2fact(droplevels(DAT))
+d_bb$VKEY <- d_bb$PKEY
 y_bb <- y_bb[rownames(y_bb) %in% rownames(d_bb),]
 ## Pacific-slope Flycatcher: Western Flycatcher, Cordilleran Flycatcher
 y_bb[,"PSFL"] <- y_bb[,"PSFL"] + y_bb[,"WEFL"] + y_bb[,"COFL"]
@@ -109,12 +113,22 @@ con <- dbConnect(
     uid = ..boreal_db_access$uid,
     pwd = ..boreal_db_access$pwd)
 #dbl <- dbListTables(con)
+xybu <- dbReadTable(con, "viewCoord_LatLong")
 d0 <- dbReadTable(con, "ViewSpecies_LongFormCount")
 s0 <- dbReadTable(con, "list Species Code")
+
 dbDisconnect(con)
 
 d0 <- make_char2fact(d0)
 s0 <- make_char2fact(s0)
+xybu <- make_char2fact(xybu)
+
+xybu$SS <- with(xybu, interaction(
+    ProjectID,
+    Cluster,
+    SITE,
+    STATION,
+    sep="::", drop=TRUE))
 
 d <- droplevels(d0[d0$Method %in% as.character(c(0, 8, 11:14)) & d0$Replicate == 1,])
 d$MAXDUR <- 3
@@ -137,16 +151,227 @@ d$PKEY <- as.factor(paste0(
     tmp1,
     "-",
     tmp2))
-d$PCODE <- "BU"
+d$PCODE <- paste0("BU_", d$ProjectID)
 d$CMETHOD <- "SM"
 d$DATE <- d$RECORDING_DATE
 d$SSYR <- paste0(d$SS, "_", d$YEAR)
 d$SPECIES <- normalize_sppcode(d$SPECIES)
+d$X <- xybu$Longitude[match(d$SS, xybu$SS)]
+d$Y <- xybu$Latitude[match(d$SS, xybu$SS)]
 
 y_bu <- Xtab(Abundance ~ PKEY + SPECIES, d)
-d_bu <- droplevels(nonDuplicated(d, PKEY, TRUE))
+d_bu <- make_char2fact(droplevels(nonDuplicated(d, PKEY, TRUE)))
+d_bu$VKEY <- d_bu$SS
 #'
-#' # Combining species data
+#' # Veg/soil/HF data
+#'
+#' - `vs0`: veg+soil current+reference at point level (data frame)
+#' - `vc1`: veg current 150m buffer (matrix)
+#' - `vc2`: veg current 564m buffer (matrix)
+#' - `vr1`: veg reference 150m buffer (matrix)
+#' - `vr2`: veg reference 564m buffer (matrix)
+#' - `sc1`: soil current 150m buffer (matrix)
+#' - `sc2`: soil current 564m buffer (matrix)
+#' - `sr1`: soil reference 150m buffer (matrix)
+#' - `sr2`: soil reference 564m buffer (matrix)
+#'
+## checking BAM+BBS+BU
+e3 <- new.env()
+load(file.path("d:/abmi/AB_data_v2018", "data/analysis/site", "veg-hf_BAM-BBS-BU_v6verified.Rdata"),
+    envir=e3)
+
+head(rownames(e3$dd_150m[[1]]))
+head(d_bb$PKEY)
+
+compare_sets(e3$dd_point$UID, d_bb$PKEY)
+compare_sets(rownames(e3$dd_150m[[1]]), d_bb$PKEY)
+head(setdiff(rownames(e3$dd_150m[[1]]), d_bb$PKEY))
+
+head(rownames(e3$dd_150m[[1]]))
+head(d_bu$SS)
+
+compare_sets(rownames(e3$dd_150m[[1]]), d_bu$SS)
+compare_sets(rownames(e3$dd_150m[[1]]), c(as.character(d_bb$PKEY), as.character(d_bu$SS)))
+## BAM+BBS
+vs0_bb <- e3$dd_point[match(d_bb$VKEY, e3$dd_point$UID),]
+vc1_bb <- as.matrix(e3$dd_150m$veg_current)[match(d_bb$VKEY, rownames(e3$dd_150m$veg_current)),]
+vr1_bb <- as.matrix(e3$dd_150m$veg_reference)[match(d_bb$VKEY, rownames(e3$dd_150m$veg_reference)),]
+sc1_bb <- as.matrix(e3$dd_150m$soil_current)[match(d_bb$VKEY, rownames(e3$dd_150m$soil_current)),]
+sr1_bb <- as.matrix(e3$dd_150m$soil_reference)[match(d_bb$VKEY, rownames(e3$dd_150m$soil_reference)),]
+vc2_bb <- as.matrix(e3$dd_564m$veg_current)[match(d_bb$VKEY, rownames(e3$dd_564m$veg_current)),]
+vr2_bb <- as.matrix(e3$dd_564m$veg_reference)[match(d_bb$VKEY, rownames(e3$dd_564m$veg_reference)),]
+sc2_bb <- as.matrix(e3$dd_564m$soil_current)[match(d_bb$VKEY, rownames(e3$dd_564m$soil_current)),]
+sr2_bb <- as.matrix(e3$dd_564m$soil_reference)[match(d_bb$VKEY, rownames(e3$dd_564m$soil_reference)),]
+rownames(vs0_bb) <-
+    rownames(vc1_bb) <- rownames(vc2_bb) <-
+    rownames(vr1_bb) <- rownames(vr2_bb) <-
+    rownames(sc1_bb) <- rownames(sc2_bb) <-
+    rownames(sr1_bb) <- rownames(sr2_bb) <- rownames(d_bb)
+## BU
+vs0_bu <- e3$dd_point[match(d_bu$VKEY, e3$dd_point$UID),]
+vc1_bu <- as.matrix(e3$dd_150m$veg_current)[match(d_bu$VKEY, rownames(e3$dd_150m$veg_current)),]
+vr1_bu <- as.matrix(e3$dd_150m$veg_reference)[match(d_bu$VKEY, rownames(e3$dd_150m$veg_reference)),]
+sc1_bu <- as.matrix(e3$dd_150m$soil_current)[match(d_bu$VKEY, rownames(e3$dd_150m$soil_current)),]
+sr1_bu <- as.matrix(e3$dd_150m$soil_reference)[match(d_bu$VKEY, rownames(e3$dd_150m$soil_reference)),]
+vc2_bu <- as.matrix(e3$dd_564m$veg_current)[match(d_bu$VKEY, rownames(e3$dd_564m$veg_current)),]
+vr2_bu <- as.matrix(e3$dd_564m$veg_reference)[match(d_bu$VKEY, rownames(e3$dd_564m$veg_reference)),]
+sc2_bu <- as.matrix(e3$dd_564m$soil_current)[match(d_bu$VKEY, rownames(e3$dd_564m$soil_current)),]
+sr2_bu <- as.matrix(e3$dd_564m$soil_reference)[match(d_bu$VKEY, rownames(e3$dd_564m$soil_reference)),]
+rownames(vs0_bu) <-
+    rownames(vc1_bu) <- rownames(vc2_bu) <-
+    rownames(vr1_bu) <- rownames(vr2_bu) <-
+    rownames(sc1_bu) <- rownames(sc2_bu) <-
+    rownames(sr1_bu) <- rownames(sr2_bu) <- rownames(d_bu)
+## checking ABMI RF+SM
+e4 <- new.env()
+load(file.path("d:/abmi/AB_data_v2018", "data/analysis/site", "veg-hf_CameraARU_v6verified.Rdata"),
+    envir=e4)
+
+head(rownames(e4$dd_150m[[1]]))
+head(d_rf$PKEY)
+head(d_sm$SSYR)
+
+compare_sets(rownames(e4$dd_150m[[1]]), d_rf$PKEY)
+compare_sets(setdiff(rownames(e4$dd_150m[[1]]), d_rf$PKEY), d_sm$SSYR)
+compare_sets(rownames(e4$dd_150m[[1]]), c(as.character(d_sm$SSYR), as.character(d_rf$PKEY)))
+
+as.character(setdiff(rownames(e4$dd_150m[[1]]), c(as.character(d_sm$SSYR), as.character(d_rf$PKEY))))
+as.character(setdiff(c(as.character(d_sm$SSYR), as.character(d_rf$PKEY)), rownames(e4$dd_150m[[1]])))
+## ABMI RF
+vs0_rf <- e4$dd_point[match(d_rf$VKEY, e4$dd_point$Site_bird_year),]
+vc1_rf <- as.matrix(e4$dd_150m$veg_current)[match(d_rf$VKEY, rownames(e4$dd_150m$veg_current)),]
+vr1_rf <- as.matrix(e4$dd_150m$veg_reference)[match(d_rf$VKEY, rownames(e4$dd_150m$veg_reference)),]
+sc1_rf <- as.matrix(e4$dd_150m$soil_current)[match(d_rf$VKEY, rownames(e4$dd_150m$soil_current)),]
+sr1_rf <- as.matrix(e4$dd_150m$soil_reference)[match(d_rf$VKEY, rownames(e4$dd_150m$soil_reference)),]
+vc2_rf <- as.matrix(e4$dd_564m$veg_current)[match(d_rf$VKEY, rownames(e4$dd_564m$veg_current)),]
+vr2_rf <- as.matrix(e4$dd_564m$veg_reference)[match(d_rf$VKEY, rownames(e4$dd_564m$veg_reference)),]
+sc2_rf <- as.matrix(e4$dd_564m$soil_current)[match(d_rf$VKEY, rownames(e4$dd_564m$soil_current)),]
+sr2_rf <- as.matrix(e4$dd_564m$soil_reference)[match(d_rf$VKEY, rownames(e4$dd_564m$soil_reference)),]
+rownames(vs0_rf) <-
+    rownames(vc1_rf) <- rownames(vc2_rf) <-
+    rownames(vr1_rf) <- rownames(vr2_rf) <-
+    rownames(sc1_rf) <- rownames(sc2_rf) <-
+    rownames(sr1_rf) <- rownames(sr2_rf) <- rownames(d_rf)
+## ABMI SM
+vs0_sm <- e4$dd_point[match(d_sm$VKEY, e4$dd_point$Site_bird_year),]
+vc1_sm <- as.matrix(e4$dd_150m$veg_current)[match(d_sm$VKEY, rownames(e4$dd_150m$veg_current)),]
+vr1_sm <- as.matrix(e4$dd_150m$veg_reference)[match(d_sm$VKEY, rownames(e4$dd_150m$veg_reference)),]
+sc1_sm <- as.matrix(e4$dd_150m$soil_current)[match(d_sm$VKEY, rownames(e4$dd_150m$soil_current)),]
+sr1_sm <- as.matrix(e4$dd_150m$soil_reference)[match(d_sm$VKEY, rownames(e4$dd_150m$soil_reference)),]
+vc2_sm <- as.matrix(e4$dd_564m$veg_current)[match(d_sm$VKEY, rownames(e4$dd_564m$veg_current)),]
+vr2_sm <- as.matrix(e4$dd_564m$veg_reference)[match(d_sm$VKEY, rownames(e4$dd_564m$veg_reference)),]
+sc2_sm <- as.matrix(e4$dd_564m$soil_current)[match(d_sm$VKEY, rownames(e4$dd_564m$soil_current)),]
+sr2_sm <- as.matrix(e4$dd_564m$soil_reference)[match(d_sm$VKEY, rownames(e4$dd_564m$soil_reference)),]
+rownames(vs0_sm) <-
+    rownames(vc1_sm) <- rownames(vc2_sm) <-
+    rownames(vr1_sm) <- rownames(vr2_sm) <-
+    rownames(sc1_sm) <- rownames(sc2_sm) <-
+    rownames(sr1_sm) <- rownames(sr2_sm) <- rownames(d_sm)
+#'
+#' # Climate data
+#'
+## ABMI RF+SM
+pat <- c(paste0("-", c("NW", "NE", "SW", "SE"), "-BOTH"),
+    paste0("-", c("NW", "NE", "SW", "SE"), "-CAM"),
+    paste0("-", c("NW", "NE", "SW", "SE"), "-ARU"), "-BOTH")
+c1 <- read.csv(file.path("d:/abmi/AB_data_v2018", "data/raw/clim", "cam-aru-bird-2003-2016.csv"))
+c1$SITE <- c1$Site_ID
+a <- levels(c1$SITE)
+a[endsWith(a, "B")] <- substr(a[endsWith(a, "B")], 1, nchar(a[endsWith(a, "B")])-1)
+a[endsWith(a, "-")] <- substr(a[endsWith(a, "-")], 1, nchar(a[endsWith(a, "-")])-1)
+a <- Gsub("-b", "", a)
+a <- Gsub(pat, "", a)
+levels(c1$SITE) <- a
+c1$SS <- as.factor(paste0(c1$SITE, "_", c1$Cam_ARU_Bird_Location))
+c1 <- nonDuplicated(c1, SS, TRUE)
+
+c2 <- read.csv(file.path("d:/abmi/AB_data_v2018", "data/raw/clim", "1_CamARU2017_v2_Summary_Climate_data.csv"))
+c2$pAspen <- c2$Populus_tremuloides_brtpred_nofp
+c2$PET <- c2$Eref
+levels(c2$Cam_ARU_Bird_Location) <- gsub("-b", "", levels(c2$Cam_ARU_Bird_Location))
+c2$SITE <- c2$Site_ID
+a <- levels(c2$SITE)
+a[endsWith(a, "B")] <- substr(a[endsWith(a, "B")], 1, nchar(a[endsWith(a, "B")])-1)
+a[endsWith(a, "-")] <- substr(a[endsWith(a, "-")], 1, nchar(a[endsWith(a, "-")])-1)
+a <- Gsub("-b", "", a)
+a <- Gsub(pat, "", a)
+levels(c2$SITE) <- a
+c2 <- droplevels(c2[!endsWith(as.character(c2$SITE), ")"),])
+c2$SS <- as.factor(paste0(c2$SITE, "_", c2$Cam_ARU_Bird_Location))
+c2 <- nonDuplicated(c2, SS, TRUE)
+
+d2 <- e4$dd_point
+d2$SS <- as.factor(paste0(
+    as.character(d2$SITE), "_",
+    ifelse(is.na(d2$Cam_ARU_Bird_Location), "NA", as.character(d2$Cam_ARU_Bird_Location))))
+
+compare_sets(d2$SS, c2$SS)
+setdiff(c2$SS, d2$SS)
+
+cn <- c("SS", "SITE", "AHM", "FFP", "MAP", "MAT", "MCMT", "MWMT", "PET", "pAspen")
+ca <- rbind(c1[,cn], c2[,cn])
+compare_sets(c(as.character(d_rf$SS),as.character(d_sm$SS)), ca$SS)
+
+ca$nearest <- as.numeric(as.character(ca$SITE))
+tmp <- as.character(ca$SITE)[is.na(ca$nearest)]
+out <- tmp
+out[] <- NA
+stmp <- strsplit(tmp, "-")
+out[startsWith(tmp, "OGW-")] <- sapply(stmp[startsWith(tmp, "OGW-")], "[[", 3)
+out[startsWith(tmp, "OG-")] <- sapply(stmp[startsWith(tmp, "OG-")], "[[", 3)
+ca$nearest[is.na(ca$nearest)] <- as.integer(out)
+xy0 <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+ca$X <- xy0$PUBLIC_LONGITUDE[match(ca$nearest, xy0$SITE_ID)]
+ca$Y <- xy0$PUBLIC_LATTITUDE[match(ca$nearest, xy0$SITE_ID)]
+## BBS+BAM+BU
+library(sp)
+library(raster)
+library(rgdal)
+#tmp <- read.csv("d:/abmi/AB_data_v2018/data/raw/xy/xy-bu-bird-points-2017-06-29.csv")
+#tmp$X <- tmp$Longitude
+#tmp$Y <- tmp$Latitude
+xy1 <- rbind(nonDuplicated(d_bb[,c("X", "Y")], d_bb$SS, TRUE),
+    nonDuplicated(d_bu[,c("X", "Y")], d_bu$SS, TRUE))
+xy1 <- xy1[!is.na(xy1[,1]),]
+coordinates(xy1) <- ~ X + Y
+proj4string(xy1) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+z <- c("AHM", "FFP", "MAP", "MAT", "MCMT", "MWMT", "Eref", "Populus_tremuloides_brtpred_nofp")
+r <- list()
+for (i in z)
+    r[[i]] <- raster(paste0("d:/spatial/ab-climate/", i, ".asc"))
+r <- stack(r)
+proj4string(r) <- proj4string(cure4insect::.read_raster_template())
+
+tmp <- extract(r, xy1)
+cb <- data.frame(coordinates(xy1), tmp)
+cb$SS <- rownames(cb)
+cb$PET <- cb$Eref
+cb$pAspen <- cb$Populus_tremuloides_brtpred_nofp
+## Regions
+d_bb$NRNAME <- e3$dd_point$NRNAME[match(d_bb$VKEY, e3$dd_point$UID)]
+d_bb$NSRNAME <- e3$dd_point$NSRNAME[match(d_bb$VKEY, e3$dd_point$UID)]
+d_bb$LUF_NAME <- e3$dd_point$LUF_NAME[match(d_bb$VKEY, e3$dd_point$UID)]
+
+d_bu$NRNAME <- e3$dd_point$NRNAME[match(d_bu$VKEY, e3$dd_point$UID)]
+d_bu$NSRNAME <- e3$dd_point$NSRNAME[match(d_bu$VKEY, e3$dd_point$UID)]
+d_bu$LUF_NAME <- e3$dd_point$LUF_NAME[match(d_bu$VKEY, e3$dd_point$UID)]
+
+d_rf$NRNAME <- e4$dd_point$NRNAME[match(d_rf$VKEY, e4$dd_point$Site_bird_year)]
+d_rf$NSRNAME <- e4$dd_point$NSRNAME[match(d_rf$VKEY, e4$dd_point$Site_bird_year)]
+d_rf$LUF_NAME <- e4$dd_point$LUF_NAME[match(d_rf$VKEY, e4$dd_point$Site_bird_year)]
+
+d_sm$NRNAME <- e4$dd_point$NRNAME[match(d_sm$VKEY, e4$dd_point$Site_bird_year)]
+d_sm$NSRNAME <- e4$dd_point$NSRNAME[match(d_sm$VKEY, e4$dd_point$Site_bird_year)]
+d_sm$LUF_NAME <- e4$dd_point$LUF_NAME[match(d_sm$VKEY, e4$dd_point$Site_bird_year)]
+## adding climate and xy
+cn <- c("AHM", "FFP", "MAP", "MAT", "MCMT", "MWMT", "PET", "pAspen", "X", "Y")
+d_rf <- data.frame(d_rf, ca[match(d_rf$SS, ca$SS), cn])
+d_sm <- data.frame(d_sm, ca[match(d_sm$SS, ca$SS), cn])
+d_bb <- data.frame(d_bb, cb[match(d_bb$SS, cb$SS), cn])
+d_bu <- data.frame(d_bu, cb[match(d_bu$SS, cb$SS), cn])
+#'
+#' # Combining species data and other tables
 #'
 #' - `code`: AOU code
 #' - `species`: common name
@@ -246,12 +471,11 @@ bump <- function(y, ref) {
     out <- Xtab(value ~ rows + cols, m)
     out[,ref]
 }
-y_bb <- bump(y_bb, rownames(tax))
-y_bu <- bump(y_bb, rownames(tax))
-y_rf <- bump(y_bb, rownames(tax))
-y_sm <- bump(y_bb, rownames(tax))
-
-yy <- rbind(y_bb, y_bu, y_rf, y_sm)
+yy <- rbind(
+    bump(y_bb, rownames(tax)),
+    bump(y_bu, rownames(tax)),
+    bump(y_rf, rownames(tax)),
+    bump(y_sm, rownames(tax)))
 cn <- c("PCODE",
     "SS",
     "SSYR",
@@ -261,32 +485,33 @@ cn <- c("PCODE",
     "DATI",
     "MAXDUR",
     "MAXDIS",
-    "CMETHOD")
-dd <- make_char2fact(rbind(d_bb[,cn], d_bu[,cn], d_rf[,cn], d_sm[,cn]))
+    "CMETHOD",
+    "ROAD",
+    "AHM", "FFP", "MAP", "MAT", "MCMT", "MWMT", "PET", "pAspen",
+    "X", "Y", "NRNAME", "NSRNAME", "LUF_NAME")
+d_bu$ROAD <- NA
+d_sm$ROAD <- NA
+d_rf$ROAD <- NA
+dd <- rbind(d_bb[,cn], d_bu[,cn], d_rf[,cn], d_sm[,cn])
 compare_sets(rownames(yy), rownames(dd))
 ii <- intersect(rownames(yy), rownames(dd))
 yy <- yy[ii,]
 dd <- droplevels(dd[ii,])
-
+cn <- c("HFclass", "VEGclass", "AgeRf", "AgeCr",
+    "VEGAGEclass", "VEGHFclass", "VEGHFAGEclass", "SOILclass", "SOILHFclass")
+vs0 <- rbind(vs0_bb[,cn], vs0_bu[,cn], vs0_rf[,cn], vs0_sm[,cn])[ii,]
+## don't store as sparse matrix with NAs (slow and big)
+vc1 <- rbind(vc1_bb, vc1_bu, vc1_rf, vc1_sm)[ii,]
+vr1 <- rbind(vr1_bb, vr1_bu, vr1_rf, vr1_sm)[ii,]
+sc1 <- rbind(sc1_bb, sc1_bu, sc1_rf, sc1_sm)[ii,]
+sr1 <- rbind(sr1_bb, sr1_bu, sr1_rf, sr1_sm)[ii,]
+vc2 <- rbind(vc2_bb, vc2_bu, vc2_rf, vc2_sm)[ii,]
+vr2 <- rbind(vr2_bb, vr2_bu, vr2_rf, vr2_sm)[ii,]
+sc2 <- rbind(sc2_bb, sc2_bu, sc2_rf, sc2_sm)[ii,]
+sr2 <- rbind(sr2_bb, sr2_bu, sr2_rf, sr2_sm)[ii,]
 #'
-#' # Veg/soil/HF data
+#' # Save
 #'
-
-file.path("d:/abmi/AB_data_v2018", "data/analysis/site", "veg-hf_BAM-BBS-BU_v6verified.Rdata")
-file.path("d:/abmi/AB_data_v2018", "data/analysis/site", "veg-hf_CameraARU_v6verified.Rdata")
-
-load(file.path("d:/abmi/AB_data_v2018", "data", "analysis", "site",
-               "veg-hf_BAM-BBS-BU_v6verified.Rdata"))
-
-mefa4::compare_sets(d$SS, dd_point$SS)
-
-#'
-#' # Climate data
-#'
-
-file.path("d:/abmi/AB_data_v2018", "data/raw/clim", "cam-aru-bird-2003-2016.csv")
-file.path("d:/abmi/AB_data_v2018", "data/raw/clim", "site-center-2003-2016.csv")
-file.path("d:/abmi/AB_data_v2018", "data/raw/clim", "1_CamARU2017_v2_Summary_Climate_data.csv")
-file.path("d:/abmi/AB_data_v2018", "data/raw/clim", "1_SiteCentre2017_Summary_Climate_data.csv")
-
-
+save(tax, yy, dd, vs0, vc1, vr1, sc1, sr1, vc2, vr2, sc2, sr2,
+    file="d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-all-2018-11-29.RData")
+#' The End

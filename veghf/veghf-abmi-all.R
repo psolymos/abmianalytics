@@ -164,12 +164,25 @@ save(dd_point, dd_qha, dd_1ha, dd_150m, dd_564m, xx,
 
 ## ABMI cam/aru -----------------------------------------------
 
+pat <- c(paste0("-", c("NW", "NE", "SW", "SE"), "-BOTH"),
+    paste0("-", c("NW", "NE", "SW", "SE"), "-CAM"),
+    paste0("-", c("NW", "NE", "SW", "SE"), "-ARU"))
+
 ## point intersections
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
     "Summary_2003_2017_CamARUBird_point_rev04.csv")
 d <- read.csv(f)
+
+d$SITE <- d$Site_ID
+a <- levels(d$SITE)
+a[endsWith(a, "B")] <- substr(a[endsWith(a, "B")], 1, nchar(a[endsWith(a, "B")])-1)
+a[endsWith(a, "-")] <- substr(a[endsWith(a, "-")], 1, nchar(a[endsWith(a, "-")])-1)
+a <- Gsub("-b", "", a)
+a <- Gsub(pat, "", a)
+levels(d$SITE) <- a
+
 d$Site_bird_year <- as.factor(paste0(
-    as.character(d$Site_ID), "_",
+    as.character(d$SITE), "_",
     ifelse(is.na(d$Cam_ARU_Bird_Location), "NA", as.character(d$Cam_ARU_Bird_Location)),
     "_", as.character(d$survey_year)))
 #d[is.na(d$Site_YEAR_bird),]
@@ -181,12 +194,22 @@ dd_point <- make_vegHF_wide_v6(d,
     col.SOIL="Soil_Type_1",
     sparse=TRUE, HF_fine=TRUE, wide=FALSE) # use refined classes
 
+
 ## 150m
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
     "Summary_2003_2017_CamARUBird_buf150m_rev05.csv")
 d <- read.csv(f)
+
+d$SITE <- d$Site_ID
+a <- levels(d$SITE)
+a[endsWith(a, "B")] <- substr(a[endsWith(a, "B")], 1, nchar(a[endsWith(a, "B")])-1)
+a[endsWith(a, "-")] <- substr(a[endsWith(a, "-")], 1, nchar(a[endsWith(a, "-")])-1)
+a <- Gsub("-b", "", a)
+a <- Gsub(pat, "", a)
+levels(d$SITE) <- a
+
 d$Site_bird_year <- as.factor(paste0(
-    as.character(d$Site_ID), "_",
+    as.character(d$SITE), "_",
     ifelse(is.na(d$Cam_ARU_Bird_Location), "NA", as.character(d$Cam_ARU_Bird_Location)),
     "_", as.character(d$survey_year)))
 dd <- make_vegHF_wide_v6(d,
@@ -204,8 +227,17 @@ dd_150m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
     "Summary_2003_2017_CamARUBird_buf564m_rev05.csv")
 d <- read.csv(f)
+
+d$SITE <- d$Site_ID
+a <- levels(d$SITE)
+a[endsWith(a, "B")] <- substr(a[endsWith(a, "B")], 1, nchar(a[endsWith(a, "B")])-1)
+a[endsWith(a, "-")] <- substr(a[endsWith(a, "-")], 1, nchar(a[endsWith(a, "-")])-1)
+a <- Gsub("-b", "", a)
+a <- Gsub(pat, "", a)
+levels(d$SITE) <- a
+
 d$Site_bird_year <- as.factor(paste0(
-    as.character(d$Site_ID), "_",
+    as.character(d$SITE), "_",
     ifelse(is.na(d$Cam_ARU_Bird_Location), "NA", as.character(d$Cam_ARU_Bird_Location)),
     "_", as.character(d$survey_year)))
 dd <- make_vegHF_wide_v6(d,
@@ -254,7 +286,7 @@ d02 <- dbReadTable(db, "BU_Buffer564m")
 
 dbDisconnect(db)
 
-d00 <- db_chr2factor(d00)
+d00 <- make_char2fact(d00)
 
 dd_point <- make_vegHF_wide_v6(d00,
     col.label="UID",
@@ -275,7 +307,7 @@ keep <- c("Origin_Year",
     "Combined_ChgByCWCS",
     "YEAR",
     "Shape_Area")
-d01 <- db_chr2factor(d01[,keep])
+d01 <- make_char2fact(d01[,keep])
 summary(d01[d01$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA"), "YEAR"])
 d01[d01$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA") & is.na(d01$YEAR), "YEAR"] <- 1930
 summary(d01[d01$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA"), "YEAR"])
@@ -292,7 +324,7 @@ dx <- nonDuplicated(d01, UID, TRUE)[rownames(dd[[1]]),]
 dd_150m <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
 ## 564m
-d02 <- db_chr2factor(d02[,keep])
+d02 <- make_char2fact(d02[,keep])
 summary(d02[d02$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA"), "YEAR"])
 d02[d02$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA") & is.na(d02$YEAR), "YEAR"] <- 1930
 summary(d02[d02$FEATURE_TY %in% c("CUTBLOCK", "HARVEST-AREA"), "YEAR"])
@@ -525,7 +557,7 @@ dbListTables(db)
 d <- dbReadTable(db, "ParkProtected_Veg61HF2016FTY_InternalUseOnly")
 dbDisconnect(db)
 
-d <- db_chr2factor(d)
+d <- make_char2fact(d)
 d$NAME_NRNAME <- interaction(d$NAME, d$NRNAME, sep="_", drop=TRUE)
 
 dd <- make_vegHF_wide_v6(d,
@@ -547,8 +579,8 @@ d1 <- dbReadTable(db, "CrownReservations_Veg61HF2016FTY_InternalUseOnly")
 d2 <- dbReadTable(db, "LarpOutsideCrownAndProtected_Veg61HF2016FTY_InternalUseOnly")
 dbDisconnect(db)
 
-d1 <- db_chr2factor(d1)
-d2 <- db_chr2factor(d2)
+d1 <- make_char2fact(d1)
+d2 <- make_char2fact(d2)
 d1$NAME_NRNAME <- interaction(d1$NAME, d1$NRNAME, sep="_", drop=TRUE)
 d2$NAME_NRNAME <- interaction(d2$AreaName, d2$NRNAME, sep="_", drop=TRUE)
 
@@ -674,7 +706,7 @@ d <- dbGetQuery(db,
 )
 dbDisconnect(db)
 
-d <- db_chr2factor(d)
+d <- make_char2fact(d)
 
 d2 <- make_vegHF_wide_v6(d,
     col.label="GRID_LABEL",
@@ -684,8 +716,8 @@ d2 <- make_vegHF_wide_v6(d,
     col.SOIL="Soil_Type_1",
     HF_fine=TRUE, wide=FALSE) # use refined classes
 d2 <- d2[,c("GRID_LABEL", "NSRNAME",
-    "VEGAGEclass", "VEGHFAGEclass", 
-    "SOILclass", "SOILHFclass", 
+    "VEGAGEclass", "VEGHFAGEclass",
+    "SOILclass", "SOILHFclass",
     "Shape_Area")]
 
 ## wide format: amount
@@ -716,7 +748,7 @@ load(file.path(ROOT, VER, "data", "inter", "veghf", "grid",
     "veg-hf_grid_v6hf2016v3noDistVeg-long-format.Rdata"))
 load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
 
-d2$soilTr <- as.character(d2$SOILclass) 
+d2$soilTr <- as.character(d2$SOILclass)
 ss <- as.character(d2$SOILclass) != as.character(d2$SOILHFclass)
 #table(ss)
 d2$soilTr[ss] <- paste0(as.character(d2$SOILclass[ss]),
@@ -727,7 +759,7 @@ trSoil <- trSoil[rownames(kgrid),]
 range(rowSums(trSoil)/10^6)
 dim(trSoil)
 
-d2$vegTr <- as.character(d2$VEGAGEclass) 
+d2$vegTr <- as.character(d2$VEGAGEclass)
 ss <- as.character(d2$VEGAGEclass) != as.character(d2$VEGHFAGEclass)
 #table(ss)
 d2$vegTr[ss] <- paste0(as.character(d2$VEGAGEclass[ss]),

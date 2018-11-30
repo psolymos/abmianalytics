@@ -33,3 +33,20 @@ normalize_sppcode <- function(x) {
     }
     stop("x must be character or factor")
 }
+#' repeated calls to gsub
+Gsub <- function(pattern, replacement, x, ...) {
+    pattern <- as.list(pattern)
+    replacement <- as.list(replacement)
+    if (length(pattern) > length(replacement)) {
+        j <- rep(seq_along(replacement), length(pattern))[seq_along(pattern)]
+        replacement <- replacement[j]
+    }
+    if (length(pattern) < length(replacement)) {
+        j <- rep(seq_along(pattern), length(replacement))[seq_along(replacement)]
+        pattern <- pattern[j]
+    }
+    for (i in seq_along(pattern)) {
+        x <- gsub(pattern[[i]], replacement[[i]], x, ...)
+    }
+    x
+}

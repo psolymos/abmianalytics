@@ -18,6 +18,7 @@ THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
 library(mefa4)
 library(DBI)
 source("~/repos/abmianalytics/R/veghf_functions.R")
+source("~/repos/abmianalytics/birds/00-functions.R")
 source("~/repos/bamanalytics/R/dataprocessing_functions.R")
 
 ## this has pasture/cultivation etc differences
