@@ -1992,3 +1992,32 @@ write.csv(vhs_terr, file=file.path(ROOT, VER, "data", "misc", "requests",
 write.csv(vhs_wet, file=file.path(ROOT, VER, "data", "misc", "requests",
     "2018-09-28", "Wetland-ABMI-all-sites-HF-250mBuffer.csv"))
 
+
+## 2018-11-30
+##
+## Hello.  I'm doing the 3x7 veg+HF trend summary (with forestry recovery, CI's, etc)
+## for the three 7G areas: lease, watershed and five watershed areas.
+## I have the updated 3x7's from Peter - the same ones as for the OSR report.
+## But I don't have the 2016 wall-to-wall summarized for the 7G area, which I will
+## use to standardardize the 3x7 values.
+## The attached is the 2016 W2W summary that Peter sent for each area in the OSR.
+## Could I get the exact same thing for the three 7G areas?
+## I think Peter did this from the 1km2 rasters -
+## do you have the info on which of these rasters are in each of the three 7G
+## summary areas?  Or, Katherine, could you work with Peter to get him those?
+
+library(mefa4)
+library(readxl)
+load("d:/abmi/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3noDistVeg.Rdata")
+f <- "d:/abmi/AB_data_v2018/data/raw/xy/GridValues7GAreas_Grid_1km.xlsx"
+x1 <- read_excel(f, sheet="LeaseArea7G_Grid_1km")
+x2 <- read_excel(f, sheet="Watershed07GB_Grid_1km")
+x3 <- read_excel(f, sheet="FiveWatershedin7G_Grid_1km")
+
+out <- rbind(
+    LeaseArea7G=colSums(dd_kgrid[[1]][x1$GRID_LABEL[x1[["Shape_Area (m^2)"]] > 0.5*10^6],]),
+    Watershed07GB=colSums(dd_kgrid[[1]][x2$GRID_LABEL[x2[["Shape_Area (m^2)"]] > 0.5*10^6],]),
+    FiveWatershedin7G=colSums(dd_kgrid[[1]][x3$GRID_LABEL[x3[["Shape_Area (m^2)"]] > 0.5*10^6],]))
+
+write.csv(as.data.frame(out), file=file.path("d:/abmi/AB_data_v2018", "data", "misc", "requests",
+    "2018-11-30", "VegHF2016-GridValues7GAreas.csv"))

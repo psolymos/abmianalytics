@@ -16,18 +16,28 @@ load("d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-all-2018-11-29.RData")
 
 
 ## dealing with sine NAs
-
-## XY: should probably drop
-dd <- droplevels(dd[!is.na(dd$X),])
-dd$MAXDUR[is.na(dd$MAXDUR)] <- 1 # ABMISM bits
+## checking veg+soil+hf summaries
+dd$vshf <- ifelse(rowSums(is.na(vc1)) > 0, NA, 0)
+(aa <- data.frame(n_of_NAs=colSums(is.na(dd))))
 ## ROAD: needs HF info
 ## DATE/DATI: use constant sra
+## XY: should probably be dropped too
+dd <- droplevels(dd[!is.na(dd$X) & !is.na(dd$vshf),])
+dd$MAXDUR[is.na(dd$MAXDUR)] <- 1 # ABMISM bits
 ## climate: probably outside of AB bound: can use nearest if distance is small
-## region: can intersect and use nearest -- it is not crucial
-## check veg/hf/soil
-##
-aa <- data.frame(colSums(is.na(dd)))
-dd <- droplevels(dd[!is.na(dd$pAspen),])
+dd <- droplevels(dd[!is.na(dd$pAspen) & !is.na(dd$NRNAME),])
+
+## shrink yy
+yy <- yy[rownames(dd), colSums(yy > 0) >= 20]
+
+dd <- data.frame(dd, vs0[rownames(dd),])
+fmax <- function(x) {
+    rs <- rowSums(x)
+    rs[is.na(rs)] <- 1
+    find_max(x / rs)
+}
+tmp <- fmax(vc1[rownames(dd),])
+
 
 ## JDAY
 dd$JULIAN <- as.POSIXlt(dd$DATE)$yday
