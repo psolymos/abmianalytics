@@ -50,3 +50,11 @@ Gsub <- function(pattern, replacement, x, ...) {
     }
     x
 }
+#' row standardization, avoids division by 0
+row_std <- function(x) {
+    rs <- rowSums(x)
+    rs[rs == 0] <- 1
+    #rs[is.na(rs)] <- 1
+    x / rs
+}
+

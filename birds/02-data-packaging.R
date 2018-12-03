@@ -10,6 +10,7 @@
 #' In this script we filter, transform, mutate, and get some offsets calculated.
 #'
 library(mefa4)
+library(intrval)
 source("~/repos/abmianalytics/birds/00-functions.R")
 knitr::opts_chunk$set(eval=FALSE)
 load("d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-all-2018-11-29.RData")
@@ -31,12 +32,121 @@ dd <- droplevels(dd[!is.na(dd$pAspen) & !is.na(dd$NRNAME),])
 yy <- yy[rownames(dd), colSums(yy > 0) >= 20]
 
 dd <- data.frame(dd, vs0[rownames(dd),])
-fmax <- function(x) {
-    rs <- rowSums(x)
-    rs[is.na(rs)] <- 1
-    find_max(x / rs)
-}
-tmp <- fmax(vc1[rownames(dd),])
+
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
+rownames(tv) <- tv[,1]
+stopifnot(all(colnames(vc1) == rownames(tv)))
+ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v61.csv")
+rownames(ts) <- ts[,1]
+stopifnot(all(colnames(sc1) == rownames(ts)))
+
+dd$pWater <- rowSums(row_std(vc1[rownames(dd),])[,tv$is_water])
+dd$pRoad <- rowSums(row_std(vc1[rownames(dd),])[,tv$is_road])
+dd$pWell <- row_std(vc1[rownames(dd),])[,"WellSite"]
+dd$pRoadVeg <- rowSums(row_std(vc1[rownames(dd),])[,tv$is_road_veg])
+
+lcc4 <- row_std(groupSums(vc1[rownames(dd),], 2, tv[colnames(vc1),"LCC4"]))
+tmp <- find_max(lcc4)
+dd$LCC4 <- tmp$index
+dd$LCC2 <- dd$LCC4
+levels(dd$LCC2) <- c("OpenWet", "Forest", "Forest", "OpenWet")
+dd$pClosed <- rowSums(row_std(vc1[rownames(dd),])[,tv$is_closed])
+dd$pHarest <- rowSums(row_std(vc1[rownames(dd),])[,tv$is_harvest])
+dd$pHF <- rowSums(row_std(vc1[rownames(dd),])[,tv$is_HF])
+
+
+dd$pWater_KM <- rowSums(row_std(vc2[rownames(dd),])[,tv$is_water])
+dd$pWet_KM <- rowSums(row_std(vc2[rownames(dd),])[,tv$is_wet])
+dd$pWetWater_KM <-dd$pWater_KM + dd$pWet_KM
+
+
+vc1r <- row_std(groupSums(vc1[rownames(dd),], 2, tv[colnames(vc1),"UseInAnalysisFine"]))
+vr1r <- row_std(groupSums(vr1[rownames(dd),], 2, tv[colnames(vr1),"UseInAnalysisFine"]))
+sc1r <- row_std(groupSums(sc1[rownames(dd),], 2, ts[colnames(sc1),"UseInAnalysisCoarse"]))
+sr1r <- row_std(groupSums(sr1[rownames(dd),], 2, ts[colnames(sr1),"UseInAnalysisCoarse"]))
+
+
+dd$useSouth <- FALSE
+dd$useSouth[dd$NRNAME %in% c("Grassland", "Parkland")] <- TRUE
+dd$useSouth[dd$NSRNAME %in% c("Dry Mixedwood")] <- TRUE
+dd$useSouth[dd$useSouth & dd$Y > 56.7] <- FALSE # ~80 points
+dd$useSouth[dd$useSouth & dd$pWater > 0.5] <- FALSE
+dd$useSouth[dd$useSouth & sr1r[,"SoilUnknown"] > 0] <- FALSE
+dd$useSouth[dd$useSouth & sc1r[,"HFor"] > 0] <- FALSE
+
+## use in north
+dd$useNorth <- TRUE
+dd$useNorth[dd$NRNAME == "Grassland"] <- FALSE
+dd$useNorth[dd$useNorth & dd$pWater > 0.5] <- FALSE
+
+
+## road
+dd$ROAD[is.na(dd$ROAD) & dd$pRoad > 0.04] <- 1
+dd$ROAD[is.na(dd$ROAD)] <- 0
+table(dd$ROAD, dd$pRoad > 0.04, useNA="a")
+
+## wells
+dd$WELL <- ifelse(dd$pWell > 0.1, 1, 0) # >3/4 of a 1 ha well site is inside)
+
+## soil classification
+
+## reclass and find max
+tmp <- find_max(sc1r[,colnames(sc1r) %ni% c("SoilWater", "SoilUnknown", "HWater",
+    "SoftLin", "HardLin", "HFor", "Well")])
+dd$soilc <- tmp$index
+dd$soilv <- tmp$value
+
+tmp <- find_max(vc1r[,colnames(vc1r) %ni% c("Water","HWater", "OtherDisturbedVegetation",
+    "Seismic", "HardLin", "TrSoftLin", "SnowIce", "Bare", "Well")])
+dd$vegc <- tmp$index
+dd$vegv <- tmp$value
+
+#dd$WELL[dd$soilc == "UrbInd"] <- 0
+with(dd[dd$useSouth,], table(soilc, WELL))
+with(dd[dd$useNorth,], table(vegc, WELL))
+
+
+
+ys <- groupSums(yy[dd$useSouth,], 1, dd$SS[dd$useSouth])
+ys[ys > 0] <- 1
+ys <- ys[,colSums(ys) >= 20]
+ds <- nonDuplicated(dd, SS, TRUE)[rownames(ys),]
+
+table(ds$soilc, ds$WELL)
+hist(ds$soilv)
+
+library(opticut)
+library(parallel)
+cl <- makeCluster(8)
+
+o <- opticut(as.matrix(ys) ~ ROAD, data=ds, strata=ds$soilc, dist="binomial:cloglog",
+    weights=ds$soilv, cl=cl)
+
+stopCluster(cl)
+
+## derive all the variables and run non BB model
+## check if habCl is needed
+## get offsets (lcc and tree!)
+
+
+yn <- groupSums(yy[dd$useNorth,], 1, dd$SS[dd$useNorth])
+yn[yn > 0] <- 1
+yn <- yn[,colSums(yn) >= 100]
+dn <- nonDuplicated(dd, SS, TRUE)[rownames(yn),]
+
+data.frame(table(dn$vegc))
+hist(dn$vegv)
+
+hist(vc1r[vc1r[,"Well"]>0.1,"Well"]*7)
+
+library(opticut)
+library(parallel)
+cl <- makeCluster(8)
+
+o <- opticut(as.matrix(yn) ~ ROAD, data=dn, strata=dn$vegc, dist="binomial:cloglog",
+    weights=dn$vegv, cl=cl)
+
+stopCluster(cl)
 
 
 ## JDAY
