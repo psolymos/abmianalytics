@@ -126,3 +126,10 @@ CCSpruce1,TRUE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,Spruce,ConUp,Conif,Spruce,CCSpr
 CCSpruce2,TRUE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,Spruce,ConUp,Conif,Spruce,CCSpruce2,CCSpruce2,2,CCSpruce,CCSpruce,CCWhiteSpruce2,Forestry,CCConif2,WhiteSpruceCC20
 CCSpruce3,TRUE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,Spruce,ConUp,Conif,Spruce,CCSpruce3,CCSpruce3,3,CCSpruce,CCSpruce,CCWhiteSpruce3,Forestry,CCConif3,WhiteSpruceCC40
 CCSpruce4,TRUE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,Spruce,ConUp,Conif,Spruce,CCSpruce4,CCSpruce4,4,CCSpruce,CCSpruce,CCWhiteSpruce4,Forestry,CCConif4,WhiteSpruceCC60
+Decid0,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,Decid,DecMix,DecidMixed,Decid,,,,,,,,,
+Spruce0,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,Spruce,ConUp,Conif,Spruce,,,,,,,,,
+Pine0,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,Pine,ConUp,Conif,Pine,,,,,,,,,
+Mixedwood0,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,Mixedwood,DecMix,DecidMixed,Mixedwood,,,,,,,,,
+TreedSwamp0,FALSE,FALSE,TRUE,FALSE,FALSE,TRUE,FALSE,Swamp,Swamp,Wet,TreedSwamp,,,,,,,,,
+TreedBog0,FALSE,FALSE,TRUE,FALSE,FALSE,TRUE,FALSE,BSpr,ConLo,Wet,TreedBog,,,,,,,,,
+TreedFen0,FALSE,FALSE,TRUE,FALSE,FALSE,TRUE,FALSE,Larch,ConLo,Wet,TreedFen,,,,,,,,,
