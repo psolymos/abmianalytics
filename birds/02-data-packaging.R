@@ -250,4 +250,4 @@ which(!is.finite(Ra[2,]))
 
 ## make wtAge and stand type indicators and fCC2
 
-
+## wet/water at( KM scale in veg models?)

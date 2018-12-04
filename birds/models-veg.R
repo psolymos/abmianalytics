@@ -30,6 +30,7 @@ mods_veg <- list(
         .~. + ROAD + mWell + mEnSft + mTrSft + mSeism),
     "ARU"=list(
         .~. + CMETHOD),
+## add wet/water here?
     "Space"=list(
         .~. + xPET,## climate only
         .~. + xMAT,
