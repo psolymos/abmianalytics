@@ -177,8 +177,8 @@ d_bu$VKEY <- d_bu$SS
 #'
 ## checking BAM+BBS+BU
 e3 <- new.env()
-load(file.path("d:/abmi/AB_data_v2018", "data/analysis/site", "veg-hf_BAM-BBS-BU_v6verified.Rdata"),
-    envir=e3)
+load(file.path("d:/abmi/AB_data_v2018", "data/analysis/site",
+    "veg-hf_BAM-BBS-BU_v6verified.Rdata"), envir=e3)
 
 head(rownames(e3$dd_150m[[1]]))
 head(d_bb$PKEY)
@@ -285,7 +285,8 @@ levels(c1$SITE) <- a
 c1$SS <- as.factor(paste0(c1$SITE, "_", c1$Cam_ARU_Bird_Location))
 c1 <- nonDuplicated(c1, SS, TRUE)
 
-c2 <- read.csv(file.path("d:/abmi/AB_data_v2018", "data/raw/clim", "1_CamARU2017_v2_Summary_Climate_data.csv"))
+c2 <- read.csv(file.path("d:/abmi/AB_data_v2018", "data/raw/clim",
+    "1_CamARU2017_v2_Summary_Climate_data.csv"))
 c2$pAspen <- c2$Populus_tremuloides_brtpred_nofp
 c2$PET <- c2$Eref
 levels(c2$Cam_ARU_Bird_Location) <- gsub("-b", "", levels(c2$Cam_ARU_Bird_Location))
@@ -327,16 +328,15 @@ ca$Y <- xy0$PUBLIC_LATTITUDE[match(ca$nearest, xy0$SITE_ID)]
 library(sp)
 library(raster)
 library(rgdal)
-#tmp <- read.csv("d:/abmi/AB_data_v2018/data/raw/xy/xy-bu-bird-points-2017-06-29.csv")
-#tmp$X <- tmp$Longitude
-#tmp$Y <- tmp$Latitude
+
 xy1 <- rbind(nonDuplicated(d_bb[,c("X", "Y")], d_bb$SS, TRUE),
     nonDuplicated(d_bu[,c("X", "Y")], d_bu$SS, TRUE))
 xy1 <- xy1[!is.na(xy1[,1]),]
 coordinates(xy1) <- ~ X + Y
 proj4string(xy1) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 
-z <- c("AHM", "FFP", "MAP", "MAT", "MCMT", "MWMT", "Eref", "Populus_tremuloides_brtpred_nofp")
+z <- c("AHM", "FFP", "MAP", "MAT", "MCMT", "MWMT", "Eref",
+    "Populus_tremuloides_brtpred_nofp")
 r <- list()
 for (i in z)
     r[[i]] <- raster(paste0("d:/spatial/ab-climate/", i, ".asc"))
@@ -452,12 +452,14 @@ tax$order2 <- as.character(s0$ORDER[match(rownames(tax), s0$CODE)])
 tax$order[is.na(tax$order)] <- tax$order2[is.na(tax$order)]
 tax$order <- as.factor(nameAlnum(tolower(tax$order), "first"))
 tax <- tax[!(tax$order %in% c("Abiotic", "Anura", "Artiodactyla",
-    "Carnivora", "Chiroptera", "Coleoptera", "Lagomorpha", "Perissodactyla", "Rodentia")),]
+    "Carnivora", "Chiroptera", "Coleoptera", "Lagomorpha",
+    "Perissodactyla", "Rodentia")),]
 
 tax <- tax[!is.na(tax$scinam),]
 tax <- tax[!is.na(tax$code),]
 SPP <- sort(rownames(tax))
-tax <- droplevels(tax[SPP,c("code", "sppid", "species", "scinam", "order", "family")])
+tax <- droplevels(tax[SPP,c("code", "sppid", "species", "scinam",
+    "order", "family")])
 
 #tax$bb <- colSums(y_bb>0)[match(rownames(tax), colnames(y_bb))]
 #tax$bu <- colSums(y_bu>0)[match(rownames(tax), colnames(y_bu))]

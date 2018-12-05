@@ -568,7 +568,7 @@ dd <- make_vegHF_wide_v6(d,
     col.SOIL="Soil_Type_1",
     sparse=TRUE, HF_fine=TRUE) # use refined classes
 dd$scale <- "ParkProtected_Veg61HF2016FTY_InternalUseOnly"
-dx <- nonDuplicated(d, NAME, TRUE)[rownames(dd[[1]]),]
+dx <- nonDuplicated(d, NAME_NRNAME, TRUE)[rownames(dd[[1]]),]
 dd <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
 
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "misc",

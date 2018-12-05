@@ -1,19 +1,16 @@
 mods_soil <- list(
     "Hab"=list(
         .~. + soilc,
-        .~. + soilc + pAspen,
-        .~. + soilc + pWater_KM,
-        .~. + soilc + pWet_KM,
-        .~. + soilc + pWetWater_KM,
-        .~. + soilc + pAspen + pWater_KM,
-        .~. + soilc + pAspen + pWet_KM,
-        .~. + soilc + pAspen + pWetWater_KM),
+        .~. + soilc + pAspen),
     "Contrast"=list(
         .~. + ROAD,
         .~. + ROAD + mWell,
         .~. + ROAD + mWell + mSoft),
     "ARU"=list(
         .~. + CMETHOD),
+    "Water"=list(
+        .~. + pWater_KM,
+        .~. + pWater_KM + pWater2_KM),
     "Space"=list(
         .~.+ xPET,## climate only
         .~.+ xMAT,
@@ -26,28 +23,31 @@ mods_soil <- list(
         .~.+ xMAT + xMAP,
         .~.+ xMWMT + xMCMT,
         .~.+ xAHM + xPET,
-        .~.+ xlat + xlong + xlat:xlong + xPET,## linear lat-long and climate
-        .~.+ xlat + xlong + xlat:xlong + xMAT,
-        .~.+ xlat + xlong + xlat:xlong + xAHM,
-        .~.+ xlat + xlong + xlat:xlong + xFFP,
-        .~.+ xlat + xlong + xlat:xlong + xMAP + xFFP,
-        .~.+ xlat + xlong + xlat:xlong + xMAP + xFFP + xMAP:xFFP,
-        .~.+ xlat + xlong + xlat:xlong + xMAT + xMAP + xPET + xAHM,
-        .~.+ xlat + xlong + xlat:xlong + xMAT + xMAP + xPET + xAHM + xPET:xMAP + xMAT:xAHM,
-        .~.+ xlat + xlong + xlat:xlong + xMAT + xMAP,
-        .~.+ xlat + xlong + xlat:xlong + xMWMT + xMCMT,
-        .~.+ xlat + xlong + xlat:xlong + xAHM + xPET,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xPET,## quadratic lat-long and climate
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xAHM,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xFFP,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAP + xFFP,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAP + xFFP + xMAP:xFFP,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT + xMAP + xPET + xAHM,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT + xMAP + xPET + xAHM + xPET:xMAP + xMAT:xAHM,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMAT + xMAP,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xMWMT + xMCMT,
-        .~.+ xlat + xlong + xlat:xlong + xlat2 + xlong2 + xAHM + xPET),
+        .~.+ xY + xX + xY:xX + xPET,## linear lat-long and climate
+        .~.+ xY + xX + xY:xX + xMAT,
+        .~.+ xY + xX + xY:xX + xAHM,
+        .~.+ xY + xX + xY:xX + xFFP,
+        .~.+ xY + xX + xY:xX + xMAP + xFFP,
+        .~.+ xY + xX + xY:xX + xMAP + xFFP + xMAP:xFFP,
+        .~.+ xY + xX + xY:xX + xMAT + xMAP + xPET + xAHM,
+        .~.+ xY + xX + xY:xX + xMAT + xMAP + xPET + xAHM + xPET:xMAP + xMAT:xAHM,
+        .~.+ xY + xX + xY:xX + xMAT + xMAP,
+        .~.+ xY + xX + xY:xX + xMWMT + xMCMT,
+        .~.+ xY + xX + xY:xX + xAHM + xPET,
+        .~.+ xY + xX + xY:xX + xY2 + xX2 + xPET,## quadratic lat-long and climate
+        .~.+ xY + xX + xY:xX + xY2 + xX2 + xMAT,
+        .~.+ xY + xX + xY:xX + xY2 + xX2 + xAHM,
+        .~.+ xY + xX + xY:xX + xY2 + xX2 + xFFP,
+        .~.+ xY + xX + xY:xX + xY2 + xX2 + xMAP + xFFP,
+        .~.+ xY + xX + xY:xX + xY2 + xX2 + xMAP + xFFP + xMAP:xFFP,
+        .~.+ xY + xX + xY:xX + xY2 + xX2 + xMAT + xMAP + xPET + xAHM,
+        .~.+ xY + xX + xY:xX + xY2 + xX2 + xMAT + xMAP + xPET + xAHM + xPET:xMAP + xMAT:xAHM,
+        .~.+ xY + xX + xY:xX + xY2 + xX2 + xMAT + xMAP,
+        .~.+ xY + xX + xY:xX + xY2 + xX2 + xMWMT + xMCMT,
+        .~.+ xY + xX + xY:xX + xY2 + xX2 + xAHM + xPET),
+    "SSH"=list(
+        .~. + SSH_KM,
+        .~. + SSH05_KM),
     "HF"=list(
         .~.+ THF_KM,
         .~.+ Lin_KM + Nonlin_KM,
