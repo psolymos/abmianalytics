@@ -408,7 +408,10 @@ which(!is.finite(Ra[2,]))
 #'
 #'
 #' The End
-
+cn=c("PCODE", "SS", "SSYR", "PKEY", "YEAR", "DATE", "DATI", "MAXDUR",
+    "MAXDIS", "CMETHOD", "ROAD", "X", "Y", "NRNAME", "NSRNAME", "LUF_NAME", "useNorth", "useSouth")
+ddd=dd[,cn]
+save(ddd, file="~/GoogleWork/abmi/bird-data.RData")
 ## test south
 
 library(mefa4)
