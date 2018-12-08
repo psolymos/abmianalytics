@@ -430,6 +430,7 @@ dd$BLOCK_XYT <- interaction(dd$BLOCK_XY, dd$BLOCK_T, sep="::", drop=TRUE)
 ftable(dd$BLOCK_T, dd$BLOCK_Y, dd$BLOCK_X)
 #'
 #' Random quantiles: these are also based on SS
+set.seed(1)
 tmp$RND <- sample.int(100, nrow(tmp), replace=TRUE)
 dd$RND <- tmp$RND[match(dd$SS, tmp$SS)]
 #'
@@ -519,7 +520,7 @@ zz$ABMIbirdpt <- sapply(tmp, "[[", 2)
 n <- table(zz$ABMIsite)
 n <- n[n==9]
 zz$All9 <- zz$ABMIsite %in% names(n)
-nn <- sum_by(zz$NRNAME == "Grassland", zz$ABMIsite)
+nn <- sum_by(zz$NRNAME == "Grassland" | zz$Y < 50, zz$ABMIsite)
 zz$NotGr <- zz$ABMIsite %in% rownames(nn)[nn[,"x"] == 0]
 
 table(ngr=zz$NotGr, a=zz$All9)/9
