@@ -402,55 +402,170 @@ for (spp in sppp) {
 summary(t(Ra))
 which(!is.finite(Ra[1,]))
 which(!is.finite(Ra[2,]))
+off_mean <- log(rowMeans(exp(off)))
 #'
-#' # make BB
+#' # Bootstrap blocking units
 #'
-#'
-#'
-#' The End
+#' Spatial blocking units are based on unique locations (SS), we aime for a well balanced
+#' data set
 cn=c("PCODE", "SS", "SSYR", "PKEY", "YEAR", "DATE", "DATI", "MAXDUR",
     "MAXDIS", "CMETHOD", "ROAD", "X", "Y", "NRNAME", "NSRNAME", "LUF_NAME", "useNorth", "useSouth")
 ddd=dd[,cn]
-save(ddd, file="~/GoogleWork/abmi/bird-data.RData")
-## test south
+#save(ddd, file="~/GoogleWork/abmi/bird-data.RData")
+#load("~/GoogleWork/abmi/bird-data.RData")
+#with(ddd, plot(X, Y, col=NRNAME, pch="."))
+tmp <- nonDuplicated(ddd, SS, TRUE)
+cx <- cut(tmp$X, c(-121, -116, -112,-109))
+cy <- cut(tmp$Y, c(48, 51, 54, 57, 61))
+ct <- cut(tmp$YEAR, c(1992, 2001, 2009, 2013, 2018))
+table(cy, cx)
+table(ct)
+ftable(ct, cy, cx)
 
+dd$BLOCK_X <- cut(dd$X, c(-121, -116, -112,-109))
+dd$BLOCK_Y <- cut(dd$Y, c(48, 51, 54, 57, 61))
+dd$BLOCK_T <- cut(dd$YEAR, c(1992, 2001, 2009, 2013, 2018))
+dd$BLOCK_XY <- interaction(droplevels(dd$BLOCK_X), droplevels(dd$BLOCK_Y), sep="::", drop=TRUE)
+dd$BLOCK_XYT <- interaction(dd$BLOCK_XY, dd$BLOCK_T, sep="::", drop=TRUE)
+ftable(dd$BLOCK_T, dd$BLOCK_Y, dd$BLOCK_X)
+#'
+#' Random quantiles: these are also based on SS
+tmp$RND <- sample.int(100, nrow(tmp), replace=TRUE)
+dd$RND <- tmp$RND[match(dd$SS, tmp$SS)]
+#'
+#' # Model subsets
+#'
 library(mefa4)
 library(opticut)
 source("~/repos/abmianalytics/birds/00-functions.R")
-
-## south
-
+NMIN <- 20
+B <- 240
+#'
+#' ## South
+#'
 source("~/repos/abmianalytics/birds/models-soil.R")
 setdiff(get_terms(mods_soil, "list"), colnames(dd))
+rm(DAT, YY, OFF, OFFmean, SSH, BB, mods)
 
-DAT <- dd[dd$useSouth,]
-YY <- yy[rownames(DAT),colSums(yy>0) >= 20]
-SPP <- intersect(colnames(off), colnames(YY))
-OFF <- off[rownames(DAT), SPP]
-BB <- data.matrix(which(!duplicated(DAT$SS)))
+cn2 <- c(cn, get_terms(mods_soil, "list"), "soilw")
+DAT <- droplevels(dd[dd$useSouth & dd$RND > 10, cn2])
+YY <- yy[rownames(DAT),]
+YY <- YY[,colSums(YY>0) >= NMIN]
+#YY <- YY[,colSums(groupSums(YY, 1, DAT$SS) > 0) >= NMIN]
+OFF <- off[rownames(DAT), intersect(colnames(off), colnames(YY))]
+OFFmean <- off_mean[rownames(DAT)]
 mods <- mods_soil
 #mods$SSH <- NULL
 SSH <- SSH_soil[rownames(DAT),]
 
+BB <- pbapply::pbsapply(1:B, bfun, DAT$SS, DAT$BLOCK_XYT)
+nrow(DAT)
+max(BB)
+(lu <- length(unique(as.numeric(BB))))
+stopifnot(all(BB <= nrow(DAT)))
+stopifnot(lu <= nrow(DAT))
+nrow(BB)
+
 z <- run_path1(1, "AMRO", mods, CAICalpha=1, wcol="soilw", ssh_class="soilc", ssh_fit="Space")
-#j=1;i="AMRO";CAICalpha=1;wcol="soilw";ssh_class="vegc";ssh_fit="ARU"
+z$timer
+cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(YY)*B*z$timer[3])/(60*60)), "hrs\n")
 
-
-## north
-
+save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
+    file="d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-south-2018-12-07.RData")
+#'
+#' ## North
+#'
 source("~/repos/abmianalytics/birds/models-veg.R")
 setdiff(get_terms(mods_veg, "list"), colnames(dd))
+rm(DAT, YY, OFF, OFFmean, SSH, BB, mods)
 
-DAT <- dd[dd$useNorth,]
-YY <- yy[rownames(DAT),colSums(yy>0) >= 20]
-SPP <- intersect(colnames(off), colnames(YY))
-OFF <- off[rownames(DAT), SPP]
-BB <- data.matrix(which(!duplicated(DAT$SS)))
+cn2 <- c(cn, get_terms(mods_veg, "list"), "vegw")
+DAT <- dd[dd$useNorth & dd$RND > 10, cn2]
+YY <- yy[rownames(DAT),]
+YY <- YY[,colSums(YY>0) >= NMIN]
+#YY <- YY[,colSums(groupSums(YY, 1, DAT$SS) > 0) >= NMIN]
+OFF <- off[rownames(DAT), intersect(colnames(off), colnames(YY))]
+OFFmean <- off_mean[rownames(DAT)]
 mods <- mods_veg
 #mods$SSH <- NULL
 SSH <- SSH_veg[rownames(DAT),]
 
+BB <- pbapply::pbsapply(1:B, bfun, DAT$SS, DAT$BLOCK_XYT)
+nrow(DAT)
+max(BB)
+(lu <- length(unique(as.numeric(BB))))
+stopifnot(all(BB <= nrow(DAT)))
+stopifnot(lu <= nrow(DAT))
+nrow(BB)
+
 z <- run_path1(1, "AMRO", mods, CAICalpha=1, wcol="vegw", ssh_class="vegc", ssh_fit="Space")
-#j=1;i="AMRO";CAICalpha=1;wcol="soilw";ssh_class="vegc";ssh_fit="ARU"
+z$timer
+cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(YY)*B*z$timer[3])/(60*60)), "hrs\n")
+
+save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
+    file="d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-north-2018-12-07.RData")
+#'
+#' ## Validation subsets
+#'
+source("~/repos/abmianalytics/birds/models-veg.R")
+setdiff(get_terms(mods_veg, "list"), colnames(dd))
+rm(DAT, YY, OFF, OFFmean, SSH, BB, mods)
+
+## find center point not that is in grassland
+zz <- droplevels(dd[dd$CMETHOD=="RF" & substr(as.character(dd$SS),1,2) != "OG",])
+tmp <- strsplit(as.character(zz$SS), "_")
+zz$ABMIsite <- sapply(tmp, "[[", 1)
+zz$ABMIbirdpt <- sapply(tmp, "[[", 2)
+n <- table(zz$ABMIsite)
+n <- n[n==9]
+zz$All9 <- zz$ABMIsite %in% names(n)
+nn <- sum_by(zz$NRNAME == "Grassland", zz$ABMIsite)
+zz$NotGr <- zz$ABMIsite %in% rownames(nn)[nn[,"x"] == 0]
+
+table(ngr=zz$NotGr, a=zz$All9)/9
+
+nam <- unique(zz[zz$NotGr & zz$All9, "ABMIsite"])
+set.seed(1)
+nam500 <- sample(nam, 500)
+
+dd$ABMIsite <- zz$ABMIsite[match(rownames(dd), rownames(zz))]
+dd$ABMIsite[is.na(dd$ABMIsite)] <- ""
+dd$validation <- dd$ABMIsite %in% nam500
+dd$validation[dd$PCODE == "BU_BG"] <- TRUE
+table(validation=dd$validation,north=dd$useNorth)
+
+with(dd[!dd$validation,], plot(X, Y, pch=19, cex=0.2, col=ifelse(Y >= 50 & useNorth, "black", "grey")))
+with(dd[dd$validation,], points(X, Y, pch=19, cex=0.4, col=ifelse(PCODE == "BU_BG", 4, 2)))
+
+cn2 <- c(cn, get_terms(mods_veg, "list"), "vegw", "ABMIsite")
+DAT <- dd[dd$Y >= 50 & dd$useNorth & !dd$validation, cn2]
+
+YY <- yy[rownames(DAT),]
+YY <- YY[,colSums(YY>0) >= NMIN & colnames(YY) %in% colnames(off)]
+OFF <- off[rownames(DAT), colnames(YY)]
+mods <- mods_veg
+#mods$SSH <- NULL
+SSH <- SSH_veg[rownames(DAT),]
+
+BB <- pbapply::pbsapply(1:B, bfun, DAT$SS, DAT$BLOCK_XYT)
+nrow(DAT)
+max(BB)
+(lu <- length(unique(as.numeric(BB))))
+stopifnot(all(BB <= nrow(DAT)))
+stopifnot(lu <= nrow(DAT))
+nrow(BB)
+
+z <- run_path1(1, "AMRO", mods, CAICalpha=1, wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+z$timer
+cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(YY)*B*z$timer[3])/(60*60)), "hrs\n")
+
+DATv <- dd[dd$validation, cn2]
+YYv <- yy[rownames(DATv),colnames(YY)]
+OFFv <- off[rownames(DATv), colnames(YY)]
+SSHv <- SSH_veg[rownames(DATv),]
 
 
+save(DAT, YY, OFF, SSH, BB, mods, DATv, YYv, OFFv, SSHv,
+    file="d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-validation-2018-12-07.RData")
+
+#' The End

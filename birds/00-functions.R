@@ -268,4 +268,29 @@ run_path1 <- function(j, i, mods, CAICalpha=1, wcol=NULL,
         timer=proc.time()-t0)
     out
 }
-
+#' bootstrap function
+bfun <- function(i, SS, BLOCK=NULL) {
+    set.seed(i)
+    if (is.null(BLOCK))
+        BLOCK <- rep(1L, length(SS))
+    if (length(SS) != length(BLOCK))
+        stop("lengths must be equal")
+    BLOCK <- droplevels(as.factor(BLOCK))
+    SS <- droplevels(as.factor(SS))
+    levs <- levels(BLOCK)
+    id <- seq_along(SS)
+    out <- list()
+    o <- sample(id)
+    id1 <- id[o]
+    ssyr1 <- SS[o]
+    block1 <- BLOCK[o]
+    for (j in levs) {
+        k <- block1 == j
+        ssyr0 <- ssyr1[k]
+        id0 <- id1[k]
+        out0 <- id0[!duplicated(ssyr0)]
+        out[[j]] <- if (i == 1)
+            out0 else sample(out0, length(out0), replace=TRUE)
+    }
+    sort(unname(unlist(out)))
+}
