@@ -472,7 +472,7 @@ z$timer
 cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(YY)*B*z$timer[3])/(60*60)), "hrs\n")
 
 save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
-    file="d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-south-2018-12-07.RData")
+    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-south-2018-12-07.RData")
 #'
 #' ## North
 #'
@@ -504,7 +504,7 @@ z$timer
 cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(YY)*B*z$timer[3])/(60*60)), "hrs\n")
 
 save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
-    file="d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-north-2018-12-07.RData")
+    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-north-2018-12-07.RData")
 #'
 #' ## Validation subsets
 #'
@@ -567,6 +567,6 @@ SSHv <- SSH_veg[rownames(DATv),]
 
 
 save(DAT, YY, OFF, SSH, BB, mods, DATv, YYv, OFFv, SSHv,
-    file="d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-validation-2018-12-07.RData")
+    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-validation-2018-12-07.RData")
 
 #' The End

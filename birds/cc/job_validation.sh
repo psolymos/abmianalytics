@@ -21,4 +21,4 @@ module load r/3.5.1
 export NODESLIST=$(echo $(srun hostname))
 
 # Run R script
-Rscript --vanilla test_makecluster.R
+Rscript --vanilla validation.R

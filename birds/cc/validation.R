@@ -21,7 +21,7 @@ if (interactive()) {
     cat("OK\nNote: this is a test run...")
     nodeslist <- 2
     BBB <- 2
-    setwd("e:/peter/AB_data_v2018/data/analytics/birds")
+    setwd("d:/abmi/AB_data_v2018/data/analysis/birds")
 } else {
     cat("OK\ngetting nodes list...")
     nodeslist <- unlist(strsplit(Sys.getenv("NODESLIST"), split=" "))
@@ -48,26 +48,29 @@ tmpcl <- clusterEvalQ(cl, source("~/repos/abmianalytics/birds/00-functions.R"))
 cat("OK\nexporting and data loading on workers...")
 tmpcl <- clusterExport(cl, "fn")
 if (interactive())
-    tmpcl <- clusterEvalQ(cl, setwd("e:/peter/AB_data_v2018/data/analytics/birds"))
+    tmpcl <- clusterEvalQ(cl, setwd("d:/abmi/AB_data_v2018/data/analysis/birds"))
 tmpcl <- clusterEvalQ(cl, load(file.path("data", fn)))
 
-cat("OK\nsetting checkpoint...")
+cat("OK\nsetting checkpoint:\n")
 SPP <- colnames(YY)
 #if (REVERSE)
 #    SPP <- rev(SPP)
 DONE <- substr(list.files(paste0("out/", PROJ)), 1, 4)
 SPP <- setdiff(SPP, DONE)
+cat("\t- done:", length(DONE), "\n\t- to do:", length(SPP), "\n")
 if (interactive())
     SPP <- SPP[1:2]
 
-cat("OK\nstart running models:")
+cat("start running models:")
 for (SPP1 in SPP) {
     cat("\t", SPP1, date(), "...")
     if (interactive())
         flush.console()
     t0 <- proc.time()
-    res <- parLapply(cl, 1:BBB, wg_fun, i=SPP1, mods=mods, CAICalpha=CAICalpha)
-    attr(res, "timing") <- t0 - proc.time()
+    z <- run_path1(1, "AMRO", mods, CAICalpha=1, wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+    res <- parLapply(cl, 1:BBB, run_path1, i=SPP1, mods=mods, CAICalpha=CAICalpha,
+        wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+    attr(res, "timing") <- proc.time() - t0
     attr(res, "proj") <- PROJ
     attr(res, "spp") <- SPP1
     attr(res, "CAICalpha") <- CAICalpha
