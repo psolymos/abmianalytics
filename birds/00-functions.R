@@ -173,7 +173,7 @@ fstat <- function(x, level=0.95, ...) {
 #' - `BB`: bootstrap sample ID matrix
 #' - `YY`: species cross tab
 #' - `SSH`: optional matrix with surrounding compositional data
-run_path1 <- function(j, i, mods, CAICalpha=1, wcol=NULL,
+.run_path1 <- function(j, i, mods, CAICalpha=1, wcol=NULL,
     ssh_class=NULL, ssh_fit=NULL)
 {
     t0 <- proc.time()
@@ -268,6 +268,8 @@ run_path1 <- function(j, i, mods, CAICalpha=1, wcol=NULL,
         timer=proc.time()-t0)
     out
 }
+#' catch errors in .run_path1
+run_path1 <- function(...) try(.run_path1(...))
 #' bootstrap function
 bfun <- function(i, SS, BLOCK=NULL) {
     set.seed(i)
