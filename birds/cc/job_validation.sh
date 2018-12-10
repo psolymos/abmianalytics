@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --account=def-psolymos  # replace this with your own account
-#SBATCH --nodes=2               # number of whole nodes
+#SBATCH --nodes=4               # number of whole nodes
 #SBATCH --ntasks-per-node=32    # 32 cores on each node
 #SBATCH --mem=0                 # use all ~3.9G mem per core
-#SBATCH --time=01:00:00         # time (HH:MM:SS)
+#SBATCH --time=06:00:00         # time (HH:MM:SS)
 #SBATCH --job-name=validation
 #SBATCH --output=%x-%j.out
 #SBATCH --mail-user=solymos@ualberta.ca
