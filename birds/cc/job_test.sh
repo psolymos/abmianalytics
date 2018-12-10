@@ -3,7 +3,7 @@
 #SBATCH --ntasks=8
 #SBATCH --mem-per-cpu=2048M
 #SBATCH --time=00:30:00
-#SBATCH --job-name=test_makecluster
+#SBATCH --job-name=test
 #SBATCH --output=%x-%j.out
 #SBATCH --mail-user=solymos@ualberta.ca
 #SBATCH --mail-type=ALL

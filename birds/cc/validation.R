@@ -1,20 +1,25 @@
 ## --- settings ---
 ## file name for data bundle, need to be in /data/ dir
 fn <- "ab-birds-validation-2018-12-07.RData"
+## project name for storing the output
+PROJ <- "validation"
+
 ## CAIC = alpha * AIC + (1 - alpha) * BIC, 1: AIC, 0: BIC
 CAICalpha <- 1
 ## Number of bootstrap runs, 100 or 240
 MaxB <- 100
-## project name for storing the output
-PROJ <- "validation"
-## testing?
+
+## test suite uses limited sets
+TEST <- FALSE
+
+if (TEST)
+    MaxB <- 2
 
 cat("loading packages etc...")
 library(parallel)
 library(mefa4)
 library(opticut)
 source("~/repos/abmianalytics/birds/00-functions.R")
-
 
 ## Create an array from the NODESLIST environnement variable
 if (interactive()) {
@@ -49,27 +54,38 @@ cat("OK\nexporting and data loading on workers...")
 tmpcl <- clusterExport(cl, "fn")
 if (interactive())
     tmpcl <- clusterEvalQ(cl, setwd("d:/abmi/AB_data_v2018/data/analysis/birds"))
-tmpcl <- clusterEvalQ(cl, load(file.path("data", fn)))
+#tmpcl <- clusterEvalQ(cl, load(file.path("data", fn)))
+clusterExport(cl, c("DAT", "YY", "OFF", "BB", "SSH"))
 
 cat("OK\nsetting checkpoint:\n")
 SPP <- colnames(YY)
-#if (REVERSE)
-#    SPP <- rev(SPP)
-DONE <- substr(list.files(paste0("out/", PROJ)), 1, 4)
-SPP <- setdiff(SPP, DONE)
-cat("\t- done:", length(DONE), "\n\t- to do:", length(SPP), "\n")
+DONE <- character(0)
 if (interactive())
     SPP <- SPP[1:2]
 
+if (TEST)
+    SPP <- c("WTSP", "OVEN")
+
+DONE <- substr(list.files(paste0("out/", PROJ)), 1, 4)
+TOGO <- setdiff(SPP, DONE)
+
 cat("start running models:")
-for (SPP1 in SPP) {
-    cat("\t", SPP1, date(), "...")
+while (length(TOGO) > 0) {
+    SPP1 <- TOGO[1L]
+    cat("\n-", length(DONE), "done,", length(TOGO), "more to go, doing", SPP1, "on", date(), "...")
     if (interactive())
         flush.console()
     t0 <- proc.time()
-    z <- run_path1(1, "AMRO", mods, CAICalpha=1, wcol="vegw", ssh_class="vegc", ssh_fit="Space")
-    res <- parLapply(cl, 1:BBB, run_path1, i=SPP1, mods=mods, CAICalpha=CAICalpha,
-        wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+    #z <- run_path1(1, "AMRO", mods, CAICalpha=1, wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+    if (interactive()) {
+        res <- pblapply(cl=cl, X=1:BBB, FUN=run_path1,
+            i=SPP1, mods=mods, CAICalpha=CAICalpha,
+            wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+    } else {
+        res <- parLapply(cl, 1:BBB, run_path1,
+            i=SPP1, mods=mods, CAICalpha=CAICalpha,
+            wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+    }
     attr(res, "timing") <- proc.time() - t0
     attr(res, "proj") <- PROJ
     attr(res, "spp") <- SPP1
@@ -78,10 +94,12 @@ for (SPP1 in SPP) {
     attr(res, "ncl") <- length(cl)
     save(res,
         file=paste0("out/", PROJ, "/", SPP1, ".RData"))
-    cat("OK\n")
+    DONE <- substr(list.files(paste0("out/", PROJ)), 1, 4)
+    TOGO <- setdiff(SPP, DONE)
+    cat("OK")
 }
 
 ## Releaseing resources.
-cat("shutting down.\n\nDONE!\n")
+cat("\nshutting down.\n\nDONE!\n")
 stopCluster(cl)
 q("no")

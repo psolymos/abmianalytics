@@ -1,20 +1,25 @@
 ## --- settings ---
 ## file name for data bundle, need to be in /data/ dir
 fn <- "ab-birds-validation-2018-12-07.RData"
+## project name for storing the output
+PROJ <- "validation"
+
 ## CAIC = alpha * AIC + (1 - alpha) * BIC, 1: AIC, 0: BIC
 CAICalpha <- 1
 ## Number of bootstrap runs, 100 or 240
 MaxB <- 100
-## project name for storing the output
-PROJ <- "validation"
-## testing?
+
+## test suite uses limited sets
+TEST <- TRUE
+
+if (TEST)
+    MaxB <- 2
 
 cat("loading packages etc...")
 library(parallel)
 library(mefa4)
 library(opticut)
 source("~/repos/abmianalytics/birds/00-functions.R")
-
 
 ## Create an array from the NODESLIST environnement variable
 if (interactive()) {
@@ -58,7 +63,8 @@ DONE <- character(0)
 if (interactive())
     SPP <- SPP[1:2]
 
-SPP <- c("WTSP", "OVEN")
+if (TEST)
+    SPP <- c("WTSP", "OVEN")
 
 DONE <- substr(list.files(paste0("out/", PROJ)), 1, 4)
 TOGO <- setdiff(SPP, DONE)
@@ -70,9 +76,16 @@ while (length(TOGO) > 0) {
     if (interactive())
         flush.console()
     t0 <- proc.time()
-    z <- run_path1(1, "AMRO", mods, CAICalpha=1, wcol="vegw", ssh_class="vegc", ssh_fit="Space")
-    res <- parLapply(cl, 1:BBB, run_path1, i=SPP1, mods=mods, CAICalpha=CAICalpha,
-        wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+    #z <- run_path1(1, "AMRO", mods, CAICalpha=1, wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+    if (interactive()) {
+        res <- pblapply(cl=cl, X=1:BBB, FUN=run_path1,
+            i=SPP1, mods=mods, CAICalpha=CAICalpha,
+            wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+    } else {
+        res <- parLapply(cl, 1:BBB, run_path1,
+            i=SPP1, mods=mods, CAICalpha=CAICalpha,
+            wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+    }
     attr(res, "timing") <- proc.time() - t0
     attr(res, "proj") <- PROJ
     attr(res, "spp") <- SPP1
