@@ -12,10 +12,12 @@ MaxB <- 100
 ## test suite uses limited sets
 TEST <- FALSE
 
-if (TEST)
+if (TEST) {
     MaxB <- 2
+    cat("* Note: this is a test run!\n")
+}
 
-cat("loading packages etc...")
+cat("* Loading packages and sourcing functions:")
 library(parallel)
 library(mefa4)
 library(opticut)
@@ -23,15 +25,14 @@ source("~/repos/abmianalytics/birds/00-functions.R")
 
 ## Create an array from the NODESLIST environnement variable
 if (interactive()) {
-    cat("OK\nNote: this is a test run...")
     nodeslist <- 2
     BBB <- 2
     setwd("d:/abmi/AB_data_v2018/data/analysis/birds")
 } else {
-    cat("OK\ngetting nodes list...")
+    cat("OK\n* Getting nodes list ... ")
     nodeslist <- unlist(strsplit(Sys.getenv("NODESLIST"), split=" "))
     BBB <- MaxB
-    cat("OK\nNodes list:\n")
+    cat("OK\n  Nodes list:\n")
     print(nodeslist)
 }
 
@@ -39,40 +40,37 @@ if (interactive()) {
 ## One process per count of node name.
 ## nodeslist = node1 node1 node2 node2, means we are starting 2 processes
 ## on node1, likewise on node2.
-cat("spawning workers...")
+cat("* Spawning workers...")
 cl <- makePSOCKcluster(nodeslist, type = "PSOCK")
 
-cat("OK\nload data on master...")
+cat("OK\n* Loading data on master ... ")
 load(file.path("data", fn))
 
-cat("OK\nload packages on workers...")
+cat("OK\nload packages on workers .. .")
 tmpcl <- clusterEvalQ(cl, library(mefa4))
 tmpcl <- clusterEvalQ(cl, library(opticut))
 tmpcl <- clusterEvalQ(cl, source("~/repos/abmianalytics/birds/00-functions.R"))
 
-cat("OK\nexporting and data loading on workers...")
+cat("OK\n* Exporting and data loading on workers ... ")
 tmpcl <- clusterExport(cl, "fn")
 if (interactive())
     tmpcl <- clusterEvalQ(cl, setwd("d:/abmi/AB_data_v2018/data/analysis/birds"))
 #tmpcl <- clusterEvalQ(cl, load(file.path("data", fn)))
 clusterExport(cl, c("DAT", "YY", "OFF", "BB", "SSH"))
 
-cat("OK\nsetting checkpoint:\n")
+cat("OK\n* Establishing checkpoint ... ")
 SPP <- colnames(YY)
 DONE <- character(0)
-if (interactive())
+if (interactive() | TEST)
     SPP <- SPP[1:2]
-
-if (TEST)
-    SPP <- c("WTSP", "OVEN")
 
 DONE <- substr(list.files(paste0("out/", PROJ)), 1, 4)
 TOGO <- setdiff(SPP, DONE)
 
-cat("start running models:")
+cat("OK\n* Start running models:")
 while (length(TOGO) > 0) {
     SPP1 <- TOGO[1L]
-    cat("\n-", length(DONE), "done,", length(TOGO), "more to go, doing", SPP1, "on", date(), "...")
+    cat("\n  -", length(DONE), "done,", length(TOGO), "more to go, doing", SPP1, "on", date(), "... ")
     if (interactive())
         flush.console()
     t0 <- proc.time()
@@ -100,6 +98,7 @@ while (length(TOGO) > 0) {
 }
 
 ## Releaseing resources.
-cat("\nshutting down.\n\nDONE!\n")
+cat("\n* Shutting down ... ")
 stopCluster(cl)
+cat("OK\nDONE!\n")
 q("no")
