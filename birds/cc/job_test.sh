@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --account=def-psolymos
 #SBATCH --ntasks=8
-#SBATCH --mem=2048M
+#SBATCH --mem-per-cpu=2048M
 #SBATCH --time=00:30:00
 #SBATCH --job-name=test_makecluster
 #SBATCH --output=%x-%j.out
