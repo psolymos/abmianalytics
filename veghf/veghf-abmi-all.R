@@ -748,6 +748,60 @@ load(file.path(ROOT, VER, "data", "inter", "veghf", "grid",
     "veg-hf_grid_v6hf2016v3noDistVeg-long-format.Rdata"))
 load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
 
+age0class <- levels(d2$VEGHFAGEclass)[endsWith(levels(d2$VEGHFAGEclass), "0")]
+#ss1 <- d2$VEGHFAGEclass %in% age0class
+ss2 <- d2$VEGAGEclass %in% age0class
+#table(cr=ss1, rf=ss2)
+d20 <- d2[ss2,]
+d2 <- d2[!ss2,]
+gc()
+
+d20ssAll <- NULL
+for (i in age0class) {
+    dss0 <- d20[d20$VEGAGEclass == i,]
+    cat("\n*", i)
+    if (nrow(dss0) > 0) {
+        lcc <- substr(i, 1, nchar(i)-1)
+        amat <- AvgAgesNSROld$reference[[lcc]]
+        nsrs <- levels(droplevels(dss0$NSRNAME))
+        d20ssLcc <- NULL
+        for (j in nsrs) {
+            cat("\n\t-", j, "- ")
+            dss <- dss0[dss0$NSRNAME == j,]
+            d20ssNsr <- NULL
+            pp <- amat[j,]
+            if (sum(pp) == 0)
+                pp <- AvgAgesAllOld$reference[[lcc]]
+            for (k in colnames(amat)) {
+                p <- pp[k]
+                if (p > 0) {
+                    cat(substr(k, nchar(k), nchar(k)))
+                    flush.console()
+                    tmp <- dss
+                    tmp$Shape_Area <- tmp$Shape_Area * p
+                    tmp$VEGAGEclass[] <- k
+                    tmp$VEGHFAGEclass[tmp$VEGHFAGEclass == i] <- k
+                    d20ssNsr <- rbind(d20ssNsr, tmp)
+                }
+            }
+            d20ssLcc <- rbind(d20ssLcc, d20ssNsr)
+            cat(" / Diff Nsr =", (sum(d20ssNsr$Shape_Area) - sum(dss$Shape_Area))/10^6)
+        }
+        d20ssAll <- rbind(d20ssAll, d20ssLcc)
+        cat("\nDiff Lcc =", (sum(d20ssLcc$Shape_Area) - sum(dss0$Shape_Area))/10^6, "\n")
+    } else {
+        cat(" none.\n")
+    }
+    cat("\n")
+}
+sum(d20$Shape_Area)/10^6
+sum(d20ssAll$Shape_Area)/10^6
+(sum(d20$Shape_Area)-sum(d20ssAll$Shape_Area))/10^6
+
+d2 <- rbind(d2, d20ssAll)
+any(d2$VEGAGEclass %in% age0class)
+any(d2$VEGHFAGEclass %in% age0class)
+
 d2$soilTr <- as.character(d2$SOILclass)
 ss <- as.character(d2$SOILclass) != as.character(d2$SOILHFclass)
 #table(ss)
@@ -774,6 +828,9 @@ ch2soil <- nonDuplicated(d2, soilTr, TRUE)[,c("SOILclass", "SOILHFclass")]
 colnames(ch2soil) <- c("rf","cr")
 ch2veg <- nonDuplicated(d2, vegTr, TRUE)[,c("VEGAGEclass", "VEGHFAGEclass")]
 colnames(ch2veg) <- c("rf","cr")
+
+any(ch2veg$rf %in% age0class)
+any(ch2veg$cr %in% age0class)
 
 save(trVeg, trSoil, ch2veg, ch2soil,
     file=file.path(ROOT, VER, "data", "analysis", "grid",
