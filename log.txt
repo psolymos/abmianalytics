@@ -1,2 +1,0 @@
-starting worker pid=18362 on localhost:11183 at 20:11:43.174
-starting worker pid=18372 on localhost:11183 at 20:11:43.388
