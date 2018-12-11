@@ -41,7 +41,8 @@ if (interactive()) {
 ## nodeslist = node1 node1 node2 node2, means we are starting 2 processes
 ## on node1, likewise on node2.
 cat("* Spawning workers...")
-cl <- makePSOCKcluster(nodeslist, type = "PSOCK")
+cl <- makePSOCKcluster(nodeslist,
+    outfile="log.txt", setup_timeout=600)
 
 cat("OK\n* Loading data on master ... ")
 load(file.path("data", fn))
