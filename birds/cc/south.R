@@ -1,8 +1,8 @@
 ## --- settings ---
 ## file name for data bundle, need to be in /data/ dir
-fn <- "ab-birds-validation-2018-12-07.RData"
+fn <- "ab-birds-south-2018-12-07.RData"
 ## project name for storing the output
-PROJ <- "validation"
+PROJ <- "south"
 
 ## CAIC = alpha * AIC + (1 - alpha) * BIC, 1: AIC, 0: BIC
 CAICalpha <- 1
@@ -10,7 +10,7 @@ CAICalpha <- 1
 MaxB <- 100
 
 ## test suite uses limited sets
-TEST <- TRUE
+TEST <- FALSE
 
 if (TEST) {
     MaxB <- 2
