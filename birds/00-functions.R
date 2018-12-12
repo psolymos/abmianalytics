@@ -296,3 +296,125 @@ bfun <- function(i, SS, BLOCK=NULL) {
     }
     sort(unname(unlist(out)))
 }
+#'
+simple_roc <- function(labels, scores){
+    Labels <- labels[order(scores, decreasing=TRUE)]
+    data.frame(
+        TPR=cumsum(Labels)/sum(Labels),
+        FPR=cumsum(!Labels)/sum(!Labels),
+        Labels=Labels)
+}
+simple_auc <- function(ROC) {
+    ROC$inv_spec <- 1-ROC$FPR
+    dx <- diff(ROC$inv_spec)
+    sum(dx * ROC$TPR[-1]) / sum(dx)
+}
+#' Making sense of model outputs
+load_species <- function(path) {
+    if (!file.exists(path)) {
+        cat("species results file does not exist\n")
+        return(NULL)
+    }
+    e <- new.env()
+    load(path, envir=e)
+    e$res
+}
+get_model_matrix <- function(DAT, mods) {
+    X <- model.matrix(get_terms(mods, "formula"), DAT)
+    colnames(X) <- fix_names(colnames(X))
+    X
+}
+get_coef <- function(res, X, stage=NULL, na.out=TRUE) {
+    OK <- !sapply(res, inherits, "try-error")
+    if (any(!OK))
+        warning(paste("try-error found:", sum(!OK)))
+    ii <- sapply(res[OK], "[[", "iteration")
+    est <- X[1:length(ii),,drop=FALSE]
+    rownames(est) <- ii
+    est[] <- 0
+    modnams <- names(res[[ii[1]]]$coef)
+    if (is.null(stage))
+        stage <- length(modnams)
+    if (is.character(stage)) {
+        stage <- which(modnams == stage)
+        if (length(stage) < 1)
+            stop("stage not found")
+    }
+    if (stage > 0) {
+        for (i in 1:length(ii)) {
+            tmp <- res[[ii[i]]]$coef[[stage]]
+            names(tmp) <- fix_names(names(tmp))
+            sdiff <- setdiff(names(tmp), colnames(est))
+            if (length(sdiff) > 0)
+                stop(paste(sdiff, collapse=" "))
+            est[i,match(names(tmp), colnames(est))] <- tmp
+        }
+    } else {
+        for (i in 1:length(ii)) {
+            est[i,1] <- res[[ii[i]]]$null
+        }
+    }
+    if (any(!OK) && na.out) {
+        nas <- matrix(NA, sum(!OK), ncol(est))
+        rownames(nas) <- which(!OK)
+        est <- rbind(est, nas)
+    }
+    est
+}
+get_caic <- function(res, stage=NULL, na.out=TRUE) {
+    OK <- !sapply(res, inherits, "try-error")
+    if (is.null(stage))
+        stage <- length(res[[which(OK)[1]]]$coef)
+    caic <- numeric(length(OK))
+    caic[!OK] <- NA
+    for (run in which(OK)) {
+        if (stage == 0) {
+            cc <- attr(res[[run]]$caic[[1]], "StartCAIC")
+        } else {
+            cc <- res[[run]]$caic[[stage]]
+            cc <- cc[which.min(cc)]
+        }
+        caic[run] <- cc
+    }
+    if (!na.out)
+        caic <- caic[OK]
+    caic
+}
+get_summary <- function(est, show0=FALSE, ...) {
+    if (!show0)
+        est <- est[,colSums(abs(est), na.rm=TRUE) > 0]
+    fr <- colMeans(abs(est) > 0, na.rm=TRUE)
+    cf <- colMeans(est, na.rm=TRUE)
+    se <- apply(est, 2, sd, na.rm=TRUE)
+    z <- cf/se
+    p <- 2 * pnorm(-abs(z))
+    cmat <- cbind(cf, se, fr, z, p)
+    colnames(cmat) <- c("Estimate", "Std. Error", "Freq.", "z value", "Pr(>|z|)")
+    cmat
+}
+get_vcov <- function(est, show0=FALSE) {
+    if (!show0)
+        est <- est[,colSums(abs(est), na.rm=TRUE) > 0]
+    cov(est)
+}
+get_confint <- function(est, level=0.95, type=c("tboot","quantile"), show0=FALSE) {
+    type <- match.arg(type)
+    a <- (1 - level)/2
+    a <- c(a, 1 - a)
+    s <- get_summary(est, show0=show0)
+    parm <- rownames(s)
+    pct <- paste(format(100 * a, trim = TRUE, scientific = FALSE, digits = 3), "%", sep="")
+    ci <- array(NA, dim = c(length(parm), 2), dimnames = list(parm, pct))
+    if (type == "tboot") {
+        fac <- qnorm(a)
+        ci[] <- s[,1] + s[,2] %o% fac
+    } else {
+        if (!show0)
+            est <- est[,colSums(abs(est)) > 0]
+        cii <- t(apply(est, 2, quantile, probs=a))
+        rownames(cii) <- parm
+        ci[] <- cii[parm,,drop=FALSE]
+    }
+    return(ci)
+}
+
