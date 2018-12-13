@@ -222,10 +222,11 @@ function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, inte
 }
 
 par(mfrow=c(2,3), mar=c(2,2,2,2))
-hacked_plotRGB(RRall, stretch="hist", main="All")
+#hacked_plotRGB(RRall, stretch="hist", main="All")
 hacked_plotRGB(RRbirds, stretch="hist", main="Birds")
 hacked_plotRGB(RRlichens, stretch="hist", main="Lichens")
 hacked_plotRGB(RRmites, stretch="hist", main="Mites")
+plot.new()
 hacked_plotRGB(RRmosses, stretch="hist", main="Bryophytes")
 hacked_plotRGB(RRvplants, stretch="hist", main="Vascular Plants")
 
