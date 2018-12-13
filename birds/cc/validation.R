@@ -71,7 +71,7 @@ TOGO <- setdiff(SPP, DONE)
 cat("OK\n* Start running models:")
 set.seed(as.integer(Sys.time()))
 while (length(TOGO) > 0) {
-    SPP1 <- sample(TOGO[1L], 1)
+    SPP1 <- sample(TOGO, 1)
     cat("\n  -", length(DONE), "done,", length(TOGO), "more to go, doing", SPP1, "on", date(), "... ")
     if (interactive())
         flush.console()

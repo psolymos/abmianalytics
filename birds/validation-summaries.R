@@ -109,8 +109,13 @@ validate <- function(res, Xv, stage=NULL, offset=TRUE) {
 
 spp <- "WTSP"
 res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
-V <- c(Null=validate(res, Xv, 0), lapply(names(mods)[1:9], function(z) validate(res, Xv, z)))
-V
+V1 <- V <- try(c(list(validate(res, Xv, 0)),
+    lapply(names(mods)[1:9], function(z) validate(res, Xv, z, TRUE))))
+V2 <- V <- try(c(list(validate(res, Xv, 0)),
+    lapply(names(mods)[1:9], function(z) validate(res, Xv, z, FALSE))))
+names(V1) <- names(V2) <- c("Null", names(mods)[1:9])
+plotOne("WTSP", All=list(WTSP=V1))
+plotOne("WTSP", All=list(WTSP=V2))
 
 SPP <- colnames(YYv[DATv$ABMIsite != "",colSums(YYv>0)>20])
 
@@ -165,4 +170,41 @@ pdf("d:/abmi/AB_data_v2018/data/analysis/birds/validation-quick-results-2018-12-
 for (spp in colnames(YYv[DATv$ABMIsite != "",colSums(YYv>0)>20]))
     plotOne(spp, q=1, All=All)
 dev.off()
+
+
+
+load("d:/abmi/AB_data_v2018/data/analysis/birds/validation-quick-results-2018-12-12.RData")
+
+coef9 <- function(spp, int=TRUE) {
+    One <- All[[spp]]
+    lam9 <- One$HF$lam9
+    y9 <- One$HF$y9obs
+    if (int)
+        coef(lm(lam9 ~ y9)) else coef(lm(lam9 ~ y9-1))
+}
+
+cf9 <- t(sapply(names(All), coef9))
+cf9 <- cf9[cf9[,2] < 2,]
+cf9x <- sapply(rownames(cf9), coef9, int=FALSE)
+
+hist(cf9[,2])
+hist(cf9x)
+
+library(lhreg)
+data("lhreg_data")
+
+Mass <- lhreg_data$mass[match(rownames(cf9), lhreg_data$spp)]
+EDR <- exp(lhreg_data$logtau[match(rownames(cf9), lhreg_data$spp)])
+
+plot(cf9x ~ log(Mass))
+abline(lm(cf9x ~ log(Mass)))
+
+plot(cf9[,2] ~ log(Mass))
+abline(lm(cf9[,2] ~ log(Mass)))
+
+
+cor(cf9x, Mass)
+cor(cf9[,2], Mass)
+cor(cf9x, EDR)
+cor(cf9[,2], EDR)
 
