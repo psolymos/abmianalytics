@@ -56,7 +56,7 @@ tmpcl <- clusterExport(cl, "fn")
 if (interactive())
     tmpcl <- clusterEvalQ(cl, setwd("d:/abmi/AB_data_v2018/data/analysis/birds"))
 #tmpcl <- clusterEvalQ(cl, load(file.path("data", fn)))
-clusterExport(cl, c("DAT", "YY", "OFF", "BB", "SSH"))
+clusterExport(cl, c("DAT", "YY", "OFF", "BB", "SSH", "OFFmean"))
 
 cat("OK\n* Establishing checkpoint ... ")
 SPP <- colnames(YY)

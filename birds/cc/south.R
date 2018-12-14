@@ -56,7 +56,7 @@ tmpcl <- clusterExport(cl, "fn")
 if (interactive())
     tmpcl <- clusterEvalQ(cl, setwd("d:/abmi/AB_data_v2018/data/analysis/birds"))
 #tmpcl <- clusterEvalQ(cl, load(file.path("data", fn)))
-clusterExport(cl, c("DAT", "YY", "OFF", "BB", "SSH"))
+clusterExport(cl, c("DAT", "YY", "OFF", "BB", "SSH", "OFFmean"))
 
 cat("OK\n* Establishing checkpoint ... ")
 SPP <- colnames(YY)
@@ -79,11 +79,11 @@ while (length(TOGO) > 0) {
     if (interactive()) {
         res <- pblapply(cl=cl, X=1:BBB, FUN=run_path1,
             i=SPP1, mods=mods, CAICalpha=CAICalpha,
-            wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+            wcol="soilw", ssh_class="soilc", ssh_fit="Space")
     } else {
         res <- parLapply(cl, 1:BBB, run_path1,
             i=SPP1, mods=mods, CAICalpha=CAICalpha,
-            wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+            wcol="soilw", ssh_class="soilc", ssh_fit="Space")
     }
     attr(res, "timing") <- proc.time() - t0
     attr(res, "proj") <- PROJ
