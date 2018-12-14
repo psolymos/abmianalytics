@@ -220,7 +220,7 @@ fstat <- function(x, level=0.95, ...) {
             glist <- vector("list", nnmods[l1])
             for (l2 in 1:nnmods[l1]) {
                 mlist[[l2]] <- glm_skeleton(try(update(object=best,
-                    formula=mods[[l1]][[l2]]), silent=silent), CAICalpha=CAICalpha)
+                    formula=mods[[l1]][[l2]]), silent=TRUE), CAICalpha=CAICalpha)
             }
             mcaic <- sapply(mlist, "[[", "caic")
             attr(mcaic, "StartCAIC") <- best$caic
