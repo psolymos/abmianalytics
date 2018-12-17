@@ -105,34 +105,6 @@ validate <- function(res, Xv, stage=NULL, offset=TRUE) {
     list(AUC=AUCo, COR9=CORo,
         y1obs=yo, lam1=evo, y9obs=y9obs, lam9=y9pred)
 }
-
-
-spp <- "WTSP"
-res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
-V1 <- V <- try(c(list(validate(res, Xv, 0)),
-    lapply(names(mods)[1:9], function(z) validate(res, Xv, z, TRUE))))
-V2 <- V <- try(c(list(validate(res, Xv, 0)),
-    lapply(names(mods)[1:9], function(z) validate(res, Xv, z, FALSE))))
-names(V1) <- names(V2) <- c("Null", names(mods)[1:9])
-plotOne("WTSP", All=list(WTSP=V1))
-plotOne("WTSP", All=list(WTSP=V2))
-
-SPP <- colnames(YYv[DATv$ABMIsite != "",colSums(YYv>0)>20])
-
-All <- list()
-for (spp in SPP) {
-    cat(spp, "\n");flush.console()
-    res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
-    V <- try(c(list(validate(res, Xv, 0)),
-        lapply(names(mods)[1:9], function(z) validate(res, Xv, z))))
-    if (!inherits(V, "try-error")) {
-        names(V) <- c("Null", names(mods)[1:9])
-        All[[spp]] <- V
-    }
-}
-
-
-
 plotOne <- function(spp, q=1, All) {
     One <- All[[spp]]
     lam1 <- One$HF$lam1
@@ -163,9 +135,41 @@ plotOne <- function(spp, q=1, All) {
     invisible(NULL)
 }
 
-save(All, file="d:/abmi/AB_data_v2018/data/analysis/birds/validation-quick-results-2018-12-12.RData")
 
-pdf("d:/abmi/AB_data_v2018/data/analysis/birds/validation-quick-results-2018-12-12.pdf",
+spp <- "WTSP"
+res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
+V1 <- V <- try(c(list(validate(res, Xv, 0)),
+    lapply(names(mods)[1:9], function(z) validate(res, Xv, z, TRUE))))
+V2 <- V <- try(c(list(validate(res, Xv, 0)),
+    lapply(names(mods)[1:9], function(z) validate(res, Xv, z, FALSE))))
+res2 <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
+V3 <- V <- try(c(list(validate(res2, Xv, 0)),
+    lapply(names(mods)[1:9], function(z) validate(res2, Xv, z, TRUE))))
+names(V1) <- names(V2) <- names(V3) <- c("Null", names(mods)[1:9])
+plotOne("WTSP", All=list(WTSP=V1))
+plotOne("WTSP", All=list(WTSP=V2))
+plotOne("WTSP", All=list(WTSP=V3))
+
+SPP <- colnames(YYv[DATv$ABMIsite != "",colSums(YYv>0)>20])
+
+All <- list()
+for (spp in SPP) {
+    cat(spp, "\n");flush.console()
+    res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
+    V <- try(c(list(validate(res, Xv, 0)),
+        lapply(names(mods)[1:9], function(z) validate(res, Xv, z))))
+    if (!inherits(V, "try-error")) {
+        names(V) <- c("Null", names(mods)[1:9])
+        All[[spp]] <- V
+    }
+}
+
+
+
+
+save(All, file="d:/abmi/AB_data_v2018/data/analysis/birds/validation-quick-results-2018-12-14.RData")
+
+pdf("d:/abmi/AB_data_v2018/data/analysis/birds/validation-quick-results-2018-12-14.pdf",
     onefile=TRUE, height=10, width=10)
 for (spp in colnames(YYv[DATv$ABMIsite != "",colSums(YYv>0)>20]))
     plotOne(spp, q=1, All=All)
@@ -207,4 +211,33 @@ cor(cf9x, Mass)
 cor(cf9[,2], Mass)
 cor(cf9x, EDR)
 cor(cf9[,2], EDR)
+
+## compare SM/RF estimates between validation and north
+SPP <- colnames(YY)
+stage <- "Water"
+#spp <- "ALFL"
+res <- matrix(0, length(SPP), 4)
+dimnames(res) <- list(SPP, c("N_SM", "N_RF", "V_SM", "V_RF"))
+for (spp in SPP) {
+    cat(spp, "\n");flush.console()
+    res1 <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
+    est1 <- get_coef(res1, X, stage=stage, na.out=FALSE)
+    res2 <- load_species(file.path(ROOT, "out", "validation", paste0(spp, ".RData")))
+    est2 <- get_coef(res2, X, stage=stage, na.out=FALSE)
+    res[spp, ] <- c(est1[1,c("CMETHODSM","CMETHODRF")], est2[1,c("CMETHODSM","CMETHODRF")])
+}
+res <- res[rownames(cf9),]
+
+plot(res[,c(1,3)], xlim=c(-5,5), ylim=c(-5,5));abline(0,1)
+plot(res[,c(2,4)], xlim=c(-5,5), ylim=c(-5,5));abline(0,1)
+
+plot(cf9[,2] ~ I(res[,1]-res[,3]))
+abline(lm(cf9[,2] ~ I(res[,1]-res[,3])))
+
+plot(cf9[,2] ~ I(res[,4]-res[,2]), xlab="RF est diff: Validation-North",ylab="Validation slope (ABMI 9 pt)")
+abline(lm(cf9[,2] ~ I(res[,4]-res[,2])))
+
+plot(cf9[,2] ~ res[,2])
+abline(lm(cf9[,2] ~ res[,2]))
+
 
