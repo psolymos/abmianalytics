@@ -1,33 +1,55 @@
-library(mefa4)
-library(opticut)
-library(intrval)
-library(parallel)
+#' ---
+#' title: "Rainbow maps"
+#' author: "Peter Solymos, <solymos@ualberta.ca>"
+#' date: "Dec 12, 2018"
+#' output: word_document
+#' ---
+#'
+knitr::opts_chunk$set(eval=FALSE)
+#'
+#'
+#' # Appendix: R code to reproduce results
+#'
+#' Loading required R packages
+library(mefa4) # data manipulation
+library(opticut) # optimal partitioning
+library(intrval) # easy interval calculations
+library(parallel) # speed things up
+#' Settings local path for the cure4insect package to speed things up, then load common data
 library(cure4insect)
 opar <- set_options(path = "w:/reports")
 load_common_data()
-
+#' Load a precompiled data of ABMI species data
 load("~/GoogleWork/collaborations/opticut/R/abmi-data/abmi-data-AB.Rdata")
-
+#' Retrieve the intersect of all the rows in the different taxa tables (sites)
 rn <- Reduce("intersect", lapply(ABMI$detections, rownames))
-
+#' Make a giant site x species matrix
 yy <- do.call(cbind, lapply(ABMI$detections, function(z) z[rn,]))
+#' Treat entries as presence (1) ansence (0)
 yy[yy > 0] <- 1
+#' Drop empty columns
 yy <- yy[,colSums(yy) > 0]
+#' `S` is overall number of species remining in `yy`
 S <- ncol(yy)
-
+#' Get Natural Region names for each site and shroten region names
 xx <- ABMI$sites[rn,]
 xx$g1 <- xx$NRNAME
 levels(xx$g1) <- c("B", "S", "F", "G", "P", "R")
-
+#' Use an 8-core cluster
 cl <- makeCluster(8)
-
+#' Fit opticut model with all the species (all taxa combined):
+#' - natural regions used as strata,
+#' - fit logistic regression to 0/1 data.
 oc1 <- opticut(yy ~ 1, strata=xx$g1, dist="binomial", cl=cl)
+#' Get the optimal partition indicator matrix (species x regions)
 bp1 <- summary(oc1)$bestpart
+
+plot(oc1, cex.axis=0.1)
 
 sh <- t(bp1) %*% bp1
 round(as.dist(100 * sh / S, 1))
 
-plot(hclust(dist(t(bp1), "manhattan"), "ward.D2"))
+plot(hclust(dist(t(bp1), "manhattan"), "ward.D2"), xlab="Natural Regions", sub="")
 
 xx$g2 <- xx$NRNAME
 levels(xx$g2) <- c("B", "FSR", "FSR", "GP", "GP", "FSR")
@@ -49,7 +71,7 @@ SppTab <- SppTab[Spp,]
 rt <- .read_raster_template()
 KT <- cure4insect:::.c4if$KT
 
-rasterize_results_cr <- function (y) 
+rasterize_results_cr <- function (y)
 {
     NC <- rowSums(y$SA.Curr)
     KT$NC <- NC[match(rownames(KT), names(NC))]
@@ -103,8 +125,8 @@ RRmosses <- h("mosses")
 RRvplants <- h("vplants")
 
 
-hacked_plotRGB <- 
-function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, interpolate=FALSE, colNA='white', alpha, bgalpha, addfun=NULL, zlim=NULL, zlimcol=NULL, axes=FALSE, xlab='', ylab='', asp=NULL, add=FALSE, ...) { 
+hacked_plotRGB <-
+function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, interpolate=FALSE, colNA='white', alpha, bgalpha, addfun=NULL, zlim=NULL, zlimcol=NULL, axes=FALSE, xlab='', ylab='', asp=NULL, add=FALSE, ...) {
 
 	if (missing(scale)) {
 		scale <- 255
@@ -115,13 +137,13 @@ function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, inte
 		}
 	}
 	scale <- as.vector(scale)[1]
-	
+
 	r <- sampleRegular(raster(x,r), maxpixels, ext=ext, asRaster=TRUE, useGDAL=TRUE)
 	g <- sampleRegular(raster(x,g), maxpixels, ext=ext, asRaster=TRUE, useGDAL=TRUE)
 	b <- sampleRegular(raster(x,b), maxpixels, ext=ext, asRaster=TRUE, useGDAL=TRUE)
 
 	RGB <- cbind(getValues(r), getValues(g), getValues(b))
-	
+
 	if (!is.null(zlim)) {
 		if (length(zlim) == 2) {
 			zlim <- sort(zlim)
@@ -130,10 +152,10 @@ function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, inte
 				RGB[ RGB>zlim[2] ] <- zlim[2]
 			} else { #if (is.na(zlimcol)) {
 				RGB[RGB<zlim[1] | RGB>zlim[2]] <- NA
-			} 
+			}
 		} else if (NROW(zlim) == 3 & NCOL(zlim) == 2) {
 			for (i in 1:3) {
-				zmin <- min(zlim[i,])		
+				zmin <- min(zlim[i,])
 				zmax <- max(zlim[i,])
 				if (is.null(zlimcol)) {
 					RGB[RGB[,i] < zmin, i] <- zmin
@@ -146,9 +168,9 @@ function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, inte
 			stop('zlim should be a vector of two numbers or a 3x2 matrix (one row for each color)')
 		}
 	}
-	
+
 	RGB <- stats::na.omit(RGB)
-	
+
 	if (!is.null(stretch)) {
 		stretch = tolower(stretch)
 		if (stretch == 'lin') {
@@ -166,7 +188,7 @@ function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, inte
 		}
 	}
 
-	
+
 	naind <- as.vector( attr(RGB, "na.action") )
 	if (!is.null(naind)) {
 		bg <- grDevices::col2rgb(colNA)
@@ -176,13 +198,13 @@ function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, inte
 	} else {
 		z <- grDevices::rgb(RGB[,1], RGB[,2], RGB[,3], alpha=alpha, max=scale)
 	}
-	
+
 	z <- matrix(z, nrow=nrow(r), ncol=ncol(r), byrow=T)
 
 	requireNamespace("grDevices")
 	bb <- as.vector(t(bbox(r)))
 
-	
+
 	if (!add) {
 		#if (!axes) graphics::par(plt=c(0,1,0,1))
 
@@ -195,10 +217,10 @@ function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, inte
 				asp <- 1
 			}
 		}
-		
+
 		xlim=c(bb[1], bb[2])
 		ylim=c(bb[3], bb[4])
-		
+
 		plot(NA, NA, xlim=xlim, ylim=ylim, type = "n", xaxs='i', yaxs='i', xlab=xlab, ylab=ylab, asp=asp, axes=FALSE, ...)
 		if (axes) {
 			xticks <- graphics::axTicks(1, c(xmin(r), xmax(r), 4))
@@ -212,7 +234,7 @@ function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, inte
 		}
 	}
 	graphics::rasterImage(z, bb[1], bb[3], bb[2], bb[4], interpolate=interpolate, ...)
-	
+
 	if (!is.null(addfun)) {
 		if (is.function(addfun)) {
 			addfun()
