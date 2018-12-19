@@ -382,7 +382,7 @@ get_caic <- function(res, stage=NULL, na.out=TRUE) {
 }
 get_summary <- function(est, show0=FALSE, ...) {
     if (!show0)
-        est <- est[,colSums(abs(est), na.rm=TRUE) > 0]
+        est <- est[,colSums(abs(est), na.rm=TRUE) > 0,drop=FALSE]
     fr <- colMeans(abs(est) > 0, na.rm=TRUE)
     cf <- colMeans(est, na.rm=TRUE)
     se <- apply(est, 2, sd, na.rm=TRUE)
