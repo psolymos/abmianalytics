@@ -1,33 +1,184 @@
+#' ---
+#' title: "Summarizing validation results"
+#' author: "Peter Solymos, <solymos@ualberta.ca>"
+#' date: "Dec 19, 2018"
+#' output: pdf_document
+#' ---
+#'
+#' # Preamble
+#'
+#' Load packages and functions, see repo on
+#' [GitHub](https://github.com/psolymos/abmianalytics)
 library(mefa4)
-library(intrval)
 source("~/repos/abmianalytics/birds/00-functions.R")
-
-
-## validation
-ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds"
+#'
+#' `ROOT` refers to the folder where data and results are
+#' - `<ROOT>/data` hosts the data package
+#' - `<ROOT>/out/<PROJ>` hosts the species specific output files
+ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
 PROJ <- "validation"
-
+#' Load data file that has the following objects:
+#' rows of `DAT`, `YY`, `OFF`, and `SSH` match
+#' (same with `DAT`, `YY`, `OFF`, and `SSH` for validation set
+#' including 500 ABMI sites with 9 points and big grids)
+#' - `DAT`: data frame with point count info (SS, PCODE, PKET etc) and predictors
+#' - `YY`: sparse matrix with PKEY x Species data
+#' - `OFF`: offsets in a PKEY x Species matrix
+#' - `SSH`: surrounding suitable habitat composition (PKEY x land cover)
+#' - `BB`: bootstrap PKEY index matrix
+#' - `mods`: list of model terms for branching model selection
+#' - `DATv`: predictors for validation data
+#' - `YYv`: species matrix for validation data
+#' - `OFFv`: offsets for validation data
+#' - `SSHv`: surrounding suitable habitat for validation data
 load(file.path(ROOT, "data", "ab-birds-validation-2018-12-07.RData"))
+#' Make a model matrix that matches the coefficients that we estimated
+#' `X` is for training data, `Xv` is for validation data set
 X <- get_model_matrix(DAT, mods)
-
-if (FALSE) {
-    rn <- rownames(DAT)[DAT$ABMIsite!=""]
-    DATv <- DAT[rn,]
-    YYv <- YY[rn,]
-    OFFv <- OFF[rn,]
-    SSHv <- SSH[rn,]
-}
-
 Xv <- get_model_matrix(DATv, mods)
-
+#'
+#' # Species summaries
+#'
+#' Let us pick a species
 spp <- "WTSP"
-spp <- "OVEN"
-
-names(mods)
-stage <- "Water"
+#spp <- "OVEN"
+#' Load species results
 res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
-est <- get_coef(res, X, stage=stage, na.out=FALSE)
+#' Get the coefficient matrix (bootstrap runs x possible coefficients
+#' based on all the terms in `mods` list): used `X` as a template to match the
+#' estimates with the column names of `X`, and uses `stage` if specified
+est <- get_coef(res, X, stage=NULL, na.out=FALSE)
 stopifnot(all(colnames(X)==colnames(est)))
+#' Here is how you to get a sense of what results look like:
+printCoefmat(get_summary(est))
+#'
+#' # Prediction
+#'
+#' Here is how to get the null model (you can use `X` and `SSH` for training data
+#' and `Xv` and `SSHv` for validation data set).
+#' The output is in a PKEY x bootstrap format, PKEY refers to the row names of the input.
+#' The matrix represent log densities without offsets
+mu0 <- predict_with_SSH(res, Xv, SSHv, stage=0)
+#' Here is how to combine with offsets (use `OFF` or `OFFv` depending on previous steps).
+#' This is now a PKEY x bootstrap matrix with expected abundances matching the counts
+lam0 <- exp(mu0 + OFFv[,spp])
+#' We can visualize the results in a boxplot using the observed counts
+#' (again, use `YY` or `YYv`)
+yv <- as.numeric(YYv[,spp])
+#' We use `rowMeans(lambda)` as the bootstrap smoothed mean,
+#' `apply(lambda, 1, median)` gives the median
+#' and `apply(lambda, 1, quantile, c(0.5, 0.05, 0.95))` gives the median and 90% CI
+#' (`lambda` is any matrix starting with `lam*` below)
+boxplot(rowMeans(lam0) ~ yv)
+#' Let us add covariates now.
+#' Just to clarify, the `stage` argument can be
+#' - `NULL`: use all the model stages, this is the default (but it will include Year effect!)
+#' - `0`: intercept only null model
+#' - any value from `names(mods)`
+names(mods)
+#' Pick for example `"ARU"` stage
+lamARU <- exp(predict_with_SSH(res, Xv, SSHv, stage="ARU") + OFFv[,spp])
+boxplot(rowMeans(lamARU) ~ yv)
+#' Pick for example `"ARU"` stage for all the local effects
+lamARU <- exp(predict_with_SSH(res, Xv, SSHv, stage="ARU") + OFFv[,spp])
+boxplot(rowMeans(lamARU) ~ yv)
+#' Pick `"HF"` stage for all local and surrounding effects
+lamHF <- exp(predict_with_SSH(res, Xv, SSHv, stage="HF") + OFFv[,spp])
+boxplot(rowMeans(lamHF) ~ yv)
+#' Now let's compare ROC/AUC metrics (`simple_roc` is a bare bones function
+#' that is blazing fast compared to pROC)
+ROC0 <- simple_roc(ifelse(yv > 0, 1, 0), rowMeans(lam0))
+ROCARU <- simple_roc(ifelse(yv > 0, 1, 0), rowMeans(lamARU))
+ROCHF <- simple_roc(ifelse(yv > 0, 1, 0), rowMeans(lamHF))
+AUC0 <- simple_auc(ROC0)
+AUCARU <- simple_auc(ROCARU)
+AUCHF <- simple_auc(ROCHF)
+#' Plot the ROC curves
+plot(ROC0[,2:1], type="l", col=2)
+abline(0,1,col=1,lty=2)
+lines(ROCARU[,2:1], col=3)
+lines(ROCHF[,2:1], col=4)
+legend("bottomright", lty=1, col=2:4, bty="n",
+    legend=paste0(c("Null", "ARU", "HF"),
+    " (AUC=", round(c(AUC0, AUCARU, AUCHF), 3), ")"))
+#'
+#' # Scaling up to ABMI grids of 9
+#'
+#' Functions for the magic
+validate <- function(res, Xv, stage=NULL) {
+    muo <- predict_with_SSH(res, Xv, SSHv, stage=stage)
+    pro <- apply(exp(muo), 1, median)
+    offo <- OFFv[,spp]
+    evo <- apply(exp(muo+offo), 1, median)
+    yo <- as.numeric(YYv[,spp])
+    Predm <- groupSums(exp(muo+offo), 1, DATv$ABMIsite)
+    Y <- sum_by(yo, DATv$ABMIsite)
+    stopifnot(all(rownames(Predm)==rownames(Y)))
+    y9obs <- Y[rownames(Y) != "","x"]
+    y9pred <- apply(Predm[rownames(Predm) != "",], 1, median)
+    AUCo <- simple_auc(simple_roc(ifelse(yo>0, 1, 0), evo))
+    CORo <- cor(y9obs, y9pred, method="spearman")
+    list(AUC=AUCo, COR9=CORo,
+        y1obs=yo, lam1=evo, y9obs=y9obs, lam9=y9pred)
+}
+plotOne <- function(spp, q=1, All) {
+    One <- All[[spp]]
+    lam1 <- One$HF$lam1
+    y1 <- One$HF$y1obs
+    lam9 <- One$HF$lam9
+    y9 <- One$HF$y9obs
+
+    op <- par(mfrow=c(2,2))
+    plot(0:9, sapply(One, "[[", "COR9"), type="l", col="#0000FF80", ylim=c(-1,1),
+        xlab="Model stages", ylab="Correlation", main=spp, lwd=2)
+    abline(h=0, lty=2)
+    text(0:9, rep(-0.1, 10), round(sapply(One, "[[", "COR9"), 3), cex=0.6)
+    plot(0:9, sapply(One, "[[", "AUC"), type="l", col="#0000FF80", ylim=c(0,1),
+        xlab="Model stages", ylab="AUC", lwd=2)
+    abline(h=0.5, lty=2)
+    text(0:9, rep(0.45, 10), round(sapply(One, "[[", "AUC"), 3), cex=0.6)
+
+    boxplot(lam1 ~ y1, xlab="Observed count at point", ylab="Expected value",
+        ylim=c(0,quantile(lam1, q)), col="#0000FF80")
+
+    MAX <- max(quantile(lam9, q), quantile(y9, q))
+    plot(jitter(y9), lam9, xlim=c(0,MAX), ylim=c(0,MAX), xlab="Observed count at ABMI site",
+        ylab="Expected value", col="#0000FF80", pch=19)
+    abline(0,1, lty=2)
+    abline(lm(lam9 ~ y9), col=2)
+    abline(lm(lam9 ~ y9-1), col=2, lty=2)
+    par(op)
+    invisible(NULL)
+}
+#' This code goes over all the model stages
+spp <- "WTSP"
+res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
+V <- try(c(list(validate(res, Xv, 0)),
+    lapply(names(mods)[1:9], function(z) validate(res, Xv, z))))
+names(V) <- c("Null", names(mods)[1:9])
+plotOne("WTSP", All=list(WTSP=V))
+#' Now we do it for all species
+SPP <- colnames(YYv[DATv$ABMIsite != "",colSums(YYv>0)>20])
+All <- list()
+for (spp in SPP) {
+    cat(spp, "\n");flush.console()
+    res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
+    V <- try(c(list(validate(res, Xv, 0)),
+        lapply(names(mods)[1:9], function(z) validate(res, Xv, z))))
+    if (!inherits(V, "try-error")) {
+        names(V) <- c("Null", names(mods)[1:9])
+        All[[spp]] <- V
+    }
+}
+save(All, file="validation-quick-results-2018-12-14.RData")
+
+pdf("validation-quick-results-2018-12-14.pdf", onefile=TRUE, height=10, width=10)
+for (spp in colnames(YYv[DATv$ABMIsite != "",colSums(YYv>0)>20]))
+    plotOne(spp, q=1, All=All)
+dev.off()
+#'
+#' Below this line is just parking lot for code pieces
+#'
 
 mui <- X %*% t(est)
 pri <- apply(exp(mui), 1, median)
@@ -73,23 +224,7 @@ cor(y9obs, y9pred, method="spearman")
 
 
 validate <- function(res, Xv, stage=NULL, offset=TRUE) {
-    est <- get_coef(res, Xv, stage=stage, na.out=FALSE)
-    c1 <- colSums(abs(est)) > 0
-    if (any(c1[c("SSH_KM", "SSH05_KM")])) {
-        essh <- est[,c("SSH_KM", "SSH05_KM")]
-        c1[c("SSH_KM", "SSH05_KM")] <- FALSE # drop SSH
-        muo <- Xv[,c1,drop=FALSE] %*% t(est[,c1,drop=FALSE])
-        mussh <- muo
-        mussh[] <- 0 # put HHS effects here
-        for (i in seq_len(nrow(est))) {
-            ssh <- res[[i]]$ssh
-            v <- rowSums(SSHv[,ssh$labels])
-            mussh[,i] <- essh[1,"SSH_KM"]*v + essh[1,"SSH05_KM"]*sqrt(v)
-        }
-        muo <- muo + mussh # add them up
-    } else {
-        muo <- Xv[,c1,drop=FALSE] %*% t(est[,c1,drop=FALSE])
-    }
+    muo <- predict_with_SSH(res, Xv, SSHv, stage=stage)
     pro <- apply(exp(muo), 1, median)
     offo <- if (offset)
         OFFv[,spp] else 0

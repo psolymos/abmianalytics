@@ -417,4 +417,29 @@ get_confint <- function(est, level=0.95, type=c("tboot","quantile"), show0=FALSE
     }
     return(ci)
 }
+#' This predicts with or without surrounding effects,
+#' output is `mu` matrix (PKEY x B) that is on log scale
+#' and has no offsets added to it
+predict_with_SSH <- function(res, X, SSH=NULL, stage=NULL) {
+    est <- get_coef(res, X, stage=stage, na.out=FALSE)
+    c1 <- colSums(abs(est)) > 0
+    if (any(c1[c("SSH_KM", "SSH05_KM")])) {
+        if (is.null(SSH))
+            stop("provide SSH")
+        essh <- est[,c("SSH_KM", "SSH05_KM")]
+        c1[c("SSH_KM", "SSH05_KM")] <- FALSE # drop SSH
+        mu <- X[,c1,drop=FALSE] %*% t(est[,c1,drop=FALSE])
+        mussh <- mu
+        mussh[] <- 0 # put SSH effects here
+        for (i in seq_len(nrow(est))) {
+            ssh <- res[[i]]$ssh
+            v <- rowSums(SSH[,ssh$labels])
+            mussh[,i] <- essh[1,"SSH_KM"]*v + essh[1,"SSH05_KM"]*sqrt(v)
+        }
+        mu <- mu + mussh # add them up
+    } else {
+        mu <- X[,c1,drop=FALSE] %*% t(est[,c1,drop=FALSE])
+    }
+    mu
+}
 
