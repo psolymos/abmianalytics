@@ -7,7 +7,7 @@ PROJ <- "south"
 ## CAIC = alpha * AIC + (1 - alpha) * BIC, 1: AIC, 0: BIC
 CAICalpha <- 1
 ## Number of bootstrap runs, 100 or 240
-MaxB <- 100
+MaxB <- 8*32 # 256
 
 ## test suite uses limited sets
 TEST <- FALSE
