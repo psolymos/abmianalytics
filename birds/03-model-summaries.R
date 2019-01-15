@@ -6,12 +6,14 @@
 #' ---
 #'
 library(mefa4)
+library(intrval)
 source("~/repos/abmianalytics/birds/00-functions.R")
 
 ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
+#ROOT <- "~/GoogleWork/tmp"
 
 ee <- new.env()
-load("d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-all-2018-11-29.RData", envir=ee)
+load(file.path(ROOT, "ab-birds-all-2018-11-29.RData"), envir=ee)
 TAX <- ee$tax
 rm(ee)
 
@@ -28,7 +30,7 @@ colnames(Xage) <- colnames(Xn)[match(colnames(Xage), make.names(colnames(Xn)))]
 
 spp <- "BTNW"
 resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
-#ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
+ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
 
 estn <- get_coef(resn, Xn, stage="ARU", na.out=FALSE)
 printCoefmat(get_summary(estn))
@@ -48,7 +50,7 @@ explore_north <- function(resn, plot=TRUE, ...) {
 
     if (plot) {
         layout(matrix(c(1,1,1,1,1,1,2,2,3), 3, 3, byrow = TRUE))
-        op <- par(las=2, mar=c(10,4,2,2))
+        op <- par(las=2, mar=c(10,4,2,2), cex.axis=0.9)
         on.exit(par(op))
         col <- c(rep(RColorBrewer::brewer.pal(8, "Accent")[c(1,2,3,5,6,7)], each=9),
             RColorBrewer::brewer.pal(12, "Set3"))
@@ -71,13 +73,15 @@ explore_north <- function(resn, plot=TRUE, ...) {
         b <- barplot(lamMOD[1:6,1], ylim=c(0, min(k*max(lamMOD[1:6,1]), max(lamMOD[1:6,]))),
             ylab="Relative abundance",
             col=RColorBrewer::brewer.pal(8, "Accent")[1:6], main="Modifiers, North")
-        segments(x0=b, y0=lamMOD[1:6,2], y1=lamMOD[1:6,3], lwd=2, col=1)
+        segments(x0=b, y0=lamMOD[1:6,2], y1=lamMOD[1:6,3], lwd=2,
+            col=ifelse(1 %[]% lamMOD[1:6,2:3], 1, 2))
         abline(h=1, col=2)
 
         b <- barplot(lamMOD[7:8,1], ylim=c(0, min(k*max(lamMOD[7:8,1]), max(lamMOD[7:8,]))),
             ylab="Relative abundance",
             col=RColorBrewer::brewer.pal(8, "Accent")[7:8], main="ARU, North")
-        segments(x0=b, y0=lamMOD[7:8,2], y1=lamMOD[7:8,3], lwd=2, col=1)
+        segments(x0=b, y0=lamMOD[7:8,2], y1=lamMOD[7:8,3], lwd=2,
+            col=ifelse(1 %[]% lamMOD[7:8,2:3], 1, 2))
         abline(h=1, col=2)
     }
     invisible(list(lam=lam1, mod=lamMOD))
@@ -116,7 +120,8 @@ explore_south <- function(ress, plot=TRUE, ...) {
     if (plot) {
         k <- 2
         NAM <- as.character(TAX[attr(ress, "spp"), "species"])
-        op <- par(mfrow=c(2,2), mar=c(4,4,2,1), cex.axis=0.9)
+        layout(matrix(c(1,2,1,2,3,4), 3, 2, byrow = TRUE))
+        op <- par(mar=c(10,4,2,1), las=2, cex.axis=0.9)
         on.exit(par(op))
         b <- barplot(lamLCC0[,1], ylim=c(0, min(k*max(lamLCC0[,1], lamLCC1[,1]), max(lamLCC0, lamLCC1))),
             ylab="Relative abundance",
@@ -130,17 +135,20 @@ explore_south <- function(ress, plot=TRUE, ...) {
         segments(x0=b, y0=lamLCC1[,2], y1=lamLCC1[,3], lwd=2, col=1)
         #points(b, lamLCC1[,4])
 
+        par(mar=c(4,4,2,1), las=1)
         b <- barplot(lamMOD[1:3,1], ylim=c(0, min(k*max(lamMOD[1:3,1]), max(lamMOD[1:3,]))),
             ylab="Relative abundance",
             col=RColorBrewer::brewer.pal(5, "Accent")[1:3], main="Modifiers, South", ...)
-        segments(x0=b, y0=lamMOD[1:3,2], y1=lamMOD[1:3,3], lwd=2, col=1)
+        segments(x0=b, y0=lamMOD[1:3,2], y1=lamMOD[1:3,3], lwd=2,
+            col=ifelse(1 %[]% lamMOD[1:3,2:3], 1, 2))
         #points(b, lamMOD[1:3,4])
         abline(h=1, col=2)
 
         b <- barplot(lamMOD[4:5,1], ylim=c(0, min(k*max(lamMOD[4:5,1]), max(lamMOD[4:5,]))),
             ylab="Relative abundance",
             col=RColorBrewer::brewer.pal(5, "Accent")[4:5], main="ARU, South", ...)
-        segments(x0=b, y0=lamMOD[4:5,2], y1=lamMOD[4:5,3], lwd=2, col=1)
+        segments(x0=b, y0=lamMOD[4:5,2], y1=lamMOD[4:5,3], lwd=2,
+            col=ifelse(1 %[]% lamMOD[4:5,2:3], 1, 2))
         #points(b, lamMOD[4:5,4])
         abline(h=1, col=2)
     }
