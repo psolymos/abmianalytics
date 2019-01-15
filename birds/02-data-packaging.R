@@ -37,7 +37,7 @@ dd <- dd[dd$YEAR %[]% c(1993, 2017),]
 #' - date and time: constrain the ranges to match QPAD expectations
 dd$JULIAN <- as.POSIXlt(dd$DATE)$yday
 dd$start <- as.POSIXlt(dd$DATI)$hour + as.POSIXlt(dd$DATI)$min / 60
-keep <- is.na(dd$DATI)
+keep <- is.na(dd$DATI) # these will be constant phi
 keep[dd$JULIAN %[]% c(125, 200)] <- TRUE
 keep[dd$start %[]% c(3, 12)] <- TRUE
 dd <- droplevels(dd[keep,])
