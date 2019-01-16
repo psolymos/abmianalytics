@@ -28,16 +28,55 @@ Xage <- as.matrix(read.csv("~/repos/abmianalytics/lookup/Xn-veg-v61.csv"))
 colnames(Xage) <- colnames(Xn)[match(colnames(Xage), make.names(colnames(Xn)))]
 
 
-spp <- "BTNW"
+spp <- "ALFL"
 resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
 ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
 
 estn <- get_coef(resn, Xn, stage="ARU", na.out=FALSE)
 printCoefmat(get_summary(estn))
 
-explore_north <- function(resn, plot=TRUE, ...) {
-    estn <- get_coef(resn, Xn, stage="ARU", na.out=FALSE)
+b <- estn[,"mWell"]
+p <- 1/7
+m <- exp(p*b)
+z <- (m-(1-p))/p
+
+p <- seq(0,1,0.01)
+pm <- 1/7
+mm <- exp(pm*b[1])
+plot(p, exp(b[1]*p), type="l")
+abline(v=pm, lty=2)
+## need to keep m=1 at p=0: exp(0*b)=1
+abline(1,(mm-1)/pm,col=2)
+
+linexp <- function(p, beta, pmax) {
+    pmax(0, 1 + p * (exp(pmax * beta) - 1) / pmax)
+}
+plot(p, exp(b[1]*p), type="l")
+abline(v=pm, lty=2)
+curve(linexp(x, b[1], pm), add=TRUE, col=4)
+
+p <- seq(0,1,0.01)
+pm <- 1/7
+b <- -1
+plot(p, exp(b*p), type="l", ylim=c(0, max(exp(b*p))))
+abline(v=pm, lty=2)
+curve(linexp(x, b, pm), add=TRUE, col=2)
+abline(h=1, lty=2)
+abline(h=linexp(1, b, pm), col=2, lty=2)
+
+gt0 <- function(x) x[x>0]
+hist(gt0(en$DAT$mWell))
+quantile(gt0(en$DAT$mWell), 0.95)
+cq(en$DAT$mWell)
+cq(en$DAT$mEnSft)
+cq(en$DAT$mTrSft)
+cq(en$DAT$mSeism)
+
+explore_north <- function(resn, plot=TRUE, lin=TRUE, ...) {
+    estn <- suppressWarnings(get_coef(resn, Xn, stage="ARU", na.out=FALSE))
     mu <- Xage %*% t(estn[,colnames(Xage)])
+    qfun <- function(x)
+        c(quantile(x, c(0.5, 0.05, 0.95)), "1st"=x[1])
     lam1 <- t(apply(exp(mu), 1, quantile, c(0.5, 0.05, 0.95)))
     lam1 <- lam1[!grepl("9", rownames(lam1)),]
     lamCC <- lam1[grepl("CC", rownames(lam1)),]
@@ -45,7 +84,15 @@ explore_north <- function(resn, plot=TRUE, ...) {
 
     MOD <- c("ROAD", "mWell", "mSoft",
         "mEnSft", "mTrSft", "mSeism", "CMETHODSM", "CMETHODRF")
-    lamMOD <- t(apply(exp(estn[,MOD]), 2, quantile, c(0.5, 0.05, 0.95)))
+    Z <- exp(estn[,MOD])
+    if (lin) {
+        pm <- c("ROAD"=1, "mWell"=0.2, "mSoft"=0.2,
+            "mEnSft"=0.2, "mTrSft"=0.2, "mSeism"=0.05,
+            "CMETHODSM"=1, "CMETHODRF"=1)
+        for (i in MOD)
+            Z[,i] <- linexp(1, estn[,i], pm[i])
+    }
+    lamMOD <- t(apply(Z, 2, qfun))
     rownames(lamMOD) <- c("Road", "Well", "Soft", "EnSoft", "TrSoft", "Seismic", "SM", "RiverFork")
 
     if (plot) {
@@ -98,8 +145,8 @@ dev.off()
 
 #' Explore south
 
-explore_south <- function(ress, plot=TRUE, ...) {
-    ests <- get_coef(ress, Xs, stage="ARU", na.out=FALSE)
+explore_south <- function(ress, plot=TRUE, lin=TRUE, ...) {
+    ests <- suppressWarnings(get_coef(ress, Xs, stage="ARU", na.out=FALSE))
     LCC <- c("soilcClay", "soilcCrop", "soilcRapidDrain",
         "soilcRoughP", "soilcSaline", "soilcTameP", "soilcUrbInd")
     muLCC <- t(cbind(ests[,1], ests[,1]+ests[,LCC]))
@@ -114,7 +161,14 @@ explore_south <- function(ress, plot=TRUE, ...) {
     lamLCC0 <- lamLCC0[o,]
     lamLCC1 <- lamLCC1[o,]
     MOD <- c("ROAD", "mWell", "mSoft", "CMETHODSM", "CMETHODRF")
-    lamMOD <- t(apply(exp(ests[,MOD]), 2, qfun))
+    Z <- exp(estn[,MOD])
+    if (lin) {
+        pm <- c("ROAD"=1, "mWell"=0.2, "mSoft"=0.2,
+            "CMETHODSM"=1, "CMETHODRF"=1)
+        for (i in MOD)
+            Z[,i] <- linexp(1, ests[,i], pm[i])
+    }
+    lamMOD <- t(apply(Z, 2, qfun))
     rownames(lamMOD) <- c("Road", "Well", "Soft", "SM", "RiverFork")
 
     if (plot) {
