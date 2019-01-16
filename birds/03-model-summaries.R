@@ -64,13 +64,13 @@ curve(linexp(x, b, pm), add=TRUE, col=2)
 abline(h=1, lty=2)
 abline(h=linexp(1, b, pm), col=2, lty=2)
 
-gt0 <- function(x) x[x>0]
-hist(gt0(en$DAT$mWell))
-quantile(gt0(en$DAT$mWell), 0.95)
-cq(en$DAT$mWell)
-cq(en$DAT$mEnSft)
-cq(en$DAT$mTrSft)
-cq(en$DAT$mSeism)
+
+get_mid <- function(res) {
+    OK <- !sapply(res, inherits, "try-error")
+    t(sapply(res[OK], "[[", "mid"))
+}
+
+table(get_mid(resn)[,"Contrast"])
 
 explore_north <- function(resn, plot=TRUE, lin=TRUE, ...) {
     estn <- suppressWarnings(get_coef(resn, Xn, stage="ARU", na.out=FALSE))
@@ -85,6 +85,11 @@ explore_north <- function(resn, plot=TRUE, lin=TRUE, ...) {
     MOD <- c("ROAD", "mWell", "mSoft",
         "mEnSft", "mTrSft", "mSeism", "CMETHODSM", "CMETHODRF")
     Z <- exp(estn[,MOD])
+    isSoft <- estn[,"mSoft"] != 0 & estn[,"mEnSft"] == 0
+    #isSoft2 <- get_mid(resn)[,"Contrast"] == 3
+    estn[isSoft,"mEnSft"] <- estn[isSoft,"mSoft"]
+    estn[isSoft,"mTrSft"] <- estn[isSoft,"mSoft"]
+    estn[isSoft,"mSeism"] <- estn[isSoft,"mSoft"]
     if (lin) {
         pm <- c("ROAD"=1, "mWell"=0.2, "mSoft"=0.2,
             "mEnSft"=0.2, "mTrSft"=0.2, "mSeism"=0.05,
@@ -117,11 +122,12 @@ explore_north <- function(resn, plot=TRUE, lin=TRUE, ...) {
         }
         segments(x0=b, y0=lam[,2], y1=lam[,3], lwd=1, col=1)
         par(las=1, mar=c(4,4,2,2))
-        b <- barplot(lamMOD[1:6,1], ylim=c(0, min(k*max(lamMOD[1:6,1]), max(lamMOD[1:6,]))),
+        ii <- c(1,2,4,5,6)
+        b <- barplot(lamMOD[ii,1], ylim=c(0, min(k*max(lamMOD[ii,1]), max(lamMOD[ii,]))),
             ylab="Relative abundance",
-            col=RColorBrewer::brewer.pal(8, "Accent")[1:6], main="Modifiers, North")
-        segments(x0=b, y0=lamMOD[1:6,2], y1=lamMOD[1:6,3], lwd=2,
-            col=ifelse(1 %[]% lamMOD[1:6,2:3], 1, 2))
+            col=RColorBrewer::brewer.pal(8, "Accent")[ii], main="Modifiers, North")
+        segments(x0=b, y0=lamMOD[ii,2], y1=lamMOD[ii,3], lwd=2,
+            col=ifelse(1 %[]% lamMOD[ii,2:3], 1, 2))
         abline(h=1, col=2)
 
         b <- barplot(lamMOD[7:8,1], ylim=c(0, min(k*max(lamMOD[7:8,1]), max(lamMOD[7:8,]))),
@@ -161,7 +167,7 @@ explore_south <- function(ress, plot=TRUE, lin=TRUE, ...) {
     lamLCC0 <- lamLCC0[o,]
     lamLCC1 <- lamLCC1[o,]
     MOD <- c("ROAD", "mWell", "mSoft", "CMETHODSM", "CMETHODRF")
-    Z <- exp(estn[,MOD])
+    Z <- exp(ests[,MOD])
     if (lin) {
         pm <- c("ROAD"=1, "mWell"=0.2, "mSoft"=0.2,
             "CMETHODSM"=1, "CMETHODRF"=1)
