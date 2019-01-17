@@ -421,7 +421,7 @@ get_confint <- function(est, level=0.95, type=c("tboot","quantile"), show0=FALSE
 #' output is `mu` matrix (PKEY x B) that is on log scale
 #' and has no offsets added to it
 predict_with_SSH <- function(res, X, SSH=NULL, stage=NULL) {
-    est <- get_coef(res, X, stage=stage, na.out=FALSE)
+    est <- suppressWarnings(get_coef(res, X, stage=stage, na.out=FALSE))
     c1 <- colSums(abs(est)) > 0
     if (any(c1[c("SSH_KM", "SSH05_KM")])) {
         if (is.null(SSH))
@@ -442,4 +442,68 @@ predict_with_SSH <- function(res, X, SSH=NULL, stage=NULL) {
     }
     mu
 }
-
+#' Get model IDs
+get_mid <- function(res) {
+    OK <- !sapply(res, inherits, "try-error")
+    t(sapply(res[OK], "[[", "mid"))
+}
+#' LinExp approximation to reduce extrapolation error in log-linear models
+linexp <- function(p, beta, pmax) {
+    pmax(0, 1 + p * (exp(pmax * beta) - 1) / pmax)
+}
+#p <- seq(0,1,0.01)
+#pm <- 1/7
+#b <- -1
+#plot(p, exp(b*p), type="l", ylim=c(0, max(exp(b*p))))
+#abline(v=pm, lty=2)
+#curve(linexp(x, b, pm), add=TRUE, col=2)
+#abline(h=1, lty=2)
+#abline(h=linexp(1, b, pm), col=2, lty=2)
+#' Trimmed mean based on quantiles
+trimmed_mean <- function(x, p_range=c(0,1), ...)
+    mean(x[x %[]% quantile(x, p_range[1:2], ...)], ...)
+#' Uncentered correlation
+#' https://stackoverflow.com/questions/23891391/uncentered-pearson-correlation
+.cor_uncentered <- function(x, y) {
+    sum(x*y)/(sqrt(sum(x^2)*sum(y^2)))
+}
+cor_uncentered <- function(x, y=NULL) {
+    x <- data.matrix(x)
+    y <- if (is.null(y))
+        data.matrix(x) else data.matrix(y)
+    if (nrow(x) != nrow(y))
+        stop("rows must match")
+    n <- NCOL(x)
+    m <- NCOL(y)
+    out <- matrix(0, n, m)
+    dimnames(out) <- list(colnames(x), colnames(y))
+    for (i in 1:n) {
+        for (j in 1:m) {
+            out[i,j] <- .cor_uncentered(x[,i], y[,j])
+        }
+    }
+    out
+}
+#' Calculate Poisson CMF/PMF
+get_mass <- function(y, yhat, cumulative=TRUE) {
+    if (length(yhat) < length(y))
+        yhat <- rep(yhat, length(y))
+    yhat <- yhat[seq_len(length(y))]
+    M <- max(y)
+    cts <- seq(0, M)
+    f <- c(sapply(cts, function(i) sum(y==i)/length(y)), 0)
+    tmp <- sapply(cts, function(i) dpois(i, yhat))
+    tmp <- cbind(tmp, 1-rowSums(tmp))
+    fhat <- colMeans(tmp)
+    if (cumulative) {
+        f <- cumsum(f)
+        fhat <- cumsum(fhat)
+    }
+    out <- cbind(observed=f, expected=fhat)
+    #rownames(out) <- c(cts, paste0(">", M))
+    #rownames(out) <- c(cts, paste0("(", M, ",Inf)"))
+    rownames(out) <- c(cts, paste0(M+1, "+"))
+    attr(out, "nobs") <- length(y)
+#    class(out) <- "Pmass"
+    out
+}
