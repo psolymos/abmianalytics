@@ -48,29 +48,100 @@ abline(v=pm, lty=2)
 ## need to keep m=1 at p=0: exp(0*b)=1
 abline(1,(mm-1)/pm,col=2)
 
-linexp <- function(p, beta, pmax) {
-    pmax(0, 1 + p * (exp(pmax * beta) - 1) / pmax)
-}
 plot(p, exp(b[1]*p), type="l")
 abline(v=pm, lty=2)
 curve(linexp(x, b[1], pm), add=TRUE, col=4)
 
-p <- seq(0,1,0.01)
-pm <- 1/7
-b <- -1
-plot(p, exp(b*p), type="l", ylim=c(0, max(exp(b*p))))
-abline(v=pm, lty=2)
-curve(linexp(x, b, pm), add=TRUE, col=2)
-abline(h=1, lty=2)
-abline(h=linexp(1, b, pm), col=2, lty=2)
+bb <- unique(sort(as.numeric(en$BB)))
 
+explore_modifs <- function(resn, plot=TRUE, ...) {
+    OK <- !sapply(resn, inherits, "try-error")
+    spp <- resn[[which(OK)[1]]]$species
+    y <- en$YY[bb,spp]
+    npk1 <- sum(y>0)
+    npkT <- length(y)
+    yss <- sum_by(y, en$DAT$SS[bb])[,"x"]
+    nss1 <- sum(yss>0)
+    nssT <- length(yss)
 
-get_mid <- function(res) {
-    OK <- !sapply(res, inherits, "try-error")
-    t(sapply(res[OK], "[[", "mid"))
+    estn <- suppressWarnings(get_coef(resn, Xn, stage="ARU", na.out=FALSE))
+    mu <- Xage %*% t(estn[,colnames(Xage)])
+    lam1 <- t(apply(exp(mu), 1, quantile, c(0.5, 0.05, 0.95)))
+    lam1 <- lam1[!grepl("9", rownames(lam1)),]
+    lamCC <- lam1[grepl("CC", rownames(lam1)),]
+
+    MOD <- c("ROAD", "mWell", "mSoft",
+        "mEnSft", "mTrSft", "mSeism", "CMETHODSM", "CMETHODRF")
+    Z <- exp(estn[,MOD])
+    isSoft <- estn[,"mSoft"] != 0 & estn[,"mEnSft"] == 0
+    #isSoft2 <- get_mid(resn)[,"Contrast"] == 3
+    estn[isSoft,"mEnSft"] <- estn[isSoft,"mSoft"]
+    estn[isSoft,"mTrSft"] <- estn[isSoft,"mSoft"]
+    estn[isSoft,"mSeism"] <- estn[isSoft,"mSoft"]
+    pm <- c("ROAD"=1, "mWell"=0.2, "mSoft"=0.2,
+        "mEnSft"=0.2, "mTrSft"=0.2, "mSeism"=0.05,
+        "CMETHODSM"=1, "CMETHODRF"=1)
+    for (i in MOD)
+        Z[,i] <- linexp(1, estn[,i], pm[i])
+
+    HFc <- c("Crop", "Industrial", "Mine", "RoughP", "Rural", "TameP", "Urban")
+
+    Xn2 <- Xn[en$DAT$mWell > 0 & en$DAT$vegc %ni% HFc & en$DAT$fCC2 > 0, colnames(Xage)]
+    lamWell <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2)])), 2, median)
+    estWell <- quantile(lamWell * Z[,"mWell"], c(0.5, 0.05, 0.95))
+
+    Xn2 <- Xn[en$DAT$mEnSft > 0 & en$DAT$vegc %ni% HFc & en$DAT$fCC2 > 0, colnames(Xage)]
+    lamEnSft <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2)])), 2, median)
+    estEnSft <- quantile(lamEnSft * Z[,"mEnSft"], c(0.5, 0.05, 0.95))
+
+    ## TrSft incorporates ROAD effect as well?
+    Xn2 <- Xn[en$DAT$mTrSft > 0 & en$DAT$vegc %ni% HFc & en$DAT$fCC2 > 0, colnames(Xage)]
+    lamTrSft <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2)])), 2, median)
+    #estTrSft <- quantile(lamTrSft * Z[,"mTrSft"] * Z[,"ROAD"], c(0.5, 0.05, 0.95))
+    estTrSft <- quantile(lamTrSft * Z[,"mTrSft"], c(0.5, 0.05, 0.95))
+
+    ESMAX <- apply(rbind(lamCC[endsWith(rownames(lamCC), "R"),], EnSft=estEnSft, TrSft=estTrSft), 2, max)
+    Xn2 <- Xn[en$DAT$mSeism > 0 & en$DAT$vegc %ni% HFc & en$DAT$fCC2 > 0, colnames(Xage)]
+    lamSeism <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2)])), 2, median)
+    estSeism <- quantile(lamSeism * Z[,"mSeism"], c(0.5, 0.05, 0.95))
+    if (estSeism[1] > ESMAX[1])
+        estSeism <- ESMAX
+
+    lam1 <- rbind(lam1, Well=estWell, EnSft=estEnSft, TrSft=estTrSft, Seism=estSeism)
+    lam <- lam1[!grepl("CC", rownames(lam1)),]
+
+    if (plot) {
+        op <- par(las=2, mar=c(10,4,3,2), cex.axis=0.9)
+        on.exit(par(op))
+        col <- c(rep(RColorBrewer::brewer.pal(8, "Accent")[c(1,2,3,5,6,7)], each=9),
+            RColorBrewer::brewer.pal(12, "Set3"), RColorBrewer::brewer.pal(4, "Dark2"))
+        k <- 2
+        NAM <- as.character(TAX[attr(resn, "spp"), "species"])
+        b <- barplot(unname(lam[,1]), col=col,
+            ylab="Relative abundance",
+            main=paste0(NAM, ", North\n", npk1,"/",npkT, " pts, ", nss1, "/", nssT, " loc"),
+            ylim=c(0, min(k*max(lam1[,1]), max(lam1))))
+        mtext(rownames(lam), col=col, side=1, at=b, cex=0.8, line=1)
+        o <- b[2]-b[1]
+        for (i in 1:4) {
+            xi <- b[(((i-1)*9+1):(i*9))][1:6]
+            yi <- rbind(lamCC[((i-1)*5+1):(i*5),], lam[(((i-1)*9+1):(i*9))[6],,drop=FALSE])
+            lines(xi-0.2*o, yi[,1], lwd=1, lty=1, col="darkgrey")
+            points(xi[-6]-0.2*o, yi[-6,1], col=1, lwd=2, cex=0.6)
+            segments(x0=xi[-6]-0.2*o, y0=yi[-6,2], y1=yi[-6,3], lwd=1, col=1)
+        }
+        segments(x0=b, y0=lam[,2], y1=lam[,3], lwd=1, col=1)
+    }
+    invisible(lam)
 }
 
-table(get_mid(resn)[,"Contrast"])
+pdf(file.path(ROOT, "explore-modif.pdf"), onefile=TRUE, width=10, height=8)
+expln <- list()
+for (i in colnames(en$YY)) {
+    cat(i, "\n");flush.console()
+    expln[[i]] <- explore_modifs(load_species(file.path(ROOT, "out", "north", paste0(i, ".RData"))))
+}
+dev.off()
 
 explore_north <- function(resn, plot=TRUE, lin=TRUE, ...) {
     estn <- suppressWarnings(get_coef(resn, Xn, stage="ARU", na.out=FALSE))
