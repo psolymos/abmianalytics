@@ -484,7 +484,19 @@ cor_uncentered <- function(x, y=NULL) {
     }
     out
 }
-#' Calculate Poisson CMF/PMF
+#' Calculate Poisson CMF/PMF and deviation from 1:1
+get_mass_dev <- function(x, by=0.001) {
+    x <- rbind(0, x)
+    Min <- pmin(x[,1], x[,2])
+    Max <- pmax(x[,1], x[,2])
+    Eta <- x[,"observed"]
+    xout <- seq(0, 1, by=by)
+    Amin <- approx(Eta, Min, xout=xout)$y
+    Amax <- approx(Eta, Max, xout=xout)$y
+    Amin[1] <- Amax[1] <- 0
+    Amin[length(xout)] <- Amax[length(xout)] <- 1
+    sum((Amax - Amin) * by)
+}
 get_mass <- function(y, yhat, cumulative=TRUE) {
     if (length(yhat) < length(y))
         yhat <- rep(yhat, length(y))
@@ -504,6 +516,7 @@ get_mass <- function(y, yhat, cumulative=TRUE) {
     #rownames(out) <- c(cts, paste0("(", M, ",Inf)"))
     rownames(out) <- c(cts, paste0(M+1, "+"))
     attr(out, "nobs") <- length(y)
+    attr(out, "dev") <- get_mass_dev(out)
 #    class(out) <- "Pmass"
     out
 }

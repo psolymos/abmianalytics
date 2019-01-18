@@ -133,6 +133,8 @@ validate <- function(res, Groups, stage=NULL) {
         y1obs=yo, lam1=evo, yobs=yobs, lam=ypred,
         cmf1=m1, cmf=m)
 }
+
+
 plotOne <- function(One, q=1) {
     spp <- One$HF$spp
     lam1 <- One$HF$lam1
@@ -141,22 +143,27 @@ plotOne <- function(One, q=1) {
     y <- One$HF$yobs
     p1 <- sapply(One, function(z) z$cmf1[,"expected"])
     p <- sapply(One, function(z) z$cmf[,"expected"])
+    Dev1 <- sapply(One, function(z) attr(z$cmf1, "dev"))
+    Dev <- sapply(One, function(z) attr(z$cmf, "dev"))
 
     op <- par(mfrow=c(2,3))
 
     plot(0:9, sapply(One, "[[", "COR"), type="l", col="#0000FF80", ylim=c(-1,1),
-        xlab="Model stages", ylab="Correlation", main=spp, lwd=2)
+        xlab="Model stages", ylab="Correlation / AUC", main=spp, lwd=2)
     lines(0:9, sapply(One, "[[", "CORU"), col="#FF000080", lwd=2)
-    abline(h=0, lty=2)
-    text(0:9, rep(-0.2, 10), round(sapply(One, "[[", "COR"), 3), cex=0.6, col="#0000FF")
-    text(0:9, rep(-0.1, 10), round(sapply(One, "[[", "CORU"), 3), cex=0.6, col="#FF0000")
-    legend("bottomright", bty="n", lwd=2, lty=1, col=c("#0000FF80", "#FF000080"),
-        legend=c("Spearman", "Uncentered"))
+    lines(0:9, sapply(One, "[[", "AUC"), col="#00FF0080", lwd=2)
+    abline(h=c(0, 0.5), lty=2)
+    text(0:9, rep(-0.1, 10), round(sapply(One, "[[", "COR"), 3), cex=0.6, col="#0000FF")
+    text(0:9, rep(-0.2, 10), round(sapply(One, "[[", "CORU"), 3), cex=0.6, col="#FF0000")
+    text(0:9, rep(-0.3, 10), round(sapply(One, "[[", "AUC"), 3), cex=0.6, col="#00FF00")
+    legend("bottomright", bty="n", lwd=2, lty=1, col=c("#0000FF80", "#FF000080", "#00FF0080"),
+        legend=c("Spearman r", "Uncentered r", "AUC"))
 
-    plot(0:9, sapply(One, "[[", "AUC"), type="l", col="#0000FF80", ylim=c(0,1),
-        xlab="Model stages", ylab="AUC", lwd=2)
-    abline(h=0.5, lty=2)
-    text(0:9, rep(0.45, 10), round(sapply(One, "[[", "AUC"), 3), cex=0.6)
+    plot(0:9, Dev1, type="l", col="#0000FF80", ylim=c(0,max(Dev,Dev1)),
+        xlab="Model stages", ylab="Goodness of fit", lwd=2)
+    lines(0:9, Dev, col="#FF000080", lwd=2)
+    legend("topright", bty="n", lwd=2, lty=1, col=c("#0000FF80", "#FF000080"),
+        legend=c("Point", "Landscape"))
 
     ss <- c("Null", "ARU", "Space", "HF")
     cg <- 1:4 # RColorBrewer::brewer.pal(length(ss)+3, "Dark2")[-(1:3)]
@@ -207,9 +214,9 @@ for (spp in SPP) {
         All[[spp]] <- V
     }
 }
-save(All, file="validation-quick-results-2019-01-17.RData")
+save(All, file=file.path(ROOT, "validation-quick-results-2019-01-17.RData"))
 
-pdf("validation-quick-results-2019-01-17.pdf", onefile=TRUE, height=8, width=12)
+pdf(file.path(ROOT, "validation-quick-results-2019-01-17.pdf"), onefile=TRUE, height=8, width=12)
 for (spp in names(All))
     plotOne(All[[spp]], q=1)
 dev.off()
