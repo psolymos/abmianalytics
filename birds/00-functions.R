@@ -147,6 +147,7 @@ glm_skeleton <- function(object, ..., CAICalpha=0.5) {
     out$caic <- CAICalpha * out$aic + (1-CAICalpha) * out$bic
     out
 }
+coef.glm_skeleton <- function(object, ...) object$coef
 #' most useful stats
 fstat <- function(x, level=0.95, ...) {
     .fstat <- function(x, level=0.95)
@@ -422,6 +423,10 @@ get_confint <- function(est, level=0.95, type=c("tboot","quantile"), show0=FALSE
 #' and has no offsets added to it
 predict_with_SSH <- function(res, X, SSH=NULL, stage=NULL) {
     est <- suppressWarnings(get_coef(res, X, stage=stage, na.out=FALSE))
+#    OK <- !sapply(res, inherits, "try-error")
+#    ii <- sapply(res[OK], "[[", "iteration")
+#    notNA <- which(OK)
+#    est <- est[notNA,,drop=FALSE]
     c1 <- colSums(abs(est)) > 0
     if (any(c1[c("SSH_KM", "SSH05_KM")])) {
         if (is.null(SSH))
@@ -431,8 +436,8 @@ predict_with_SSH <- function(res, X, SSH=NULL, stage=NULL) {
         mu <- X[,c1,drop=FALSE] %*% t(est[,c1,drop=FALSE])
         mussh <- mu
         mussh[] <- 0 # put SSH effects here
-        for (i in seq_len(nrow(est))) {
-            ssh <- res[[i]]$ssh
+        for (i in rownames(est)) {
+            ssh <- res[[as.integer(i)]]$ssh
             v <- rowSums(SSH[,ssh$labels])
             mussh[,i] <- essh[1,"SSH_KM"]*v + essh[1,"SSH05_KM"]*sqrt(v)
         }
