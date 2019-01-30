@@ -194,6 +194,35 @@ dd_point <- make_vegHF_wide_v6(d,
     col.SOIL="Soil_Type_1",
     sparse=TRUE, HF_fine=TRUE, wide=FALSE) # use refined classes
 
+## 2018 sites
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
+    "20190129_SummaryTables_CAMARU_2017_2018_Veg61_vHFSPOT2017.sqlite")
+
+db <- dbConnect(RSQLite::SQLite(), f)
+dbListTables(db)
+
+d00 <- dbReadTable(db, "Summary_Points")
+d01 <- dbReadTable(db, "Summary_Buffers")
+
+dbDisconnect(db)
+
+d00 <- make_char2fact(d00)
+d01 <- make_char2fact(d01)
+d00$Site_point_year <- as.factor(paste0(
+    as.character(d00$Site_ID), "_",
+    ifelse(is.na(d00$Cam_ARU_Bi), "NA", as.character(d00$Cam_ARU_Bi)),
+    "_", as.character(d00$Survey_Year)))
+dd_point <- make_vegHF_wide_v6(d00,
+    col.label="Site_point_year",
+    col.year="Survey_Year",
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE, wide=FALSE) # use refined classes
+save(dd_point,
+    file=file.path(ROOT, VER, "data", "analysis", "site",
+        "veg-hf_CameraARU_v6verif_2017-2018-sites.Rdata"))
+
 
 ## 150m
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
@@ -684,15 +713,17 @@ save(veg_curr, veg_ref, soil_curr, soil_ref,
 
 t0 <- proc.time()
 load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
+#f <- file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+#    "20181010_Grid_1sqkm_VEG61HFI2016v3fty.sqlite")
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
-    "20181010_Grid_1sqkm_VEG61HFI2016v3fty.sqlite")
+    "20190129_Grid_1sqkm_VEG61Cond2010HFI2010v2.sqlite")
 db <- dbConnect(RSQLite::SQLite(), f)
 tn <- dbListTables(db) # "Summary_1sqkm_grid_FTY"
 
 hd <- dbGetQuery(db, paste('SELECT * FROM', tn, 'LIMIT 5'))
 d <- dbGetQuery(db,
     paste("SELECT
-      Origin_Year,
+      Origin_Year_2010cond,
       Pct_of_Larch,
       NSRNAME,
       Soil_Type_1,
@@ -707,10 +738,15 @@ d <- dbGetQuery(db,
 dbDisconnect(db)
 
 d <- make_char2fact(d)
+d$Origin_Year <- d$Origin_Year_2010cond
+Origin_Year_2010cond <- NULL
+gc()
 
+d <- d[!is.na(d$GRID_LABEL),]
 d2 <- make_vegHF_wide_v6(d,
     col.label="GRID_LABEL",
-    col.year=2016,
+#    col.year=2016,
+    col.year=2010,
     col.HFyear="YEAR",
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
@@ -741,6 +777,11 @@ save(dd_kgrid,
 save(d2,
     file=file.path(ROOT, VER, "data", "inter", "veghf", "grid",
     "veg-hf_grid_v6hf2016v3noDistVeg-long-format.Rdata"))
+
+save(dd_kgrid,
+    file=file.path(ROOT, VER, "data", "analysis", "grid",
+        "veg-hf_grid_VEG61Cond2010HFI2010v2.Rdata"))
+
 
 ## wide format: transitions --------------------------------------
 
@@ -834,7 +875,8 @@ any(ch2veg$cr %in% age0class)
 
 save(trVeg, trSoil, ch2veg, ch2soil,
     file=file.path(ROOT, VER, "data", "analysis", "grid",
-    "veg-hf_transitions_v6hf2016v3noDistVeg.Rdata"))
+    #"veg-hf_transitions_v6hf2016v3noDistVeg.Rdata"))
+    "veg-hf_transitions_VEG61Cond2010HFI2010v2.Rdata"))
 
 
 ## w2w 1km^2 scale ---------- long version ----------------------------

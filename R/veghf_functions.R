@@ -232,6 +232,7 @@ HF_fine=TRUE, widen_only=FALSE) {
         ## reference age class 0=no age (either not forest or no info)
         ## 1=0-19, 2=20-39, etc.
         d$ORIGIN_YEAR[!is.na(d$ORIGIN_YEAR) & d$ORIGIN_YEAR == 9999] <- NA
+        d$ORIGIN_YEAR[!is.na(d$ORIGIN_YEAR) & d$ORIGIN_YEAR > d$SampleYear] <- NA
         d$AgeRf <- as.integer(sign(d$ORIGIN_YEAR) * (1 + floor((d$SampleYear - d$ORIGIN_YEAR) / 20)))
         ## truncate reference age classes at 9 = 160+
         d$AgeRf[d$AgeRf > 9L] <- 9L
