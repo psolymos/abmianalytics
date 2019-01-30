@@ -2,17 +2,17 @@ library(mefa4)
 
 shf <- FALSE
 
-ROOT <- "e:/peter/AB_data_v2016"
+ROOT <- "d:/abmi/AB_data_v2016"
 
 ## surrounding hf
 if (shf) {
-    OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-shf-1/"
-    OUTDIRB <- "e:/peter/sppweb2015/birds-pred-shf-B/"
+    OUTDIR1 <- "d:/abmi/sppweb2015/birds-pred-shf-1/"
+    OUTDIRB <- "d:/abmi/sppweb2015/birds-pred-shf-B/"
 } else {
-    OUTDIR1 <- "e:/peter/sppweb2015/birds-pred-1/"
-    OUTDIRB <- "e:/peter/sppweb2015/birds-pred-B/"
+    OUTDIR1 <- "d:/abmi/sppweb2015/birds-pred-1/"
+    OUTDIRB <- "d:/abmi/sppweb2015/birds-pred-B/"
 }
-#OUTDIR <- "e:/peter/AB_data_v2016/out/birds/figs"
+#OUTDIR <- "d:/abmi/AB_data_v2016/out/birds/figs"
 
 load(file.path(ROOT, "out", "kgrid", "kgrid_table.Rdata"))
 #source("~/repos/bragging/R/glm_skeleton.R")
