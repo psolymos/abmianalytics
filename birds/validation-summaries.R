@@ -36,6 +36,43 @@ load(file.path(ROOT, "data", "ab-birds-validation-2018-12-07.RData"))
 #' `X` is for training data, `Xv` is for validation data set
 X <- get_model_matrix(DAT, mods)
 Xv <- get_model_matrix(DATv, mods)
+#' Process BU aggregate units
+bgu <- read.csv(file.path(ROOT, "validation-BGgroups.csv"))
+
+bgu$SS2 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g2, sep="::", drop=TRUE)))
+tmp <- table(bgu$SS2)
+for (i in names(tmp))
+    if (tmp[i] < 4)
+        bgu$SS2[bgu$SS2 == i] <- ""
+bgu$SS2 <- as.factor(bgu$SS2)
+bgu$SS3 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g3, sep="::", drop=TRUE)))
+tmp <- table(bgu$SS3)
+for (i in names(tmp))
+    if (tmp[i] < 9)
+        bgu$SS3[bgu$SS3 == i] <- ""
+bgu$SS3 <- as.factor(bgu$SS3)
+bgu$SS4 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g4, sep="::", drop=TRUE)))
+tmp <- table(bgu$SS4)
+for (i in names(tmp))
+    if (tmp[i] < 16)
+        bgu$SS4[bgu$SS4 == i] <- ""
+bgu$SS4 <- as.factor(bgu$SS4)
+bgu$SS5 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g5, sep="::", drop=TRUE)))
+tmp <- table(bgu$SS5)
+for (i in names(tmp))
+    if (tmp[i] < 25)
+        bgu$SS5[bgu$SS5 == i] <- ""
+bgu$SS5 <- as.factor(bgu$SS5)
+#bgu$SS10 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g10, sep="::", drop=TRUE)))
+DATv$SS2 <- bgu$SS2[match(DATv$SS, bgu$SS)]
+DATv$SS2[is.na(DATv$SS2)] <- ""
+DATv$SS3 <- bgu$SS3[match(DATv$SS, bgu$SS)]
+DATv$SS3[is.na(DATv$SS3)] <- ""
+DATv$SS4 <- bgu$SS4[match(DATv$SS, bgu$SS)]
+DATv$SS4[is.na(DATv$SS4)] <- ""
+DATv$SS5 <- bgu$SS5[match(DATv$SS, bgu$SS)]
+DATv$SS5[is.na(DATv$SS5)] <- ""
+
 #'
 #' # Species summaries
 #'
@@ -197,12 +234,12 @@ plotOne <- function(One, q=1) {
 spp <- "WTSP"
 Groups <- DATv$ABMIsite
 res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
-V <- try(c(list(validate(res, Groups=DATv$ABMIsite, stage=0)),
+V <- try(c(list(validate(res, Groups=Groups, stage=0)),
     lapply(names(mods)[1:9], function(z) validate(res, Groups=Groups, stage=z))))
 names(V) <- c("Null", names(mods)[1:9])
 plotOne(V)
 #' Now we do it for all species
-SPP <- colnames(YYv[DATv$ABMIsite != "",colSums(YYv>0)>20])
+SPP <- colnames(YYv[Groups != "",colSums(YYv>0)>20])
 All <- list()
 for (spp in SPP) {
     cat(spp, "\n");flush.console()
@@ -215,6 +252,17 @@ for (spp in SPP) {
     }
 }
 save(All, file=file.path(ROOT, "validation-quick-results-2019-01-17.RData"))
+
+
+Groups <- DATv$SS3
+res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
+V <- try(c(list(validate(res, Groups=Groups, stage=0)),
+    lapply(names(mods)[1:9], function(z) validate(res, Groups=Groups, stage=z))))
+names(V) <- c("Null", names(mods)[1:9])
+plotOne(V)
+
+
+
 
 pdf(file.path(ROOT, "validation-quick-results-2019-01-17.pdf"), onefile=TRUE, height=8, width=12)
 for (spp in names(All))
@@ -474,3 +522,69 @@ getMID <- function(spp) {
 }
 MID <- pbapply::pbsapply(SPP, getMID)
 summary(t(MID)/max(MID))
+
+## process big grids
+
+table(droplevels(DATv$PCODE))
+
+bg <- droplevels(nonDuplicated(DATv[DATv$PCODE == "BU_BG",], SS, TRUE))
+ss <- as.character(bg$SS)
+tmp <- strsplit(ss, "::")
+z <- data.frame(bg[,c("X", "Y")],
+    ProjectID=sapply(tmp, "[[", 1),
+    Cluster=sapply(tmp, "[[", 2),
+    SITE=as.integer(sapply(tmp, "[[", 3)),
+    STATION=as.integer(sapply(tmp, "[[", 4)))
+z <- z[order(z$SITE, z$STATION),]
+
+## problematic grids:
+## 1: missing--exclude
+## (7: last bit is weird, use <=100 stations)
+## 14: something is not quite right up here--exclude
+f <- function(i) {
+    with(z[z$SITE==i & z$STATION<=100,], plot(X, Y, type="l",col=2))
+    #with(z[z$SITE==i,], points(X, Y,col=4))
+    with(z[z$SITE==i & z$STATION<=100,], text(X, Y, STATION,col=4))
+    invisible()
+}
+
+z <- z[z$SITE %in% c(2:13) & z$STATION<=100,]
+
+x <- data.frame(STATION=1:100, xv=rep(1:10,10), yv=rep(1:10,each=10))
+
+c2 <- c(0,2,4,6,8,10)+0.5
+x$g2 <- interaction(cut(x$xv, c2, labels=FALSE), cut(x$yv, c2, labels=FALSE), sep="_", drop=TRUE)
+
+c3 <- c(0,3,6,9,12)+0.5
+x$g3 <- interaction(cut(x$xv, c3, labels=FALSE), cut(x$yv, c3, labels=FALSE), sep="_", drop=TRUE)
+
+c4 <- c(0,4,8,12)+0.5
+x$g4 <- interaction(cut(x$xv, c4, labels=FALSE), cut(x$yv, c4, labels=FALSE), sep="_", drop=TRUE)
+
+c5 <- c(0,5,10)+0.5
+x$g5 <- interaction(cut(x$xv, c5, labels=FALSE), cut(x$yv, c5, labels=FALSE), sep="_", drop=TRUE)
+
+x$g10 <- as.factor("1_1")
+
+z <- data.frame(z, x[match(z$STATION, x$STATION),])
+
+write.csv(z, row.names=TRUE, file=file.path(ROOT, "validation-BGgroups.csv"))
+
+## looking at ABMI sites and landscape effects
+
+spp <- "CAWA"
+res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
+res <- res[!sapply(res, inherits, "try-error")]
+#names(mods)
+
+mu1 <- predict_with_SSH(res, Xv, SSHv, stage="Space")
+lam1 <- exp(mu1 + OFFv[,spp])
+mu2 <- predict_with_SSH(res, Xv, SSHv, stage="HF")
+lam2 <- exp(mu2 + OFFv[,spp])
+
+lc <- table(unname(unlist(lapply(res, function(z) z$ssh$labels))))/length(res)
+LC <- names(lc)[lc >= 0.5]
+
+ss <- endsWith(as.character(DATv$SS), "_1")
+cnt <- DATv$ABMIsite
+
