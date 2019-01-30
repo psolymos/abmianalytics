@@ -17,10 +17,14 @@ library(intrval) # easy interval calculations
 library(parallel) # speed things up
 #' Settings local path for the cure4insect package to speed things up, then load common data
 library(cure4insect)
-opar <- set_options(path = "w:/reports")
+#opar <- set_options(path = "w:/reports")
+opar <- set_options(path = "d:/abmi/reports")
 load_common_data()
 #' Load a precompiled data of ABMI species data
 load("~/GoogleWork/collaborations/opticut/R/abmi-data/abmi-data-AB.Rdata")
+
+#' ## Combine all taxa
+
 #' Retrieve the intersect of all the rows in the different taxa tables (sites)
 rn <- Reduce("intersect", lapply(ABMI$detections, rownames))
 #' Make a giant site x species matrix
@@ -47,12 +51,14 @@ bp1 <- summary(oc1)$bestpart
 plot(oc1, cex.axis=0.1)
 
 sh <- t(bp1) %*% bp1
-round(as.dist(100 * sh / S, 1))
+#round(as.dist(100 * sh / S, 1))
 
 plot(hclust(dist(t(bp1), "manhattan"), "ward.D2"), xlab="Natural Regions", sub="")
+plot(hclust(vegan::vegdist(t(bp1), "bray"), "ward.D2"), xlab="Natural Regions", sub="")
 
 xx$g2 <- xx$NRNAME
-levels(xx$g2) <- c("B", "FSR", "FSR", "GP", "GP", "FSR")
+Class <- c("SB", "SB", "FR", "GP", "GP", "FR")
+levels(xx$g2) <- Class
 oc2 <- opticut(yy ~ 1, strata=xx$g2, dist="binomial", cl=cl)
 bp2 <- summary(oc2)$bestpart
 
@@ -61,11 +67,61 @@ round(as.dist(100 * sh / S, 1))
 
 stopCluster(cl)
 
+bp <- groupSums(bp1, 2, Class)
+bp[bp > 0] <- 1
+
+#' ## Each taxon separate OC
+
+tx <- names(ABMI$detections)
+
+i <- tx[1]
+BP <- list()
+
+cl <- makeCluster(8)
+for (i in tx) {
+    cat(i, "\n")
+    rn <- rownames(ABMI$detections[[i]])
+    yy <- ABMI$detections[[i]][rn,]
+    if (i == "vascular_plants")
+        yy <- yy[,!ABMI$species[[i]]$nonnative]
+    yy[yy > 0] <- 1
+    yy <- yy[,colSums(yy) > 0]
+    xx <- ABMI$sites[rn,]
+    xx$g1 <- xx$NRNAME
+    levels(xx$g1) <- c("B", "S", "F", "G", "P", "R")
+
+    oc1 <- opticut(yy ~ 1, strata=xx$g1, dist="binomial", cl=cl)
+    bp1 <- summary(oc1)$bestpart
+    BP[[i]] <- bp1
+}
+stopCluster(cl)
+
+
+op <- par(mfrow=c(2,3))
+for (i in tx)
+plot(hclust(vegan::vegdist(t(BP[[i]]), "bray"), "ward.D2"), xlab="Natural Regions", sub="", main=i)
+par(op)
+
 bp <- groupSums(bp1, 2, c("B", "FSR", "FSR", "GP", "GP", "FSR"))
 bp[bp > 0] <- 1
 
+bpl <- list()
+for (i in tx) {
+    Class <- if (i == "mites")
+        c("BS", "BS", "FR", "GP", "GP", "FR") else c("SBF", "SBF", "SBF", "GP", "GP", "R")
+    bp <- groupSums(BP[[i]], 2, Class)
+    bp[bp > 0] <- 1
+    bpl[[i]] <- bp
+}
+
+
+
+#' Process predictions
+
 SppTab <- get_species_table()
-Spp <- intersect(SppTab$SpeciesID,rownames(bp))
+SppTab <- SppTab[SppTab$native,]
+#Spp <- intersect(SppTab$SpeciesID, unname(unlist(lapply(bpl, rownames))))
+Spp <- intersect(SppTab$SpeciesID, rownames(bp))
 bp <- bp[Spp,]
 SppTab <- SppTab[Spp,]
 rt <- .read_raster_template()
@@ -88,20 +144,23 @@ f <- function(spp) {
     r
 }
 
-cl <- makeCluster(12)
+cl <- makeCluster(8)
 system.time(f(Spp[1]))
 tmp <- clusterEvalQ(cl, library(cure4insect))
-tmp <- clusterEvalQ(cl, set_options(path = "w:/reports"))
+tmp <- clusterEvalQ(cl, set_options(path = "d:/abmi/reports"))
 tmp <- clusterEvalQ(cl, load_common_data())
 tmp <- clusterExport(cl, c("rt", "KT", "rasterize_results_cr", "SppTab"))
 All <- pblapply(Spp, f, cl=cl)
 stopCluster(cl)
 names(All) <- Spp
 
+#bpl$mites <- bpl$mites[,c("BS", "GP", "FR")] # hack to reorg mites
+#bp <- do.call(rbind, bpl)[Spp,]
+
 Rall <- Reduce("+", All)
 Rred   <- Reduce("+", All[bp[,"GP"]==1])
-Rgreen <- Reduce("+", All[bp[,"B"]==1])
-Rblue  <- Reduce("+", All[bp[,"FSR"]==1])
+Rgreen <- Reduce("+", All[bp[,"SB"]==1])
+Rblue  <- Reduce("+", All[bp[,"FR"]==1])
 
 RRall <- stack(list(r=255*Rred/Rall, g=255*Rgreen/Rall, b=255*Rblue/Rall))
 R0 <- stack(list(r=0*rt, g=0*rt, b=0*rt))
@@ -113,8 +172,8 @@ h <- function(TT) {
     ss <- SppTab$taxon == TT
     Rall <- Reduce("+", All[ss])
     Rred   <- Reduce("+", All[bp[,"GP"]==1 & ss])
-    Rgreen <- Reduce("+", All[bp[,"B"]==1 & ss])
-    Rblue  <- Reduce("+", All[bp[,"FSR"]==1 & ss])
+    Rgreen <- Reduce("+", All[bp[,"SB"]==1 & ss])
+    Rblue  <- Reduce("+", All[bp[,"FR"]==1 & ss])
     RR <- stack(list(r=255*Rred/Rall, g=255*Rgreen/Rall, b=255*Rblue/Rall))
 }
 
@@ -243,15 +302,25 @@ function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, inte
     invisible(NULL)
 }
 
-par(mfrow=c(2,3), mar=c(2,2,2,2))
-#hacked_plotRGB(RRall, stretch="hist", main="All")
+op <- par(mfrow=c(2,3), mar=c(2,2,2,2))
+hacked_plotRGB(RRall, stretch="hist", main="All")
 hacked_plotRGB(RRbirds, stretch="hist", main="Birds")
 hacked_plotRGB(RRlichens, stretch="hist", main="Lichens")
 hacked_plotRGB(RRmites, stretch="hist", main="Mites")
-plot.new()
+#plot.new()
 hacked_plotRGB(RRmosses, stretch="hist", main="Bryophytes")
 hacked_plotRGB(RRvplants, stretch="hist", main="Vascular Plants")
+par(op)
 
+op <- par(mfrow=c(2,3), mar=c(2,2,2,2))
+hacked_plotRGB(RRall, main="All")
+hacked_plotRGB(RRbirds, main="Birds")
+hacked_plotRGB(RRlichens, main="Lichens")
+hacked_plotRGB(RRmites, main="Mites")
+#plot.new()
+hacked_plotRGB(RRmosses, main="Bryophytes")
+hacked_plotRGB(RRvplants, main="Vascular Plants")
+par(op)
 
 save(RRall, RRbirds, RRlichens, RRmites, RRmosses, RRvplants,
-    file="d:/abmi/sppweb2018/rainbow-maps/results-rainbow-maps.RData")
+    file="d:/abmi/sppweb2018/rainbow-maps/results-rainbow-maps-2019-01-30.RData")
