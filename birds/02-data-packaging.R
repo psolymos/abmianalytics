@@ -480,7 +480,7 @@ source("~/repos/abmianalytics/birds/models-veg.R")
 setdiff(get_terms(mods_veg, "list"), colnames(dd))
 rm(DAT, YY, OFF, OFFmean, SSH, BB, mods)
 
-cn2 <- c(cn, get_terms(mods_veg, "list"), "vegw")
+cn2 <- c(cn, get_terms(mods_veg, "list"), "vegw", "vegca")
 DAT <- dd[dd$useNorth & dd$RND > 10, cn2]
 YY <- yy[rownames(DAT),]
 YY <- YY[,colSums(YY>0) >= NMIN]
@@ -499,12 +499,12 @@ stopifnot(all(BB <= nrow(DAT)))
 stopifnot(lu <= nrow(DAT))
 nrow(BB)
 
-z <- run_path1(1, "AMRO", mods, CAICalpha=1, wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+z <- run_path1(1, "AMRO", mods, CAICalpha=1, wcol="vegw", ssh_class="vegca", ssh_fit="Space")
 z$timer
 cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(YY)*B*z$timer[3])/(60*60)), "hrs\n")
 
 save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
-    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-north-2018-12-07.RData")
+    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-north-2019-01-30.RData")
 #'
 #' ## Validation subsets
 #'
@@ -538,7 +538,7 @@ table(validation=dd$validation,north=dd$useNorth)
 with(dd[!dd$validation,], plot(X, Y, pch=19, cex=0.2, col=ifelse(Y >= 50 & useNorth, "black", "grey")))
 with(dd[dd$validation,], points(X, Y, pch=19, cex=0.4, col=ifelse(PCODE == "BU_BG", 4, 2)))
 
-cn2 <- c(cn, get_terms(mods_veg, "list"), "vegw", "ABMIsite")
+cn2 <- c(cn, get_terms(mods_veg, "list"), "vegw", "vegca", "ABMIsite")
 DAT <- dd[dd$Y >= 50 & dd$useNorth & !dd$validation, cn2]
 
 YY <- yy[rownames(DAT),]
@@ -556,7 +556,7 @@ stopifnot(all(BB <= nrow(DAT)))
 stopifnot(lu <= nrow(DAT))
 nrow(BB)
 
-z <- run_path1(1, "AMRO", mods, CAICalpha=1, wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+z <- run_path1(1, "AMRO", mods, CAICalpha=1, wcol="vegw", ssh_class="vegca", ssh_fit="Space")
 z$timer
 cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(YY)*B*z$timer[3])/(60*60)), "hrs\n")
 
@@ -567,7 +567,7 @@ SSHv <- SSH_veg[rownames(DATv),]
 
 
 save(DAT, YY, OFF, SSH, BB, mods, DATv, YYv, OFFv, SSHv,
-    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-validation-2018-12-07.RData")
+    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-validation-2019-01-30.RData")
 
 #' The End
 

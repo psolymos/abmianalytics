@@ -1,6 +1,6 @@
 ## --- settings ---
 ## file name for data bundle, need to be in /data/ dir
-fn <- "ab-birds-validation-2018-12-07.RData"
+fn <- "ab-birds-validation-2019-01-30.RData"
 ## project name for storing the output
 PROJ <- "validation"
 
@@ -80,11 +80,11 @@ while (length(TOGO) > 0) {
     if (interactive()) {
         res <- pblapply(cl=cl, X=1:BBB, FUN=run_path1,
             i=SPP1, mods=mods, CAICalpha=CAICalpha,
-            wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+            wcol="vegw", ssh_class="vegca", ssh_fit="Space")
     } else {
         res <- parLapply(cl, 1:BBB, run_path1,
             i=SPP1, mods=mods, CAICalpha=CAICalpha,
-            wcol="vegw", ssh_class="vegc", ssh_fit="Space")
+            wcol="vegw", ssh_class="vegca", ssh_fit="Space")
     }
     attr(res, "timing") <- proc.time() - t0
     attr(res, "proj") <- PROJ
