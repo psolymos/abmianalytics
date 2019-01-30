@@ -439,3 +439,38 @@ plot(cf9[,2] ~ res[,2])
 abline(lm(cf9[,2] ~ res[,2]))
 
 
+
+getAUC <- function(spp) {
+    res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
+    mu1 <- predict_with_SSH(res, X[BB[,1],], SSH[BB[,1],], stage="Space")
+    mu2 <- predict_with_SSH(res, X[BB[,1],], SSH[BB[,1],], stage="HF")
+    pr1 <- apply(exp(mu1+OFF[BB[,1],spp]), 1, median)
+    pr2 <- apply(exp(mu2+OFF[BB[,1],spp]), 1, median)
+    y <- as.numeric(YY[BB[,1],spp])
+
+    c(Space=simple_auc(simple_roc(ifelse(y>0, 1, 0), pr1)),
+        Landsc=simple_auc(simple_roc(ifelse(y>0, 1, 0), pr2)))
+}
+
+z <- read.csv("~/repos/abmispecies/_data/birds.csv")
+SPP <- intersect(colnames(OFF), as.character(z$AOU[z$modelN]))
+library(parallel)
+cl <- makeCluster(4)
+clusterEvalQ(cl, library(Matrix))
+clusterExport(cl, c("X", "SSH", "YY", "simple_roc", "simple_auc", "predict_with_SSH", "load_species", "ROOT", "BB"))
+AUC <- pbapply::pbsapply(SPP, getAUC)
+AUC <- list()
+for (spp in SPP) {
+    cat(spp, "\n")
+    AUC[[spp]] <- getAUC(spp)
+
+}
+stopCluster(cl)
+
+getMID <- function(spp) {
+    res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
+    mid <- get_mid(res)
+    c(SHH=sum(mid[,"SSH"] > 0), HF=sum(mid[,"HF"] > 0))
+}
+MID <- pbapply::pbsapply(SPP, getMID)
+summary(t(MID)/max(MID))

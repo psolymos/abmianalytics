@@ -516,4 +516,9 @@ sr2 <- rbind(sr2_bb, sr2_bu, sr2_rf, sr2_sm)[ii,]
 #'
 save(tax, yy, dd, vs0, vc1, vr1, sc1, sr1, vc2, vr2, sc2, sr2,
     file="d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-all-2018-11-29.RData")
+#' Save pieces for EMB
+if (FALSE) {
+    out <- data.frame(dd, as.matrix(yy), as.matrix(vc2))
+    write.csv(out, row.names=FALSE, file="bird-data-AB-all-2019-01-22.csv")
+}
 #' The End

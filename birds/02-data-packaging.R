@@ -570,3 +570,39 @@ save(DAT, YY, OFF, SSH, BB, mods, DATv, YYv, OFFv, SSHv,
     file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-validation-2018-12-07.RData")
 
 #' The End
+
+
+
+## set root directory
+ROOT <- "~/Dropbox/courses/st-johns-2017"
+library(raster)
+library(rgdal)
+library(rgeos)
+library(sp)
+
+## load natural regions shape file
+## dissolve polygons
+setwd(file.path(ROOT, "data", "NatRegAB"))
+AB <- readOGR(".",
+    "Natural_Regions_Subregions_of_Alberta") # rgdal
+ABnr <- gUnaryUnion(AB, AB@data$NRNAME) # natural regions
+ABpr <- gUnaryUnion(AB, rep(1, nrow(AB))) # province
+
+
+COL <- c('#e6f5c9','#f4cae4','#b3e2cd','#fff2ae','#fdcdac','#cbd5e8')
+
+## sampling grid as spatial points data frame
+x <- dd[,c("X","Y")]
+coordinates(x) <- c("X", "Y") # string
+proj4string(x) <-
+    CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+x <- spTransform(x, proj4string(AB))
+
+png("aa.png", height=2000, width=1200, bg=NA)
+op <- par(mar=c(0,0,1,0))
+plot(ABnr, col=COL, border=COL)
+plot(x,add=TRUE)
+par(op)
+dev.off()
+
+

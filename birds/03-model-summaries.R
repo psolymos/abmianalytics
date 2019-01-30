@@ -32,6 +32,8 @@ spp <- "ALFL"
 resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
 ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
 
+## --
+
 estn <- get_coef(resn, Xn, stage="ARU", na.out=FALSE)
 printCoefmat(get_summary(estn))
 
@@ -293,4 +295,147 @@ for (i in colnames(es$YY)) {
     expls[[i]] <- explore_south(load_species(file.path(ROOT, "out", "south", paste0(i, ".RData"))))
 }
 dev.off()
+
+spptab <- read.csv("~/repos/abmispecies/_data/birds.csv")
+spptab <- droplevels(spptab[spptab$modelS,])
+rownames(spptab) <- spptab$AOU
+SPP <- rownames(spptab)
+cf0 <- read.csv("d:/abmi/sppweb2017/tables/AllTaxaCombined-SoilNontreedSouth.csv")
+Cult0 <- cf0[match(spptab$species, cf0$Species) ,c("Cult", "Cult.LCL", "Cult.UCL")]
+
+expls <- list()
+for (i in SPP) {
+    cat(i, "\n");flush.console()
+    expls[[i]] <- explore_south(load_species(file.path(ROOT, "out", "south", paste0(i, ".RData"))), plot=FALSE)
+}
+
+Crop <- t(sapply(expls, function(z) z$lcc0["Crop",]))[,1:3]
+Rough <- t(sapply(expls, function(z) z$lcc0["RoughP",]))[,1:3]
+Tame <- t(sapply(expls, function(z) z$lcc0["TameP",]))[,1:3]
+Crop <- t(sapply(expls, function(z) z$lcc0["Crop",]))[,1:3]
+Prod <- t(sapply(expls, function(z) z$lcc0["Productive",]))[,1:3]
+
+plot(density(Cult0[,3]-Cult0[,2]))
+lines(density(Crop[,3]-Crop[,2]), col=2)
+lines(density(Tame[,3]-Tame[,2]), col=3)
+lines(density(Rough[,3]-Rough[,2]), col=4)
+
+o <- order(Cult0[,1], decreasing=TRUE)
+plot(1:nrow(Cult0)-0.15, Cult0[o,1], type="l", ylim=c(0,max(Cult0, Crop, Tame, Rough, Prod)),
+    xlim=c(1,10), axes=FALSE, ann=FALSE)
+title(ylab="Relative abundance")
+axis(2)
+axis(1, 1:10, rownames(spptab[o,])[1:10], las=2, tick=FALSE)
+
+segments(x0=1:nrow(Cult0)-0.15, y0=Cult0[o,2], y1=Cult0[o,3])
+points(1:nrow(Cult0)-0.15, Cult0[o,1], pch=19)
+points(1:nrow(Cult0)-0.05, Crop[o,1], col=2, pch=19)
+segments(x0=1:nrow(Cult0)-0.05, y0=Crop[o,2], y1=Crop[o,3], col=2)
+points(1:nrow(Cult0)+0.05, Tame[o,1], col=3, pch=19)
+segments(x0=1:nrow(Cult0)+0.05, y0=Tame[o,2], y1=Tame[o,3], col=3)
+points(1:nrow(Cult0)+0.15, Rough[o,1], col=4, pch=19)
+segments(x0=1:nrow(Cult0)+0.15, y0=Rough[o,2], y1=Rough[o,3], col=4)
+points(1:nrow(Cult0)+0.25, Prod[o,1], col="tan", pch=19)
+segments(x0=1:nrow(Cult0)+0.25, y0=Prod[o,2], y1=Prod[o,3], col="tan")
+legend("topright", pch=19, col=c(1:4, "tan"), lty=1, bty="n",
+    legend=c("Cultivation (old)", "Crop", "Tame", "Rough", "Productive"))
+
+
+round(cor(cbind(Crop=Crop[,1], Tame=Tame[,2], Rough=Rough[,1], Productive=Prod[,1])),2)
+
+
+plot(density(Cult0[,1]))
+lines(density(Crop[,1]), col=2)
+lines(density(Tame[,1]), col=3)
+lines(density(Rough[,1]), col=4)
+
+
+## compare dominant type vs compositio in the south (no age complexity)
+
+e <- new.env()
+load("d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-all-2018-11-29.RData", envir=e)
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
+rownames(tv) <- tv[,1]
+ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v61.csv")
+rownames(ts) <- ts[,1]
+
+sc1r <- row_std(groupSums(e$sc1[rownames(Xs),], 2, ts[colnames(e$sc1),"UseInAnalysisCoarse"]))
+
+compare_sets(es$DAT$soilc, colnames(sc1r))
+
+ps <- sc1r[,levels(es$DAT$soilc)]
+
+DAT <- es$DAT
+DAT$pProductive <- ps[,"Productive"]
+DAT$pClay <- ps[,"Clay"]
+DAT$pCrop <- ps[,"Crop"]
+DAT$pRapidDrain <- ps[,"RapidDrain"]
+DAT$pRoughP <- ps[,"RoughP"]
+DAT$pSaline <- ps[,"Saline"]
+DAT$pTameP <- ps[,"TameP"]
+DAT$pUrbInd <- ps[,"UrbInd"]
+
+mods1 <- mods2 <- es$mods
+mods2$Hab <- list(
+    .~. + pProductive + pClay + pCrop + pRapidDrain + pRoughP + pSaline + pTameP + pUrbInd,
+    .~. + pProductive + pClay + pCrop + pRapidDrain + pRoughP + pSaline + pTameP + pUrbInd + pAspen)
+k <- 3
+
+
+#spp <- "ALFL"
+dc <- list()
+for (spp in colnames(es$OFF)) {
+    cat(spp, "\n");flush.console()
+    ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
+    mid <- get_mid(ress)
+    pieces1 <- lapply(1:k, function(i) if (mid[1,i] < 1) .~. else mods1[[i]][[mid[1,i]]])
+    pieces2 <- lapply(1:k, function(i) if (mid[1,i] < 1) .~. else mods2[[i]][[mid[1,i]]])
+    ff1 <- ff2 <- y ~ 1
+    for (i in 1:k) {
+        ff1 <- update(ff1, pieces1[[i]])
+        ff2 <- update(ff2, pieces2[[i]])
+    }
+
+    dat <- DAT[es$BB[,1],]
+    y <- es$YY[es$BB[,1],spp]
+    off <- if (spp %in% colnames(es$OFF))
+        es$OFF[es$BB[,1],spp] else es$OFFmean[es$BB[,1]]
+
+    m1 <- glm(ff1, data=dat, offset=off, family=poisson)
+    m2 <- glm(ff2, data=dat, offset=off, family=poisson)
+
+    dc[[spp]] <- list(dom=glm_skeleton(m1), com=glm_skeleton(m2))
+}
+
+
+conv1 <- sapply(dc, function(z) z$dom$converge)
+conv2 <- sapply(dc, function(z) z$com$converge)
+
+aic1 <- sapply(dc, function(z) z$dom$aic)
+aic2 <- sapply(dc, function(z) z$com$aic)
+
+table(ComConverged=conv2, DomBetter=aic1-aic2 < 0)
+
+
+f <- function(x, dom=TRUE) {
+    m1 <- x$dom
+    m2 <- x$com
+    cf1 <- c(coef(m1)[1], coef(m1)[1] + coef(m1)[2:8])
+    cf2 <- coef(m2)[1] + coef(m2)[2:9]
+    names(cf1) <- names(cf2) <- colnames(ps)
+    #cbind(Dominant=exp(cf1), Composition=exp(cf2))
+    if (dom) exp(cf1) else exp(cf2)
+}
+
+cf1 <- sapply(dc, f, dom=TRUE)
+cf2 <- sapply(dc, f, dom=FALSE)
+
+plot(as.numeric(cf1[,conv2]), as.numeric(cf2[,conv2]),
+    xlim=c(0,1), ylim=c(0,1))
+abline(0,1)
+
+round(data.frame(Dominant=exp(cf1), Composition=exp(cf2)),4)
+
+plot(exp(cf1), exp(cf2))
+abline(0,1)
 
