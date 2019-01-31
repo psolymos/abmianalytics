@@ -31,7 +31,7 @@ PROJ <- "validation"
 #' - `YYv`: species matrix for validation data
 #' - `OFFv`: offsets for validation data
 #' - `SSHv`: surrounding suitable habitat for validation data
-load(file.path(ROOT, "data", "ab-birds-validation-2018-12-07.RData"))
+load(file.path(ROOT, "data", "ab-birds-validation-2019-01-30.RData"))
 #' Make a model matrix that matches the coefficients that we estimated
 #' `X` is for training data, `Xv` is for validation data set
 X <- get_model_matrix(DAT, mods)
@@ -572,19 +572,32 @@ write.csv(z, row.names=TRUE, file=file.path(ROOT, "validation-BGgroups.csv"))
 
 ## looking at ABMI sites and landscape effects
 
+library(mgcv)
 spp <- "CAWA"
 res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
 res <- res[!sapply(res, inherits, "try-error")]
-#names(mods)
 
 mu1 <- predict_with_SSH(res, Xv, SSHv, stage="Space")
-lam1 <- exp(mu1 + OFFv[,spp])
 mu2 <- predict_with_SSH(res, Xv, SSHv, stage="HF")
-lam2 <- exp(mu2 + OFFv[,spp])
+lam1 <- rowMeans(exp(mu1))
+lam2 <- rowMeans(exp(mu2))
+#y <- as.numeric(YYv[,spp])
+
+q <- quantile(lam1,0.99)
+lam1[lam1>q] <- q
+q <- quantile(lam2,0.99)
+lam2[lam2>q] <- q
 
 lc <- table(unname(unlist(lapply(res, function(z) z$ssh$labels))))/length(res)
 LC <- names(lc)[lc >= 0.5]
 
-ss <- endsWith(as.character(DATv$SS), "_1")
-cnt <- DATv$ABMIsite
+pSH <- rowSums(SSHv[,LC])
+pHF <- DATv$THF_KM
+
+m1 <- gam(lam1 ~ s(pSH, pHF))
+m2 <- gam(lam2 ~ s(pSH, pHF))
+op <- par(mfrow=c(1,2))
+plot(m1, se=FALSE)
+plot(m2, se=FALSE)
+par(op)
 
