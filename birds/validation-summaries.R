@@ -38,7 +38,29 @@ X <- get_model_matrix(DAT, mods)
 Xv <- get_model_matrix(DATv, mods)
 #' Process BU aggregate units
 bgu <- read.csv(file.path(ROOT, "validation-BGgroups.csv"))
+bgu$xv_yv <- as.factor(paste0(bgu$xv, "_", bgu$yv))
 
+Grain <- expand.grid(xv=1:10, yv=1:10)
+rownames(Grain) <- paste0(Grain$xv, "_", Grain$yv)
+Grain$x0 <- factor(rep("x", 100), c("x", ""))
+Grain$x1 <- Grain$x0
+Grain$x1[] <- ifelse(Grain$xv %in% c(1,3,5,7,9) & Grain$yv %in% c(1,3,5,7,9), "x", "")
+Grain$x2 <- Grain$x0
+Grain$x2[] <- ifelse(Grain$xv %in% c(1,4,7,10) & Grain$yv %in% c(1,4,7,10), "x", "")
+Grain$x3 <- Grain$x0
+Grain$x3[] <- ifelse(Grain$xv %in% c(1,5,9) & Grain$yv %in% c(1,5,9), "x", "")
+Grain$x4 <- Grain$x0
+Grain$x4[] <- ifelse(Grain$xv %in% c(1,10) & Grain$yv %in% c(1,10), "x", "")
+#with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x4)]))
+Grain <- Grain[match(bgu$xv_yv, rownames(Grain)),]
+
+bgu$x0 <- Grain$x0
+bgu$x1 <- Grain$x1
+bgu$x2 <- Grain$x2
+bgu$x3 <- Grain$x3
+bgu$x4 <- Grain$x4
+
+## extent
 bgu$SS2 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g2, sep="::", drop=TRUE)))
 tmp <- table(bgu$SS2)
 for (i in names(tmp))
@@ -77,6 +99,39 @@ DATv$SS5 <- bgu$SS5[match(DATv$SS, bgu$SS)]
 DATv$SS5[is.na(DATv$SS5)] <- ""
 DATv$SS10 <- bgu$SS10[match(DATv$SS, bgu$SS)]
 DATv$SS10[is.na(DATv$SS10)] <- ""
+## grain size
+
+bgu$xx0 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x0, sep="::", drop=TRUE)))
+bgu$xx0[bgu$x0 == ""] <- ""
+bgu$xx0 <- as.factor(bgu$xx0)
+levels(bgu$xx0) <- c(levels(bgu$xx0), "")
+
+bgu$xx1 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x1, sep="::", drop=TRUE)))
+bgu$xx1[bgu$x1 == ""] <- ""
+bgu$xx1 <- as.factor(bgu$xx1)
+
+bgu$xx2 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x2, sep="::", drop=TRUE)))
+bgu$xx2[bgu$x2 == ""] <- ""
+bgu$xx2 <- as.factor(bgu$xx2)
+
+bgu$xx3 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x3, sep="::", drop=TRUE)))
+bgu$xx3[bgu$x3 == ""] <- ""
+bgu$xx3 <- as.factor(bgu$xx3)
+
+bgu$xx4 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x4, sep="::", drop=TRUE)))
+bgu$xx4[bgu$x4 == ""] <- ""
+bgu$xx4 <- as.factor(bgu$xx4)
+
+DATv$xx0 <- bgu$xx0[match(DATv$SS, bgu$SS)]
+DATv$xx0[is.na(DATv$xx0)] <- ""
+DATv$xx1 <- bgu$xx1[match(DATv$SS, bgu$SS)]
+DATv$xx1[is.na(DATv$xx1)] <- ""
+DATv$xx2 <- bgu$xx2[match(DATv$SS, bgu$SS)]
+DATv$xx2[is.na(DATv$xx2)] <- ""
+DATv$xx3 <- bgu$xx3[match(DATv$SS, bgu$SS)]
+DATv$xx3[is.na(DATv$xx3)] <- ""
+DATv$xx4 <- bgu$xx4[match(DATv$SS, bgu$SS)]
+DATv$xx4[is.na(DATv$xx4)] <- ""
 #'
 #' # Species summaries
 #'
@@ -245,7 +300,7 @@ names(V) <- c("Null", names(mods)[1:9])
 plotOne(V)
 #' Now we do it for all species
 
-
+## Extent
 SPP <- colnames(YYv[Groups != "",colSums(YYv>0)>100])
 All <- list()
 for (spp in SPP) {
@@ -272,6 +327,33 @@ for (spp in SPP) {
     }
 }
 save(All, file=file.path(ROOT, "validation-ABMIandBG-results-2019-02-01.RData"))
+
+## Grain size
+SPP <- colnames(YYv[DATv$xx0 != "",colSums(YYv>0)>100])
+All <- list()
+for (spp in SPP) {
+    cat("\n", spp);flush.console()
+    res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
+    All[[spp]] <- list()
+    for (i in 1:5) {
+        cat(".")
+        Groups <- switch(i,
+            "1"=DATv$xx0,
+            "2"=DATv$xx1,
+            "3"=DATv$xx2,
+            "4"=DATv$xx3,
+            "5"=DATv$xx4)
+        V <- try(c(list(validate(res, Groups=Groups, stage=0)),
+            lapply(names(mods)[1:9], function(z) validate(res, Groups=Groups, stage=z))))
+        if (!inherits(V, "try-error")) {
+            names(V) <- c("Null", names(mods)[1:9])
+            All[[spp]][[i]] <- V
+        } else {
+            All[[spp]][[i]] <- NULL
+        }
+    }
+}
+save(All, file=file.path(ROOT, "validation-BGgrain-results-2019-02-19.RData"))
 
 
 Groups <- DATv$SS3
