@@ -223,6 +223,34 @@ save(dd_point,
     file=file.path(ROOT, VER, "data", "analysis", "site",
         "veg-hf_CameraARU_v6verif_2017-2018-sites.Rdata"))
 
+## additional camera sites
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "mammals",
+    "20190207_SummaryTables_Additional_CAM_Dave_Veg61_HFI2016.sqlite")
+
+db <- dbConnect(RSQLite::SQLite(), f)
+dbListTables(db)
+
+d00 <- dbReadTable(db, "Summary_Points")
+d01 <- dbReadTable(db, "Summary_Buffers")
+
+dbDisconnect(db)
+
+d00 <- make_char2fact(d00)
+d01 <- make_char2fact(d01)
+d00$Site_point_year <- as.factor(paste0(
+    as.character(d00$Site_ID), "_",
+    ifelse(is.na(d00$Cam_ARU_Bi), "NA", as.character(d00$Cam_ARU_Bi)),
+    "_", as.character(d00$Survey_Year)))
+dd_point <- make_vegHF_wide_v6(d00,
+    col.label="Site_name",
+    col.year=2018,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE, wide=FALSE) # use refined classes
+save(dd_point,
+    file=file.path(ROOT, VER, "data", "analysis", "site",
+        "veg-hf_CameraARU_v6verif_Additional.Rdata"))
 
 ## 150m
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
