@@ -118,6 +118,10 @@ for (i in tx) {
 
 #' Process predictions
 
+
+bpl$mites <- bpl$mites[,c("BS", "GP", "FR")] # hack to reorg mites
+bp <- do.call(rbind, bpl)
+
 SppTab <- get_species_table()
 SppTab <- SppTab[SppTab$native,]
 #Spp <- intersect(SppTab$SpeciesID, unname(unlist(lapply(bpl, rownames))))
@@ -127,18 +131,19 @@ SppTab <- SppTab[Spp,]
 rt <- .read_raster_template()
 KT <- cure4insect:::.c4if$KT
 
-rasterize_results_cr <- function (y)
+rasterize_results_cr <- function (y, current=TRUE)
 {
-    NC <- rowSums(y$SA.Curr)
+    NC <- if (current)
+        rowSums(y$SA.Curr) else rowSums(y$SA.Ref)
     KT$NC <- NC[match(rownames(KT), names(NC))]
     KT$NC[is.na(KT$NC)] <- 0
     r <- .make_raster(KT$NC, rc = KT, rt = rt)
     r
 }
 
-f <- function(spp) {
+f <- function(spp, current=TRUE) {
     y <- load_species_data(spp)
-    r <- rasterize_results_cr(y)
+    r <- rasterize_results_cr(y, current)
     if (SppTab[spp,"taxon"] == "birds")
         r <- p_bird(r, "ha", 2)
     r
@@ -150,17 +155,18 @@ tmp <- clusterEvalQ(cl, library(cure4insect))
 tmp <- clusterEvalQ(cl, set_options(path = "d:/abmi/reports"))
 tmp <- clusterEvalQ(cl, load_common_data())
 tmp <- clusterExport(cl, c("rt", "KT", "rasterize_results_cr", "SppTab"))
-All <- pblapply(Spp, f, cl=cl)
+All1 <- pblapply(Spp, f, current=TRUE, cl=cl)
+All2 <- pblapply(Spp, f, current=FALSE, cl=cl)
 stopCluster(cl)
-names(All) <- Spp
+names(All1) <- Spp
+names(All2) <- Spp
 
-#bpl$mites <- bpl$mites[,c("BS", "GP", "FR")] # hack to reorg mites
-#bp <- do.call(rbind, bpl)[Spp,]
+All <- All2
 
 Rall <- Reduce("+", All)
 Rred   <- Reduce("+", All[bp[,"GP"]==1])
-Rgreen <- Reduce("+", All[bp[,"SB"]==1])
-Rblue  <- Reduce("+", All[bp[,"FR"]==1])
+Rgreen <- Reduce("+", All[bp[,"SBF"]==1])
+Rblue  <- Reduce("+", All[bp[,"R"]==1])
 
 RRall <- stack(list(r=255*Rred/Rall, g=255*Rgreen/Rall, b=255*Rblue/Rall))
 R0 <- stack(list(r=0*rt, g=0*rt, b=0*rt))
@@ -172,8 +178,8 @@ h <- function(TT) {
     ss <- SppTab$taxon == TT
     Rall <- Reduce("+", All[ss])
     Rred   <- Reduce("+", All[bp[,"GP"]==1 & ss])
-    Rgreen <- Reduce("+", All[bp[,"SB"]==1 & ss])
-    Rblue  <- Reduce("+", All[bp[,"FR"]==1 & ss])
+    Rgreen <- Reduce("+", All[bp[,"SBF"]==1 & ss])
+    Rblue  <- Reduce("+", All[bp[,"R"]==1 & ss])
     RR <- stack(list(r=255*Rred/Rall, g=255*Rgreen/Rall, b=255*Rblue/Rall))
 }
 
@@ -302,6 +308,8 @@ function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, inte
     invisible(NULL)
 }
 
+#pdf("d:/abmi/sppweb2018/rainbow-maps/results-rainbow-maps-curr.pdf")
+pdf("d:/abmi/sppweb2018/rainbow-maps/results-rainbow-maps-ref.pdf")
 op <- par(mfrow=c(2,3), mar=c(2,2,2,2))
 hacked_plotRGB(RRall, stretch="hist", main="All")
 hacked_plotRGB(RRbirds, stretch="hist", main="Birds")
@@ -322,5 +330,7 @@ hacked_plotRGB(RRmosses, main="Bryophytes")
 hacked_plotRGB(RRvplants, main="Vascular Plants")
 par(op)
 
+#fno <- "d:/abmi/sppweb2018/rainbow-maps/results-rainbow-maps-curr-2019-01-30.RData"
+fno <- "d:/abmi/sppweb2018/rainbow-maps/results-rainbow-maps-ref-2019-01-30.RData"
 save(RRall, RRbirds, RRlichens, RRmites, RRmosses, RRvplants,
-    file="d:/abmi/sppweb2018/rainbow-maps/results-rainbow-maps-2019-01-30.RData")
+    file=fno)
