@@ -63,6 +63,9 @@ for (i in names(tmp))
     if (tmp[i] < 25)
         bgu$SS5[bgu$SS5 == i] <- ""
 bgu$SS5 <- as.factor(bgu$SS5)
+bgu$SS10 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g10, sep="::", drop=TRUE)))
+bgu$SS10 <- as.factor(bgu$SS10)
+levels(bgu$SS10) <- c(levels(bgu$SS10), "")
 #bgu$SS10 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g10, sep="::", drop=TRUE)))
 DATv$SS2 <- bgu$SS2[match(DATv$SS, bgu$SS)]
 DATv$SS2[is.na(DATv$SS2)] <- ""
@@ -72,7 +75,8 @@ DATv$SS4 <- bgu$SS4[match(DATv$SS, bgu$SS)]
 DATv$SS4[is.na(DATv$SS4)] <- ""
 DATv$SS5 <- bgu$SS5[match(DATv$SS, bgu$SS)]
 DATv$SS5[is.na(DATv$SS5)] <- ""
-
+DATv$SS10 <- bgu$SS10[match(DATv$SS, bgu$SS)]
+DATv$SS10[is.na(DATv$SS10)] <- ""
 #'
 #' # Species summaries
 #'
@@ -172,7 +176,7 @@ validate <- function(res, Groups, stage=NULL) {
 }
 
 
-plotOne <- function(One, q=1) {
+plotOne <- function(One, q=1, txt="") {
     spp <- One$HF$spp
     lam1 <- One$HF$lam1
     y1 <- One$HF$y1obs
@@ -186,7 +190,7 @@ plotOne <- function(One, q=1) {
     op <- par(mfrow=c(2,3))
 
     plot(0:9, sapply(One, "[[", "COR"), type="l", col="#0000FF80", ylim=c(-1,1),
-        xlab="Model stages", ylab="Correlation / AUC", main=spp, lwd=2)
+        xlab="Model stages", ylab="Correlation / AUC", main=paste(spp, txt), lwd=2)
     lines(0:9, sapply(One, "[[", "CORU"), col="#FF000080", lwd=2)
     lines(0:9, sapply(One, "[[", "AUC"), col="#00FF0080", lwd=2)
     abline(h=c(0, 0.5), lty=2)
@@ -231,6 +235,7 @@ plotOne <- function(One, q=1) {
     invisible(NULL)
 }
 #' This code goes over all the model stages
+
 spp <- "WTSP"
 Groups <- DATv$ABMIsite
 res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
@@ -239,19 +244,34 @@ V <- try(c(list(validate(res, Groups=Groups, stage=0)),
 names(V) <- c("Null", names(mods)[1:9])
 plotOne(V)
 #' Now we do it for all species
-SPP <- colnames(YYv[Groups != "",colSums(YYv>0)>20])
+
+
+SPP <- colnames(YYv[Groups != "",colSums(YYv>0)>100])
 All <- list()
 for (spp in SPP) {
-    cat(spp, "\n");flush.console()
+    cat("\n", spp);flush.console()
     res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
-    V <- try(c(list(validate(res, Groups=DATv$ABMIsite, stage=0)),
-        lapply(names(mods)[1:9], function(z) validate(res, Groups=Groups, stage=z))))
-    if (!inherits(V, "try-error")) {
-        names(V) <- c("Null", names(mods)[1:9])
-        All[[spp]] <- V
+    All[[spp]] <- list()
+    for (i in 1:6) {
+        cat(".")
+        Groups <- switch(i,
+            "1"=DATv$ABMIsite,
+            "2"=DATv$SS2,
+            "3"=DATv$SS3,
+            "4"=DATv$SS4,
+            "5"=DATv$SS5,
+            "6"=DATv$SS10)
+        V <- try(c(list(validate(res, Groups=Groups, stage=0)),
+            lapply(names(mods)[1:9], function(z) validate(res, Groups=Groups, stage=z))))
+        if (!inherits(V, "try-error")) {
+            names(V) <- c("Null", names(mods)[1:9])
+            All[[spp]][[i]] <- V
+        } else {
+            All[[spp]][[i]] <- NULL
+        }
     }
 }
-save(All, file=file.path(ROOT, "validation-quick-results-2019-01-17.RData"))
+save(All, file=file.path(ROOT, "validation-ABMIandBG-results-2019-02-01.RData"))
 
 
 Groups <- DATv$SS3
@@ -264,10 +284,51 @@ plotOne(V)
 
 
 
-pdf(file.path(ROOT, "validation-quick-results-2019-01-17.pdf"), onefile=TRUE, height=8, width=12)
-for (spp in names(All))
-    plotOne(All[[spp]], q=1)
+pdf(file.path(ROOT, "validation-ABMIandBG-results-2019-02-01.pdf"), onefile=TRUE, height=8, width=12)
+for (spp in names(All)) {
+    for (i in 1:6) {
+        txt <- switch(i,
+            "1"="ABMI 3x3",
+            "2"="BG 2x2",
+            "3"="BG 3x3",
+            "4"="BG 4x4",
+            "5"="BG 5x5",
+            "6"="BG full")
+        try(plotOne(All[[spp]][[i]], q=1, txt=txt))
+    }
+}
 dev.off()
+
+COR <- matrix(NA, length(All), 6)
+rownames(COR) <- names(All)
+colnames(COR) <- c("1"="ABMI 3x3",
+    "2"="BG 2x2",
+    "3"="BG 3x3",
+    "4"="BG 4x4",
+    "5"="BG 5x5",
+    "6"="BG full")
+for (spp in names(All)) {
+    COR[spp,] <- sapply(All[[spp]], function(z) z$HF$CORU)
+}
+plotrix::ladderplot(COR[rowSums(is.na(COR))==0,-1], ylab="Uncentered correlation")
+
+cr <- COR[rowSums(is.na(COR))==0,-1]
+A <- c(2, 3, 4, 5, 10)
+mn <- apply(cr, 2, mean)
+cf <- coef(lm(mn[4:5] ~ A[4:5]))
+E <- (1-cf[1])/cf[2]
+
+plot(A^2, cr[1,], ylim=c(0,1), type="n", xlim=c(0,E^2), xlab="Scale (km^2)", ylab="Uncentered corr")
+for (i in 1:nrow(cr))
+    lines(A^2, cr[i,], col="grey")
+lines(A^2, mn, lwd=2)
+points(A^2, mn, pch=19)
+abline(h=1, lty=2)
+AA <- seq(A[5], E, length.out = 10)
+rr <- cf[1]+cf[2]*AA
+lines(AA^2, rr, lty=2, lwd=2)
+
+
 #'
 #' Below this line is just parking lot for code pieces -- DON'T USE!
 #'
@@ -573,31 +634,53 @@ write.csv(z, row.names=TRUE, file=file.path(ROOT, "validation-BGgroups.csv"))
 ## looking at ABMI sites and landscape effects
 
 library(mgcv)
-spp <- "CAWA"
-res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
-res <- res[!sapply(res, inherits, "try-error")]
+SPP <- colnames(YYv[,colSums(YYv>0)>100])
 
-mu1 <- predict_with_SSH(res, Xv, SSHv, stage="Space")
-mu2 <- predict_with_SSH(res, Xv, SSHv, stage="HF")
-lam1 <- rowMeans(exp(mu1))
-lam2 <- rowMeans(exp(mu2))
-#y <- as.numeric(YYv[,spp])
+#spp <- "OVEN"
+pdf(file.path(ROOT, "landscape-pred.pdf"), width=12, height=12, onefile=TRUE)
 
-q <- quantile(lam1,0.99)
-lam1[lam1>q] <- q
-q <- quantile(lam2,0.99)
-lam2[lam2>q] <- q
+for (spp in SPP) {
+    cat(spp, "\n")
+    res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
+    res <- res[!sapply(res, inherits, "try-error")]
 
-lc <- table(unname(unlist(lapply(res, function(z) z$ssh$labels))))/length(res)
-LC <- names(lc)[lc >= 0.5]
+    mu0 <- predict_with_SSH(res, Xv, SSHv, stage="ARU")
+    mu1 <- predict_with_SSH(res, Xv, SSHv, stage="Space")
+    mu2 <- predict_with_SSH(res, Xv, SSHv, stage="HF")
+    lam0 <- rowMeans(exp(mu0))
+    lam1 <- rowMeans(exp(mu1))
+    lam2 <- rowMeans(exp(mu2))
+    #y <- as.numeric(YYv[,spp])
 
-pSH <- rowSums(SSHv[,LC])
-pHF <- DATv$THF_KM
+    q <- quantile(lam0,0.99)
+    lam0[lam0>q] <- q
+    q <- quantile(lam1,0.99)
+    lam1[lam1>q] <- q
+    q <- quantile(lam2,0.99)
+    lam2[lam2>q] <- q
 
-m1 <- gam(lam1 ~ s(pSH, pHF))
-m2 <- gam(lam2 ~ s(pSH, pHF))
-op <- par(mfrow=c(1,2))
-plot(m1, se=FALSE)
-plot(m2, se=FALSE)
-par(op)
+    lc <- table(unname(unlist(lapply(res, function(z) z$ssh$labels))))/length(res)
+    lc <- lc[match(colnames(SSHv), names(lc))]
+    names(lc) <- colnames(SSHv)
+    lc[is.na(lc)] <- 0
+    LC <- names(lc)[lc >= 0.5]
+
+    pSH <- rowSums(SSHv[,LC])
+    pHF <- DATv$THF_KM
+
+    m0 <- gam(lam0 ~ s(pSH, pHF))
+    m1 <- gam(lam1 ~ s(pSH, pHF))
+    m2 <- gam(lam2 ~ s(pSH, pHF))
+
+    LEV <- pretty(c(0, fitted(m2)[fitted(m2)>0]), 6)
+    LEV <- LEV[-length(LEV)]
+
+    op <- par(mfrow=c(2,2), las=2, cex.axis=0.6)
+    plot(m0, se=FALSE, scheme=2, main=paste(spp, "ARU"), rug=FALSE, levels=LEV)
+    plot(m1, se=FALSE, scheme=2, main="Space", rug=FALSE, levels=LEV)
+    barplot(rev(lc), horiz=TRUE, col=grey(1-rev(lc)), xlab="selection freq")
+    plot(m2, se=FALSE, scheme=2, main="HF", rug=FALSE, levels=LEV)
+    par(op)
+}
+dev.off()
 
