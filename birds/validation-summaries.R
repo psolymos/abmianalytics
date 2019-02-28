@@ -54,6 +54,14 @@ Grain$x4[] <- ifelse(Grain$xv %in% c(1,10) & Grain$yv %in% c(1,10), "x", "")
 #with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x4)]))
 Grain <- Grain[match(bgu$xv_yv, rownames(Grain)),]
 
+op <- par(mfrow=c(2,3))
+with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x0)], main="0"))
+with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x1)], main="1"))
+with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x2)], main="2"))
+with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x3)], main="3"))
+with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x4)], main="4"))
+par(op)
+
 bgu$x0 <- Grain$x0
 bgu$x1 <- Grain$x1
 bgu$x2 <- Grain$x2
@@ -209,13 +217,14 @@ validate <- function(res, Groups, stage=NULL) {
     Groups[is.na(Groups)] <- ""
     muo <- predict_with_SSH(res, Xv, SSHv, stage=stage)
     pro <- apply(exp(muo), 1, median)
-    offo <- OFFv[,spp]
+    offo <- OFFv[,res[[1]]$species]
     evo <- apply(exp(muo+offo), 1, median)
-    yo <- as.numeric(YYv[,spp])
+    yo <- as.numeric(YYv[,res[[1]]$species])
 
     Predm <- groupSums(exp(muo+offo), 1, Groups)
     Y <- sum_by(yo, Groups)
     yobs <- Y[rownames(Y) != "","x"]
+    npool <- Y[rownames(Y) != "","by"]
     ypred <- apply(Predm[rownames(Predm) != "",], 1, median)
     ypred <- ypred[names(yobs)]
     m1 <- get_mass(yo, evo)
@@ -225,9 +234,10 @@ validate <- function(res, Groups, stage=NULL) {
     CORo <- cor(yobs, ypred, method="spearman")
     CORUo <- .cor_uncentered(yobs, ypred)
     list(spp=res[[1]]$species,
+        Groups=as.factor(Groups[Groups != ""]),
         AUC=AUCo, COR=CORo, CORU=CORUo,
         y1obs=yo, lam1=evo, yobs=yobs, lam=ypred,
-        cmf1=m1, cmf=m)
+        cmf1=m1, cmf=m, npool=npool)
 }
 
 
@@ -300,24 +310,41 @@ names(V) <- c("Null", names(mods)[1:9])
 plotOne(V)
 #' Now we do it for all species
 
-## Extent
+## Extent & Grain size (or is it sampling intensity?)
+library(parallel)
 SPP <- colnames(YYv[Groups != "",colSums(YYv>0)>100])
+GR <- c("ABMI 3x3",
+    "BGex 2x2", "BGex 3x3", "BGex 4x4", "BGex 5x5", "BGex 10x10", # extent
+    "BGgr 2x2", "BGgr 3x3", "BGgr 4x4", "BGgr 5x5", "BGgr 10x10") # grain
 All <- list()
+cl <- makeCluster(9)
+clusterEvalQ(cl, library(mefa4))
+clusterEvalQ(cl, source("~/repos/abmianalytics/birds/00-functions.R"))
+clusterExport(cl, c("validate", "Xv", "OFFv", "YYv", "SSHv"))
 for (spp in SPP) {
     cat("\n", spp);flush.console()
     res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
+    clusterEvalQ(cl, rm(res))
+    clusterExport(cl, "res")
     All[[spp]] <- list()
-    for (i in 1:6) {
+    for (i in GR) {
         cat(".")
         Groups <- switch(i,
-            "1"=DATv$ABMIsite,
-            "2"=DATv$SS2,
-            "3"=DATv$SS3,
-            "4"=DATv$SS4,
-            "5"=DATv$SS5,
-            "6"=DATv$SS10)
+            "ABMI 3x3"=DATv$ABMIsite,
+            "BGex 2x2"=DATv$SS2,
+            "BGex 3x3"=DATv$SS3,
+            "BGex 4x4"=DATv$SS4,
+            "BGex 5x5"=DATv$SS5,
+            "BGex 10x10"=DATv$SS10,
+            "BGgr 2x2"=DATv$xx4,
+            "BGgr 3x3"=DATv$xx3,
+            "BGgr 4x4"=DATv$xx2,
+            "BGgr 5x5"=DATv$xx1,
+            "BGgr 10x10"=DATv$xx0)
+        clusterEvalQ(cl, rm(Groups))
+        clusterExport(cl, "Groups")
         V <- try(c(list(validate(res, Groups=Groups, stage=0)),
-            lapply(names(mods)[1:9], function(z) validate(res, Groups=Groups, stage=z))))
+            parLapply(cl, names(mods)[1:9], function(z) validate(res, Groups=Groups, stage=z))))
         if (!inherits(V, "try-error")) {
             names(V) <- c("Null", names(mods)[1:9])
             All[[spp]][[i]] <- V
@@ -326,9 +353,10 @@ for (spp in SPP) {
         }
     }
 }
-save(All, file=file.path(ROOT, "validation-ABMIandBG-results-2019-02-01.RData"))
+stopCluster(cl)
+save(All, file=file.path(ROOT, "validation-ABMIandBG-results-2019-02-25.RData"))
 
-## Grain size
+## Grain size (or is it sampling intensity?)
 SPP <- colnames(YYv[DATv$xx0 != "",colSums(YYv>0)>100])
 All <- list()
 for (spp in SPP) {
@@ -354,6 +382,23 @@ for (spp in SPP) {
     }
 }
 save(All, file=file.path(ROOT, "validation-BGgrain-results-2019-02-19.RData"))
+
+COR <- matrix(NA, length(All), 5)
+rownames(COR) <- names(All)
+colnames(COR) <- c(
+    "1"="BG 0",
+    "2"="BG 1",
+    "3"="BG 2",
+    "4"="BG 3",
+    "5"="BG 4")
+for (spp in names(All)) {
+    COR[spp,] <- sapply(All[[spp]], function(z) z$HF$CORU)
+}
+plotrix::ladderplot(COR[rowSums(is.na(COR))==0,], ylab="Uncentered correlation")
+#lines(1:5, rep(0.5,5),lwd=2, col=2)
+COR["CAWA","BG 3"] <- 0.475
+lines(1:5, COR["CAWA",], col=2, lwd=2)
+lines(1:5, COR["AMRO",], col=4, lwd=2)
 
 
 Groups <- DATv$SS3
