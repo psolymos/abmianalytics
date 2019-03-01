@@ -525,3 +525,21 @@ get_mass <- function(y, yhat, cumulative=TRUE) {
 #    class(out) <- "Pmass"
     out
 }
+#' Monte Carlo p-value
+pmc <- function(x, x0, alternative = c("two.sided", "less", "greater")) {
+    alternative <- match.arg(alternative)
+    pless <- sum(x >= x0, na.rm = TRUE)
+    pmore <- sum(x <= x0, na.rm = TRUE)
+    if (any(is.na(x0))) {
+        warning("some simulated values were NA and were removed")
+        nsimul <- sum(!is.na(x0))
+    } else {
+        nsimul <- length(x0)
+    }
+    p <- switch(alternative,
+        two.sided = 2*pmin(pless, pmore),
+        less = pless,
+        greater = pmore)
+    p <- pmin(1, (p + 1)/(nsimul + 1))
+    p
+}
