@@ -65,3 +65,63 @@ outj <- toJSON(all, pretty=TRUE)
 
 write.csv(out, file="~/GoogleWork/abmi/bu-helper/bu-helper.csv")
 writeLines(outj, con="~/GoogleWork/abmi/bu-helper/bu-helper.json")
+
+
+## -- time of year processing from ARU data
+
+library(mefa4)
+library(cure4insect)
+set_options(verbose=0, path = "d:/abmi/reports")
+load_common_data()
+spt <- read.csv("~/repos/abmispecies/_data/birds.csv")
+rownames(spt) <- spt$AOU
+library(lhreg)
+data("lhreg_data")
+rt <- .read_raster_template()
+KT <- cure4insect:::.c4if$KT
+
+rasterize_results_cr <- function (y, current=TRUE)
+{
+    NC <- if (current)
+        rowSums(y$SA.Curr) else rowSums(y$SA.Ref)
+    KT$NC <- NC[match(rownames(KT), names(NC))]
+    KT$NC[is.na(KT$NC)] <- 0
+    r <- .make_raster(KT$NC, rc = KT, rt = rt)
+    r
+}
+
+
+SPP <- intersect(lhreg_data$spp, spt$AOU[spt$map.pred])
+WR <- as.character(lhreg_data$spp)[lhreg_data$Mig == "WR"]
+SD <- as.character(lhreg_data$spp)[lhreg_data$Mig == "SD"]
+zz <- matrix(0, 12, length(SPP))
+dimnames(zz) <- list(1:12, SPP)
+zz[5:9,] <- 1
+zz[,colnames(zz) %in% WR] <- 1
+zz[4,colnames(zz) %in% SD] <- 1
+zz <- t(zz)
+zz
+
+Species <- as.character(spt[SPP, "sppid"])
+plist <- list()
+for (spp in Species) {
+    cat(spp, "\n")
+    y <- load_species_data(spp)
+    r <- rasterize_results_cr(y)
+    p <- p_bird(r, "ha", 7)
+    plist[[spp]] <- p
+}
+t(sapply(plist, function(z) range(values(z),na.rm=T)))
+
+for (spp in Species) {
+    p <- plist[[spp]]
+    MAX <- max(values(p), na.rm=TRUE)
+    p <- p / MAX
+    plist[[spp]] <- p
+}
+
+names(plist) <- SPP
+rr <- stack(plist)
+
+writeRaster(rr, "d:/abmi/AB_data_v2018/data/analysis/birds/BU-helper.tif", overwrite=TRUE)
+write.csv(zz,file="d:/abmi/AB_data_v2018/data/analysis/birds/BU-helper.csv")
