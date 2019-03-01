@@ -215,18 +215,18 @@ legend("bottomright", lty=1, col=2:4, bty="n",
 validate <- function(res, Groups, stage=NULL) {
     Groups <- as.character(Groups)
     Groups[is.na(Groups)] <- ""
-    muo <- predict_with_SSH(res, Xv, SSHv, stage=stage)
-    pro <- apply(exp(muo), 1, median)
-    offo <- OFFv[,res[[1]]$species]
+    ss <- Groups != ""
+    muo <- predict_with_SSH(res, Xv[ss,,drop=FALSE], SSHv[ss,,drop=FALSE], stage=stage)
+    offo <- OFFv[ss,res[[1]]$species]
     evo <- apply(exp(muo+offo), 1, median)
-    yo <- as.numeric(YYv[,res[[1]]$species])
+    yo <- as.numeric(YYv[ss,res[[1]]$species])
+    Groups <- as.factor(Groups[ss])
 
     Predm <- groupSums(exp(muo+offo), 1, Groups)
     Y <- sum_by(yo, Groups)
-    yobs <- Y[rownames(Y) != "","x"]
-    npool <- Y[rownames(Y) != "","by"]
-    ypred <- apply(Predm[rownames(Predm) != "",], 1, median)
-    ypred <- ypred[names(yobs)]
+    yobs <- Y[,"x"]
+    npool <- Y[,"by"]
+    ypred <- apply(Predm, 1, median)
     m1 <- get_mass(yo, evo)
     m <- get_mass(yobs, ypred)
 
@@ -234,12 +234,31 @@ validate <- function(res, Groups, stage=NULL) {
     CORo <- cor(yobs, ypred, method="spearman")
     CORUo <- .cor_uncentered(yobs, ypred)
     list(spp=res[[1]]$species,
-        Groups=as.factor(Groups[Groups != ""]),
+        Groups=Groups,
         AUC=AUCo, COR=CORo, CORU=CORUo,
         y1obs=yo, lam1=evo, yobs=yobs, lam=ypred,
-        cmf1=m1, cmf=m, npool=npool)
+        cmf1=m1, cmf=m, npool=npool,
+        mu=muo, off=offo)
 }
 
+.randomize <- function(v) {
+    g <- sample(v$Groups)
+    Predm <- groupSums(exp(v$mu+v$off), 1, g)
+    Y <- sum_by(v$y1obs, g)
+    yobs <- Y[,"x"]
+    ypred <- apply(Predm, 1, median)
+    CORo <- cor(yobs, ypred, method="spearman")
+    CORUo <- .cor_uncentered(yobs, ypred)
+    c(COR=CORo, CORU=CORUo)
+}
+randomize <- function(v, B=99) {
+    cbind(c(COR=v$COR, CORU=v$CORU), replicate(B, .randomize(v)))
+}
+summarize <- function(r) {
+    q <- t(apply(r, 1, quantile, c(0.025, 0.5, 0.975)))
+    p <- c(pmc(r[1,1], r[1,]), pmc(r[2,1], r[2,]))
+    cbind(Est=r[,1], q, "p-value"=p)
+}
 
 plotOne <- function(One, q=1, txt="") {
     spp <- One$HF$spp
@@ -308,6 +327,42 @@ V <- try(c(list(validate(res, Groups=Groups, stage=0)),
     lapply(names(mods)[1:9], function(z) validate(res, Groups=Groups, stage=z))))
 names(V) <- c("Null", names(mods)[1:9])
 plotOne(V)
+
+
+spp <- "ALFL"
+res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
+VV <- list()
+for (i in c("BGex 2x2", "BGex 3x3", "BGex 4x4", "BGex 5x5", "BGex 10x10")) {
+    Groups <- switch(i,
+        "BGex 2x2"=DATv$SS2,
+        "BGex 3x3"=DATv$SS3,
+        "BGex 4x4"=DATv$SS4,
+        "BGex 5x5"=DATv$SS5,
+        "BGex 10x10"=DATv$SS10)
+    VV[[i]] <- validate(res, Groups=Groups, stage="HF")
+}
+r <- lapply(VV, randomize, B=199)
+a <- lapply(r, function(z) summarize(z))
+
+op <- par(mfrow=c(1,2))
+j <- 1
+plot(c(2,3,4,5,10), sapply(a, function(z) z[j,1]), type="l", ylim=c(0,1), col=4,
+    xlab="Scale", ylab="Spearman r", main=spp)
+lines(c(2,3,4,5,10), sapply(a, function(z) z[j,3]), lty=1, col="grey")
+lines(c(2,3,4,5,10), sapply(a, function(z) z[j,2]), lty=2, col="grey")
+lines(c(2,3,4,5,10), sapply(a, function(z) z[j,4]), lty=2, col="grey")
+points(c(2,3,4,5,10), sapply(a, function(z) z[j,1]), col=4,
+    pch=ifelse(sapply(a, function(z) z[j,"p-value"] < 0.05), 19, 21))
+j <- 2
+plot(c(2,3,4,5,10), sapply(a, function(z) z[j,1]), type="l", ylim=c(0,1), col=4,
+    xlab="Scale", ylab="Uncentered r", main="")
+lines(c(2,3,4,5,10), sapply(a, function(z) z[j,3]), lty=1, col="grey")
+lines(c(2,3,4,5,10), sapply(a, function(z) z[j,2]), lty=2, col="grey")
+lines(c(2,3,4,5,10), sapply(a, function(z) z[j,4]), lty=2, col="grey")
+points(c(2,3,4,5,10), sapply(a, function(z) z[j,1]), col=4,
+    pch=ifelse(sapply(a, function(z) z[j,"p-value"] < 0.05), 19, 21))
+par(op)
+
 #' Now we do it for all species
 
 ## Extent & Grain size (or is it sampling intensity?)
