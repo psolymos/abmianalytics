@@ -344,22 +344,23 @@ for (i in c("BGex 2x2", "BGex 3x3", "BGex 4x4", "BGex 5x5", "BGex 10x10")) {
 r <- lapply(VV, randomize, B=199)
 a <- lapply(r, function(z) summarize(z))
 
+Sc <- log(c(2,3,4,5,10)^2)
 op <- par(mfrow=c(1,2))
 j <- 1
-plot(c(2,3,4,5,10), sapply(a, function(z) z[j,1]), type="l", ylim=c(0,1), col=4,
+plot(Sc, sapply(a, function(z) z[j,1]), type="l", ylim=c(0,1), col=4,
     xlab="Scale", ylab="Spearman r", main=spp)
-lines(c(2,3,4,5,10), sapply(a, function(z) z[j,3]), lty=1, col="grey")
-lines(c(2,3,4,5,10), sapply(a, function(z) z[j,2]), lty=2, col="grey")
-lines(c(2,3,4,5,10), sapply(a, function(z) z[j,4]), lty=2, col="grey")
-points(c(2,3,4,5,10), sapply(a, function(z) z[j,1]), col=4,
+lines(Sc, sapply(a, function(z) z[j,3]), lty=1, col="grey")
+lines(Sc, sapply(a, function(z) z[j,2]), lty=2, col="grey")
+lines(Sc, sapply(a, function(z) z[j,4]), lty=2, col="grey")
+points(Sc, sapply(a, function(z) z[j,1]), col=4,
     pch=ifelse(sapply(a, function(z) z[j,"p-value"] < 0.05), 19, 21))
 j <- 2
-plot(c(2,3,4,5,10), sapply(a, function(z) z[j,1]), type="l", ylim=c(0,1), col=4,
+plot(Sc, sapply(a, function(z) z[j,1]), type="l", ylim=c(0,1), col=4,
     xlab="Scale", ylab="Uncentered r", main="")
-lines(c(2,3,4,5,10), sapply(a, function(z) z[j,3]), lty=1, col="grey")
-lines(c(2,3,4,5,10), sapply(a, function(z) z[j,2]), lty=2, col="grey")
-lines(c(2,3,4,5,10), sapply(a, function(z) z[j,4]), lty=2, col="grey")
-points(c(2,3,4,5,10), sapply(a, function(z) z[j,1]), col=4,
+lines(Sc, sapply(a, function(z) z[j,3]), lty=1, col="grey")
+lines(Sc, sapply(a, function(z) z[j,2]), lty=2, col="grey")
+lines(Sc, sapply(a, function(z) z[j,4]), lty=2, col="grey")
+points(Sc, sapply(a, function(z) z[j,1]), col=4,
     pch=ifelse(sapply(a, function(z) z[j,"p-value"] < 0.05), 19, 21))
 par(op)
 
@@ -367,10 +368,10 @@ par(op)
 
 ## Extent & Grain size (or is it sampling intensity?)
 library(parallel)
-SPP <- colnames(YYv[Groups != "",colSums(YYv>0)>100])
+SPP <- colnames(YYv[,colSums(YYv>0)>100])
 GR <- c("ABMI 3x3",
-    "BGex 2x2", "BGex 3x3", "BGex 4x4", "BGex 5x5", "BGex 10x10", # extent
-    "BGgr 2x2", "BGgr 3x3", "BGgr 4x4", "BGgr 5x5", "BGgr 10x10") # grain
+    "BGex 2x2", "BGex 3x3", "BGex 4x4", "BGex 5x5", "BGex 10x10")#, # extent
+    #"BGgr 2x2", "BGgr 3x3", "BGgr 4x4", "BGgr 5x5", "BGgr 10x10") # grain
 All <- list()
 cl <- makeCluster(9)
 clusterEvalQ(cl, library(mefa4))
@@ -402,6 +403,10 @@ for (spp in SPP) {
             parLapply(cl, names(mods)[1:9], function(z) validate(res, Groups=Groups, stage=z))))
         if (!inherits(V, "try-error")) {
             names(V) <- c("Null", names(mods)[1:9])
+            for (j in 1:length(V)) {
+                V[[j]]$mu <- NULL
+                V[[j]]$offset <- NULL
+            }
             All[[spp]][[i]] <- V
         } else {
             All[[spp]][[i]] <- NULL
@@ -409,7 +414,7 @@ for (spp in SPP) {
     }
 }
 stopCluster(cl)
-save(All, file=file.path(ROOT, "validation-ABMIandBG-results-2019-02-25.RData"))
+save(All, file=file.path(ROOT, "validation-ABMIandBG-results-2019-02-28.RData"))
 
 ## Grain size (or is it sampling intensity?)
 SPP <- colnames(YYv[DATv$xx0 != "",colSums(YYv>0)>100])
