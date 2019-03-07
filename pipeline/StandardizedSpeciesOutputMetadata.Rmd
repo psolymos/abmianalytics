@@ -1,0 +1,409 @@
+---
+title: "Standardized Species Output Metadata"
+author: "Peter Solymos, <solymos@ualberta.ca>"
+date: "`r as.Date(Sys.time())`"
+output: word_document
+---
+
+```{r echo=FALSE}
+library(knitr)
+opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+options(knitr.kable.NA = '')
+#options(scipen = 999)
+HEAD <- c("Header", "Type", "Required", "Description")
+ALIGN <- c("lccl")
+```
+
+## Introduction
+
+The goal of this document to describe species output standards to automate the creation of
+
+1. figures for development website (SC review and soliciting feedback from experts before releasing new version),
+2. make custom predictions (given same backfilled version) for various purposes (BMF, scenario based management)
+
+This would greatly reduce 'project overhead' that is
+usually significant time spent on not creating additional value 
+(handing off between SC members and between SC and IC).
+
+## Format
+
+Because all of us running the models use R, it seems logical to use native R format (.RData files)
+for sharing the results. This can be further processed and written into other 
+formats upon request, e.g. CSV, Excel, GeoTIFF, etc.
+
+I am proposing the following structure:
+
+**Files** --- Each taxon have its own file, file name reflecting the taxon and date of creation (using ISO standard YYYY-MM-DD format), e.g. `ABMI-vplant-results-2019-03-01.RData`. A taxon can be divided into more than one file, e.g. native vs. non-native species, or snow-tracking vs. camera -- which also needs to be reflected in the file name.
+
+**Objects** --- In each taxon's file, we have a standard set of objects 
+(usually tables, like matrices or data frames) as listed in the next section.
+These tables list species as rows (Species ID as row name) and various fields as columns (standardized column names listed below). Cell values in these tables usually refer to 
+parameter estimates, predictions, or summary statistics.
+
+## Objects
+
+Objects are 2D or 3D arrays. 
+
+* The 1st dimension represent species, names along the 1st dimension are called species IDs.
+* The 2nd dimension represent fields,  names along the 2nd dimension must match _all_ the fields listed below. Objects can have other fields, and ordering if these fields can be arbitrary.
+* The 3rd dimension is optional, when it is present, it usually represents bootstrap replicates aling the 1st and 2nd dimensions (i.e. coefficient estimates coming from bootstrap runs), and the number of replicates (e.g. 100) defines the 3rd dimension size.
+
+Field types are defined as the following:
+
+* Chr: character or factor, or coercible to these.
+* Bin: logical (`TRUE`/`FALSE`) or coercible to these (i.e. 0/1).
+* Int: discrete numbers, usually non-negative
+* Num: real valued numbers represented with 6 digits precision.
+
+The following sections describe the schema for the individual objects.
+
+### General
+
+#### Species lookup table
+
+One special table is the species lookup table, that lists all the species IDs 
+that serve as row names for the other objects.
+This table links together all the other objects through its Species ID field, 
+which is used as row name in other objects (and this used as file name in the past).
+Not required fields can be blank (for character/factor types)
+
+* Object name: `Lookup`
+* Object format: data frame (colnames as in table)
+
+```{r}
+Lookup0 <- matrix(byrow=TRUE, ncol=4, dimnames=list(NULL, HEAD), data=c(
+"SpeciesID", "Chr", "Y", "Primary key for species.",
+"ScientificName", "Chr", "Y", "Scientific name(s) of possible multiple taxa included, must match names from taxonomic workbench / Oracle.",
+"TSNID", "Chr", "", "Use only of ScientificName has not been grouped/altered.",
+"CommonName", "Chr", "", "Provide is it exists.",
+"ModelNorth", "Bin", "Y", "Model based on north data exists and we decided to show it.",
+"ModelSouth", "Bin", "Y", "Model based on south data exists and we decided to show it.",
+"SizeNorth", "Int", "Y", "Sample size to be reported for north results (for models or use/availability).",
+"SizeSouth", "Int", "Y", "Sample size to be reported for south results (for models or use/availability).",
+"Nonnative", "Bin", "Y", "Non native status, assumed native if missing.",
+"Link", "Chr", "Y", "Link function used in north/south models, i.e. logit, log, identity (usually the same for all spp except for habitat elements).",
+"Comments", "Chr", "", "Known issues, general disclaimers about secies or groups of species."
+))
+kable(Lookup0, row.names=FALSE, align=ALIGN, padding = 2)
+```
+
+#### Detections
+
+Detection maps are generated based on Oracle data on the data portal.
+This means that data not presently in Oracle is not represented in the maps by IC.
+Based on some discussions with IC, we concluded that the easiest would be to
+snap non-ABMI data locations to the 20x20 km ABMI grid (i.e. determine nearest on-grid ABMI 
+site ID).
+
+* Object name: `Detections`
+* Object format: **DISCUSSION NEEDED** Best format is probably a table with ABMI sites as columns (list only those sites that are in the proximity of any of the non-ABMI data) and SpeciesID's as rows, cell values indicating detections (1) or non-detections (0) of the species in the proximity of a site.
+
+
+### South
+
+#### Use/availability
+
+Summary statistics of the datactions and land cover composition.
+
+* Object name: `UseavailSouth`
+* Object format: matrix or data frame (rownames are SpeciesID's, colnames as in table)
+
+
+```{r}
+UseavailSouth0 <- data.frame(c(
+    "Productive",
+    "Clay",
+    "Saline",
+    "RapidDrain",
+    "Crop",
+    "TameP",
+    "RoughP",
+    "UrbInd",
+    "HardLin",
+    "SoftLin"), 
+    "Num", "Y", "Use availability statistic.")
+colnames(UseavailSouth0) <- HEAD
+kable(UseavailSouth0, row.names=FALSE, align=ALIGN)
+```
+
+
+#### Soil and HF coefficients
+
+Backtransformed (i.e. not log/logit scale) relative abundances from the habitat part of the models.
+Note: this table only covers land cover types and not spatial covariates used in the habitat modeling (e.g. pAspen).
+
+* Object name: `CoefSouth`
+* Object format: matrix, a data frame (rownames are SpeciesID's, colnames as in table), or a 3D array
+
+
+```{r}
+CoefSouth0 <- data.frame(c(
+    "Productive",
+    "Clay",
+    "Saline",
+    "RapidDrain",
+    "Crop",
+    "TameP",
+    "RoughP",
+    "UrbInd",
+    "HardLin",
+    "SoftLin"), 
+    "Num", "Y", "Relative abundance estimate.")
+colnames(CoefSouth0) <- HEAD
+kable(CoefSouth0, row.names=FALSE, align=ALIGN)
+```
+
+Derivative values:
+
+* AverageCoef is defined as arithmetic mean of non HF classes (Productive, Clay, Saline, RapidDrain).
+* SoftLin10: defined as 0.9 x AverageCoef + 0.1 x SoftLin.
+* HardLin10: defined as 0.9 x AverageCoef + 0.1 x HardLin.
+
+Uncertainties: two additional tables can be added. The table has same rows/columns as `CoefSouth`.
+
+* `LowerSouth`: lower limits of the 90% confidence intervals, pre calculated
+* `UpperSouth`: upper limits of the 90% confidence intervals, pre calculated
+
+As an alternative, `CoefSouth` can be a 3D array in which case intervals are based on quantiles.
+
+#### Space and climate coefficients
+
+Untransformed (i.e. on log/logit scale) parameter estimates from the space climate part of the models.
+Note: this table contains pAspen that was estimated in the habitat part of the model, but we consider it part of this table.
+
+
+* Object name: `SpclimSouth`
+* Object format: matrix, a data frame (rownames are SpeciesID's, colnames as in table), or a 3D array
+
+```{r}
+SpclimSouth0 <- data.frame(c(
+    "pAspen",
+    "Intercept",
+    "Lat",
+    "Long",
+    "AHM",
+    "PET",
+    "FFP",
+    "MAP",
+    "MAT",
+    "MCMT",
+    "MWMT",
+    "Lat2",
+    "Long2",
+    "LatLong",
+    "MAPPET",
+    "MATAHM",
+    "MAPFFP",
+    "MAT2",
+    "MWMT2"),
+    "Num", "Y", "Parameter estimates.")
+colnames(SpclimSouth0) <- HEAD
+kable(SpclimSouth0, row.names=FALSE, align=ALIGN)
+```
+
+Variables are assumed untransformed, other than 2 indicating squared, and 2 names side-by-side indicating an interaction (product).
+
+If a 3D array, 3rd dimension represent independent bootstrap estimates.
+
+
+### North
+
+#### Use/availability
+
+Summary statistics of the datactions and land cover composition.
+
+* Object name: `UseavailNorth`
+* Object format: matrix or data frame (rownames are SpeciesID's, colnames as in table)
+
+
+```{r}
+UseavailNorth0 <- data.frame(c(
+    "Deciduous",
+    "Mixedwood",
+    "WhiteSpruce",
+    "Pine",
+    "BlackSpruce",
+    "TreedFen",
+    "Open",
+    "Wetland",
+    "HFor",
+    "Crop",
+    "TameP",
+    "RoughP",
+    "UrbInd",
+    "HardLin",
+    "SoftLin"),
+    "Num", "Y", "Use availability statistic.")
+colnames(UseavailNorth0) <- HEAD
+kable(UseavailNorth0, row.names=FALSE, align=ALIGN)
+```
+
+
+#### Soil and HF coefficients
+
+Backtransformed (i.e. not log/logit scale) relative abundances from the habitat part of the models.
+Note: this table only covers land cover types and not spatial covariates used in the habitat modeling (e.g. pAspen).
+
+* Object name: `CoefNorth`
+* Object format: matrix, a data frame (rownames are SpeciesID's, colnames as in table), or a 3D array
+
+
+```{r}
+CoefNorth0 <- data.frame(c(
+    "WhiteSpruce0",
+    "WhiteSpruce10",
+    "WhiteSpruce20",
+    "WhiteSpruce40",
+    "WhiteSpruce60",
+    "WhiteSpruce80",
+    "WhiteSpruce100",
+    "WhiteSpruce120",
+    "WhiteSpruce140",
+    "Pine0",
+    "Pine10",
+    "Pine20",
+    "Pine40",
+    "Pine60",
+    "Pine80",
+    "Pine100",
+    "Pine120",
+    "Pine140",
+    "Deciduous0",
+    "Deciduous10",
+    "Deciduous20",
+    "Deciduous40",
+    "Deciduous60",
+    "Deciduous80",
+    "Deciduous100",
+    "Deciduous120",
+    "Deciduous140",
+    "Mixedwood0",
+    "Mixedwood10",
+    "Mixedwood20",
+    "Mixedwood40",
+    "Mixedwood60",
+    "Mixedwood80",
+    "Mixedwood100",
+    "Mixedwood120",
+    "Mixedwood140",
+    "BlackSpruce0",
+    "BlackSpruce10",
+    "BlackSpruce20",
+    "BlackSpruce40",
+    "BlackSpruce60",
+    "BlackSpruce80",
+    "BlackSpruce100",
+    "BlackSpruce120",
+    "BlackSpruce140",
+    "TreedFen",
+    "Shrub",
+    "Grass",
+    "TreeShrubSwamp",
+    "NonTreeFenMarsh",
+    "CCWhiteSpruce0",
+    "CCWhiteSpruce10",
+    "CCWhiteSpruce20",
+    "CCWhiteSpruce40",
+    "CCWhiteSpruce60",
+    "CCPine0",
+    "CCPine10",
+    "CCPine20",
+    "CCPine40",
+    "CCPine60",
+    "CCDeciduous0",
+    "CCDeciduous10",
+    "CCDeciduous20",
+    "CCDeciduous40",
+    "CCDeciduous60",
+    "Crop",
+    "TameP",
+    "RoughP",
+    "UrbInd",
+    "SoftLin",
+    "HardLin"), 
+    "Num", "Y", "Relative abundance estimate.")
+colnames(CoefNorth0) <- HEAD
+kable(CoefNorth0, row.names=FALSE, align=ALIGN)
+```
+
+Derivative values:
+
+* AverageCoef is defined as arithmetic mean of non HF classes (not CC, Crop, TameP, RoughP, UrbInd, SoftLin, HardLin).
+* SoftLin10: defined as 0.9 x AverageCoef + 0.1 x SoftLin.
+* HardLin10: defined as 0.9 x AverageCoef + 0.1 x HardLin.
+
+Uncertainties: two additional tables can be added. The table has same rows/columns as `CoefSouth`.
+
+* `LowerNorth`: lower limits of the 90% confidence intervals, pre calculated
+* `UpperNorth`: upper limits of the 90% confidence intervals, pre calculated
+
+As an alternative, `CoefNorth` can be a 3D array in which case intervals are based on quantiles.
+
+#### Space and climate coefficients
+
+Untransformed (i.e. on log/logit scale) parameter estimates from the space climate part of the models.
+Note: this table contains pAspen that was estimated in the habitat part of the model, but we consider it part of this table.
+
+
+* Object name: `SpclimNorth`
+* Object format: matrix, a data frame (rownames are SpeciesID's, colnames as in table), or a 3D array
+
+```{r}
+SpclimNorth0 <- data.frame(c(
+    "pAspen",
+    "Intercept",
+    "Lat",
+    "Long",
+    "AHM",
+    "PET",
+    "FFP",
+    "MAP",
+    "MAT",
+    "MCMT",
+    "MWMT",
+    "Lat2",
+    "Long2",
+    "LatLong",
+    "MAPPET",
+    "MATAHM",
+    "MAPFFP",
+    "MAT2",
+    "MWMT2"),
+    "Num", "Y", "Parameter estimates.")
+colnames(SpclimNorth0) <- HEAD
+kable(SpclimNorth0, row.names=FALSE, align=ALIGN)
+```
+
+Variables are assumed untransformed, other than 2 indicating squared, and 2 names side-by-side indicating an interaction (product).
+
+If a 3D array, 3rd dimension represent independent bootstrap estimates.
+
+```{r eval=FALSE}
+Lookup <- data.frame(
+    SpeciesID=c("Spp1", "Spp2", "Spp3", "Spp4"),
+    ScientificName=c("Homo sapiens", "Tirannosaurus rex", "Paramecium spp.", "Felis catus"),
+    TSNID=c("TSN000", "", "ABMI666", "TSN999"),
+    CommonName=c("Human", NA, NA, NA),
+    ModelNorth=c(TRUE, FALSE, FALSE, TRUE),
+    ModelSouth=c(TRUE, TRUE, FALSE, FALSE),
+    SizeNorth=c(100, NA, NA, 10),
+    SizeSouth=c(200, 1, NA, NA),
+    Nonnative=c(TRUE, FALSE, FALSE, TRUE),
+    Link=c("identity", "logit", "logit", "log"),
+    Comments=c("", "Extinct.", "Oh crap, what is this !?", "Meow"))
+rownames(Lookup) <- Lookup$SpeciesID
+f <- function(x) {
+    matrix(rnorm(nrow(x) * nrow(Lookup)), 
+        nrow(Lookup), nrow(x),
+        dimnames=list(rownames(Lookup), x[,1]))
+}
+CoefNorth <- exp(f(CoefNorth0))
+CoefSouth <- exp(f(CoefSouth0))
+SpclimNorth <- f(SpclimNorth0)
+SpclimSouth <- f(SpclimSouth0)
+UseavailNorth <- f(UseavailNorth0)
+UseavailSouth <- f(UseavailSouth0)
+save(list=c("CoefNorth", "CoefSouth",
+    "Lookup", "SpclimNorth", "SpclimSouth", 
+    "UseavailNorth", "UseavailSouth"), file="StandardizedOutput.RData")
+```
