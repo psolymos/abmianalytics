@@ -407,3 +407,8 @@ save(list=c("CoefNorth", "CoefSouth",
     "Lookup", "SpclimNorth", "SpclimSouth", 
     "UseavailNorth", "UseavailSouth"), file="StandardizedOutput.RData")
 ```
+
+## Updates
+
+* Versioning: added version to the schema,  soliciting that later versions can be tracked
+* Need to added the mapping between land cover labels (veg/HF/soil) to this
