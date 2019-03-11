@@ -297,7 +297,7 @@ bfun <- function(i, SS, BLOCK=NULL) {
     }
     sort(unname(unlist(out)))
 }
-#'
+#' Simple and fast ROC and AUC
 simple_roc <- function(labels, scores){
     Labels <- labels[order(scores, decreasing=TRUE)]
     data.frame(
