@@ -95,6 +95,7 @@ Lookup0 <- matrix(byrow=TRUE, ncol=4, dimnames=list(NULL, HEAD), data=c(
 "Nonnative", "Bin", "Y", "Non native status, assumed native if missing.",
 "LinkHabitat", "Chr", "Y", "Link function used in north/south habitat models, i.e. logit, log, identity (usually the same for all spp except for habitat elements).",
 "LinkSpclim", "Chr", "Y", "Link function used in north/south space/climate models, i.e. logit, log, identity (usually the same for all spp except for habitat elements).",
+"AUC", "Num", "Y", "AUC value (0-1).", 
 "Comments", "Chr", "", "Known issues, general disclaimers about secies or groups of species."
 ))
 kable(Lookup0, row.names=FALSE, align=ALIGN, padding = 2)
