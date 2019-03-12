@@ -1,5 +1,5 @@
 ---
-title: "Standardized Species Output Metadata"
+title: "Standardized Species Output Metadata (v2018)"
 author: "Peter Solymos, <solymos@ualberta.ca>"
 date: "`r as.Date(Sys.time())`"
 output: word_document
@@ -25,6 +25,14 @@ This would greatly reduce 'project overhead' that is
 usually significant time spent on not creating additional value 
 (handing off between SC members and between SC and IC).
 
+## Versions
+
+Version of 'backfilled' soil/vegetation layer used alongside of the verified footpring info for modelling is noted for each taxa in the final
+compendium of results (within the **cure4insect** package).
+Version are denoted by the year of summer surveys when most of the data
+was collected for the update. I.e. v2018 in this document.
+Updates might not be backwards compatible bue to changes in land cover classification or the soil/vegetation layer.
+
 ## Format
 
 Because all of us running the models use R, it seems logical to use native R format (.RData files)
@@ -46,7 +54,8 @@ Objects are 2D or 3D arrays.
 
 * The 1st dimension represent species, names along the 1st dimension are called species IDs.
 * The 2nd dimension represent fields,  names along the 2nd dimension must match _all_ the fields listed below. Objects can have other fields, and ordering if these fields can be arbitrary.
-* The 3rd dimension is optional, when it is present, it usually represents bootstrap replicates aling the 1st and 2nd dimensions (i.e. coefficient estimates coming from bootstrap runs), and the number of replicates (e.g. 100) defines the 3rd dimension size.
+* The 3rd dimension is optional, when it is present, it usually represents bootstrap replicates aling the 1st and 2nd dimensions (i.e. coefficient estimates coming from bootstrap runs), and the number of replicates (e.g. 100) defines the 3rd dimension size. Camera mammals have separate models for summer and winter, this can also be used as the 3rd dimension, adding distinguishing names along that dimension.
+
 
 Field types are defined as the following:
 
@@ -56,6 +65,11 @@ Field types are defined as the following:
 * Num: real valued numbers represented with 6 digits precision.
 
 The following sections describe the schema for the individual objects.
+
+Notes:
+
+* When a given variable was not estimated for a species, put `NA` when the variable was not even considered, and put 0 when an estimates missing due to model selection (i.e. it was part of the original scope).
+* When a coefficient refers to multiple land cover types (because those were pooled for modeling), repeat the same value under the multiple names.
 
 ### General
 
@@ -78,25 +92,27 @@ Lookup0 <- matrix(byrow=TRUE, ncol=4, dimnames=list(NULL, HEAD), data=c(
 "CommonName", "Chr", "", "Provide is it exists.",
 "ModelNorth", "Bin", "Y", "Model based on north data exists and we decided to show it.",
 "ModelSouth", "Bin", "Y", "Model based on south data exists and we decided to show it.",
-"SizeNorth", "Int", "Y", "Sample size to be reported for north results (for models or use/availability).",
-"SizeSouth", "Int", "Y", "Sample size to be reported for south results (for models or use/availability).",
 "Nonnative", "Bin", "Y", "Non native status, assumed native if missing.",
-"Link", "Chr", "Y", "Link function used in north/south models, i.e. logit, log, identity (usually the same for all spp except for habitat elements).",
+"LinkHabitat", "Chr", "Y", "Link function used in north/south habitat models, i.e. logit, log, identity (usually the same for all spp except for habitat elements).",
+"LinkSpclim", "Chr", "Y", "Link function used in north/south space/climate models, i.e. logit, log, identity (usually the same for all spp except for habitat elements).",
 "Comments", "Chr", "", "Known issues, general disclaimers about secies or groups of species."
 ))
 kable(Lookup0, row.names=FALSE, align=ALIGN, padding = 2)
 ```
 
-#### Detections
+#### Observations
 
-Detection maps are generated based on Oracle data on the data portal.
-This means that data not presently in Oracle is not represented in the maps by IC.
-Based on some discussions with IC, we concluded that the easiest would be to
-snap non-ABMI data locations to the 20x20 km ABMI grid (i.e. determine nearest on-grid ABMI 
-site ID).
-
-* Object name: `Detections`
-* Object format: **DISCUSSION NEEDED** Best format is probably a table with ABMI sites as columns (list only those sites that are in the proximity of any of the non-ABMI data) and SpeciesID's as rows, cell values indicating detections (1) or non-detections (0) of the species in the proximity of a site.
+Have the species data used for modeling in a table (matrix or data frame) 
+with samples as rows and Species IDs as column names.
+Cell values are the observations (detections, counts, densities).
+Zero (0) indicates that the species at that site or in that sample was not 
+detected.
+Additional columns can indicate if any non-ABMI data were used, so that
+we can report on these separately.
+Add longitude and latitude, so that these extra locations can be mapped.
+Use public coordinates for ABMI sites,
+and provice public coordinates for nearest ABMI site in case the location
+cannot be shared.
 
 
 ### South
@@ -142,6 +158,7 @@ CoefSouth0 <- data.frame(c(
     "Clay",
     "Saline",
     "RapidDrain",
+    "Water",
     "Crop",
     "TameP",
     "RoughP",
@@ -159,18 +176,20 @@ Derivative values:
 * SoftLin10: defined as 0.9 x AverageCoef + 0.1 x SoftLin.
 * HardLin10: defined as 0.9 x AverageCoef + 0.1 x HardLin.
 
-Uncertainties: two additional tables can be added. The table has same rows/columns as `CoefSouth`.
+Uncertainties: two additional tables can be added. The table has same rows/columns as `CoefSouth`. These are the error bars that would be 
+included on the coefficient figures.
 
 * `LowerSouth`: lower limits of the 90% confidence intervals, pre calculated
 * `UpperSouth`: upper limits of the 90% confidence intervals, pre calculated
 
-As an alternative, `CoefSouth` can be a 3D array in which case intervals are based on quantiles.
+As an alternative, `CoefSouth` can be a 3D array in which case intervals are based on quantiles. This is when the whole modeling is bootstrapped.
+
+Optionally, a similarly structured table (`HonestSouth`) can be created to indicate which coefficients were estimeted togather. I.e. instead of coefficient values, one would use (1, 1, 2, 2) to indicate that (A, B, C, D) classes were estimates as (A+B, A+B, C+D, C+D). Either numeric or character representation would work.
 
 #### Space and climate coefficients
 
 Untransformed (i.e. on log/logit scale) parameter estimates from the space climate part of the models.
 Note: this table contains pAspen that was estimated in the habitat part of the model, but we consider it part of this table.
-
 
 * Object name: `SpclimSouth`
 * Object format: matrix, a data frame (rownames are SpeciesID's, colnames as in table), or a 3D array
@@ -205,6 +224,12 @@ Variables are assumed untransformed, other than 2 indicating squared, and 2 name
 
 If a 3D array, 3rd dimension represent independent bootstrap estimates.
 
+#### Auxiliary variables
+
+Auxiliary variables (methodology related variables, snow days, etc.)
+can be store in additional objects (i.e. `ExtrasNorth`)
+with SPecies IDs as rownames and columns referring to these
+additional parameters.
 
 ### North
 
@@ -226,6 +251,7 @@ UseavailNorth0 <- data.frame(c(
     "TreedFen",
     "Open",
     "Wetland",
+    "Water",
     "HFor",
     "Crop",
     "TameP",
@@ -238,83 +264,90 @@ colnames(UseavailNorth0) <- HEAD
 kable(UseavailNorth0, row.names=FALSE, align=ALIGN)
 ```
 
+Notes: Open includes Bare.
 
-#### Soil and HF coefficients
+#### Vegetation and HF coefficients
 
 Backtransformed (i.e. not log/logit scale) relative abundances from the habitat part of the models.
-Note: this table only covers land cover types and not spatial covariates used in the habitat modeling (e.g. pAspen).
 
 * Object name: `CoefNorth`
-* Object format: matrix, a data frame (rownames are SpeciesID's, colnames as in table), or a 3D array
+* Object format: matrix, a data frame (rownames are SpeciesID's, colnames as in table), or a 3D array.
 
 
 ```{r}
 CoefNorth0 <- data.frame(c(
-    "WhiteSpruce0",
-    "WhiteSpruce10",
-    "WhiteSpruce20",
-    "WhiteSpruce40",
-    "WhiteSpruce60",
-    "WhiteSpruce80",
-    "WhiteSpruce100",
-    "WhiteSpruce120",
-    "WhiteSpruce140",
-    "Pine0",
-    "Pine10",
-    "Pine20",
-    "Pine40",
-    "Pine60",
-    "Pine80",
-    "Pine100",
-    "Pine120",
-    "Pine140",
-    "Deciduous0",
-    "Deciduous10",
-    "Deciduous20",
-    "Deciduous40",
-    "Deciduous60",
-    "Deciduous80",
-    "Deciduous100",
-    "Deciduous120",
-    "Deciduous140",
-    "Mixedwood0",
-    "Mixedwood10",
-    "Mixedwood20",
-    "Mixedwood40",
-    "Mixedwood60",
-    "Mixedwood80",
-    "Mixedwood100",
-    "Mixedwood120",
-    "Mixedwood140",
-    "BlackSpruce0",
-    "BlackSpruce10",
-    "BlackSpruce20",
-    "BlackSpruce40",
-    "BlackSpruce60",
-    "BlackSpruce80",
-    "BlackSpruce100",
-    "BlackSpruce120",
-    "BlackSpruce140",
+    "WhiteSpruce_0-10",
+    "WhiteSpruce_10-20",
+    "WhiteSpruce_20-40",
+    "WhiteSpruce_40-60",
+    "WhiteSpruce_60-80",
+    "WhiteSpruce_80-100",
+    "WhiteSpruce_100-120",
+    "WhiteSpruce_120-140",
+    "WhiteSpruce_140+",
+    "Pine_0-10",
+    "Pine_10-20",
+    "Pine_20-40",
+    "Pine_40-60",
+    "Pine_60-80",
+    "Pine_80-100",
+    "Pine_100-120",
+    "Pine_120-140",
+    "Pine_140+",
+    "Deciduous_0-10",
+    "Deciduous_10-20",
+    "Deciduous_20-40",
+    "Deciduous_40-60",
+    "Deciduous_60-80",
+    "Deciduous_80-100",
+    "Deciduous_100-120",
+    "Deciduous_120-140",
+    "Deciduous_140+",
+    "Mixedwood_0-10",
+    "Mixedwood_10-20",
+    "Mixedwood_20-40",
+    "Mixedwood_40-60",
+    "Mixedwood_60-80",
+    "Mixedwood_80-100",
+    "Mixedwood_100-120",
+    "Mixedwood_120-140",
+    "Mixedwood_140+",
+    "BlackSpruce_0-10",
+    "BlackSpruce_10-20",
+    "BlackSpruce_20-40",
+    "BlackSpruce_40-60",
+    "BlackSpruce_60-80",
+    "BlackSpruce_80-100",
+    "BlackSpruce_100-120",
+    "BlackSpruce_120-140",
+    "BlackSpruce_140+",
     "TreedFen",
     "Shrub",
     "Grass",
+    "Bare",
+    "Water",
     "TreeShrubSwamp",
     "NonTreeFenMarsh",
-    "CCWhiteSpruce0",
-    "CCWhiteSpruce10",
-    "CCWhiteSpruce20",
-    "CCWhiteSpruce40",
-    "CCWhiteSpruce60",
-    "CCPine0",
-    "CCPine10",
-    "CCPine20",
-    "CCPine40",
-    "CCPine60",
-    "CCDeciduous0",
-    "CCDeciduous10",
-    "CCDeciduous20",
-    "CCDeciduous40",
-    "CCDeciduous60",
+    "CCWhiteSpruce_0-10",
+    "CCWhiteSpruce_10-20",
+    "CCWhiteSpruce_20-40",
+    "CCWhiteSpruce_40-60",
+    "CCWhiteSpruce_60-80",
+    "CCPine_0-10",
+    "CCPine_10-20",
+    "CCPine_20-40",
+    "CCPine_40-60",
+    "CCPine_60-80",
+    "CCDeciduous_0-10",
+    "CCDeciduous_10-20",
+    "CCDeciduous_20-40",
+    "CCDeciduous_40-60",
+    "CCDeciduous_60-80",
+    "CCMixedwood_0-10",
+    "CCMixedwood_10-20",
+    "CCMixedwood_20-40",
+    "CCMixedwood_40-60",
+    "CCMixedwood_60-80",
     "Crop",
     "TameP",
     "RoughP",
@@ -332,18 +365,19 @@ Derivative values:
 * SoftLin10: defined as 0.9 x AverageCoef + 0.1 x SoftLin.
 * HardLin10: defined as 0.9 x AverageCoef + 0.1 x HardLin.
 
-Uncertainties: two additional tables can be added. The table has same rows/columns as `CoefSouth`.
+Uncertainties: two additional tables can be added. The table has same rows/columns as `CoefNorth`. These are the error bars that would be 
+included on the coefficient figures.
 
 * `LowerNorth`: lower limits of the 90% confidence intervals, pre calculated
 * `UpperNorth`: upper limits of the 90% confidence intervals, pre calculated
 
-As an alternative, `CoefNorth` can be a 3D array in which case intervals are based on quantiles.
+As an alternative, `CoefNorth` can be a 3D array in which case intervals are based on quantiles. This is when the whole modeling is bootstrapped.
+
+Optionally, a similarly structured table (`HonestNorth`) can be created to indicate which coefficients were estimeted togather. I.e. instead of coefficient values, one would use (1, 1, 2, 2) to indicate that (A, B, C, D) classes were estimates as (A+B, A+B, C+D, C+D). Either numeric or character representation would work.
 
 #### Space and climate coefficients
 
 Untransformed (i.e. on log/logit scale) parameter estimates from the space climate part of the models.
-Note: this table contains pAspen that was estimated in the habitat part of the model, but we consider it part of this table.
-
 
 * Object name: `SpclimNorth`
 * Object format: matrix, a data frame (rownames are SpeciesID's, colnames as in table), or a 3D array
@@ -408,7 +442,3 @@ save(list=c("CoefNorth", "CoefSouth",
     "UseavailNorth", "UseavailSouth"), file="StandardizedOutput.RData")
 ```
 
-## Updates
-
-* Versioning: added version to the schema,  soliciting that later versions can be tracked
-* Need to added the mapping between land cover labels (veg/HF/soil) to this
