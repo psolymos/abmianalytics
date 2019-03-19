@@ -100,6 +100,7 @@ sudo ufw allow 'Samba'
 
 sudo mkdir /samba
 sudo chgrp sambashare /samba
+
 ## add admin user group 'sadmin'
 sudo useradd -M -d /samba/users -s /usr/sbin/nologin -G sambashare sadmin
 sudo smbpasswd -a sadmin
@@ -119,6 +120,32 @@ Add this by `sudo vi /etc/samba/smb.conf`:
     force create mode = 0660
     force directory mode = 2770
     valid users = @sambashare @sadmin
+```
+
+Then restart: `sudo systemctl restart nmbd`
+
+## BAM share
+
+```
+## add admin user group 'bamadmin'
+sudo useradd -M -d /samba/bam -s /usr/sbin/nologin -G sambashare bamadmin
+sudo smbpasswd -a bamadmin
+sudo smbpasswd -e bamadmin
+sudo mkdir /samba/bam
+sudo chown bamadmin:sambashare /samba/bam
+sudo chmod 2770 /samba/bam
+```
+
+Add this by `sudo vi /etc/samba/smb.conf`:
+
+```
+[bam]
+    path = /samba/bam
+    browseable = yes
+    read only = no
+    force create mode = 0660
+    force directory mode = 2770
+    valid users = @sambashare @bamadmin
 ```
 
 Then restart: `sudo systemctl restart nmbd`
