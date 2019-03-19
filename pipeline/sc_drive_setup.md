@@ -92,60 +92,64 @@ sudo apt-get install docker-compose
 
 https://linuxize.com/post/how-to-install-and-configure-samba-on-ubuntu-18-04/
 
+Share: abmisc, user group: abmiscuser
+
 ```
 sudo apt update
 sudo apt install samba
 sudo systemctl status nmbd
 sudo ufw allow 'Samba'
 
-sudo mkdir /samba
-sudo chgrp sambashare /samba
+sudo mkdir /media/samba
+sudo chgrp sambashare /media/samba
 
-## add admin user group 'sadmin'
-sudo useradd -M -d /samba/users -s /usr/sbin/nologin -G sambashare sadmin
-sudo smbpasswd -a sadmin
-sudo smbpasswd -e sadmin
-sudo mkdir /samba/users
-sudo chown sadmin:sambashare /samba/users
-sudo chmod 2770 /samba/users
+## add admin user group 'abmiscuser'
+sudo useradd -M -d /media/samba/abmisc -s /usr/sbin/nologin -G sambashare abmiscuser
+sudo smbpasswd -a abmiscuser
+sudo smbpasswd -e abmiscuser
+sudo mkdir /media/samba/abmisc
+sudo chown abmiscuser:sambashare /media/samba/abmisc
+sudo chmod 2770 /media/samba/abmisc
 ```
 
 Add this by `sudo vi /etc/samba/smb.conf`:
 
 ```
-[users]
-    path = /samba/users
+[abmisc]
+    path = /media/samba/abmisc
     browseable = yes
     read only = no
     force create mode = 0660
     force directory mode = 2770
-    valid users = @sambashare @sadmin
+    valid users = @sambashare @abmiscuser
 ```
 
 Then restart: `sudo systemctl restart nmbd`
 
 ## BAM share
 
+Share: bam, user group: bamuser
+
 ```
-## add admin user group 'bamadmin'
-sudo useradd -M -d /samba/bam -s /usr/sbin/nologin -G sambashare bamadmin
-sudo smbpasswd -a bamadmin
-sudo smbpasswd -e bamadmin
-sudo mkdir /samba/bam
-sudo chown bamadmin:sambashare /samba/bam
-sudo chmod 2770 /samba/bam
+## add admin user group 'bamuser'
+sudo useradd -M -d /media/samba/bam -s /usr/sbin/nologin -G sambashare bamuser
+sudo smbpasswd -a bamuser
+sudo smbpasswd -e bamuser
+sudo mkdir /media/samba/bam
+sudo chown bamuser:sambashare /media/samba/bam
+sudo chmod 2770 /media/samba/bam
 ```
 
 Add this by `sudo vi /etc/samba/smb.conf`:
 
 ```
 [bam]
-    path = /samba/bam
+    path = /media/samba/bam
     browseable = yes
     read only = no
     force create mode = 0660
     force directory mode = 2770
-    valid users = @sambashare @bamadmin
+    valid users = @sambashare @bamuser
 ```
 
 Then restart: `sudo systemctl restart nmbd`
