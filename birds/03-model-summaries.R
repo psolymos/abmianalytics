@@ -32,6 +32,18 @@ spp <- "ALFL"
 resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
 ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
 
+if (FALSE) {
+    ## SSH matrix for 1st run
+    m <- as.matrix(en$SSH[1:ncol(en$YY),])
+    rownames(m) <- colnames(en$YY)
+    m[] <- 0
+    for (spp in colnames(en$YY)) {
+        resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
+        try(m[spp, resn[[1]]$ssh$labels] <- 1)
+    }
+    write.csv(m, file=file.path(ROOT, "ssh-north.csv"))
+}
+
 ## --
 
 estn <- get_coef(resn, Xn, stage="ARU", na.out=FALSE)

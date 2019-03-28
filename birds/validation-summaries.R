@@ -329,7 +329,7 @@ names(V) <- c("Null", names(mods)[1:9])
 plotOne(V)
 
 
-spp <- "ALFL"
+spp <- "OVEN"
 res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
 VV <- list()
 for (i in c("BGex 2x2", "BGex 3x3", "BGex 4x4", "BGex 5x5", "BGex 10x10")) {
@@ -344,7 +344,7 @@ for (i in c("BGex 2x2", "BGex 3x3", "BGex 4x4", "BGex 5x5", "BGex 10x10")) {
 r <- lapply(VV, randomize, B=199)
 a <- lapply(r, function(z) summarize(z))
 
-Sc <- log(c(2,3,4,5,10)^2)
+Sc <- (c(2,3,4,5,10)^2)
 op <- par(mfrow=c(1,2))
 j <- 1
 plot(Sc, sapply(a, function(z) z[j,1]), type="l", ylim=c(0,1), col=4,

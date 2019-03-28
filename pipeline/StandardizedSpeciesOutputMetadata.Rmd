@@ -92,10 +92,13 @@ Lookup0 <- matrix(byrow=TRUE, ncol=4, dimnames=list(NULL, HEAD), data=c(
 "CommonName", "Chr", "", "Provide is it exists.",
 "ModelNorth", "Bin", "Y", "Model based on north data exists and we decided to show it.",
 "ModelSouth", "Bin", "Y", "Model based on south data exists and we decided to show it.",
+"UseavailNorth", "Bin", "Y", "Use/availability plot based on north data exists.",
+"UseavailSouth", "Bin", "Y", "Use/availability plot based on south data exists.",
 "Nonnative", "Bin", "Y", "Non native status, assumed native if missing.",
 "LinkHabitat", "Chr", "Y", "Link function used in north/south habitat models, i.e. logit, log, identity (usually the same for all spp except for habitat elements).",
 "LinkSpclim", "Chr", "Y", "Link function used in north/south space/climate models, i.e. logit, log, identity (usually the same for all spp except for habitat elements).",
-"AUC", "Num", "Y", "AUC value (0-1).", 
+"AUCNorth", "Num", "Y", "AUC value (0-1).",
+"AUCSouth", "Num", "Y", "AUC value (0-1).", 
 "Comments", "Chr", "", "Known issues, general disclaimers about secies or groups of species."
 ))
 kable(Lookup0, row.names=FALSE, align=ALIGN, padding = 2)
@@ -253,6 +256,7 @@ UseavailNorth0 <- data.frame(c(
     "Open",
     "Wetland",
     "Water",
+    "Bare",
     "HFor",
     "Crop",
     "TameP",
@@ -385,7 +389,6 @@ Untransformed (i.e. on log/logit scale) parameter estimates from the space clima
 
 ```{r}
 SpclimNorth0 <- data.frame(c(
-    "pAspen",
     "Intercept",
     "Lat",
     "Long",
@@ -421,10 +424,15 @@ Lookup <- data.frame(
     CommonName=c("Human", NA, NA, NA),
     ModelNorth=c(TRUE, FALSE, FALSE, TRUE),
     ModelSouth=c(TRUE, TRUE, FALSE, FALSE),
+    UseavailNorth=c(FALSE, TRUE, TRUE, FALSE),
+    UseavailSouth=c(FALSE, FALSE, TRUE, TRUE),
     SizeNorth=c(100, NA, NA, 10),
     SizeSouth=c(200, 1, NA, NA),
     Nonnative=c(TRUE, FALSE, FALSE, TRUE),
-    Link=c("identity", "logit", "logit", "log"),
+    LinkHabitat=c("identity", "logit", "logit", "log"),
+    LinkSpclim=c("identity", "logit", "logit", "log"),
+    AUCNorth=c(0.5, NA, NA, 0.8),
+    AUCSouth=c(0.7, 0.6, NA, NA),
     Comments=c("", "Extinct.", "Oh crap, what is this !?", "Meow"))
 rownames(Lookup) <- Lookup$SpeciesID
 f <- function(x) {
@@ -438,8 +446,14 @@ SpclimNorth <- f(SpclimNorth0)
 SpclimSouth <- f(SpclimSouth0)
 UseavailNorth <- f(UseavailNorth0)
 UseavailSouth <- f(UseavailSouth0)
+UpperNorth <- CoefNorth * 1.1
+UpperSouth <- CoefSouth * 1.1
+LowerNorth <- CoefNorth * 0.9
+LowerSouth <- CoefSouth * 0.9
 save(list=c("CoefNorth", "CoefSouth",
     "Lookup", "SpclimNorth", "SpclimSouth", 
-    "UseavailNorth", "UseavailSouth"), file="StandardizedOutput.RData")
+    "UseavailNorth", "UseavailSouth",
+    "UpperNorth", "UpperSouth", "LowerNorth", "LowerSouth"), 
+    file="d:/abmi/sppweb2018/c4i/tables/StandardizedOutput.RData")
 ```
 

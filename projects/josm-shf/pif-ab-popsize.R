@@ -926,6 +926,30 @@ text(c(1,1,1)+0.1, c(-0.6, -0.75, -0.9),
 par(op)
 dev.off()
 
+pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig6-report.pdf", width=8, height=8)
+op <- par(las=1)
+Colg <- colorRampPalette(c("red","yellow"))(7)[cut(Cex, br)]
+names(Colg) <- names(Cex)
+plot(0, type="n", xlim=c(-0.8,1.2), ylim=c(-1,1), xlab="", ylab="")
+s1 <- scores(o)$species
+s1 <- s1 / max(abs(s1))
+points(s1[names(Colg),]*0.8, cex=2, col=Colg, pch=19)
+points(s1[names(Colg),]*0.8, cex=2, col="orange")
+s2 <- scores(o)$sites
+s2 <- s2 / max(abs(s2))
+for (i in 1:nrow(s2))
+    arrows(x0=0,y0=0,x1=s2[i,1],y1=s2[i,2], angle=20, length = 0.1, col="darkgrey")
+text(s2*1.05, labels=rownames(NN),cex=1,col=1)
+abline(h=0,v=0,lty=2)
+#text(s1[names(Col),]*0.8, labels=colnames(NN),cex=0.75, col=4)
+for (ii in 1:200)
+    lines(c(0.85, 0.9), rep(seq(-0.55, -0.95, len=200)[ii], 2), col=colorRampPalette(c("red","yellow"))(200)[ii])
+text(c(1,1,1)+0.1, c(-0.6, -0.75, -0.9),
+    c(expression(N[PIX] < N[PIF]),expression(N[PIX] == N[PIF]),expression(N[PIX] > N[PIF])))
+par(op)
+dev.off()
+
+
 pdf("~/GoogleWork/bam/PIF-AB/draft3/Fig6-ordination-all.pdf", width=9, height=9, onefile=TRUE)
 for (ii in c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH")) {
 
