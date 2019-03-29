@@ -445,6 +445,15 @@ for (spp in colnames(es$YY)) {
 
 plot_coef_south <- function(lam0, ...) {
 
+    if (length(lam0) == 1 && is.character(lam0)) {
+        spp <- lam0
+        lam0 <- data.frame(
+            Estimate=CoefSouth[spp,],
+            Lower=LowerSouth[spp,],
+            Upper=UpperSouth[spp,])
+        attr(lam0, "pAspen") <- mean(exp(CoefSouthBoot[spp,"pAspen",]))
+    }
+
     op <- par(mfrow=c(1,2), las=2, cex.axis=0.9)
     on.exit(par(op))
     lam1 <- lam0 * attr(lam0, "pAspen")
@@ -563,3 +572,49 @@ summary(Lookup$AUCSouth)
 
 save(list=toSave,
     file=paste0("d:/abmi/sppweb2018/c4i/tables/StandardizedOutput-birds.RData"))
+
+## --- checking results
+
+## todo:
+## - add sample size
+## - fix boot array names
+
+
+library(mefa4)
+ROOT <- "~/GoogleWork/tmp"
+
+en <- new.env()
+load(file.path(ROOT, "data", "ab-birds-north-2018-12-07.RData"), envir=en)
+es <- new.env()
+load(file.path(ROOT, "data", "ab-birds-south-2018-12-07.RData"), envir=es)
+bbn <- unique(sort(as.numeric(en$BB)))
+bbs <- unique(sort(as.numeric(es$BB)))
+
+load(file.path(ROOT, "tables", "StandardizedOutput-birds.RData"))
+Lookup$SizeNorth <- colSums(en$YY[bbn,] > 0)[match(Lookup$Code, colnames(en$YY))]
+Lookup$SizeSouth <- colSums(es$YY[bbs,] > 0)[match(Lookup$Code, colnames(es$YY))]
+
+
+dCIn <- rowMeans((UpperNorth - LowerNorth) / CoefNorth[,,1], na.rm=TRUE)
+dCIs <- rowMeans((UpperSouth - LowerSouth) / CoefSouth[,,1], na.rm=TRUE)
+nn <- Lookup[names(dCIn), "SizeNorth"]
+ns <- Lookup[names(dCIs), "SizeSouth"]
+#an <- Lookup[names(dCIn), "AUCNorth"]
+#as <- Lookup[names(dCIs), "AUCSouth"]
+hist(dCIn[dCIn < 12])
+hist(dCIs[dCIs < 20])
+
+plot(dCIn, log(nn), xlim=c(0,20),
+    col=ifelse(Lookup[names(dCIn), "Comments"] == "", 1, 2))
+abline(h=log(400), v=3)
+#plot(dCIn, an, xlim=c(0,20), ylim=c(0,1))
+#abline(h=0.6, v=3)
+
+plot(dCIs, log(ns), xlim=c(0,20),
+    col=ifelse(Lookup[names(dCIs), "Comments"] == "", 1, 2))
+abline(h=log(230), v=5)
+#plot(dCIs, as, xlim=c(0,20), ylim=c(0,1))
+#abline(h=0.6, v=3)
+
+
+
