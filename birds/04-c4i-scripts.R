@@ -25,8 +25,8 @@ rownames(xwalk) <- xwalk[,1]
 
 tax <- read.csv("d:/abmi/AB_data_v2018/data/raw/species/taxonomy.csv")
 
-#bbn <- unique(sort(as.numeric(en$BB)))
-#bbs <- unique(sort(as.numeric(es$BB)))
+bbn <- unique(sort(as.numeric(en$BB)))
+bbs <- unique(sort(as.numeric(es$BB)))
 
 #spp <- "ALFL"
 #resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
@@ -242,7 +242,6 @@ plot_coef_north <- function(lam1, ...) {
     invisible(lam1)
 }
 
-bbn <- unique(sort(as.numeric(en$BB)))
 pdf(file.path(ROOT, "explore-coefNorth.pdf"), onefile=TRUE, width=10, height=8)
 for (spp in names(COEFS)) {
     cat(spp, "\n");flush.console()
@@ -353,15 +352,6 @@ rownames(CoefNorth) <- rownames(LowerNorth) <- rownames(UpperNorth) <-
 Lookup$ModelNorth[Lookup$SpeciesID %in% rownames(CoefNorth)] <- TRUE
 
 CoefNorth <- array(CoefNorth, c(dim(CoefNorth), 1), dimnames=c(dimnames(CoefNorth), NULL))
-
-CoefNorthBoot <- array(NA, c(length(COEFS), ncol(Xn), 101),
-    dimnames=list(names(COEFS), colnames(Xn), NULL))
-for (spp in names(COEFS)) {
-    cat(spp, "\n");flush.console()
-    resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
-    estn <- suppressWarnings(get_coef(resn, Xn, stage="Space", na.out=FALSE))
-    CoefNorthBoot[spp,,] <- estn[1:101,dimnames(CoefNorthBoot)[[2]]]
-}
 
 ## Linear North
 
@@ -477,7 +467,6 @@ plot_coef_south <- function(lam0, ...) {
     invisible(lam0)
 }
 
-bbs <- unique(sort(as.numeric(es$BB)))
 pdf(file.path(ROOT, "explore-coefSouth.pdf"), onefile=TRUE, width=10, height=5)
 for (spp in names(COEFS2)) {
     cat(spp, "\n");flush.console()
@@ -507,15 +496,6 @@ rownames(CoefSouth) <- rownames(LowerSouth) <- rownames(UpperSouth) <-
 Lookup$ModelSouth[Lookup$SpeciesID %in% rownames(CoefSouth)] <- TRUE
 
 CoefSouth <- array(CoefSouth, c(dim(CoefSouth), 1), dimnames=c(dimnames(CoefSouth), NULL))
-
-CoefSouthBoot <- array(NA, c(length(COEFS2), ncol(Xs), 101),
-    dimnames=list(names(COEFS2), colnames(Xs), NULL))
-for (spp in names(COEFS2)) {
-    cat(spp, "\n");flush.console()
-    ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
-    ests <- suppressWarnings(get_coef(ress, Xs, stage="Space", na.out=FALSE))
-    CoefSouthBoot[spp,,1:min(nrow(ests),101)] <- ests[1:min(nrow(ests),101),dimnames(CoefSouthBoot)[[2]]]
-}
 
 ## Linear South
 
@@ -553,7 +533,7 @@ for (spp in names(COEFS2)) {
 
 toSave <- c("Lookup",
     "CoefNorth", "CoefSouth",
-    "CoefNorthBoot", "CoefSouthBoot",
+    "CoefNorthBootlist", "CoefSouthBootlist",
     #"SpclimNorth", "SpclimSouth",
     "UseavailNorth", "UseavailSouth",
     "LinearNorth", "LinearSouth",
@@ -570,8 +550,34 @@ table(N=Lookup$ModelNorth, S=Lookup$ModelSouth)
 summary(Lookup$AUCNorth)
 summary(Lookup$AUCSouth)
 
+## additions
+
+Lookup$SizeNorth <- colSums(en$YY[bbn,] > 0)[match(Lookup$Code, colnames(en$YY))]
+Lookup$SizeSouth <- colSums(es$YY[bbs,] > 0)[match(Lookup$Code, colnames(es$YY))]
+
+tmpn <- list()
+for (spp in colnames(en$YY)) {
+    cat(spp, "\n");flush.console()
+    resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
+    estn <- suppressWarnings(get_coef(resn, Xn, stage="Space", na.out=FALSE))
+    tmpn[[spp]] <- estn
+    #CoefNorthBoot[spp,,] <- estn[1:101,dimnames(CoefNorthBoot)[[2]]]
+}
+tmps <- list()
+for (spp in colnames(es$YY)) {
+    cat(spp, "\n");flush.console()
+    ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
+    ests <- suppressWarnings(get_coef(ress, Xs, stage="Space", na.out=FALSE))
+    tmps[[spp]] <- ests
+    #CoefSouthBoot[spp,,1:min(nrow(ests),101)] <- ests[1:min(nrow(ests),101),dimnames(CoefSouthBoot)[[2]]]
+}
+
+CoefNorthBootlist <- tmpn
+CoefSouthBootlist <- tmps
+
 save(list=toSave,
     file=paste0("d:/abmi/sppweb2018/c4i/tables/StandardizedOutput-birds.RData"))
+
 
 ## --- checking results
 
@@ -591,8 +597,6 @@ bbn <- unique(sort(as.numeric(en$BB)))
 bbs <- unique(sort(as.numeric(es$BB)))
 
 load(file.path(ROOT, "tables", "StandardizedOutput-birds.RData"))
-Lookup$SizeNorth <- colSums(en$YY[bbn,] > 0)[match(Lookup$Code, colnames(en$YY))]
-Lookup$SizeSouth <- colSums(es$YY[bbs,] > 0)[match(Lookup$Code, colnames(es$YY))]
 
 
 dCIn <- rowMeans((UpperNorth - LowerNorth) / CoefNorth[,,1], na.rm=TRUE)
