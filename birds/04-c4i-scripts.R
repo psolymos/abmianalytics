@@ -214,6 +214,17 @@ for (spp in colnames(en$YY)) {
 
 plot_coef_north <- function(lam1, ...) {
 
+    if (length(lam1) == 1 && is.character(lam1)) {
+        spp <- lam1
+        spp2 <- rownames(Lookup)[Lookup$Code == spp]
+        lam1 <- cbind(
+            Estimate=CoefNorth[spp2,,1],
+            Lower=LowerNorth[spp2,],
+            Upper=UpperNorth[spp2,])
+        lam1 <- lam1[rownames(lam1) != "Water",]
+        lam1 <- lam1[rownames(lam1) != "Bare",]
+    }
+
     lam <- lam1[!grepl("CC", rownames(lam1)),]
     #lam <- lam[!(rownames(lam) %in% c("SoftLin", "HardLin")),]
     rownames(lam) <- gsub("_", " ", rownames(lam))
@@ -437,11 +448,13 @@ plot_coef_south <- function(lam0, ...) {
 
     if (length(lam0) == 1 && is.character(lam0)) {
         spp <- lam0
-        lam0 <- data.frame(
-            Estimate=CoefSouth[spp,],
-            Lower=LowerSouth[spp,],
-            Upper=UpperSouth[spp,])
-        attr(lam0, "pAspen") <- mean(exp(CoefSouthBoot[spp,"pAspen",]))
+        spp2 <- rownames(Lookup)[Lookup$Code == spp]
+        lam0 <- cbind(
+            Estimate=CoefSouth[spp2,,1],
+            Lower=LowerSouth[spp2,],
+            Upper=UpperSouth[spp2,])
+        lam0 <- lam0[rownames(lam0) != "Water",]
+        attr(lam0, "pAspen") <- mean(exp(CoefSouthBootlist[[spp]][,"pAspen"]))
     }
 
     op <- par(mfrow=c(1,2), las=2, cex.axis=0.9)
@@ -576,14 +589,10 @@ CoefNorthBootlist <- tmpn
 CoefSouthBootlist <- tmps
 
 save(list=toSave,
-    file=paste0("d:/abmi/sppweb2018/c4i/tables/StandardizedOutput-birds.RData"))
-
+#    file=paste0("d:/abmi/sppweb2018/c4i/tables/StandardizedOutput-birds.RData"))
+    file=file.path(ROOT, "tables", "StandardizedOutput-birds.RData"))
 
 ## --- checking results
-
-## todo:
-## - add sample size
-## - fix boot array names
 
 
 library(mefa4)
@@ -598,27 +607,123 @@ bbs <- unique(sort(as.numeric(es$BB)))
 
 load(file.path(ROOT, "tables", "StandardizedOutput-birds.RData"))
 
+## N 109, S 101
+b <- read.csv("~/repos/abmispecies/_data/birds.csv")
 
-dCIn <- rowMeans((UpperNorth - LowerNorth) / CoefNorth[,,1], na.rm=TRUE)
-dCIs <- rowMeans((UpperSouth - LowerSouth) / CoefSouth[,,1], na.rm=TRUE)
+LIN <- c("SoftLin", "HardLin")
+#dCIn <- rowMeans((UpperNorth - LowerNorth) / (0.00001 + CoefNorth[,,1]), na.rm=TRUE)
+dCIn <- apply(UpperNorth[,!(colnames(UpperNorth) %in% LIN)], 1, max, na.rm=TRUE) /
+    apply(CoefNorth[,!(colnames(UpperNorth) %in% LIN), 1], 1, max, na.rm=TRUE)
+dCIn <- structure(pmin(25, round(dCIn, 1)), names=names(dCIn))
+#dCIs <- rowMeans((UpperSouth - LowerSouth) / (0.00001 + CoefSouth[,,1]), na.rm=TRUE)
+dCIs <- apply(UpperSouth[,!(colnames(UpperSouth) %in% LIN)], 1, max, na.rm=TRUE) /
+    apply(CoefSouth[,!(colnames(UpperSouth) %in% LIN),1], 1, max, na.rm=TRUE)
+dCIs <- structure(pmin(25, round(dCIs, 1)), names=names(dCIs))
+
 nn <- Lookup[names(dCIn), "SizeNorth"]
 ns <- Lookup[names(dCIs), "SizeSouth"]
-#an <- Lookup[names(dCIn), "AUCNorth"]
-#as <- Lookup[names(dCIs), "AUCSouth"]
-hist(dCIn[dCIn < 12])
-hist(dCIs[dCIs < 20])
+SPPn <- as.character(Lookup[names(dCIn), "Code"])
+SPPs <- as.character(Lookup[names(dCIs), "Code"])
+dfn <- sapply(SPPn, function(i) sum(colSums(abs(CoefNorthBootlist[[i]])) > 0))
+dfs <- sapply(SPPs, function(i) sum(colSums(abs(CoefSouthBootlist[[i]])) > 0))
+ncn <- Lookup[names(dCIn), "Comments"] == ""
+ncs <- Lookup[names(dCIs), "Comments"] == ""
+names(ncn) <- names(nn) <- names(dfn) <- names(SPPn) <- names(dCIn)
+names(ncs) <- names(ns) <- names(dfs) <- names(SPPs) <- names(dCIs)
+summary(dfn)
+summary(dfs)
 
-plot(dCIn, log(nn), xlim=c(0,20),
+plot(dCIn, log(nn), #xlim=c(0,20),
     col=ifelse(Lookup[names(dCIn), "Comments"] == "", 1, 2))
-abline(h=log(400), v=3)
-#plot(dCIn, an, xlim=c(0,20), ylim=c(0,1))
-#abline(h=0.6, v=3)
+abline(h=log(60*5), v=3)
 
-plot(dCIs, log(ns), xlim=c(0,20),
+plot(dCIs, log(ns), #xlim=c(0,20),
     col=ifelse(Lookup[names(dCIs), "Comments"] == "", 1, 2))
-abline(h=log(230), v=5)
-#plot(dCIs, as, xlim=c(0,20), ylim=c(0,1))
-#abline(h=0.6, v=3)
+abline(h=log(30*5), v=5)
 
+table(CI=dCIn < 3, NoComm=ncn)
+table(CI=nn >= 300, NoComm=ncn)
+
+#OKn <- nn >= 300 & ncn & dCIn < 20
+#OKs <- ns >= 150 & ncs & dCIs < 20
+OKn <- nn >= dfn*5 & dCIn < 20
+OKs <- ns >= dfs*5 & dCIs < 20
+
+pdf(file.path(ROOT, "tables", "explore-coefNorthOK.pdf"),
+    onefile=TRUE, width=10, height=8)
+for (spp in SPPn[OKn]) {
+    #cat(spp, "\n");flush.console()
+    NAM <- names(SPPn[SPPn == spp])
+    LAB <- paste0(spp, " ", NAM, "\n",
+        ifelse(nn[NAM] < dfn[NAM]*5, "nnn ", ""),
+        ifelse(dCIn[NAM] > 3, "iii ", ""),
+        ifelse(Lookup[NAM, "Comments"] == "", "",  "ccc "),
+        "ndet=", nn[NAM], " df=", dfn[NAM])
+    plot_coef_north(spp, main=LAB)
+}
+dev.off()
+pdf(file.path(ROOT, "tables", "explore-coefNorthNotOK.pdf"),
+    onefile=TRUE, width=10, height=8)
+for (spp in SPPn[!OKn]) {
+    #cat(spp, "\n");flush.console()
+    NAM <- names(SPPn[SPPn == spp])
+    LAB <- paste0(spp, " ", NAM, "\n",
+        ifelse(nn[NAM] < dfn[NAM]*5, "nnn ", ""),
+        ifelse(dCIn[NAM] > 3, "iii ", ""),
+        ifelse(Lookup[NAM, "Comments"] == "", "",  "ccc "),
+        "ndet=", nn[NAM], " df=", dfn[NAM])
+    plot_coef_north(spp, main=LAB)
+}
+dev.off()
+
+pdf(file.path(ROOT, "tables", "explore-coefSouthOK.pdf"),
+    onefile=TRUE, width=10, height=5)
+for (spp in SPPs[OKs]) {
+    #cat(spp, "\n");flush.console()
+    NAM <- names(SPPs[SPPs == spp])
+    LAB <- paste0(spp, " ", NAM, "\n",
+        ifelse(ns[NAM] < dfs[NAM]*5, "nnn ", ""),
+        ifelse(dCIs[NAM] > 3, "iii ", ""),
+        ifelse(Lookup[NAM, "Comments"] == "", "",  "ccc "),
+        "ndet=", ns[NAM], " df=", dfs[NAM])
+    plot_coef_south(spp, main=LAB)
+}
+dev.off()
+pdf(file.path(ROOT, "tables", "explore-coefSouthNotOK.pdf"),
+    onefile=TRUE, width=10, height=5)
+for (spp in SPPs[!OKs]) {
+    #cat(spp, "\n");flush.console()
+    NAM <- names(SPPs[SPPs == spp])
+    LAB <- paste0(spp, " ", NAM, "\n",
+        ifelse(ns[NAM] < dfs[NAM]*5, "nnn ", ""),
+        ifelse(dCIs[NAM] > 3, "iii ", ""),
+        ifelse(Lookup[NAM, "Comments"] == "", "",  "ccc "),
+        "ndet=", ns[NAM], " df=", dfs[NAM])
+    plot_coef_south(spp, main=LAB)
+}
+dev.off()
+
+OKn <- nn >= dfn*5 & dCIn < 20
+OKs <- ns >= dfs*5 & dCIs < 20
+
+ii <- c("FRGU", "MALL")
+OKn[names(SPPn[SPPn %in% ii])] <- FALSE
+
+ii <- c("BADO", "BLBW", "BBWO", "BOOW", "CSWA", "DUFL", "EAPH",
+    "EUST", "GADW", "MAWR", "MERL", "MOBL", "MOCH", "PIGR",
+    "RECR", "SPGR", "SPPI", "TOWA", "VEER", "WIFL", "YERA",
+    "YHBL")
+OKn[names(SPPn[SPPn %in% ii])] <- TRUE
+
+ii <- c("FEHA", "LESC")
+OKs[names(SPPs[SPPs %in% ii])] <- FALSE
+
+ii <- c("BOBO", "LASP", "PUMA", "RNPH")
+OKs[names(SPPs[SPPs %in% ii])] <- TRUE
+
+Lookup$ModelNorth <- rownames(Lookup) %in% names(OKn[OKn])
+Lookup$ModelSouth <- rownames(Lookup) %in% names(OKs[OKs])
+
+save(Lookup, file=file.path(ROOT, "tables", "lookup-birds.RData"))
 
 

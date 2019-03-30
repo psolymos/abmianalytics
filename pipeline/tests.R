@@ -1,3 +1,5 @@
+## Organizing pieces
+
 library(mefa4)
 
 rm(list=ls())
@@ -192,5 +194,145 @@ table(N=Lookup$ModelNorth, S=Lookup$ModelSouth)
 
 save(list=toSave,
     file=paste0("d:/abmi/sppweb2018/c4i/tables/StandardizedOutput-", tx, ".RData"))
+
+## Making tables for IC handoff
+
+library(mefa4)
+library(openxlsx)
+
+#ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
+ROOT <- "~/GoogleWork/tmp/tables"
+
+TX <- c("birds", "vplants", "mites", "mosses", "lichens")
+
+tx <- "birds"
+
+e1 <- new.env()
+e2 <- new.env()
+e3 <- new.env()
+e4 <- new.env()
+e5 <- new.env()
+load(file.path(ROOT, paste0("StandardizedOutput-birds.RData")), envir=e1)
+load(file.path(ROOT, paste0("StandardizedOutput-vplants.RData")), envir=e2)
+load(file.path(ROOT, paste0("StandardizedOutput-mites.RData")), envir=e3)
+load(file.path(ROOT, paste0("StandardizedOutput-mosses.RData")), envir=e4)
+load(file.path(ROOT, paste0("StandardizedOutput-lichens.RData")), envir=e5)
+
+OUT <- list()
+
+## version info
+OUT$Info <- data.frame(
+    Data_Portal_Updates=c(
+        "Date",
+        "Backfilled_version"),
+    Version_2018=c(
+        "2019-03-29",
+        "6.1"))
+
+## taxonomy/lookup
+tmp1 <- e1$Lookup
+tmp1$Group <- "birds"
+tmp2 <- e2$Lookup
+tmp2$Group <- "vplants"
+tmp3 <- e3$Lookup
+tmp3$Group <- "mites"
+tmp4 <- e4$Lookup
+tmp4$Group <- "mosses"
+tmp5 <- e5$Lookup
+tmp5$Group <- "lichens"
+OUT$Species <- rbind(tmp1[,colnames(tmp2)], tmp2,
+    tmp3[,colnames(tmp2)], tmp4[,colnames(tmp2)], tmp5[,colnames(tmp2)])
+rownames(OUT$Species) <- OUT$Species$SpeciesID
+
+cn0 <- c("SpeciesID", "ScientificName", "CommonName", "TSNID", "Group")
+
+## useavail north
+tn <- "UseavailNorth"
+cn <- dimnames(e2[[tn]])[[2]]
+tmp <- rbind(e1[[tn]][,cn], e2[[tn]][,cn], e3[[tn]][,cn],
+    e4[[tn]][,cn], e5[[tn]][,cn])
+OUT$UseavailNorth <- data.frame(
+    OUT$Species[rownames(tmp), cn0],
+    tmp)
+OUT$UseavailNorth <- OUT$UseavailNorth[rownames(OUT$UseavailNorth) %in%
+    rownames(OUT$Species)[OUT$Species$UseavailNorth & !OUT$Species$ModelNorth],]
+
+## useavail south
+tn <- "UseavailSouth"
+cn <- dimnames(e2[[tn]])[[2]]
+tmp <- rbind(e1[[tn]][,cn], e2[[tn]][,cn], e3[[tn]][,cn],
+    e4[[tn]][,cn], e5[[tn]][,cn])
+OUT$UseavailSouth <- data.frame(
+    OUT$Species[rownames(tmp), cn0],
+    tmp)
+OUT$UseavailSouth <- OUT$UseavailSouth[rownames(OUT$UseavailSouth) %in%
+    rownames(OUT$Species)[OUT$Species$UseavailSouth & !OUT$Species$ModelSouth],]
+
+## vegHF north
+tn <- "CoefNorth"
+cn <- dimnames(e2[[tn]])[[2]]
+cn <- cn[!(cn %in% c("SoftLin", "HardLin"))]
+tmp <- rbind(e1[[tn]][,cn,1], e2[[tn]][,cn,1], e3[[tn]][,cn,1],
+    e4[[tn]][,cn,1], e5[[tn]][,cn,1])
+tn <- "LowerNorth"
+tmpL <- rbind(e1[[tn]][,cn], e2[[tn]][,cn], e3[[tn]][,cn],
+    e4[[tn]][,cn], e5[[tn]][,cn])
+colnames(tmpL) <- paste0("Lower_", colnames(tmpL))
+tn <- "UpperNorth"
+tmpU <- rbind(e1[[tn]][,cn], e2[[tn]][,cn], e3[[tn]][,cn],
+    e4[[tn]][,cn], e5[[tn]][,cn])
+colnames(tmpU) <- paste0("Upper_", colnames(tmpU))
+
+OUT$VeghfNorth <- cbind(
+    OUT$Species[rownames(tmp), cn0],
+    tmp, tmpL, tmpU)
+OUT$VeghfNorth <- OUT$VeghfNorth[rownames(OUT$VeghfNorth) %in%
+    rownames(OUT$Species)[OUT$Species$ModelNorth],]
+
+## linear north
+tn <- "LinearNorth"
+cn <- dimnames(e2[[tn]])[[2]]
+tmp <- rbind(e1[[tn]][,cn], e2[[tn]][,cn], e3[[tn]][,cn],
+    e4[[tn]][,cn], e5[[tn]][,cn])
+tmp <- tmp[rownames(OUT$VeghfNorth),]
+
+OUT$LinearNorth <- data.frame(
+    OUT$Species[rownames(tmp), cn0],
+    tmp)
+
+## soulHF south
+tn <- "CoefSouth"
+cn <- dimnames(e2[[tn]])[[2]]
+cn <- cn[!(cn %in% c("SoftLin", "HardLin"))]
+tmp <- rbind(e1[[tn]][,cn,1], e2[[tn]][,cn,1], e3[[tn]][,cn,1],
+    e4[[tn]][,cn,1], e5[[tn]][,cn,1])
+tn <- "LowerSouth"
+tmpL <- rbind(e1[[tn]][,cn], e2[[tn]][,cn], e3[[tn]][,cn],
+    e4[[tn]][,cn], e5[[tn]][,cn])
+colnames(tmpL) <- paste0("Lower_", colnames(tmpL))
+tn <- "UpperSouth"
+tmpU <- rbind(e1[[tn]][,cn], e2[[tn]][,cn], e3[[tn]][,cn],
+    e4[[tn]][,cn], e5[[tn]][,cn])
+colnames(tmpU) <- paste0("Upper_", colnames(tmpU))
+
+OUT$SoilhfSouth <- cbind(
+    OUT$Species[rownames(tmp), cn0],
+    tmp, tmpL, tmpU)
+OUT$SoilhfSouth <- OUT$SoilhfSouth[rownames(OUT$SoilhfSouth) %in%
+    rownames(OUT$Species)[OUT$Species$ModelSouth],]
+
+## linear south
+tn <- "LinearSouth"
+cn <- dimnames(e2[[tn]])[[2]]
+tmp <- rbind(e1[[tn]][,cn], e2[[tn]][,cn], e3[[tn]][,cn],
+    e4[[tn]][,cn], e5[[tn]][,cn])
+tmp <- tmp[rownames(OUT$SoilhfSouth),]
+
+OUT$LinearSouth <- data.frame(
+    OUT$Species[rownames(tmp), cn0],
+    tmp)
+
+write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-03-29.xlsx")))
+
 
 
