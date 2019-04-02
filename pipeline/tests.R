@@ -300,7 +300,7 @@ OUT$LinearNorth <- data.frame(
     OUT$Species[rownames(tmp), cn0],
     tmp)
 
-## soulHF south
+## soilHF south - nontreed
 tn <- "CoefSouth"
 cn <- dimnames(e2[[tn]])[[2]]
 cn <- cn[!(cn %in% c("SoftLin", "HardLin"))]
@@ -315,24 +315,51 @@ tmpU <- rbind(e1[[tn]][,cn], e2[[tn]][,cn], e3[[tn]][,cn],
     e4[[tn]][,cn], e5[[tn]][,cn])
 colnames(tmpU) <- paste0("Upper_", colnames(tmpU))
 
-OUT$SoilhfSouth <- cbind(
+OUT$SoilhfSouthNontreed <- cbind(
     OUT$Species[rownames(tmp), cn0],
     tmp, tmpL, tmpU)
-OUT$SoilhfSouth <- OUT$SoilhfSouth[rownames(OUT$SoilhfSouth) %in%
+OUT$SoilhfSouthNontreed <- OUT$SoilhfSouth[rownames(OUT$SoilhfSouthNontreed) %in%
     rownames(OUT$Species)[OUT$Species$ModelSouth],]
 
-## linear south
+## soilHF south - treed
+tn <- "SpclimSouth"
+b <- sapply(e1$CoefSouthBootlist, function(z) median(exp(z[,"pAspen"])))
+b <- structure(b[match(e1$Lookup$Code, names(b))], names=rownames(e1$Lookup))
+pA1 <- b[dimnames(e1$CoefSouth)[[1]]]
+cn <- "pAspen"
+pA2 <- c(e2[[tn]][,cn,1], e3[[tn]][,cn,1], e4[[tn]][,cn,1], e5[[tn]][,cn,1])
+tmp1 <- tmp[names(pA1),] * pA1
+tmp1L <- tmpL[names(pA1),] * pA1
+tmp1U <- tmpU[names(pA1),] * pA1
+tmp2 <- plogis(qlogis(tmp[names(pA2),]) + pA2)
+tmp2L <- plogis(qlogis(tmpL[names(pA2),]) + pA2)
+tmp2U <- plogis(qlogis(tmpU[names(pA2),]) + pA2)
+
+xtmp <- rbind(tmp1, tmp2)[rownames(tmp),]
+xtmpL <- rbind(tmp1L, tmp2L)[rownames(tmp),]
+xtmpU <- rbind(tmp1U, tmp2U)[rownames(tmp),]
+
+OUT$SoilhfSouthTreed <- cbind(
+    OUT$Species[rownames(xtmp), cn0],
+    xtmp, xtmpL, xtmpU)
+OUT$SoilhfSouthTreed <- OUT$SoilhfSouthTreed[rownames(OUT$SoilhfSouthNontreed),]
+
+nt <- OUT$SoilhfSouthNontreed[,"Productive"]
+tr <- OUT$SoilhfSouthTreed[,"Productive"]
+plot(nt,tr)
+
+## linear south (based on non treed)
 tn <- "LinearSouth"
 cn <- dimnames(e2[[tn]])[[2]]
 tmp <- rbind(e1[[tn]][,cn], e2[[tn]][,cn], e3[[tn]][,cn],
     e4[[tn]][,cn], e5[[tn]][,cn])
-tmp <- tmp[rownames(OUT$SoilhfSouth),]
+tmp <- tmp[rownames(OUT$SoilhfSouthNontreed),]
 
 OUT$LinearSouth <- data.frame(
     OUT$Species[rownames(tmp), cn0],
     tmp)
 
-write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-03-29.xlsx")))
+write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-04-01.xlsx")))
 
 
 
