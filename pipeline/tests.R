@@ -358,8 +358,13 @@ tmp <- tmp[rownames(OUT$SoilhfSouthNontreed),]
 OUT$LinearSouth <- data.frame(
     OUT$Species[rownames(tmp), cn0],
     tmp)
+#write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-04-04.xlsx")))
 
-write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-04-01.xlsx")))
+OUT$pAspen <- data.frame(pAspen=c(log(pA1), pA2))
+rownames(OUT$pAspen) <- rownames(tmpL)
+OUT$pAspen <- OUT$pAspen[rownames(OUT$LinearSouth),,drop=FALSE]
+
+save(OUT, file="d:/abmi/reports/2018/misc/DataPortalUpdate.RData")
 
 
 

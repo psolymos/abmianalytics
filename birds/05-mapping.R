@@ -596,3 +596,18 @@ for (spp in rownames(tax)) {
     }
 }
 
+## sector effects
+
+library(mefa4)
+library(raster)
+
+## kgrid
+load("d:/abmi/AB_data_v2018/data/analysis/kgrid_table_km.Rdata")
+kgrid$useN <- !(kgrid$NRNAME %in% c("Grassland", "Parkland") | kgrid$NSRNAME == "Dry Mixedwood")
+kgrid$useN[kgrid$NSRNAME == "Dry Mixedwood" & kgrid$POINT_Y > 56.7] <- TRUE
+kgrid$useS <- kgrid$NRNAME == "Grassland"
+
+load("d:/abmi/sppweb2018/c4i/tables/lookup-birds.RData")
+tax <- droplevels(Lookup[Lookup$ModelNorth | Lookup$ModelSouth,])
+rownames(tax) <- tax$Code
+
