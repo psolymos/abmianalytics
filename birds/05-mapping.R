@@ -279,9 +279,10 @@ col3 <- colorRampPalette(c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0","#A1D76A","#4
 CW <- rgb(0.4,0.3,0.8) # water
 CE <- "lightcyan4" # exclude
 
-spp <- "ALFL" # species
+#spp <- "ALFL" # species
 
 ## detections
+ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
 ee <- new.env()
 load(file.path(ROOT, "ab-birds-all-2018-11-29.RData"), envir=ee)
 ddd <- nonDuplicated(ee$dd, ee$dd$SS, TRUE)
@@ -298,6 +299,85 @@ rt10 <- aggregate(rt, fact=10)
 sam0 <- rasterize(xy, rt10, field=1, fun='sum')
 values(sam0)[!is.na(values(sam0))] <- 1
 
+rnr <- Rcr <- make_raster(as.integer(kgrid$NRNAME), kgrid, rt)
+cnr <- c('#b3e2cd','#fdcdac','#cbd5e8','#f4cae4','#e6f5c9','#fff2ae')
+cnr <- cnr[c(5,6,1,2,4,3)]
+
+## 10k level detections
+if (FALSE) {
+xyall <- xyFromCell(sam0, c(1:ncell(sam0)), spatial=TRUE)
+tmp <- spTransform(xyall, "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+xyall <- as(xyall, "SpatialPointsDataFrame")
+xyall@data <- data.frame(coordinates(tmp), surveyed=ifelse(is.na(values(sam0)), 0, 1))
+#plot(xyall, col=xyall@data$surveyed+1, pch=".")
+xyall2 <- xyall
+for (spp in rownames(tax)) {
+    cat(spp, "\n");flush.console()
+    ## only non ABMI detections here
+    xy1 <- try(SpatialPoints(as.matrix(ddd[yyy[,spp] > 0 &
+        !(ddd$PCODE %in% c("BU_ABMI", "BU_OG-ABMI", "ABMIRF", "ABMISM")) &
+        startsWith(as.character(ddd$PCODE), "BBS"), c("X","Y")])))
+    if (!inherits(xy1, "try-error")) {
+        proj4string(xy1) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
+        xy1 <- spTransform(xy1, proj4string(rt))
+        sam1 <- rasterize(xy1, rt10, field=1, fun='last')
+        xyall@data[[as.character(tax[spp, "SpeciesID"])]] <- ifelse(is.na(values(sam1)), 0, 1)
+    } else {
+        xyall@data[[as.character(tax[spp, "SpeciesID"])]] <- 0
+    }
+
+    xy1 <- try(SpatialPoints(as.matrix(ddd[yyy[,spp] > 0 &
+            !(ddd$PCODE %in% c("BU_ABMI", "BU_OG-ABMI", "ABMIRF", "ABMISM")) &
+            !startsWith(as.character(ddd$PCODE), "BBS"), c("X","Y")])))
+    if (!inherits(xy1, "try-error")) {
+        proj4string(xy1) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
+        xy1 <- spTransform(xy1, proj4string(rt))
+        sam1 <- rasterize(xy1, rt10, field=1, fun='last')
+        xyall2@data[[as.character(tax[spp, "SpeciesID"])]] <- ifelse(is.na(values(sam1)), 0, 1)
+    } else {
+        xyall2@data[[as.character(tax[spp, "SpeciesID"])]] <- 0
+    }
+}
+#summary(xyall@data)
+xyall <- xyall@data # BBS
+xyall <- xyall[xyall$surveyed == 1,]
+xyall <- xyall[rowSums(xyall[,-(1:3)]) > 0,]
+xyall2 <- xyall2@data # BAM
+xyall2 <- xyall2[xyall2$surveyed == 1,]
+xyall2 <- xyall2[rowSums(xyall2[,-(1:3)]) > 0,]
+dim(xyall)
+dim(xyall2)
+
+#dbWriteTable(con, "detections10k_nonABMI", xyall, overwrite=TRUE, row.names=FALSE) # birds
+dbWriteTable(con, "detections10k_BBS", xyall, overwrite=TRUE, row.names=FALSE) # birds
+dbWriteTable(con, "detections10k_BAM", xyall, overwrite=TRUE, row.names=FALSE) # birds
+}
+
+library(DBI)
+source("~/.ssh/postgres")
+data.frame(..postgres_science)
+con <- dbConnect(
+    odbc::odbc(),
+    driver   = "PostgreSQL Unicode(x64)",
+    server   = ..postgres_science$host,
+    database = ..postgres_science$database,
+    uid      = ..postgres_science$username,
+    pwd      = ..postgres_science$password,
+    port     = ..postgres_science$port)
+(dbl <- dbListTables(con))
+
+#tmp <- data.frame(x=1:3, y=5:7)
+#dbWriteTable(con, "test", tmp)
+#dbSendQuery(con, "drop table test")
+
+#d0 <- dbReadTable(con, "map_YellowheadedBlackbird")
+#dbSendQuery(con, "DROP TABLE map_YellowheadedBlackbird;")
+
+
+#dbDisconnect(con)
+
+PLOT <- FALSE
+SAVE <- TRUE
 for (spp in rownames(tax)) {
 
     cat(spp, "\n");flush.console()
@@ -329,48 +409,71 @@ for (spp in rownames(tax)) {
     #si[is.na(si)] <- 100
     #si[si==0] <- 1
 
-    Rcr <- make_raster(cr, kgrid, rt)
-    Rrf <- make_raster(rf, kgrid, rt)
-    Rdf <- make_raster(df-100, kgrid, rt)
-    #Rsi <- make_raster(si, kgrid, rt)
-    if (TYPE == "S")
-        Msk <- Rmasks
-    if (TYPE == "N")
-        Msk <- Rmaskn
-    if (TYPE != "C") {
-        Rcr <- mask(Rcr, Msk)
-        Rrf <- mask(Rrf, Msk)
-        Rdf <- mask(Rdf, Msk)
-        #Rsi <- mask(Rsi, Msk)
+    if (SAVE) {
+        tmp <- data.frame(
+            ID=rownames(kgrid),
+            Current=Dcr,
+            Reference=Drf)
+            #Color_Current=col1[cr],
+            #Color_Reference=col1[rf],
+            #Color_Difference=col3[df]
+
+        if (TYPE == "S")
+            tmp <- tmp[kgrid$useS,]
+        if (TYPE == "N")
+            tmp <- tmp[kgrid$useN,]
+        dbWriteTable(con, "test_num", tmp,
+            overwrite=TRUE, row.names=FALSE)
     }
-    ## add here mask for Rockies if needed
 
-    xy1 <- SpatialPoints(as.matrix(ddd[yyy[,spp] > 0,c("X","Y")]))
-    proj4string(xy1) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
-    xy1 <- spTransform(xy1, proj4string(rt))
-    sam1 <- rasterize(xy1, rt10, field=1, fun='sum')
+    if (PLOT) {
+        Rcr <- make_raster(cr, kgrid, rt)
+        Rrf <- make_raster(rf, kgrid, rt)
+        Rdf <- make_raster(df-100, kgrid, rt)
+        #Rsi <- make_raster(si, kgrid, rt)
+        if (TYPE == "S")
+            Msk <- Rmasks
+        if (TYPE == "N")
+            Msk <- Rmaskn
+        if (TYPE != "C") {
+            Rcr <- mask(Rcr, Msk)
+            Rrf <- mask(Rrf, Msk)
+            Rdf <- mask(Rdf, Msk)
+            #Rsi <- mask(Rsi, Msk)
+        }
+        ## add here mask for Rockies if needed
 
-    png(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/figs/maps/", spp, ".png"),
-        height=1500*2, width=1000*2, res=300)
-    op <- par(mfrow=c(2,2), mar=c(2,1,2,3))
-    plot(rt, col=CE, axes=FALSE, box=FALSE, main="Current", legend=FALSE)
-    plot(Rcr, add=TRUE, col=col1[1:max(cr)])
-    plot(Rw, add=TRUE, col=CW, legend=FALSE)
-    plot(rt, col=CE, axes=FALSE, box=FALSE, main="Reference", legend=FALSE)
-    plot(Rrf, add=TRUE, col=col1[1:max(rf)])
-    plot(Rw, add=TRUE, col=CW, legend=FALSE)
-    plot(rt, col=CE, axes=FALSE, box=FALSE, main="Difference", legend=FALSE)
-    plot(Rdf, add=TRUE, col=col3[min(df):max(df)])
-    plot(Rw, add=TRUE, col=CW, legend=FALSE)
-    #plot(rt, col=CE, axes=FALSE, box=FALSE, main="Intactness", legend=FALSE)
-    #plot(Rsi, add=TRUE, col=col2[min(si):max(si)])
-    #plot(Rw, add=TRUE, col=CW, legend=FALSE)
-    plot(rt,col="darkgrey", axes=FALSE, box=FALSE, main="Detections", legend=FALSE)
-    plot(sam0,add=TRUE, col="white", legend=FALSE)
-    plot(sam1,add=TRUE, col="red4", legend=FALSE)
-    par(op)
-    dev.off()
+        xy1 <- SpatialPoints(as.matrix(ddd[yyy[,spp] > 0,c("X","Y")]))
+        proj4string(xy1) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
+        xy1 <- spTransform(xy1, proj4string(rt))
+        sam1 <- rasterize(xy1, rt10, field=1, fun='last')
+        #xyall@data[[spp]] <- ifelse(is.na(values(sam1)), 0, 1)
+
+        png(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/figs/maps/", spp, ".png"),
+            height=1500*2, width=1000*2, res=300)
+        op <- par(mfrow=c(2,2), mar=c(2,1,2,3))
+        plot(rt, col=CE, axes=FALSE, box=FALSE, main="Current", legend=FALSE)
+        plot(Rcr, add=TRUE, col=col1[1:max(cr)])
+        plot(Rw, add=TRUE, col=CW, legend=FALSE)
+        plot(rt, col=CE, axes=FALSE, box=FALSE, main="Reference", legend=FALSE)
+        plot(Rrf, add=TRUE, col=col1[1:max(rf)])
+        plot(Rw, add=TRUE, col=CW, legend=FALSE)
+        plot(rt, col=CE, axes=FALSE, box=FALSE, main="Difference", legend=FALSE)
+        plot(Rdf, add=TRUE, col=col3[min(df):max(df)])
+        plot(Rw, add=TRUE, col=CW, legend=FALSE)
+        #plot(rt, col=CE, axes=FALSE, box=FALSE, main="Intactness", legend=FALSE)
+        #plot(Rsi, add=TRUE, col=col2[min(si):max(si)])
+        #plot(Rw, add=TRUE, col=CW, legend=FALSE)
+        plot(rnr,col=cnr, axes=FALSE, box=FALSE, main="Detections", legend=FALSE)
+        plot(sam0,add=TRUE, col="#ffffffaa", legend=FALSE)
+        plot(sam1,add=TRUE, col="red4", legend=FALSE)
+        par(op)
+        dev.off()
+    }
 }
+
+if (SAVE)
+    dbDisconnect(con)
 
 ## compare
 

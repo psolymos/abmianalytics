@@ -205,7 +205,7 @@ ROOT <- "~/GoogleWork/tmp/tables"
 
 TX <- c("birds", "vplants", "mites", "mosses", "lichens")
 
-tx <- "birds"
+#tx <- "birds"
 
 e1 <- new.env()
 e2 <- new.env()
