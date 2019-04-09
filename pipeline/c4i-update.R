@@ -11,8 +11,12 @@ all(rownames(kgrid) == rownames(KT))
 all(kgrid$LUF_NAME == KT$reg_luf)
 KT$reg_luf <- kgrid$LUF_NAME
 
+VER$species <- as.numeric(table(SP$taxon)[rownames(VER)])
+
 save(XY, KT, KA_2012, KA_2014, SP, QT2KT, VER, CF, CFbirds,
     file="d:/abmi/reports/2017/data/kgrid_areas_by_sector.RData")
+save(XY, KT, KA_2012, KA_2014, SP, QT2KT, VER, CF, CFbirds,
+    file="s:/reports/2017/data/kgrid_areas_by_sector.RData")
 
 }
 
@@ -24,17 +28,6 @@ XY <- c4i0$XY
 str(XY)
 QT2KT <- c4i0$QT2KT
 str(QT2KT)
-
-## version
-VER <- c4i0$VER
-VER$version <- 2018
-VER$yr_last <- 2017
-VER["mammals", "yr_last"] <- c4i0$VER["mammals", "yr_last"]
-VER["mosses", "yr_last"] <- 2016
-VER$hf <- "2016v3"
-VER$veg <- "v6.1"
-c4i0$VER
-VER
 
 ## lookup
 str(c4i0$SP)
@@ -80,6 +73,19 @@ with(spt, table(taxon, model_region))
 
 with(spt, table(taxon, model_region)) - with(c4i0$SP, table(taxon, model_region))
 SP <- spt
+
+## version
+VER <- c4i0$VER
+VER$version <- 2018
+VER$yr_last <- 2017
+VER["mammals", "yr_last"] <- c4i0$VER["mammals", "yr_last"]
+VER["mosses", "yr_last"] <- 2016
+VER$hf <- "2016v3"
+VER$veg <- "v6.1"
+VER$species <- as.numeric(table(SP$taxon)[rownames(VER)])
+
+c4i0$VER
+VER
 
 ## regions
 KT <- c4i0$KT
@@ -169,6 +175,10 @@ CF <- list(
 write.csv(spt, row.names=FALSE, file="d:/abmi/reports/2018/data/species-info.csv")
 save(XY, KT, KA_2016, SP, QT2KT, VER, CF, # CFbirds,
     file="d:/abmi/reports/2018/data/kgrid_areas_by_sector.RData")
+
+write.csv(spt, row.names=FALSE, file="s:/reports/2018/data/species-info.csv")
+save(XY, KT, KA_2016, SP, QT2KT, VER, CF, # CFbirds,
+    file="s:/reports/2018/data/kgrid_areas_by_sector.RData")
 
 
 ## calculate spclim raster for /spclim
@@ -329,19 +339,106 @@ for (tx in c("vplants", "mites", "mosses", "lichens")) {
     }
 }
 
-SPP <- rownames(SP)[SP$taxon == "birds"]
-AOU <- as.character(e1$Lookup[SPP,"Code"])
+load("d:/abmi/sppweb2018/c4i/tables/lookup-birds.RData")
+tax <- droplevels(Lookup[Lookup$ModelNorth | Lookup$ModelSouth,])
+rownames(tax) <- tax$Code
+SPP <- as.character(tax$SpeciesID)
+AOU <- rownames(tax)
+CN <- c("Native", "Misc", "Agriculture", "Forestry", "RuralUrban", "Energy", "Transportation")
+
 for (i in 1:length(AOU)) {
     spp <- AOU[i]
     cat(spp, "\n");flush.console()
 
     ee <- new.env()
     load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-04-01/", spp, ".RData"), envir=ee)
-    SA.Curr <- as.matrix(ee$Curr[,colnames(KA_2016)])
-    SA.Ref <- as.matrix(ee$Ref[,colnames(KA_2016)])
+    SA.Curr <- as.matrix(ee$Curr[,CN])
+    SA.Ref <- as.matrix(ee$Ref[,CN])
 
     save(SA.Curr, SA.Ref, file=paste0("d:/abmi/reports/2018/results/birds/sector/",
         SPP[i], ".RData"))
 
+}
+
+## compare species lists
+
+library(cure4insect)
+set_options(path = "s:/reports")
+set_options(version = 2017)
+load_common_data()
+SP1 <- get_species_table()
+clear_common_data()
+set_options(version = 2018)
+load_common_data()
+SP2 <- get_species_table()
+
+
+## use package to do sector effects updates
+
+devtools::install_github("ABbiodiversity/cure4insect@v2018")
+library(cure4insect)
+set_options(path = "s:/reports")
+set_options(version = 2018)
+#clear_common_data()
+load_common_data()
+
+
+KT <- cure4insect:::.c4if$KT
+KT$N <- KT$reg_nr != "Grassland" & KT$reg_nr != "Rocky Mountain" &
+    KT$reg_nr != "Parkland" & KT$reg_nsr != "Dry Mixedwood"
+KT$S <- KT$reg_nr == "Grassland" | KT$reg_nr == "Parkland" |
+    KT$reg_nsr == "Dry Mixedwood"
+
+
+ID <- rownames(KT)[KT$N]
+Spp <- get_all_species()
+subset_common_data(id=ID, species=Spp)
+xxn <- report_all(cores=8)
+resn <- do.call(rbind, lapply(xxn, flatten))
+class(resn) <- c("data.frame", "c4idf")
+#y <- load_species_data("AlderFlycatcher")
+#x <- calculate_results(y)
+#flatten(x)
+
+ID <- rownames(KT)[KT$S]
+subset_common_data(id=ID, species=Spp)
+xxs <- report_all(cores=8)
+ress <- do.call(rbind, lapply(xxs, flatten))
+class(ress) <- c("data.frame", "c4idf")
+
+save(resn, ress, file="d:/abmi/sppweb2018/c4i/tables/sector-effects.RData")
+
+
+load("d:/abmi/sppweb2018/c4i/tables/sector-effects.RData")
+
+SPP <- rownames(resn)
+
+for (spp in SPP) {
+    TYPE <- "C"
+    if (resn[spp, "model_north"] && !resn[spp, "model_south"])
+        TYPE <- "N"
+    if (!resn[spp, "model_north"] && resn[spp, "model_south"])
+        TYPE <- "S"
+    if (TYPE != "S") {
+        png(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/figs/sector/", spp, "-north.png"),
+            height=500, width=1500, res=150)
+        op <- par(mfrow=c(1,3))
+        plot_sector(resn[spp,], "unit")
+        plot_sector(resn[spp,], "regional", main="")
+        plot_sector(resn[spp,], "underhf", main="")
+        par(op)
+        dev.off()
+    }
+    if (TYPE != "S") {
+        png(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/figs/sector/", spp, "-south.png"),
+            height=500, width=1500, res=150)
+        op <- par(mfrow=c(1,3))
+        plot_sector(ress[spp,], "unit")
+        plot_sector(ress[spp,], "regional", main="")
+        plot_sector(ress[spp,], "underhf", main="")
+        par(op)
+        dev.off()
+
+    }
 }
 

@@ -195,13 +195,15 @@ table(N=Lookup$ModelNorth, S=Lookup$ModelSouth)
 save(list=toSave,
     file=paste0("d:/abmi/sppweb2018/c4i/tables/StandardizedOutput-", tx, ".RData"))
 
-## Making tables for IC handoff
+## Making tables for IC handoff ==========================================================
 
 library(mefa4)
 library(openxlsx)
+library(cure4insect)
+set_options(path = "s:/reports")
+load_common_data()
 
-#ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
-ROOT <- "~/GoogleWork/tmp/tables"
+ROOT <- "d:/abmi/sppweb2018/c4i/tables"
 
 TX <- c("birds", "vplants", "mites", "mosses", "lichens")
 
@@ -221,13 +223,15 @@ load(file.path(ROOT, paste0("StandardizedOutput-lichens.RData")), envir=e5)
 OUT <- list()
 
 ## version info
-OUT$Info <- data.frame(
-    Data_Portal_Updates=c(
-        "Date",
-        "Backfilled_version"),
-    Version_2018=c(
-        "2019-03-29",
-        "6.1"))
+#OUT$Info <- data.frame(
+#    Data_Portal_Updates=c(
+#        "Date",
+#        "Backfilled_version"),
+#    Version_2018=c(
+#        "2019-03-29",
+#        "6.1"))
+OUT$Info <- get_version_info()
+OUT$Info <- data.frame(Group=rownames(OUT$Info), OUT$Info)
 
 ## taxonomy/lookup
 tmp1 <- e1$Lookup
@@ -358,7 +362,36 @@ tmp <- tmp[rownames(OUT$SoilhfSouthNontreed),]
 OUT$LinearSouth <- data.frame(
     OUT$Species[rownames(tmp), cn0],
     tmp)
-#write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-04-04.xlsx")))
+
+load("d:/abmi/sppweb2018/c4i/tables/sector-effects.RData")
+
+compare_sets(rownames(OUT$VeghfNorth), rownames(resn))
+compare_sets(rownames(OUT$SoilhfSouthNontreed), rownames(ress))
+
+resn <- resn[rownames(OUT$VeghfNorth),]
+ress <- ress[rownames(OUT$SoilhfSouthNontreed),]
+
+cns <- c("Area_Agriculture", "Area_Forestry", "Area_RuralUrban", "Area_Energy", "Area_Transportation",
+    "Total_Agriculture", "Total_Forestry", "Total_RuralUrban", "Total_Energy", "Total_Transportation",
+    "UnderHF_Agriculture", "UnderHF_Forestry", "UnderHF_RuralUrban", "UnderHF_Energy", "UnderHF_Transportation",
+    "Unit_Agriculture", "Unit_Forestry", "Unit_RuralUrban", "Unit_Energy", "Unit_Transportation")
+OUT$SectorNorth <- cbind(OUT$Species[rownames(resn), cn0], resn[,cns])
+OUT$SectorSouth <- cbind(OUT$Species[rownames(ress), cn0], ress[,cns])
+
+meta <- read.csv("d:/abmi/sppweb2018/c4i/tables/meta.csv")
+OUT$Metadata <- meta
+
+write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-04-08.xlsx")))
+write.xlsx(OUT, file.path("d:/abmi/sppweb2018/c4i/tables", paste0("DataPortalUpdate_2019-04-08.xlsx")))
+
+
+#meta <- list()
+#for (i in names(OUT)) {
+#    meta[[i]] <- data.frame(SheetName=i, FieldName=colnames(OUT[[i]]), Description="")
+#}
+#meta <- do.call(rbind, meta)
+#str(meta)
+#write.csv(meta, file="d:/abmi/sppweb2018/c4i/tables/meta.csv")
 
 OUT$pAspen <- data.frame(pAspen=c(log(pA1), pA2))
 rownames(OUT$pAspen) <- rownames(tmpL)

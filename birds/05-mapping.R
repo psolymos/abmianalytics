@@ -137,13 +137,19 @@ make_raster <- function(value, rc, rt)
     raster(x=r, template=rt)
 }
 
+CN <- c("Native", "Misc", "Agriculture", "Forestry", "RuralUrban", "Energy", "Transportation")
 stemp <- matrix(0, nrow(kgrid), nlevels(ch2veg$sector))
-dimnames(stemp) <- list(rownames(kgrid), levels(ch2veg$sector))
+dimnames(stemp) <- list(rownames(kgrid), CN)
 stemp <- as(stemp, "dgCMatrix")
 
 ## spp runs
 
-for (spp in rownames(tax)) {
+#spp <- "ALFL"
+SPP <- rownames(tax)
+SPP <- rownames(tax)[1:60]
+SPP <- rownames(tax)[61:120]
+SPP <- rownames(tax)[121:nrow(tax)]
+for (spp in SPP) {
     cat(spp, "\n");flush.console()
 
     TYPE <- "C" # combo
@@ -211,6 +217,7 @@ for (spp in rownames(tax)) {
         prnRf <- munHab[match(ch2veg$rf2, names(munHab))]
         prnCr[ch2veg$modif] <- prnRf[ch2veg$modif] + prnCr[ch2veg$modif]
         ## put pieces together for north
+        ## multiplying with row normalized area gives the weighted averaging
         ADnCr <- t(exp(prnCr) * t(trVeg)) * exp(munClim)
         ADnRf <- t(exp(prnRf) * t(trVeg)) * exp(munClim)
         ## add up by sector for north
@@ -229,13 +236,20 @@ for (spp in rownames(tax)) {
         wS[] <- 0
     wS[kgrid$useS] <- 1
     wS[kgrid$useN] <- 0
-    Curr <- wS * ADsCrSect + (1-wS) * ADnCrSect
-    Ref <- wS * ADsRfSect + (1-wS) * ADnRfSect
+    Curr <- wS * ADsCrSect[,CN] + (1-wS) * ADnCrSect[,CN]
+    Ref <- wS * ADsRfSect[,CN] + (1-wS) * ADnRfSect[,CN]
 
     save(Curr, Ref,
         file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-04-01/", spp, ".RData"))
 
+    SA.Curr <- Curr
+    SA.Ref <- Ref
+    NAM <- as.character(tax[spp, "SpeciesID"])
+    save(SA.Curr, SA.Ref, file=paste0("d:/abmi/reports/2018/results/birds/sector/",
+        NAM, ".RData"))
+
 }
+
 
 ## mapping
 
@@ -279,7 +293,55 @@ col3 <- colorRampPalette(c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0","#A1D76A","#4
 CW <- rgb(0.4,0.3,0.8) # water
 CE <- "lightcyan4" # exclude
 
-#spp <- "ALFL" # species
+## checking results
+if (FALSE) {
+cn <- c("Native", "Misc", "Agriculture", "Forestry", "RuralUrban", "Energy", "Transportation")
+rn <- rownames(kgrid)[kgrid$NRNAME != "Grassland"]
+Aveg <- groupSums(trVeg, 2, ch2veg$sector)[,cn]
+KA <- 100*colMeans(Aveg[rn,])
+#Asoil <- 100*colMeans(groupSums(trSoil, 2, ch2soil$sector)[rn,cn])
+
+#spp <- "BTNW" # species
+#load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-04-01/", spp, ".RData"))
+
+
+CS <- colSums(Curr[rn,cn])
+RS <- colSums(Ref[rn,cn])
+NC <- sum(CS)
+NR <- sum(RS)
+Sector_Total <- (100 * (CS - RS) / NR)[-1]
+Sector_UnderHF <- (100 * (CS - RS) / RS)[-1]
+Sector_Area <- (100 * KA / sum(KA))[names(Sector_Total)]
+Sector_Unit <- 100 * Sector_Total / Sector_Area
+
+cat(spp, "\n")
+round(cbind(CS=CS, RS=RS, Df=CS-RS), 2)
+round(cbind(Total=Sector_Total,
+    Under=Sector_UnderHF,
+    Unit=Sector_Unit), 2)
+
+
+Dcr <- rowSums(Curr)
+q <- quantile(Dcr, 0.99)
+Dcr[Dcr > q] <- q
+summary(Dcr)
+Drf <- rowSums(Ref)
+q <- quantile(Drf, 0.99)
+Drf[Drf > q] <- q
+summary(Drf)
+MAX <- max(Dcr, Drf)
+
+Rcr <- make_raster(Dcr, kgrid, rt)
+Rrf <- make_raster(Drf, kgrid, rt)
+plot(sqrt(Rcr), col=col1)
+plot(sqrt(Rrf), col=col1)
+
+x <- make_raster(as.numeric(Aveg[,"Forestry"]), kgrid, rt)
+plot(x, col=col1)
+
+}
+
+
 
 ## detections
 ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
@@ -376,8 +438,8 @@ con <- dbConnect(
 
 #dbDisconnect(con)
 
-PLOT <- FALSE
-SAVE <- TRUE
+PLOT <- TRUE
+SAVE <- FALSE
 for (spp in rownames(tax)) {
 
     cat(spp, "\n");flush.console()
