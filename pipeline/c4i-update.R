@@ -31,7 +31,8 @@ str(QT2KT)
 
 ## lookup
 str(c4i0$SP)
-ROOT <- "~/GoogleWork/tmp/tables"
+ROOT <- "d:/abmi/sppweb2018/c4i/tables"
+
 e1 <- new.env()
 e2 <- new.env()
 e3 <- new.env()
@@ -60,19 +61,25 @@ rownames(spt) <- spt$SpeciesID
 spt$native <- !spt$Nonnative
 spt$model_north <- spt$ModelNorth
 spt$model_south <- spt$ModelSouth
-spt$Species <- ifelse(is.na(spt$CommonName), spt$ScientificName, spt$CommonName)
+spt$Species <- as.factor(ifelse(is.na(spt$CommonName),
+    as.character(spt$ScientificName), as.character(spt$CommonName)))
 spt$habitat_assoc <- c4i0$SP$habitat_assoc[match(rownames(spt), rownames(c4i0$SP))]
 spt$model_region <- factor("North and South", levels(c4i0$SP$model_region))
 spt$model_region[!spt$model_north] <- "South"
 spt$model_region[!spt$model_south] <- "North"
 spt <- spt[,colnames(c4i0$SP)]
 spt <- droplevels(rbind(spt, c4i0$SP[c4i0$SP$taxon == "mammals",]))
+spt$taxon <- as.factor(spt$taxon)
 
 with(c4i0$SP, table(taxon, model_region))
 with(spt, table(taxon, model_region))
 
 with(spt, table(taxon, model_region)) - with(c4i0$SP, table(taxon, model_region))
 SP <- spt
+
+head(SP)
+summary(spt)
+str(SP)
 
 ## version
 VER <- c4i0$VER
@@ -106,8 +113,9 @@ tv <- droplevels(tv[!endsWith(rownames(tv), "0"),])
 ch2veg$sector <- tv$Sector61[match(ch2veg$cr, rownames(tv))]
 
 KA_2016 <- groupSums(trVeg[,rownames(ch2veg)], 2, ch2veg$sector)
-#colnames(KA_2016)[colnames(KA_2016) == "Native"] <- "NATIVE"
+colnames(KA_2016)[colnames(KA_2016) == "Native"] <- "NATIVE"
 KA_2016 <- KA_2016[,colnames(c4i0$KA_2014)]
+colnames(KA_2016)[colnames(KA_2016) == "NATIVE"] <- "Native"
 
 KA_2016 <- KA_2016 / 10^6
 

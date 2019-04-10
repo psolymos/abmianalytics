@@ -175,6 +175,11 @@ cn <- intersect(colnames(en$SpclimNorth), colnames(e0$SpclimNorth))
 SpclimNorth[,cn,1] <- as.matrix(en$SpclimNorth[dimnames(SpclimNorth)[[1]],cn])
 SpclimNorth[,cn,-1] <- en$SpclimNorth.bs[dimnames(SpclimNorth)[[1]],cn,]
 
+## linear table issue
+if (tx == "lichens") {
+    summary(LinearNorth)
+    head(LinearNorth)
+}
 
 toSave <- c("Lookup",
     "CoefNorth", "CoefSouth",
@@ -381,8 +386,9 @@ OUT$SectorSouth <- cbind(OUT$Species[rownames(ress), cn0], ress[,cns])
 meta <- read.csv("d:/abmi/sppweb2018/c4i/tables/meta.csv")
 OUT$Metadata <- meta
 
-write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-04-08.xlsx")))
-write.xlsx(OUT, file.path("d:/abmi/sppweb2018/c4i/tables", paste0("DataPortalUpdate_2019-04-08.xlsx")))
+summary(OUT$LinearNorth)
+
+write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-04-10.xlsx")))
 
 
 #meta <- list()
@@ -398,6 +404,74 @@ rownames(OUT$pAspen) <- rownames(tmpL)
 OUT$pAspen <- OUT$pAspen[rownames(OUT$LinearSouth),,drop=FALSE]
 
 save(OUT, file="d:/abmi/reports/2018/misc/DataPortalUpdate.RData")
+
+
+## writing csv files with current and reference abundances
+
+library(cure4insect)
+library(mefa4)
+set_options(path = "d:/abmi/reports")
+load_common_data()
+
+load("d:/abmi/AB_data_v2018/data/analysis/kgrid_table_km.Rdata")
+
+kgrid$xNotRocky <- kgrid$NRNAME != "Rocky Mountain"
+kgrid$xBoth <- TRUE
+kgrid$xSonly <- kgrid$NRNAME %in% c("Grassland", "Parkland") |
+    (kgrid$NSRNAME == "Dry Mixedwood" & kgrid$POINT_Y <= 56.7)
+kgrid$xNonly <- kgrid$NRNAME != "Grassland"
+
+SP <- get_species_table()
+SP <- droplevels(SP[SP$taxon != "mammals",])
+
+gr <- "birds"
+spp <- "AlderFlycatcher"
+
+
+options(scipen=500)
+for (gr in unique(SP$taxon)) {
+    setwd(paste0("d:/abmi/AB_data_v2018/www/maps/", gr))
+    DONE <- gsub(".zip", "", list.files(pattern=".zip"))
+    SPP <- setdiff(rownames(SP[SP$taxon == gr,]), DONE)
+    for (spp in SPP) {
+
+        cat(gr, spp, "\n");flush.console()
+
+        TYPE <- "C"
+        if (SP[spp, "model_north"] && !SP[spp, "model_south"])
+            TYPE <- "N"
+        if (!SP[spp, "model_north"] && SP[spp, "model_south"])
+            TYPE <- "S"
+        ss <- switch(TYPE,
+            "C" = kgrid$xBoth,
+            "S" = kgrid$xSonly,
+            "N" = kgrid$xNonly)
+        if (gr != "birds")
+            ss <- ss & kgrid$xNotRocky
+
+        y <- load_species_data(spp)
+        Curr <- y$SA.Curr[match(rownames(kgrid), rownames(y$SA.Curr)),]
+        Ref <- y$SA.Ref[match(rownames(kgrid), rownames(y$SA.Ref)),]
+        Dcr <- rowSums(Curr)
+        q <- quantile(Dcr, 0.99)
+        Dcr[Dcr > q] <- q
+        Drf <- rowSums(Ref)
+        q <- quantile(Drf, 0.99)
+        Drf[Drf > q] <- q
+
+        d <- data.frame(ID=rownames(Curr),
+            Current=round(Dcr, 6), Reference=round(Drf, 6))
+        d <- d[ss,]
+        d$Current[d$Current < 10^-6] <- 0
+        d$Reference[d$Reference < 10^-6] <- 0
+        write.csv(d, row.names=FALSE,
+            file=paste0("d:/abmi/AB_data_v2018/www/maps/", gr, "/", spp, ".csv"))
+        zip(paste0(spp, ".zip"), paste0(spp, ".csv"))
+        unlink(paste0(spp, ".csv"))
+
+    }
+
+}
 
 
 
