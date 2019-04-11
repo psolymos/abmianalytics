@@ -237,6 +237,7 @@ OUT <- list()
 #        "6.1"))
 OUT$Info <- get_version_info()
 OUT$Info <- data.frame(Group=rownames(OUT$Info), OUT$Info)
+OUT$Info <- OUT$Info[OUT$Info$Group != "mammals",]
 
 ## taxonomy/lookup
 tmp1 <- e1$Lookup
@@ -254,6 +255,10 @@ OUT$Species <- rbind(tmp1[,colnames(tmp2)], tmp2,
 rownames(OUT$Species) <- OUT$Species$SpeciesID
 
 cn0 <- c("SpeciesID", "ScientificName", "CommonName", "TSNID", "Group")
+
+## duplicates removed
+OUT$Species <-
+    OUT$Species[!rownames(OUT$Species) %in% c("DomesticDuck", "Boechera.collinsii"),]
 
 ## useavail north
 tn <- "UseavailNorth"
@@ -388,7 +393,34 @@ OUT$Metadata <- meta
 
 summary(OUT$LinearNorth)
 
-write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-04-10.xlsx")))
+names(OUT)
+a1 <- OUT$UseavailNorth[rowSums(is.na(OUT$UseavailNorth[,-(c(1:6, 14, 15))]))>0,]
+a2 <- OUT$UseavailSouth[rowSums(is.na(OUT$UseavailSouth[,-(c(1:6))]))>0,]
+#OUT$LinearNorth[rowSums(is.na(OUT$LinearNorth[,-(c(1:6))]))>0,]
+#OUT$LinearSouth[rowSums(is.na(OUT$LinearSouth[,-(c(1:6))]))>0,]
+#OUT$SectorNorth[rowSums(is.na(OUT$SectorNorth[,-(c(1:6))]))>0,]
+#OUT$SectorSouth[rowSums(is.na(OUT$SectorSouth[,-(c(1:6))]))>0,]
+#OUT$SoilhfSouthNontreed[rowSums(is.na(OUT$SoilhfSouthNontreed[,c(6:9, 11:14)]))>0,]
+#OUT$SoilhfSouthTreed[rowSums(is.na(OUT$SoilhfSouthTreed[,c(6:9, 11:14)]))>0,]
+#OUT$SoilhfSouthNontreed[rowSums(is.na(OUT$SoilhfSouthNontreed[,c(6:9, 11:14)]))>0,]
+#OUT$VeghfNorth[rowSums(is.na(OUT$VeghfNorth[,c(6:53, 56:81)]))>0,1:81]
+
+summary(as.numeric(OUT$VeghfNorth["MountainChickadee",-(1:6)]))
+#write.csv(a1, file=file.path(ROOT, paste0("problem-useavail-north.csv")))
+#write.csv(a2, file=file.path(ROOT, paste0("problem-useavail-south.csv")))
+
+for (i in 3:11) {
+    for (j in 7:ncol(OUT[[i]])) {
+#        if (any(is.infinite(OUT[[i]][,j])))
+#            OUT[[i]][is.infinite(OUT[[i]][,j]),j] <- 10^6
+        if (any(!is.na(OUT[[i]][,j]) & OUT[[i]][,j] > 10^6))
+            OUT[[i]][OUT[[i]][,j] > 10^6,j] <- 10^6
+        OUT[[i]][,j] <- round(OUT[[i]][,j], 6)
+    }
+}
+
+options(scipen=999)
+write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-04-11.xlsx")))
 
 
 #meta <- list()

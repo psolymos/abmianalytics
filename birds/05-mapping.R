@@ -251,6 +251,69 @@ for (spp in SPP) {
 }
 
 
+## north models with bootstrap to get pop sizes in BCR6
+SPP <- rownames(tax)[tax$ModelNorth & rownames(tax) %in% colnames(en$OFF)]
+ss <- kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS"
+
+for (spp in SPP) {
+    resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
+    ## north estimates
+    ESTN <- suppressWarnings(get_coef(resn, Xn, stage="Space", na.out=FALSE))
+    b <- nrow(ESTN)
+    cat(spp, "with", b, "runs ")
+    flush.console()
+    CR <- matrix(0, sum(ss), b)
+    rownames(CR) <- rownames(kgrid)[ss]
+    HAB <- matrix(0, nlevels(ch2veg$cr2), b)
+    rownames(HAB) <- levels(ch2veg$cr2)
+
+    for (i in seq_len(b)) {
+        if (i %% round(b/10) == 0) {
+            cat(".")
+            flush.console()
+        }
+        estn <- ESTN[i,]
+        munClim <- drop(Xclim[ss,cfn$spclim] %*% estn[cfn$spclim])
+        if (estn["mSoft"] != 0 & estn["mEnSft"] == 0) {
+            estn["mEnSft"] <- estn["mSoft"]
+            estn["mTrSft"] <- estn["mSoft"]
+            estn["mSeism"] <- estn["mSoft"]
+        }
+        munHab <- drop(Xage %*% estn[colnames(Xage)])
+        munMod <- structure(numeric(length(cfn$modif)), names=cfn$modif)
+        for (k in cfn$modif)
+            munMod[k] <- log(linexp(1, estn[k], pm[k]))
+        munHab <- c(munHab,
+            HardLin=-1000,
+            Bare=-1000,
+            SnowIce=-1000,
+            Well=unname(munMod["mWell"]),
+            EnSoftLin=unname(munMod["mEnSft"]),
+            TrSoftLin=unname(munMod["mTrSft"]),
+            Seismic=unname(munMod["mSeism"]))
+        munHab["Mine"] <- -1000
+        ## expand coefficients for north
+        prnCr <- munHab[match(ch2veg$cr2, names(munHab))]
+        prnRf <- munHab[match(ch2veg$rf2, names(munHab))]
+        prnCr[ch2veg$modif] <- prnRf[ch2veg$modif] + prnCr[ch2veg$modif]
+        ## put pieces together for north
+        ## multiplying with row normalized area gives the weighted averaging
+        ADnCr <- 100 * t(exp(prnCr) * t(trVeg[ss,])) * exp(munClim) # males / km cell
+#        ADnRf <- t(exp(prnRf) * t(trVeg)) * exp(munClim)
+        ADnCrHab <- groupSums(ADnCr, 2, ch2veg$cr2)
+
+        ## quantiles not applied -- look at that post hoc before summing up
+        CR[,i] <- rowSums(ADnCrHab) # no pair adjustment applied, just ha to km
+        HAB[colnames(ADnCrHab),i] <- colSums(ADnCrHab)
+
+    }
+    save(CR, HAB,
+        file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/bcr6/", spp, ".RData"))
+    cat(" OK\n")
+
+}
+
+
 ## mapping
 
 library(mefa4)
