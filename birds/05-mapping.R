@@ -252,7 +252,8 @@ for (spp in SPP) {
 
 
 ## north models with bootstrap to get pop sizes in BCR6
-SPP <- rownames(tax)[tax$ModelNorth & rownames(tax) %in% colnames(en$OFF)]
+DONE <- gsub(".RData", "", list.files("d:/abmi/AB_data_v2018/data/analysis/birds/pred/bcr6/"))
+SPP <- setdiff(rownames(tax)[tax$ModelNorth & rownames(tax) %in% colnames(en$OFF)], DONE)
 ss <- kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS"
 
 for (spp in SPP) {

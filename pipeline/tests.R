@@ -254,6 +254,12 @@ OUT$Species <- rbind(tmp1[,colnames(tmp2)], tmp2,
     tmp3[,colnames(tmp2)], tmp4[,colnames(tmp2)], tmp5[,colnames(tmp2)])
 rownames(OUT$Species) <- OUT$Species$SpeciesID
 
+
+with(OUT$Species, table(UseavailNorth, ModelNorth))
+with(OUT$Species, table(UseavailSouth, ModelSouth))
+with(OUT$Species, table(Usevail=UseavailNorth | UseavailSouth, Model=ModelNorth | ModelSouth))
+
+
 cn0 <- c("SpeciesID", "ScientificName", "CommonName", "TSNID", "Group")
 
 ## duplicates removed
@@ -268,8 +274,10 @@ tmp <- rbind(e1[[tn]][,cn], e2[[tn]][,cn], e3[[tn]][,cn],
 OUT$UseavailNorth <- data.frame(
     OUT$Species[rownames(tmp), cn0],
     tmp)
+#OUT$UseavailNorth <- OUT$UseavailNorth[rownames(OUT$UseavailNorth) %in%
+#    rownames(OUT$Species)[OUT$Species$UseavailNorth & !OUT$Species$ModelNorth],]
 OUT$UseavailNorth <- OUT$UseavailNorth[rownames(OUT$UseavailNorth) %in%
-    rownames(OUT$Species)[OUT$Species$UseavailNorth & !OUT$Species$ModelNorth],]
+    rownames(OUT$Species)[OUT$Species$UseavailNorth],]
 
 ## useavail south
 tn <- "UseavailSouth"
@@ -279,8 +287,10 @@ tmp <- rbind(e1[[tn]][,cn], e2[[tn]][,cn], e3[[tn]][,cn],
 OUT$UseavailSouth <- data.frame(
     OUT$Species[rownames(tmp), cn0],
     tmp)
+#OUT$UseavailSouth <- OUT$UseavailSouth[rownames(OUT$UseavailSouth) %in%
+#    rownames(OUT$Species)[OUT$Species$UseavailSouth & !OUT$Species$ModelSouth],]
 OUT$UseavailSouth <- OUT$UseavailSouth[rownames(OUT$UseavailSouth) %in%
-    rownames(OUT$Species)[OUT$Species$UseavailSouth & !OUT$Species$ModelSouth],]
+    rownames(OUT$Species)[OUT$Species$UseavailSouth],]
 
 ## vegHF north
 tn <- "CoefNorth"
@@ -419,8 +429,28 @@ for (i in 3:11) {
     }
 }
 
+## species to drop
+dr <- rownames(OUT$UseavailNorth)[rowSums(is.na(OUT$UseavailNorth[,-(c(1:6, 14, 15))]))>0]
+OUT$Species[rownames(OUT$Species) %in% dr, "UseavailNorth"] <- FALSE
+nrow(OUT$UseavailNorth)
+OUT$UseavailNorth <- OUT$UseavailNorth[rownames(OUT$Species)[OUT$Species$UseavailNorth],]
+nrow(OUT$UseavailNorth)
+
+compare_sets(rownames(OUT$Species[OUT$Species$UseavailNorth,]), rownames(OUT$UseavailNorth))
+compare_sets(rownames(OUT$Species[OUT$Species$UseavailSouth,]), rownames(OUT$UseavailSouth))
+compare_sets(rownames(OUT$Species[OUT$Species$ModelNorth,]), rownames(OUT$LinearNorth))
+compare_sets(rownames(OUT$Species[OUT$Species$ModelNorth,]), rownames(OUT$VeghfNorth))
+compare_sets(rownames(OUT$Species[OUT$Species$ModelNorth,]), rownames(OUT$SectorNorth))
+compare_sets(rownames(OUT$Species[OUT$Species$ModelSouth,]), rownames(OUT$LinearSouth))
+compare_sets(rownames(OUT$Species[OUT$Species$ModelSouth,]), rownames(OUT$SoilhfSouthNontreed))
+compare_sets(rownames(OUT$Species[OUT$Species$ModelSouth,]), rownames(OUT$SoilhfSouthTreed))
+compare_sets(rownames(OUT$Species[OUT$Species$ModelNorth,]), rownames(OUT$SectorSouth))
+
+with(OUT$Species, table(UseavailNorth + UseavailSouth + ModelNorth + ModelSouth))
+addmargins(with(OUT$Species, table(Useavail=UseavailNorth + UseavailSouth, Model=ModelNorth + ModelSouth)))
+
 options(scipen=999)
-write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-04-11.xlsx")))
+write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-04-15.xlsx")))
 
 
 #meta <- list()
