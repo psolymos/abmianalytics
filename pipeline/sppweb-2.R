@@ -1,4 +1,4 @@
-devtools::install_github("ABbiodiversity/cure4insect@v2018")
+#devtools::install_github("ABbiodiversity/cure4insect@v2018")
 
 library(cure4insect)
 library(mefa4)
@@ -6,7 +6,8 @@ set_options(path = "s:/reports")
 load_common_data()
 
 load("d:/abmi/sppweb2018/c4i/tables/sector-effects.RData")
-ROOT <- "d:/abmi/sppweb2018/www/"
+ROOT <- "d:/abmi/AB_data_v2018/www"
+#ROOT <- "d:/abmi/sppweb2018/www/"
 
 ## kgrid
 load("d:/abmi/AB_data_v2018/data/analysis/kgrid_table_km.Rdata")
@@ -153,3 +154,175 @@ for (spp in SPP) {
 
 
 }
+
+
+## use avail figures
+
+load("d:/abmi/reports/2018/misc/DataPortalUpdate.RData")
+
+library(RColorBrewer)
+
+
+tab <- OUT$Species
+uan <- OUT$UseavailNorth
+uas <- OUT$UseavailSouth
+
+x <- as.matrix(uan[ ,c("Deciduous","Mixedwood","WhiteSpruce","Pine","BlackSpruce","TreedFen","Open","Wetland","HFor","Crop", "TameP", "RoughP","UrbInd","HardLin","SoftLin")])
+HabLabel <- c("Deciduous","Mixedwood","Upland Spruce","Pine","Black Spruce","Treed Fen","Open Upland","Open Wetland","Forestry","Crop", "Tame Pasture", "Rough Pasture","Urban/Industry","Hard Linear","Soft Linear" )
+col1<-brewer.pal(8, "Dark2")[c(1,1,1,1, 5,5, 6,7)]
+col2<-brewer.pal(12, "Paired")[c(4,7,7,7,12,12,10)]
+cols <- c(col1,col2)
+
+for (spp in rownames(tab)[tab$UseavailNorth]) {
+    gr <- tab[spp, "Group"]
+    spnam <- if (is.na(tab[spp, "CommonName"])) {
+        as.character(tab[spp, "ScientificName"])
+    } else {
+        paste0(as.character(tab[spp, "CommonName"]), " (", as.character(tab[spp, "ScientificName"]), ")")
+    }
+    cat(gr, spp, "\n");flush.console()
+    png(paste0(ROOT, "/figs/", gr, "/", spp, "-useavail-north.png"),
+        height=480, width=600)
+    op <- par(mar=c(6,4,2,2)+0.1, las=2)
+    x1 <- barplot(as.vector(x [spp, ]), horiz=FALSE, ylab="Affinity",space=NULL, col=cols, border=cols, ylim=c(-1,1), axes=FALSE,axisnames=F )
+    axis(side=2)
+    abline(h=0, col="red4", lwd=2)
+    mtext(side=3,at=x1[1],adj=0, spnam, cex=1.2,col="grey40",las=1)
+    text(x=x1, y=par()$usr[3]-0.01,labels=HabLabel, srt=60, adj=1, col=cols, xpd=TRUE)
+    par(op)
+    dev.off()
+}
+
+x<- as.matrix(uas[ , c("Productive","Clay","Saline","RapidDrain","Crop","TameP","RoughP","UrbInd","HardLin","SoftLin")])
+HabLabel <- c("Productive","Clay","Saline","Rapid Drain","Crop", "Tame Pasture", "Rough Pasture","Urban/Industry","Hard Linear","Soft Linear" )
+col1<-brewer.pal(8, "Dark2")[c(7,7,7,7)]
+col2<-brewer.pal(12, "Paired")[c(7,7,7,12,12,10)]
+cols <- c(col1,col2)
+
+for (spp in rownames(tab)[tab$UseavailSouth]) {
+    gr <- tab[spp, "Group"]
+    spnam <- if (is.na(tab[spp, "CommonName"])) {
+        as.character(tab[spp, "ScientificName"])
+    } else {
+        paste0(as.character(tab[spp, "CommonName"]), " (", as.character(tab[spp, "ScientificName"]), ")")
+    }
+    cat(gr, spp, "\n");flush.console()
+    png(paste0(ROOT, "/figs/", gr, "/", spp, "-useavail-south.png"),
+        height=480, width=600)
+    op <- par(mar=c(6,4,2,2)+0.1, las=2)
+    x1 <- barplot(as.vector(x [spp, ]), horiz=FALSE, ylab="Affinity",space=NULL, col=cols, border=cols, ylim=c(-1,1), axes=FALSE,axisnames=F )
+    axis(side=2)
+    abline(h=0, col="red4", lwd=2)
+    mtext(side=3,at=x1[1],adj=0,spnam,cex=1.2,col="grey40",las=1)
+    text(x=x1, y=par()$usr[3]-0.01,labels=HabLabel, srt=60, adj=1, col=cols, xpd=TRUE)
+    par(op)
+    dev.off()
+}
+
+## detection maps for non birds
+
+m <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+rt <- raster(system.file("extdata/AB_1km_mask.tif", package="cure4insect"))
+
+rnr <- make_raster(as.integer(kgrid$NRNAME), kgrid, rt)
+cnr <- c('#b3e2cd','#fdcdac','#cbd5e8','#f4cae4','#e6f5c9','#fff2ae')
+cnr <- cnr[c(5,6,1,2,4,3)]
+
+
+ex <- new.env()
+gr <- "mites"
+load("s:/Result from Ermias_2018/mites/Species detection Mites 2018.RData", envir=ex)
+
+ex <- new.env()
+gr <- "lichens"
+load("s:/Result from Ermias_2018/lichens/Species detection Lichens 2018.RData", envir=ex)
+
+ex <- new.env()
+gr <- "mosses"
+load("s:/Result from Ermias_2018/mosses/Species detection Moss 2018.RData", envir=ex)
+
+ex <- new.env()
+gr <- "vplants"
+load("s:/Result from Ermias_2018/vplants/Species detection Vascular plants 2018.RData", envir=ex)
+
+
+
+site <- ex$dd$Site
+og <- ex$dd$OnOffGrid == "OG"
+ogs <- sapply(strsplit(site[og], "-"), "[[", 3)
+site[og] <- ogs
+site <- gsub("B", "", site)
+siten <- as.integer(site)
+
+xy <- data.frame(x=m$PUBLIC_LONGITUDE, y=m$PUBLIC_LATTITUDE)[match(site, m$SITE_ID),]
+coordinates(xy) <- ~x+y
+proj4string(xy) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
+xy <- spTransform(xy, proj4string(rt))
+
+yy <- ex$dd[,6:ncol(ex$dd)]
+compare_sets(colnames(yy), rownames(tab[tab$Group == gr,]))
+
+for (spp in rownames(tab[tab$Group == gr,])) {
+    spnam <- if (is.na(tab[spp, "CommonName"])) {
+        as.character(tab[spp, "ScientificName"])
+    } else {
+        paste0(as.character(tab[spp, "CommonName"]), " (", as.character(tab[spp, "ScientificName"]), ")")
+    }
+    cat(gr, spp, "\n");flush.console()
+    xy0 <- xy[yy[,spp] == 0 & !duplicated(site),]
+    xy1 <- xy[yy[,spp] > 0,]
+    png(paste0(ROOT, "/figs/", gr, "/", spp, "-det.png"),
+        height=1500*1.5, width=1000*1.5, res=300)
+    op <- par(mar=c(1,1,1,1))
+    plot(rnr,col=cnr, axes=FALSE, box=FALSE, main=spnam, legend=FALSE)
+    plot(xy0, add=TRUE, pch=19, col="#aaaaaa88", legend=FALSE, cex=0.8)
+    plot(xy1, add=TRUE, pch=19, col="red4", legend=FALSE, cex=0.8)
+    par(op)
+    dev.off()
+
+}
+
+## detection maps for birds
+
+## detections
+ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
+ee <- new.env()
+load(file.path(ROOT, "ab-birds-all-2018-11-29.RData"), envir=ee)
+ddd <- nonDuplicated(ee$dd, ee$dd$SS, TRUE)
+yyy <- groupSums(ee$yy, 1, ee$dd$SS)[rownames(ddd),]
+yyy[yyy > 0] <- 1
+ss <- !is.na(ddd$X) & !is.na(ddd$NRNAME)
+ddd <- ddd[ss,]
+yyy <- yyy[ss,]
+
+xy <- SpatialPoints(as.matrix(ddd[,c("X","Y")]))
+proj4string(xy) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
+xy <- spTransform(xy, proj4string(rt))
+rt10 <- aggregate(rt, fact=10)
+sam0 <- rasterize(xy, rt10, field=1, fun='sum')
+values(sam0)[!is.na(values(sam0))] <- 1
+
+load("d:/abmi/sppweb2018/c4i/tables/lookup-birds.RData")
+tax <- droplevels(Lookup[Lookup$UseavailNorth | Lookup$UseavailSouth,])
+rownames(tax) <- tax$Code
+
+gr <- "birds"
+for (spp in rownames(tax)) {
+    cat(gr, spp, "\n");flush.console()
+    xy1 <- SpatialPoints(as.matrix(ddd[yyy[,spp] > 0,c("X","Y")]))
+    proj4string(xy1) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
+    xy1 <- spTransform(xy1, proj4string(rt))
+    sam1 <- rasterize(xy1, rt10, field=1, fun='last')
+    png(paste0("d:/abmi/AB_data_v2018/www", "/figs/", gr, "/", as.character(tax[spp, "SpeciesID"]), "-det.png"),
+        height=1500*1.5, width=1000*1.5, res=300)
+    op <- par(mar=c(1,1,1,1))
+    plot(rnr,col=cnr, axes=FALSE, box=FALSE, main=as.character(tax[spp, "CommonName"]), legend=FALSE)
+    plot(sam0,add=TRUE, col="#aaaaaa88", legend=FALSE)
+    plot(sam1,add=TRUE, col="red4", legend=FALSE)
+    par(op)
+    dev.off()
+
+}
+
+
+
