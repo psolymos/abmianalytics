@@ -425,7 +425,7 @@ rt10 <- aggregate(rt, fact=10)
 sam0 <- rasterize(xy, rt10, field=1, fun='sum')
 values(sam0)[!is.na(values(sam0))] <- 1
 
-rnr <- Rcr <- make_raster(as.integer(kgrid$NRNAME), kgrid, rt)
+rnr <- make_raster(as.integer(kgrid$NRNAME), kgrid, rt)
 cnr <- c('#b3e2cd','#fdcdac','#cbd5e8','#f4cae4','#e6f5c9','#fff2ae')
 cnr <- cnr[c(5,6,1,2,4,3)]
 
@@ -476,7 +476,7 @@ dim(xyall2)
 
 #dbWriteTable(con, "detections10k_nonABMI", xyall, overwrite=TRUE, row.names=FALSE) # birds
 dbWriteTable(con, "detections10k_BBS", xyall, overwrite=TRUE, row.names=FALSE) # birds
-dbWriteTable(con, "detections10k_BAM", xyall, overwrite=TRUE, row.names=FALSE) # birds
+dbWriteTable(con, "detections10k_BAM", xyall2, overwrite=TRUE, row.names=FALSE) # birds
 }
 
 library(DBI)
