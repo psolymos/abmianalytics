@@ -325,4 +325,144 @@ for (spp in rownames(tax)) {
 }
 
 
+## mammal camera dump
+
+fl <- list.files("s:/Camera mammals Mar 2019/Figures North/Best model")
+x <- gsub("Veg+HF figure best model ", "", fl, fixed=TRUE)
+#x[endsWith(x, "Winter.png")] <- gsub("Winter.png", "-winter.png", x[endsWith(x, "Winter.png")])
+#x[endsWith(x, "Summer.png")] <- gsub("Summer.png", "-summer.png", x[endsWith(x, "Summer.png")])
+
+i1 <- endsWith(x, "Winter.png")
+i2 <- endsWith(x, "Summer.png")
+
+## combined (fine coef, summer+winter)
+file.copy(paste0("s:/Camera mammals Mar 2019/Figures North/Best model/", fl[!i1 & !i2]),
+    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-north-combo/", x[!i1 & !i2]))
+## honest models, winter
+file.copy(paste0("s:/Camera mammals Mar 2019/Figures North/Best model/", fl[i1]),
+    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-north-winter/",
+    gsub("Winter.png", ".png", x[i1])))
+## honest models, summer
+file.copy(paste0("s:/Camera mammals Mar 2019/Figures North/Best model/", fl[i2]),
+    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-north-summer/",
+    gsub("Summer.png", ".png", x[i2])))
+
+fl1 <- list.files("s:/Camera mammals Mar 2019/Figures South/Best model/Treed")
+fl2 <- list.files("s:/Camera mammals Mar 2019/Figures South/Best model/Non-treed")
+x1 <- gsub("Soil+HF figure best model ", "", fl1, fixed=TRUE)
+x2 <- gsub("Soil+HF figure best model ", "", fl2, fixed=TRUE)
+all(x1 == x2)
+
+i1 <- endsWith(x1, "Winter.png")
+i2 <- endsWith(x1, "Summer.png")
+
+## combined (fine coef, summer+winter)
+file.copy(paste0("s:/Camera mammals Mar 2019/Figures South/Best model/Treed/", fl1[!i1 & !i2]),
+    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-south-combo-treed/", x1[!i1 & !i2]))
+## honest models, winter
+file.copy(paste0("s:/Camera mammals Mar 2019/Figures South/Best model/Treed/", fl1[i1]),
+    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-south-winter-treed/",
+    gsub("Winter.png", ".png", x1[i1])))
+## honest models, summer
+file.copy(paste0("s:/Camera mammals Mar 2019/Figures South/Best model/Treed/", fl1[i2]),
+    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-south-summer-treed/",
+    gsub("Summer.png", ".png", x1[i2])))
+
+file.copy(paste0("s:/Camera mammals Mar 2019/Figures South/Best model/Non-treed/", fl2[!i1 & !i2]),
+    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-south-combo-nontreed/", x2[!i1 & !i2]))
+file.copy(paste0("s:/Camera mammals Mar 2019/Figures South/Best model/Non-treed/", fl2[i1]),
+    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-south-winter-nontreed/",
+    gsub("Winter.png", ".png", x2[i1])))
+file.copy(paste0("s:/Camera mammals Mar 2019/Figures South/Best model/Non-treed/", fl2[i2]),
+    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-south-summer-nontreed/",
+    gsub("Summer.png", ".png", x2[i2])))
+
+## jpg to png
+
+library(magick)
+fl <- list.files("s:/Camera mammals Mar 2019/Maps/Space climate North/")
+x <- gsub(".jpg", ".png", fl, fixed=TRUE)
+for (i in 1:length(fl)) {
+    img <- image_read(paste0("s:/Camera mammals Mar 2019/Maps/Space climate North/", fl[i]))
+    image_write(img, paste0("s:/Camera mammals Mar 2019/Maps/Space climate North/", x[i]), format="png")
+}
+fl <- list.files("s:/Camera mammals Mar 2019/Maps/Space climate South/")
+x <- gsub(".jpg", ".png", fl, fixed=TRUE)
+for (i in 1:length(fl)) {
+    img <- image_read(paste0("s:/Camera mammals Mar 2019/Maps/Space climate South/", fl[i]))
+    image_write(img, paste0("s:/Camera mammals Mar 2019/Maps/Space climate South/", x[i]), format="png")
+}
+
+
+## lookup table
+
+r <- "d:/abmi/reports/2018/images/mammals-camera/"
+fl <- list.files("d:/abmi/reports/2018/images/mammals-camera/map-det")
+
+d <- list.dirs(r, full.names=FALSE)[-1]
+
+ls <- lapply(d, function(z) list.files(paste0(r, z)))
+names(ls) <- d
+
+spp <- sort(unique(unlist(ls)))
+
+mefa4::compare_sets(fl, spp)
+setdiff(fl, spp)
+setdiff(spp, fl)
+intersect(spp, fl)
+
+
+SPP <- c(
+    "Badger" = "Badger",
+    "Beaver" = "Beaver",
+    "Bighornsheep" = "Bighorn Sheep",
+    "Bison" = "Bison",
+    "BlackBear" = "Black Bear",
+    "Bobcat" = "Bobcat",
+    "CanadaLynx" = "Canada Lynx",
+    "ColumbianGroundSquirrel" = "Columbian Ground Squirrel",
+    "Cougar" = "Cougar",
+    "Coyote" = "Coyote",
+    "Deer" = "Deer",
+    "Elk" = "Elk",
+    "Fisher" = "Fisher",
+    "Foxes" = "Foxes",
+    "GoldenMantledGroundSquirrel" = "Golden Mantled Ground Squirrel",
+    "GrayWolf" = "Gray Wolf",
+    "Grizzlybear" = "Grizzly Bear",
+    "Groundhog" = "Groundhog",
+    "HoaryMarmot" = "Hoary Marmot",
+    "LeastChipmunk" = "Least Chipmunk",
+    "Marten" = "Marten",
+    "Mink" = "Mink",
+    "Moose" = "Moose",
+    "Mountaingoat" = "Mountain Goat",
+    "Muledeer" = "Muledeer",
+    "Muskrat" = "Muskrat",
+    "NorthernFlyingSquirrel" = "Northern Flying Squirrel",
+    "Porcupine" = "Porcupine",
+    "Pronghorn" = "Pronghorn",
+    "Raccoon" = "Raccoon",
+    "Redfox" = "Red Fox",
+    "RedSquirrel" = "Red Squirrel",
+    "RichardsonsGroundSquirrel" = "Richardson's Ground Squirrel",
+    "RiverOtter" = "River Otter",
+    "SnowshoeHare" = "Snowshoe Hare",
+    "StripedSkunk" = "Striped Skunk",
+    "VolesMiceandAllies" = "Voles, Mice and Allies",
+    "WeaselsandErmine" = "Weasels and Ermine",
+    "WhitetailedDeer" = "White-tailed Deer",
+    "WhitetailedJackRabbit" = "Whitetailed Jack Rabbit",
+    "Wolverine" = "Wolverine",
+    "WolvesCoyotesandAllies" = "Wolves, Coyotes and Allies",
+    "WoodlandCaribou" = "Woodland Caribou")
+
+tab <- data.frame(SpeciesID=names(SPP), CommonName=SPP)
+for (i in d) {
+    tab[[i]] <- names(SPP) %in% gsub(".png", "", ls[[i]])
+}
+
+
+library(jsonlite)
+toJSON(tab, rownames=FALSE,pretty=TRUE)
 

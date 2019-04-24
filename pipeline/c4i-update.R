@@ -380,6 +380,10 @@ set_options(version = 2018)
 load_common_data()
 SP2 <- get_species_table()
 
+spp <- setdiff(rownames(SP2), rownames(SP1))
+tab <- SP2[spp,]
+table(tab$taxon)
+
 
 ## use package to do sector effects updates
 
