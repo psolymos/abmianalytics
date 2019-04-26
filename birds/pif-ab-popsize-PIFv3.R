@@ -212,8 +212,10 @@ if (FALSE) {
     ROAD0 <- matrix(NA, length(SPP), 240)
     rownames(ROAD0) <- SPP
     ROAD1 <- ROAD0
-    bb <- unique(as.numeric(en$BB))
-    ddr <- en$DAT[bb,]
+    #bb <- unique(as.numeric(en$BB))
+    #ddr <- en$DAT[bb,]
+    #ddr <- ddr[ddr$ROAD==1,]
+    ddr <- en$DAT
     ddr <- ddr[ddr$ROAD==1,]
 
     Xn1 <- get_model_matrix(ddr, en$mods) # has ROAD and mTrSft as >0
@@ -239,10 +241,10 @@ tmp0 <- t(apply(ROAD0, 1, quantile, c(0.5, 0.025, 0.975), na.rm=TRUE))
 tmp1 <- t(apply(ROAD1, 1, quantile, c(0.5, 0.025, 0.975), na.rm=TRUE))
 TAB$Y0 <- tmp0[,1]
 TAB$Y0_95lower <- tmp0[,2]
-TAB$Y0_95upper <- tmp0[,2]
+TAB$Y0_95upper <- tmp0[,3]
 TAB$Y1 <- tmp1[,1]
 TAB$Y1_95lower <- tmp1[,2]
-TAB$Y1_95upper <- tmp1[,2]
+TAB$Y1_95upper <- tmp1[,3]
 #TAB$Y1[TAB$Y1 < 0.0001] <- 0.0001 # impacts 1 species, CSWA
 TAB$Y0_Y1 <- sign(TAB$Y0-TAB$Y1)
 TAB$Y0_Y1[tmp0[,2:3] %[o]% tmp1[,2:3]] <- 0
@@ -267,6 +269,8 @@ if (FALSE) {
     tv <- droplevels(tv[!endsWith(rownames(tv), "0"),])
 
     ch2veg$g <- tv$UseInPIX[match(ch2veg$cr, rownames(tv))]
+    ch2veg$f <- ifelse(startsWith(as.character(ch2veg$cr), "CC"), "CC", "not")
+    ch2veg$s <- tv$Sector61[match(ch2veg$cr, rownames(tv))]
 
     rn <- c(
         "Decid", "DecidO",
@@ -284,9 +288,24 @@ if (FALSE) {
         "Roads",
         "Agr",
         "UrbInd")
+    AAx <- groupSums(trVeg, 2, ch2veg[colnames(trVeg), "f"])
+    AAx <- colSums(AAx[kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS",])/10^6
     AA <- groupSums(trVeg, 2, ch2veg[colnames(trVeg), "g"])
     AA <- colSums(AA[kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS",])
     AA <- AA[rn]/10^6 # in km^2
+
+
+    if (FALSE) {
+        ## study area
+        AAx <- groupSums(trVeg, 2, ch2veg[colnames(trVeg), "s"])
+        AAx <- colSums(AAx[kgrid$NRNAME != "Grassland",])/10^6
+        AA <- groupSums(trVeg, 2, ch2veg[colnames(trVeg), "g"])
+        AA <- colSums(AA[kgrid$NRNAME != "Grassland",])
+        AA <- AA[rn]/10^6 # in km^2
+        sum(kgrid$NRNAME != "Grassland")
+        data.frame(p=round(100*AAx/sum(AAx),1))
+        round(100*AA/sum(AA),1)
+    }
 
 
     HABITAT <- list()
@@ -311,30 +330,85 @@ if (FALSE) {
         HABITAT[[spp]] <- list(N=NN, A=AA, D=DD)
     }
 
-    ## calculate availability and w for road sampling
-    ee <- new.env()
-    load("d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-all-2018-11-29.RData", envir=ee)
-    ## `vc2`: veg current 564m buffer (matrix)
-    vc2 <- ee$vc2
-    vc2[is.na(vc2)] <- 0
-    vc2 <- groupSums(vc2, 2, as.character(tv[colnames(vc2), "UseInPIX"]))
-    vc2 <- vc2[rownames(en$DAT),]
-    vc2 <- vc2[en$DAT$ROAD==1 & !duplicated(en$DAT$SS),]
-    vc2 <- vc2[,rn]
-    wroad <- colSums(vc2) / sum(vc2)
-    avail <- AA/sum(AA)
-    data.frame(a=ahab,w=wroad, wa=wroad/ahab)
+    vc <- as.character(en$DAT$vegc)
+    table(en$DAT$vegc)
+    summary(en$DAT$wtAge*200)
+    vc[vc == "Decid" & en$DAT$wtAge*200 > 60] <- "DecidO"
+    vc[vc == "Mixedwood" & en$DAT$wtAge*200 > 60] <- "MixedwoodO"
+    vc[vc == "Spruce" & en$DAT$wtAge*200 > 80] <- "SpruceO"
+    vc[vc == "Pine" & en$DAT$wtAge*200 > 80] <- "PineO"
+    vc[vc == "BSpr" & en$DAT$wtAge*200 > 80] <- "BSprO"
 
-    save(HABITAT, avail, wroad, file="~/GoogleWork/bam/PIF-AB/results-v3/HABITAT.RData")
+    nn <- c(
+        "Decid"="Decid",
+        "DecidO"="DecidO",
+        "MixedwoodO"="MixedO",
+        "Mixedwood"="Mixed",
+        "Spruce"="WSpr",
+        "Pine"="Pine",
+        "SpruceO"="WSprO",
+        "Swamp"="Swamp",
+        "Shrub"="Shrub",
+        "BSpr"="BSpr",
+        "RoughP"="Agr",
+        "Crop"="Agr",
+        "PineO"="PineO",
+        "Industrial"="UrbInd",
+        "BSprO"="BSprO",
+        "Rural"="UrbInd",
+        "GrassHerb"="Grass",
+        "GraminoidFen"="GrFen",
+        "Marsh"="Marsh",
+        "Larch"="TrFen",
+        "Mine"="UrbInd",
+        "TameP"="Agr",
+        "Urban"="UrbInd")
+    for (i in names(nn))
+        vc[vc == i] <- nn[i]
+    data.frame(table(vc)[rn])
+    ndet <- table(vc)
+    ndet <- structure(as.numeric(ndet[rn]), names=rn)
+
+    ## determine BBS in BCR6
+    r <- cure4insect::.read_raster_template()
+    od <- setwd("d:/spatial/bcr/")
+    BCR <- readOGR(".", "BCR_Terrestrial_master") # rgdal
+    BCR <- spTransform(BCR, proj4string(r))
+    setwd(od)
+    xypt <- en$DAT
+    coordinates(xypt) <- ~ X + Y
+    proj4string(xypt) <-
+        CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    xypt <- spTransform(xypt, proj4string(r))
+    xypt2BCR <- over(xypt, BCR)
+
+    ss <- startsWith(rownames(en$DAT), "BBS") & !duplicated(en$DAT$SS) & xypt2BCR$BCR==6
+    vc2 <- vc[ss]
+    wroad <- table(vc2)/sum(table(vc2))
+    wroad <- structure(as.numeric(wroad[rn]), names=rn)
+    avail <- AA/sum(AA)
+
+    save(HABITAT, avail, wroad, ndet, file="~/GoogleWork/bam/PIF-AB/results-v3/HABITAT.RData")
 
 }
 load("~/GoogleWork/bam/PIF-AB/results-v3/HABITAT.RData") # HABITAT, avail, wroad
 
 h_fun <- function(x) {
+    rn <- names(avail)[!(names(avail) %in% c("SoftLin","Roads"))]
     DD <- apply(x$D, 1, median)
-    sum(DD * wroad) / sum(DD * avail)
+    sum(DD[rn] * wroad[rn]) / sum(DD[rn] * avail[rn])
 }
 TAB$H <- sapply(HABITAT[rownames(TAB)], h_fun)
+
+## table 1
+tab1 <- data.frame(a=100*avail,w=100*wroad, wa=wroad/avail,n=ndet)
+tab1 <- tab1[!is.na(tab1$w),]
+tab1 <- round(tab1, 1)
+colSums(tab1)
+tab1$a <- 100*tab1$a/sum(tab1$a)
+tab1$w <- 100*tab1$w/sum(tab1$w)
+colSums(round(tab1,1))
+round(tab1,1)
 
 
 ## Final subset -------------------------
@@ -396,59 +470,54 @@ TAB$DeltaH <- log(1/TAB$H) # we take inverse because H=1 is the PIF setup
 TAB$DeltaExp <- TAB$DeltaR + TAB$DeltaT + TAB$DeltaA + TAB$DeltaH
 TAB$epsilon <- TAB$DeltaObs - TAB$DeltaExp
 
+a <- read.csv("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/NACC_list_species.csv")
+levels(TAB$CommonName)[levels(TAB$CommonName)=="Le Conte's Sparrow"] <- "LeConte's Sparrow"
+levels(TAB$CommonName)[levels(TAB$CommonName)=="Gray Jay"] <- "Canada Jay"
+compare_sets(a$common_name, TAB$CommonName)
+setdiff(TAB$CommonName, a$common_name)
+a$sort <- 1:nrow(a)
+a <- droplevels(a[match(TAB$CommonName, a$common_name),])
+TAB$ScientificName <- a$species
+TAB$Order <- a$order
+TAB$Family <- a$family
+TAB$sort <- a$sort
+TAB <- TAB[order(TAB$sort),]
+
+TAB$Npix_Npif <- sign(TAB$Npix-TAB$Npif)
+TAB$Npix_Npif[TAB[,c("Npix95lower","Npix95upper")] %[o]% TAB[,c("Npif95lower","Npif95upper")]] <- 0
+table(TAB$Npix_Npif)
+
 write.csv(TAB, row.names=FALSE,
     file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-all-results.csv"))
 
 ## comparing v2 to v3 ---------------------------------
 
+TAB <- read.csv("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-all-results.csv")
+rownames(TAB) <- TAB$Code
 
 pop <- read.csv("~/GoogleWork/bam/PIF-AB/draft2/Table1-estimates.csv")
 rownames(pop) <- pop[,1]
 sp <- intersect(rownames(TAB), rownames(pop))
 
 op <- par(mfrow=c(2,3))
-plot(pop[sp,"DeltaObs"], TAB[sp,"DeltaObs"]);abline(0,1)
-plot(pop[sp,"DeltaExp"], TAB[sp,"DeltaExp"]);abline(0,1)
-plot(pop[sp,"DeltaR"], TAB[sp,"DeltaR"]);abline(0,1)
-plot(pop[sp,"DeltaT"], TAB[sp,"DeltaT"]);abline(0,1)
-plot(pop[sp,"DeltaA"], TAB[sp,"DeltaA"]);abline(0,1)
-plot(pop[sp,"DeltaH"], TAB[sp,"DeltaH"]);abline(0,1)
+plot(pop[sp,"Npix"], TAB[sp,"Npix"], ylab="New", xlab="Old", main="Npix");abline(0,1)
+plot(pop[sp,"p3"], TAB[sp,"p3"], ylab="New", xlab="Old", main="p3");abline(0,1)
+plot(pop[sp,"EDR"], TAB[sp,"EDR"], ylab="New", xlab="Old", main="EDR");abline(0,1)
+plot(pop[sp,"Npif"], TAB[sp,"Npif"], ylab="New", xlab="Old", main="Npif");abline(0,1)
+plot(pop[sp,"TimeAdj"], TAB[sp,"TimeAdj"], ylab="New", xlab="Old", main="TimeAdj");abline(0,1)
+plot(pop[sp,"MDD"], TAB[sp,"MDD"], ylab="New", xlab="Old", main="MDD");abline(0,1)
 par(op)
 
-pif2 <- read.csv("~/GoogleWork/bam/PIF-AB/popBCR-6AB_v2_22-May-2013.csv") # v2
-mefa4::compare_sets(pop$English_Name, pif2$Common_Name)
-setdiff(pop$English_Name, pif2$Common_Name)
-pif2 <- droplevels(pif2[match(pop$English_Name, pif2$Common_Name),])
-rownames(pif2) <- rownames(pop)
-pif2 <- pif2[,c("Pop_Est",
-    "Pair_Adjust",
-    "Time_Adjust",
-    "Detection_Distance_m")]
 
-
-colnames(pif2) <- c("Npif2", "Pair2", "Time2", "MDD2")
-colnames(pif3) <- c("Npif3", "Pair3", "Time3", "MDD3")
-
-pif <- cbind(pif2, pif3)
-pif$Npix2 <- pop$Npix*10^6
-pif$Npix3 <- Npix3[match(rownames(pif), names(Npix3))]
-pif$dNpif <- pif$Npif3 - pif$Npif2
-pif$dPair <- pif$Pair3 - pif$Pair2
-pif$dTime <- pif$Time3 - pif$Time2
-pif$dMDD <- pif$MDD3 - pif$MDD2
-pif$dNpix <- pif$Npix3 - pif$Npix2
-
-setdiff(rownames(pif), names(Npix3))
-setdiff(names(Npix3), rownames(pif))
-compare_sets(rownames(pif), names(Npix3))
-
-summary(pif)
-
-op <- par(mfrow=c(1,3))
-with(pif, plot(Npif3 ~ Npif2));abline(0,1)
-with(pif, plot(Time3 ~ Time2));abline(0,1)
-with(pif, plot(Npix3 ~ Npix2));abline(0,1)
+op <- par(mfrow=c(2,3))
+plot(pop[sp,"DeltaObs"], TAB[sp,"DeltaObs"], ylab="New", xlab="Old", main="OBS");abline(0,1)
+plot(pop[sp,"DeltaExp"], TAB[sp,"DeltaExp"], ylab="New", xlab="Old", main="EXP");abline(0,1)
+plot(pop[sp,"DeltaT"], TAB[sp,"DeltaT"], ylab="New", xlab="Old", main="T");abline(0,1)
+plot(pop[sp,"DeltaA"], TAB[sp,"DeltaA"], ylab="New", xlab="Old", main="A");abline(0,1)
+plot(pop[sp,"DeltaR"], TAB[sp,"DeltaR"], ylab="New", xlab="Old", main="R");abline(0,1)
+plot(pop[sp,"DeltaH"], TAB[sp,"DeltaH"], ylab="New", xlab="Old", main="H");abline(0,1)
 par(op)
+
 
 
 ## ----- figures for v3 -----------------------
@@ -503,10 +572,16 @@ SPP <- rownames(pop)
 EXCL <- c("DUFL", "HOSP", "MAWR", "MOBL", "PIGR", "SPGR", "RUGR", "TOWA", "RECR", "CSWA", "EUST", "EAPH", "ROPI")
 SPP <- rownames(pop)[!(rownames(pop) %in% EXCL)]
 pop <- droplevels(pop[SPP,])
-#write.csv(pop, row.names=FALSE, file="d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-final-results.csv")
+write.csv(pop, row.names=FALSE, file="d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-final-results.csv")
 
 load("~/GoogleWork/bam/PIF-AB/results-v3/HABITAT.RData") # HABITAT, avail, wroad
 Dall <- data.frame(Ahab=100*avail, Whab=100*wroad, sapply(HABITAT[SPP], function(z) apply(z$D, 1, median)))
+Dall <- Dall[!(rownames(Dall) %in% c("SoftLin","Roads")),]
+sum(is.na(Dall))
+Dall$Ahab <- 100*Dall$Ahab/sum(Dall$Ahab)
+Dall$Whab <- 100*Dall$Whab/sum(Dall$Whab)
+options(scipen=999)
+write.csv(Dall, file="d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-densities.csv")
 
 
 ## maps
@@ -658,9 +733,19 @@ off <- 0.2
 i <- 1
 z <- mat[order(mat[,i], decreasing=TRUE),]
 text(i+off, head(z[,i], 1), cex=0.8, rownames(z)[1])
-text(i+off, tail(z[,i], 2), cex=0.8, rownames(z)[(nrow(z)-1):nrow(z)])
+text(i+off, tail(z[,i], 1), cex=0.8, rownames(z)[nrow(z)])
 
 i <- 2
+z <- mat[order(mat[,i], decreasing=TRUE),]
+text(i+off, head(z[,i], 1), cex=0.8, rownames(z)[1])
+text(i+off, tail(z[,i], 1), cex=0.8, rownames(z)[nrow(z)])
+
+i <- 3
+z <- mat[order(mat[,i], decreasing=TRUE),]
+text(i+off, head(z[,i], 1), cex=0.8, rownames(z)[1])
+text(i+off, tail(z[,i], 1), cex=0.8, rownames(z)[nrow(z)])
+
+i <- 4
 z <- mat[order(mat[,i], decreasing=TRUE),]
 text(i+off, head(z[,i], 1), cex=0.8, rownames(z)[1])
 text(i+off, tail(z[,i], 1), cex=0.8, rownames(z)[nrow(z)])
@@ -668,17 +753,12 @@ text(i+off, tail(z[,i], 1), cex=0.8, rownames(z)[nrow(z)])
 i <- 5
 z <- mat[order(mat[,i], decreasing=TRUE),]
 text(i+off, head(z[,i], 2), cex=0.8, rownames(z)[1:2])
-text(i+off, tail(z[,i], 3), cex=0.8, rownames(z)[(nrow(z)-2):nrow(z)])
-
-i <- 4
-z <- mat[order(mat[,i], decreasing=TRUE),]
-text(i+off, head(z[,i], 1), cex=0.8, rownames(z)[1])
-text(i+off, tail(z[,i], 1), cex=0.8, rownames(z)[nrow(z)])
+text(i+off, tail(z[,i], 2), cex=0.8, rownames(z)[(nrow(z)-1):nrow(z)])
 
 i <- 6
 z <- mat[order(mat[,i], decreasing=TRUE),]
 text(i+off, head(z[,i], 1), cex=0.8, rownames(z)[1])
-#text(i+off, tail(z[,i], 1), cex=0.8, rownames(z)[nrow(z)])
+text(i+off, tail(z[,i], 1), cex=0.8, rownames(z)[nrow(z)])
 
 for (i in 1:6) {
     zz1 <- format(mean(mat[,i]), trim = TRUE, scientific = FALSE, digits = 2)
@@ -728,7 +808,7 @@ vpfun <- function (x, cutoff = 0, digits = 1, Xnames, showNote=FALSE, ...)
 
 prt <- vegan::varpart(Y=pop$DeltaObs, ~DeltaR, ~DeltaT, ~DeltaA, ~DeltaH, data=pop)
 pdf("~/GoogleWork/bam/PIF-AB/draft5/Fig6-varpart.pdf", width=6, height=6)
-vpfun(prt, cutoff = 0, digits = 2, Xnames=c("R", "T", "A", "H"))
+vpfun(prt, cutoff = 0, digits = 2, Xnames=c("R", "T", "A", "H"), bg=1)
 dev.off()
 
 
@@ -763,7 +843,7 @@ text(s1[names(Col),]*0.8, labels=colnames(NN),cex=0.75, col=Col)
 text(s2*1.05, labels=rownames(NN),cex=1,col=1)
 #text(s1[names(Col),]*0.8, labels=colnames(NN),cex=0.75, col=4)
 for (ii in 1:200)
-    lines(c(0.85, 0.9), rep(seq(-0.55, -0.95, len=200)[ii], 2), col=colorRampPalette(c00)(200)[ii])
+    lines(c(0.9, 0.96), rep(seq(-0.55, -0.95, len=200)[ii], 2), col=colorRampPalette(c00)(200)[ii])
 text(c(1,1,1)+0.1, c(-0.6, -0.75, -0.9),
     c(expression(N[PIX] < N[PIF]),expression(N[PIX] == N[PIF]),expression(N[PIX] > N[PIF])))
 par(op)
@@ -858,25 +938,51 @@ text(topl[,1], topl[,2]-0.06,
 #text(topl[,1]-0.15, topl[,2],
 #    labels=ifelse(rd_sign != 0 & (rownames(topl) %in% c("TRES","AMRO")), rownames(topl), ""), cex=0.6)
 for (ii in 1:200)
-    lines(c(1.5, 1.7), rep(seq(-0.55, -0.95, len=200)[ii], 2), col=colorRampPalette(c00)(200)[ii])
-text(rep(2,3)+0.1, c(-0.6, -0.75, -0.9),
-    c(expression(N[PIX] < N[PIF]),expression(N[PIX] == N[PIF]),expression(N[PIX] > N[PIF])))
+    lines(c(1.6, 1.7), rep(seq(-0.55, -0.95, len=200)[ii], 2)-0.4, col=colorRampPalette(c00)(200)[ii])
+text(rep(2,3)+0.1, c(-0.6, -0.75, -0.9)-0.4,
+    c(expression(N[PIX] < N[PIF]),expression(N[PIX] == N[PIF]),expression(N[PIX] > N[PIF])),cex=0.9)
 dev.off()
 
-## table 1
 
-tab1 <- Dall[,1:2]
-tab1$wpera <- tab1$Whab/tab1$Ahab
-round(tab1,1)
+## story
+library(intrval)
 
-vc <- as.character(en$DAT$vegc)
-table(en$DAT$vegc)
-summary(en$DAT$wtAge*200)
-vc[vc == "Decid" & en$DAT$wtAge*200 > 60] <- "DecidO"
-vc[vc == "Mixedwood" & en$DAT$wtAge*200 > 60] <- "MixedwoodO"
-vc[vc == "Spruce" & en$DAT$wtAge*200 > 80] <- "SpruceO"
-vc[vc == "Pine" & en$DAT$wtAge*200 > 80] <- "PineO"
-vc[vc == "BSpr" & en$DAT$wtAge*200 > 80] <- "BSprO"
-data.frame(table(vc))
-length(vc[vc %in% c("Crop","TameP","RoughP")])
-length(vc[vc %in% c("Industrial","Mine","Rural","Urban")])
+
+summary(pop$Npix/pop$Npif)
+pop[which.max(pop$Npix/pop$Npif),]
+
+exp(mean(log(pop$Npix/pop$Npif)))
+
+table(pop$Npix_Npif)
+
+all(pop$EDR < pop$MDD)
+
+sum(pop$Npix > pop$Npif & pop[,c("Npix95lower","Npix95upper")] %)o(% pop[,c("Npif95lower","Npif95upper")])
+sum(pop$Npix < pop$Npif & pop[,c("Npix95lower","Npix95upper")] %)o(% pop[,c("Npif95lower","Npif95upper")])
+cat(as.character(pop$CommonName[pop$Npix < pop$Npif & pop[,c("Npix95lower","Npix95upper")] %)o(% pop[,c("Npif95lower","Npif95upper")]]), sep=", ")
+sum(pop[,c("Npix95lower","Npix95upper")] %[o]% pop[,c("Npif95lower","Npif95upper")])
+
+get_p <- function(cf,se) {
+    zval <- cf/se
+    2 * pnorm(-abs(zval))
+}
+round(get_p(c(1.3, 1.6, 0.37, 1.1, 0.087, -0.028), c(1.9,1.2,0.38,0.33,0.72,0.58)),2)
+
+
+round(100*table(pop$Y0_Y1)/nrow(pop),1)
+table(sign(pop$Y0 - pop$Y1))
+dots_box_plot(log(pop[,c("Y0","Y1")]), lines=TRUE)
+
+summary(pop$Y0/pop$Y1)
+
+cor.test(pop$DeltaH,pop$DeltaR)
+
+o
+eigenvals(o)/sum(eigenvals(o))
+
+
+round(pop[c("CAWA","WEWP","OSFL","BTNW","RUBL","BRCR"),c("Npix","Npix95lower","Npix95upper","Npif","Npif95lower","Npif95upper")],4)
+
+
+
+
