@@ -474,6 +474,10 @@ xyall2 <- xyall2[rowSums(xyall2[,-(1:3)]) > 0,]
 dim(xyall)
 dim(xyall2)
 
+write.csv(xyall[,-3], row.names=FALSE, file="d:/abmi/AB_data_v2018/www/detections10k_BBS.csv")
+write.csv(xyall2[,-3], row.names=FALSE, file="d:/abmi/AB_data_v2018/www/detections10k_BAM.csv")
+
+
 #dbWriteTable(con, "detections10k_nonABMI", xyall, overwrite=TRUE, row.names=FALSE) # birds
 dbWriteTable(con, "detections10k_BBS", xyall, overwrite=TRUE, row.names=FALSE) # birds
 dbWriteTable(con, "detections10k_BAM", xyall2, overwrite=TRUE, row.names=FALSE) # birds

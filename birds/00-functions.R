@@ -330,7 +330,7 @@ get_coef <- function(res, X, stage=NULL, na.out=TRUE) {
     if (any(!OK))
         warning(paste("try-error found:", sum(!OK)))
     ii <- sapply(res[OK], "[[", "iteration")
-    est <- X[1:length(ii),,drop=FALSE]
+    est <- X[rep(1, length(ii)),,drop=FALSE]
     rownames(est) <- ii
     est[] <- 0
     modnams <- names(res[[ii[1]]]$coef)

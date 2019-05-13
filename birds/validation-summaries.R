@@ -31,188 +31,21 @@ PROJ <- "validation"
 #' - `YYv`: species matrix for validation data
 #' - `OFFv`: offsets for validation data
 #' - `SSHv`: surrounding suitable habitat for validation data
-load(file.path(ROOT, "data", "ab-birds-validation-2019-01-30.RData"))
+load(file.path(ROOT, "data", "ab-birds-biggrids-2019-05-13.RData"))
 #' Make a model matrix that matches the coefficients that we estimated
 #' `X` is for training data, `Xv` is for validation data set
-X <- get_model_matrix(DAT, mods)
+X <- get_model_matrix(DATv, mods)
 Xv <- get_model_matrix(DATv, mods)
-#' Process BU aggregate units
-bgu <- read.csv(file.path(ROOT, "validation-BGgroups.csv"))
-bgu$xv_yv <- as.factor(paste0(bgu$xv, "_", bgu$yv))
-
-Grain <- expand.grid(xv=1:10, yv=1:10)
-rownames(Grain) <- paste0(Grain$xv, "_", Grain$yv)
-Grain$x0 <- factor(rep("x", 100), c("x", ""))
-Grain$x1 <- Grain$x0
-Grain$x1[] <- ifelse(Grain$xv %in% c(1,3,5,7,9) & Grain$yv %in% c(1,3,5,7,9), "x", "")
-Grain$x2 <- Grain$x0
-Grain$x2[] <- ifelse(Grain$xv %in% c(1,4,7,10) & Grain$yv %in% c(1,4,7,10), "x", "")
-Grain$x3 <- Grain$x0
-Grain$x3[] <- ifelse(Grain$xv %in% c(1,5,9) & Grain$yv %in% c(1,5,9), "x", "")
-Grain$x4 <- Grain$x0
-Grain$x4[] <- ifelse(Grain$xv %in% c(1,10) & Grain$yv %in% c(1,10), "x", "")
-#with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x4)]))
-Grain <- Grain[match(bgu$xv_yv, rownames(Grain)),]
-
-op <- par(mfrow=c(2,3))
-with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x0)], main="0"))
-with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x1)], main="1"))
-with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x2)], main="2"))
-with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x3)], main="3"))
-with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x4)], main="4"))
-par(op)
-
-bgu$x0 <- Grain$x0
-bgu$x1 <- Grain$x1
-bgu$x2 <- Grain$x2
-bgu$x3 <- Grain$x3
-bgu$x4 <- Grain$x4
-
-## extent
-bgu$SS2 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g2, sep="::", drop=TRUE)))
-tmp <- table(bgu$SS2)
-for (i in names(tmp))
-    if (tmp[i] < 4)
-        bgu$SS2[bgu$SS2 == i] <- ""
-bgu$SS2 <- as.factor(bgu$SS2)
-bgu$SS3 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g3, sep="::", drop=TRUE)))
-tmp <- table(bgu$SS3)
-for (i in names(tmp))
-    if (tmp[i] < 9)
-        bgu$SS3[bgu$SS3 == i] <- ""
-bgu$SS3 <- as.factor(bgu$SS3)
-bgu$SS4 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g4, sep="::", drop=TRUE)))
-tmp <- table(bgu$SS4)
-for (i in names(tmp))
-    if (tmp[i] < 16)
-        bgu$SS4[bgu$SS4 == i] <- ""
-bgu$SS4 <- as.factor(bgu$SS4)
-bgu$SS5 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g5, sep="::", drop=TRUE)))
-tmp <- table(bgu$SS5)
-for (i in names(tmp))
-    if (tmp[i] < 25)
-        bgu$SS5[bgu$SS5 == i] <- ""
-bgu$SS5 <- as.factor(bgu$SS5)
-bgu$SS10 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g10, sep="::", drop=TRUE)))
-bgu$SS10 <- as.factor(bgu$SS10)
-levels(bgu$SS10) <- c(levels(bgu$SS10), "")
-#bgu$SS10 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g10, sep="::", drop=TRUE)))
-DATv$SS2 <- bgu$SS2[match(DATv$SS, bgu$SS)]
-DATv$SS2[is.na(DATv$SS2)] <- ""
-DATv$SS3 <- bgu$SS3[match(DATv$SS, bgu$SS)]
-DATv$SS3[is.na(DATv$SS3)] <- ""
-DATv$SS4 <- bgu$SS4[match(DATv$SS, bgu$SS)]
-DATv$SS4[is.na(DATv$SS4)] <- ""
-DATv$SS5 <- bgu$SS5[match(DATv$SS, bgu$SS)]
-DATv$SS5[is.na(DATv$SS5)] <- ""
-DATv$SS10 <- bgu$SS10[match(DATv$SS, bgu$SS)]
-DATv$SS10[is.na(DATv$SS10)] <- ""
-## grain size
-
-bgu$xx0 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x0, sep="::", drop=TRUE)))
-bgu$xx0[bgu$x0 == ""] <- ""
-bgu$xx0 <- as.factor(bgu$xx0)
-levels(bgu$xx0) <- c(levels(bgu$xx0), "")
-
-bgu$xx1 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x1, sep="::", drop=TRUE)))
-bgu$xx1[bgu$x1 == ""] <- ""
-bgu$xx1 <- as.factor(bgu$xx1)
-
-bgu$xx2 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x2, sep="::", drop=TRUE)))
-bgu$xx2[bgu$x2 == ""] <- ""
-bgu$xx2 <- as.factor(bgu$xx2)
-
-bgu$xx3 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x3, sep="::", drop=TRUE)))
-bgu$xx3[bgu$x3 == ""] <- ""
-bgu$xx3 <- as.factor(bgu$xx3)
-
-bgu$xx4 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x4, sep="::", drop=TRUE)))
-bgu$xx4[bgu$x4 == ""] <- ""
-bgu$xx4 <- as.factor(bgu$xx4)
-
-DATv$xx0 <- bgu$xx0[match(DATv$SS, bgu$SS)]
-DATv$xx0[is.na(DATv$xx0)] <- ""
-DATv$xx1 <- bgu$xx1[match(DATv$SS, bgu$SS)]
-DATv$xx1[is.na(DATv$xx1)] <- ""
-DATv$xx2 <- bgu$xx2[match(DATv$SS, bgu$SS)]
-DATv$xx2[is.na(DATv$xx2)] <- ""
-DATv$xx3 <- bgu$xx3[match(DATv$SS, bgu$SS)]
-DATv$xx3[is.na(DATv$xx3)] <- ""
-DATv$xx4 <- bgu$xx4[match(DATv$SS, bgu$SS)]
-DATv$xx4[is.na(DATv$xx4)] <- ""
+#' We decided to use the more complex model and not to do all the stages
+Stage <- "HF"
 #'
-#' # Species summaries
-#'
-#' Let us pick a species
-spp <- "WTSP"
-#spp <- "OVEN"
-#' Load species results
-res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
-#' Get the coefficient matrix (bootstrap runs x possible coefficients
-#' based on all the terms in `mods` list): used `X` as a template to match the
-#' estimates with the column names of `X`, and uses `stage` if specified
-est <- get_coef(res, X, stage=NULL, na.out=FALSE)
-stopifnot(all(colnames(X)==colnames(est)))
-#' Here is how you to get a sense of what results look like:
-printCoefmat(get_summary(est))
-#'
-#' # Prediction
-#'
-#' Here is how to get the null model (you can use `X` and `SSH` for training data
-#' and `Xv` and `SSHv` for validation data set).
-#' The output is in a PKEY x bootstrap format, PKEY refers to the row names of the input.
-#' The matrix represent log densities without offsets
-mu0 <- predict_with_SSH(res, Xv, SSHv, stage=0)
-#' Here is how to combine with offsets (use `OFF` or `OFFv` depending on previous steps).
-#' This is now a PKEY x bootstrap matrix with expected abundances matching the counts
-lam0 <- exp(mu0 + OFFv[,spp])
-#' We can visualize the results in a boxplot using the observed counts
-#' (again, use `YY` or `YYv`)
-yv <- as.numeric(YYv[,spp])
-#' We use `rowMeans(lambda)` as the bootstrap smoothed mean,
-#' `apply(lambda, 1, median)` gives the median
-#' and `apply(lambda, 1, quantile, c(0.5, 0.05, 0.95))` gives the median and 90% CI
-#' (`lambda` is any matrix starting with `lam*` below)
-boxplot(rowMeans(lam0) ~ yv)
-#' Let us add covariates now.
-#' Just to clarify, the `stage` argument can be
-#' - `NULL`: use all the model stages, this is the default (but it will include Year effect!)
-#' - `0`: intercept only null model
-#' - any value from `names(mods)`
-names(mods)
-#' Pick for example `"ARU"` stage
-lamARU <- exp(predict_with_SSH(res, Xv, SSHv, stage="ARU") + OFFv[,spp])
-boxplot(rowMeans(lamARU) ~ yv)
-#' Pick for example `"ARU"` stage for all the local effects
-lamARU <- exp(predict_with_SSH(res, Xv, SSHv, stage="ARU") + OFFv[,spp])
-boxplot(rowMeans(lamARU) ~ yv)
-#' Pick `"HF"` stage for all local and surrounding effects
-lamHF <- exp(predict_with_SSH(res, Xv, SSHv, stage="HF") + OFFv[,spp])
-boxplot(rowMeans(lamHF) ~ yv)
-#' Now let's compare ROC/AUC metrics (`simple_roc` is a bare bones function
-#' that is blazing fast compared to pROC)
-ROC0 <- simple_roc(ifelse(yv > 0, 1, 0), rowMeans(lam0))
-ROCARU <- simple_roc(ifelse(yv > 0, 1, 0), rowMeans(lamARU))
-ROCHF <- simple_roc(ifelse(yv > 0, 1, 0), rowMeans(lamHF))
-AUC0 <- simple_auc(ROC0)
-AUCARU <- simple_auc(ROCARU)
-AUCHF <- simple_auc(ROCHF)
-#' Plot the ROC curves
-plot(ROC0[,2:1], type="l", col=2)
-abline(0,1,col=1,lty=2)
-lines(ROCARU[,2:1], col=3)
-lines(ROCHF[,2:1], col=4)
-legend("bottomright", lty=1, col=2:4, bty="n",
-    legend=paste0(c("Null", "ARU", "HF"),
-    " (AUC=", round(c(AUC0, AUCARU, AUCHF), 3), ")"))
-#'
-#' # Scaling up to ABMI grids of 9
+#' # Aggregating up to different scales
 #'
 #' Functions for the magic: uses only external data
-#' Groups argument defines the spatial units to aggregate
-#' like ABMIsite etc, must match DATv row ordering
-#' unwanted rows should be blank (`""`) or NA
-validate <- function(res, Groups, stage=NULL) {
+#' Groups argument defines the spatial units to aggregate to
+#' must match DATv row ordering
+#' unwanted rows should be blank (`""`) or `NA`
+validate <- function(res, Groups, stage="HF") {
     Groups <- as.character(Groups)
     Groups[is.na(Groups)] <- ""
     ss <- Groups != ""
@@ -240,7 +73,7 @@ validate <- function(res, Groups, stage=NULL) {
         cmf1=m1, cmf=m, npool=npool,
         mu=muo, off=offo)
 }
-
+#' These functions do the randomization
 .randomize <- function(v) {
     g <- sample(v$Groups)
     Predm <- groupSums(exp(v$mu+v$off), 1, g)
@@ -251,7 +84,7 @@ validate <- function(res, Groups, stage=NULL) {
     CORUo <- .cor_uncentered(yobs, ypred)
     c(COR=CORo, CORU=CORUo)
 }
-randomize <- function(v, B=99) {
+randomize <- function(v, B=199) {
     cbind(c(COR=v$COR, CORU=v$CORU), replicate(B, .randomize(v)))
 }
 summarize <- function(r) {
@@ -259,65 +92,99 @@ summarize <- function(r) {
     p <- c(pmc(r[1,1], r[1,]), pmc(r[2,1], r[2,]))
     cbind(Est=r[,1], q, "p-value"=p)
 }
+#'
+#' Take species with enough detections and run all grouping variables
+#' with randomization where it makes sense
+ALL <- list()
+SPP <- colnames(YYv[,colSums(YYv>0)>100])
+#spp <- "WTSP"
+for (spp in SPP) {
+    cat("\n", spp);flush.console()
 
-plotOne <- function(One, q=1, txt="") {
-    spp <- One$HF$spp
-    lam1 <- One$HF$lam1
-    y1 <- One$HF$y1obs
-    lam <- One$HF$lam
-    y <- One$HF$yobs
-    p1 <- sapply(One, function(z) z$cmf1[,"expected"])
-    p <- sapply(One, function(z) z$cmf[,"expected"])
-    Dev1 <- sapply(One, function(z) attr(z$cmf1, "dev"))
-    Dev <- sapply(One, function(z) attr(z$cmf, "dev"))
+    res <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
 
-    op <- par(mfrow=c(2,3))
-
-    plot(0:9, sapply(One, "[[", "COR"), type="l", col="#0000FF80", ylim=c(-1,1),
-        xlab="Model stages", ylab="Correlation / AUC", main=paste(spp, txt), lwd=2)
-    lines(0:9, sapply(One, "[[", "CORU"), col="#FF000080", lwd=2)
-    lines(0:9, sapply(One, "[[", "AUC"), col="#00FF0080", lwd=2)
-    abline(h=c(0, 0.5), lty=2)
-    text(0:9, rep(-0.1, 10), round(sapply(One, "[[", "COR"), 3), cex=0.6, col="#0000FF")
-    text(0:9, rep(-0.2, 10), round(sapply(One, "[[", "CORU"), 3), cex=0.6, col="#FF0000")
-    text(0:9, rep(-0.3, 10), round(sapply(One, "[[", "AUC"), 3), cex=0.6, col="#00FF00")
-    legend("bottomright", bty="n", lwd=2, lty=1, col=c("#0000FF80", "#FF000080", "#00FF0080"),
-        legend=c("Spearman r", "Uncentered r", "AUC"))
-
-    plot(0:9, Dev1, type="l", col="#0000FF80", ylim=c(0,max(Dev,Dev1)),
-        xlab="Model stages", ylab="Goodness of fit", lwd=2)
-    lines(0:9, Dev, col="#FF000080", lwd=2)
-    legend("topright", bty="n", lwd=2, lty=1, col=c("#0000FF80", "#FF000080"),
-        legend=c("Point", "Landscape"))
-
-    ss <- c("Null", "ARU", "Space", "HF")
-    cg <- 1:4 # RColorBrewer::brewer.pal(length(ss)+3, "Dark2")[-(1:3)]
-    matplot(c(0, One$HF$cmf1[,"observed"]), rbind(0, p1[,ss]),
-        type="l", lty=1, ylim=c(0,1), xlim=c(0,1), col=cg,
-        xlab="Observed (point)", ylab="Expected (point)")
-    legend("topleft", col=cg, lty=1, legend=ss, bty="n")
-    abline(0,1,lty=2)
-
-    boxplot(lam1 ~ y1, xlab="Observed count at point", ylab="Expected value",
-        ylim=c(0,quantile(lam1, q)), col="#0000FF80")
-
-    MAX <- max(quantile(lam, q), quantile(y, q))
-    plot(jitter(y), lam, xlim=c(0,MAX), ylim=c(0,MAX), xlab="Observed count at ABMI site",
-        ylab="Expected value", col="#0000FF80", pch=19)
-    abline(0,1, lty=2)
-    abline(lm(lam ~ y), col=2)
-    abline(lm(lam ~ y-1), col=2, lty=2)
-
-
-    matplot(c(0, One$HF$cmf[,"observed"]), rbind(0,p[,ss]),
-        type="l", lty=1, ylim=c(0,1), xlim=c(0,1), col=cg,
-        xlab="Observed (landscape)", ylab="Expected (landscape)")
-    legend("topleft", col=cg, lty=1, legend=ss, bty="n")
-    abline(0,1,lty=2)
-
-    par(op)
-    invisible(NULL)
+    VV <- list()
+    for (g in c("EX2x2", "EX3x3", "EX4x4", "EX5x5", "EX10x10", "GR2x2", "GR3x3", "GR4x4", "GR5x5", "GR10x10")) {
+        V <- validate(res, Groups=as.factor(DATv[,g]), stage="HF")
+        VV[[g]] <- randomize(V)
+    }
+    for (g in c("TS1", "TS2", "TS3", "TS4", "TR1", "TR2", "TR3", "TR4")) {
+        v <- validate(res, Groups=as.factor(DATv[,g]), stage="HF")
+        VV[[g]] <- cbind(c(COR=v$COR, CORU=v$CORU))
+    }
+    ALL[[spp]] <- VV
 }
+
+save(ALL, file=file.path(ROOT, "validation-BG-results-2019-05-13.RData"))
+
+
+pdf(file.path(ROOT, "validation-BG-results-2019-05-13.pdf"), onefile = TRUE, width=15, height=5)
+
+op <- par(mfrow=c(1,3))
+
+#spp <- "WTSP"
+for (spp in names(ALL)) {
+
+VV <- ALL[[spp]]
+
+TS <- do.call(cbind, VV[c("TS1", "TS2", "TS3", "TS4")])
+TR <- do.call(cbind, VV[c("TR1", "TR2", "TR3", "TR4")])
+colnames(TS) <- colnames(TR) <- paste0("Visit", 1:4)
+EX <- sapply(VV[c("EX2x2", "EX3x3", "EX4x4", "EX5x5", "EX10x10")], function(z) z[,1])
+GR <- sapply(VV[c("GR2x2", "GR3x3", "GR4x4", "GR5x5", "GR10x10")], function(z) z[,1])
+EXr <- sapply(VV[c("EX2x2", "EX3x3", "EX4x4", "EX5x5", "EX10x10")], function(z)
+    apply(z, 1, quantile, c(0.025, 0.975), na.rm=TRUE))
+GRr <- sapply(VV[c("GR2x2", "GR3x3", "GR4x4", "GR5x5", "GR10x10")], function(z)
+    apply(z, 1, quantile, c(0.025, 0.975), na.rm=TRUE))
+rownames(EXr) <- rownames(GRr) <- c("COR_lower", "COR_upper", "CORU_lower", "CORU_upper")
+
+
+plot(1:5, EX[1,], ylim=c(-1,1), type="l", col=2, xlab="Extent", ylab="Correlation",
+    main=paste(spp, "Extent (intensity fixed)"), axes=FALSE)
+axis(2)
+box()
+axis(1, 1:5, c("2x2", "3x3", "4x4", "5x5", "10x10"))
+lines(1:5, EX[2,], ylim=c(0,1), type="l", col=4)
+polygon(c(1:5, 5:1), c(EXr[1,], rev(EXr[2,])), border=NA, col="#FF000044")
+polygon(c(1:5, 5:1), c(EXr[3,], rev(EXr[4,])), border=NA, col="#0000FF44")
+legend("bottomright", col=c(2,4), lty=1, legend=c(
+    "Speraman rho", "Uncentered cor."), cex=0.6, bty="n")
+abline(h=0)
+
+plot(1:5, GR[1,], ylim=c(-1,1), type="l", col=2, xlab="Intensity", ylab="Correlation",
+    main="Intensity (extent fixed)", axes=FALSE)
+axis(2)
+box()
+axis(1, 1:5, c("2x2", "3x3", "4x4", "5x5", "10x10"))
+lines(1:5, GR[2,], ylim=c(0,1), type="l", col=4)
+polygon(c(1:5, 5:1), c(GRr[1,], rev(GRr[2,])), border=NA, col="#FF000044")
+polygon(c(1:5, 5:1), c(GRr[3,], rev(GRr[4,])), border=NA, col="#0000FF44")
+legend("bottomright", col=c(2,4), lty=1, legend=c(
+    "Speraman rho", "Uncentered cor."), cex=0.6, bty="n")
+abline(h=0)
+
+plot(1:4, TS[1,], ylim=c(-1,1), type="l", col=2, xlab="Number of visits", ylab="Correlation",
+    main="Temporal", axes=FALSE)
+axis(2)
+box()
+axis(1, 1:4, 1:4)
+lines(1:4, TS[2,], col=4)
+lines(1:4, TR[1,], col=2, lty=2)
+lines(1:4, TR[2,], col=4, lty=2)
+legend("bottomright", col=c(2,2,4,4), lty=c(1,2,1,2), legend=c(
+    "Speraman rho, sequential", "Speraman rho, random", "Uncentered cor., sequential", "Uncentered cor., random"),
+    cex=0.6, bty="n")
+abline(h=0)
+
+}
+
+par(op)
+
+dev.off()
+
+#' ------------- old stuff -----------------
+#'
+#'
 #' This code goes over all the model stages
 
 spp <- "WTSP"

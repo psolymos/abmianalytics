@@ -605,4 +605,199 @@ plot(x,add=TRUE)
 par(op)
 dev.off()
 
+## export all the BG data (no temporal resampling/subsetting)
+
+source("~/repos/abmianalytics/birds/models-veg.R")
+setdiff(get_terms(mods_veg, "list"), colnames(dd))
+rm(DAT, YY, OFF, OFFmean, SSH, BB, mods)
+
+dd$isBG <- dd$PCODE == "BU_BG"
+
+cn2 <- c(cn, get_terms(mods_veg, "list"), "vegw", "vegca")
+DAT <- dd[dd$isBG, cn2]
+
+DATv <- DAT
+
+bgu <- read.csv("d:/abmi/AB_data_v2018/data/analysis/birds/validation-BGgroups.csv")
+bgu$xv_yv <- as.factor(paste0(bgu$xv, "_", bgu$yv))
+
+Grain <- expand.grid(xv=1:10, yv=1:10)
+rownames(Grain) <- paste0(Grain$xv, "_", Grain$yv)
+Grain$x0 <- factor(rep("x", 100), c("x", ""))
+Grain$x1 <- Grain$x0
+Grain$x1[] <- ifelse(Grain$xv %in% c(1,3,5,7,9) & Grain$yv %in% c(1,3,5,7,9), "x", "")
+Grain$x2 <- Grain$x0
+Grain$x2[] <- ifelse(Grain$xv %in% c(1,4,7,10) & Grain$yv %in% c(1,4,7,10), "x", "")
+Grain$x3 <- Grain$x0
+Grain$x3[] <- ifelse(Grain$xv %in% c(1,5,9) & Grain$yv %in% c(1,5,9), "x", "")
+Grain$x4 <- Grain$x0
+Grain$x4[] <- ifelse(Grain$xv %in% c(1,10) & Grain$yv %in% c(1,10), "x", "")
+#with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x4)]))
+Grain <- Grain[match(bgu$xv_yv, rownames(Grain)),]
+
+op <- par(mfrow=c(2,3))
+with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x0)], main="0"))
+with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x1)], main="1"))
+with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x2)], main="2"))
+with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x3)], main="3"))
+with(Grain, plot(xv, yv, pch=c(19, 21)[as.integer(x4)], main="4"))
+par(op)
+
+bgu$x0 <- Grain$x0
+bgu$x1 <- Grain$x1
+bgu$x2 <- Grain$x2
+bgu$x3 <- Grain$x3
+bgu$x4 <- Grain$x4
+
+## extent
+bgu$SS2 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g2, sep="::", drop=TRUE)))
+tmp <- table(bgu$SS2)
+for (i in names(tmp))
+    if (tmp[i] < 4)
+        bgu$SS2[bgu$SS2 == i] <- ""
+bgu$SS2 <- as.factor(bgu$SS2)
+bgu$SS3 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g3, sep="::", drop=TRUE)))
+tmp <- table(bgu$SS3)
+for (i in names(tmp))
+    if (tmp[i] < 9)
+        bgu$SS3[bgu$SS3 == i] <- ""
+bgu$SS3 <- as.factor(bgu$SS3)
+bgu$SS4 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g4, sep="::", drop=TRUE)))
+tmp <- table(bgu$SS4)
+for (i in names(tmp))
+    if (tmp[i] < 16)
+        bgu$SS4[bgu$SS4 == i] <- ""
+bgu$SS4 <- as.factor(bgu$SS4)
+bgu$SS5 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g5, sep="::", drop=TRUE)))
+tmp <- table(bgu$SS5)
+for (i in names(tmp))
+    if (tmp[i] < 25)
+        bgu$SS5[bgu$SS5 == i] <- ""
+bgu$SS5 <- as.factor(bgu$SS5)
+bgu$SS10 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, g10, sep="::", drop=TRUE)))
+bgu$SS10 <- as.factor(bgu$SS10)
+levels(bgu$SS10) <- c(levels(bgu$SS10), "")
+
+## grain size
+
+bgu$xx0 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x0, sep="::", drop=TRUE)))
+bgu$xx0[bgu$x0 == ""] <- ""
+bgu$xx0 <- as.factor(bgu$xx0)
+levels(bgu$xx0) <- c(levels(bgu$xx0), "")
+
+bgu$xx1 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x1, sep="::", drop=TRUE)))
+bgu$xx1[bgu$x1 == ""] <- ""
+bgu$xx1 <- as.factor(bgu$xx1)
+
+bgu$xx2 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x2, sep="::", drop=TRUE)))
+bgu$xx2[bgu$x2 == ""] <- ""
+bgu$xx2 <- as.factor(bgu$xx2)
+
+bgu$xx3 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x3, sep="::", drop=TRUE)))
+bgu$xx3[bgu$x3 == ""] <- ""
+bgu$xx3 <- as.factor(bgu$xx3)
+
+bgu$xx4 <- as.character(with(bgu, interaction(ProjectID, Cluster, SITE, x4, sep="::", drop=TRUE)))
+bgu$xx4[bgu$x4 == ""] <- ""
+bgu$xx4 <- as.factor(bgu$xx4)
+
+
+## extent: sampling intensity (/ unit area) stays, extent grows grows
+DATv$EX2x2 <- bgu$SS2[match(DATv$SS, bgu$SS)]
+DATv$EX2x2[is.na(DATv$EX2x2)] <- ""
+DATv$EX3x3 <- bgu$SS3[match(DATv$SS, bgu$SS)]
+DATv$EX3x3[is.na(DATv$EX3x3)] <- ""
+DATv$EX4x4 <- bgu$SS4[match(DATv$SS, bgu$SS)]
+DATv$EX4x4[is.na(DATv$EX4x4)] <- ""
+DATv$EX5x5 <- bgu$SS5[match(DATv$SS, bgu$SS)]
+DATv$EX5x5[is.na(DATv$EX5x5)] <- ""
+DATv$EX10x10 <- bgu$SS10[match(DATv$SS, bgu$SS)]
+DATv$EX10x10[is.na(DATv$EX10x10)] <- ""
+
+## 'grain' size: extent stays save but sampling intensity (/ unit area) changes
+DATv$GR2x2 <- bgu$xx4[match(DATv$SS, bgu$SS)]
+DATv$GR2x2[is.na(DATv$GR2x2)] <- ""
+DATv$GR3x3 <- bgu$xx3[match(DATv$SS, bgu$SS)]
+DATv$GR3x3[is.na(DATv$GR3x3)] <- ""
+DATv$GR4x4 <- bgu$xx2[match(DATv$SS, bgu$SS)]
+DATv$GR4x4[is.na(DATv$GR4x4)] <- ""
+DATv$GR5x5 <- bgu$xx1[match(DATv$SS, bgu$SS)]
+DATv$GR5x5[is.na(DATv$GR5x5)] <- ""
+DATv$GR10x10 <- bgu$xx0[match(DATv$SS, bgu$SS)]
+DATv$GR10x10[is.na(DATv$GR10x10)] <- ""
+
+bgu$bgid <- as.factor(paste0("BGID", bgu$SITE))
+DATv$BGID <- bgu$bgid[match(DATv$SS, bgu$SS)]
+bgu$bgxy <- as.factor(paste0("BGID", bgu$SITE, "_", bgu$xv_yv))
+DATv$BGXY <- bgu$bgxy[match(DATv$SS, bgu$SS)]
+DATv$XXYY <- bgu$xv_yv[match(DATv$SS, bgu$SS)]
+
+## randomly pick one visit for the spatial groups
+DATv <- DATv[sample(nrow(DATv)),]
+#DATv$RND1 <- ifelse(duplicated(DATv$SS), 0, 1)
+DATv <- DATv[order(rownames(DATv)),]
+
+DATv <- DATv[DATv$YEAR >= 2015 & !is.na(DATv$BGID),]
+#data.frame(nl=apply(DATv,2,function(z) nlevels(as.factor(z))), nl2=apply(droplevels(DATv),2,function(z) nlevels(as.factor(z))))
+
+## dealing with visits
+set.seed(1)
+DATv$VISIT <- NA
+DATv$VISITRND <- NA
+for (i in levels(DATv$BGXY)) {
+    ii <- DATv$BGXY == i
+    tmp <- DATv[ii,,drop=FALSE]
+    tmp$VISIT <- seq_len(nrow(tmp))
+    tmp$VISITRND <- tmp$VISIT
+    if (nrow(tmp) > 1)
+        tmp$VISITRND <- sample(tmp$VISIT)
+    DATv$VISIT[ii] <- tmp$VISIT
+    DATv$VISITRND[ii] <- tmp$VISITRND
+}
+## temporal pools: seqential visits
+DATv$TS1 <- paste0(DATv$BGXY, "_", DATv$VISIT)
+DATv$TS1[DATv$VISIT > 1] <- ""
+DATv$TS2 <- paste0(DATv$BGXY, "_", DATv$VISIT)
+DATv$TS2[DATv$VISIT > 2] <- ""
+DATv$TS3 <- paste0(DATv$BGXY, "_", DATv$VISIT)
+DATv$TS3[DATv$VISIT > 3] <- ""
+DATv$TS4 <- paste0(DATv$BGXY, "_", DATv$VISIT)
+DATv$TS4[DATv$VISIT > 4] <- ""
+## temporal pools: random visits
+DATv$TR1 <- paste0(DATv$BGXY, "_", DATv$VISIT)
+DATv$TR1[DATv$VISITRND > 1] <- ""
+DATv$TR2 <- paste0(DATv$BGXY, "_", DATv$VISIT)
+DATv$TR2[DATv$VISITRND > 2] <- ""
+DATv$TR3 <- paste0(DATv$BGXY, "_", DATv$VISIT)
+DATv$TR3[DATv$VISITRND > 3] <- ""
+DATv$TR4 <- paste0(DATv$BGXY, "_", DATv$VISIT)
+DATv$TR4[DATv$VISITRND > 4] <- ""
+
+DATv$EX2x2[DATv$VISITRND > 1] <- ""
+DATv$EX3x3[DATv$VISITRND > 1] <- ""
+DATv$EX4x4[DATv$VISITRND > 1] <- ""
+DATv$EX5x5[DATv$VISITRND > 1] <- ""
+DATv$EX10x10[DATv$VISITRND > 1] <- ""
+
+DATv$GR2x2[DATv$VISITRND > 1] <- ""
+DATv$GR3x3[DATv$VISITRND > 1] <- ""
+DATv$GR4x4[DATv$VISITRND > 1] <- ""
+DATv$GR5x5[DATv$VISITRND > 1] <- ""
+DATv$GR10x10[DATv$VISITRND > 1] <- ""
+
+
+YY <- yy[rownames(DATv),]
+YY <- YY[,colSums(YY>0) >= NMIN & colnames(YY) %in% colnames(off)]
+OFF <- off[rownames(DATv), colnames(YY)]
+mods <- mods_veg
+#mods$SSH <- NULL
+SSH <- SSH_veg[rownames(DATv),]
+
+YYv <- YY
+OFFv <- OFF
+SSHv <- SSH
+
+save(#DAT, YY, OFF, SSH, BB,
+    mods, DATv, YYv, OFFv, SSHv,
+    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-biggrids-2019-05-13.RData")
 
