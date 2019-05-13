@@ -42,10 +42,10 @@ CW <- rgb(0.4,0.3,0.8) # water
 CE <- "lightcyan4" # exclude
 
 
-
+for (gr in c("birds","vplants","lichens","mosses","mites")) {
 #gr <- "birds"
 #gr <- "vplants"
-gr <- "lichens"
+#gr <- "lichens"
 #gr <- "mosses"
 #gr <- "mites"
 SPP <- rownames(resn[resn$Taxon == gr,])
@@ -61,11 +61,15 @@ for (spp in SPP) {
     if (!resn[spp, "model_north"] && resn[spp, "model_south"])
         TYPE <- "S"
 
-if (FALSE) {
+    NAM <- resn[spp, "CommonName"]
+    if (is.na(NAM))
+        NAM <- resn[spp, "ScientificName"]
+    NAM <- as.character(NAM)
+
     if (TYPE != "S") {
         ## hab-north
         png(paste0(ROOT, "/figs/", gr, "/", spp, "-coef-north.png"),
-            height=700, width=1500, res=150)
+            height=800, width=2200, res=150)
         layout(matrix(c(1,1,2), nrow=1))
         plot_abundance(spp, "veg_coef")
         par(mar=c(12,5,4,3))
@@ -84,12 +88,12 @@ if (FALSE) {
     if (TYPE != "N") {
         ## hab-south
         png(paste0(ROOT, "/figs/", gr, "/", spp, "-coef-south.png"),
-            height=700, width=1500, res=150)
+            height=800, width=2000, res=150)
         layout(matrix(c(1,2,3), nrow=1))
         p1 <- plot_abundance(spp, "soil_coef", paspen=0, plot=FALSE)
         p2 <- plot_abundance(spp, "soil_coef", paspen=1, plot=FALSE)
-        plot_abundance(spp, "soil_coef", paspen=0, ylim=c(0, max(p1, p2)))
-        plot_abundance(spp, "soil_coef", paspen=1, ylim=c(0, max(p1, p2)), main="")
+        plot_abundance(spp, "soil_coef", paspen=0, ylim=c(0, max(p1, p2)), main=paste0(NAM, " - non treed"))
+        plot_abundance(spp, "soil_coef", paspen=1, ylim=c(0, max(p1, p2)), main="treed")
         par(mar=c(11,5,4,3))
         plot_abundance(spp, "soil_lin", main="")
         dev.off()
@@ -103,8 +107,8 @@ if (FALSE) {
         par(op)
         dev.off()
     }
-}
 
+if (FALSE) {
     y <- load_species_data(spp)
     Curr <- y$SA.Curr[match(rownames(kgrid), rownames(y$SA.Curr)),]
     Ref <- y$SA.Ref[match(rownames(kgrid), rownames(y$SA.Ref)),]
@@ -144,6 +148,7 @@ if (FALSE) {
     writeRaster(Rcr, paste0(ROOT, "/normalized-maps/", gr, "/", spp, "-cr.tif"), overwrite=TRUE)
     writeRaster(Rrf, paste0(ROOT, "/normalized-maps/", gr, "/", spp, "-rf.tif"), overwrite=TRUE)
     writeRaster(Rdf, paste0(ROOT, "/normalized-maps/", gr, "/", spp, "-df.tif"), overwrite=TRUE)
+}
 
     ## add here mask for Rockies if needed
 if (FALSE) {
@@ -164,8 +169,8 @@ if (FALSE) {
 }
 
 
+    }
 }
-
 
 ## use avail figures
 

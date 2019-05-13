@@ -242,6 +242,9 @@ OUT$Info <- OUT$Info[OUT$Info$Group != "mammals",]
 ## taxonomy/lookup
 tmp1 <- e1$Lookup
 tmp1$Group <- "birds"
+birds <- tmp1
+write.csv(birds, file=file.path(ROOT, paste0("StandardizedOutput-birds-final-lookup.csv")))
+
 tmp2 <- e2$Lookup
 tmp2$Group <- "vplants"
 tmp3 <- e3$Lookup
