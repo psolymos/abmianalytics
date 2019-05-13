@@ -5,6 +5,87 @@ source("~/repos/abmianalytics/veghf/veghf-setup.R")
 load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
 meta <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 
+## 2019
+
+## 1 ha in 4 x 0.25ha quadrants
+f <- file.path(ROOT, VER, "data", "raw", "veghf", "site_all",
+    "20190318_SummaryTables_1ha_TerrestrialSites_Veg61_vHF_LandFacets_SurveyYear_2003_2018.sqlite")
+db <- dbConnect(RSQLite::SQLite(), f)
+dbListTables(db)
+d <- dbReadTable(db, "Summary_1ha")
+dbDisconnect(db)
+
+d$QID <- with(d, interaction(UID, Section, sep="_", drop=TRUE))
+
+d$survey_year <- as.integer(sapply(strsplit(d$UID, "_"), "[[", 2))
+d$site_id <- sapply(strsplit(d$UID, "_"), "[[", 1)
+
+dd <- make_vegHF_wide_v6(d,
+    col.label="QID",
+    col.year="survey_year",
+    col.HFyear="year",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "1/4 ha quadrant at site centre [V6 backfilled + verified HF]"
+dx <- nonDuplicated(d, QID, TRUE)[rownames(dd[[1]]),]
+dd_qha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+## 1 ha
+dd <- make_vegHF_wide_v6(d,
+    col.label="UID",
+    col.year="survey_year",
+    col.HFyear="year",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "1 ha square around site centre [V6 backfilled + verified HF]"
+dx <- nonDuplicated(d, UID, TRUE)[rownames(dd[[1]]),]
+dd_1ha <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+
+xx <- nonDuplicated(d, UID, TRUE)[rownames(dd_1ha[[1]]),]
+xx <- xx[,c("UID", "site_id", "survey_year", "NSRNAME", "NRNAME", "LUF_NAME",
+  "cti", "cti_4cls", "slope_deg",
+  "aspect_deg", "solar_lat", "solar_local", "solar_123", "water_01",
+  "snowice_01", "springs_01", "rockb_pre01", "rock_post01", "saline_01",
+  "dunes_01", "land_facet", "cti_123")]
+
+
+save(dd_qha, dd_1ha, xx,
+    file=file.path(ROOT, VER, "data", "analysis", "site",
+    "veg-hf_SiteCenter_Veg61-vHF.Rdata"))
+
+## -- one offs
+
+
+## 1 ha in 4 x 0.25ha quadrants
+#f <- "x:/public/toPeter/SouthABGrids_backfill.txt"
+f <- "x:/public/toPeter/ProposedSouthGrid_Veg2B.txt"
+d <- read.csv(f)
+d$pg <- paste0(d$Protocol, "_", d$Grid)
+
+dd <- make_vegHF_wide_v6(d,
+    col.label="pg",
+    col.year=2019,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd$scale <- "summary for Southern Alberta cam/ARU grids"
+dx <- nonDuplicated(d, pg, TRUE)[rownames(dd[[1]]),]
+dd <- fill_in_0ages_v6(dd, dx$NSRNAME, ages_list)
+
+OUT <- list(veg_current = data.frame(LandCover=colnames(dd[[1]]), t(as.matrix(dd[[1]]))),
+  veg_reference = data.frame(LandCover=colnames(dd[[2]]), t(as.matrix(dd[[2]]))),
+  soil_current = data.frame(LandCover=colnames(dd[[3]]), t(as.matrix(dd[[3]]))),
+  soil_reference = data.frame(LandCover=colnames(dd[[4]]), t(as.matrix(dd[[4]]))))
+openxlsx::write.xlsx(OUT, "summary-S-AB-cam-ARU-grids-v2.xlsx")
+
+## 2018
+
+VER <- "AB_data_v2018"
+
 ## ABMI sites (on+off) cetre -----------------------------------------------
 
 ## point intersections

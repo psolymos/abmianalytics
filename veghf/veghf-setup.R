@@ -10,7 +10,8 @@ SAVE <- TRUE
 ## root directory
 ROOT <- "d:/abmi"
 ## version (structure is still in change, so not really useful)
-VER <- "AB_data_v2018"
+#VER <- "AB_data_v2018"
+VER <- "AB_data_v2019"
 ## current year
 THIS_YEAR <- as.POSIXlt(Sys.Date())$year + 1900
 #HF_YEAR <- 2014 # HF inventory update year
