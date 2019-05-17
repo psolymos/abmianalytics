@@ -106,6 +106,36 @@ ch2veg$sector <- tv$Sector61[match(ch2veg$cr, rownames(tv))]
 str(ch2soil)
 str(ch2veg)
 
+## checking if sectors are assigned correctly
+if (FALSE) {
+isN <- kgrid$NRNAME != "Grassland" & kgrid$NRNAME != "Rocky Mountain" &
+    kgrid$NRNAME != "Parkland" & kgrid$NSRNAME != "Dry Mixedwood"
+isS <- kgrid$NRNAME == "Grassland" | kgrid$NRNAME == "Parkland" |
+    kgrid$NSRNAME == "Dry Mixedwood"
+
+load("d:/abmi/AB_data_v2018/data/analysis/grid/veg-hf_grid_v6hf2016v3noDistVeg.Rdata")
+s1 <- groupSums(dd_kgrid[[1]], 2, tv$Sector61[match(colnames(dd_kgrid[[1]]), rownames(tv))])
+s2 <- groupSums(dd_kgrid[[3]], 2, ts$Sector61[match(colnames(dd_kgrid[[3]]), rownames(ts))])
+
+s3 <- groupSums(trVeg, 2, ch2veg$sector[match(colnames(trVeg), rownames(ch2veg))])
+s4 <- groupSums(trSoil, 2, ch2soil$sector[match(colnames(trSoil), rownames(ch2soil))])
+
+load("d:/abmi/AB_data_v2018/data/analysis/checks/Veg transtion and sector lookup.RData")
+
+ch2veg$VegTSL <- VegTSL[rownames(ch2veg),"Sector"]
+table(Peter=ch2veg$sector, Ermias=ch2veg$VegTSL)
+
+aa <- data.frame(VegKg=100*colSums(s1[isN,])[levels(tv$Sector61)]/sum(s1[isN,]),
+    VegTr=100*colSums(s3[isN,])[levels(tv$Sector61)]/sum(s3[isN,]),
+    SoilKg=100*colSums(s2[isS,])[levels(tv$Sector61)]/sum(s2[isS,]),
+    SoilTr=100*colSums(s4[isS,])[levels(tv$Sector61)]/sum(s4[isS,]))
+colSums(aa)
+round(aa, 3)
+
+}
+
+
+
 EXCL <- c("HWater", "SoilUnknown", "SoilWater", "Water")
 MODIF <- c("SoftLin", "Well", "EnSoftLin", "TrSoftLin", "Seismic")
 
@@ -149,8 +179,14 @@ SPP <- rownames(tax)
 SPP <- rownames(tax)[1:60]
 SPP <- rownames(tax)[61:120]
 SPP <- rownames(tax)[121:nrow(tax)]
+b <- 100
+
 for (spp in SPP) {
-    cat(spp, "\n");flush.console()
+    cat(spp)
+    flush.console()
+    CURRB <- REFB <- matrix(0, nrow(kgrid), b)
+    rownames(CURRB) <- rownames(REFB) <- rownames(kgrid)
+    RUN_OK <- logical(b) # FALSE
 
     TYPE <- "C" # combo
     if (tax[spp, "ModelSouth"] && !tax[spp, "ModelNorth"])
@@ -158,96 +194,137 @@ for (spp in SPP) {
     if (!tax[spp, "ModelSouth"] && tax[spp, "ModelNorth"])
         TYPE <- "N"
 
-    i <- 1 # boot run
+    ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
+    resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
 
-    if (TYPE != "N") {
-        ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
-        ## south estimates
-        ests <- suppressWarnings(get_coef(ress, Xs, stage="Space", na.out=FALSE))[i,]
-        musClim <- drop(Xclim[,cfs$spclim] %*% ests[cfs$spclim])
-        musHab <- c(ests[1], ests[1]+ests[cfs$hab])
-        names(musHab) <- c("Productive", gsub("soilc", "", cfs$hab))
-        musMod <- structure(numeric(length(cfs$modif)), names=cfs$modif)
-        for (k in cfs$modif)
-            musMod[k] <- log(linexp(1, ests[k], pm[k]))
-        musHab <- c(musHab,
-            HardLin=-1000,
-            HFor=unname(musHab["Productive"]),
-            SoftLin=unname(musMod["mSoft"]))
-        ## expand coefficients for south
-        prsCr <- musHab[match(ch2soil$cr2, names(musHab))]
-        prsRf <- musHab[match(ch2soil$rf2, names(musHab))]
-        prsCr[ch2soil$modif] <- prsRf[ch2soil$modif] + prsCr[ch2soil$modif]
-        ## put pieces together for south
-        ADsCr <- t(exp(prsCr) * t(trSoil)) * exp(musClim)
-        ADsRf <- t(exp(prsRf) * t(trSoil)) * exp(musClim)
-        ## add up by sector for south
-        ADsCrSect <- groupSums(ADsCr, 2, ch2soil$sector)
-        ADsRfSect <- groupSums(ADsRf, 2, ch2soil$sector)
-    } else {
-        ADsCrSect <- stemp
-        ADsRfSect <- stemp
-    }
-
-    if (TYPE != "S") {
-        resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
-        ## north estimates
-        estn <- suppressWarnings(get_coef(resn, Xn, stage="Space", na.out=FALSE))[i,]
-        munClim <- drop(Xclim[,cfn$spclim] %*% estn[cfn$spclim])
-        if (estn["mSoft"] != 0 & estn["mEnSft"] == 0) {
-            estn["mEnSft"] <- estn["mSoft"]
-            estn["mTrSft"] <- estn["mSoft"]
-            estn["mSeism"] <- estn["mSoft"]
+    #i <- 1 # boot run
+    for (i in seq_len(b)) {
+        gc()
+        if (i %% 5 == 0) {
+            cat(".")
+            flush.console()
         }
-        munHab <- drop(Xage %*% estn[colnames(Xage)])
-        munMod <- structure(numeric(length(cfn$modif)), names=cfn$modif)
-        for (k in cfn$modif)
-            munMod[k] <- log(linexp(1, estn[k], pm[k]))
-        munHab <- c(munHab,
-            HardLin=-1000,
-            Bare=-1000,
-            SnowIce=-1000,
-            Well=unname(munMod["mWell"]),
-            EnSoftLin=unname(munMod["mEnSft"]),
-            TrSoftLin=unname(munMod["mTrSft"]),
-            Seismic=unname(munMod["mSeism"]))
-        munHab["Mine"] <- -1000
-        ## expand coefficients for north
-        prnCr <- munHab[match(ch2veg$cr2, names(munHab))]
-        prnRf <- munHab[match(ch2veg$rf2, names(munHab))]
-        prnCr[ch2veg$modif] <- prnRf[ch2veg$modif] + prnCr[ch2veg$modif]
-        ## put pieces together for north
-        ## multiplying with row normalized area gives the weighted averaging
-        ADnCr <- t(exp(prnCr) * t(trVeg)) * exp(munClim)
-        ADnRf <- t(exp(prnRf) * t(trVeg)) * exp(munClim)
-        ## add up by sector for north
-        ADnCrSect <- groupSums(ADnCr, 2, ch2veg$sector)
-        ADnRfSect <- groupSums(ADnRf, 2, ch2veg$sector)
-    } else {
-        ADnCrSect <- stemp
-        ADnRfSect <- stemp
+
+
+        if (TYPE != "N") {
+            #ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
+            ## south estimates
+            ests <- suppressWarnings(get_coef(ress, Xs, stage="Space", na.out=FALSE))[i,]
+            musClim <- drop(Xclim[,cfs$spclim] %*% ests[cfs$spclim])
+            musHab <- c(ests[1], ests[1]+ests[cfs$hab])
+            names(musHab) <- c("Productive", gsub("soilc", "", cfs$hab))
+            musMod <- structure(numeric(length(cfs$modif)), names=cfs$modif)
+            for (k in cfs$modif)
+                musMod[k] <- log(linexp(1, ests[k], pm[k]))
+            musHab <- c(musHab,
+                HardLin=-1000,
+                HFor=unname(musHab["Productive"]),
+                SoftLin=unname(musMod["mSoft"]))
+            if (all(is.finite(exp(musHab)))) {
+                ## expand coefficients for south
+                prsCr <- musHab[match(ch2soil$cr2, names(musHab))]
+                prsRf <- musHab[match(ch2soil$rf2, names(musHab))]
+                prsCr[ch2soil$modif] <- prsRf[ch2soil$modif] + prsCr[ch2soil$modif]
+                ## put pieces together for south
+                ADsCr <- t(exp(prsCr) * t(trSoil)) * exp(musClim)
+                ADsRf <- t(exp(prsRf) * t(trSoil)) * exp(musClim)
+                ## add up by sector for south
+                ADsCrSect <- groupSums(ADsCr, 2, ch2soil$sector)
+                ADsRfSect <- groupSums(ADsRf, 2, ch2soil$sector)
+                RUN_OK[i] <- TRUE
+            }
+        } else {
+            ADsCrSect <- stemp
+            ADsRfSect <- stemp
+        }
+
+        if (TYPE != "S") {
+            #resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
+            ## north estimates
+            estn <- suppressWarnings(get_coef(resn, Xn, stage="Space", na.out=FALSE))[i,]
+            munClim <- drop(Xclim[,cfn$spclim] %*% estn[cfn$spclim])
+            if (estn["mSoft"] != 0 & estn["mEnSft"] == 0) {
+                estn["mEnSft"] <- estn["mSoft"]
+                estn["mTrSft"] <- estn["mSoft"]
+                estn["mSeism"] <- estn["mSoft"]
+            }
+            munHab <- drop(Xage %*% estn[colnames(Xage)])
+            munMod <- structure(numeric(length(cfn$modif)), names=cfn$modif)
+            for (k in cfn$modif)
+                munMod[k] <- log(linexp(1, estn[k], pm[k]))
+            munHab <- c(munHab,
+                HardLin=-1000,
+                Bare=-1000,
+                SnowIce=-1000,
+                Well=unname(munMod["mWell"]),
+                EnSoftLin=unname(munMod["mEnSft"]),
+                TrSoftLin=unname(munMod["mTrSft"]),
+                Seismic=unname(munMod["mSeism"]))
+            munHab["Mine"] <- -1000
+            if (all(is.finite(exp(munHab)))) {
+                ## expand coefficients for north
+                prnCr <- munHab[match(ch2veg$cr2, names(munHab))]
+                prnRf <- munHab[match(ch2veg$rf2, names(munHab))]
+                prnCr[ch2veg$modif] <- prnRf[ch2veg$modif] + prnCr[ch2veg$modif]
+                ## put pieces together for north
+                ## multiplying with row normalized area gives the weighted averaging
+                ADnCr <- t(exp(prnCr) * t(trVeg)) * exp(munClim)
+                ADnRf <- t(exp(prnRf) * t(trVeg)) * exp(munClim)
+                ## add up by sector for north
+                ADnCrSect <- groupSums(ADnCr, 2, ch2veg$sector)
+                ADnRfSect <- groupSums(ADnRf, 2, ch2veg$sector)
+                RUN_OK[i] <- TRUE
+            }
+        } else {
+            ADnCrSect <- stemp
+            ADnRfSect <- stemp
+        }
+
+        if (RUN_OK[i]) {
+            ## weighted average
+            wS <- 1-kgrid$pAspen
+            if (TYPE == "S")
+                wS[] <- 1
+            if (TYPE == "N")
+                wS[] <- 0
+            wS[kgrid$useS] <- 1
+            wS[kgrid$useN] <- 0
+            Curr <- wS * ADsCrSect[,CN] + (1-wS) * ADnCrSect[,CN]
+            Ref <- wS * ADsRfSect[,CN] + (1-wS) * ADnRfSect[,CN]
+
+            if (i == 1) {
+                CURR <- Curr
+                REF <- Ref
+            } else {
+                px <- sum(RUN_OK-1) / sum(RUN_OK)
+                CURR <- CURR * px + Curr * (1-px)
+                REF <- REF * px + Ref * (1-px)
+            }
+            CURRB[,i] <- rowSums(Curr)
+            REFB[,i] <- rowSums(Ref)
+        } else {
+            CURRB[,i] <- NA
+            REFB[,i] <- NA
+        }
     }
 
-    ## weighted average
-    wS <- 1-kgrid$pAspen
-    if (TYPE == "S")
-        wS[] <- 1
-    if (TYPE == "N")
-        wS[] <- 0
-    wS[kgrid$useS] <- 1
-    wS[kgrid$useN] <- 0
-    Curr <- wS * ADsCrSect[,CN] + (1-wS) * ADnCrSect[,CN]
-    Ref <- wS * ADsRfSect[,CN] + (1-wS) * ADnRfSect[,CN]
+#    save(Curr, Ref,
+#        file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-04-01/", spp, ".RData"))
+    save(CURR, REF, CURRB, REFB,
+        file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-05-14/", spp, ".RData"))
 
-    save(Curr, Ref,
-        file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-04-01/", spp, ".RData"))
+#NC <- colSums(CURR)
+#NR <- colSums(REF)
+#round(100*(NC-NR)/sum(NR),4)
+#round(100*(NC-NR)/NR,4)
 
-    SA.Curr <- Curr
-    SA.Ref <- Ref
-    NAM <- as.character(tax[spp, "SpeciesID"])
-    save(SA.Curr, SA.Ref, file=paste0("d:/abmi/reports/2018/results/birds/sector/",
-        NAM, ".RData"))
 
+#    SA.Curr <- Curr
+#    SA.Ref <- Ref
+#    NAM <- as.character(tax[spp, "SpeciesID"])
+#    save(SA.Curr, SA.Ref, file=paste0("d:/abmi/reports/2018/results/birds/sector/",
+#        NAM, ".RData"))
+    cat("DONE\n")
 }
 
 
@@ -411,7 +488,15 @@ plot(x, col=col1)
 ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
 ee <- new.env()
 load(file.path(ROOT, "ab-birds-all-2018-11-29.RData"), envir=ee)
-ddd <- nonDuplicated(ee$dd, ee$dd$SS, TRUE)
+
+en <- new.env()
+load(file.path(ROOT, "data", "ab-birds-north-2018-12-07.RData"), envir=en)
+es <- new.env()
+load(file.path(ROOT, "data", "ab-birds-south-2018-12-07.RData"), envir=es)
+
+ddd <- ee$dd
+ddd <- ddd[unique(c(rownames(en$DAT), rownames(es$DAT))),]
+ddd <- nonDuplicated(ddd, ddd$SS, TRUE)
 yyy <- groupSums(ee$yy, 1, ee$dd$SS)[rownames(ddd),]
 yyy[yyy > 0] <- 1
 ss <- !is.na(ddd$X) & !is.na(ddd$NRNAME)
@@ -506,12 +591,12 @@ con <- dbConnect(
 
 #dbDisconnect(con)
 
-PLOT <- TRUE
-SAVE <- FALSE
-for (spp in rownames(tax)) {
+## saving BOOT objects for c4i
+for (spp in rownames(tax)[49:173]) {
 
     cat(spp, "\n");flush.console()
-    load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-04-01/", spp, ".RData"))
+#    load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-04-01/", spp, ".RData"))
+    load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-05-14/", spp, ".RData"))
 
     TYPE <- "C" # combo
     if (tax[spp, "ModelSouth"] && !tax[spp, "ModelNorth"])
@@ -519,14 +604,59 @@ for (spp in rownames(tax)) {
     if (!tax[spp, "ModelSouth"] && tax[spp, "ModelNorth"])
         TYPE <- "N"
 
-    Dcr <- rowSums(Curr)
-    q <- quantile(Dcr, 0.99)
-    Dcr[Dcr > q] <- q
-    summary(Dcr)
-    Drf <- rowSums(Ref)
-    q <- quantile(Drf, 0.99)
-    Drf[Drf > q] <- q
-    summary(Drf)
+    for (i in 1:100) {
+        if (any(is.na(CURRB[,i]))) {
+            CURRB[,i] <- CURRB[,i-1]
+            cat(" NAcr")
+        }
+        if (any(is.na(REFB[,i]))) {
+            REFB[,i] <- REFB[,i-1]
+            cat(" NArf")
+        }
+
+        q <- quantile(CURRB[,i], 0.99, na.rm=TRUE)
+        CURRB[CURRB[,i] > q,i] <- q
+        q <- quantile(REFB[,i], 0.99, na.rm=TRUE)
+        REFB[REFB[,i] > q,i] <- q
+    }
+    Curr.Boot <- as.matrix(groupSums(CURRB, 1, kgrid[rownames(CURRB),"Row10_Col10"]))
+    Ref.Boot <- as.matrix(groupSums(REFB, 1, kgrid[rownames(CURRB),"Row10_Col10"]))
+    save(Curr.Boot, Ref.Boot, file=paste0("s:/reports/2018/results/birds/boot/",
+        as.character(tax[spp, "SpeciesID"]), ".RData"))
+}
+
+PLOT <- TRUE
+SAVE <- FALSE
+for (spp in rownames(tax)[48:173]) {
+
+    cat(spp, "\n");flush.console()
+#    load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-04-01/", spp, ".RData"))
+    load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-05-14/", spp, ".RData"))
+
+    TYPE <- "C" # combo
+    if (tax[spp, "ModelSouth"] && !tax[spp, "ModelNorth"])
+        TYPE <- "S"
+    if (!tax[spp, "ModelSouth"] && tax[spp, "ModelNorth"])
+        TYPE <- "N"
+
+    for (i in 1:100) {
+        q <- quantile(CURRB[,i], 0.99, na.rm=TRUE)
+        CURRB[CURRB[,i] > q,i] <- q
+        q <- quantile(REFB[,i], 0.99, na.rm=TRUE)
+        REFB[REFB[,i] > q,i] <- q
+    }
+    Dcr <- rowMeans(CURRB, na.rm=TRUE)
+    Drf <- rowMeans(REFB, na.rm=TRUE)
+    SD <- apply(CURRB, 1, sd, na.rm=TRUE)
+
+#    Dcr <- rowSums(Curr)
+#    q <- quantile(Dcr, 0.99)
+#    Dcr[Dcr > q] <- q
+#    summary(Dcr)
+#    Drf <- rowSums(Ref)
+#    q <- quantile(Drf, 0.99)
+#    Drf[Drf > q] <- q
+#    summary(Drf)
     MAX <- max(Dcr, Drf)
 
     df <- (Dcr-Drf) / MAX
@@ -535,9 +665,10 @@ for (spp in rownames(tax)) {
     df[df==0] <- 1
     cr <- pmin(100, ceiling(99 * sqrt(Dcr / MAX))+1)
     rf <- pmin(100, ceiling(99 * sqrt(Drf / MAX))+1)
-    #si <- 100 * pmin(Dcr, Drf)/pmax(Dcr, Drf)
-    #si[is.na(si)] <- 100
-    #si[si==0] <- 1
+    crsd <- 100 * SD / mean(Dcr)
+    si <- 100 * pmin(Dcr, Drf)/pmax(Dcr, Drf)
+    si[is.na(si)] <- 100
+    si[si==0] <- 1
 
     if (SAVE) {
         tmp <- data.frame(
@@ -560,7 +691,8 @@ for (spp in rownames(tax)) {
         Rcr <- make_raster(cr, kgrid, rt)
         Rrf <- make_raster(rf, kgrid, rt)
         Rdf <- make_raster(df-100, kgrid, rt)
-        #Rsi <- make_raster(si, kgrid, rt)
+        Rsd <- make_raster(crsd, kgrid, rt)
+        Rsi <- make_raster(si, kgrid, rt)
         if (TYPE == "S")
             Msk <- Rmasks
         if (TYPE == "N")
@@ -569,7 +701,8 @@ for (spp in rownames(tax)) {
             Rcr <- mask(Rcr, Msk)
             Rrf <- mask(Rrf, Msk)
             Rdf <- mask(Rdf, Msk)
-            #Rsi <- mask(Rsi, Msk)
+            Rsd <- mask(Rsd, Msk)
+            Rsi <- mask(Rsi, Msk)
         }
         ## add here mask for Rockies if needed
 
@@ -579,24 +712,27 @@ for (spp in rownames(tax)) {
         sam1 <- rasterize(xy1, rt10, field=1, fun='last')
         #xyall@data[[spp]] <- ifelse(is.na(values(sam1)), 0, 1)
 
-        png(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/figs/maps/", spp, ".png"),
-            height=1500*2, width=1000*2, res=300)
-        op <- par(mfrow=c(2,2), mar=c(2,1,2,3))
-        plot(rt, col=CE, axes=FALSE, box=FALSE, main="Current", legend=FALSE)
-        plot(Rcr, add=TRUE, col=col1[1:max(cr)])
-        plot(Rw, add=TRUE, col=CW, legend=FALSE)
+        png(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/figs/maps2/", spp, ".png"),
+            height=1500*2, width=1000*3, res=300)
+        op <- par(mfrow=c(2,3), mar=c(2,1,2,3))
         plot(rt, col=CE, axes=FALSE, box=FALSE, main="Reference", legend=FALSE)
         plot(Rrf, add=TRUE, col=col1[1:max(rf)])
+        plot(Rw, add=TRUE, col=CW, legend=FALSE)
+        plot(rt, col=CE, axes=FALSE, box=FALSE, main="Current", legend=FALSE)
+        plot(Rcr, add=TRUE, col=col1[1:max(cr)])
         plot(Rw, add=TRUE, col=CW, legend=FALSE)
         plot(rt, col=CE, axes=FALSE, box=FALSE, main="Difference", legend=FALSE)
         plot(Rdf, add=TRUE, col=col3[min(df):max(df)])
         plot(Rw, add=TRUE, col=CW, legend=FALSE)
-        #plot(rt, col=CE, axes=FALSE, box=FALSE, main="Intactness", legend=FALSE)
-        #plot(Rsi, add=TRUE, col=col2[min(si):max(si)])
-        #plot(Rw, add=TRUE, col=CW, legend=FALSE)
+        plot(rt, col=CE, axes=FALSE, box=FALSE, main="Intactness", legend=FALSE)
+        plot(Rsi, add=TRUE, col=col2[min(si):max(si)])
+        plot(Rw, add=TRUE, col=CW, legend=FALSE)
         plot(rnr,col=cnr, axes=FALSE, box=FALSE, main="Detections", legend=FALSE)
         plot(sam0,add=TRUE, col="#ffffffaa", legend=FALSE)
         plot(sam1,add=TRUE, col="red4", legend=FALSE)
+        plot(rt, col=CE, axes=FALSE, box=FALSE, main="Current SD", legend=FALSE)
+        plot(Rsd, add=TRUE, col=rev(col2)[1:max(cr)])
+        plot(Rw, add=TRUE, col=CW, legend=FALSE)
         par(op)
         dev.off()
     }
