@@ -201,3 +201,4 @@ HARVEST-AREA,CutBlocks,,CutBlocks,,,,VerifiedHF_2018-05-24,
 ROAD-WINTER,RoadHardSurface,,RoadHardSurface,,,,SnowTransect,
 WELL-CLEARED-NOT-CONFIRMED,WellSite,,WellSite,,,,VerifiedHF_2018-05-24,
 FRUIT-VEGETABLES,CultivationCropPastureBareground,,CultivationCrop,,,,W2W_HF2014,
+PIPELINES,Pipeline,,Pipeline,,,,W2W_HF2017,"A line of pipes, of substantial length and capacity, used for the conveyance of petrochemicals."

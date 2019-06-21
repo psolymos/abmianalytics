@@ -1,10 +1,10 @@
 library(mefa4)
 #library(cure4insect)
 
-ROOT <- "e:/peter/AB_data_v2016"
+ROOT <- "d:/abmi/AB_data_v2016"
 #INDIR <- paste0("e:/peter/josm/2018/earlyseralTRUE")
 #INDIR <- paste0("e:/peter/josm/2018/earlyseralFALSE")
-INDIR <- paste0("e:/peter/josm/2018/hshfix")
+INDIR <- paste0("d:/josm/2018/hshfix")
 
 sectors_all <- c("Agriculture", "EnergyLin", "EnergyMW", "Forestry", "Misc",
     "RuralUrban","Transportation")
@@ -221,6 +221,10 @@ effs$total <- effs$combined + effs$interact
 plot(effs[abs(effs$total)<=100,])
 summary(effs)
 
+syn <- abs(sapply(sector_res, function(z) attr(z$total, "synergy")))
+plot(density(syn, n=1000),xlim=c(0,20), xaxs="i", col=2, lwd=2, main="", xlab="")
+rug(syn, col=2)
+abline(v=syn[spp], lty=2)
 
 ## species
 
@@ -244,7 +248,7 @@ Plot <- function(spp) {
     f((rowSums(sector_res[[spp]]$total[-1,])/100)/ppp[-1], main="Combined") # combined
     plot.new()
     title(sub=spp)
-    legend("topleft", bty="n", fill=Col, legend=rownames(z), border=NA,
+    legend("topleft", bty="n", fill=Col, legend=colnames(z), border=NA,
         text.col=Col, cex=1.5)
     par(op)
 
@@ -255,3 +259,4 @@ pdf(file.path(INDIR, "species.pdf"), onefile=TRUE, width=8, height=8)
 for (spp in names(sector_res))
     Plot(spp)
 dev.off()
+

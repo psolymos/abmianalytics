@@ -58,6 +58,116 @@ save(dd_qha, dd_1ha, xx,
 
 ## -- one offs
 
+## HF around 2019 sites
+
+#I have been asked to provide you with these tables for you to magician them into what the SC wants.
+#For CMU_HFI2017.txt - use ProjectID as the site identifier, FEATURE_TY are the HFI2017 feature types
+#
+#For Focal2019_HFI2017.txt, use newID as the site identifier
+#
+#Let me know if you have any questions. I assume Jim H has spoken to you.
+#Note:
+#The points all had a 564 m buffer
+#There are a number of the focal sites that overlap completely (every third ARU is paired with a camera)
+#The ARUs are only 300 m apart so the 564m buffers overlap
+
+HF_VERSION <- "2016_fine"
+source("~/repos/abmianalytics/veghf/veghf-setup.R")
+load(file.path(ROOT, VER, "data", "analysis", "ages-by-nsr.Rdata"))
+meta <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+
+d1 <- read.csv("d:/abmi/AB_data_v2019/data/raw/requests/2018-06-21/CMU_HFI2017.csv")
+d2 <- read.csv("d:/abmi/AB_data_v2019/data/raw/requests/2018-06-21/Focal2019_HFI2017.csv")
+str(hflt)
+compare_sets(rownames(hflt), d1$FEATURE_TY)
+setdiff(d1$FEATURE_TY, rownames(hflt))
+compare_sets(rownames(hflt), d2$FEATURE_TY)
+setdiff(d2$FEATURE_TY, rownames(hflt))
+
+levels(d1$FEATURE_TY)[levels(d1$FEATURE_TY) == " "] <- "NATIVE"
+levels(d2$FEATURE_TY)[levels(d2$FEATURE_TY) == ""] <- "NATIVE"
+
+d1$HF <- hflt$HF_GROUP_COMB[match(d1$FEATURE_TY, rownames(hflt))]
+levels(d1$HF) <- c(levels(d1$HF), "NATIVE")
+d1$HF[is.na(d1$HF)] <- "NATIVE"
+d2$HF <- hflt$HF_GROUP_COMB[match(d2$FEATURE_TY, rownames(hflt))]
+levels(d2$HF) <- c(levels(d2$HF), "NATIVE")
+d2$HF[is.na(d2$HF)] <- "NATIVE"
+
+x1 <- as.matrix(Xtab(Shape_Area ~ ProjectID + HF, d1))
+x2 <- as.matrix(Xtab(Shape_Area ~ newID + HF, d2))
+
+summary(rowSums(x1)-564^2*pi)
+summary(rowSums(x2)-564^2*pi)
+
+write.csv(x1, file="d:/abmi/AB_data_v2019/data/raw/requests/2018-06-21/CMU_HFI2017_wide20160621.csv")
+write.csv(x2, file="d:/abmi/AB_data_v2019/data/raw/requests/2018-06-21/Focal2019_HFI2017_wide20160621.csv")
+
+## next
+f1 <- "d:/abmi/AB_data_v2019/data/raw/requests/2018-06-21/20190620_SummaryTables_OSR_Terrestrialsites_2019_Veg61_3x7andHF_2017.sqlite"
+f2 <- "d:/abmi/AB_data_v2019/data/raw/requests/2018-06-21/20190621_SummaryTables_OSR_Wetlandsites_2019_Veg61_3x7andHF_2017.sqlite"
+
+db <- dbConnect(RSQLite::SQLite(), f1)
+dbListTables(db)
+d1 <- dbReadTable(db, "Summary_Buffers")
+d1p <- dbReadTable(db, "Summary_Points")
+dbDisconnect(db)
+
+db <- dbConnect(RSQLite::SQLite(), f2)
+dbListTables(db)
+d2 <- dbReadTable(db, "Summary_Buffers")
+dbDisconnect(db)
+
+d1 <- make_char2fact(d1)
+d1p <- make_char2fact(d1p)
+d2 <- make_char2fact(d2)
+
+d1[d1$FEATURE_TY == "HARVEST-AREA" & is.na(d1$YEAR),"YEAR"] <- 2019
+
+dd1 <- make_vegHF_wide_v6(d1,
+    col.label="ABMI_ID_Wi",
+    col.year=2019,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd1$scale <- "564m circle buffer around site centre [V6 backfilled + 2017 HFI]"
+dx <- nonDuplicated(d1, ABMI_ID_Wi, TRUE)[rownames(dd1[[1]]),]
+dd1 <- fill_in_0ages_v6(dd1, dx$NSRNAME, ages_list)
+dd_terr <- dd1
+
+table(d2$YEAR)
+d2$YEAR <- as.integer(as.character(d2$YEAR))
+
+d2[d2$FEATURE_TY == "HARVEST-AREA" & is.na(d2$YEAR),"YEAR"] <- 2019
+
+dd2 <- make_vegHF_wide_v6(d2[d2$Section != "250-300m",],
+    col.label="NAME",
+    col.year=2019,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd2$scale <- "0-250m buffer around wetlands [V6 backfilled + 2017 HFI]"
+dx <- nonDuplicated(d2, NAME, TRUE)[rownames(dd2[[1]]),]
+dd2 <- fill_in_0ages_v6(dd2, dx$NSRNAME, ages_list)
+dd_wet250 <- dd2
+
+dd2 <- make_vegHF_wide_v6(d2,
+    col.label="NAME",
+    col.year=2019,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd2$scale <- "0-250m buffer around wetlands [V6 backfilled + 2017 HFI]"
+dx <- nonDuplicated(d2, NAME, TRUE)[rownames(dd2[[1]]),]
+dd2 <- fill_in_0ages_v6(dd2, dx$NSRNAME, ages_list)
+dd_wet300 <- dd2
+
+
+save(dd_terr, dd_wet250, dd_wet300,
+  file="d:/abmi/AB_data_v2019/data/raw/requests/2018-06-21/terr_wet_1kmbuffer_20190621.RData")
 
 ## 1 ha in 4 x 0.25ha quadrants
 #f <- "x:/public/toPeter/SouthABGrids_backfill.txt"
