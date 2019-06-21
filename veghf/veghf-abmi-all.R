@@ -124,6 +124,18 @@ d2 <- make_char2fact(d2)
 
 d1[d1$FEATURE_TY == "HARVEST-AREA" & is.na(d1$YEAR),"YEAR"] <- 2019
 
+dd1 <- make_vegHF_wide_v6(d1[d1$Section %in% c("NE","NW","SE","SW"),],
+    col.label="ABMI_ID_Wi",
+    col.year=2019,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    sparse=TRUE, HF_fine=TRUE) # use refined classes
+dd1$scale <- "1 ha buffer around site centre [V6 backfilled + 2017 HFI]"
+dx <- nonDuplicated(d1, ABMI_ID_Wi, TRUE)[rownames(dd1[[1]]),]
+dd1 <- fill_in_0ages_v6(dd1, dx$NSRNAME, ages_list)
+dd_terr1ha <- dd1
+
 dd1 <- make_vegHF_wide_v6(d1,
     col.label="ABMI_ID_Wi",
     col.year=2019,
@@ -134,7 +146,7 @@ dd1 <- make_vegHF_wide_v6(d1,
 dd1$scale <- "564m circle buffer around site centre [V6 backfilled + 2017 HFI]"
 dx <- nonDuplicated(d1, ABMI_ID_Wi, TRUE)[rownames(dd1[[1]]),]
 dd1 <- fill_in_0ages_v6(dd1, dx$NSRNAME, ages_list)
-dd_terr <- dd1
+dd_terr1km <- dd1
 
 table(d2$YEAR)
 d2$YEAR <- as.integer(as.character(d2$YEAR))
@@ -166,7 +178,7 @@ dd2 <- fill_in_0ages_v6(dd2, dx$NSRNAME, ages_list)
 dd_wet300 <- dd2
 
 
-save(dd_terr, dd_wet250, dd_wet300,
+save(dd_terr1ha, dd_terr1km, dd_wet250, dd_wet300,
   file="d:/abmi/AB_data_v2019/data/raw/requests/2018-06-21/terr_wet_1kmbuffer_20190621.RData")
 
 ## 1 ha in 4 x 0.25ha quadrants
