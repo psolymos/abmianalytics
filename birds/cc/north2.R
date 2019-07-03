@@ -41,10 +41,12 @@ source("~/repos/abmianalytics/birds/00-functions.R")
         if (which(names(mods) == ssh_fit) >= which(names(mods) == "SSH"))
             stop("fitting stage must precede SSH stage in model list")
     }
-    x <- DAT[BB[,j],]
+    x <- DAT
+    x$order <- seq_len(nrow(x))
+    x <- x[BB[,j],]
     x <- x[x$YEAR >= 2006 & x$YEAR <= 2015,]
-    y <- as.numeric(YY[rownames(x), i])
-    off <- OFF[rownames(x), i]
+    y <- as.numeric(YY[x$order, i])
+    off <- OFF[x$order, i]
     w <- if (is.null(wcol))
         rep(1, nrow(x)) else x[,wcol]
     nmods <- length(mods)
@@ -101,7 +103,7 @@ source("~/repos/abmianalytics/birds/00-functions.R")
             l <- lorenz(g[,"x"]/g[,"by"], g[,"by"])
             s <- summary(l)
             lab <- rownames(l[l[,"x"] >= s["x[t]"],])
-            x$SSH_KM <- rowSums(SSH[rownames(x),lab,drop=FALSE])
+            x$SSH_KM <- rowSums(SSH[x$order,lab,drop=FALSE])
             x$SSH05_KM <- sqrt(x$SSH_KM)
 
             res <- list(lorenz=l, labels=lab)
