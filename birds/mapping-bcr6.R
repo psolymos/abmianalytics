@@ -68,7 +68,7 @@ xclim <- data.frame(
     pWater_KM=kgrid$pWater,
     pWater2_KM=kgrid$pWater^2)
 ## this has pAspen for the south, otherwise all the same
-Xclim <- model.matrix(as.formula(paste0("~-1+", paste(cfs$spclim, collapse="+"))), xclim)
+Xclim <- model.matrix(as.formula(paste0("~-1+", paste(cfn$spclim, collapse="+"))), xclim)
 colnames(Xclim) <- fix_names(colnames(Xclim))
 
 ## ch2soil ch2veg trSoil trVeg
@@ -104,13 +104,18 @@ CN <- c("Native", "Misc", "Agriculture", "Forestry", "RuralUrban", "Energy", "Tr
 
 ## north models with bootstrap to get pop sizes in BCR6 -------------------------------------
 
+#PROJ <- "north" # all years
+PROJ <- "north2" # years matching PIF/BBS years 2006-2015
 
-DONE <- gsub(".RData", "", list.files("d:/abmi/AB_data_v2018/data/analysis/birds/pred/bcr6/"))
-SPP <- setdiff(rownames(tax)[tax$ModelNorth & rownames(tax) %in% colnames(en$OFF)], DONE)
+#DONE <- gsub(".RData", "", list.files("d:/abmi/AB_data_v2018/data/analysis/birds/pred/bcr6/"))
+#SPP <- setdiff(rownames(tax)[tax$ModelNorth & rownames(tax) %in% colnames(en$OFF)], DONE)
+
+SPP <- gsub(".RData", "", list.files(file.path(ROOT, "out", PROJ)))
+
 ss <- kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS"
 
 for (spp in SPP) {
-    resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
+    resn <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
     ## north estimates
     ESTN <- suppressWarnings(get_coef(resn, Xn, stage="Space", na.out=FALSE))
     b <- nrow(ESTN)
@@ -161,8 +166,9 @@ for (spp in SPP) {
         HAB[colnames(ADnCrHab),i] <- colSums(ADnCrHab)
 
     }
-    save(CR, HAB,
-        file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/bcr6/", spp, ".RData"))
+    #fout <- paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/bcr6/", spp, ".RData")
+    fout <- paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/bcr6-subset/", spp, ".RData")
+    save(CR, HAB, file=fout)
     cat(" OK\n")
 
 }
