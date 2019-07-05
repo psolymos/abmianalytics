@@ -100,6 +100,64 @@ if (FALSE) {
     }
     save(NPIX, file="~/GoogleWork/bam/PIF-AB/results-v3/NPIX.RData")
 }
+## PIX pop sizes: 2006-2015 subset
+if (FALSE) {
+    load("d:/abmi/AB_data_v2018/data/analysis/kgrid_table_km.Rdata")
+    k <- kgrid[kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS",]
+    A <- k$Area_km2 - k$Area_km2*k$pWater
+
+    SPP <- gsub(".RData", "", list.files(file.path(ROOT, "out", "north2")))
+
+    NPIX2 <- matrix(NA, length(SPP), 240)
+    rownames(NPIX2) <- SPP
+
+    for (spp in SPP) {
+        cat(spp, "\n")
+        flush.console()
+        e <- new.env()
+        load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/bcr6-subset/", spp, ".RData"), envir=e)
+        CR <- e$CR[rownames(k),]
+        for (i in 1:ncol(CR)) {
+            q <- quantile(CR[,i], 0.99)
+            CR[CR[,i] > q,i] <- q
+        }
+        CR <- CR * A
+        NPIX2[spp,1:ncol(CR)] <- colSums(CR)
+    }
+    save(NPIX2, file="~/GoogleWork/bam/PIF-AB/results-v3/NPIX-subset-2006-2015.RData")
+
+    ## compare the two
+    library(intrval)
+    load("~/GoogleWork/bam/PIF-AB/results-v3/NPIX.RData") # NPIX
+    load("~/GoogleWork/bam/PIF-AB/results-v3/NPIX-subset-2006-2015.RData") # NPIX
+    NPIX <- NPIX[rownames(NPIX2),]
+
+    tab <- t(apply(NPIX, 1, quantile, c(0.5, 0.025, 0.975), na.rm=TRUE))
+    tab2 <- t(apply(NPIX2, 1, quantile, c(0.5, 0.025, 0.975), na.rm=TRUE))
+    table(tab[,2:3] %[o]% tab2[,2:3])
+    which(!(tab[,2:3] %[o]% tab2[,2:3]))
+    data.frame(tab, tab2)["WTSP",]
+
+    op <- par(mfrow=c(1,3))
+    plot(tab[,1], tab2[,1], xlab="All (1993-2017)", ylab="Subset (2006-2015)",
+        xlim=c(0, max(tab[,1])), ylim=c(0, max(tab[,1])), main=expression(N[PIX]))
+    abline(0,1, lty=2)
+    segments(x0=tab[,1], y0=tab2[,2], y1=tab2[,3], col="grey")
+    segments(y0=tab2[,1], x0=tab[,2], x1=tab[,3], col="grey")
+    points(tab[,1], tab2[,1], pch=19)
+    mm <- lm(tab2[rownames(tab) != "PISI",1] ~ tab[rownames(tab) != "PISI",1])
+    abline(mm, col=2)
+    summary(mm)
+
+    hist((tab2[,1]/tab[,1])[rownames(tab) != "PISI"], xlab="subset/all", main="Ratio")
+
+    plot(tab[,3]-tab[,2], tab2[,3]-tab2[,2], xlim=c(0, 10^7), ylim=c(0, 10^7),
+        xlab="All (1993-2017)", ylab="Subset (2006-2015)", main="CI range")
+    abline(0,1)
+    par(op)
+
+
+}
 
 load("~/GoogleWork/bam/PIF-AB/results-v3/NPIX.RData") # NPIX
 tab <- t(apply(NPIX, 1, quantile, c(0.5, 0.025, 0.975), na.rm=TRUE))
@@ -391,6 +449,146 @@ if (FALSE) {
     save(HABITAT, avail, wroad, ndet, file="~/GoogleWork/bam/PIF-AB/results-v3/HABITAT.RData")
 
 }
+## habitat representation stuff: 2006-2015 subset
+if (FALSE) {
+
+    load("d:/abmi/AB_data_v2018/data/analysis/kgrid_table_km.Rdata")
+    k <- kgrid[kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS",]
+    A <- k$Area_km2 - k$Area_km2*k$pWater
+    ## ch2soil ch2veg trSoil trVeg
+    load("d:/abmi/AB_data_v2018/data/analysis/grid/veg-hf_transitions_v6hf2016v3noDistVeg.Rdata")
+    stopifnot(all(rownames(kgrid) == rownames(trVeg)))
+    stopifnot(all(rownames(kgrid) == rownames(trSoil)))
+
+    tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
+    rownames(tv) <- tv[,1]
+    tv <- droplevels(tv[!endsWith(rownames(tv), "0"),])
+
+    ch2veg$g <- tv$UseInPIX[match(ch2veg$cr, rownames(tv))]
+    ch2veg$f <- ifelse(startsWith(as.character(ch2veg$cr), "CC"), "CC", "not")
+    ch2veg$s <- tv$Sector61[match(ch2veg$cr, rownames(tv))]
+
+    rn <- c(
+        "Decid", "DecidO",
+        "Mixed", "MixedO",
+        "Pine", "PineO",
+        "WSpr", "WSprO",
+        "BSpr", "BSprO",
+        "TrFen",
+        "Shrub",
+        "Grass",
+        "GrFen",
+        "Marsh",
+        "Swamp",
+        "SoftLin",
+        "Roads",
+        "Agr",
+        "UrbInd")
+    AAx <- groupSums(trVeg, 2, ch2veg[colnames(trVeg), "f"])
+    AAx <- colSums(AAx[kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS",])/10^6
+    AA <- groupSums(trVeg, 2, ch2veg[colnames(trVeg), "g"])
+    AA <- colSums(AA[kgrid$BCRCODE == "  6-BOREAL_TAIGA_PLAINS",])
+    AA <- AA[rn]/10^6 # in km^2
+
+
+    if (FALSE) {
+        ## study area
+        AAx <- groupSums(trVeg, 2, ch2veg[colnames(trVeg), "s"])
+        AAx <- colSums(AAx[kgrid$NRNAME != "Grassland",])/10^6
+        AA <- groupSums(trVeg, 2, ch2veg[colnames(trVeg), "g"])
+        AA <- colSums(AA[kgrid$NRNAME != "Grassland",])
+        AA <- AA[rn]/10^6 # in km^2
+        sum(kgrid$NRNAME != "Grassland")
+        data.frame(p=round(100*AAx/sum(AAx),1))
+        round(100*AA/sum(AA),1)
+    }
+
+    SPP <- gsub(".RData", "", list.files(file.path(ROOT, "out", "north2")))
+
+    HABITAT <- list()
+
+    for (spp in SPP) {
+        cat(spp, "\n")
+        flush.console()
+        e <- new.env()
+        load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/bcr6-subset/", spp, ".RData"), envir=e)
+        HAB <- e$HAB
+        #compare_sets(tv$UseInAnalysisFineAge, rownames(HAB))
+        g <- tv$UseInPIX[match(rownames(HAB), tv$UseInAnalysisFineAge)]
+        NN <- groupSums(HAB, 1, g)[rn,]
+        NN <- NN * TAB[spp, "PairAdj"] # inds in kn2 cell
+        ## diff is due to weighting by 1-pWater for pop size, which is the right thing to do
+        #d <- TAB[spp,"Npix"] / (median(colSums(NN))/10^6)
+        #NN <- NN * d # adjust to same median
+        DD <- (NN / 100) / AA # inds/ha
+        t(apply(NN, 1, quantile, c(0.5, 0.025, 0.975)))
+        t(apply(DD, 1, quantile, c(0.5, 0.025, 0.975)))
+
+        HABITAT[[spp]] <- list(N=NN, A=AA, D=DD)
+    }
+
+    vc <- as.character(en$DAT$vegc)
+    table(en$DAT$vegc)
+    summary(en$DAT$wtAge*200)
+    vc[vc == "Decid" & en$DAT$wtAge*200 > 60] <- "DecidO"
+    vc[vc == "Mixedwood" & en$DAT$wtAge*200 > 60] <- "MixedwoodO"
+    vc[vc == "Spruce" & en$DAT$wtAge*200 > 80] <- "SpruceO"
+    vc[vc == "Pine" & en$DAT$wtAge*200 > 80] <- "PineO"
+    vc[vc == "BSpr" & en$DAT$wtAge*200 > 80] <- "BSprO"
+
+    nn <- c(
+        "Decid"="Decid",
+        "DecidO"="DecidO",
+        "MixedwoodO"="MixedO",
+        "Mixedwood"="Mixed",
+        "Spruce"="WSpr",
+        "Pine"="Pine",
+        "SpruceO"="WSprO",
+        "Swamp"="Swamp",
+        "Shrub"="Shrub",
+        "BSpr"="BSpr",
+        "RoughP"="Agr",
+        "Crop"="Agr",
+        "PineO"="PineO",
+        "Industrial"="UrbInd",
+        "BSprO"="BSprO",
+        "Rural"="UrbInd",
+        "GrassHerb"="Grass",
+        "GraminoidFen"="GrFen",
+        "Marsh"="Marsh",
+        "Larch"="TrFen",
+        "Mine"="UrbInd",
+        "TameP"="Agr",
+        "Urban"="UrbInd")
+    for (i in names(nn))
+        vc[vc == i] <- nn[i]
+    data.frame(table(vc)[rn])
+    ndet <- table(vc)
+    ndet <- structure(as.numeric(ndet[rn]), names=rn)
+
+    ## determine BBS in BCR6
+    r <- cure4insect::.read_raster_template()
+    od <- setwd("d:/spatial/bcr/")
+    BCR <- readOGR(".", "BCR_Terrestrial_master") # rgdal
+    BCR <- spTransform(BCR, proj4string(r))
+    setwd(od)
+    xypt <- en$DAT
+    coordinates(xypt) <- ~ X + Y
+    proj4string(xypt) <-
+        CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+    xypt <- spTransform(xypt, proj4string(r))
+    xypt2BCR <- over(xypt, BCR)
+
+    ss <- startsWith(rownames(en$DAT), "BBS") & !duplicated(en$DAT$SS) & xypt2BCR$BCR==6
+    vc2 <- vc[ss]
+    wroad <- table(vc2)/sum(table(vc2))
+    wroad <- structure(as.numeric(wroad[rn]), names=rn)
+    avail <- AA/sum(AA)
+
+    HABITAT2 <- HABITAT
+    save(HABITAT2, avail, wroad, ndet, file="~/GoogleWork/bam/PIF-AB/results-v3/HABITAT-subset-2006-2015.RData")
+
+}
 load("~/GoogleWork/bam/PIF-AB/results-v3/HABITAT.RData") # HABITAT, avail, wroad
 
 h_fun <- function(x) {
@@ -574,6 +772,16 @@ SPP <- rownames(pop)[!(rownames(pop) %in% EXCL)]
 pop <- droplevels(pop[SPP,])
 write.csv(pop, row.names=FALSE, file="d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-final-results.csv")
 
+## subset years of 2006-2015
+if (FALSE) {
+    load("~/GoogleWork/bam/PIF-AB/results-v3/NPIX-subset-2006-2015.RData") # NPIX
+    tab2 <- t(apply(NPIX2, 1, quantile, c(0.5, 0.025, 0.975), na.rm=TRUE))
+    pop$Npix <- tab2[rownames(pop),1] * pop$PairAdj / 10^6
+    pop$Npix95lower <- tab2[rownames(pop),2] * pop$PairAdj / 10^6
+    pop$Npix95upper <- tab2[rownames(pop),3] * pop$PairAdj / 10^6
+    pop <- droplevels(pop[rownames(pop) != "PISI",])
+}
+
 load("~/GoogleWork/bam/PIF-AB/results-v3/HABITAT.RData") # HABITAT, avail, wroad
 Dall <- data.frame(Ahab=100*avail, Whab=100*wroad, sapply(HABITAT[SPP], function(z) apply(z$D, 1, median)))
 Dall <- Dall[!(rownames(Dall) %in% c("SoftLin","Roads")),]
@@ -602,7 +810,7 @@ xypt <- spTransform(xypt, proj4string(r))
 xypt2BCR <- over(xypt, BCR)
 
 
-pdf("~/GoogleWork/bam/PIF-AB/draft5/Fig1-maps.pdf", width=12, height=9)
+pdf("~/GoogleWork/bam/PIF-AB/draft6/Fig1-maps.pdf", width=12, height=9)
 op <- par(mfrow=c(1,2), mar=c(1,1,1,1))
 plot(BCR2AB, col=c(NA, "grey", rep(NA, 11)), border=NA, main="Roadside surveys")
 #plot(lak, col="white", border=NA,add=TRUE)
@@ -625,7 +833,7 @@ Siz <- 24*2
 Up <- 75
 pch2 <- 19 # ifelse(ppp$Npif %[]% list(ppp$NpixLo, ppp$NpixHi), 21, 19)
 
-pdf("~/GoogleWork/bam/PIF-AB/draft5/Fig2-popsize.pdf", width=7, height=7)
+pdf("~/GoogleWork/bam/PIF-AB/draft6/Fig2-popsize.pdf", width=7, height=7)
 op <- par(mfrow=c(1,1), las=1, mar=c(4,4,1,2))
 plot(pop[,c("Npif", "Npix")], xlab=expression(N[PIF]), ylab=expression(N[PIX]),
     type="n",
@@ -653,7 +861,7 @@ dev.off()
 
 ## pop rank
 
-pdf("~/GoogleWork/bam/PIF-AB/draft5/Fig3-poprank.pdf", width=7, height=7)
+pdf("~/GoogleWork/bam/PIF-AB/draft6/Fig3-poprank.pdf", width=7, height=7)
 op <- par(mfrow=c(1,1), las=1, mar=c(4,4,1,2))
 rnk <- cbind(rank(pop$Npif), rank(pop$Npix))
 #rnk <- 100 * rnk / max(rnk)
@@ -719,7 +927,7 @@ dots_box_plot <- function(mat, lines=FALSE, method="box", ...) {
 }
 
 
-pdf("~/GoogleWork/bam/PIF-AB/draft5/Fig4-components.pdf", width=10, height=7)
+pdf("~/GoogleWork/bam/PIF-AB/draft6/Fig4-components.pdf", width=10, height=7)
 op <- par(las=1)
 #mat <- pop[,c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH")]
 #colnames(mat) <- c("OBS", "EXP", "R", "T", "A", "H")
@@ -807,7 +1015,7 @@ vpfun <- function (x, cutoff = 0, digits = 1, Xnames, showNote=FALSE, ...)
 }
 
 prt <- vegan::varpart(Y=pop$DeltaObs, ~DeltaR, ~DeltaT, ~DeltaA, ~DeltaH, data=pop)
-pdf("~/GoogleWork/bam/PIF-AB/draft5/Fig6-varpart.pdf", width=6, height=6)
+pdf("~/GoogleWork/bam/PIF-AB/draft6/Fig6-varpart.pdf", width=6, height=6)
 vpfun(prt, cutoff = 0, digits = 2, Xnames=c("R", "T", "A", "H"), bg=1)
 dev.off()
 
@@ -829,7 +1037,7 @@ o <- cca(NN)
 round(100*eigenvals(o)/sum(eigenvals(o)), 1)
 round(cumsum(100*eigenvals(o)/sum(eigenvals(o))), 1)
 
-pdf("~/GoogleWork/bam/PIF-AB/draft5/Fig7-ordination3.pdf", width=9, height=9)
+pdf("~/GoogleWork/bam/PIF-AB/draft6/Fig7-ordination3.pdf", width=9, height=9)
 op <- par(las=1)
 plot(0, type="n", xlim=c(-0.8,1.2), ylim=c(-1,1), xlab="Axis 1", ylab="Axis 2")
 s2 <- scores(o)$sites
@@ -849,7 +1057,7 @@ text(c(1,1,1)+0.1, c(-0.6, -0.75, -0.9),
 par(op)
 dev.off()
 
-pdf("~/GoogleWork/bam/PIF-AB/draft5/Fig7-report.pdf", width=8, height=8)
+pdf("~/GoogleWork/bam/PIF-AB/draft6/Fig7-report.pdf", width=8, height=8)
 op <- par(las=1)
 Colg <- colorRampPalette(c("red","yellow"))(7)[cut(Cex, br)]
 names(Colg) <- names(Cex)
@@ -873,7 +1081,7 @@ par(op)
 dev.off()
 
 
-pdf("~/GoogleWork/bam/PIF-AB/draft5/Fig7-ordination-all.pdf", width=9, height=9, onefile=TRUE)
+pdf("~/GoogleWork/bam/PIF-AB/draft6/Fig7-ordination-all.pdf", width=9, height=9, onefile=TRUE)
 for (ii in c("DeltaObs", "DeltaExp", "DeltaR", "DeltaT", "DeltaA", "DeltaH")) {
 
     Cex <- pop[[ii]]
@@ -922,7 +1130,7 @@ Col0 <- colorRampPalette(c00)(7)
 Col <- Col0[cut(Cex, br)]
 names(Col) <- names(Cex)
 
-pdf("~/GoogleWork/bam/PIF-AB/draft5/Fig5-count-habitat.pdf", width=7, height=7)
+pdf("~/GoogleWork/bam/PIF-AB/draft6/Fig5-count-habitat.pdf", width=7, height=7)
 op <- par(las=1)
 cx <- 1 # pop$EDR/100
 topl <- pop[,c("DeltaR", "DeltaH")]

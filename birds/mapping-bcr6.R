@@ -234,9 +234,17 @@ SPP <- c("ALFL", "AMCR", "AMGO", "AMRE", "AMRO", "ATTW", "BAOR", "BARS",
     "WETA", "WEWP", "WIWA", "WIWR", "WTSP", "WWCR", "YBFL", "YBSA",
     "YEWA", "YRWA")
 
+SPP <- gsub(".RData", "", list.files(file.path(ROOT, "out", "north2")))
+
 for (spp in SPP) {
 
+    gc()
     cat(spp, "\n");flush.console()
+
+    png(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubset/", spp, ".png"),
+        height=1600*2, width=1000*2, res=300)
+    op <- par(mfrow=c(2,2), mar=c(6,0.5,5,0.5))
+
     load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/bcr6/", spp, ".RData"))
 
     for (i in 1:ncol(CR)) {
@@ -257,32 +265,62 @@ for (spp in SPP) {
     Rsd <- make_raster(SD, kgrid, rt)
     values(Rsd)[values(Rsd) < 0] <- NA
 
+    #xy1 <- SpatialPoints(as.matrix(ddd[yyy[,spp] > 0,c("X","Y")]))
+    #proj4string(xy1) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
+    #xy1 <- spTransform(xy1, proj4string(rt))
+    #sam1 <- rasterize(xy1, rt10, field=1, fun='last')
 
-    xy1 <- SpatialPoints(as.matrix(ddd[yyy[,spp] > 0,c("X","Y")]))
-    proj4string(xy1) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
-    xy1 <- spTransform(xy1, proj4string(rt))
-    sam1 <- rasterize(xy1, rt10, field=1, fun='last')
 
-    png(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/", spp, ".png"),
-        height=1600*1, width=1000*3, res=300)
-    op <- par(mfrow=c(1,3), mar=c(6,0.5,5,0.5))
+#    plot(rnr,col=cnr, axes=FALSE, box=FALSE, legend=FALSE,
+#        main=paste0(as.character(tax[spp, "CommonName"]), "\n(", as.character(tax[spp, "ScientificName"]), ")"))
+#    plot(sam0,add=TRUE, col="#ffffffaa", legend=FALSE)
+#    plot(sam1,add=TRUE, col="red4", legend=FALSE)
 
-    plot(rnr,col=cnr, axes=FALSE, box=FALSE, legend=FALSE,
+    plot(rt, col=CE, axes=FALSE, box=FALSE, legend=FALSE,
         main=paste0(as.character(tax[spp, "CommonName"]), "\n(", as.character(tax[spp, "ScientificName"]), ")"))
-    plot(sam0,add=TRUE, col="#ffffffaa", legend=FALSE)
-    plot(sam1,add=TRUE, col="red4", legend=FALSE)
-
-    plot(rt, col=CE, axes=FALSE, box=FALSE, main="", legend=FALSE)
     plot(Rcr, add=TRUE, col=col1, legend=FALSE)
     plot(Rw, add=TRUE, col=CE, legend=FALSE)
     plot(Rcr, col=col1, legend.only=TRUE, horizontal = TRUE,
-        legend.args = list(text="Median Density (inds./ha)", side = 1, line = 2, cex=0.8))
+        legend.args = list(text="Median Density (inds./ha)", side = 1, line = 2, cex=0.5))
 
     plot(rt, col=CE, axes=FALSE, box=FALSE, main="", legend=FALSE)
     plot(Rsd, add=TRUE, col=rev(col2), legend=FALSE)
     plot(Rw, add=TRUE, col=CE, legend=FALSE)
     plot(Rsd, col=rev(col2), legend.only=TRUE, horizontal = TRUE,
-        legend.args = list(text="95% CI Range", side = 1, line = 2, cex=0.8))
+        legend.args = list(text="95% CI Range", side = 1, line = 2, cex=0.5))
+
+
+    load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/bcr6-subset/", spp, ".RData"))
+
+    for (i in 1:ncol(CR)) {
+        q <- quantile(CR[,i], 0.99)
+        CR[CR[,i] > q,i] <- q
+    }
+    tab <- t(apply(CR, 1, quantile, c(0.5, 0.025, 0.975)))
+    tab <- tab / 100
+
+    cr <- tab[match(rownames(kgrid), rownames(CR)), 1]
+    cr[is.na(cr)] <- -1
+    Rcr <- make_raster(cr, kgrid, rt)
+    values(Rcr)[values(Rcr) < 0] <- NA
+
+    SD <- tab[,3]-tab[,2] # IQR
+    SD <- SD[match(rownames(kgrid), rownames(CR))]
+    SD[is.na(SD)] <- -1
+    Rsd <- make_raster(SD, kgrid, rt)
+    values(Rsd)[values(Rsd) < 0] <- NA
+
+    plot(rt, col=CE, axes=FALSE, box=FALSE, main="Subset", legend=FALSE)
+    plot(Rcr, add=TRUE, col=col1, legend=FALSE)
+    plot(Rw, add=TRUE, col=CE, legend=FALSE)
+    plot(Rcr, col=col1, legend.only=TRUE, horizontal = TRUE,
+        legend.args = list(text="Median Density (inds./ha)", side = 1, line = 2, cex=0.5))
+
+    plot(rt, col=CE, axes=FALSE, box=FALSE, main="", legend=FALSE)
+    plot(Rsd, add=TRUE, col=rev(col2), legend=FALSE)
+    plot(Rw, add=TRUE, col=CE, legend=FALSE)
+    plot(Rsd, col=rev(col2), legend.only=TRUE, horizontal = TRUE,
+        legend.args = list(text="95% CI Range", side = 1, line = 2, cex=0.5))
 
     par(op)
     dev.off()
