@@ -505,9 +505,10 @@ if (FALSE) {
 
     SPP <- gsub(".RData", "", list.files(file.path(ROOT, "out", "north2")))
 
-    HABITAT <- list()
+    HABITAT2 <- list()
 
     for (spp in SPP) {
+        gc()
         cat(spp, "\n")
         flush.console()
         e <- new.env()
@@ -524,69 +525,10 @@ if (FALSE) {
         t(apply(NN, 1, quantile, c(0.5, 0.025, 0.975)))
         t(apply(DD, 1, quantile, c(0.5, 0.025, 0.975)))
 
-        HABITAT[[spp]] <- list(N=NN, A=AA, D=DD)
+        HABITAT2[[spp]] <- list(N=NN, A=AA, D=DD)
     }
 
-    vc <- as.character(en$DAT$vegc)
-    table(en$DAT$vegc)
-    summary(en$DAT$wtAge*200)
-    vc[vc == "Decid" & en$DAT$wtAge*200 > 60] <- "DecidO"
-    vc[vc == "Mixedwood" & en$DAT$wtAge*200 > 60] <- "MixedwoodO"
-    vc[vc == "Spruce" & en$DAT$wtAge*200 > 80] <- "SpruceO"
-    vc[vc == "Pine" & en$DAT$wtAge*200 > 80] <- "PineO"
-    vc[vc == "BSpr" & en$DAT$wtAge*200 > 80] <- "BSprO"
-
-    nn <- c(
-        "Decid"="Decid",
-        "DecidO"="DecidO",
-        "MixedwoodO"="MixedO",
-        "Mixedwood"="Mixed",
-        "Spruce"="WSpr",
-        "Pine"="Pine",
-        "SpruceO"="WSprO",
-        "Swamp"="Swamp",
-        "Shrub"="Shrub",
-        "BSpr"="BSpr",
-        "RoughP"="Agr",
-        "Crop"="Agr",
-        "PineO"="PineO",
-        "Industrial"="UrbInd",
-        "BSprO"="BSprO",
-        "Rural"="UrbInd",
-        "GrassHerb"="Grass",
-        "GraminoidFen"="GrFen",
-        "Marsh"="Marsh",
-        "Larch"="TrFen",
-        "Mine"="UrbInd",
-        "TameP"="Agr",
-        "Urban"="UrbInd")
-    for (i in names(nn))
-        vc[vc == i] <- nn[i]
-    data.frame(table(vc)[rn])
-    ndet <- table(vc)
-    ndet <- structure(as.numeric(ndet[rn]), names=rn)
-
-    ## determine BBS in BCR6
-    r <- cure4insect::.read_raster_template()
-    od <- setwd("d:/spatial/bcr/")
-    BCR <- readOGR(".", "BCR_Terrestrial_master") # rgdal
-    BCR <- spTransform(BCR, proj4string(r))
-    setwd(od)
-    xypt <- en$DAT
-    coordinates(xypt) <- ~ X + Y
-    proj4string(xypt) <-
-        CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-    xypt <- spTransform(xypt, proj4string(r))
-    xypt2BCR <- over(xypt, BCR)
-
-    ss <- startsWith(rownames(en$DAT), "BBS") & !duplicated(en$DAT$SS) & xypt2BCR$BCR==6
-    vc2 <- vc[ss]
-    wroad <- table(vc2)/sum(table(vc2))
-    wroad <- structure(as.numeric(wroad[rn]), names=rn)
-    avail <- AA/sum(AA)
-
-    HABITAT2 <- HABITAT
-    save(HABITAT2, avail, wroad, ndet, file="~/GoogleWork/bam/PIF-AB/results-v3/HABITAT-subset-2006-2015.RData")
+    save(HABITAT2, file="~/GoogleWork/bam/PIF-AB/results-v3/HABITAT-subset-2006-2015.RData")
 
 }
 load("~/GoogleWork/bam/PIF-AB/results-v3/HABITAT.RData") # HABITAT, avail, wroad
