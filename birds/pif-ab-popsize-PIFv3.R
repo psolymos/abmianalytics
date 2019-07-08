@@ -530,6 +530,39 @@ if (FALSE) {
 
     save(HABITAT2, file="~/GoogleWork/bam/PIF-AB/results-v3/HABITAT-subset-2006-2015.RData")
 
+    load("~/GoogleWork/bam/PIF-AB/results-v3/HABITAT.RData")
+    load("~/GoogleWork/bam/PIF-AB/results-v3/HABITAT-subset-2006-2015.RData")
+
+    fun <- function(x) {
+        x <- t(apply(x$D, 1, quantile, c(0.5, 0.025, 0.975)))
+        colnames(x) <- c("est", "lwr", "upr")
+        x
+    }
+    Dsub <- lapply(HABITAT2, fun)
+    Dall <- lapply(HABITAT, fun)[names(Dsub)]
+    library(intrval)
+
+    pdf("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubset/habitat.pdf", onefile=TRUE)
+    #spp <- "ALFL"
+    for (spp in names(Dsub)) {
+        z <- data.frame(Hab=rownames(Dall[[1]]), All=Dall[[spp]], Sub=Dsub[[spp]])
+        zz <- list(z$All.lwr, z$All.upr) %)o(% list(z$Sub.lwr, z$Sub.upr)
+        lim <- c(0, min(3*max(z$All.est, z$Sub.est), quantile(z[,-1], 0.99, na.rm=TRUE)))
+        plot(z$All.est, z$Sub.est, main=spp, xlab="D (1993-2017)", ylab="D (2006-2015)",
+            xlim=lim, ylim=lim, pch=19, col="grey")
+        segments(x0=z$All.est, y0=z$Sub.lwr, y1=z$Sub.upr, col="grey")
+        segments(y0=z$Sub.est, x0=z$All.lwr, x1=z$All.upr, col="grey")
+        abline(0, 1, lty=2)
+        lines(lowess(z$Sub.est ~ z$All.est), col=4)
+        if (any(zz)) {
+            points(z$All.est[zz], z$Sub.est[zz], pch=19, col=1)
+            segments(x0=z$All.est[zz], y0=z$Sub.lwr[zz], y1=z$Sub.upr[zz], col="1")
+            segments(y0=z$Sub.est[zz], x0=z$All.lwr[zz], x1=z$All.upr[zz], col="1")
+            text(z$All.est[zz], z$Sub.est[zz], z$Hab[zz], col=2, cex=0.8)
+        }
+    }
+    dev.off()
+
 }
 load("~/GoogleWork/bam/PIF-AB/results-v3/HABITAT.RData") # HABITAT, avail, wroad
 
