@@ -69,9 +69,9 @@ el$Lookup$LinkHabitat <- "binomial_logit"
 el$Lookup$LinkSpclim <- "binomial_logit"
 el$Lookup$AUCNorth <- en$ModEval.North[rownames(el$Lookup), "AUC.All"]
 el$Lookup$AUCSouth <- es$ModEval.South[rownames(el$Lookup), "AUC.All"]
-if (tax == "vplants") {
+if (tx == "vplants") {
     el$Lookup$Nonnative[el$Lookup$Nonnative == "Native/Exotic"] <- "TRUE"
-    el$Lookup$Nonnative <- as.logical(el$Lookup$Nonnative)
+    el$Lookup$Nonnative <- as.logical(as.character(el$Lookup$Nonnative))
 } else {
     el$Lookup$Nonnative <- FALSE
 }
@@ -243,7 +243,8 @@ OUT$Info <- OUT$Info[OUT$Info$Group != "mammals",]
 tmp1 <- e1$Lookup
 tmp1$Group <- "birds"
 birds <- tmp1
-write.csv(birds, file=file.path(ROOT, paste0("StandardizedOutput-birds-final-lookup.csv")))
+#write.csv(birds, file=file.path(ROOT, paste0("StandardizedOutput-birds-final-lookup.csv")))
+#birds <- read.csv(file.path(ROOT, paste0("StandardizedOutput-birds-final-lookup-withChecks.csv")))
 
 tmp2 <- e2$Lookup
 tmp2$Group <- "vplants"
@@ -267,7 +268,7 @@ cn0 <- c("SpeciesID", "ScientificName", "CommonName", "TSNID", "Group")
 
 ## duplicates removed
 OUT$Species <-
-    OUT$Species[!rownames(OUT$Species) %in% c("DomesticDuck", "Boechera.collinsii"),]
+    droplevels(OUT$Species[!(rownames(OUT$Species) %in% c("DomesticDuck", "Boechera.collinsii")),])
 
 ## useavail north
 tn <- "UseavailNorth"
@@ -350,7 +351,7 @@ OUT$SoilhfSouthNontreed <- OUT$SoilhfSouth[rownames(OUT$SoilhfSouthNontreed) %in
 
 ## soilHF south - treed
 tn <- "SpclimSouth"
-b <- sapply(e1$CoefSouthBootlist, function(z) median(exp(z[,"pAspen"])))
+b <- sapply(e1$CoefSouthBootlistARU, function(z) median(exp(z[,"pAspen"])))
 b <- structure(b[match(e1$Lookup$Code, names(b))], names=rownames(e1$Lookup))
 pA1 <- b[dimnames(e1$CoefSouth)[[1]]]
 cn <- "pAspen"
@@ -453,16 +454,7 @@ with(OUT$Species, table(UseavailNorth + UseavailSouth + ModelNorth + ModelSouth)
 addmargins(with(OUT$Species, table(Useavail=UseavailNorth + UseavailSouth, Model=ModelNorth + ModelSouth)))
 
 options(scipen=999)
-write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-04-15.xlsx")))
-
-
-#meta <- list()
-#for (i in names(OUT)) {
-#    meta[[i]] <- data.frame(SheetName=i, FieldName=colnames(OUT[[i]]), Description="")
-#}
-#meta <- do.call(rbind, meta)
-#str(meta)
-#write.csv(meta, file="d:/abmi/sppweb2018/c4i/tables/meta.csv")
+write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-07-11.xlsx")))
 
 OUT$pAspen <- data.frame(pAspen=c(log(pA1), pA2))
 rownames(OUT$pAspen) <- rownames(tmpL)

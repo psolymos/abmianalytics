@@ -76,6 +76,7 @@ with(spt, table(taxon, model_region))
 
 with(spt, table(taxon, model_region)) - with(c4i0$SP, table(taxon, model_region))
 SP <- spt
+table(SP$taxon, SP$native)
 
 head(SP)
 summary(spt)
@@ -179,6 +180,10 @@ CF <- list(
     lower=list(veg=VegL, soil=SoilL),
     higher=list(veg=VegU, soil=SoilU))
 
+## check pAspen issue
+CF$coef$soil["BairdsSparrow",]
+CF$coef$paspen["BairdsSparrow",1]
+
 ## save
 write.csv(spt, row.names=FALSE, file="d:/abmi/reports/2018/data/species-info.csv")
 save(XY, KT, KA_2016, SP, QT2KT, VER, CF, # CFbirds,
@@ -239,6 +244,7 @@ make_raster <- function(value, rc, rt)
 ## birds
 SPP <- rownames(SP)[SP$taxon == "birds"]
 AOU <- as.character(e1$Lookup[SPP,"Code"])
+
 for (i in 1:length(AOU)) {
     spp <- AOU[i]
     cat(spp, "\n");flush.console()
@@ -250,7 +256,7 @@ for (i in 1:length(AOU)) {
         TYPE <- "N"
 
     if (TYPE != "N") {
-        ests <- e1$CoefSouthBootlist[[spp]][1,cfs$spclim]
+        ests <- e1$CoefSouthBootlistSpace[[spp]][1,cfs$spclim]
         musClim <- drop(Xclim[,cfs$spclim] %*% ests[cfs$spclim])
         rsoil <- make_raster(musClim, kgrid, rt)
     } else {
@@ -258,8 +264,8 @@ for (i in 1:length(AOU)) {
     }
 
     if (TYPE != "S") {
-        estn <- e1$CoefNorthBootlist[[spp]][1,cfs$spclim]
-        munClim <- drop(Xclim[,cfs$spclim] %*% estn[cfn$spclim])
+        estn <- e1$CoefNorthBootlistSpace[[spp]][1,cfs$spclim]
+        munClim <- drop(Xclim[,cfs$spclim] %*% estn[cfs$spclim])
         rveg <- make_raster(munClim, kgrid, rt)
     } else {
         rveg <- NULL
@@ -335,6 +341,7 @@ for (tx in c("vplants", "mites", "mosses", "lichens")) {
     dirin <- paste0("s:/Result from Ermias_2018/", tx, "/combined/Sector effects/Sector abundance summary/")
 
     SPP <- rownames(SP)[SP$taxon == tx]
+    #SPP <- gsub(".RData", "", list.files(dirin))
     for (spp in SPP) {
         cat(tx, spp, "\n");flush.console()
         ee <- new.env()
@@ -367,6 +374,7 @@ for (i in 1:length(AOU)) {
         SPP[i], ".RData"))
 
 }
+
 
 ## compare species lists
 
@@ -408,9 +416,14 @@ subset_common_data(id=ID, species=Spp)
 xxn <- report_all(cores=8)
 resn <- do.call(rbind, lapply(xxn, flatten))
 class(resn) <- c("data.frame", "c4idf")
-#y <- load_species_data("AlderFlycatcher")
-#x <- calculate_results(y)
-#flatten(x)
+
+zzz <- list()
+for (spp in Spp) {
+    cat(spp, "\n");flush.console()
+    y <- load_species_data(spp)
+    zzz[[spp]] <- calculate_results(y)
+    #flatten(x)
+}
 
 ID <- rownames(KT)[KT$S]
 subset_common_data(id=ID, species=Spp)

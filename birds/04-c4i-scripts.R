@@ -33,7 +33,7 @@ bbs <- unique(sort(as.numeric(es$BB)))
 #ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
 
 ## lookup table
-
+if (FALSE) {
 Lookup <- data.frame(
     SpeciesID=TAX$sppid,
     ScientificName=TAX$scinam,
@@ -72,13 +72,28 @@ Lookup$Comments[Lookup$Family %in% tmp1] <- tmp2
 
 #Phasianidae
 #Game birds are not modeled.
+}
 
+bbb <- read.csv("d:/abmi/sppweb2018/c4i/tables/StandardizedOutput-birds-final-lookup-withChecks.csv")
+bbb <- bbb[is.na(bbb$Exclude),]
+rownames(bbb) <- bbb$SpeciesID
+bbb$Code <- bbb$Code.1
+Lookup <- bbb[,c("SpeciesID", "ScientificName", "TSNID", "CommonName", "ModelNorth",
+    "ModelSouth", "UseavailNorth", "UseavailSouth", "Nonnative",
+    "LinkHabitat", "LinkSpclim", "AUCNorth", "AUCSouth", "Code",
+    "Order", "Family", "Comments")]
+Lookup <- Lookup[Lookup$UseavailNorth+Lookup$UseavailSouth+Lookup$ModelNorth+Lookup$ModelSouth > 0,]
+Lookup <- droplevels(Lookup)
 
 ## Use-Availability south
 
 yys <- ee$yy[rownames(es$DAT),]
 yys <- yys[,colSums(yys>0) > 3]
-vcs <- es$SSH[rownames(yys),
+vcs <- ee$sc2[rownames(yys),] # 1km^2 buffer used here
+ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v61.csv")
+rownames(ts) <- ts[,1]
+vcs <- groupSums(vcs, 2, ts[colnames(vcs), "UseInAnalysisCoarse"])
+vcs <- vcs[rownames(yys),
     c("Productive",
     "Clay",
     "Saline",
@@ -94,13 +109,13 @@ UseavailSouth <- t(apply(as.matrix(yys), 2, function(z) wrsi(z, vcs)$rWRSI))
 colnames(UseavailSouth) <- colnames(vcs)
 rownames(UseavailSouth) <- TAX[rownames(UseavailSouth), "sppid"]
 
-Lookup$UseavailSouth[Lookup$SpeciesID %in% rownames(UseavailSouth)] <- TRUE
+#Lookup$UseavailSouth[Lookup$SpeciesID %in% rownames(UseavailSouth)] <- TRUE
 
 ## Use-Availability north
 
 yyn <- ee$yy[rownames(en$DAT),]
 yyn <- yyn[,colSums(yyn>0) > 3]
-vcn <- ee$vc1[rownames(yyn),]
+vcn <- ee$vc2[rownames(yyn),] # 1km^2 buffer used here
 vt <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
 rownames(vt) <- vt$ID
 vcn <- groupSums(vcn, 2, vt[colnames(vcn), "UseAvail"])
@@ -126,7 +141,7 @@ UseavailNorth <- t(apply(as.matrix(yyn), 2, function(z) wrsi(z, vcn)$rWRSI))
 colnames(UseavailNorth) <- colnames(vcn)
 rownames(UseavailNorth) <- TAX[rownames(UseavailNorth), "sppid"]
 
-Lookup$UseavailNorth[Lookup$SpeciesID %in% rownames(UseavailNorth)] <- TRUE
+#Lookup$UseavailNorth[Lookup$SpeciesID %in% rownames(UseavailNorth)] <- TRUE
 
 ## coefs North
 
@@ -157,7 +172,6 @@ get_coef_north <- function(resn, STAGE="ARU", ...) {
         "CMETHODSM"=1, "CMETHODRF"=1)
     for (i in MOD)
         Z[,i] <- linexp(1, estn[,i], pm[i])
-
 
     HFc <- c("Crop", "Industrial", "Mine", "RoughP", "Rural", "TameP", "Urban")
 
@@ -203,7 +217,7 @@ get_coef_north <- function(resn, STAGE="ARU", ...) {
 }
 
 COEFS <- list()
-for (spp in colnames(en$YY)) {
+for (spp in as.character(Lookup$Code[Lookup$ModelNorth])) {
     cat(spp, "\n")
     flush.console()
     resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
@@ -253,7 +267,13 @@ plot_coef_north <- function(lam1, ...) {
     invisible(lam1)
 }
 
-pdf(file.path(ROOT, "explore-coefNorth.pdf"), onefile=TRUE, width=10, height=8)
+## also look at current and previous results
+library(cure4insect)
+set_options(path = "s:/reports", version="2017")
+load_common_data()
+v17spp <- get_all_species("birds", "north")
+
+pdf(file.path(ROOT, "explore-coefNorth2.pdf"), onefile=TRUE, width=10, height=12)
 for (spp in names(COEFS)) {
     cat(spp, "\n");flush.console()
     y <- en$YY[bbn,spp]
@@ -264,7 +284,12 @@ for (spp in names(COEFS)) {
     nssT <- length(yss)
     NAM <- as.character(TAX[spp, "species"])
     LAB <- paste0(spp, " ", NAM, ", North\n", npk1,"/",npkT, " pts, ", nss1, "/", nssT, " loc")
+    ID <- as.character(TAX[spp, "sppid"])
+    op <- par(mfrow=c(2,1))
     plot_coef_north(COEFS[[spp]], main=LAB)
+    if (ID %in% v17spp)
+        plot_abundance(ID, "veg_coef") else plot.new()
+    par(op)
 }
 dev.off()
 
@@ -360,7 +385,7 @@ UpperNorth <- t(sapply(COEFS, function(z) {
 }))[,cn]
 rownames(CoefNorth) <- rownames(LowerNorth) <- rownames(UpperNorth) <-
     Lookup$SpeciesID[match(rownames(CoefNorth), Lookup$Code)]
-Lookup$ModelNorth[Lookup$SpeciesID %in% rownames(CoefNorth)] <- TRUE
+#Lookup$ModelNorth[Lookup$SpeciesID %in% rownames(CoefNorth)] <- TRUE
 
 CoefNorth <- array(CoefNorth, c(dim(CoefNorth), 1), dimnames=c(dimnames(CoefNorth), NULL))
 
@@ -435,7 +460,7 @@ get_coef_south <- function(ress, STAGE="ARU", ...) {
 }
 
 COEFS2 <- list()
-for (spp in colnames(es$YY)) {
+for (spp in as.character(Lookup$Code[Lookup$ModelSouth])) {
     cat(spp, "\n")
     flush.console()
     ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
@@ -457,8 +482,8 @@ plot_coef_south <- function(lam0, ...) {
         attr(lam0, "pAspen") <- mean(exp(CoefSouthBootlist[[spp]][,"pAspen"]))
     }
 
-    op <- par(mfrow=c(1,2), las=2, cex.axis=0.9)
-    on.exit(par(op))
+#    op <- par(mfrow=c(1,2), las=2, cex.axis=0.9)
+#    on.exit(par(op))
     lam1 <- lam0 * attr(lam0, "pAspen")
     k <- 2
     b <- barplot(lam0[,1], ylim=c(0, min(k*max(lam0[,1], lam1[,1]), max(lam0, lam1))),
@@ -480,7 +505,9 @@ plot_coef_south <- function(lam0, ...) {
     invisible(lam0)
 }
 
-pdf(file.path(ROOT, "explore-coefSouth.pdf"), onefile=TRUE, width=10, height=5)
+s17spp <- get_all_species("birds", "south")
+
+pdf(file.path(ROOT, "explore-coefSouth2.pdf"), onefile=TRUE, width=20, height=10)
 for (spp in names(COEFS2)) {
     cat(spp, "\n");flush.console()
     y <- es$YY[bbs,spp]
@@ -490,8 +517,19 @@ for (spp in names(COEFS2)) {
     nss1 <- sum(yss>0)
     nssT <- length(yss)
     NAM <- as.character(TAX[spp, "species"])
-    LAB <- paste0(spp, " ", NAM, ", North\n", npk1,"/",npkT, " pts, ", nss1, "/", nssT, " loc")
+    LAB <- paste0(spp, " ", NAM, ", South\n", npk1,"/",npkT, " pts, ", nss1, "/", nssT, " loc")
+    ID <- as.character(TAX[spp, "sppid"])
+    #op <- par(mfrow=c(2,1))
+    op <- par(mfrow=c(2,2), cex.axis=0.7)
     plot_coef_south(COEFS2[[spp]], main=LAB)
+    if (ID %in% s17spp) {
+        p0 <- plot_abundance(ID, "soil_coef", paspen=0, plot=FALSE)
+        p1 <- plot_abundance(ID, "soil_coef", paspen=1, plot=FALSE)
+        plot_abundance(ID, "soil_coef", paspen=0, ylim=c(0, max(p0, p1)))
+        plot_abundance(ID, "soil_coef", paspen=1, ylim=c(0, max(p0, p1)))
+    }
+    par(op)
+
 }
 dev.off()
 
@@ -506,7 +544,7 @@ UpperSouth <- t(sapply(COEFS2, function(z) {
 }))[,cn]
 rownames(CoefSouth) <- rownames(LowerSouth) <- rownames(UpperSouth) <-
     Lookup$SpeciesID[match(rownames(CoefSouth), Lookup$Code)]
-Lookup$ModelSouth[Lookup$SpeciesID %in% rownames(CoefSouth)] <- TRUE
+#Lookup$ModelSouth[Lookup$SpeciesID %in% rownames(CoefSouth)] <- TRUE
 
 CoefSouth <- array(CoefSouth, c(dim(CoefSouth), 1), dimnames=c(dimnames(CoefSouth), NULL))
 
@@ -519,7 +557,7 @@ LinearSouth <- as.matrix(LinearSouth)
 
 
 ## AUC based on stage=Space
-
+Lookup$AUCNorth <- NA
 for (spp in names(COEFS)) {
     cat(spp, "N\n");flush.console()
     resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
@@ -532,6 +570,7 @@ for (spp in names(COEFS)) {
     Lookup$AUCNorth[Lookup$Code == spp] <- aucn
 }
 
+Lookup$AUCSouth <- NA
 for (spp in names(COEFS2)) {
     cat(spp, "S\n");flush.console()
     ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
@@ -544,9 +583,53 @@ for (spp in names(COEFS2)) {
     Lookup$AUCSouth[Lookup$Code == spp] <- aucs
 }
 
+## additions
+
+Lookup$SizeNorth <- colSums(en$YY[bbn,] > 0)[match(Lookup$Code, colnames(en$YY))]
+Lookup$SizeSouth <- colSums(es$YY[bbs,] > 0)[match(Lookup$Code, colnames(es$YY))]
+
+tmpn <- list()
+for (spp in as.character(Lookup$Code[Lookup$ModelNorth])) {
+    cat(spp, "\n");flush.console()
+    resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
+    estn <- suppressWarnings(get_coef(resn, Xn, stage="ARU", na.out=FALSE))
+    tmpn[[spp]] <- estn
+    #CoefNorthBoot[spp,,] <- estn[1:101,dimnames(CoefNorthBoot)[[2]]]
+}
+tmps <- list()
+for (spp in as.character(Lookup$Code[Lookup$ModelSouth])) {
+    cat(spp, "\n");flush.console()
+    ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
+    ests <- suppressWarnings(get_coef(ress, Xs, stage="ARU", na.out=FALSE))
+    tmps[[spp]] <- ests
+    #CoefSouthBoot[spp,,1:min(nrow(ests),101)] <- ests[1:min(nrow(ests),101),dimnames(CoefSouthBoot)[[2]]]
+}
+CoefNorthBootlistARU <- tmpn
+CoefSouthBootlistARU <- tmps
+
+tmpn <- list()
+for (spp in as.character(Lookup$Code[Lookup$ModelNorth])) {
+    cat(spp, "\n");flush.console()
+    resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
+    estn <- suppressWarnings(get_coef(resn, Xn, stage="Space", na.out=FALSE))
+    tmpn[[spp]] <- estn
+    #CoefNorthBoot[spp,,] <- estn[1:101,dimnames(CoefNorthBoot)[[2]]]
+}
+tmps <- list()
+for (spp in as.character(Lookup$Code[Lookup$ModelSouth])) {
+    cat(spp, "\n");flush.console()
+    ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
+    ests <- suppressWarnings(get_coef(ress, Xs, stage="Space", na.out=FALSE))
+    tmps[[spp]] <- ests
+    #CoefSouthBoot[spp,,1:min(nrow(ests),101)] <- ests[1:min(nrow(ests),101),dimnames(CoefSouthBoot)[[2]]]
+}
+CoefNorthBootlistSpace <- tmpn
+CoefSouthBootlistSpace <- tmps
+
 toSave <- c("Lookup",
     "CoefNorth", "CoefSouth",
-    "CoefNorthBootlist", "CoefSouthBootlist",
+    "CoefNorthBootlistSpace", "CoefSouthBootlistSpace",
+    "CoefNorthBootlistARU", "CoefSouthBootlistARU",
     #"SpclimNorth", "SpclimSouth",
     "UseavailNorth", "UseavailSouth",
     "LinearNorth", "LinearSouth",
@@ -563,34 +646,8 @@ table(N=Lookup$ModelNorth, S=Lookup$ModelSouth)
 summary(Lookup$AUCNorth)
 summary(Lookup$AUCSouth)
 
-## additions
-
-Lookup$SizeNorth <- colSums(en$YY[bbn,] > 0)[match(Lookup$Code, colnames(en$YY))]
-Lookup$SizeSouth <- colSums(es$YY[bbs,] > 0)[match(Lookup$Code, colnames(es$YY))]
-
-tmpn <- list()
-for (spp in colnames(en$YY)) {
-    cat(spp, "\n");flush.console()
-    resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
-    estn <- suppressWarnings(get_coef(resn, Xn, stage="Space", na.out=FALSE))
-    tmpn[[spp]] <- estn
-    #CoefNorthBoot[spp,,] <- estn[1:101,dimnames(CoefNorthBoot)[[2]]]
-}
-tmps <- list()
-for (spp in colnames(es$YY)) {
-    cat(spp, "\n");flush.console()
-    ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
-    ests <- suppressWarnings(get_coef(ress, Xs, stage="Space", na.out=FALSE))
-    tmps[[spp]] <- ests
-    #CoefSouthBoot[spp,,1:min(nrow(ests),101)] <- ests[1:min(nrow(ests),101),dimnames(CoefSouthBoot)[[2]]]
-}
-
-CoefNorthBootlist <- tmpn
-CoefSouthBootlist <- tmps
-
 save(list=toSave,
-#    file=paste0("d:/abmi/sppweb2018/c4i/tables/StandardizedOutput-birds.RData"))
-    file=file.path(ROOT, "tables", "StandardizedOutput-birds.RData"))
+    file="d:/abmi/sppweb2018/c4i/tables/StandardizedOutput-birds.RData")
 
 ## --- checking results
 

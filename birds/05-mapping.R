@@ -175,13 +175,17 @@ stemp <- as(stemp, "dgCMatrix")
 ## spp runs
 
 #spp <- "ALFL"
-SPP <- rownames(tax)
-SPP <- rownames(tax)[1:60]
-SPP <- rownames(tax)[61:120]
-SPP <- rownames(tax)[121:nrow(tax)]
+#SPP <- rownames(tax)
+
+bbb <- read.csv("d:/abmi/sppweb2018/c4i/tables/StandardizedOutput-birds-final-lookup-withChecks.csv")
+bbb <- bbb[is.na(bbb$Exclude),]
+bbb <- bbb[bbb$ModelNorth | bbb$ModelSouth,]
+rownames(bbb) <- bbb$Code.1
+SPP <- rownames(bbb)
+
 b <- 100
 
-for (spp in SPP) {
+for (spp in SPP[85:126]) {
     cat(spp)
     flush.console()
     CURRB <- REFB <- matrix(0, nrow(kgrid), b)
@@ -189,9 +193,9 @@ for (spp in SPP) {
     RUN_OK <- logical(b) # FALSE
 
     TYPE <- "C" # combo
-    if (tax[spp, "ModelSouth"] && !tax[spp, "ModelNorth"])
+    if (bbb[spp, "ModelSouth"] && !bbb[spp, "ModelNorth"])
         TYPE <- "S"
-    if (!tax[spp, "ModelSouth"] && tax[spp, "ModelNorth"])
+    if (!bbb[spp, "ModelSouth"] && bbb[spp, "ModelNorth"])
         TYPE <- "N"
 
     ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
@@ -204,7 +208,6 @@ for (spp in SPP) {
             cat(".")
             flush.console()
         }
-
 
         if (TYPE != "N") {
             #ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
@@ -289,13 +292,17 @@ for (spp in SPP) {
                 wS[] <- 0
             wS[kgrid$useS] <- 1
             wS[kgrid$useN] <- 0
+            #wS <- wS * kgrid$pSoil
             Curr <- wS * ADsCrSect[,CN] + (1-wS) * ADnCrSect[,CN]
             Ref <- wS * ADsRfSect[,CN] + (1-wS) * ADnRfSect[,CN]
 
             if (i == 1) {
+                CURR1 <- Curr
+                REF1 <- Ref
                 CURR <- Curr
                 REF <- Ref
             } else {
+                ## this updates the numbers for eventually give the mean
                 px <- sum(RUN_OK-1) / sum(RUN_OK)
                 CURR <- CURR * px + Curr * (1-px)
                 REF <- REF * px + Ref * (1-px)
@@ -308,22 +315,9 @@ for (spp in SPP) {
         }
     }
 
-#    save(Curr, Ref,
-#        file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-04-01/", spp, ".RData"))
-    save(CURR, REF, CURRB, REFB,
-        file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-05-14/", spp, ".RData"))
+    save(CURR, REF, CURR1, REF1, CURRB, REFB,
+        file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-07-11/", spp, ".RData"))
 
-#NC <- colSums(CURR)
-#NR <- colSums(REF)
-#round(100*(NC-NR)/sum(NR),4)
-#round(100*(NC-NR)/NR,4)
-
-
-#    SA.Curr <- Curr
-#    SA.Ref <- Ref
-#    NAM <- as.character(tax[spp, "SpeciesID"])
-#    save(SA.Curr, SA.Ref, file=paste0("d:/abmi/reports/2018/results/birds/sector/",
-#        NAM, ".RData"))
     cat("DONE\n")
 }
 
@@ -495,6 +489,7 @@ es <- new.env()
 load(file.path(ROOT, "data", "ab-birds-south-2018-12-07.RData"), envir=es)
 
 ddd <- ee$dd
+## subset based on analysis data -- same filtering applied
 ddd <- ddd[unique(c(rownames(en$DAT), rownames(es$DAT))),]
 ddd <- nonDuplicated(ddd, ddd$SS, TRUE)
 yyy <- groupSums(ee$yy, 1, ee$dd$SS)[rownames(ddd),]
@@ -592,7 +587,16 @@ con <- dbConnect(
 #dbDisconnect(con)
 
 ## saving BOOT objects for c4i
-for (spp in rownames(tax)[49:173]) {
+
+z <- NULL
+for (spp in SPP) {
+    cat(spp, "\n");flush.console()
+    load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-05-14/", spp, ".RData"))
+    if (any(is.na(CURR)) || any(is.na(REF)) || any(is.na(CURRB)) || any(is.na(REFB)))
+        z <- c(z, spp)
+}
+
+for (spp in SPP) {
 
     cat(spp, "\n");flush.console()
 #    load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-04-01/", spp, ".RData"))
@@ -621,9 +625,19 @@ for (spp in rownames(tax)[49:173]) {
     }
     Curr.Boot <- as.matrix(groupSums(CURRB, 1, kgrid[rownames(CURRB),"Row10_Col10"]))
     Ref.Boot <- as.matrix(groupSums(REFB, 1, kgrid[rownames(CURRB),"Row10_Col10"]))
-    save(Curr.Boot, Ref.Boot, file=paste0("s:/reports/2018/results/birds/boot/",
+    CN <- c("Native", "Misc", "Agriculture", "Forestry", "RuralUrban", "Energy", "Transportation")
+    SA.Curr <- as.matrix(CURR[,CN])
+    SA.Ref <- as.matrix(REF[,CN])
+
+    save(Curr.Boot, Ref.Boot, file=paste0("d:/abmi/reports/2018/results/birds/boot/",
         as.character(tax[spp, "SpeciesID"]), ".RData"))
+    save(SA.Curr, SA.Ref,     file=paste0("d:/abmi/reports/2018/results/birds/sector/",
+        as.character(tax[spp, "SpeciesID"]), ".RData"))
+
 }
+
+
+
 
 PLOT <- TRUE
 SAVE <- FALSE
@@ -639,7 +653,7 @@ for (spp in rownames(tax)[48:173]) {
     if (!tax[spp, "ModelSouth"] && tax[spp, "ModelNorth"])
         TYPE <- "N"
 
-    for (i in 1:100) {
+    for (i in 1:ncol(CURRB)) {
         q <- quantile(CURRB[,i], 0.99, na.rm=TRUE)
         CURRB[CURRB[,i] > q,i] <- q
         q <- quantile(REFB[,i], 0.99, na.rm=TRUE)
