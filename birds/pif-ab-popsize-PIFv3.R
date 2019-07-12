@@ -44,7 +44,22 @@ TAB$Nonnative <- TAB$LinkHabitat <- TAB$LinkSpclim <- TAB$AUCSouth <- NULL
 TAB$SizeSouth <- TAB$Comments <- TAB$TSNID <- NULL
 #TAB$SpeciesID <- NULL
 summary(TAB)
-SPP <- rownames(TAB)
+#SPP <- rownames(TAB)
+
+## final subset of species based on all the data
+SPP <- c("ALFL", "AMCR", "AMGO", "AMRE", "AMRO", "ATTW", "BAOR", "BARS",
+    "BAWW", "BBMA", "BBWA", "BBWO", "BCCH", "BHCO", "BHVI", "BLJA",
+    "BLPW", "BOCH", "BRBL", "BRCR", "BTNW", "CAWA", "CCSP", "CEDW",
+    "CHSP", "CMWA", "CONW", "CORA", "COYE", "DEJU", "DOWO", "EAKI",
+    "EVGR", "FOSP", "GCKI", "GRAJ", "GRCA", "HAWO", "HETH", "HOLA",
+    "HOWR", "LCSP", "LEFL", "LISP", "MAWA", "MODO", "MOWA", "NOFL",
+    "NOWA", "OCWA", "OSFL", "OVEN", "PAWA", "PHVI", "PISI", "PIWO",
+    "PUFI", "RBGR", "RBNU", "RCKI", "REVI", "RUBL", "RWBL", "SAVS",
+    "SOSP", "SWSP", "SWTH", "TEWA", "TRES", "VATH", "VEER", "VESP",
+    "WAVI", "WBNU", "WCSP", "WETA", "WEWP", "WIWA", "WIWR", "WTSP",
+    "WWCR", "YBFL", "YBSA", "YEWA", "YRWA")
+## final subset based on 2006-2015 daya
+SPP <- SPP[!(SPP %in% c("BBWO", "PISI", "WBNU", "ATTW"))]
 
 ## PIF v3 numbers
 
@@ -56,24 +71,31 @@ TAB$MDD <- pif3$Detection.Distance.Category..m.
 TAB$PairAdj <- pif3$Pair.Adjust.Category
 TAB$TimeAdj <- pif3$Time.Adjust.Mean
 
+TAB <- TAB[SPP,]
+
 ## AUC
 if (FALSE) {
 
     AUC <- numeric(length(SPP))
     names(AUC) <- SPP
+    #ss <- rep(TRUE, nrow(en$DAT))
+    ss <- en$DAT$YEAR >= 2006 & en$DAT$YEAR <= 2015
     for (spp in SPP) {
         cat(spp, "N\n");flush.console()
         resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
-        yn <- as.numeric(en$YY[,spp])
-        off <- en$OFF[,spp]
-        lamn <- exp(predict_with_SSH(resn, Xn, en$SSH, stage="Space") + off)
+        yn <- as.numeric(en$YY[ss,spp])
+        off <- en$OFF[ss,spp]
+        lamn <- exp(predict_with_SSH(resn, Xn[ss,], en$SSH[ss,], stage="Space") + off)
         rocn <- simple_roc(ifelse(yn > 0, 1, 0), apply(lamn, 1, median))
         aucn <- simple_auc(rocn)
         AUC[spp] <- aucn
     }
-    save(AUC, file="~/GoogleWork/bam/PIF-AB/results-v3/AUC.RData")
+    #save(AUC, file="~/GoogleWork/bam/PIF-AB/results-v3/AUC.RData")
+    save(AUC, file="~/GoogleWork/bam/PIF-AB/results-v3/AUC2.RData")
+    summary(AUC)
 }
-load("~/GoogleWork/bam/PIF-AB/results-v3/AUC.RData") # AUC
+#load("~/GoogleWork/bam/PIF-AB/results-v3/AUC.RData") # AUC
+load("~/GoogleWork/bam/PIF-AB/results-v3/AUC2.RData")
 TAB$AUC <- AUC[match(rownames(TAB), names(AUC))]
 
 ## PIX pop sizes
@@ -159,8 +181,10 @@ if (FALSE) {
 
 }
 
-load("~/GoogleWork/bam/PIF-AB/results-v3/NPIX.RData") # NPIX
-tab <- t(apply(NPIX, 1, quantile, c(0.5, 0.025, 0.975), na.rm=TRUE))
+#load("~/GoogleWork/bam/PIF-AB/results-v3/NPIX.RData") # NPIX
+#tab <- t(apply(NPIX, 1, quantile, c(0.5, 0.025, 0.975), na.rm=TRUE))
+load("~/GoogleWork/bam/PIF-AB/results-v3/NPIX-subset-2006-2015.RData") # NPIX
+tab <- t(apply(NPIX2, 1, quantile, c(0.5, 0.025, 0.975), na.rm=TRUE))
 TAB$Npix <- tab[rownames(TAB),1] * TAB$PairAdj / 10^6
 TAB$Npix95lower <- tab[rownames(TAB),2] * TAB$PairAdj / 10^6
 TAB$Npix95upper <- tab[rownames(TAB),3] * TAB$PairAdj / 10^6
@@ -208,6 +232,7 @@ if (FALSE) {
         LCC4Conif=ifelse(dd$LCC4=="Conif", 1, 0),
         LCC4Open=ifelse(dd$LCC4=="Open", 1, 0),
         LCC4Wet=ifelse(dd$LCC4=="Wet", 1, 0))
+    rownames(Xp) <- rownames(Xq) <- rownames(dd)
     summary(Xp)
     summary(Xq)
 
@@ -230,15 +255,20 @@ if (FALSE) {
         for (i in 1:240) {
             ss <- en$BB[,i]
             dd <- dd0[ss,]
+
+            dd <- dd[dd$YEAR >= 2006 & dd$YEAR <= 2015,]
+
             p <- rep(NA, nrow(dd))
             A <- q <- p
             cf0 <- exp(unlist(coefBAMspecies(spp, 0, 0)))
             mi <- bestmodelBAMspecies(spp, type="BIC",
                 model.sra=names(getBAMmodellist()$sra)[!grepl("DSLS", getBAMmodellist()$sra)])
             cfi <- coefBAMspecies(spp, mi$sra, mi$edr)
-            Xp2 <- Xp[ss,names(cfi$sra),drop=FALSE]
+
+            Xp2 <- Xp[as.character(dd$PKEY),names(cfi$sra),drop=FALSE]
+            Xq2 <- Xq[as.character(dd$PKEY),names(cfi$edr),drop=FALSE]
+
             OKp <- rowSums(is.na(Xp2)) == 0
-            Xq2 <- Xq[ss,names(cfi$edr),drop=FALSE]
             OKq <- rowSums(is.na(Xq2)) == 0
             p[!OKp] <- sra_fun(dd$MAXDUR[!OKp], cf0[1])
             unlim <- ifelse(dd$MAXDIS[!OKq] == Inf, TRUE, FALSE)
@@ -250,9 +280,11 @@ if (FALSE) {
             TAU[spp,i] <- mean(tau1) * 100
         }
     }
-    save(PHI, TAU, file="~/GoogleWork/bam/PIF-AB/results-v3/PHIandTAU.RData")
+    #save(PHI, TAU, file="~/GoogleWork/bam/PIF-AB/results-v3/PHIandTAU.RData")
+    save(PHI, TAU, file="~/GoogleWork/bam/PIF-AB/results-v3/PHIandTAU2.RData")
 }
-load("~/GoogleWork/bam/PIF-AB/results-v3/PHIandTAU.RData") # PHI, TAU
+#load("~/GoogleWork/bam/PIF-AB/results-v3/PHIandTAU.RData") # PHI, TAU
+load("~/GoogleWork/bam/PIF-AB/results-v3/PHIandTAU2.RData")
 tmp1 <- t(apply(TAU, 1, quantile, c(0.5, 0.025, 0.975)))
 tmp2 <- t(apply(PHI, 1, quantile, c(0.5, 0.025, 0.975)))
 TAB$EDR <- tmp1[,1]
@@ -276,6 +308,8 @@ if (FALSE) {
     ddr <- en$DAT
     ddr <- ddr[ddr$ROAD==1,]
 
+    ddr <- ddr[ddr$YEAR >= 2006 & ddr$YEAR <= 2015,]
+
     Xn1 <- get_model_matrix(ddr, en$mods) # has ROAD and mTrSft as >0
     Xn0 <- Xn1
     Xn0[,"ROAD"] <- 0
@@ -287,14 +321,16 @@ if (FALSE) {
         cat(spp, "N\n");flush.console()
         resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
 
-        lam0 <- exp(predict_with_SSH(resn, Xn0, en$SSH, stage="Space"))
-        lam1 <- exp(predict_with_SSH(resn, Xn1, en$SSH, stage="Space"))
+        lam0 <- exp(predict_with_SSH(resn, Xn0, en$SSH[rownames(ddr),], stage="Space"))
+        lam1 <- exp(predict_with_SSH(resn, Xn1, en$SSH[rownames(ddr),], stage="Space"))
         ROAD0[spp,1:ncol(lam0)] <- colMeans(lam0)
         ROAD1[spp,1:ncol(lam1)] <- colMeans(lam1)
     }
-    save(ROAD0, ROAD1, file="~/GoogleWork/bam/PIF-AB/results-v3/ROAD.RData")
+    #save(ROAD0, ROAD1, file="~/GoogleWork/bam/PIF-AB/results-v3/ROAD.RData")
+    save(ROAD0, ROAD1, file="~/GoogleWork/bam/PIF-AB/results-v3/ROAD2.RData")
 }
-load("~/GoogleWork/bam/PIF-AB/results-v3/ROAD.RData") # ROAD0, ROAD1
+#load("~/GoogleWork/bam/PIF-AB/results-v3/ROAD.RData") # ROAD0, ROAD1
+load("~/GoogleWork/bam/PIF-AB/results-v3/ROAD2.RData") # ROAD0, ROAD1
 tmp0 <- t(apply(ROAD0, 1, quantile, c(0.5, 0.025, 0.975), na.rm=TRUE))
 tmp1 <- t(apply(ROAD1, 1, quantile, c(0.5, 0.025, 0.975), na.rm=TRUE))
 TAB$Y0 <- tmp0[,1]
@@ -565,13 +601,15 @@ if (FALSE) {
 
 }
 load("~/GoogleWork/bam/PIF-AB/results-v3/HABITAT.RData") # HABITAT, avail, wroad
+load("~/GoogleWork/bam/PIF-AB/results-v3/HABITAT-subset-2006-2015.RData") # HABITAT, avail, wroad
 
 h_fun <- function(x) {
     rn <- names(avail)[!(names(avail) %in% c("SoftLin","Roads"))]
     DD <- apply(x$D, 1, median)
     sum(DD[rn] * wroad[rn]) / sum(DD[rn] * avail[rn])
 }
-TAB$H <- sapply(HABITAT[rownames(TAB)], h_fun)
+#TAB$H <- sapply(HABITAT[rownames(TAB)], h_fun)
+TAB$H <- sapply(HABITAT2[rownames(TAB)], h_fun)
 
 ## table 1
 tab1 <- data.frame(a=100*avail,w=100*wroad, wa=wroad/avail,n=ndet)
@@ -660,8 +698,10 @@ TAB$Npix_Npif <- sign(TAB$Npix-TAB$Npif)
 TAB$Npix_Npif[TAB[,c("Npix95lower","Npix95upper")] %[o]% TAB[,c("Npif95lower","Npif95upper")]] <- 0
 table(TAB$Npix_Npif)
 
+#write.csv(TAB, row.names=FALSE,
+#    file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-all-results.csv"))
 write.csv(TAB, row.names=FALSE,
-    file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-all-results.csv"))
+    file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-2006-2015-results.csv"))
 
 ## comparing v2 to v3 ---------------------------------
 
@@ -739,13 +779,18 @@ BCR2AB <- gIntersection(AB, BCR, byid=TRUE)
 
 
 ## load numbers
-pop <- read.csv("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-all-results.csv")
+#pop <- read.csv("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-all-results.csv")
+#rownames(pop) <- pop$Code
+#SPP <- rownames(pop)
+#EXCL <- c("DUFL", "HOSP", "MAWR", "MOBL", "PIGR", "SPGR", "RUGR", "TOWA", "RECR", "CSWA", "EUST", "EAPH", "ROPI")
+#SPP <- rownames(pop)[!(rownames(pop) %in% EXCL)]
+#pop <- droplevels(pop[SPP,])
+#write.csv(pop, row.names=FALSE, file="d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-final-results.csv")
+
+pop <- read.csv("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-2006-2015-results.csv")
 rownames(pop) <- pop$Code
 SPP <- rownames(pop)
-EXCL <- c("DUFL", "HOSP", "MAWR", "MOBL", "PIGR", "SPGR", "RUGR", "TOWA", "RECR", "CSWA", "EUST", "EAPH", "ROPI")
-SPP <- rownames(pop)[!(rownames(pop) %in% EXCL)]
-pop <- droplevels(pop[SPP,])
-write.csv(pop, row.names=FALSE, file="d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-final-results.csv")
+
 
 ## subset years of 2006-2015
 if (FALSE) {
@@ -758,18 +803,22 @@ if (FALSE) {
 }
 
 load("~/GoogleWork/bam/PIF-AB/results-v3/HABITAT.RData") # HABITAT, avail, wroad
-Dall <- data.frame(Ahab=100*avail, Whab=100*wroad, sapply(HABITAT[SPP], function(z) apply(z$D, 1, median)))
+load("~/GoogleWork/bam/PIF-AB/results-v3/HABITAT-subset-2006-2015.RData") # HABITAT, avail, wroad
+#Dall <- data.frame(Ahab=100*avail, Whab=100*wroad, sapply(HABITAT[SPP], function(z) apply(z$D, 1, median)))
+Dall <- data.frame(Ahab=100*avail, Whab=100*wroad, sapply(HABITAT2[SPP], function(z) apply(z$D, 1, median)))
 Dall <- Dall[!(rownames(Dall) %in% c("SoftLin","Roads")),]
 sum(is.na(Dall))
 Dall$Ahab <- 100*Dall$Ahab/sum(Dall$Ahab)
 Dall$Whab <- 100*Dall$Whab/sum(Dall$Whab)
 options(scipen=999)
-write.csv(Dall, file="d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-densities.csv")
+#write.csv(Dall, file="d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-densities.csv")
+write.csv(Dall, file="d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-densities-2006-2015.csv")
 
 
 ## maps
 
-xnss <- nonDuplicated(en$DAT, SS, TRUE)
+#xnss <- nonDuplicated(en$DAT, SS, TRUE)
+xnss <- nonDuplicated(en$DAT[en$DAT$YEAR >= 2006 & en$DAT$YEAR <= 2015,], SS, TRUE)
 xy <- xnss
 coordinates(xy) <- ~ X + Y
 proj4string(xy) <-
@@ -777,7 +826,7 @@ proj4string(xy) <-
 xy <- spTransform(xy, proj4string(r))
 xy2BCR <- over(xy, BCR)
 
-xypt <- en$DAT
+xypt <- en$DAT[en$DAT$YEAR >= 2006 & en$DAT$YEAR <= 2015,]
 coordinates(xypt) <- ~ X + Y
 proj4string(xypt) <-
     CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
