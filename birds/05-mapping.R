@@ -181,11 +181,15 @@ bbb <- read.csv("d:/abmi/sppweb2018/c4i/tables/StandardizedOutput-birds-final-lo
 bbb <- bbb[is.na(bbb$Exclude),]
 bbb <- bbb[bbb$ModelNorth | bbb$ModelSouth,]
 rownames(bbb) <- bbb$Code.1
+
 SPP <- rownames(bbb)
+DONE <- gsub(".RData", "", list.files("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-07-11/"))
+SPP <- SPP[!(SPP %in% DONE)]
 
 b <- 100
 
-for (spp in SPP[85:126]) {
+for (spp in SPP) {
+    gc()
     cat(spp)
     flush.console()
     CURRB <- REFB <- matrix(0, nrow(kgrid), b)
