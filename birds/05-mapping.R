@@ -592,24 +592,16 @@ con <- dbConnect(
 
 ## saving BOOT objects for c4i
 
-z <- NULL
-for (spp in SPP) {
-    cat(spp, "\n");flush.console()
-    load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-05-14/", spp, ".RData"))
-    if (any(is.na(CURR)) || any(is.na(REF)) || any(is.na(CURRB)) || any(is.na(REFB)))
-        z <- c(z, spp)
-}
-
-for (spp in SPP) {
+NAfound <- NULL
+for (spp in rownames(bbb)) {
 
     cat(spp, "\n");flush.console()
-#    load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-04-01/", spp, ".RData"))
-    load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-05-14/", spp, ".RData"))
+    load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-07-11/", spp, ".RData"))
 
     TYPE <- "C" # combo
-    if (tax[spp, "ModelSouth"] && !tax[spp, "ModelNorth"])
+    if (bbb[spp, "ModelSouth"] && !bbb[spp, "ModelNorth"])
         TYPE <- "S"
-    if (!tax[spp, "ModelSouth"] && tax[spp, "ModelNorth"])
+    if (!bbb[spp, "ModelSouth"] && bbb[spp, "ModelNorth"])
         TYPE <- "N"
 
     for (i in 1:100) {
@@ -630,14 +622,18 @@ for (spp in SPP) {
     Curr.Boot <- as.matrix(groupSums(CURRB, 1, kgrid[rownames(CURRB),"Row10_Col10"]))
     Ref.Boot <- as.matrix(groupSums(REFB, 1, kgrid[rownames(CURRB),"Row10_Col10"]))
     CN <- c("Native", "Misc", "Agriculture", "Forestry", "RuralUrban", "Energy", "Transportation")
-    SA.Curr <- as.matrix(CURR[,CN])
-    SA.Ref <- as.matrix(REF[,CN])
+    SA.Curr <- as.matrix(CURR1[,CN])
+    SA.Ref <- as.matrix(REF1[,CN])
 
-    save(Curr.Boot, Ref.Boot, file=paste0("d:/abmi/reports/2018/results/birds/boot/",
-        as.character(tax[spp, "SpeciesID"]), ".RData"))
-    save(SA.Curr, SA.Ref,     file=paste0("d:/abmi/reports/2018/results/birds/sector/",
-        as.character(tax[spp, "SpeciesID"]), ".RData"))
-
+    if (any(is.na(Curr.Boot)) || any(is.na(Ref.Boot)) || any(is.na(SA.Curr)) || any(is.na(SA.Ref))) {
+        cat("\t--> NA found for", spp, "\n\n")
+        NAfound <- c(NAfound, spp)
+    } else {
+        save(Curr.Boot, Ref.Boot, file=paste0("d:/abmi/reports/2018/results/birds/boot/",
+            as.character(bbb[spp, "SpeciesID"]), ".RData"))
+        save(SA.Curr, SA.Ref,     file=paste0("d:/abmi/reports/2018/results/birds/sector/",
+            as.character(bbb[spp, "SpeciesID"]), ".RData"))
+    }
 }
 
 

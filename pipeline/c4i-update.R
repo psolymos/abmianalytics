@@ -417,13 +417,12 @@ xxn <- report_all(cores=8)
 resn <- do.call(rbind, lapply(xxn, flatten))
 class(resn) <- c("data.frame", "c4idf")
 
-zzz <- list()
-for (spp in Spp) {
-    cat(spp, "\n");flush.console()
-    y <- load_species_data(spp)
-    zzz[[spp]] <- calculate_results(y)
-    #flatten(x)
-}
+#zzz <- list()
+#for (spp in Spp) {
+#    cat(spp, "\n");flush.console()
+#    y <- load_species_data(spp)
+#    zzz[[spp]] <- calculate_results(y)
+#}
 
 ID <- rownames(KT)[KT$S]
 subset_common_data(id=ID, species=Spp)

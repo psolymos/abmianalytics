@@ -6,6 +6,7 @@ set_options(path = "s:/reports")
 load_common_data()
 
 load("d:/abmi/sppweb2018/c4i/tables/sector-effects.RData")
+load("d:/abmi/reports/2018/misc/DataPortalUpdate.RData")
 ROOT <- "d:/abmi/AB_data_v2018/www"
 #ROOT <- "d:/abmi/sppweb2018/www/"
 
@@ -48,7 +49,10 @@ for (gr in c("birds","vplants","lichens","mosses","mites")) {
 #gr <- "lichens"
 #gr <- "mosses"
 #gr <- "mites"
-SPP <- rownames(resn[resn$Taxon == gr,])
+
+#SPP <- rownames(resn[resn$Taxon == gr,])
+SPP <- rownames(OUT$Species[(OUT$Species$ModelNorth |
+        OUT$Species$ModelSouth) & OUT$Species$Group == gr,])
 #spp <- "AlderFlycatcher"
 
 for (spp in SPP) {
@@ -56,14 +60,14 @@ for (spp in SPP) {
     cat(gr, spp, "\n");flush.console()
 
     TYPE <- "C"
-    if (resn[spp, "model_north"] && !resn[spp, "model_south"])
+    if (OUT$Species[spp, "ModelNorth"] && !OUT$Species[spp, "ModelSouth"])
         TYPE <- "N"
-    if (!resn[spp, "model_north"] && resn[spp, "model_south"])
+    if (!OUT$Species[spp, "ModelNorth"] && OUT$Species[spp, "ModelSouth"])
         TYPE <- "S"
 
-    NAM <- resn[spp, "CommonName"]
+    NAM <- OUT$Species[spp, "CommonName"]
     if (is.na(NAM))
-        NAM <- resn[spp, "ScientificName"]
+        NAM <- OUT$Species[spp, "ScientificName"]
     NAM <- as.character(NAM)
 
     if (TYPE != "S") {
@@ -108,10 +112,13 @@ for (spp in SPP) {
         dev.off()
     }
 
-if (FALSE) {
-    y <- load_species_data(spp)
+if (TRUE) {
+    y <- load_species_data(spp, boot=TRUE)
+    ry <- rasterize_results(y)
+
     Curr <- y$SA.Curr[match(rownames(kgrid), rownames(y$SA.Curr)),]
     Ref <- y$SA.Ref[match(rownames(kgrid), rownames(y$SA.Ref)),]
+
     Dcr <- rowSums(Curr)
     q <- quantile(Dcr, 0.99)
     Dcr[Dcr > q] <- q
@@ -151,26 +158,32 @@ if (FALSE) {
 }
 
     ## add here mask for Rockies if needed
-if (FALSE) {
+if (TRUE) {
     png(paste0(ROOT, "/figs/", gr, "/", spp, "-map.png"),
-        height=1500*1, width=1000*3, res=300)
-    op <- par(mfrow=c(1,3), mar=c(2,1,2,3))
+        height=1500*2, width=1000*2, res=300)
+    op <- par(mfrow=c(2,2), mar=c(2,1,2,3))
+
     plot(rt, col=CE, axes=FALSE, box=FALSE, main="Reference", legend=FALSE)
     plot(Rrf, add=TRUE, col=col1[1:max(rf)])
     plot(Rw, add=TRUE, col=CW, legend=FALSE)
+
     plot(rt, col=CE, axes=FALSE, box=FALSE, main="Current", legend=FALSE)
     plot(Rcr, add=TRUE, col=col1[1:max(cr)])
     plot(Rw, add=TRUE, col=CW, legend=FALSE)
+
     plot(rt, col=CE, axes=FALSE, box=FALSE, main="Difference", legend=FALSE)
     plot(Rdf, add=TRUE, col=col3[min(df):max(df)])
     plot(Rw, add=TRUE, col=CW, legend=FALSE)
+
+    plot(rt, col=CE, axes=FALSE, box=FALSE, main="Std. Error (Current)", legend=FALSE)
+    plot(ry[["SE"]]/MAX, add=TRUE, col=rev(col2))
+    plot(Rw, add=TRUE, col=CW, legend=FALSE)
+
     par(op)
     dev.off()
 }
 
-
-    }
-}
+}}
 
 ## use avail figures
 
@@ -189,7 +202,10 @@ col1<-brewer.pal(8, "Dark2")[c(1,1,1,1, 5,5, 6,7)]
 col2<-brewer.pal(12, "Paired")[c(4,7,7,7,12,12,10)]
 cols <- c(col1,col2)
 
-for (spp in rownames(tab)[tab$UseavailNorth]) {
+#SPP <- rownames(tab)[tab$UseavailNorth]
+SPP <- rownames(tab)[tab$UseavailNorth & tab$Group == "birds"]
+
+for (spp in SPP) {
     gr <- tab[spp, "Group"]
     spnam <- if (is.na(tab[spp, "CommonName"])) {
         as.character(tab[spp, "ScientificName"])
@@ -215,7 +231,10 @@ col1<-brewer.pal(8, "Dark2")[c(7,7,7,7)]
 col2<-brewer.pal(12, "Paired")[c(7,7,7,12,12,10)]
 cols <- c(col1,col2)
 
-for (spp in rownames(tab)[tab$UseavailSouth]) {
+#SPP <- rownames(tab)[tab$UseavailSouth]
+SPP <- rownames(tab)[tab$UseavailSouth & tab$Group == "birds"]
+
+for (spp in SPP) {
     gr <- tab[spp, "Group"]
     spnam <- if (is.na(tab[spp, "CommonName"])) {
         as.character(tab[spp, "ScientificName"])
@@ -226,7 +245,7 @@ for (spp in rownames(tab)[tab$UseavailSouth]) {
     png(paste0(ROOT, "/figs/", gr, "/", spp, "-useavail-south.png"),
         height=480, width=600)
     op <- par(mar=c(6,4,2,2)+0.1, las=2)
-    x1 <- barplot(as.vector(x [spp, ]), horiz=FALSE, ylab="Affinity",space=NULL, col=cols, border=cols, ylim=c(-1,1), axes=FALSE,axisnames=F )
+    x1 <- barplot(as.vector(x[spp, ]), horiz=FALSE, ylab="Affinity",space=NULL, col=cols, border=cols, ylim=c(-1,1), axes=FALSE,axisnames=F )
     axis(side=2)
     abline(h=0, col="red4", lwd=2)
     mtext(side=3,at=x1[1],adj=0,spnam,cex=1.2,col="grey40",las=1)
@@ -304,7 +323,16 @@ for (spp in rownames(tab[tab$Group == gr,])) {
 ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
 ee <- new.env()
 load(file.path(ROOT, "ab-birds-all-2018-11-29.RData"), envir=ee)
-ddd <- nonDuplicated(ee$dd, ee$dd$SS, TRUE)
+
+en <- new.env()
+load(file.path(ROOT, "data", "ab-birds-north-2018-12-07.RData"), envir=en)
+es <- new.env()
+load(file.path(ROOT, "data", "ab-birds-south-2018-12-07.RData"), envir=es)
+
+ddd <- ee$dd
+## subset based on analysis data -- same filtering applied
+ddd <- ddd[unique(c(rownames(en$DAT), rownames(es$DAT))),]
+ddd <- nonDuplicated(ddd, ddd$SS, TRUE)
 yyy <- groupSums(ee$yy, 1, ee$dd$SS)[rownames(ddd),]
 yyy[yyy > 0] <- 1
 ss <- !is.na(ddd$X) & !is.na(ddd$NRNAME)
@@ -322,6 +350,9 @@ load("d:/abmi/sppweb2018/c4i/tables/lookup-birds.RData")
 tax <- droplevels(Lookup[Lookup$UseavailNorth | Lookup$UseavailSouth,])
 rownames(tax) <- tax$Code
 
+SPP <- rownames(OUT$Species[OUT$Species$Group == gr,])
+tax <- tax[tax$SpeciesID %in% SPP,]
+
 gr <- "birds"
 for (spp in rownames(tax)) {
     cat(gr, spp, "\n");flush.console()
@@ -337,7 +368,6 @@ for (spp in rownames(tax)) {
     plot(sam1,add=TRUE, col="red4", legend=FALSE)
     par(op)
     dev.off()
-
 }
 
 

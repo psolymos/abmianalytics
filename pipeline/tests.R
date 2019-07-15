@@ -448,17 +448,17 @@ compare_sets(rownames(OUT$Species[OUT$Species$ModelNorth,]), rownames(OUT$Sector
 compare_sets(rownames(OUT$Species[OUT$Species$ModelSouth,]), rownames(OUT$LinearSouth))
 compare_sets(rownames(OUT$Species[OUT$Species$ModelSouth,]), rownames(OUT$SoilhfSouthNontreed))
 compare_sets(rownames(OUT$Species[OUT$Species$ModelSouth,]), rownames(OUT$SoilhfSouthTreed))
-compare_sets(rownames(OUT$Species[OUT$Species$ModelNorth,]), rownames(OUT$SectorSouth))
+compare_sets(rownames(OUT$Species[OUT$Species$ModelSouth,]), rownames(OUT$SectorSouth))
 
 with(OUT$Species, table(UseavailNorth + UseavailSouth + ModelNorth + ModelSouth))
 addmargins(with(OUT$Species, table(Useavail=UseavailNorth + UseavailSouth, Model=ModelNorth + ModelSouth)))
 
-options(scipen=999)
-write.xlsx(OUT, file.path(ROOT, paste0("DataPortalUpdate_2019-07-11.xlsx")))
-
 OUT$pAspen <- data.frame(pAspen=c(log(pA1), pA2))
 rownames(OUT$pAspen) <- rownames(tmpL)
 OUT$pAspen <- OUT$pAspen[rownames(OUT$LinearSouth),,drop=FALSE]
+
+options(scipen=999)
+write.xlsx(OUT[!(names(OUT) %in% "pAspen")], file.path(ROOT, paste0("DataPortalUpdate_2019-07-15.xlsx")))
 
 save(OUT, file="d:/abmi/reports/2018/misc/DataPortalUpdate.RData")
 
