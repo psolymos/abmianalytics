@@ -205,7 +205,7 @@ save(list=toSave,
 library(mefa4)
 library(openxlsx)
 library(cure4insect)
-set_options(path = "s:/reports")
+set_options(path = "d:/abmi/reports")
 load_common_data()
 
 ROOT <- "d:/abmi/sppweb2018/c4i/tables"
@@ -456,6 +456,31 @@ addmargins(with(OUT$Species, table(Useavail=UseavailNorth + UseavailSouth, Model
 OUT$pAspen <- data.frame(pAspen=c(log(pA1), pA2))
 rownames(OUT$pAspen) <- rownames(tmpL)
 OUT$pAspen <- OUT$pAspen[rownames(OUT$LinearSouth),,drop=FALSE]
+
+## catching dots in names
+OUT0 <- OUT
+
+oldrn <- newrn <- rownames(OUT$Species)
+tab <- OUT$Species
+dot <- endsWith(rownames(tab), ".")
+dotBad <- rownames(tab)[dot]
+dotOK <- substr(dotBad, 1, nchar(dotBad)-1)
+data.frame(Bad=dotBad,Good=dotOK, tab$Group[dot])
+for (i in seq_along(dotBad))
+    newrn[newrn == dotBad[i]] <- dotOK[i]
+sum(newrn != oldrn)
+
+for (aa in c("Species", "UseavailNorth", "UseavailSouth", "VeghfNorth",
+    "LinearNorth", "SoilhfSouthNontreed", "SoilhfSouthTreed", "LinearSouth",
+    "SectorNorth", "SectorSouth", "pAspen")) {
+
+    rownames(OUT[[aa]]) <- newrn[match(rownames(OUT[[aa]]), oldrn)]
+    if (!is.null(OUT[[aa]]$SpeciesID))
+        levels(OUT[[aa]]$SpeciesID) <- newrn[match(levels(OUT[[aa]]$SpeciesID), oldrn)]
+
+}
+
+
 
 options(scipen=999)
 write.xlsx(OUT[!(names(OUT) %in% "pAspen")], file.path(ROOT, paste0("DataPortalUpdate_2019-07-15.xlsx")))

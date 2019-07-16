@@ -184,14 +184,41 @@ CF <- list(
 CF$coef$soil["BairdsSparrow",]
 CF$coef$paspen["BairdsSparrow",1]
 
+## clean up dotted names
+
+tab <- SP
+dot <- endsWith(rownames(tab), ".")
+dotBad <- rownames(tab)[dot]
+dotOK <- substr(dotBad, 1, nchar(dotBad)-1)
+data.frame(Bad=dotBad,Good=dotOK, tab$taxon[dot])
+
+for (i in seq_along(dotBad)) {
+    levels(SP$SpeciesID)[levels(SP$SpeciesID) == dotBad[i]] <- dotOK[i]
+}
+fixfun <- function(x) {
+    for (i in seq_along(dotBad)) {
+        rownames(x)[rownames(x) == dotBad[i]] <- dotOK[i]
+    }
+    x
+}
+SP <- fixfun(SP)
+CF$coef$veg <- fixfun(CF$coef$veg)
+CF$coef$soil <- fixfun(CF$coef$soil)
+CF$coef$paspen <- fixfun(CF$coef$paspen)
+CF$lower$veg <- fixfun(CF$lower$veg)
+CF$lower$soil <- fixfun(CF$lower$soil)
+CF$higher$veg <- fixfun(CF$higher$veg)
+CF$higher$soil <- fixfun(CF$higher$soil)
+
+
 ## save
 write.csv(spt, row.names=FALSE, file="d:/abmi/reports/2018/data/species-info.csv")
 save(XY, KT, KA_2016, SP, QT2KT, VER, CF, # CFbirds,
     file="d:/abmi/reports/2018/data/kgrid_areas_by_sector.RData")
 
-write.csv(spt, row.names=FALSE, file="s:/reports/2018/data/species-info.csv")
-save(XY, KT, KA_2016, SP, QT2KT, VER, CF, # CFbirds,
-    file="s:/reports/2018/data/kgrid_areas_by_sector.RData")
+#write.csv(spt, row.names=FALSE, file="s:/reports/2018/data/species-info.csv")
+#save(XY, KT, KA_2016, SP, QT2KT, VER, CF, # CFbirds,
+#    file="s:/reports/2018/data/kgrid_areas_by_sector.RData")
 
 
 ## calculate spclim raster for /spclim

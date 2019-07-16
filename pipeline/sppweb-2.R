@@ -2,7 +2,8 @@
 
 library(cure4insect)
 library(mefa4)
-set_options(path = "s:/reports")
+#set_options(path = "s:/reports")
+set_options(path = "d:/abmi/reports")
 load_common_data()
 
 load("d:/abmi/sppweb2018/c4i/tables/sector-effects.RData")
@@ -181,6 +182,8 @@ if (TRUE) {
 
     par(op)
     dev.off()
+
+    gc()
 }
 
 }}
@@ -297,7 +300,9 @@ xy <- spTransform(xy, proj4string(rt))
 yy <- ex$dd[,6:ncol(ex$dd)]
 compare_sets(colnames(yy), rownames(tab[tab$Group == gr,]))
 
-for (spp in rownames(tab[tab$Group == gr,])) {
+SPP <- rownames(tab[tab$Group == gr,])
+
+for (spp in SPP) {
     spnam <- if (is.na(tab[spp, "CommonName"])) {
         as.character(tab[spp, "ScientificName"])
     } else {
@@ -538,6 +543,18 @@ library(jsonlite)
 
 load("d:/abmi/reports/2018/misc/DataPortalUpdate.RData")
 tab <- OUT$Species
+
+dot <- endsWith(rownames(tab), ".")
+dotBad <- rownames(tab)[dot]
+dotOK <- substr(dotBad, 1, nchar(dotBad)-1)
+data.frame(Bad=dotBad,Good=dotOK, tab$Group[dot])
+
+for (i in seq_along(dotBad)) {
+    levels(tab$SpeciesID)[levels(tab$SpeciesID) == dotBad[i]] <- dotOK[i]
+    rownames(tab)[rownames(tab) == dotBad[i]] <- dotOK[i]
+}
+any(endsWith(rownames(tab), "."))
+
 tab$DisplayName <- ifelse(is.na(tab$CommonName), as.character(tab$ScientificName),
     paste0(tab$CommonName, " (", tab$ScientificName, ")"))
 
@@ -621,9 +638,18 @@ for (g in grs[1:5]) {
     f <- list.files(file.path("d:/abmi/reports/2018", "images", g))
     m <- as.data.frame(matrix(FALSE, length(s), length(figs)))
     dimnames(m) <- list(s, figs)
+
     for (i in s) {
-        ff <- f[startsWith(f, i)]
-        ff <- gsub(".png", "", gsub(paste0(i, "-"), "", ff))
+#        ff <- f[startsWith(f, i)]
+#        ff <- gsub(".png", "", gsub(paste0(i, "-"), "", ff))
+        d <- OUT$Species[i,]
+        ff <- c("det",
+            if (d$ModelNorth) c("sector-north", "coef-north") else NULL,
+            if (d$ModelSouth) c("sector-south", "coef-south") else NULL,
+            if (d$ModelNorth || d$ModelSouth) c("map") else NULL,
+            if (d$UseavailNorth && !d$ModelNorth) c("useavail-north") else NULL,
+            if (d$UseavailSouth && !d$ModelSouth) c("useavail-south") else NULL
+        )
         m[i,] <- figs %in% ff
         v <- cbind(tab[i,], tmp[[g]][i,c("sppprevious", "sppnext")], m[i,])
         #toJSON(as.list(v), rownames=FALSE,pretty=TRUE,auto_unbox=TRUE)
@@ -656,4 +682,22 @@ for (i in s) {
         file.path("d:/abmi/reports/2018", "api", g, i, "index.json"))
 }
 
-
+## clean up dotted names
+if (FALSE) {
+fl <- list.files("d:/abmi/reports/2018", recursive = TRUE)
+xx <- NULL
+for (i in seq_along(dotBad)) {
+    xx <- c(xx, grep(dotBad[i], fl))
+}
+xx <- sort(unique(xx))
+str(xx)
+fl[xx]
+for (j in xx) {
+    In <- Out <- fl[j]
+    for (i in seq_along(dotBad)) {
+        Out <- gsub(dotBad[i], dotOK[i], Out)
+    }
+    file.rename(file.path("d:/abmi/reports/2018", In),
+        file.path("d:/abmi/reports/2018", Out))
+}
+}
