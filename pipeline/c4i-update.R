@@ -210,6 +210,38 @@ CF$lower$soil <- fixfun(CF$lower$soil)
 CF$higher$veg <- fixfun(CF$higher$veg)
 CF$higher$soil <- fixfun(CF$higher$soil)
 
+## CFbirds
+
+## todo:
+## - add SoftLin and HardLin coefs to CF
+## - add joint/marginal coefs to CFbirds
+
+e17 <- new.env()
+load("d:/abmi/reports/2017/data/kgrid_areas_by_sector.RData", envir=e17)
+str(e17$CFbirds)
+str(e17$CFbirds)
+
+names(e1)
+
+SPPn <- rownames(SP)[SP$taxon=="birds" & SP$model_north]
+
+rownames(e1$CoefNorthMarginal) <- e1$Lookup$SpeciesID[match(rownames(e1$CoefNorthMarginal), e1$Lookup$Code)]
+rownames(e1$CoefNorthJoint) <- e1$Lookup$SpeciesID[match(rownames(e1$CoefNorthJoint), e1$Lookup$Code)]
+rownames(e1$CoefSouthMarginal) <- e1$Lookup$SpeciesID[match(rownames(e1$CoefSouthMarginal), e1$Lookup$Code)]
+rownames(e1$CoefSouthJoint) <- e1$Lookup$SpeciesID[match(rownames(e1$CoefSouthJoint), e1$Lookup$Code)]
+
+CFbirds <- list(
+    marginal=list(
+        veg=e1$CoefNorthMarginal[SPPn,colnames(CF$coef$veg)],
+        soil=x,
+        paspen=x
+    ),
+    joint=list(
+        veg=x,
+        soil=x,
+        paspen=x
+    )
+)
 
 ## save
 write.csv(spt, row.names=FALSE, file="d:/abmi/reports/2018/data/species-info.csv")

@@ -145,23 +145,26 @@ rownames(UseavailNorth) <- TAX[rownames(UseavailNorth), "sppid"]
 
 ## coefs North
 
-get_coef_north <- function(resn, STAGE="ARU", ...) {
+get_coef_north <- function(resn, STAGE="ARU", subset=NULL, ...) {
     OK <- !sapply(resn, inherits, "try-error")
     spp <- resn[[which(OK)[1]]]$species
     estn <- suppressWarnings(get_coef(resn, Xn, stage=STAGE, na.out=FALSE))
+    if (is.null(subset))
+        subset <- seq_len(nrow(estn))
+    estn <- estn[subset,,drop=FALSE]
 
-    mu <- Xage %*% t(estn[,colnames(Xage)])
+    mu <- Xage %*% t(estn[,colnames(Xage),drop=FALSE])
     lam1 <- exp(mu)
-    lam1 <- lam1[!grepl("9", rownames(lam1)),]
+    lam1 <- lam1[!grepl("9", rownames(lam1)),,drop=FALSE]
     #lamUI <- lam1[xwalk[rownames(lam1),2] == "UrbInd",]
     lam1 <- groupMeans(lam1, 1, xwalk[rownames(lam1),2])
-    lam1 <- lam1[rownames(lam1) != "UrbInd",]
+    lam1 <- lam1[rownames(lam1) != "UrbInd",,drop=FALSE]
     lam1 <- t(apply(lam1, 1, quantile, c(0.5, 0.05, 0.95)))
-    lamCC <- lam1[grepl("CC", rownames(lam1)),]
+    lamCC <- lam1[grepl("CC", rownames(lam1)),,drop=FALSE]
 
     MOD <- c("ROAD", "mWell", "mSoft",
         "mEnSft", "mTrSft", "mSeism", "CMETHODSM", "CMETHODRF")
-    Z <- exp(estn[,MOD])
+    Z <- exp(estn[,MOD,drop=FALSE])
     isSoft <- estn[,"mSoft"] != 0 & estn[,"mEnSft"] == 0
     #isSoft2 <- get_mid(resn)[,"Contrast"] == 3
     estn[isSoft,"mEnSft"] <- estn[isSoft,"mSoft"]
@@ -178,25 +181,25 @@ get_coef_north <- function(resn, STAGE="ARU", ...) {
     # not in HFc and not forestry!
     Xn2 <- Xn[en$DAT$mWell > 0 & en$DAT$vegc %ni% HFc & en$DAT$fCC2 == 0, colnames(Xage)]
     nWell <- nrow(Xn2)
-    lamWell <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2)])), 2, median)
+    lamWell <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2),drop=FALSE])), 2, median)
     estWell <- quantile(lamWell * Z[,"mWell"], c(0.5, 0.05, 0.95))
 
     Xn2 <- Xn[en$DAT$mEnSft > 0 & en$DAT$vegc %ni% HFc & en$DAT$fCC2 == 0, colnames(Xage)]
     nEnSoft <- nrow(Xn2)
-    lamEnSft <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2)])), 2, median)
+    lamEnSft <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2),drop=FALSE])), 2, median)
     estEnSft <- quantile(lamEnSft * Z[,"mEnSft"], c(0.5, 0.05, 0.95))
 
     ## TrSft incorporates ROAD effect as well?
     Xn2 <- Xn[en$DAT$mTrSft > 0 & en$DAT$vegc %ni% HFc & en$DAT$fCC2 == 0, colnames(Xage)]
     nTrSoft <- nrow(Xn2)
-    lamTrSft <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2)])), 2, median)
+    lamTrSft <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2),drop=FALSE])), 2, median)
     #estTrSft <- quantile(lamTrSft * Z[,"mTrSft"] * Z[,"ROAD"], c(0.5, 0.05, 0.95))
     estTrSft <- quantile(lamTrSft * Z[,"mTrSft"], c(0.5, 0.05, 0.95))
 
     ESMAX <- apply(rbind(lamCC[endsWith(rownames(lamCC), "_0-10"),], EnSft=estEnSft, TrSft=estTrSft), 2, max)
     Xn2 <- Xn[en$DAT$mSeism > 0 & en$DAT$vegc %ni% HFc & en$DAT$fCC2 == 0, colnames(Xage)]
     nSeism <- nrow(Xn2)
-    lamSeism <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2)])), 2, median)
+    lamSeism <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2),drop=FALSE])), 2, median)
     estSeism <- quantile(lamSeism * Z[,"mSeism"], c(0.5, 0.05, 0.95))
     if (estSeism[1] > ESMAX[1])
         estSeism <- ESMAX
@@ -204,7 +207,7 @@ get_coef_north <- function(resn, STAGE="ARU", ...) {
     ## UrbInd
     Xn2 <- Xn[en$DAT$vegc %ni% c("Industrial", "Mine", "Rural", "Urban"), colnames(Xage)]
     nUI <- nrow(Xn2)
-    lamUI <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2)])), 2, median)
+    lamUI <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2),drop=FALSE])), 2, median)
     estUI <- quantile((nUI * lamUI + nWell * lamWell) / (nUI + nWell),
         c(0.5, 0.05, 0.95))
 
@@ -224,6 +227,20 @@ for (spp in as.character(Lookup$Code[Lookup$ModelNorth])) {
     tmp <- try(get_coef_north(resn, STAGE="ARU"))
     if (!inherits(tmp, "try-error"))
         COEFS[[spp]] <- tmp
+}
+
+COEFSmarginal <- list()
+COEFSjoint <- list()
+for (spp in as.character(Lookup$Code[Lookup$ModelNorth])) {
+    cat(spp, "\n")
+    flush.console()
+    resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
+    tmp <- try(get_coef_north(resn, STAGE="ARU", subset=1))
+    if (!inherits(tmp, "try-error"))
+        COEFSmarginal[[spp]] <- tmp
+    tmp <- try(get_coef_north(resn, STAGE="Space", subset=1))
+    if (!inherits(tmp, "try-error"))
+        COEFSjoint[[spp]] <- tmp
 }
 
 plot_coef_north <- function(lam1, ...) {
@@ -389,6 +406,14 @@ rownames(CoefNorth) <- rownames(LowerNorth) <- rownames(UpperNorth) <-
 
 CoefNorth <- array(CoefNorth, c(dim(CoefNorth), 1), dimnames=c(dimnames(CoefNorth), NULL))
 
+CoefNorthJoint <- t(sapply(COEFSjoint, function(z) {
+    c(z[,"Estimate"], Bare=NA, Water=NA)
+}))[,cn]
+CoefNorthMarginal <- t(sapply(COEFSmarginal, function(z) {
+    c(z[,"Estimate"], Bare=NA, Water=NA)
+}))[,cn]
+
+
 ## Linear North
 
 LinearNorth <- data.frame(AverageCoef=rowMeans(CoefNorth[,cn1,1], na.rm=TRUE))
@@ -413,11 +438,15 @@ cn2 <- c("Crop",
     "SoftLin")
 cn <- c(cn1, cn2)
 
-get_coef_south <- function(ress, STAGE="ARU", ...) {
+get_coef_south <- function(ress, STAGE="ARU", subset=NULL, ...) {
     ests <- suppressWarnings(get_coef(ress, Xs, stage=STAGE, na.out=FALSE))
+    if (is.null(subset))
+        subset <- seq_len(nrow(ests))
+    ests <- ests[subset,,drop=FALSE]
+
     LCC <- c("soilcClay", "soilcCrop", "soilcRapidDrain",
         "soilcRoughP", "soilcSaline", "soilcTameP", "soilcUrbInd")
-    muLCC <- t(cbind(ests[,1], ests[,1]+ests[,LCC]))
+    muLCC <- t(cbind(ests[,1,drop=FALSE], ests[,1]+ests[,LCC,drop=FALSE]))
     rownames(muLCC) <- levels(es$DAT$soilc)
     qfun <- function(x)
         c(quantile(x, c(0.5, 0.05, 0.95)))
@@ -431,7 +460,7 @@ get_coef_south <- function(ress, STAGE="ARU", ...) {
     lamLCC1 <- lamLCC1[o,]
 
     MOD <- c("ROAD", "mWell", "mSoft")
-    Z <- exp(ests[,MOD])
+    Z <- exp(ests[,MOD,drop=FALSE])
     pm <- c("ROAD"=1, "mWell"=0.2, "mSoft"=0.2)
     for (i in MOD)
         Z[,i] <- linexp(1, ests[,i], pm[i])
@@ -442,12 +471,12 @@ get_coef_south <- function(ress, STAGE="ARU", ...) {
 
     Xs2 <- Xs[es$DAT$mSoft > 0 & es$DAT$soilc %ni% HFc, colnames(Xs)]
     nSoft <- nrow(Xs2)
-    lamSoft <- apply(exp(Xs2 %*% t(ests[,colnames(Xs2)])), 2, median)
+    lamSoft <- apply(exp(Xs2 %*% t(ests[,colnames(Xs2),drop=FALSE])), 2, median)
     estSoft <- quantile(lamSoft * Z[,"mSoft"], c(0.5, 0.05, 0.95))
 
     Xs2 <- Xs[es$DAT$ROAD > 0 & es$DAT$soilc %ni% HFc, colnames(Xs)]
     nROAD <- nrow(Xs2)
-    lamROAD <- apply(exp(Xs2 %*% t(ests[,colnames(Xs2)])), 2, median)
+    lamROAD <- apply(exp(Xs2 %*% t(ests[,colnames(Xs2),drop=FALSE])), 2, median)
     estROAD <- quantile(lamROAD * Z[,"mSoft"], c(0.5, 0.05, 0.95))
 
     lam0 <- rbind(lamLCC0,
@@ -468,6 +497,21 @@ for (spp in as.character(Lookup$Code[Lookup$ModelSouth])) {
     if (!inherits(tmp, "try-error"))
         COEFS2[[spp]] <- tmp
 }
+
+COEFS2joint <- list()
+COEFS2marginal <- list()
+for (spp in as.character(Lookup$Code[Lookup$ModelSouth])) {
+    cat(spp, "\n")
+    flush.console()
+    ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
+    tmp <- try(get_coef_south(ress, STAGE="ARU", subset=1))
+    if (!inherits(tmp, "try-error"))
+        COEFS2marginal[[spp]] <- tmp
+    tmp <- try(get_coef_south(ress, STAGE="Space", subset=1))
+    if (!inherits(tmp, "try-error"))
+        COEFS2joint[[spp]] <- tmp
+}
+
 
 plot_coef_south <- function(lam0, ...) {
 
@@ -547,6 +591,14 @@ rownames(CoefSouth) <- rownames(LowerSouth) <- rownames(UpperSouth) <-
 #Lookup$ModelSouth[Lookup$SpeciesID %in% rownames(CoefSouth)] <- TRUE
 
 CoefSouth <- array(CoefSouth, c(dim(CoefSouth), 1), dimnames=c(dimnames(CoefSouth), NULL))
+
+CoefSouthJoint <- t(sapply(COEFS2joint, function(z) {
+    c(z[,"Estimate"], Water=NA)
+}))[,cn]
+CoefSouthMarginal <- t(sapply(COEFS2marginal, function(z) {
+    c(z[,"Estimate"], Water=NA)
+}))[,cn]
+
 
 ## Linear South
 
@@ -628,6 +680,8 @@ CoefSouthBootlistSpace <- tmps
 
 toSave <- c("Lookup",
     "CoefNorth", "CoefSouth",
+    "CoefNorthJoint", "CoefSouthJoint",
+    "CoefNorthMarginal", "CoefSouthMarginal",
     "CoefNorthBootlistSpace", "CoefSouthBootlistSpace",
     "CoefNorthBootlistARU", "CoefSouthBootlistARU",
     #"SpclimNorth", "SpclimSouth",

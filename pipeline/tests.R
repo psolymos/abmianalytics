@@ -463,6 +463,7 @@ OUT0 <- OUT
 oldrn <- newrn <- rownames(OUT$Species)
 tab <- OUT$Species
 dot <- endsWith(rownames(tab), ".")
+sum(dot)
 dotBad <- rownames(tab)[dot]
 dotOK <- substr(dotBad, 1, nchar(dotBad)-1)
 data.frame(Bad=dotBad,Good=dotOK, tab$Group[dot])
@@ -479,8 +480,6 @@ for (aa in c("Species", "UseavailNorth", "UseavailSouth", "VeghfNorth",
         levels(OUT[[aa]]$SpeciesID) <- newrn[match(levels(OUT[[aa]]$SpeciesID), oldrn)]
 
 }
-
-
 
 options(scipen=999)
 write.xlsx(OUT[!(names(OUT) %in% "pAspen")], file.path(ROOT, paste0("DataPortalUpdate_2019-07-15.xlsx")))
