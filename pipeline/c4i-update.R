@@ -143,6 +143,32 @@ Soil[is.na(Soil)] <- 0
 SoilL <- Soil[,startsWith(colnames(Soil), "Lower_")]
 SoilU <- Soil[,startsWith(colnames(Soil), "Upper_")]
 Soil <- Soil[,!startsWith(colnames(Soil), "Lower_") & !startsWith(colnames(Soil), "Upper_")]
+SoilLin <- rbind(
+    e1$CoefSouth[, c("SoftLin", "HardLin"),1],
+    e2$CoefSouth[, c("SoftLin", "HardLin"),1],
+    e3$CoefSouth[, c("SoftLin", "HardLin"),1],
+    e4$CoefSouth[, c("SoftLin", "HardLin"),1],
+    e5$CoefSouth[, c("SoftLin", "HardLin"),1])
+SoilLinL <- rbind(
+    e1$LowerSouth[, c("SoftLin", "HardLin")],
+    e2$LowerSouth[, c("SoftLin", "HardLin")],
+    e3$LowerSouth[, c("SoftLin", "HardLin")],
+    e4$LowerSouth[, c("SoftLin", "HardLin")],
+    e5$LowerSouth[, c("SoftLin", "HardLin")])
+SoilLinU <- rbind(
+    e1$UpperSouth[, c("SoftLin", "HardLin")],
+    e2$UpperSouth[, c("SoftLin", "HardLin")],
+    e3$UpperSouth[, c("SoftLin", "HardLin")],
+    e4$UpperSouth[, c("SoftLin", "HardLin")],
+    e5$UpperSouth[, c("SoftLin", "HardLin")])
+stopifnot(all(rownames(SoilLin) == rownames(SoilLinL)))
+stopifnot(all(rownames(SoilLin) == rownames(SoilLinU)))
+dot <- endsWith(rownames(SoilLin), ".")
+rownames(SoilLin)[dot] <- substr(rownames(SoilLin)[dot], 1, nchar(rownames(SoilLin)[dot])-1)
+rownames(SoilLinL) <- rownames(SoilLinU) <- rownames(SoilLin)
+Soil <- cbind(Soil, SoilLin[rownames(Soil),])
+SoilL <- cbind(SoilL, SoilLinL[rownames(SoilL),])
+SoilU <- cbind(SoilU, SoilLinU[rownames(SoilU),])
 colnames(Soil)
 colnames(c4i0$CF$coef$soil)
 colnames(SoilL) <- gsub("Lower_", "", colnames(SoilL))
@@ -158,6 +184,32 @@ Veg[is.na(Veg)] <- 0
 VegL <- Veg[,startsWith(colnames(Veg), "Lower_")]
 VegU <- Veg[,startsWith(colnames(Veg), "Upper_")]
 Veg <- Veg[,!startsWith(colnames(Veg), "Lower_") & !startsWith(colnames(Veg), "Upper_")]
+VegLin <- rbind(
+    e1$CoefNorth[, c("SoftLin", "HardLin"),1],
+    e2$CoefNorth[, c("SoftLin", "HardLin"),1],
+    e3$CoefNorth[, c("SoftLin", "HardLin"),1],
+    e4$CoefNorth[, c("SoftLin", "HardLin"),1],
+    e5$CoefNorth[, c("SoftLin", "HardLin"),1])
+VegLinL <- rbind(
+    e1$LowerNorth[, c("SoftLin", "HardLin")],
+    e2$LowerNorth[, c("SoftLin", "HardLin")],
+    e3$LowerNorth[, c("SoftLin", "HardLin")],
+    e4$LowerNorth[, c("SoftLin", "HardLin")],
+    e5$LowerNorth[, c("SoftLin", "HardLin")])
+VegLinU <- rbind(
+    e1$UpperNorth[, c("SoftLin", "HardLin")],
+    e2$UpperNorth[, c("SoftLin", "HardLin")],
+    e3$UpperNorth[, c("SoftLin", "HardLin")],
+    e4$UpperNorth[, c("SoftLin", "HardLin")],
+    e5$UpperNorth[, c("SoftLin", "HardLin")])
+stopifnot(all(rownames(VegLin) == rownames(VegLinL)))
+stopifnot(all(rownames(VegLin) == rownames(VegLinU)))
+dot <- endsWith(rownames(VegLin), ".")
+rownames(VegLin)[dot] <- substr(rownames(VegLin)[dot], 1, nchar(rownames(VegLin)[dot])-1)
+rownames(VegLinL) <- rownames(VegLinU) <- rownames(VegLin)
+Veg <- cbind(Veg, VegLin[rownames(Veg),])
+VegL <- cbind(VegL, VegLinL[rownames(VegL),])
+VegU <- cbind(VegU, VegLinU[rownames(VegU),])
 colnames(Veg)
 colnames(c4i0$CF$coef$veg)
 colnames(VegL) <- gsub("Lower_", "", colnames(VegL))
@@ -167,25 +219,16 @@ colnames(VegU) <- gsub("Upper_", "", colnames(VegU))
 colnames(VegU)
 colnames(c4i0$CF$higher$veg)
 
-
-compare_sets(rownames(SP)[SP$model_south], rownames(Soil))
-SP[rownames(SP) %ni% rownames(Soil) & SP$model_south,]
-
-compare_sets(rownames(SP)[SP$model_north], rownames(Veg))
-SP[rownames(SP) %ni% rownames(Veg) & SP$model_north,]
-
-## no mammals included
+## no mammals included in v2018
 CF <- list(
     coef=list(veg=Veg, soil=Soil, paspen=pA),
     lower=list(veg=VegL, soil=SoilL),
     higher=list(veg=VegU, soil=SoilU))
-
 ## check pAspen issue
-CF$coef$soil["BairdsSparrow",]
-CF$coef$paspen["BairdsSparrow",1]
+#CF$coef$soil["BairdsSparrow",]
+#CF$coef$paspen["BairdsSparrow",1]
 
 ## clean up dotted names
-
 tab <- SP
 dot <- endsWith(rownames(tab), ".")
 dotBad <- rownames(tab)[dot]
@@ -210,42 +253,97 @@ CF$lower$soil <- fixfun(CF$lower$soil)
 CF$higher$veg <- fixfun(CF$higher$veg)
 CF$higher$soil <- fixfun(CF$higher$soil)
 
+compare_sets(rownames(SP)[SP$model_south], rownames(Soil))
+SP[rownames(SP) %ni% rownames(Soil) & SP$model_south,]
+
+compare_sets(rownames(SP)[SP$model_north], rownames(Veg))
+SP[rownames(SP) %ni% rownames(Veg) & SP$model_north,]
+
+## add in the mammal coefs from v2017
+SPPms <- rownames(SP[rownames(SP) %ni% rownames(Soil) & SP$model_south,])
+ts <- read.csv("~/repos/cure4insect/inst/crosswalk/soil.csv")[,1:2]
+ts <- nonDuplicated(ts, v2018, TRUE)[colnames(CF$coef$soil),]
+ts[,1] <- as.character(ts[,1])
+ts[,2] <- as.character(ts[,2])
+ts["Water", "v2017"] <- "Water"
+ts2 <- ts[colnames(CF$lower$soil),]
+SoilM <- cbind(c4i0$CF$coef$soil, Water=0)[SPPms,ts$v2017]
+colnames(SoilM) <- colnames(CF$coef$soil)
+SoilML <- cbind(c4i0$CF$lower$soil, Water=0)[SPPms,ts2$v2017]
+colnames(SoilML) <- colnames(CF$lower$soil)
+SoilMU <- cbind(c4i0$CF$higher$soil, Water=0)[SPPms,ts2$v2017]
+colnames(SoilMU) <- colnames(CF$higher$soil)
+
+pAm <- c4i0$CF$coef$paspen[SPPms,,drop=FALSE]
+
+SPPmn <- rownames(SP[rownames(SP) %ni% rownames(Veg) & SP$model_north,])
+tv <- read.csv("~/repos/cure4insect/inst/crosswalk/veg.csv")[,1:2]
+tv <- nonDuplicated(tv, v2018, TRUE)[colnames(CF$coef$veg),]
+tv[,1] <- as.character(tv[,1])
+tv[,2] <- as.character(tv[,2])
+tv[c("Water", "Bare"), "v2017"] <- c("Water", "Bare")
+tv2 <- tv[colnames(CF$lower$veg),]
+VegM <- cbind(c4i0$CF$coef$veg, Bare=0, Water=0)[SPPmn,tv$v2017]
+colnames(VegM) <- colnames(CF$coef$veg)
+VegML <- cbind(c4i0$CF$lower$veg, Bare=0, Water=0)[SPPmn,tv2$v2017]
+colnames(VegML) <- colnames(CF$lower$veg)
+VegMU <- cbind(c4i0$CF$higher$veg, Bare=0, Water=0)[SPPmn,tv2$v2017]
+colnames(VegMU) <- colnames(CF$higher$veg)
+
+CF$coef$veg <- rbind(CF$coef$veg, VegM)
+CF$coef$soil <- rbind(CF$coef$soil, SoilM)
+CF$coef$paspen <- rbind(CF$coef$paspen, pAm)
+CF$lower$veg <- rbind(CF$lower$veg, VegML)
+CF$lower$soil <- rbind(CF$lower$soil, SoilML)
+CF$higher$veg <- rbind(CF$higher$veg, VegMU)
+CF$higher$soil <- rbind(CF$higher$soil, SoilMU)
+
+str(CF)
+
+compare_sets(rownames(SP)[SP$model_south], rownames(CF$coef$soil))
+compare_sets(rownames(SP)[SP$model_north], rownames(CF$coef$veg))
+
 ## CFbirds
 
-## todo:
-## - add SoftLin and HardLin coefs to CF
-## - add joint/marginal coefs to CFbirds
-
-e17 <- new.env()
-load("d:/abmi/reports/2017/data/kgrid_areas_by_sector.RData", envir=e17)
-str(e17$CFbirds)
-str(e17$CFbirds)
-
-names(e1)
+names(c4i0)
 
 SPPn <- rownames(SP)[SP$taxon=="birds" & SP$model_north]
+SPPs <- rownames(SP)[SP$taxon=="birds" & SP$model_south]
 
 rownames(e1$CoefNorthMarginal) <- e1$Lookup$SpeciesID[match(rownames(e1$CoefNorthMarginal), e1$Lookup$Code)]
 rownames(e1$CoefNorthJoint) <- e1$Lookup$SpeciesID[match(rownames(e1$CoefNorthJoint), e1$Lookup$Code)]
 rownames(e1$CoefSouthMarginal) <- e1$Lookup$SpeciesID[match(rownames(e1$CoefSouthMarginal), e1$Lookup$Code)]
 rownames(e1$CoefSouthJoint) <- e1$Lookup$SpeciesID[match(rownames(e1$CoefSouthJoint), e1$Lookup$Code)]
 
+compare_sets(colnames(CF$lower$veg), colnames(e1$CoefNorthMarginal))
+aa=e1$CoefNorthMarginal[SPPn,colnames(CF$lower$veg)]
+
+pAm <- sapply(e1$CoefSouthBootlistARU, function(z) z[1,"pAspen"])
+pAj <- sapply(e1$CoefSouthBootlistSpace, function(z) z[1,"pAspen"])
+names(pAm) <- names(pAj) <- e1$Lookup$SpeciesID[match(names(pAm), e1$Lookup$Code)]
+
 CFbirds <- list(
     marginal=list(
-        veg=e1$CoefNorthMarginal[SPPn,colnames(CF$coef$veg)],
-        soil=x,
-        paspen=x
+        veg=e1$CoefNorthMarginal[SPPn,colnames(CF$lower$veg)],
+        soil=e1$CoefSouthMarginal[SPPs,colnames(CF$lower$soil)],
+        paspen=cbind(pAspen=pAm[SPPs])
     ),
     joint=list(
-        veg=x,
-        soil=x,
-        paspen=x
+        veg=e1$CoefNorthJoint[SPPn,colnames(CF$lower$veg)],
+        soil=e1$CoefSouthJoint[SPPs,colnames(CF$lower$soil)],
+        paspen=cbind(pAspen=pAj[SPPs])
     )
 )
+str(c4i0$CFbirds)
+str(CFbirds)
+colnames(c4i0$CFbirds[[1]][[1]])
+colnames(CFbirds[[1]][[1]])
+colnames(c4i0$CFbirds[[1]][[2]])
+colnames(CFbirds[[1]][[2]])
 
 ## save
 write.csv(spt, row.names=FALSE, file="d:/abmi/reports/2018/data/species-info.csv")
-save(XY, KT, KA_2016, SP, QT2KT, VER, CF, # CFbirds,
+save(XY, KT, KA_2016, SP, QT2KT, VER, CF, CFbirds,
     file="d:/abmi/reports/2018/data/kgrid_areas_by_sector.RData")
 
 #write.csv(spt, row.names=FALSE, file="s:/reports/2018/data/species-info.csv")
