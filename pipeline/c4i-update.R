@@ -341,6 +341,9 @@ colnames(CFbirds[[1]][[1]])
 colnames(c4i0$CFbirds[[1]][[2]])
 colnames(CFbirds[[1]][[2]])
 
+table(SP$habitat_assoc, useNA="a")
+SP$habitat_assoc[is.na(SP$habitat_assoc)] <- "NotAssessed"
+
 ## save
 write.csv(spt, row.names=FALSE, file="d:/abmi/reports/2018/data/species-info.csv")
 save(XY, KT, KA_2016, SP, QT2KT, VER, CF, CFbirds,
@@ -545,10 +548,19 @@ set_options(version = 2018)
 load_common_data()
 SP2 <- get_species_table()
 
-spp <- setdiff(rownames(SP2), rownames(SP1))
+spp <- intersect(rownames(SP2), rownames(SP1))
 tab <- SP2[spp,]
-table(tab$taxon)
+sppNew <- setdiff(rownames(SP2), rownames(SP1))
+tabNew <- SP2[sppNew,]
+sppOld <- setdiff(rownames(SP1), rownames(SP2))
+tabOld <- SP1[sppOld,]
 
+table(tab$taxon)
+table(tabNew$taxon)
+table(tabOld$taxon)
+
+tabNew[tabNew$taxon=="birds",]
+tabOld[tabOld$taxon=="birds",]
 
 ## use package to do sector effects updates
 
