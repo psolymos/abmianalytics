@@ -34,6 +34,7 @@ modSpace <- new.env()
 load("data/pred/lamMod.RData", envir=modSpace)
 ## additive (Space level) sector effects
 load("data/pred/osm-oven-space.RData")
+#load("data/pred/osm-oven-hf-all.RData")
 getSE <- function(s) {
     Ns1 <- HCR[s,]
     ## 81.3% of mine polys have >0.1 NDVI

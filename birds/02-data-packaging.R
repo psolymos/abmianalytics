@@ -214,6 +214,7 @@ conif <- 1-c(0, 1.3, 4.7, 10, 17.3, 26, 35.5, 45.3, 54.6, 63.1, 70.7, 77.3,
     82.7, 87, 90.1, 92.3, 94, 95.3, 96.7, 98.2, 100)/100
 decid <- 1-c(0, 6.5, 15.1, 25.2, 36.1, 47.2, 57.6, 66.7, 74.3, 80.4, 85,
     88.3, 90.5, 92, 93, 94, 95.1, 96.4, 97.6, 98.8, 100)/100
+#data.frame(Age=age*200, wtAge=age, fCC2_decid=decid, fCC2_decid=decid)
 dd$fCC2 <- 0
 tmp1 <- approxfun(age, decid)(dd$wtAge)
 tmp1[is.na(tmp1)] <- 0 # this happens when wtAge > 0.4 (out of range of approx)

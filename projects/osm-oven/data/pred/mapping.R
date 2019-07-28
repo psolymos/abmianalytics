@@ -79,6 +79,7 @@ stopifnot(all(rownames(kgrid) == rownames(trSoil)))
 tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
 rownames(tv) <- tv[,1]
 tv <- droplevels(tv[!endsWith(rownames(tv), "0"),])
+tv$ao <- as.factor(paste0(as.character(tv[, "UseInAnalysisFine"]), ifelse(tv[, "MatureOld"], "O", "")))
 
 compare_sets(ch2veg$cr, rownames(tv))
 setdiff(ch2veg$cr, rownames(tv))
@@ -87,6 +88,8 @@ setdiff(rownames(tv), ch2veg$cr)
 ch2veg$rf2 <- tv$UseInAnalysisFineAge[match(ch2veg$rf, rownames(tv))]
 ch2veg$cr2 <- tv$UseInAnalysisFineAge[match(ch2veg$cr, rownames(tv))]
 ch2veg$sector <- tv$Sector61[match(ch2veg$cr, rownames(tv))]
+ch2veg$rf3 <- tv$ao[match(ch2veg$rf, rownames(tv))]
+ch2veg$cr3 <- tv$ao[match(ch2veg$cr, rownames(tv))]
 
 EXCL <- c("HWater", "SoilUnknown", "SoilWater", "Water")
 MODIF <- c("SoftLin", "Well", "EnSoftLin", "TrSoftLin", "Seismic")
@@ -102,7 +105,7 @@ trVeg <- trVeg / rsn
 CN <- c("Native", "Misc", "Agriculture", "Forestry", "RuralUrban", "Energy", "Transportation")
 
 
-## north models with bootstrap to get pop sizes in BCR6 -------------------------------------
+## north models with bootstrap -------------------------------------
 
 PROJ <- "north"
 spp <- "OVEN"
@@ -129,8 +132,8 @@ resn <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
 
 ## north estimates
 names(en$mods)
-STAGE <- "Space"
-#STAGE <- "HF"
+#STAGE <- "Space"
+STAGE <- "HF"
 ESTN <- suppressWarnings(get_coef(resn, Xn, stage=STAGE, na.out=FALSE))
 
 b <- nrow(ESTN)
@@ -143,25 +146,81 @@ HABRF <- HABCR
 
 ## define SSH based on actuall partial backfill here based on trVeg
 
-## this goes into loop
-c1 <- colSums(abs(ESTN)) > 0
-if (any(c1[c("SSH_KM", "SSH05_KM")])) {
-    essh <- ESTN[,c("SSH_KM", "SSH05_KM")]
-#    c1[c("SSH_KM", "SSH05_KM")] <- FALSE # drop SSH
-#    mu <- X[,c1,drop=FALSE] %*% t(est[,c1,drop=FALSE])
-    mussh <- mu
-    mussh[] <- 0 # put SSH effects here
-    for (i in rownames(est)) {
-        ssh <- res[[as.integer(i)]]$ssh
-        v <- rowSums(SSH[,ssh$labels])
-        mussh[,i] <- essh[1,"SSH_KM"]*v + essh[1,"SSH05_KM"]*sqrt(v)
-    }
-    mu <- mu + mussh # add them up
-} else {
-    mu <- X[,c1,drop=FALSE] %*% t(est[,c1,drop=FALSE])
-}
-#mu
+SSH <- en$SSH
+compare_sets(colnames(en$SSH), levels(ch2veg$cr3))
+setdiff(colnames(en$SSH), levels(ch2veg$cr3))
+SSH_EXCL <- setdiff(levels(ch2veg$cr3), colnames(en$SSH)) # do not count for SSH
+ZERO <- c("Bare", "SnowIce", "HWater", "Water") # non-habitat
+ALL_HF <- c("Crop", "RoughP", "TameP",
+    "HardLin", "TrSoftLin",
+    "EnSoftLin", "Seismic",
+    "Mine", "Well",
+    "Industrial", "Rural", "Urban",
+    "ForHarv") # backfill these
+LIN_HF <- c(    "HardLin", "TrSoftLin", "EnSoftLin", "Seismic")
+Alien_HF <- c("Crop", "TameP", #"RoughP",
+    "HardLin", "Mine", "Well", "Industrial", "Rural", "Urban")
 
+## fully backfilled
+bf0 <- as.character(ch2veg$rf3)
+SSH0 <- row_std(groupSums(trVeg[ss,], 2, bf0))
+
+## partial backfilled
+## keep all the HF
+#BF_THIS <- character(0) # current
+#SEC <- "All" # what HF was not backfilled
+
+## keep energy only
+BF_THIS <- c(
+    "EnSoftLin", "Seismic",
+    "Mine", "Well",
+    "Industrial") # backfill these
+SEC <- "Energy"
+
+#BF_THIS <- c("Crop", "RoughP", "TameP",
+#    "HardLin", "TrSoftLin",
+#    "EnSoftLin", "Seismic",
+#    "Mine", "Well",
+#    "Industrial", "Rural", "Urban",
+#    "ForHarv") # backfill these
+#SEC <- "None"
+
+## this does not separate forestry --> for SSH_KM variable
+pbf <- as.character(ch2veg$cr3)
+bfi <- pbf %in% BF_THIS
+pbf[bfi] <- as.character(ch2veg$rf3[bfi])
+SSH <- row_std(groupSums(trVeg[ss,], 2, pbf))
+## this does separate forestry --> for HF_KM variables
+pbfFor <- as.character(ch2veg$cr3)
+pbfFor[ch2veg$sector == "Forestry"] <- "ForHarv"
+pbfFor[bfi] <- as.character(ch2veg$rf3[bfi])
+SSHfor <- row_std(groupSums(trVeg[ss,], 2, pbfFor))
+
+## placeholder matrix
+dd <- data.frame(SSH_KM = rep(0, sum(ss)))
+dd$SSH05_KM <- 0
+dd$THF_KM <- rowSums(SSHfor[,colnames(SSHfor) %in% ALL_HF,drop=FALSE])
+dd$Lin_KM <- rowSums(SSHfor[,colnames(SSHfor) %in% LIN_HF,drop=FALSE])
+## note: no abandoned or rough pasture here
+dd$Cult_KM <- rowSums(SSHfor[,colnames(SSHfor) %in% c("Crop", "TameP"),drop=FALSE])
+dd$Alien_KM <- rowSums(SSHfor[,colnames(SSHfor) %in% Alien_HF,drop=FALSE])
+
+dd$Nonlin_KM <- dd$THF_KM - dd$Lin_KM
+dd$Noncult_KM <- dd$THF_KM - dd$Cult_KM
+dd$Succ_KM <- dd$THF_KM - dd$Alien_KM
+dd$THF2_KM <- dd$THF_KM^2
+dd$Succ2_KM <- dd$Succ_KM^2
+dd$Alien2_KM <- dd$Alien_KM^2
+dd$Noncult2_KM <- dd$Noncult_KM^2
+dd$Nonlin2_KM <- dd$Nonlin_KM^2
+
+Xssh <- model.matrix(as.formula(paste0("~-1+", paste(cfn$ssh, collapse="+"))), dd)
+colnames(Xssh) <- fix_names(colnames(Xssh))
+Xssh0 <- Xssh
+Xssh0[] <- 0
+
+## modifying effects: use with Space stage
+if (FALSE) {
 lamMod <- matrix(NA, b, length(cfn$modif))
 colnames(lamMod) <- cfn$modif
 for (i in seq_len(b)) {
@@ -176,6 +235,8 @@ for (i in seq_len(b)) {
             lamMod[i,k] <- linexp(1, estn[k], pm[k])
 }
 save(lamMod, ESTN, file="~/repos/abmianalytics/projects/osm-oven/data/pred/lamMod.RData")
+}
+
 
 for (i in seq_len(b)) {
         if (i %% round(b/10) == 0) {
@@ -183,7 +244,25 @@ for (i in seq_len(b)) {
             flush.console()
         }
         estn <- ESTN[i,]
-        munClim <- drop(Xclim[ss,cfn$spclim] %*% estn[cfn$spclim])
+
+        ## surrounding SSH and HF
+        ssh <- resn[[as.integer(i)]]$ssh
+        Xssh0[,"SSH_KM"] <- rowSums(SSH0[,colnames(SSH0) %in% ssh$labels]) # reference
+        Xssh0[,"SSH05_KM"] <- sqrt(Xssh0[,"SSH_KM"])
+        Xssh[,"SSH_KM"] <- rowSums(SSH[,colnames(SSH0) %in% ssh$labels])
+        Xssh[,"SSH05_KM"] <- sqrt(Xssh[,"SSH_KM"])
+        if (i == 1) # save 1st run
+            XSSH <- Xssh[,c("SSH_KM", "THF_KM", "Lin_KM", "Nonlin_KM", "Succ_KM", "Alien_KM",
+                "Noncult_KM", "Cult_KM")]
+        munSsh0 <- drop(Xssh0[,cfn$ssh] %*% estn[cfn$ssh])
+        munSsh <- drop(Xssh[,cfn$ssh] %*% estn[cfn$ssh])
+        munCl <- drop(Xclim[ss,cfn$spclim] %*% estn[cfn$spclim])
+
+        ## let climate include SSH and HF too
+        munClim0 <- munCl + munSsh0 # reference (fully backfilled)
+        munClim <- munCl + munSsh # current/partial backfilled
+
+        ## sof linear modifiers & habitat
         if (estn["mSoft"] != 0 & estn["mEnSft"] == 0) {
             estn["mEnSft"] <- estn["mSoft"]
             estn["mTrSft"] <- estn["mSoft"]
@@ -206,24 +285,95 @@ for (i in seq_len(b)) {
         prnCr <- munHab[match(ch2veg$cr2, names(munHab))]
         prnRf <- munHab[match(ch2veg$rf2, names(munHab))]
         prnCr[ch2veg$modif] <- prnRf[ch2veg$modif] + prnCr[ch2veg$modif]
+
         ## put pieces together for north
         ## multiplying with row normalized area gives the weighted averaging
         ADnCr <- 100 * t(exp(prnCr) * t(trVegSS)) * exp(munClim) # males / km cell
-        ADnRf <- 100 * t(exp(prnRf) * t(trVegSS)) * exp(munClim)
+        ADnRf <- 100 * t(exp(prnRf) * t(trVegSS)) * exp(munClim0)
         #ADnCrHab <- groupSums(ADnCr, 2, ch2veg$cr2)
 
         ## quantiles not applied -- look at that post hoc before summing up
-        #CR[,i] <- rowSums(ADnCr) # no pair adjustment applied, just ha to km
-        #RF[,i] <- rowSums(ADnRf) # no pair adjustment applied, just ha to km
+        CR[,i] <- rowSums(ADnCr) # no pair adjustment applied, just ha to km
+        RF[,i] <- rowSums(ADnRf) # no pair adjustment applied, just ha to km
         HABCR[colnames(ADnCr),i] <- colSums(ADnCr)
         HABRF[colnames(ADnRf),i] <- colSums(ADnRf)
 }
-save(HABRF, HABCR, ch2veg, tv, AVegSS,
-    file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/", spp, ".RData"))
+cat("\n")
+save(CR, RF, HABRF, HABCR, ch2veg, tv, AVegSS, XSSH,
+    file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/",
+    spp, "-", tolower(STAGE), "-", tolower(SEC), ".RData"))
+
+
+## explore joint ssh landscape
+
+ssh_labs <- list()
+for (i in seq_len(b)) {
+    ssh_labs[[i]] <- resn[[as.integer(i)]]$ssh$labels
+}
+lab <- names(table(unlist(ssh_labs))[table(unlist(ssh_labs)) > 0.5*b])
+
+#d:\abmi\AB_data_v2018\data\analysis\birds\pred\oven\OVEN-hf-all.RData
+#d:\abmi\AB_data_v2018\data\analysis\birds\pred\oven\OVEN-hf-energy.RData
+#d:\abmi\AB_data_v2018\data\analysis\birds\pred\oven\OVEN-space-all.RData
+#d:\abmi\AB_data_v2018\data\analysis\birds\pred\oven\OVEN-space-energy.RData
+
+EN <- c("EnSoftLin", "Seismic", "Mine", "Well", "Industrial")
+jd <- data.frame(XSSH)
+colnames(jd) <- gsub("_KM", "", colnames(jd))
+jd$D <- rowMeans(CR) / 100 # per ha density
+jd$logD <- log(jd$D+0.5)
+summary(jd)
+sub <- sample(nrow(jd), 5000)
+kk <- row_std(groupSums(trVeg[ss,], 2, ch2veg$cr3))
+jd <- data.frame(jd, as.matrix(kk[,EN]))
+jd$SSH <- rowSums(kk[,colnames(kk) %in% lab,drop=FALSE])
+jd$Energy <- as.numeric(rowSums(kk[,EN]))
+jd$Soft <- as.numeric(rowSums(kk[,c("EnSoftLin", "Seismic")]))
+jd$Ui <- as.numeric(rowSums(kk[,c("Mine", "Well", "Industrial")]))
+
+plot(D ~ SSH, jd[sub,], pch=19, col="#00000022")
+plot(D ~ THF, jd[sub,], pch=19, col="#00000022")
+
+# bivariate using GAM
+m <- mgcv::gam(D ~ s(SSH, THF), jd, family=gaussian)
+plot(m, scheme=2, main=spp)
+
+m2 <- mgcv::gam(D ~ s(Lin), jd, family=gaussian)
+plot(m2)
+m2 <- mgcv::gam(D ~ s(Alien), jd, family=gaussian)
+plot(m2)
+m2 <- mgcv::gam(D ~ s(Succ), jd, family=gaussian)
+plot(m2)
+m2 <- mgcv::gam(D ~ s(Cult), jd, family=gaussian)
+plot(m2)
+
+m2 <- mgcv::gam(D ~ s(Energy, k=5), jd, family=gaussian)
+plot(m2, rug=TRUE)
+
+m2 <- mgcv::gam(D ~ s(Seismic), jd, family=gaussian)
+plot(m2, rug=TRUE)
+
+m2 <- mgcv::gam(D ~ s(EnSoftLin), jd, family=gaussian)
+plot(m2, rug=TRUE)
+
+m2 <- mgcv::gam(D ~ s(Soft), jd, family=gaussian)
+plot(m2, rug=TRUE)
+
+m2 <- mgcv::gam(D ~ s(Ui), jd, family=gaussian)
+plot(m2, rug=TRUE)
+
+m <- mgcv::gam(D ~ s(Ui, Soft), jd, family=gaussian)
+plot(m, scheme=2, main=spp)
+
+## take
+
 
 ## sector effects
 
-load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/OVEN.RData")
+file <- paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/",
+    spp, "-", tolower(STAGE), "-", tolower(SEC), ".RData")
+
+load(file)
 
 
 levs <- c(
@@ -258,7 +408,9 @@ HCR <- groupSums(HABCR, 1, sect)
 HRF <- groupSums(HABRF, 1, sect)
 A <- groupSums(matrix(AVegSS, ncol=1), 1, sect)
 
-save(HCR, HRF, A, file="~/repos/abmianalytics/projects/osm-oven/data/pred/osm-oven-space.RData")
+save(HCR, HRF, A, file=paste0(
+    "~/repos/abmianalytics/projects/osm-oven/data/pred/osm-oven-",
+    tolower(STAGE), "-", tolower(SEC), ".RData"))
 
 
 ## mine site: take NDVI and use weighted average
