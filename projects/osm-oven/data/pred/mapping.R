@@ -124,6 +124,7 @@ o <- over(xy, pl)
 #plot(xy, pch=".", col=ifelse(is.na(o$FIELDCODE), 1, 4))
 
 ss <- !is.na(o$FIELDCODE)
+pveg_mine <- 0.44 # proportion of vegetated mines in OSR from NDVI
 
 trVegSS <- trVeg[ss,]
 AVegSS <- colSums(trVegSS)
@@ -292,6 +293,9 @@ for (i in seq_len(b)) {
         ADnRf <- 100 * t(exp(prnRf) * t(trVegSS)) * exp(munClim0)
         #ADnCrHab <- groupSums(ADnCr, 2, ch2veg$cr2)
 
+        ## Mines: 70 is vegetated
+        ADnCr[,ch2veg$cr == "MineSite"] <- pveg_mine * ADnCr[,ch2veg$cr == "MineSite"]
+
         ## quantiles not applied -- look at that post hoc before summing up
         CR[,i] <- rowSums(ADnCr) # no pair adjustment applied, just ha to km
         RF[,i] <- rowSums(ADnRf) # no pair adjustment applied, just ha to km
@@ -304,7 +308,15 @@ save(CR, RF, HABRF, HABCR, ch2veg, tv, AVegSS, XSSH,
     spp, "-", tolower(STAGE), "-", tolower(SEC), ".RData"))
 
 
-## explore joint ssh landscape
+## explore joint ssh landscape effects
+
+espall <- new.env()
+ehfall <- new.env()
+#ehfen <- new.env()
+load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/OVEN-space-all.RData", envir=espall)
+load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/OVEN-hf-all.RData", envir=ehfall)
+#load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/OVEN-hf-energy.RData", envir=ehfen)
+
 
 ssh_labs <- list()
 for (i in seq_len(b)) {
@@ -312,16 +324,14 @@ for (i in seq_len(b)) {
 }
 lab <- names(table(unlist(ssh_labs))[table(unlist(ssh_labs)) > 0.5*b])
 
-#d:\abmi\AB_data_v2018\data\analysis\birds\pred\oven\OVEN-hf-all.RData
-#d:\abmi\AB_data_v2018\data\analysis\birds\pred\oven\OVEN-hf-energy.RData
-#d:\abmi\AB_data_v2018\data\analysis\birds\pred\oven\OVEN-space-all.RData
-#d:\abmi\AB_data_v2018\data\analysis\birds\pred\oven\OVEN-space-energy.RData
-
 EN <- c("EnSoftLin", "Seismic", "Mine", "Well", "Industrial")
 jd <- data.frame(XSSH)
 colnames(jd) <- gsub("_KM", "", colnames(jd))
-jd$D <- rowMeans(CR) / 100 # per ha density
-jd$logD <- log(jd$D+0.5)
+
+jd$D1 <- rowMeans(espall$CR) / 100 # per ha density
+jd$D2 <- rowMeans(ehfall$CR) / 100 # per ha density
+jd$dD <- jd$D2 - jd$D1
+#jd$logD <- log(jd$D+0.5)
 summary(jd)
 sub <- sample(nrow(jd), 5000)
 kk <- row_std(groupSums(trVeg[ss,], 2, ch2veg$cr3))
@@ -331,39 +341,65 @@ jd$Energy <- as.numeric(rowSums(kk[,EN]))
 jd$Soft <- as.numeric(rowSums(kk[,c("EnSoftLin", "Seismic")]))
 jd$Ui <- as.numeric(rowSums(kk[,c("Mine", "Well", "Industrial")]))
 
-plot(D ~ SSH, jd[sub,], pch=19, col="#00000022")
-plot(D ~ THF, jd[sub,], pch=19, col="#00000022")
 
-# bivariate using GAM
-m <- mgcv::gam(D ~ s(SSH, THF), jd, family=gaussian)
-plot(m, scheme=2, main=spp)
+m1 <- mgcv::gam(D1 ~ s(SSH, THF), jd, family=gaussian)
+m2 <- mgcv::gam(D2 ~ s(SSH, THF), jd, family=gaussian)
+#m3 <- mgcv::gam(dD ~ s(SSH, THF), jd, family=gaussian)
 
-m2 <- mgcv::gam(D ~ s(Lin), jd, family=gaussian)
-plot(m2)
-m2 <- mgcv::gam(D ~ s(Alien), jd, family=gaussian)
-plot(m2)
-m2 <- mgcv::gam(D ~ s(Succ), jd, family=gaussian)
-plot(m2)
-m2 <- mgcv::gam(D ~ s(Cult), jd, family=gaussian)
-plot(m2)
+op <- par(mfrow=c(1,2))
+plot(m1, scheme=2, main="Space")
+plot(m2, scheme=2, main="HF")
+#plot(m3, scheme=2, main="Diff")
+par(op)
 
-m2 <- mgcv::gam(D ~ s(Energy, k=5), jd, family=gaussian)
-plot(m2, rug=TRUE)
+SSH <- seq(0, 1, 0.01)
+THF <- seq(0, 1, 0.01)
+pr <- expand.grid(SSH=SSH, THF=THF)
+pr$D1 <- predict(m1, pr)
+pr$D2 <- predict(m2, pr)
 
-m2 <- mgcv::gam(D ~ s(Seismic), jd, family=gaussian)
-plot(m2, rug=TRUE)
+img1 <- list(x=SSH, y=THF, z=matrix(pr$D1, length(SSH), length(THF)))
+img2 <- list(x=SSH, y=THF, z=matrix(pr$D2, length(SSH), length(THF)))
+MAX <- c(max(img1$z), max(img2$z))
 
-m2 <- mgcv::gam(D ~ s(EnSoftLin), jd, family=gaussian)
-plot(m2, rug=TRUE)
+levs <- seq(0.2, 1.2, 0.2)
+col <- hcl.colors(100, "YlOrRd", rev = TRUE)
+op <- par(mfrow=c(1,2))
+image(img1, xlab="SSH", ylab="THF", main="Space", col=col[seq_len(ceiling(100*MAX[1]/max(MAX)))])
+contour(img1, add=TRUE, levels=levs)
+box()
+image(img2, xlab="SSH", ylab="THF", main="HF", col=col[seq_len(ceiling(100*MAX[2]/max(MAX)))])
+contour(img2, add=TRUE, levels=levs)
+box()
+par(op)
 
-m2 <- mgcv::gam(D ~ s(Soft), jd, family=gaussian)
-plot(m2, rug=TRUE)
 
-m2 <- mgcv::gam(D ~ s(Ui), jd, family=gaussian)
-plot(m2, rug=TRUE)
+val <- jd$SSH
+val <- jd$THF
+val <- jd$Seismic
+val <- jd$EnSoftLin
+val <- jd$Ui
+val <- jd$Soft
 
-m <- mgcv::gam(D ~ s(Ui, Soft), jd, family=gaussian)
-plot(m, scheme=2, main=spp)
+m31 <- mgcv::gam(D1 ~ s(val, k=4), jd, family=gaussian)
+m32 <- mgcv::gam(D2 ~ s(val, k=4), jd, family=gaussian)
+
+pr2 <- data.frame(val=seq(0, quantile(val, 0.999), length.out=200))
+
+pp <- qnorm(0.975)
+tmp <- predict(m31, pr2, se.fit=TRUE)
+pr2$D1 <- tmp$fit
+pr2$D1cl <- tmp$se.fit*pp
+tmp <- predict(m32, pr2, se.fit=TRUE)
+pr2$D2 <- tmp$fit
+pr2$D2cl <- tmp$se.fit*pp
+
+plot(D1 ~ val, pr2, type="n", col=4, lwd=2, ylim=c(0, max(pr2$D1, pr2$D2)))
+polygon(c(pr2$val, rev(pr2$val)), c(pr2$D1+pr2$D1cl, rev(pr2$D1-pr2$D1cl)), border=NA, col="#0000ff44")
+polygon(c(pr2$val, rev(pr2$val)), c(pr2$D2+pr2$D2cl, rev(pr2$D2-pr2$D2cl)), border=NA, col="#ff000044")
+lines(D1 ~ val, pr2, col=4, lwd=2)
+lines(D2 ~ val, pr2, col=2, lwd=2)
+
 
 ## take
 
@@ -431,6 +467,50 @@ save(HCR, HRF, A, file=paste0(
 #' Low, positive values represent shrub and grassland (approximately 0.2 to 0.4),
 #' while high values indicate temperate and tropical rainforests (values approaching 1).
 
+x <- read.csv("d:/abmi/AB_data_v2018/data/raw/HFI_Mines_NDVI.csv")
+summary(x)
+hist(x$NDVImean)
+table(x$Mines_FEATURE_TY, is.na(x$NDVImean), useNA="a")
+x <- x[!is.na(x$NDVImean),]
+
+m <- lm(NDVImean ~ Mines_FEATURE_TY-1, x)
+summary(m)
+
+boxplot(NDVImean ~ Mines_FEATURE_TY-1, x)
+abline(h=c(-0.1,0, 0.1), col=2)
+
+a <- aggregate(x$NDVImean, list(FTY=x$Mines_FEATURE_TY), quantile, c(0.5, 0, 1))
+a <- a[order(a$x[,"50%"]),]
+a
+
+x$FEATURE_TY <- as.character(x$Mines_FEATURE_TY)
+x$FEATURE_TY <- factor(x$FEATURE_TY, as.character(a$FTY))
+#levels(x$FEATURE_TY) <- paste(LETTERS[1:nlevels(x$FEATURE_TY)], x$FEATURE_TY)
+
+library(ggplot2)
+
+p <- ggplot(x, aes(y=NDVImean, x=FEATURE_TY, fill=FEATURE_TY, color=FEATURE_TY)) +
+  geom_violin() + coord_flip() + theme(legend.position = "none") +
+  geom_hline(yintercept = 0) + geom_hline(yintercept = -0.1, lty=2) + geom_hline(yintercept = 0.1, lty=2)
+p
+
+## calculating average mine NDVI proportions (all)
+x$vegetated <- x$NDVImean > 0.1
+sum(x$area_ha[x$vegetated]) / sum(x$area_ha) # 0.7
+
+## calculating average mine NDVI proportions (OSR)
+library(rgdal)
+library(sp)
+pl <- readOGR("d:/spatial/Oilsands-Boundaries.gdb", "OilsandRegionDissolve10TM")
+xy <- x[,c("x", "y")]
+coordinates(xy) <- ~ x + y
+proj4string(xy) <- proj4string(pl)
+xy <- spTransform(xy, proj4string(pl))
+o <- over(xy, pl)
+plot(xy, pch=".", col=ifelse(is.na(o$FIELDCODE), 1, 4))
+plot(pl, add=T)
+x$inOSR <- !is.na(o$FIELDCODE)
+sum(x$area_ha[x$vegetated & x$inOSR]) / sum(x$area_ha[x$inOSR]) # 0.44
 
 
 
