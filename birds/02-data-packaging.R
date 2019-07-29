@@ -130,6 +130,17 @@ sc1r <- row_std(groupSums(sc1[rownames(dd),], 2, ts[colnames(sc1),"UseInAnalysis
 sr1r <- row_std(groupSums(sr1[rownames(dd),], 2, ts[colnames(sr1),"UseInAnalysisCoarse"]))
 sc2r <- row_std(groupSums(sc2[rownames(dd),], 2, ts[colnames(sc2),"UseInAnalysisCoarse"]))
 sr2r <- row_std(groupSums(sr2[rownames(dd),], 2, ts[colnames(sr2),"UseInAnalysisCoarse"]))
+if (FALSE) {
+    ## quick hack to get reference data set for prediction
+    vc1r[] <- 0
+    vc1r[,colnames(vr1r)] <- vr1r
+    vc2r[] <- 0
+    vc2r[,colnames(vr2r)] <- vr2r
+    sc1r[] <- 0
+    sc1r[,colnames(sr1r)] <- sr1r
+    sc2r[] <- 0
+    sc2r[,colnames(sr2r)] <- sr2r
+}
 #' Point intersection based reclassified variables (w/o forest age)
 dd$vegpt <- as.factor(tv$UseInAnalysisFine[match(dd$VEGHFAGEclass, rownames(tv))])
 dd$soilpt <- as.factor(ts$UseInAnalysisCoarse[match(dd$SOILHFclass, rownames(ts))])
@@ -474,6 +485,8 @@ cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(Y
 
 save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
     file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-south-2018-12-07.RData")
+#save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
+#    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-south-2019-07-29-reference.RData")
 #'
 #' ## North
 #'
@@ -506,6 +519,8 @@ cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(Y
 
 save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
     file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-north-2019-01-30.RData")
+#save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
+#    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-north-2019-07-29-reference.RData")
 #'
 #' ## Validation subsets
 #'

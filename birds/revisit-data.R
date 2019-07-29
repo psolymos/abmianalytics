@@ -15,9 +15,11 @@ TAX <- ee$tax
 rm(ee)
 
 en <- new.env()
-load(file.path(ROOT, "data", "ab-birds-north-2018-12-07.RData"), envir=en)
+#load(file.path(ROOT, "data", "ab-birds-north-2018-12-07.RData"), envir=en)
+load(file.path(ROOT, "data", "ab-birds-north-2019-07-29-reference.RData"), envir=en)
 es <- new.env()
-load(file.path(ROOT, "data", "ab-birds-south-2018-12-07.RData"), envir=es)
+#load(file.path(ROOT, "data", "ab-birds-south-2018-12-07.RData"), envir=es)
+load(file.path(ROOT, "data", "ab-birds-south-2019-07-29-reference.RData"), envir=es)
 Xn <- get_model_matrix(en$DAT, en$mods)
 Xs <- get_model_matrix(es$DAT, es$mods)
 
