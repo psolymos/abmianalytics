@@ -20,8 +20,12 @@ load(file.path(ROOT, "data", "ab-birds-north-2019-07-29-reference.RData"), envir
 es <- new.env()
 #load(file.path(ROOT, "data", "ab-birds-south-2018-12-07.RData"), envir=es)
 load(file.path(ROOT, "data", "ab-birds-south-2019-07-29-reference.RData"), envir=es)
+
 Xn <- get_model_matrix(en$DAT, en$mods)
 Xs <- get_model_matrix(es$DAT, es$mods)
+
+Xn <- cbind(Xn, "vegcCrop"=0, "vegcIndustrial"=0, "vegcMine"=0, "vegcRoughP"=0, "vegcRural"=0,
+    "vegcTameP"=0, "vegcUrban"=0)
 
 Xage <- as.matrix(read.csv("~/repos/abmianalytics/lookup/Xn-veg-v61.csv"))
 colnames(Xage) <- colnames(Xn)[match(colnames(Xage), make.names(colnames(Xn)))]
@@ -61,9 +65,11 @@ D[] <- 0
 for (spp in colnames(D)) {
     cat(spp, "\n");flush.console()
     resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
-    lam <- rowMeans(exp(predict_with_SSH(resn, Xn[keep,], stage="Space")))
-    tmp <- sum_by(lam, d$ABMIsiteYear)[rownames(Dat),]
-    D[,spp] <- tmp[,"x"] / tmp[,"by"]
+    if (!is.null(resn)) {
+        lam <- rowMeans(exp(predict_with_SSH(resn, Xn[keep,], stage="Space")))
+        tmp <- sum_by(lam, d$ABMIsiteYear)[rownames(Dat),]
+        D[,spp] <- tmp[,"x"] / tmp[,"by"]
+    }
 }
 
 colnames(Y) <- colnames(D) <- as.character(TAX[colnames(Y), "sppid"])
@@ -89,4 +95,6 @@ range(D)
 apply(D, 2, max)
 
 save(Dat, Y, D, file="RFdata-toDave-20190724.RData", version=2)
+
+write.csv(D, file="reference-bird-densities-20190730.csv")
 

@@ -15,6 +15,17 @@ library(maptools)
 source("~/repos/abmianalytics/birds/00-functions.R")
 knitr::opts_chunk$set(eval=FALSE)
 load("d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-all-2018-11-29.RData")
+if (FALSE) {
+    ## quick hack to get reference data set for prediction
+    vc1[] <- 0
+    vc1[,colnames(vr1)] <- vr1
+    vc2[] <- 0
+    vc2[,colnames(vr2)] <- vr2
+    sc1[] <- 0
+    sc1[,colnames(sr1)] <- sr1
+    sc2[] <- 0
+    sc2[,colnames(sr2)] <- sr2
+}
 #'
 #' # Remove missing data
 #'
@@ -130,17 +141,6 @@ sc1r <- row_std(groupSums(sc1[rownames(dd),], 2, ts[colnames(sc1),"UseInAnalysis
 sr1r <- row_std(groupSums(sr1[rownames(dd),], 2, ts[colnames(sr1),"UseInAnalysisCoarse"]))
 sc2r <- row_std(groupSums(sc2[rownames(dd),], 2, ts[colnames(sc2),"UseInAnalysisCoarse"]))
 sr2r <- row_std(groupSums(sr2[rownames(dd),], 2, ts[colnames(sr2),"UseInAnalysisCoarse"]))
-if (FALSE) {
-    ## quick hack to get reference data set for prediction
-    vc1r[] <- 0
-    vc1r[,colnames(vr1r)] <- vr1r
-    vc2r[] <- 0
-    vc2r[,colnames(vr2r)] <- vr2r
-    sc1r[] <- 0
-    sc1r[,colnames(sr1r)] <- sr1r
-    sc2r[] <- 0
-    sc2r[,colnames(sr2r)] <- sr2r
-}
 #' Point intersection based reclassified variables (w/o forest age)
 dd$vegpt <- as.factor(tv$UseInAnalysisFine[match(dd$VEGHFAGEclass, rownames(tv))])
 dd$soilpt <- as.factor(ts$UseInAnalysisCoarse[match(dd$SOILHFclass, rownames(ts))])
