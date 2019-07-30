@@ -64,7 +64,7 @@ forest harvest on songbirds.
 We chose this species as an example because it is one of the most studied boreal songbird species,
 and it represents upland bird communities preferring mature and old grofth forests.
 
-[^1]: Mahon et al. 2016
+[^1]: Mahon, C. L., Holloway, G., Sólymos, P., Cumming, S. G., Bayne, E. M., Schmiegelow, F. K. A., and Song, S. J., 2016. Community structure and niche characteristics of upland and lowland western boreal birds at multiple spatial scales. Forest Ecology and Management, 361:99–116.
 
 [^2]: BNA website: Porneluzi, P., M. A. Van Horn, and T. M. Donovan (2011). Ovenbird (_Seiurus aurocapilla_), version 2.0. In The Birds of North America (A. F. Poole, Editor). Cornell Lab of Ornithology, Ithaca, NY, USA. https://doi.org/10.2173/bna.88
 
@@ -72,6 +72,152 @@ and it represents upland bird communities preferring mature and old grofth fores
 include_graphics("images/Seiurus-aurocapilla-large.jpg")
 ```
 
+# Methods
+
+Methods closely follow the approach described in Ball et al.[^5] and Solymos et al.[^6][^16]
+
+[^5]: Ball, J. R., P. Sólymos, F. K. A. Schmiegelow, S. Hache, J. Schieck, and E. Bayne. 2016. Regional habitat needs of a nationally listed species, Canada Warbler (Cardellina canadensis), in Alberta, Canada. Avian Conservation and Ecology 11(2):10. http://dx.doi.org/10.5751/ACE-00916-110210 
+
+[^6]: Sólymos, P., Azeria, E. T., Huggard, D. J., Roy, M.-C., and Schieck, J., 2019. Predicting species status and relationships. In: Alberta Biodiversity Monitoring Institute (ABMI), ABMI 10-year science and program review. pp. 65--97. https://abmi10years.ca/10-year-review/resources/
+
+[^16]: Solymos, P., Judith D. Toms,  Steven M. Matsuoka,  Steven G. Cumming,  Nicole K. S. Barker,  Wayne E. Thogmartin,  Diana Stralberg,  Andrew D. Crosby,  Francisco V. Denes,  Samuel Hache,  C. Lisa Mahon,  Fiona K. A. Schmiegelow,  Erin M. Bayne. 2019. At the end of the road: Lessons learned from comparing model- and sample-based approaches to estimate population sizes of boreal birds in Alberta, Canada. Condor, under revision.
+
+## Bird data
+
+```{r include=FALSE}
+ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
+en <- new.env()
+load(file.path(ROOT, "data", "ab-birds-north-2018-12-07.RData"), envir=en)
+
+```
+
+We used `r nrow(en$DAT)` point count survey visits from `r nlevels(droplevels(en$DAT$SS))` unique survey stations in the Boreal, Foothills, Parklands, and Rocky Mountain natural regions north of 50 degrees latitude in Alberta, Canada. Survey data were collated from the North American Breeding Bird Survey (BBS) (`r sum(en$DAT$PCODE == "BBSAB")` visits), Boreal Avian Modelling Program (`r sum(!(en$DAT$PCODE %in% c("BBSAB", "ABMIRF", "ABMISM")))` visits; http://www.borealbirds.ca), and the Alberta Biodiversity Monitoring Institute (`r sum(en$DAT$PCODE %in% c("ABMIRF", "ABMISM"))` visits; http://www.abmi.ca). Surveys were conducted between 1997 and 2017. In combination, these surveys are representative of Alberta’s boreal region. Each survey was 3--10 minutes long and sampled a radius of 50 m to unlimited distance. One or more Ovenbirds were detected during `r sum(en$YY[,"OVEN"]>0)` (`r round(100*sum(en$YY[,"OVEN"]>0)/nrow(en$YY), 1)`%) surveys, with a maximum record of `r max(en$YY[,"OVEN"])` individuals in a survey.
+
+## Biophysical attributes
+
+We used two spatial scales to derive predictor variables for each survey station. Local-scale variables were assessed in a 150-m radius of each station. This scale encompasses the average breeding territory of Ovenbird (1 ha[^3]) and the effective detection distance for the song of most forest songbirds[^4]. It is also half the minimum distance between stations in our data set. Stand-scale variables were assessed in a 564-m radius (1 km$^2$) of each survey station. This stand scale was chosen for pragmatic reasons to match the mapping unit in our predictions and because it roughly corresponds to the scale deemed most appropriate for landscape variables based on smoothing kernel estimates for landscape variables[^7] and based on Ovenbirds shown to disperse up to 500 m from their natal territory post-fledge, suggesting habitat selection may also be operating at this scale[^8].
+
+[^3]: Lankau, H. E., E. M. Bayne, and C. S. Machtans. 2013. Ovenbird (Seiurus aurocapilla) territory placement near seismic lines is influenced by forest regeneration and conspecific density. Avian Conservation and Ecology 8(1):5. http://dx.doi.org/10.5751/ACE-00596-080105
+
+[^4]: Matsuoka et al. 2012. Auk
+
+[^7]: Chandler, R., and J. Hepinstall-Cymerman. 2016. Estimating the spatial scales of landscape effects on abundance. Landscape Ecology 31:1383-1394. http://dx.doi.org/10.1007/s10980-016-0380-z
+
+[^8]: Streby, H. M., and D. E. Andersen. 2013. Testing common assumptions in studies of songbird nest success. Ibis 155:327-337. http://dx.doi.org/10.1111/ibi.12018
+
+
+At the local scale, land cover was assessed for each survey station using provincial land cover[^9][^11] information. Vegetation type included deciduous, mixedwood, white spruce, pine, black spruce forest stands, treed fen, shrub, grass/herb, graminoid fen, marsh, and swamp cover types. Human footprint was assessed at each survey point based on the year of sampling (interpreted at a 1:5000 scale[^10][^11]). Footprint type included cultivation, forestry, urban-industrial (mines, well sites, urban areas, industrial, rural residential), hard linear (road and rails), and vegetated soft linear (seismic lines, pipe lines, power lines, road verges) features.
+
+[^9]: Alberta Biodiversity Monitoring Institute. 2017. Alberta Wall-to-Wall Vegetation Layer Including "Backfilled" Vegetation in Human Footprints (Version 6). Alberta Biodiversity Monitoring Institute, Alberta, Canada. URL: https://www.abmi.ca/home/data-analytics/da-top/da-product-overview/GIS-Land-Surface/Detailed-Vegetation-Maps.html
+
+[^10]: Shieck, J., Huggard, D., and Sólymos, P. 2014. Human footprint in Alberta. ABMI Science Letters, September 5, 2014. URL: http://ftp.public.abmi.ca//home/publications/documents/364_Schieck_etal_2014_LetterHFInAlberta_ABMI.pdf
+
+[^11]: Allen, B., Morrison, S., Kariyeva, J., Sparkes, S., Hutchings, C., Hricko, B., Sólymos, P., and Huggard, D., 2019. Data collection. In: Alberta Biodiversity Monitoring Institute (ABMI), ABMI 10-year science and program review. pp. 29--64. https://abmi10years.ca/10-year-review/resources/
+
+```{r hab_tab,echo=FALSE}
+k <- data.frame(table(en$DAT$vegc))
+colnames(k) <- c("Land cover type", "Number of surveys")
+kable(k)
+```
+
+Proportional area was calculated at the local scale, and the dominant vegetation type was assigned to each survey station based on a simple majority rule. Observations were weighted according to the proportion of the dominant land-cover type (weight = 1 for > 0.75, linearly deceasing between 0.75 and 0.25, 0 for < 0.25 proportions) to reduce the effects of 'contamination' when surveys were done in a mixture of different land-cover types. We used various data sources[^9] to estimate the years since last disturbance (i.e., forest age) relative to year of sampling for birds. Age was calculated as the area weighted average of the polygons within each buffer distance (local and stand scales).We modeled the effect of forest age on Ovenbird density by using weighted age and its quadratic and square root transformed terms as covariates. We incorporated interactions between forest type and age. When the dominant land cover was a harvest block, the predisturbance vegetation type was assumed based on available forest inventory data in the local 150-m buffer. Doing so treated harvested areas as young forest rather than a separate land cover type. We also created a contrast variable that ranged between 1 (recent harvest) and 0 (converged to natural stands) to describe the convergence trajectory of forestry cut blocks. We assumed that convergence is complete at 60 years after harvest. This allowed us to differentiate young forests of natural (i.e., fire) versus anthropogenic (i.e., timber harvest) origin.
+
+**FIXME** add harvest trajectory convergence info.
+
+Footprint types were treated as landcover classes when they comprised the dominant class in the buffer. However, because linear features usually make up <20% of the 150-m buffer area, we did not treat these features as separate land-cover classes. Instead we included the proportion of soft linear features within the buffer as a covariate. We used a binary variable to distinguish roadside (1) from off-road (0) surveys because it is known that their presence can introduce biases when not accounted for[^12][^13]. 
+
+[^12]: Bayne, E., L. Leston, C. L. Mahon, P. Sólymos, C. Machtans, H. Lankau, J. R. Ball, S. L. Van Wilgenburg, S. G. Cumming, T. Fontaine, F. K. A. Schmiegelow, and S. J. Song. 2016. Boreal bird abundance estimates within different energy sector disturbances vary with point count radius. Condor 118:376--390. http://dx.doi.org/10.1650/CONDOR-15-126.1
+
+[^13]: Marques, T. A., S. T. Buckland, D. L. Borchers, D. Tosh, and R. A. McDonald. 2010. Point transect sampling along linear features. Biometrics 66:1247-1255. http://dx.doi.org/10.1111/j.1541-0420.2009.01381.x
+
+We also accounted for biases related to survey methodology. The majority of the surveys were done by trained human observers, whereas the remainder were field-based recordings (RiverFork and SongMeter units), which were transcribed in the laboratory. We used a three-level (human, RiverFork, SongMeter) factor variable to account for this possible bias in our analyses. The exponent of these estimated contrasts gave the magnitude of expected counts compared with the reference type of survey method[^14][^15].
+
+[^14]: Van Wilgenburg, S. L., P. Sólymos, K. J. Kardynal, and M. D. Frey. 2017. Paired sampling standardizes point count data from humans and acoustic recorders. Avian Conservation and Ecology 12(1):13. https://doi.org/10.5751/ACE-00975-120113
+
+[^15]: Yip, D. A., L. Leston, E. M. Bayne, P. Sólymos, and A. Grover. 2017. Experimentally derived detection distances from audio recordings and human observers enable integrated analysis of point count data. Avian Conservation and Ecology 12(1):11. https://doi.org/10.5751/ACE-00997-120111
+
+Geographic variation was captured by including latitude, longitude, and climate (mean annual precipitation, mean annual temperature, potential evapotranspiration, annual heat moisture index, frost-free period, mean warmest and coldest month temperature[^17]), and the amount of open water in a 1-km$^2$ buffer around each survey location as another spatial covariate.
+
+[^17]: Wang, T., A. Hamann, D. L. Spittlehouse, and T. Q. Murdock. 2012. ClimateWNA–high-resolution spatial climate data for western North America. Journal of Applied Meteorology and Climatology 51:16-29. http://dx.doi.org/10.1175/JAMC-D-11-043.1
+
+At the stand scale, we calculated the proportion of SSH within a 564 m radius of each survey station. 
+
+**FIXME** add here how SSH were derived and selection frequencies ("Decid"      "DecidO"     "Mixedwood"  "MixedwoodO" "Spruce").
+
+Area of total human footprint was also quantified at the stand scale for each survey station, and further partitioned as proportion of successional, alienating, linear, nonlinear, cultivation, and non-cultivation footprints. Successional footprint included activities where the soil disturbance was minimal (forest harvest, soft linear features), whereas alienating footprint included activities that disturbed soils (cultivation, urban-industrial, hard linear features, human-created water bodies). 
+
+
+
+## Modeling
+
+We used Poisson generalized linear models with a log link. The response variable was the number of Ovenbirds counted per survey. We used the QPAD approach to account for differences in sampling protocol and nuisance parameters affecting detectability (time of day, time of year, tree cover, habitat composition[^18][^19]). This approach converts sampling distances and durations to a common standard through statistical offsets and adjusts for differences in detection error and sampling area related to broad vegetation types and timing of surveys. The QPAD correction included time-varying singing rate estimates[^20]. Singing rates were used to estimate the probability of a Ovenbird being present and giving a cue that could be counted by the observer. We also calculated an effective detection radius (EDR) that uses distance sampling to determine the area sampled. EDRs are dependent on tree cover and habitat composition at the survey point[^18].
+
+[^18]: Solymos, P., Matsuoka, S. M., Bayne, E. M., Lele, S. R., Fontaine, P., Cumming, S. G., Stralberg, D., Schmiegelow, F. K. A. & Song, S. J., 2013. Calibrating indices of avian density from non-standardized survey data: making the most of a messy situation. Methods in Ecology and Evolution 4:1047--1058.
+
+[^19]: Solymos, P. 2016. QPAD version 3 documentation. Technical Report, Boreal Avian Modelling Project, Edmonton, AB, Canada. Retrieved on April 2017, from http://www.borealbirds.ca/files/QPAD_v3_report_1.pdf
+
+[^20]: Solymos, P., Matsuoka, S. M., Cumming, S. G., Stralberg, D., Fontaine, P., Schmiegelow, F. K. A., Song, S. J., and Bayne, E. M., 2018b. Evaluating time-removal models for estimating availability of boreal birds during point-count surveys: sample size requirements and model complexity. Condor 120: 765--786.
+
+We applied branching forward stepwise variable selection[^5][^21] to minimize bias and variance in predictionsbased on an a priori branching hierarchy. The branching process was applied instead of a simple add-one type of variable search to make variable selection computationally more efficient by narrowing the scope of potential predictors entering the active set at each stage. At each stage of the branching hierarchy, we compared support among candidate models using Akaike's information criterion. Variables for the top-ranked model in a given stage were fixed and added to models in the subsequent stage. Model sets at each stage also considered a null model, which was the top model from the previous level or, in the case of the first stage, a constant density model without covariates. We includes the following stages:
+
+1. Local scale land cover
+2. Forest age
+3. Forest harvest
+4. Roadside effects
+5. Methodology (human, recording units)
+6. Proportion of water in surrounding 1 km$^2$
+7. Space and climate variable effects
+8. Proportion of suitable habitat in surrounding 1 km$^2$
+9. Proportion of human footprint in surrounding 1 km$^2$
+
+[^21]: Westwood, A. R., C. Staicer, P. Solymos, S. Hache, T. Fontaine, E. Bayne, and D. Mazerolle. 2019. Estimating the conservation value of protected areas in Maritime Canada for two species at risk: the Olive-sided Flycatcher (Contopus cooperi) and Canada Warbler (Cardellina canadensis). Avian Conservation and Ecology 14(1):16. https://doi.org/10.5751/ACE-01359-140116
+
+The model selection procedure was repeated by combining the branching process with bootstrap aggregation (bagging[^22], or bootstrap smoothing[^23]). Bootstrap replicates were drawn with replacement from each spatio-temporal block to ensure representation of the entire sample distribution. Temporal blocks were set using five-year intervals over the two decades of the study. Spatial blocks were defined based on natural regions (Foothills, Parkland, Rocky Mountain, Boreal). Because of its comparatively large area, the Boreal natural region (including the Canadian Shield) was further subdivided into four quadrants by the 56.5 parallel and the -115.5 meridian. Within spatial units, we sampled survey stations and survey visits within each selected station with replacement, to retain the spatial sampling pattern of the surveys in the bootstrap samples. When more than one visit occurred at the same location in the same year, we randomly selected a single visit for each of the bootstrap iterations. Observations were assumed to be independent, conditional on the value of the predictors. The number of bootstrap iterations was 239, plus the original model fit with all data, for a total of 240 independent runs.
+
+[^22]: Breiman, L. 1996. Bagging predictors. Machine Learning 24:123-140. http://dx.doi.org/10.1007/BF0005865510.1525/auk.2008.07115
+
+[^23]: Efron, B. 2014. Estimation and accuracy after model selection. Journal of the American Statistical Association 109:991-1007. http://dx.doi.org/10.1080/01621459.2013.823775
+
+We used 90% of the unique location-year combinations in the data as a training set and held out the remaining 10% of the data as a validation set. We calculated the bootstrap averaged (B = 240) prediction for each data point in the validation set given the values of the predictors, including the QPAD offsets. We then constructed receiver operating characteristic (ROC) curves by plotting sensitivity and specificity based on the predicted values and the dichotomized observations (detection vs. nondetection) to assess model performance. We calculated area under the curve (AUC) as a measure of classification accuracy.
+
+We used the R language[^24] for data processing[^25], analysis (glm function), and prediction. The QPAD methodology was based on estimates using the detect R package[^26].
+
+[^24]: R Core Team (2019). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+
+[^25]: Peter Solymos (2009). Processing Ecological Data in R with the mefa Package. Journal of Statistical Software 29(8), 1-28. URL http://www.jstatsoft.org/v29/i08/.
+
+[^26]: Peter Solymos, Monica Moreno and Subhash R. Lele (2018). detect: Analyzing Wildlife Data with Detection Error. R package version 0.4-2. https://CRAN.R-project.org/package=detect
+
+## Prediction
+
+We summarized provincial land cover information[^27] (human footprint interpreted at a 1:15,000 scale based on ABMI's 2016 wall-to-wall human footprint inventory) for the entire study area and calculated average Ovenbird density (males per ha) for each of 1 km$^2$ units in Alberta. Stand-level attributes (footprint and forest composition) were calculated for each unit based on all polygon attributes found within that unit. The centroid of the unit was used to assign latitude, longitude, and climate variable values. Local-scale variables were determined for each stand type–age polygon within each 1 km$^2$ unit using the same approach applied for the 150-m radius buffers. Predicted Ovenbird density for each 1 km$^2$ unit was the area-weighted average of the polygon-level densities. This procedure was repeated for all 240 bootstrap runs using the estimated coefficient matrix. Point prediction for each 1 km$^2$ unit was calculated as the mean of the 240 predicted values. We calculated the coefficient of variation (standard deviation/mean across bootstrap runs) for each unit as an estimate of prediction uncertainty.
+
+[^27]: Alberta Biodiversity Monitoring Institute. 2018. Human Footprint Inventory 2016 (Version 1). Alberta Biodiversity Monitoring Institute, Geospatial Centre, Alberta, Canada. URL: https://www.abmi.ca/home/data-analytics/da-top/da-product-overview/GIS-Land-Surface/HF-inventory.html
+
+## Attributing effects to industrial sectors
+
+We used the Ovenbird models and predictions to estimate the effects of individual industrial sectors (or a set of human footprint categories) within the Oil Sands Region.We started with a summary of all combinations of vegetation types x footprint types in each 1 km$^2$ unit, for both the current (footprint included) and reference (backfilled, no footprint[^9]) conditions.  We could then 'turn on' only the footprint types associated with one industrial sector and compared the predicted abundances of each species with only that footprint type in the current land-base to the specie's predicted abundance under reference land-base. This showed the degree to which the footprint from just that one industrial sector was predicted to have changed the abundance of that species[^28][^29]. We did this calculation for each major industrial sectors (agriculture, forestry, energy, rural/urban and transportation), and also for individual footprint types related to energy sector (access roads, seismic lines, industrial facilities, well sites, mines, pipe lines).
+
+[^28]: Solymos, P., Mahon, C. L., Fontaine, T., and Bayne, E. M. (2015). Predictive models for estimating the cumulative effects of human development on migratory landbirds in the oil sands areas of Alberta. Technical report, Joint Oil Sands Monitoring: Cause-Effects Assessment of Oil Sands Activity on Migratory Landbirds, Edmonton, AB. pp. 38+410 appendices.
+
+[^29]: Solymos, P. & Schieck, J. (2016): Effects of industrial sectors on species abundance in Alberta. ABMI Science Letters, Issue 5, October, 2016.
+
+The procedure gave the predicted total population effect of the industrial sector on each species' abundance within the region (including native vegetation and footprint land cover types), and the effect per unit area of the industry's footprint (i.e., how "intensive" the effect of the industry's footprint is on the species, we call this the "unit effect"). We also quantified how the predicted abundance inside the human footprint polygons compared betwen current and reference conditions, i.e. how the local abundance under current footprint changed (we call this "under-footprint" effect).
+
+Sector effects on a species are plotted as the product of 1) the area of the sector's footprint (width of the bars), and 2) the average "per unit area" effect of that sector's footprint on the species (height of the bars). The area of footprint for a sector is the sum of all footprints belonging to it. The average effect of a sector is the difference between the predicted current and reference abundances in that sector's footprint type based on the species' model. A bar with a large area means that that sector has had a large effect on the population --- increasing the population if the bar is above 0, decreasing it if the bar is below 0.
+
+The effect of an industrial sector on a species is affected by three factors: 1) How much area is occupied by footprint of that sector, 2) How strongly -- positively or negatively, or a mix of both -- the species responds to each of the sector's footprint types, 3) How much of the sector's footprint is in higher- versus lower-quality habitat for the species. For example, a species that lives in old upland forest may be more affected by the forestry sector than the energy sector, because forestry focuses disturbance on older merchantable stands.
+
+Tables are separately presented for the North (foothills, Canadian shield, boreal excluding the Dry Mixedwood subregion) and South (grassland, parkland, Dry Mixedwood subregion of the boreal) study regions including the total population effect (area of rectangles) and the "unit-effect" (y-axis value) for the different sectors (columns) per species (rows; http://species.abmi.ca). The percent of human footprint in the North and South analyses regions are:
+
+We cannot tell which roads are associated with particular sectors (for example roads to well sites in forestry cutblocks). Thus all roads are attributed to the transportation sector. Two sectors sometimes operate together to reduce cumulative effects, such as forestry cutblocks being placed where energy developments are planned. A forestry cutblock on a future wellsite, for example, would be assigned to forestry until the wellpad was built, when that area of footprint would change to the energy sector. In addition, we have difficulty separating some types of footprint, such as urban and industrial areas, so those types are assigned to only one sector. 
+
+Sector effects only include direct effects of footprint, not indirect effects (e.g., pollution, noise, access effects) or possible cumulative effects where two or more sectors interact (e.g., roads allowing weeds into an area, where they can then colonize harvest areas).
+
+**FIXME** add NDVI in mines here
+
+
+# Results
 
 ## Habitat associations
 
@@ -96,11 +242,11 @@ include_graphics("images/Ovenbird-cr.png")
 ```
 
 
-# Local impacts
+## Local impacts
 
 Describe here local impacts in order of OSR development chain
 
-## Access roads and road verges
+### Access roads and road verges
 
 Bring in roadside effects, possibly bSims
 
@@ -116,7 +262,7 @@ abline(v=c(0, 100, -100), lty=2)
 par(op)
 ```
 
-## Seismic lines
+### Seismic lines
 
 Truncated gradient
 
@@ -147,7 +293,7 @@ for (k in 1:3) {
 }
 ```
 
-## Industrial facilities
+### Industrial facilities
 
 Discuss estimates, possibly relative to regional average (i.e. under HF SE)
 
@@ -164,7 +310,7 @@ par(op)
 ```
 
 
-## Well sites
+### Well sites
 
 Truncated gradient
 
@@ -197,7 +343,7 @@ for (k in 1:3) {
 }
 ```
 
-## Mine sites
+### Mine sites
 
 veg, pond ,active
 
@@ -213,7 +359,7 @@ abline(v=c(0, 100, -100), lty=2)
 par(op)
 ```
 
-## Pipelines
+### Pipelines
 
 Truncated gradient
 
@@ -245,145 +391,21 @@ for (k in 1:3) {
 }
 ```
 
-# Comparing direct impacts
+## Comparing direct impacts
 
 Additive sector effects: talk about regional, under HF, and unit effects here
 
-# Landscape level effects
+## Landscape level effects
 
 Show SSH and km_HF results based on actual landscapes from prediction
 
-# Direct and indirect impacts
+## Direct and indirect impacts
 
 Bit unclear yet what to do here
 
-# Appendix: Methods
 
-This appendix serves as background material for individual species results available from the Alberta Biodiversity Monitoring Institute (ABMI). The document describes the content, methods, and limitations/caveats associated with species results.
+# Conclusion
 
-####	Sample size
+Conclusions.
 
-ABMI conducts separate analysis for two regions: the Northern (Boreal, Canadian shield, Foothills and Rocky Mountain natural regions) which is vegetation-based and Southern (Grassland, Parkland and Dry Mixedwood regions) which is soil based. The vegetation-based models require on average 20 degrees of freedom (df) with habitat/age/climate terms in the models. The soil-based models require on average 10 df with soil/climate terms in the model. Accordingly, modelling is carried out for all species, except birds, that occur in at least 20 sites in an analysis region. Since a great deal more information is available for birds, a species must have at least 100 detections in the Northern analysis region, and 50 detections in the Southern analysis region to be modelled.
-
-#### Sampling design adequacy and detection issue
-
-ABMI is designed to determine habitat association and track population trend for common species. The chosen sampling methods, however, do not capture all species effectively, including species that live in rare patchy habitats.
-
-**Birds.** Point count methods are inadequate for monitoring the following groups of birds: waterfowl, shorebirds, raptors, owls, nightjars because:
-
-* Their habitats are not well sampled (waterfowl, shorebirds),
-* Their nocturnal activity periods are not well sampled (rails, owls),
-* They vocalize irregularly or infrequently,
-* Their home range is at much larger spatial scale than sampled by point counts (raptors, owls).
-
-The taxonomic information for bird species as part of the downloadable material provides details about which bird species are adequately monitored. The classification follows family level taxonomy.
-
-#### Model output plausibility
-
-Once a species meets the minimum detection requirements, visual inspection of the model results is done to evaluate the plausibility of the output. Visual inspection includes:
-
-* Determining whether habitat associations are compatible with known biology of species,
-* Determining whether confidence intervals in habitat associations are extreme (relative to mean abundance),
-* Determining whether the predicted distribution of the species is compatible with the known spatial distribution of the species (range maps, detections).
-
-Once inspection is done, notes are added to the species lookup table and final decisions are made. This way the steps in the evaluation process are transparent and decisions can be re-evaluated if needed. These are incorporated into the species taxonomic information table to make the process and any caveats transparent.
-
-#### Habitat associations
-
-Models are used to show how species, relative abundance differed among vegetation, soil and, human footprint types in the northern, and southern regions of Alberta. Models were only created for species that had enough detections. The following figures are presented to describe habitat associations:
-predicted species abundance in each vegetation and human footprint type is shown with bars. Vertical lines indicate 90\% confidence intervals. Dots within the forested habitat types show predicted species abundance in forest harvest areas of various ages.
-
-We use a set of statistical models to relate the relative abundance of each species measured at ABMI sites to two sets of variables: vegetation or human footprint type, and geographic location or climate variables. The analyses are done separately for two overlapping regions: North (boreal, foothills, Canadian shield, parkland), and South (grasslands, parkland, dry mixedwood subregion of the boreal).
-
-Relative abundance for vascular plants, bryophytes, and lichens is the probability that the species will occur in a 50 m x 50 m ABMI quadrat, or a soil sample for mites. For birds, relative abundance is the number of birds detected at a point count, adjusted for the species' detection distance and standardized for other sampling variables. For mammals, we are using winter snow-track transect data, with relative abundance being the probability of finding the animal's tracks on a 1-km segment 5 days after a snowfall. These are the values on the y-axis of the habitat model figures, and in the coefficient tables. We also model the number of non-native vascular plant species, besides individual vacular plant species.
-
-Vegetation types in the North region are based on several province-wide GIS layers of vegetation variables, and include main forest stand types (white spruce, pine, deciduous, mixedwood, black spruce) by broad age classes (0-9 years, 10-19 years, then 20-year classes to 140+ years) and several categories of open vegetation (larch fens, upland grass, upland shrub, wet grass, and wet shrub). In the South, 'vegetation types' are broad soil types, such as productive, rapid draining, etc. The South models also include a term for the probability that the site is or was naturally treed. Open wetlands are sampled and modeled separately.
-
-Several categories of human footprint are distinguished in the models, including cultivation (typically forage or tame pasture in the North and crops in the South), urban/industrial, forestry, soft (vegetated) linear features and hard (unvegetated) linear features. Forestry footprint is differentiated by broad stand type and the same age classes as natural forest (although we have few samples in forestry areas >20 years old).
-
-The scale of the vegetation or soils and human footprint information used in the models is a square 1-ha area for plants, lichens and mites, a 150m-radius circle for birds, and a 250m buffer around the 1-km snow-track transect segment for mammals.
-
-Flexible relationships with latitude, longitude and a set of broad climate variables are also included in the models to represent the geographic and climatic distribution of the species. The bioclimatic variables used in the modeling were calculated at a 4-km resolution using monthly climate normals of temperature and precipitation averaged over 1961-1990.
-
-The analysis is conducted in a 'model selection framework', which means that the models for each species are only as complex as the data for that species support. For example, the models for a rarer species with few records may not be able to separate different age classes or even broad stand types. All age classes or several stand types therefore have the same average value in the resulting habitat model. This does not mean that there are truly no differences between these types for that species. It just means that we do not yet have enough data to estimate abundances in all those individual vegetation types.
-
-This habitat modeling requires moderate sample sizes, so we can only do the analyses for species found in at least 20 sites in an analysis region (25 sites for birds; 50 transect segments for mammals).
-
-Full details of the habitat modeling can be found in the ABMI Species Modeling Protocol[1].
-
-#### Limitations
-
-There are many limitations and caveats about the use of these habitat models:
-
-**We use simple abundance measures.** For vascular plants, bryophytes, lichens and mites, we are only analyzing occurrence of the species at 0-4 of the 4 quadrats or soil samples per site. The number of individuals, percent cover, total volume or biomass, reproductive status, etc. of the species is not part of this measure --- a single sapling of a tree species is an occurrence counted as much as complete cover of large trees. There is also no adjustment for the probability that the species was present but was missed by the field technicians. That probability is probably higher in complicated quadrats, species rich habitats, rare species, and for groups of species that are hard to distinguish in the field, all of which could affect the habitat models.
-
-For birds, the measure is based on counts of birds heard in the field by trained observers in some studies, or heard on recordings made using various technologies in others (including ABMI). These are mainly, but not exclusively, singing male birds. Adjustments are made for different detection distances in the different studies, habitats and for different species, but these adjustments all have statistical uncertainty. The number of vocalizing birds may also not directly reflect the total number of birds or reproductive success in different habitat types.
-
-For mammals, ABMI is switching to camera-based indices, but these are not available yet. The models are currently based on snow-track transects, so they reflect how far the species travels in different habitat or human footprint types during winter. This can be very different from the habitats that they use for foraging, or during summer. Additionally, ABMI transects were along linear features that could be travelled by snowmobile, so the results are confounded by how those features affect winter travel by the species.
-
-**There is often high uncertainty in individual values.** The confidence intervals on individual habitat values for a species are often wide, and should be integral to any use of the habitat models. There are two main reasons for wide uncertainty in our results: 1) We estimate values for many habitat and human footprint types, particularly in the North, with many combinations of broad stand types and age classes. Ideally we would have hundreds of observations of a species to estimate so many values. Instead, we use a fairly complicated modeling procedure to extract reasonable values for many species with lower sample sizes by simplifying the complexity of habitat types. For all but the most common species, the resulting habitat models are simplified (some habitat types are assumed to be the same) and estimated with large error. 2) ABMI sites are systematically located, and the Alberta landbase often contains a fine-scale mix of several habitat types and human footprint. Individual sites, even 1-ha areas, therefore usually fall in more than one habitat and/or human footprint type. Our models are designed to separate out the effects of each individual habitat or human footprint type as best as possible, but the analysis is necessarily imperfect with limited sample sizes. A highly specialised species, for example, will almost inevitably show some predicted abundance in habitat types that it does not use, when these co-occur with preferred habitat types.
-
-**The explanatory variables are confounded.** We have limited ability to separate effects of each vegetation and human footprint type, and spatial and climate variables. In addition to the challenges generating uncertainty in the individual values, ABMI is not an experimental study. We do not design and manipulate habitat and human footprint types, and simply use what is sampled in the province. As a result, habitat and human footprint types are partially confounded with geographic location and climate variables. Our modeling separate out these effects as best as possible, but without impossible province-wide experiments, we can never be sure how well we have estimated the separate habitat, human footprint and geographic/climate effects.
-
-**We use the same model set for all species.** Our model selection approach weights different models in a model set based on the support provided by each species' data. However, we use the same set of models for all species. We currently do not have the resources to develop separate model sets for individual species to benefit from the differences in natural history.
-
-**There are errors in species identification.** All taxa have potential for errors in species identification, including the mammal track surveys and the bird recording interpretation. Taxonomic issues are common with the plants, bryophytes, and lichens, where many species groups are difficult to distinguish and taxonomy changes frequently. This adds to uncertainty in models for some species.
-
-**The vegetation and soil classification is simplified and contains errors.** ABMI's vegetation map[2] is compiled from various sources, not all of which cover the entire province. Some layers are less accurate than others. Also, even if individual polygons are accurate, their boundaries may not be precise, and many ABMI sites fall on the edges of vegetation polygons. Resulting error in the vegetation types at sites increases error in the habitat models. Some habitat types may have additional challenges. Grass and shrub sites in the North, for example, may be true permanent open habitats, but the same designation is often given to early seral stages of forested sites after fire. Grass and shrub sites in the prairies are also poorly mapped. Mixedwood stands are also poorly mapped, because they represent a gradient between deciduous and upland conifer stands, which can often change as a stand ages.
-
-
-**The soil classification[3] currently uses only broad groupings of individual soil types.** Few species show strong responses to soil type in our models, suggesting that these groups may not be well-defined or relevant to many species. We have too few sites to treat lowland sites in the South separately.
-
-
-**We have only broad classes of human footprint.** Human footprint[4] is generally mapped more precisely than vegetation, but we use only broad groups of footprint types. Industrial sites and urban or rural residential areas, for example, cannot be reliably distinguished. Values are particularly difficult to estimate reliably for linear features, because these usually occupy only a small portion of a site. We also have few sites with older forestry cutblocks. Values for those habitat types combine our rough estimates with an assumed rate of convergence of aging forestry and natural stands.
-
-
-**No other effects of human activities are included in our models.** Many sites in the South are grazed to varying degrees but this information is not available. Thus grazing effects cannot be included in our models, and if grazing differs among native habitat types the effects confound those difference. Any wide-scale human effects, like pollution away from visible human footprint or recent climate change, are also not included in our modeling. Additionally, we only include effects of footprint at the local scale --- the 1-ha scale we sample at, or larger sampling areas for birds and mammals. Due to sample size constraints and confounding among variables, we do not include any additional effects that might be caused by human footprint in the larger surrounding area.
-
-
-#### Predictive maps
-
-Habitat association models, plus models describing how species varied spatially and with climate gradients were used to predict species abundance in 1 km$^2$ spatial units under reference and current conditions.
-
-We present the following figures:
-
-* **Predicted relative abundance throughout Alberta under reference conditions.** Habitat association models, plus models describing how species varied spatially and with climate gradients were used to predict species abundance in 1 km$^2$ spatial units under reference conditions. Predictions of relative abundance of species in each 1 km$^2$ unit were made after all human footprint in the 1 km$^2$ unit had been 'backfilled'[2] based on native vegetation in the surrounding area.
-* **Predicted relative abundance throughout Alberta under current conditions.** Habitat association models, plus models describing how species varied spatially and with climate gradients were used to predict species abundance in 1 km$^2$ spatial units under current conditions. Predictions of relative species abundance in each 1 km$^2$ unit were made based on the vegetation and human footprint present in the 1 km$^2$ unit under current conditions (in year 2016).
-* **Difference in relative abundance between current and reference conditions.** For each 1 km$^2$ unit the difference between predicted current and reference conditions was determined.
-* **Uncertainty in predicted current conditions.** To highlight the degree of uncertainty in the models, we estimated the standard error of prediction for each 10 km x 10 km units.
-
-
-Province-wide maps are generated by applying the models of a species' relationship with vegetation or soil types, human footprint, geographic location and climate to a set of 1-km$^2$ pixels covering the province. Within each pixel, the proportion of each vegetation or soil and human footprint type in the 1-km$^2$ area is determined, along with the latitude, longitude and climate values at the centre of the pixel. The 'current' maps summarize information from the current landbase, including current human footprint (2012 human footprint[4] is being used presently). The 'reference' maps summarize information from a 'back-filled' map[2], in which footprint has been removed and replaced with the vegetation type that was expected prior to the footprint being created. Back-filling is based on adjacent vegetation types and rules about what vegetation types different footprint types can occur in (e.g., forestry occurs only in harvestable-age upland stands). The 'difference' maps show the areas where the species is predicted to be higher or lower in the current map compared to the reference map.
-
-Separate predictions are made using the North and South models. In the overlap area where both of these predictions are available, a weighted average prediction is used. The weighting is based on the mapped probability that the site is or was treed, with the weight for the North prediction being that probability and the weight for the South prediction being 1 minus that probability. In other words, the South predictions apply to the untreed proportion of the raster, while the North applies to the treed part.
-
-Province-wide maps are only produced for species that we can analyze from the systematic sites. The models generated for species in the wetland sites cannot be applied province-wide for two reasons: 1) We do not have GIS layers describing where all the wetlands of the type we sample occur in the province, 2) The wetland models include physical and chemistry variables that need to be sampled in the field for each wetland, and therefore are not available for unsampled wetlands.
-
-There are several limitations to ABMI species maps:
-
-* The maps are based on predicted habitat quality. They show the average expected abundance of a species given the habitat types, footprint, geographic location and climate of the 1 km$^2$ area. We do not know the actual abundances of each species in each of the 1 km$^2$ area in the province.  There are many variables beyond habitat quality that determine why a species may be absent or rare at a particular place where we predict it to be common, and vice versa.
-* There is uncertainty in the habitat models for each species. Uncertainty of habitat models is high for rarer species and for rarer habitat types. Uncertainty is also higher in the corners of the province, particularly the northwest and southwest, where we have limited sampling and are extrapolating from our models. Accompanying uncertainty maps show the absolute prediction uncertainty across the province.
-* The map predictions are most accurate at broad regional scales. At smaller scales, the true abundance of the species can vary from the prediction, because many factors beyond habitat quality affect a species. At small scales --- individual pixels through townships --- the maps show the habitat quality for the species, but should not be interpreted as showing the actual abundance of the species in that small area.
-* The underlying vegetation maps used to make the predictions are imperfect. There are classification errors in some places with greater errors for some particular habitat types (e.g., grass and shrub, mixedwood), and areas missing some of the input layers particularly outside of commercial forestry areas. We make assumptions about stand ages in about 1/3 of the forest area that is missing that information. Human footprint is more accurate, but may be 2 or 3 years out of date.
-* Reference maps only show the effects of statistically removing the effects of visible human footprint. They do not show how the species would have been distributed under 'pristine', 'natural' or 'pre-historic' conditions.
-* Current maps do not show effects of other human disturbances, like pollution, cattle grazing, climate change or changes on wintering grounds for migratory species.
-
-
-#### Sector effects
-
-The effect of a sector on a species is the product of the area of the sector's footprint (width of the bars), and the average "per unit area" effect of that sector's footprint on the species (height of the bars). The area of footprint for a sector is the sum of the footprint belonging to it. The average effect is the difference between the predicted current and reference abundances in that sector's footprint type based on the species' model.
-
-We calculate the effects of different industrial sectors by predicting the abundance of each species in the current landbase versus a landbase in which the footprint associated with a particular industrial sector has been back-filled. 'Back-filling'[2] means replacing that sector's footprint with the vegetation or soil type that would have been present before the footprint was made. The difference between the total predicted population in the current and the back-filled landbase is the predicted effect of that sector on the abundance of a species in the region.
-
-For the sector effect figures, we express the effect as the percent population change per unit area of the sector's footprint (height of the bar). The width of the bar for each sector shows the total area of the region occupied by that sector's footprint. The height multiplied by the width of the bar (i.e., the area of the bar = the effect per unit area of footprint multiplied by the area of footprint)  is the total effect of the sector on the population of the species in the region.  A bar with a large area means that that sector has had a large effect on the population --- increasing the population if the bar is above 0, decreasing it if the bar is below 0.
-
-The effect of an industrial sector on a species is determined by three factors: 1) How much area is occupied by the footprint of that sector, 2) How strongly --- positively or negatively, or a mix of both --- the species responds to each of the sector's footprint types, 3) How much of the sector's footprint is in higher- versus lower-quality habitat for the species. For example, a species that lives in old upland forest may be more affected by the forestry sector than the energy sector, because forestry focuses on those older merchantable stands.
-
-The sector effect results are based on each species' habitat models applied to the maps of vegetation or soils and footprint in the region, so all the limitations of the modeling and mapping  apply to these results. There are additional caveats:
-
-- Where footprint types overlap, such as a well site in a cultivated field, or a road through a forestry cutblock, we assign the sector footprint type as being 'on top', and its sector is credited with the effect of footprint in that overlap area.
-- We cannot tell which roads are associated with particular sectors, such as roads to well sites or forestry cutblocks, so all roads are called transportation sector.
-- Two sectors sometimes operate together to reduce cumulative effects, such as forestry cutblocks being placed where energy developments are planned. A forestry cutblock on a future wellsite, for example, would be assigned to forestry until the wellpad was built, when that area of footprint would change to the energy sector.
-- We have difficulty separating some types of footprint, such as urban and industrial areas, so those types are assigned to only one of the two sectors involved.
-- Sector effects only include direct effects of footprint, not indirect effects (e.g., pollution, noise, access effects) or possible cumulative effects where two or more sectors interact (e.g., roads allowing weeds into an area, where they can then colonize harvest areas).
 
