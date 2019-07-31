@@ -14,11 +14,15 @@ urlcolor: blue
 ---
 
 ```{r preamble,include=FALSE}
+library(ggplot2)
 library(mefa4)
 library(intrval)
 library(knitr)
+library(opticut)
+library(rgdal)
+library(sp)
 source("~/repos/abmianalytics/birds/00-functions.R")
-knitr::opts_chunk$set(cache=TRUE, echo=FALSE)
+knitr::opts_chunk$set(cache=TRUE, echo=FALSE, message=FALSE, warning=FALSE)
 ## Bayne et al 2016 Condor results for Ovenbird
 b16 <- list(est = structure(c(0.81, 0.98, 0.96, 0.98, 0.77, 0.76, 0.31, 
     0.89, 0.88), .Dim = c(3L, 3L), .Dimnames = list(c("50m", "100m", 
@@ -33,22 +37,29 @@ b16 <- list(est = structure(c(0.81, 0.98, 0.96, 0.98, 0.77, 0.76, 0.31,
 modSpace <- new.env()
 load("data/pred/lamMod.RData", envir=modSpace)
 ## additive (Space level) sector effects
-load("data/pred/osm-oven-space.RData")
+load("data/pred/osm-oven-space-all.RData")
 #load("data/pred/osm-oven-hf-all.RData")
 getSE <- function(s) {
-    Ns1 <- HCR[s,]
-    ## 81.3% of mine polys have >0.1 NDVI
-    if (s == "MineSite") {
-        Ns1 <- Ns1 * 0.813
-    }
-    Ns0 <- HRF[s,]
+    Ns1 <- colSums(HCR[s,,drop=FALSE])
+    Ns0 <- colSums(HRF[s,,drop=FALSE])
     Nt0 <- colSums(HRF)
-    Ps <- A[s,] / colSums(A)
+    Ps <- colSums(A[s,,drop=FALSE]) / colSums(A)
     SEuhf <- 100 * (Ns1 - Ns0) / Ns0
     SEtot <- 100 * (Ns1 - Ns0) / Nt0
     SEuni <- 100 * ((Ns1 - Ns0) / Nt0) / Ps
     list(under=SEuhf, reg=SEtot, unit=SEuni, perc=Ps*100, sector=s)
 }
+hf <- function(x, ...) {
+  d <- density(x)
+  d$y <- d$y / max(d$y)
+  plot(d, type="n", ...)
+  polygon(d$x, d$y, col="#ff000044", border="#ff000044")
+  abline(v=0, lty=2)
+  abline(v=median(x), col=2, lwd=2)
+  lines(quantile(x, c(0.05, 0.95)), c(0, 0), lwd=4, col=2)
+  invisible(d)
+}
+enhf <- c("RoadRailVerge", "SeismicLine", "Industrial", "WellSite", "MineSite", "PipeTransLine")
 ```
 
 # Introduction
@@ -91,7 +102,11 @@ load(file.path(ROOT, "data", "ab-birds-north-2018-12-07.RData"), envir=en)
 
 ```
 
-We used `r nrow(en$DAT)` point count survey visits from `r nlevels(droplevels(en$DAT$SS))` unique survey stations in the Boreal, Foothills, Parklands, and Rocky Mountain natural regions north of 50 degrees latitude in Alberta, Canada. Survey data were collated from the North American Breeding Bird Survey (BBS) (`r sum(en$DAT$PCODE == "BBSAB")` visits), Boreal Avian Modelling Program (`r sum(!(en$DAT$PCODE %in% c("BBSAB", "ABMIRF", "ABMISM")))` visits; http://www.borealbirds.ca), and the Alberta Biodiversity Monitoring Institute (`r sum(en$DAT$PCODE %in% c("ABMIRF", "ABMISM"))` visits; http://www.abmi.ca). Surveys were conducted between 1997 and 2017. In combination, these surveys are representative of Alberta’s boreal region. Each survey was 3--10 minutes long and sampled a radius of 50 m to unlimited distance. One or more Ovenbirds were detected during `r sum(en$YY[,"OVEN"]>0)` (`r round(100*sum(en$YY[,"OVEN"]>0)/nrow(en$YY), 1)`%) surveys, with a maximum record of `r max(en$YY[,"OVEN"])` individuals in a survey.
+We used `r nrow(en$DAT)` point count survey visits from `r nlevels(droplevels(en$DAT$SS))` unique survey stations in the Boreal, Foothills, Parklands, and Rocky Mountain natural regions north of 50 degrees latitude in Alberta, Canada. Survey data were collated from the North American Breeding Bird Survey (BBS) (`r sum(en$DAT$PCODE == "BBSAB")` visits), Boreal Avian Modelling Program (`r sum(!(en$DAT$PCODE %in% c("BBSAB", "ABMIRF", "ABMISM")))` visits; http://www.borealbirds.ca), and the Alberta Biodiversity Monitoring Institute (`r sum(en$DAT$PCODE %in% c("ABMIRF", "ABMISM"))` visits; http://www.abmi.ca). Surveys were conducted between 1997 and 2017. In combination, these surveys are representative of Alberta’s boreal region. Each survey was 3--10 minutes long and sampled a radius of 50 m to unlimited distance. One or more Ovenbirds were detected during `r sum(en$YY[,"OVEN"]>0)` (`r round(100*sum(en$YY[,"OVEN"]>0)/nrow(en$YY), 1)`%) surveys, with a maximum record of `r max(en$YY[,"OVEN"])` individuals in a survey (Figure \@ref(fig:plot-det)). 
+
+```{r plot-det,fig.cap='Map of Ovenbird detections in Alberta, aggregated at 10 km x 10 km resolution.',out.width='50%'}
+include_graphics("images/Ovenbird-det.png")
+```
 
 ## Biophysical attributes
 
@@ -120,9 +135,19 @@ colnames(k) <- c("Land cover type", "Number of surveys")
 kable(k)
 ```
 
-Proportional area was calculated at the local scale, and the dominant vegetation type was assigned to each survey station based on a simple majority rule. Observations were weighted according to the proportion of the dominant land-cover type (weight = 1 for > 0.75, linearly deceasing between 0.75 and 0.25, 0 for < 0.25 proportions) to reduce the effects of 'contamination' when surveys were done in a mixture of different land-cover types. We used various data sources[^9] to estimate the years since last disturbance (i.e., forest age) relative to year of sampling for birds. Age was calculated as the area weighted average of the polygons within each buffer distance (local and stand scales).We modeled the effect of forest age on Ovenbird density by using weighted age and its quadratic and square root transformed terms as covariates. We incorporated interactions between forest type and age. When the dominant land cover was a harvest block, the predisturbance vegetation type was assumed based on available forest inventory data in the local 150-m buffer. Doing so treated harvested areas as young forest rather than a separate land cover type. We also created a contrast variable that ranged between 1 (recent harvest) and 0 (converged to natural stands) to describe the convergence trajectory of forestry cut blocks. We assumed that convergence is complete at 60 years after harvest. This allowed us to differentiate young forests of natural (i.e., fire) versus anthropogenic (i.e., timber harvest) origin.
+Proportional area was calculated at the local scale, and the dominant vegetation type was assigned to each survey station based on a simple majority rule. Observations were weighted according to the proportion of the dominant land-cover type (weight = 1 for > 0.75, linearly deceasing between 0.75 and 0.25, 0 for < 0.25 proportions) to reduce the effects of 'contamination' when surveys were done in a mixture of different land-cover types. We used various data sources[^9] to estimate the years since last disturbance (i.e., forest age) relative to year of sampling for birds. Age was calculated as the area weighted average of the polygons within each buffer distance (local and stand scales).We modeled the effect of forest age on Ovenbird density by using weighted age and its quadratic and square root transformed terms as covariates. We incorporated interactions between forest type and age. When the dominant land cover was a harvest block, the predisturbance vegetation type was assumed based on available forest inventory data in the local 150-m buffer. Doing so treated harvested areas as young forest rather than a separate land cover type. We also created a contrast variable that ranged between 1 (recent harvest) and 0 (converged to natural stands) to describe the convergence trajectory of forestry cut blocks (Figure \@ref(fig:plot-recovery)). We assumed that convergence is complete at 60 years after harvest. This allowed us to differentiate young forests of natural (i.e., fire) versus anthropogenic (i.e., timber harvest) origin.
 
-**FIXME** add harvest trajectory convergence info.
+```{r plot-recovery,echo=FALSE,fig.cap='Forest harvest recovery trajectories.',out.width='100%'}
+age <- c(0, 1:20*4)/200
+conif <- 1-c(0, 1.3, 4.7, 10, 17.3, 26, 35.5, 45.3, 54.6, 63.1, 70.7, 77.3,
+    82.7, 87, 90.1, 92.3, 94, 95.3, 96.7, 98.2, 100)/100
+decid <- 1-c(0, 6.5, 15.1, 25.2, 36.1, 47.2, 57.6, 66.7, 74.3, 80.4, 85,
+    88.3, 90.5, 92, 93, 94, 95.1, 96.4, 97.6, 98.8, 100)/100
+matplot(age*200, cbind(conif, decid), type="l", lty=1, col=c(2,4),
+  xlab="Age (years)", ylab="Recovery")
+legend("topright", bty="n", title="Stand type", lty=1, col=c(2,4),
+  legend=c("Coniferous", "Mixed/Deciduous"))
+```
 
 Footprint types were treated as landcover classes when they comprised the dominant class in the buffer. However, because linear features usually make up <20% of the 150-m buffer area, we did not treat these features as separate land-cover classes. Instead we included the proportion of soft linear features within the buffer as a covariate. We used a binary variable to distinguish roadside (1) from off-road (0) surveys because it is known that their presence can introduce biases when not accounted for[^12][^13]. 
 
@@ -142,10 +167,30 @@ Geographic variation was captured by including latitude, longitude, and climate 
 
 At the stand scale, we calculated the proportion of SSH within a 564 m radius of each survey station. 
 
-**FIXME** add here how SSH were derived and selection frequencies ("Decid"      "DecidO"     "Mixedwood"  "MixedwoodO" "Spruce").
+Surrounding suitable habitat (SSH) was defined based on fitting a model to land cover classes with forest age classes classified into young vs. mature/old-growth (following Mahon et al.[^1]). We then predicted the expected abundance at each survey location in the training data set and constructed a Lorenz-curve based on the cumulative density. We then identified the population density threshold at the tangent of the Lorenz curve (also used to determine the Youden index in the binary classification case[^30]) and assigned land cover types as suitable habitat when more than 50% of the surveys within that class were found to be above the threshold[^31] (Figure \@ref(fig:plot-lorenz)).
+
+[^30]: Youden, W. J. (1950): Index for rating diagnostic tests. Cancer 3:32–5.
+
+[^31]: Peter Solymos and Ermias T. Azeria (2018). opticut: Likelihood Based Optimal Partitioning and Indicator Species Analysis. R package version 0.1-2. https://CRAN.R-project.org/package=opticut
+
+
+```{r plot-lorenz,echo=FALSE,fig.cap='Lorenz tangent approach illustrated. L: cumulative abundance, p: cumulative portion of surveys, red: Lorenz tangent (slope = 1).',out.width='100%'}
+n <- 1000
+m <- 25
+g <- as.factor(sort(sample(LETTERS[1:m], n, replace=TRUE, prob=rexp(m))))
+lam <- exp(2*sqrt(as.integer(g)))
+x <- rpois(n, lam)
+mu <- aggregate(x, list(g), mean)
+l <- lorenz(mu$x, table(g))
+s <- summary(l)
+
+plot(l, lwd=2, tangent=2, h=3, v=4)
+abline(0, 1, lty=2)
+#lines(rep(s["p[t]"], 2), c(s["p[t]"], s["L[t]"]), col=2)
+```
+
 
 Area of total human footprint was also quantified at the stand scale for each survey station, and further partitioned as proportion of successional, alienating, linear, nonlinear, cultivation, and non-cultivation footprints. Successional footprint included activities where the soil disturbance was minimal (forest harvest, soft linear features), whereas alienating footprint included activities that disturbed soils (cultivation, urban-industrial, hard linear features, human-created water bodies). 
-
 
 
 ## Modeling
@@ -194,6 +239,33 @@ We summarized provincial land cover information[^27] (human footprint interprete
 
 [^27]: Alberta Biodiversity Monitoring Institute. 2018. Human Footprint Inventory 2016 (Version 1). Alberta Biodiversity Monitoring Institute, Geospatial Centre, Alberta, Canada. URL: https://www.abmi.ca/home/data-analytics/da-top/da-product-overview/GIS-Land-Surface/HF-inventory.html
 
+A visual inspection of the surveyed mine sites revealed that those were aither at the margin of open pit mines or tailing ponds, or vegetated. This represented a challenge when predicting abundance for mine sites, because non-vegetated mine sites were not represented in our sample, thus applying the estimate based on vegetated mine sites will cretainly overestimate abundance. Non-vegetated mine sites can safely be assumed as non-habitat for Ovenbird. We opted to quantify the proportion of non-vegetated mine sites based on 2017--2018 summer (June 1st -- Aug 15th) normalized difference vegetation index (NDVI; from top of atmosphere corrected Sentinel-2 10 m data). We calculated average NDVI in each mine site polygon within the Oil Sands region (Figure \@ref(fig:plot-ndvi)). The percentage of total polgon area of vegetated areas with >0.1 average NDVI value was 44%. We predicted mine site abundance at the Oil Sands region scale as the weighted average of vegetated and non-vegetated mine site abundances (44% x estimate + 66% x 0).
+
+```{r plot-ndvi,echo=FALSE,fig.cap='Distribution of average NDVI valies in different types of mine site polygons inside the Oil Sands region.',out.width='100%'}
+x <- read.csv("d:/abmi/AB_data_v2018/data/raw/HFI_Mines_NDVI.csv")
+x <- x[!is.na(x$NDVImean),]
+a <- aggregate(x$NDVImean, list(FTY=x$Mines_FEATURE_TY), quantile, c(0.5, 0, 1))
+a <- a[order(a$x[,"50%"]),]
+x$FEATURE_TY <- as.character(x$Mines_FEATURE_TY)
+x$FEATURE_TY <- factor(x$FEATURE_TY, as.character(a$FTY))
+
+pl <- readOGR("d:/spatial/Oilsands-Boundaries.gdb", "OilsandRegionDissolve10TM", verbose=FALSE)
+xy <- x[,c("x", "y")]
+coordinates(xy) <- ~ x + y
+proj4string(xy) <- proj4string(pl)
+xy <- spTransform(xy, proj4string(pl))
+o <- over(xy, pl)
+x$inOSR <- !is.na(o$FIELDCODE)
+x$vegetated <- x$NDVImean > 0.1
+#sum(x$area_ha[x$vegetated & x$inOSR]) / sum(x$area_ha[x$inOSR]) # 0.44
+
+p <- ggplot(x[x$inOSR,], aes(y=NDVImean, x=FEATURE_TY, fill=FEATURE_TY, color=FEATURE_TY)) +
+  geom_violin() + coord_flip() + theme(legend.position = "none") +
+  geom_hline(yintercept = 0) + geom_hline(yintercept = -0.1, lty=2) + geom_hline(yintercept = 0.1, lty=2)
+p
+```
+
+
 ## Attributing effects to industrial sectors
 
 We used the Ovenbird models and predictions to estimate the effects of individual industrial sectors (or a set of human footprint categories) within the Oil Sands Region.We started with a summary of all combinations of vegetation types x footprint types in each 1 km$^2$ unit, for both the current (footprint included) and reference (backfilled, no footprint[^9]) conditions.  We could then 'turn on' only the footprint types associated with one industrial sector and compared the predicted abundances of each species with only that footprint type in the current land-base to the specie's predicted abundance under reference land-base. This showed the degree to which the footprint from just that one industrial sector was predicted to have changed the abundance of that species[^28][^29]. We did this calculation for each major industrial sectors (agriculture, forestry, energy, rural/urban and transportation), and also for individual footprint types related to energy sector (access roads, seismic lines, industrial facilities, well sites, mines, pipe lines).
@@ -214,37 +286,33 @@ We cannot tell which roads are associated with particular sectors (for example r
 
 Sector effects only include direct effects of footprint, not indirect effects (e.g., pollution, noise, access effects) or possible cumulative effects where two or more sectors interact (e.g., roads allowing weeds into an area, where they can then colonize harvest areas).
 
-**FIXME** add NDVI in mines here
-
 
 # Results
 
-## Habitat associations
+## Habitat associations and spatial distribution
 
-Figure \@ref(fig:plot-hab) shows habitat associations
+Ovenbird abundance was highest mature deciduous and mixed deciduous/coniferous forest stands, supporting 0.35-0.75 males / ha on average. Upland white spruce dominated coniferous stands support intermediate population densities (0.15-0.35 males / ha). Pine dominated upland forests and treed wetlands (black spruce bogs, larch dominated treed fens), open wetlands, and human footpring types all proved to be unsuitable for Ovenbirds (<0.15 males / ha; Figure \@ref(fig:plot-hab)). Uncertainty around these estimates was very small compared to the effect sizes. Ovenbird abundances in fire and harvest originated stands of the same age did differ significantly from each other. The species generally avoided young forests irrespective of forest origin.
+The spatial distribution of Ovenbird in Alberta followed the distribution of deciduous and mixedwood forests outside of the Grasslands natural region and higher elevations areas (Figure \@ref(fig:plot-cr)).
 
-```{r plot-hab,echo=FALSE,fig.cap='Habitat associations of Ovenbird in .',out.width='100%'}
+```{r plot-hab,echo=FALSE,fig.cap='General habitat associations of Ovenbird in the northern Alberta study area. Relative abundance equals population density (males / ha). The figure does not show specific energy sector footprint categories. Bars indicate bootstrap based 90 percent confidence confidence intervals.',out.width='100%'}
 include_graphics("images/Ovenbird-nonEnHF.png")
 ```
 
-## Spatial distribution
 
-Figure \@ref(fig:plot-det) shows detections, 
-Figure \@ref(fig:plot-cr) shows current distr.
-
-
-```{r plot-det,fig.cap='Current map.',out.width='50%'}
-include_graphics("images/Ovenbird-det.png")
-```
-
-```{r plot-cr,fig.cap='Current map.',out.width='50%'}
+```{r plot-cr,fig.cap='Predicted Ovenbird distribution in Alberta. Values are percentages relative to maximum average abundance in 1 km$^2$ mapping units.',out.width='75%'}
 include_graphics("images/Ovenbird-cr.png")
 ```
 
 
-## Local impacts
+## Local scale impacts
 
-Describe here local impacts in order of OSR development chain
+We summarized local scale impacts based on the model incorporating local scale habitat associations and spatial and climate variables (stages 1--7), without the landscape level habitat nd footpring effects (stages 8--9). This means that polygon level predictions do not change based on landscape context. We call this as local scale impacts, but the impact can be quantified over the whole Oil Sands region by summing up the effects within the region based on predictions under current condistions (native vegetation and footprint in the landscape) and reference (backfilled and native vegetation, no footprint). 
+
+We can talk about 'under-footprint' effects for individual energy sector footprint types. This summarizes the abundance change between current and reference landscapes inside the boundaries of the footprint polygons. This refers to a regional average of the impacts due to land cover transformation from native vegetation to a given footprint type without regard to other footprint types and native vegatation (areas outside of any current footprint).
+
+The 'regional' effects summarizes the abundance change between current and reference landscapes over the whole Oil Sands region, including native vegetation and footprint polygons. This refers to a regional average of the impacts due to land cover transformation from native vegetation to a given footprint type taking into account all other footprint types and native vegatation (areas outside of any current footprint).
+
+The 'unit' effect is an area standardized version of the regional effect. A -100 value indicates that transforming 1% of the land base to a particular footprint type leads to a corresponding 1% loss in population abundance. Unit effects closer to 0 have less effect on population abundance, mostly because the footprint type tends to avoid suitable species for the species. Values that are greater than 100 in absolute value tend to disproportionately affect population abundance: 1% land cover transformation leading to >1% population change.
 
 ### Access roads and road verges
 
@@ -253,12 +321,10 @@ Bring in roadside effects, possibly bSims
 ```{r space-road,fig.cap='Additive sector effects for roads/rails/verges',out.width='100%',warning=FALSE,message=FALSE}
 d <- getSE("RoadRailVerge")
 op <- par(mfrow=c(1,3))
-plot(density(d$under), main="underHF", xlim=c(-100, 100), col=2)
-abline(v=0, lty=2)
-plot(density(d$reg), main="Regional", xlim=c(-5, 5), col=2)
-abline(v=0, lty=2)
-plot(density(d$unit), main="Unit", xlim=c(-200, 200), col=2)
-abline(v=c(0, 100, -100), lty=2)
+hf(d$under, main="Under-HF", xlim=c(-100, 100))
+hf(d$reg, main="Regional", xlim=c(-5, 5))
+hf(d$unit, main="Regional", xlim=c(-200, 200))
+abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
@@ -266,15 +332,14 @@ par(op)
 
 Truncated gradient
 
+
 ```{r space-seismic,fig.cap='Additive sector effects for seismic',out.width='100%',warning=FALSE,message=FALSE}
 d <- getSE("SeismicLine")
 op <- par(mfrow=c(1,3))
-plot(density(d$under), main="underHF", xlim=c(-100, 100), col=2)
-abline(v=0, lty=2)
-plot(density(d$reg), main="Regional", xlim=c(-5, 5), col=2)
-abline(v=0, lty=2)
-plot(density(d$unit), main="Unit", xlim=c(-200, 200), col=2)
-abline(v=c(0, 100, -100), lty=2)
+hf(d$under, main="Under-HF", xlim=c(-100, 100))
+hf(d$reg, main="Regional", xlim=c(-5, 5))
+hf(d$unit, main="Regional", xlim=c(-200, 200))
+abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
@@ -300,12 +365,10 @@ Discuss estimates, possibly relative to regional average (i.e. under HF SE)
 ```{r space-industrial,fig.cap='Additive sector effects for industrial',out.width='100%',warning=FALSE,message=FALSE}
 d <- getSE("Industrial")
 op <- par(mfrow=c(1,3))
-plot(density(d$under), main="underHF", xlim=c(-100, 100), col=2)
-abline(v=0, lty=2)
-plot(density(d$reg), main="Regional", xlim=c(-5, 5), col=2)
-abline(v=0, lty=2)
-plot(density(d$unit), main="Unit", xlim=c(-200, 200), col=2)
-abline(v=c(0, 100, -100), lty=2)
+hf(d$under, main="Under-HF", xlim=c(-100, 100))
+hf(d$reg, main="Regional", xlim=c(-5, 5))
+hf(d$unit, main="Regional", xlim=c(-200, 200))
+abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
@@ -317,12 +380,10 @@ Truncated gradient
 ```{r space-wellsite,fig.cap='Additive sector effects for well sites',out.width='100%',warning=FALSE,message=FALSE}
 d <- getSE("WellSite")
 op <- par(mfrow=c(1,3))
-plot(density(d$under), main="underHF", xlim=c(-100, 100), col=2)
-abline(v=0, lty=2)
-plot(density(d$reg), main="Regional", xlim=c(-5, 5), col=2)
-abline(v=0, lty=2)
-plot(density(d$unit), main="Unit", xlim=c(-200, 200), col=2)
-abline(v=c(0, 100, -100), lty=2)
+hf(d$under, main="Under-HF", xlim=c(-100, 100))
+hf(d$reg, main="Regional", xlim=c(-5, 5))
+hf(d$unit, main="Regional", xlim=c(-200, 200))
+abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
@@ -347,15 +408,14 @@ for (k in 1:3) {
 
 veg, pond ,active
 
+
 ```{r space-mines,fig.cap='Additive sector effects for mine sites',out.width='100%',warning=FALSE,message=FALSE}
 d <- getSE("MineSite")
 op <- par(mfrow=c(1,3))
-plot(density(d$under), main="underHF", xlim=c(-100, 100), col=2)
-abline(v=0, lty=2)
-plot(density(d$reg), main="Regional", xlim=c(-5, 5), col=2)
-abline(v=0, lty=2)
-plot(density(d$unit), main="Unit", xlim=c(-200, 200), col=2)
-abline(v=c(0, 100, -100), lty=2)
+hf(d$under, main="Under-HF", xlim=c(-100, 100))
+hf(d$reg, main="Regional", xlim=c(-5, 5))
+hf(d$unit, main="Regional", xlim=c(-200, 200))
+abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
@@ -366,12 +426,10 @@ Truncated gradient
 ```{r space-pipeline,fig.cap='Additive sector effects for pipe lines',out.width='100%',warning=FALSE,message=FALSE}
 d <- getSE("PipeTransLine")
 op <- par(mfrow=c(1,3))
-plot(density(d$under), main="underHF", xlim=c(-100, 100), col=2)
-abline(v=0, lty=2)
-plot(density(d$reg), main="Regional", xlim=c(-5, 5), col=2)
-abline(v=0, lty=2)
-plot(density(d$unit), main="Unit", xlim=c(-200, 200), col=2)
-abline(v=c(0, 100, -100), lty=2)
+hf(d$under, main="Under-HF", xlim=c(-100, 100))
+hf(d$reg, main="Regional", xlim=c(-5, 5))
+hf(d$unit, main="Regional", xlim=c(-200, 200))
+abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
@@ -401,7 +459,7 @@ Show SSH and km_HF results based on actual landscapes from prediction
 
 ## Direct and indirect impacts
 
-Bit unclear yet what to do here
+We don't do this here. It makes sense to compare sectors, but it is problematic for individual footprint types, because that kind of defeats using landscape effects (thos act at larger scales than the scale of individual footprint types, and thus e.g. under-HF effect doesn't even makes sense in isolation).
 
 
 # Conclusion
@@ -409,3 +467,23 @@ Bit unclear yet what to do here
 Conclusions.
 
 
+```{r eval=FALSE,echo=FALSE}
+HF <- list("Native", "Forestry", "RoadRailVerge", 
+  c("SeismicLine", "WellSite", "PipeTransLine", "MineSite", "Industrial"), 
+"RuralUrban", "Agriculture")
+out <- list()
+for (s in HF) {
+  load("data/pred/osm-oven-space-all.RData")
+  d1 <- getSE(s)[1:3]
+  load("data/pred/osm-oven-hf-all.RData")
+  d2 <- getSE(s)[1:3]
+  #load("data/pred/osm-oven-hf-energy.RData")
+  #d3 <- getSE(s)[1:3]
+  tmp <- matrix(sapply(c(d1, d2), median), nrow=2, byrow=TRUE)
+  dimnames(tmp) <- list(c("spall", "hfall"), c("under", "reg", "unit"))
+  out[[paste(s, collapse=" ")]] <- tmp
+}
+out
+
+
+```

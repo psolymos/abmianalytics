@@ -1,5 +1,30 @@
 ## common stuff -----------------------------------------------------------
 
+PROJ <- "north"
+spp <- "CAWA"
+#STAGE <- "Space"
+STAGE <- "HF"
+
+## partial backfilled
+## keep all the HF
+BF_THIS <- character(0) # current
+SEC <- "All" # what HF was not backfilled
+
+## keep energy only
+#BF_THIS <- c(
+#    "EnSoftLin", "Seismic",
+#    "Mine", "Well",
+#    "Industrial") # backfill these
+#SEC <- "Energy"
+
+#BF_THIS <- c("Crop", "RoughP", "TameP",
+#    "HardLin", "TrSoftLin",
+#    "EnSoftLin", "Seismic",
+#    "Mine", "Well",
+#    "Industrial", "Rural", "Urban",
+#    "ForHarv") # backfill these
+#SEC <- "None"
+
 library(mefa4)
 library(intrval)
 library(raster)
@@ -107,9 +132,6 @@ CN <- c("Native", "Misc", "Agriculture", "Forestry", "RuralUrban", "Energy", "Tr
 
 ## north models with bootstrap -------------------------------------
 
-PROJ <- "north"
-spp <- "OVEN"
-
 ## define OSR
 library(rgdal)
 library(sp)
@@ -133,8 +155,6 @@ resn <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
 
 ## north estimates
 names(en$mods)
-#STAGE <- "Space"
-STAGE <- "HF"
 ESTN <- suppressWarnings(get_coef(resn, Xn, stage=STAGE, na.out=FALSE))
 
 b <- nrow(ESTN)
@@ -165,26 +185,6 @@ Alien_HF <- c("Crop", "TameP", #"RoughP",
 ## fully backfilled
 bf0 <- as.character(ch2veg$rf3)
 SSH0 <- row_std(groupSums(trVeg[ss,], 2, bf0))
-
-## partial backfilled
-## keep all the HF
-#BF_THIS <- character(0) # current
-#SEC <- "All" # what HF was not backfilled
-
-## keep energy only
-BF_THIS <- c(
-    "EnSoftLin", "Seismic",
-    "Mine", "Well",
-    "Industrial") # backfill these
-SEC <- "Energy"
-
-#BF_THIS <- c("Crop", "RoughP", "TameP",
-#    "HardLin", "TrSoftLin",
-#    "EnSoftLin", "Seismic",
-#    "Mine", "Well",
-#    "Industrial", "Rural", "Urban",
-#    "ForHarv") # backfill these
-#SEC <- "None"
 
 ## this does not separate forestry --> for SSH_KM variable
 pbf <- as.character(ch2veg$cr3)
@@ -406,6 +406,9 @@ lines(D2 ~ val, pr2, col=2, lwd=2)
 
 ## sector effects
 
+spp <- "OVEN"
+STAGE <- "Space"
+SEC <- "All"
 file <- paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/",
     spp, "-", tolower(STAGE), "-", tolower(SEC), ".RData")
 
@@ -457,7 +460,7 @@ save(HCR, HRF, A, file=paste0(
 ## from Sentinel-2 10 m data, top of atmosphere corrected.
 #' Sentinel - NDVI (Normalized Difference Vegetation Index)
 #'
-#' This most known and used vegetation index is a simple, but effective VI for
+#' This most known and used vegetation index is a simple, but effective vegetation index for
 #' quantifying green vegetation. It normalizes green leaf scattering in the
 #' Near Infra-red wavelength and chlorophyll absorption in the red wavelength.
 #'
