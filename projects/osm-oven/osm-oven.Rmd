@@ -2,15 +2,7 @@
 title: 'OSM Synthesis: Ovenbird'
 author: "Peter Solymos, Marcus Becker, and Erin Bayne"
 date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
-output:
-  bookdown::pdf_document2:
-    toc: true
-    toc_depth: 3
-    number_sections: false
-documentclass: report
-fontsize: 12pt
-classoption: letterpaper
-urlcolor: blue
+output: word_document
 ---
 
 ```{r preamble,include=FALSE}
@@ -418,7 +410,9 @@ kable(z[order(z[,1]),], digits=2)
 
 ## Landscape level effects
 
-Show SSH and km_HF results based on actual landscapes from prediction
+Show SSH and km_HF results based on actual landscapes from prediction.
+
+Describe how it was done
 
 ```{r echo=FALSE}
 source("~/repos/abmianalytics/birds/00-functions.R")
