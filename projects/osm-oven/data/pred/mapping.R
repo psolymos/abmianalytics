@@ -546,3 +546,21 @@ predict_with_SSH <- function(res, X, SSH=NULL, stage=NULL) {
     }
     mu
 }
+
+
+HF <- list("Native", "Forestry", "RoadRailVerge",
+  c("SeismicLine", "WellSite", "PipeTransLine", "MineSite", "Industrial"),
+"RuralUrban", "Agriculture")
+out <- list()
+for (s in HF) {
+  load("data/pred/osm-oven-space-all.RData")
+  d1 <- getSE(s)[1:3]
+  load("data/pred/osm-oven-hf-all.RData")
+  d2 <- getSE(s)[1:3]
+  #load("data/pred/osm-oven-hf-energy.RData")
+  #d3 <- getSE(s)[1:3]
+  tmp <- matrix(sapply(c(d1, d2), median), nrow=2, byrow=TRUE)
+  dimnames(tmp) <- list(c("spall", "hfall"), c("under", "reg", "unit"))
+  out[[paste(s, collapse=" ")]] <- tmp
+}
+out

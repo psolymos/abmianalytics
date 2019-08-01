@@ -65,19 +65,16 @@ enhf <- c("RoadRailVerge", "SeismicLine", "Industrial", "WellSite", "MineSite", 
 # Introduction
 
 The Ovenbird (_Seiurus aurocapilla_; Figure \@ref(fig:oven)) is a small but loud insectivorous songbird found throughout forested regions of Alberta, 
-preferring mature/old hardwood and mixedwood forests for nesting[^1].
+preferring mature/old hardwood and mixedwood forests for nesting (Mahon et al. 2016).
 Ovenbirds have a relatively wide breeding range that spreads from eastern British Columbia to Quebec and Newfoundland. It is migratory species wintering in Mexico, Central America, Florida, and the Caribbean 
-islands[^2].
+islands (Porneluzzi et al. 2011).
 
 Its conservation status is secure based on AB Wildlife Act and AEP general status 2015.
 Ovenbirds have become a model organism for understanding the effects of habitat fragmentation and 
 forest harvest on songbirds.
 We chose this species as an example because it is one of the most studied boreal songbird species,
-and it represents upland bird communities preferring mature and old grofth forests.
+and it represents upland bird communities preferring mature and old-growth forests.
 
-[^1]: Mahon, C. L., Holloway, G., Sólymos, P., Cumming, S. G., Bayne, E. M., Schmiegelow, F. K. A., and Song, S. J., 2016. Community structure and niche characteristics of upland and lowland western boreal birds at multiple spatial scales. Forest Ecology and Management, 361:99–116.
-
-[^2]: BNA website: Porneluzi, P., M. A. Van Horn, and T. M. Donovan (2011). Ovenbird (_Seiurus aurocapilla_), version 2.0. In The Birds of North America (A. F. Poole, Editor). Cornell Lab of Ornithology, Ithaca, NY, USA. https://doi.org/10.2173/bna.88
 
 ```{r oven,echo=FALSE,fig.cap='Ovenbird (Seiurus aurocapilla).',out.width='50%'}
 include_graphics("images/Seiurus-aurocapilla-large.jpg")
@@ -85,13 +82,7 @@ include_graphics("images/Seiurus-aurocapilla-large.jpg")
 
 # Methods
 
-Methods closely follow the approach described in Ball et al.[^5] and Solymos et al.[^6][^16]
-
-[^5]: Ball, J. R., P. Sólymos, F. K. A. Schmiegelow, S. Hache, J. Schieck, and E. Bayne. 2016. Regional habitat needs of a nationally listed species, Canada Warbler (Cardellina canadensis), in Alberta, Canada. Avian Conservation and Ecology 11(2):10. http://dx.doi.org/10.5751/ACE-00916-110210 
-
-[^6]: Sólymos, P., Azeria, E. T., Huggard, D. J., Roy, M.-C., and Schieck, J., 2019. Predicting species status and relationships. In: Alberta Biodiversity Monitoring Institute (ABMI), ABMI 10-year science and program review. pp. 65--97. https://abmi10years.ca/10-year-review/resources/
-
-[^16]: Solymos, P., Judith D. Toms,  Steven M. Matsuoka,  Steven G. Cumming,  Nicole K. S. Barker,  Wayne E. Thogmartin,  Diana Stralberg,  Andrew D. Crosby,  Francisco V. Denes,  Samuel Hache,  C. Lisa Mahon,  Fiona K. A. Schmiegelow,  Erin M. Bayne. 2019. At the end of the road: Lessons learned from comparing model- and sample-based approaches to estimate population sizes of boreal birds in Alberta, Canada. Condor, under revision.
+Methods closely follow the approach described in Ball et al. (2016) and Solymos et al. (2019a, 2019b).
 
 ## Bird data
 
@@ -110,24 +101,10 @@ include_graphics("images/Ovenbird-det.png")
 
 ## Biophysical attributes
 
-We used two spatial scales to derive predictor variables for each survey station. Local-scale variables were assessed in a 150-m radius of each station. This scale encompasses the average breeding territory of Ovenbird (1 ha[^3]) and the effective detection distance for the song of most forest songbirds[^4]. It is also half the minimum distance between stations in our data set. Stand-scale variables were assessed in a 564-m radius (1 km$^2$) of each survey station. This stand scale was chosen for pragmatic reasons to match the mapping unit in our predictions and because it roughly corresponds to the scale deemed most appropriate for landscape variables based on smoothing kernel estimates for landscape variables[^7] and based on Ovenbirds shown to disperse up to 500 m from their natal territory post-fledge, suggesting habitat selection may also be operating at this scale[^8].
+We used two spatial scales to derive predictor variables for each survey station. Local-scale variables were assessed in a 150-m radius of each station. This scale encompasses the average breeding territory of Ovenbird (1 ha; Lanaku et al. 2013) and the effective detection distance for the song of most forest songbirds (Matsuoka et al. 2012). It is also half the minimum distance between stations in our data set. Stand-scale variables were assessed in a 564-m radius (1 km$^2$) of each survey station. This stand scale was chosen for pragmatic reasons to match the mapping unit in our predictions and because it roughly corresponds to the scale deemed most appropriate for landscape variables based on smoothing kernel estimates for landscape variables (Chandler et al. 2016) and based on Ovenbirds shown to disperse up to 500 m from their natal territory post-fledge, suggesting habitat selection may also be operating at this scale (Streby and Andersen 2013).
 
-[^3]: Lankau, H. E., E. M. Bayne, and C. S. Machtans. 2013. Ovenbird (Seiurus aurocapilla) territory placement near seismic lines is influenced by forest regeneration and conspecific density. Avian Conservation and Ecology 8(1):5. http://dx.doi.org/10.5751/ACE-00596-080105
+At the local scale, land cover was assessed for each survey station using provincial land cover (ABMI 2017, Allen et al. 2019) information. Vegetation type included deciduous, mixedwood, white spruce, pine, black spruce forest stands, treed fen, shrub, grass/herb, graminoid fen, marsh, and swamp cover types. Human footprint was assessed at each survey point based on the year of sampling (interpreted at a 1:5000 scale; Allen et al. 2019, Schieck et al. 2014). Footprint type included cultivation, forestry, urban-industrial (mines, well sites, urban areas, industrial, rural residential), hard linear (road and rails), and vegetated soft linear (seismic lines, pipe lines, power lines, road verges) features.
 
-[^4]: Matsuoka et al. 2012. Auk
-
-[^7]: Chandler, R., and J. Hepinstall-Cymerman. 2016. Estimating the spatial scales of landscape effects on abundance. Landscape Ecology 31:1383-1394. http://dx.doi.org/10.1007/s10980-016-0380-z
-
-[^8]: Streby, H. M., and D. E. Andersen. 2013. Testing common assumptions in studies of songbird nest success. Ibis 155:327-337. http://dx.doi.org/10.1111/ibi.12018
-
-
-At the local scale, land cover was assessed for each survey station using provincial land cover[^9][^11] information. Vegetation type included deciduous, mixedwood, white spruce, pine, black spruce forest stands, treed fen, shrub, grass/herb, graminoid fen, marsh, and swamp cover types. Human footprint was assessed at each survey point based on the year of sampling (interpreted at a 1:5000 scale[^10][^11]). Footprint type included cultivation, forestry, urban-industrial (mines, well sites, urban areas, industrial, rural residential), hard linear (road and rails), and vegetated soft linear (seismic lines, pipe lines, power lines, road verges) features.
-
-[^9]: Alberta Biodiversity Monitoring Institute. 2017. Alberta Wall-to-Wall Vegetation Layer Including "Backfilled" Vegetation in Human Footprints (Version 6). Alberta Biodiversity Monitoring Institute, Alberta, Canada. URL: https://www.abmi.ca/home/data-analytics/da-top/da-product-overview/GIS-Land-Surface/Detailed-Vegetation-Maps.html
-
-[^10]: Shieck, J., Huggard, D., and Sólymos, P. 2014. Human footprint in Alberta. ABMI Science Letters, September 5, 2014. URL: http://ftp.public.abmi.ca//home/publications/documents/364_Schieck_etal_2014_LetterHFInAlberta_ABMI.pdf
-
-[^11]: Allen, B., Morrison, S., Kariyeva, J., Sparkes, S., Hutchings, C., Hricko, B., Sólymos, P., and Huggard, D., 2019. Data collection. In: Alberta Biodiversity Monitoring Institute (ABMI), ABMI 10-year science and program review. pp. 29--64. https://abmi10years.ca/10-year-review/resources/
 
 ```{r hab_tab,echo=FALSE}
 k <- data.frame(table(en$DAT$vegc))
@@ -135,7 +112,7 @@ colnames(k) <- c("Land cover type", "Number of surveys")
 kable(k)
 ```
 
-Proportional area was calculated at the local scale, and the dominant vegetation type was assigned to each survey station based on a simple majority rule. Observations were weighted according to the proportion of the dominant land-cover type (weight = 1 for > 0.75, linearly deceasing between 0.75 and 0.25, 0 for < 0.25 proportions) to reduce the effects of 'contamination' when surveys were done in a mixture of different land-cover types. We used various data sources[^9] to estimate the years since last disturbance (i.e., forest age) relative to year of sampling for birds. Age was calculated as the area weighted average of the polygons within each buffer distance (local and stand scales).We modeled the effect of forest age on Ovenbird density by using weighted age and its quadratic and square root transformed terms as covariates. We incorporated interactions between forest type and age. When the dominant land cover was a harvest block, the predisturbance vegetation type was assumed based on available forest inventory data in the local 150-m buffer. Doing so treated harvested areas as young forest rather than a separate land cover type. We also created a contrast variable that ranged between 1 (recent harvest) and 0 (converged to natural stands) to describe the convergence trajectory of forestry cut blocks (Figure \@ref(fig:plot-recovery)). We assumed that convergence is complete at 60 years after harvest. This allowed us to differentiate young forests of natural (i.e., fire) versus anthropogenic (i.e., timber harvest) origin.
+Proportional area was calculated at the local scale, and the dominant vegetation type was assigned to each survey station based on a simple majority rule. Observations were weighted according to the proportion of the dominant land-cover type (weight = 1 for > 0.75, linearly deceasing between 0.75 and 0.25, 0 for < 0.25 proportions) to reduce the effects of 'contamination' when surveys were done in a mixture of different land-cover types. We used various data sources (ABMI 2017) to estimate the years since last disturbance (i.e., forest age) relative to year of sampling for birds. Age was calculated as the area weighted average of the polygons within each buffer distance (local and stand scales).We modeled the effect of forest age on Ovenbird density by using weighted age and its quadratic and square root transformed terms as covariates. We incorporated interactions between forest type and age. When the dominant land cover was a harvest block, the predisturbance vegetation type was assumed based on available forest inventory data in the local 150-m buffer. Doing so treated harvested areas as young forest rather than a separate land cover type. We also created a contrast variable that ranged between 1 (recent harvest) and 0 (converged to natural stands) to describe the convergence trajectory of forestry cut blocks (Figure \@ref(fig:plot-recovery)). We assumed that convergence is complete at 60 years after harvest. This allowed us to differentiate young forests of natural (i.e., fire) versus anthropogenic (i.e., timber harvest) origin.
 
 ```{r plot-recovery,echo=FALSE,fig.cap='Forest harvest recovery trajectories.',out.width='100%'}
 age <- c(0, 1:20*4)/200
@@ -149,30 +126,14 @@ legend("topright", bty="n", title="Stand type", lty=1, col=c(2,4),
   legend=c("Coniferous", "Mixed/Deciduous"))
 ```
 
-Footprint types were treated as landcover classes when they comprised the dominant class in the buffer. However, because linear features usually make up <20% of the 150-m buffer area, we did not treat these features as separate land-cover classes. Instead we included the proportion of soft linear features within the buffer as a covariate. We used a binary variable to distinguish roadside (1) from off-road (0) surveys because it is known that their presence can introduce biases when not accounted for[^12][^13]. 
+Footprint types were treated as landcover classes when they comprised the dominant class in the buffer. However, because linear features usually make up <20% of the 150-m buffer area, we did not treat these features as separate land-cover classes. Instead we included the proportion of soft linear features within the buffer as a covariate. We used a binary variable to distinguish roadside (1) from off-road (0) surveys because it is known that their presence can introduce biases when not accounted for (Bayne et al. 2016, Marques et al. 2010). 
 
-[^12]: Bayne, E., L. Leston, C. L. Mahon, P. Sólymos, C. Machtans, H. Lankau, J. R. Ball, S. L. Van Wilgenburg, S. G. Cumming, T. Fontaine, F. K. A. Schmiegelow, and S. J. Song. 2016. Boreal bird abundance estimates within different energy sector disturbances vary with point count radius. Condor 118:376--390. http://dx.doi.org/10.1650/CONDOR-15-126.1
+We also accounted for biases related to survey methodology. The majority of the surveys were done by trained human observers, whereas the remainder were field-based recordings (RiverFork and SongMeter units), which were transcribed in the laboratory. We used a three-level (human, RiverFork, SongMeter) factor variable to account for this possible bias in our analyses. The exponent of these estimated contrasts gave the magnitude of expected counts compared with the reference type of survey method (Van Wilgenburg et al. 2017, Yip et al. 2017).
 
-[^13]: Marques, T. A., S. T. Buckland, D. L. Borchers, D. Tosh, and R. A. McDonald. 2010. Point transect sampling along linear features. Biometrics 66:1247-1255. http://dx.doi.org/10.1111/j.1541-0420.2009.01381.x
+Geographic variation was captured by including latitude, longitude, and climate (mean annual precipitation, mean annual temperature, potential evapotranspiration, annual heat moisture index, frost-free period, mean warmest and coldest month temperature; Wang et al. 2012), and the amount of open water in a 1-km$^2$ buffer around each survey location as another spatial covariate.
 
-We also accounted for biases related to survey methodology. The majority of the surveys were done by trained human observers, whereas the remainder were field-based recordings (RiverFork and SongMeter units), which were transcribed in the laboratory. We used a three-level (human, RiverFork, SongMeter) factor variable to account for this possible bias in our analyses. The exponent of these estimated contrasts gave the magnitude of expected counts compared with the reference type of survey method[^14][^15].
 
-[^14]: Van Wilgenburg, S. L., P. Sólymos, K. J. Kardynal, and M. D. Frey. 2017. Paired sampling standardizes point count data from humans and acoustic recorders. Avian Conservation and Ecology 12(1):13. https://doi.org/10.5751/ACE-00975-120113
-
-[^15]: Yip, D. A., L. Leston, E. M. Bayne, P. Sólymos, and A. Grover. 2017. Experimentally derived detection distances from audio recordings and human observers enable integrated analysis of point count data. Avian Conservation and Ecology 12(1):11. https://doi.org/10.5751/ACE-00997-120111
-
-Geographic variation was captured by including latitude, longitude, and climate (mean annual precipitation, mean annual temperature, potential evapotranspiration, annual heat moisture index, frost-free period, mean warmest and coldest month temperature[^17]), and the amount of open water in a 1-km$^2$ buffer around each survey location as another spatial covariate.
-
-[^17]: Wang, T., A. Hamann, D. L. Spittlehouse, and T. Q. Murdock. 2012. ClimateWNA–high-resolution spatial climate data for western North America. Journal of Applied Meteorology and Climatology 51:16-29. http://dx.doi.org/10.1175/JAMC-D-11-043.1
-
-At the stand scale, we calculated the proportion of SSH within a 564 m radius of each survey station. 
-
-Surrounding suitable habitat (SSH) was defined based on fitting a model to land cover classes with forest age classes classified into young vs. mature/old-growth (following Mahon et al.[^1]). We then predicted the expected abundance at each survey location in the training data set and constructed a Lorenz-curve based on the cumulative density. We then identified the population density threshold at the tangent of the Lorenz curve (also used to determine the Youden index in the binary classification case[^30]) and assigned land cover types as suitable habitat when more than 50% of the surveys within that class were found to be above the threshold[^31] (Figure \@ref(fig:plot-lorenz)).
-
-[^30]: Youden, W. J. (1950): Index for rating diagnostic tests. Cancer 3:32–5.
-
-[^31]: Peter Solymos and Ermias T. Azeria (2018). opticut: Likelihood Based Optimal Partitioning and Indicator Species Analysis. R package version 0.1-2. https://CRAN.R-project.org/package=opticut
-
+At the stand scale, we calculated the proportion of suitable habitat within a 564 m radius of each survey station. Surrounding suitable habitat (SSH) was defined based on fitting a model to land cover classes with forest age classes classified into young vs. mature/old-growth (following Mahon et al. 2016). We then predicted the expected abundance at each survey location in the training data set and constructed a Lorenz-curve based on the cumulative density. We then identified the population density threshold at the tangent of the Lorenz curve (also used to determine the Youden index in the binary classification case; Youden 1950) and assigned land cover types as suitable habitat when more than 50% of the surveys within that class were found to be above the threshold (Solymos and Azeria 2018) (Figure \@ref(fig:plot-lorenz)).
 
 ```{r plot-lorenz,echo=FALSE,fig.cap='Lorenz tangent approach illustrated. L: cumulative abundance, p: cumulative portion of surveys, red: Lorenz tangent (slope = 1).',out.width='100%'}
 n <- 1000
@@ -192,18 +153,11 @@ abline(0, 1, lty=2)
 
 Area of total human footprint was also quantified at the stand scale for each survey station, and further partitioned as proportion of successional, alienating, linear, nonlinear, cultivation, and non-cultivation footprints. Successional footprint included activities where the soil disturbance was minimal (forest harvest, soft linear features), whereas alienating footprint included activities that disturbed soils (cultivation, urban-industrial, hard linear features, human-created water bodies). 
 
-
 ## Modeling
 
-We used Poisson generalized linear models with a log link. The response variable was the number of Ovenbirds counted per survey. We used the QPAD approach to account for differences in sampling protocol and nuisance parameters affecting detectability (time of day, time of year, tree cover, habitat composition[^18][^19]). This approach converts sampling distances and durations to a common standard through statistical offsets and adjusts for differences in detection error and sampling area related to broad vegetation types and timing of surveys. The QPAD correction included time-varying singing rate estimates[^20]. Singing rates were used to estimate the probability of a Ovenbird being present and giving a cue that could be counted by the observer. We also calculated an effective detection radius (EDR) that uses distance sampling to determine the area sampled. EDRs are dependent on tree cover and habitat composition at the survey point[^18].
+We used Poisson generalized linear models with a log link. The response variable was the number of Ovenbirds counted per survey. We used the QPAD approach to account for differences in sampling protocol and nuisance parameters affecting detectability (time of day, time of year, tree cover, habitat composition; Solymos et al. 2013, Solymos 2016). This approach converts sampling distances and durations to a common standard through statistical offsets and adjusts for differences in detection error and sampling area related to broad vegetation types and timing of surveys. The QPAD correction included time-varying singing rate estimates (Solymos et al. 2018a). Singing rates were used to estimate the probability of a Ovenbird being present and giving a cue that could be counted by the observer. We also calculated an effective detection radius (EDR) that uses distance sampling to determine the area sampled. EDRs are dependent on tree cover and habitat composition at the survey point (Solymos et al. 2013).
 
-[^18]: Solymos, P., Matsuoka, S. M., Bayne, E. M., Lele, S. R., Fontaine, P., Cumming, S. G., Stralberg, D., Schmiegelow, F. K. A. & Song, S. J., 2013. Calibrating indices of avian density from non-standardized survey data: making the most of a messy situation. Methods in Ecology and Evolution 4:1047--1058.
-
-[^19]: Solymos, P. 2016. QPAD version 3 documentation. Technical Report, Boreal Avian Modelling Project, Edmonton, AB, Canada. Retrieved on April 2017, from http://www.borealbirds.ca/files/QPAD_v3_report_1.pdf
-
-[^20]: Solymos, P., Matsuoka, S. M., Cumming, S. G., Stralberg, D., Fontaine, P., Schmiegelow, F. K. A., Song, S. J., and Bayne, E. M., 2018b. Evaluating time-removal models for estimating availability of boreal birds during point-count surveys: sample size requirements and model complexity. Condor 120: 765--786.
-
-We applied branching forward stepwise variable selection[^5][^21] to minimize bias and variance in predictionsbased on an a priori branching hierarchy. The branching process was applied instead of a simple add-one type of variable search to make variable selection computationally more efficient by narrowing the scope of potential predictors entering the active set at each stage. At each stage of the branching hierarchy, we compared support among candidate models using Akaike's information criterion. Variables for the top-ranked model in a given stage were fixed and added to models in the subsequent stage. Model sets at each stage also considered a null model, which was the top model from the previous level or, in the case of the first stage, a constant density model without covariates. We includes the following stages:
+We applied branching forward stepwise variable selection (Ball et al. 2016, Westwood et al. 2019) to minimize bias and variance in predictionsbased on an a priori branching hierarchy. The branching process was applied instead of a simple add-one type of variable search to make variable selection computationally more efficient by narrowing the scope of potential predictors entering the active set at each stage. At each stage of the branching hierarchy, we compared support among candidate models using Akaike's information criterion. Variables for the top-ranked model in a given stage were fixed and added to models in the subsequent stage. Model sets at each stage also considered a null model, which was the top model from the previous level or, in the case of the first stage, a constant density model without covariates. We includes the following stages:
 
 1. Local scale land cover
 2. Forest age
@@ -215,29 +169,15 @@ We applied branching forward stepwise variable selection[^5][^21] to minimize bi
 8. Proportion of suitable habitat in surrounding 1 km$^2$
 9. Proportion of human footprint in surrounding 1 km$^2$
 
-[^21]: Westwood, A. R., C. Staicer, P. Solymos, S. Hache, T. Fontaine, E. Bayne, and D. Mazerolle. 2019. Estimating the conservation value of protected areas in Maritime Canada for two species at risk: the Olive-sided Flycatcher (Contopus cooperi) and Canada Warbler (Cardellina canadensis). Avian Conservation and Ecology 14(1):16. https://doi.org/10.5751/ACE-01359-140116
-
-The model selection procedure was repeated by combining the branching process with bootstrap aggregation (bagging[^22], or bootstrap smoothing[^23]). Bootstrap replicates were drawn with replacement from each spatio-temporal block to ensure representation of the entire sample distribution. Temporal blocks were set using five-year intervals over the two decades of the study. Spatial blocks were defined based on natural regions (Foothills, Parkland, Rocky Mountain, Boreal). Because of its comparatively large area, the Boreal natural region (including the Canadian Shield) was further subdivided into four quadrants by the 56.5 parallel and the -115.5 meridian. Within spatial units, we sampled survey stations and survey visits within each selected station with replacement, to retain the spatial sampling pattern of the surveys in the bootstrap samples. When more than one visit occurred at the same location in the same year, we randomly selected a single visit for each of the bootstrap iterations. Observations were assumed to be independent, conditional on the value of the predictors. The number of bootstrap iterations was 239, plus the original model fit with all data, for a total of 240 independent runs.
-
-[^22]: Breiman, L. 1996. Bagging predictors. Machine Learning 24:123-140. http://dx.doi.org/10.1007/BF0005865510.1525/auk.2008.07115
-
-[^23]: Efron, B. 2014. Estimation and accuracy after model selection. Journal of the American Statistical Association 109:991-1007. http://dx.doi.org/10.1080/01621459.2013.823775
+The model selection procedure was repeated by combining the branching process with bootstrap aggregation (bagging [Breiman 1996], or bootstrap smoothing [Efron 2014]). Bootstrap replicates were drawn with replacement from each spatio-temporal block to ensure representation of the entire sample distribution. Temporal blocks were set using five-year intervals over the two decades of the study. Spatial blocks were defined based on natural regions (Foothills, Parkland, Rocky Mountain, Boreal). Because of its comparatively large area, the Boreal natural region (including the Canadian Shield) was further subdivided into four quadrants by the 56.5 parallel and the -115.5 meridian. Within spatial units, we sampled survey stations and survey visits within each selected station with replacement, to retain the spatial sampling pattern of the surveys in the bootstrap samples. When more than one visit occurred at the same location in the same year, we randomly selected a single visit for each of the bootstrap iterations. Observations were assumed to be independent, conditional on the value of the predictors. The number of bootstrap iterations was 239, plus the original model fit with all data, for a total of 240 independent runs.
 
 We used 90% of the unique location-year combinations in the data as a training set and held out the remaining 10% of the data as a validation set. We calculated the bootstrap averaged (B = 240) prediction for each data point in the validation set given the values of the predictors, including the QPAD offsets. We then constructed receiver operating characteristic (ROC) curves by plotting sensitivity and specificity based on the predicted values and the dichotomized observations (detection vs. nondetection) to assess model performance. We calculated area under the curve (AUC) as a measure of classification accuracy.
 
-We used the R language[^24] for data processing[^25], analysis (glm function), and prediction. The QPAD methodology was based on estimates using the detect R package[^26].
-
-[^24]: R Core Team (2019). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
-
-[^25]: Peter Solymos (2009). Processing Ecological Data in R with the mefa Package. Journal of Statistical Software 29(8), 1-28. URL http://www.jstatsoft.org/v29/i08/.
-
-[^26]: Peter Solymos, Monica Moreno and Subhash R. Lele (2018). detect: Analyzing Wildlife Data with Detection Error. R package version 0.4-2. https://CRAN.R-project.org/package=detect
+We used the R language (R Core Team 2019) for data processing (Solymos 2009), analysis (glm function), and prediction. The QPAD methodology was based on estimates using the detect R package (Solymos et al. 2018b).
 
 ## Prediction
 
-We summarized provincial land cover information[^27] (human footprint interpreted at a 1:15,000 scale based on ABMI's 2016 wall-to-wall human footprint inventory) for the entire study area and calculated average Ovenbird density (males per ha) for each of 1 km$^2$ units in Alberta. Stand-level attributes (footprint and forest composition) were calculated for each unit based on all polygon attributes found within that unit. The centroid of the unit was used to assign latitude, longitude, and climate variable values. Local-scale variables were determined for each stand type–age polygon within each 1 km$^2$ unit using the same approach applied for the 150-m radius buffers. Predicted Ovenbird density for each 1 km$^2$ unit was the area-weighted average of the polygon-level densities. This procedure was repeated for all 240 bootstrap runs using the estimated coefficient matrix. Point prediction for each 1 km$^2$ unit was calculated as the mean of the 240 predicted values. We calculated the coefficient of variation (standard deviation/mean across bootstrap runs) for each unit as an estimate of prediction uncertainty.
-
-[^27]: Alberta Biodiversity Monitoring Institute. 2018. Human Footprint Inventory 2016 (Version 1). Alberta Biodiversity Monitoring Institute, Geospatial Centre, Alberta, Canada. URL: https://www.abmi.ca/home/data-analytics/da-top/da-product-overview/GIS-Land-Surface/HF-inventory.html
+We summarized provincial land cover information (ABMI 2018) (human footprint interpreted at a 1:15,000 scale based on ABMI's 2016 wall-to-wall human footprint inventory) for the entire study area and calculated average Ovenbird density (males per ha) for each of 1 km$^2$ units in Alberta. Stand-level attributes (footprint and forest composition) were calculated for each unit based on all polygon attributes found within that unit. The centroid of the unit was used to assign latitude, longitude, and climate variable values. Local-scale variables were determined for each stand type–age polygon within each 1 km$^2$ unit using the same approach applied for the 150-m radius buffers. Predicted Ovenbird density for each 1 km$^2$ unit was the area-weighted average of the polygon-level densities. This procedure was repeated for all 240 bootstrap runs using the estimated coefficient matrix. Point prediction for each 1 km$^2$ unit was calculated as the mean of the 240 predicted values. We calculated the coefficient of variation (standard deviation/mean across bootstrap runs) for each unit as an estimate of prediction uncertainty.
 
 A visual inspection of the surveyed mine sites revealed that those were aither at the margin of open pit mines or tailing ponds, or vegetated. This represented a challenge when predicting abundance for mine sites, because non-vegetated mine sites were not represented in our sample, thus applying the estimate based on vegetated mine sites will cretainly overestimate abundance. Non-vegetated mine sites can safely be assumed as non-habitat for Ovenbird. We opted to quantify the proportion of non-vegetated mine sites based on 2017--2018 summer (June 1st -- Aug 15th) normalized difference vegetation index (NDVI; from top of atmosphere corrected Sentinel-2 10 m data). We calculated average NDVI in each mine site polygon within the Oil Sands region (Figure \@ref(fig:plot-ndvi)). The percentage of total polgon area of vegetated areas with >0.1 average NDVI value was 44%. We predicted mine site abundance at the Oil Sands region scale as the weighted average of vegetated and non-vegetated mine site abundances (44% x estimate + 66% x 0).
 
@@ -268,11 +208,7 @@ p
 
 ## Attributing effects to industrial sectors
 
-We used the Ovenbird models and predictions to estimate the effects of individual industrial sectors (or a set of human footprint categories) within the Oil Sands Region.We started with a summary of all combinations of vegetation types x footprint types in each 1 km$^2$ unit, for both the current (footprint included) and reference (backfilled, no footprint[^9]) conditions.  We could then 'turn on' only the footprint types associated with one industrial sector and compared the predicted abundances of each species with only that footprint type in the current land-base to the specie's predicted abundance under reference land-base. This showed the degree to which the footprint from just that one industrial sector was predicted to have changed the abundance of that species[^28][^29]. We did this calculation for each major industrial sectors (agriculture, forestry, energy, rural/urban and transportation), and also for individual footprint types related to energy sector (access roads, seismic lines, industrial facilities, well sites, mines, pipe lines).
-
-[^28]: Solymos, P., Mahon, C. L., Fontaine, T., and Bayne, E. M. (2015). Predictive models for estimating the cumulative effects of human development on migratory landbirds in the oil sands areas of Alberta. Technical report, Joint Oil Sands Monitoring: Cause-Effects Assessment of Oil Sands Activity on Migratory Landbirds, Edmonton, AB. pp. 38+410 appendices.
-
-[^29]: Solymos, P. & Schieck, J. (2016): Effects of industrial sectors on species abundance in Alberta. ABMI Science Letters, Issue 5, October, 2016.
+We used the Ovenbird models and predictions to estimate the effects of individual industrial sectors (or a set of human footprint categories) within the Oil Sands Region.We started with a summary of all combinations of vegetation types x footprint types in each 1 km$^2$ unit, for both the current (footprint included) and reference (backfilled, no footprint; ABMI 2017) conditions.  We could then 'turn on' only the footprint types associated with one industrial sector and compared the predicted abundances of each species with only that footprint type in the current land-base to the specie's predicted abundance under reference land-base. This showed the degree to which the footprint from just that one industrial sector was predicted to have changed the abundance of that species (Solymos et al. 2015, Solymos and Schieck 2016). We did this calculation for each major industrial sectors (agriculture, forestry, energy, rural/urban and transportation), and also for individual footprint types related to energy sector (access roads, seismic lines, industrial facilities, well sites, mines, pipe lines).
 
 The procedure gave the predicted total population effect of the industrial sector on each species' abundance within the region (including native vegetation and footprint land cover types), and the effect per unit area of the industry's footprint (i.e., how "intensive" the effect of the industry's footprint is on the species, we call this the "unit effect"). We also quantified how the predicted abundance inside the human footprint polygons compared betwen current and reference conditions, i.e. how the local abundance under current footprint changed (we call this "under-footprint" effect).
 
@@ -314,42 +250,48 @@ The 'regional' effects summarizes the abundance change between current and refer
 
 The 'unit' effect is an area standardized version of the regional effect. A -100 value indicates that transforming 1% of the land base to a particular footprint type leads to a corresponding 1% loss in population abundance. Unit effects closer to 0 have less effect on population abundance, mostly because the footprint type tends to avoid suitable species for the species. Values that are greater than 100 in absolute value tend to disproportionately affect population abundance: 1% land cover transformation leading to >1% population change.
 
-### Access roads and road verges
+### Roads, rails, and verges
 
-Bring in roadside effects, possibly bSims
+Roads and road verges occupied `r round(getSE("RoadRailVerge")$perc, 2)`% of the land base in the Oil Sands region. We estimated a -100% local scale effect on the footprint itself. Because roads are usually built in upland areas, it is more likely for roads and road verges to replace suitable ovenbird habiat (upland mixed and deciduous forests and to some extent white spruce dominated conifer stands) than unsuitable lowland habitats. This selectivity results in a lower than -100 unit effect (`r round(median(getSE("RoadRailVerge")$unit), 2)`) and a regional population effect of `r round(median(getSE("RoadRailVerge")$reg), 2)`% that is larger than it would be expected based on road footprint alone (a roughly equal absolute population effects would be expected if footprint impacted suitable and unsuitable Ovenbird habitats randomly) (Figure \@ref(fig:space-road)).
 
-```{r space-road,fig.cap='Additive sector effects for roads/rails/verges',out.width='100%',warning=FALSE,message=FALSE}
+```{r space-road,fig.cap='Effects of roads/rails/verges on ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE}
 d <- getSE("RoadRailVerge")
-op <- par(mfrow=c(1,3))
-hf(d$under, main="Under-HF", xlim=c(-100, 100))
-hf(d$reg, main="Regional", xlim=c(-5, 5))
-hf(d$unit, main="Regional", xlim=c(-200, 200))
+op <- par(mfrow=c(1,3), mar=c(4,4,3,0.1))
+hf(d$under, xlab="Under HF (%)", xlim=c(-100, 100), main="Roads, rails, verges")
+hf(d$reg, xlab="Regional (%)", xlim=c(-2, 2), main="", ylab="")
+hf(d$unit, xlab="Unit effect", xlim=c(-200, 200), main="", ylab="")
 abline(v=c(100, -100), lty=2)
 par(op)
 ```
+
+Roads themselves provide largely unsuitable breeding habitat for Ovenbirds that nest on the ground in sparse understory forest floor avoiding dense woody understory vegetation (Porneluzi et al. 2011). 
+Ovenbirds are also known exclude open areas from their territories because of lack of protective tree and shrub cover (Wilson and Bayne 2018) and because of reduced food resources (Lankau et al. 2013). Therefore, the expected abundance on paved and gravel road surfaces is zero, while road edges might be used by ovenbirds in narrow access roads without verges (neutral edge effect), verges along higher-trafic roads and rails are unsuitable as other early seral and open habitats, and often create edge effects (Bayne and Dale 2011).
 
 ### Seismic lines
 
-Truncated gradient
+Seismic lines occupied `r round(getSE("SeismicLine")$perc, 2)`% of the land base in the Oil Sands region. We estimated a neutral local and regional scale effect, although the uncertainy around this neutral point estimate was rather wide ans skewed towards negative effects. Seismic lines do not discriminate among habitats and impact upland and lowland habitats in a systematic manner. Because wetlands predominate in the Oil Sands region, seismic lines impact suitable Ovenbird habitat less frequently, as indicated by the neutral unit area effects (Figure \@ref(fig:space-seismic)).
 
 
-```{r space-seismic,fig.cap='Additive sector effects for seismic',out.width='100%',warning=FALSE,message=FALSE}
+```{r space-seismic,fig.cap='Effects of seismic lines on Ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE}
 d <- getSE("SeismicLine")
-op <- par(mfrow=c(1,3))
-hf(d$under, main="Under-HF", xlim=c(-100, 100))
-hf(d$reg, main="Regional", xlim=c(-5, 5))
-hf(d$unit, main="Regional", xlim=c(-200, 200))
+op <- par(mfrow=c(1,3), mar=c(4,4,3,0.1))
+hf(d$under, xlab="Under HF (%)", xlim=c(-100, 100), main="Seismic lines")
+hf(d$reg, xlab="Regional (%)", xlim=c(-2, 2), main="", ylab="")
+hf(d$unit, xlab="Unit effect", xlim=c(-200, 200), main="", ylab="")
 abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
-Condor paper results
+Bayne et al. (2016) studied bird responses to seismic lines using a paired sampling design to estimate impact ratios (treatment / control). They found that Ovenbird abundance in 50-m count radius was 80% of the control abundance found in forests 150--400 m from the nearest seismic line edge. This effects was not significant due to the noisy nature of bird counts collected over small areas (50-m radius is 0.8 ha), and counts were also likely 'contaminated' by individuals detected in the surrounding forest habitats, because seismic lines tend to be narrow (5--8 m wide) making the actual footprint less than 10% of the area sampled by the bird count. By looking at the point estimate of 80% impact ratio, it is important to note that a less than 10% habitat loss resulted in 20% abundance decrease, therefore we suspect at least half of the impact is attributable to edge effects because the loss was greated than expected based on area alone.
+Impact ratios were close to 1 (no effect) when using 100-m or unlimited distance counts, which minimized the relative area of the seismic line inside the surveyed area (Figure \@ref(fig:b16-seismic)).
+Given all this complexity, we can conclude that it is difficult to estimate seismic line effects,
+mostly due to the narrow nature of the feature relative to counting area and Ovenbird territory sizes.
+Nevertheless, the two studies both point to a slight negative effect of seismic lines on Ovenbird abundance at the local scale.
 
-```{r b16-seismic,fig.cap='Bayne et al. 2016 Seismic.',out.width='100%'}
+```{r b16-seismic,fig.cap='Relative effect sizes of seismic lines on Ovenbird relative abundances (paired control/impact design by Bayne et al. 2016).',out.width='100%'}
 i <- "Seismic"
 v <- barplot(b16$est[,i],beside=TRUE, ylim=c(0, 1.5), 
-    main=colnames(b16$est)[i],
-    xlab="Point count radius", ylab="Relative effect size")
+    xlab="Point count radius", ylab="Relative effect size", main="Seismic lines")
 abline(h=1, col='#8da0cb')
 for (k in 1:3) {
     int <- c(b16$lwr[k,i], b16$upr[k,i])
@@ -357,45 +299,53 @@ for (k in 1:3) {
     lines(c(v[k], v[k]), int, lwd=lwd)
 }
 ```
+
+The neutral to negative response to edges of Ovenbirds was noted previously by Bayne and Dale (2011) based on literature review. Bayne et al. (2005a) and Lankau et al. (2013) found decreased habitat use along seismic lines by studying movement behaviour and territory placements. Bayne et al. (2005b) found that Ovenbirds perceived conventional seismic lines (8-m wide) as creating a gap in the forest and used it as a territory boundary. In contrast, Ovenbirds incorporated low-impact seismic lines (2-3 m wide) within their territories. They concluded that wide seismic lines without regenerating shrubs and treed vegetation are unsiutable for Ovenbirds. The behavioural response to narrow seismic lines was found not to translate into numeric response at the local scales.
 
 ### Industrial facilities
 
-Discuss estimates, possibly relative to regional average (i.e. under HF SE)
+Industrial facilities occupied `r round(getSE("Industrial")$perc, 2)`% of the land base in the Oil Sands region. We estimated a `r round(median(getSE("Industrial")$under), 2)`% local scale effect on the footprint itself. The effect of facilities on the regional population was small (`r round(median(getSE("Industrial")$reg), 2)`%) due to the tiny extent of this footprint type, but 90% confidence interval did not overlap zero. Unit area effects were between -100 and 0 indicating a negative but not too severe effect as shown by local scale under-footprint effects as well (Figure \@ref(fig:space-industrial)).
 
-```{r space-industrial,fig.cap='Additive sector effects for industrial',out.width='100%',warning=FALSE,message=FALSE}
+```{r space-industrial,fig.cap='Effects of industrial facilities on Ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE}
 d <- getSE("Industrial")
-op <- par(mfrow=c(1,3))
-hf(d$under, main="Under-HF", xlim=c(-100, 100))
-hf(d$reg, main="Regional", xlim=c(-5, 5))
-hf(d$unit, main="Regional", xlim=c(-200, 200))
+op <- par(mfrow=c(1,3), mar=c(4,4,3,0.1))
+hf(d$under, xlab="Under HF (%)", xlim=c(-100, 100), main="Industrial facilities")
+hf(d$reg, xlab="Regional (%)", xlim=c(-1, 1), main="", ylab="")
+hf(d$unit, xlab="Unit effect", xlim=c(-200, 200), main="", ylab="")
 abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
+Industrial facilities share similarities with rural residential and urban areas that are mostly unsuitable habitats for Ovenbirds (Figure \@ref(fig:plot-hab)). Industrial facilities in northern Alberta tend to be surrounded by intact forest patches which might provide more suitable habitat for Ovenbirds in the vicinity. This is likely to result into the not so severe local scale impact we identified based on pur predictive models. However, increasing contagious extents of industrial facilities might have effects similar to more expansive urban and residential areas, further decreasing suitability ofr Ovenbirds.
+
+Besides habitat effects, some facilities, e.g. compressor stations, impact Ovenbirds through noise pollution as well. Habib et al. (2007) found a significant reduction in ovenbird pairing success at compressor sites
+(77%) compared with noiseless wellpads (92%). They also found significantly more inexperienced birds
+breeding for the first time near noise-generating compressor stations than noiseless wellpads (48% vs. 30%).
+They hypothesized that noise interferes with a male’s song, such that females may not hear the male’s song at greater distances and/or females may perceive males to be of lower quality because of distortion of song characteristics. As a result, noisy industrial facilities might have more severe population effects on Ovenbirds through pairing success and reproductive rates. Bayne et al. (2008) found that noiseless energy sector facilities harbored 1.5x more Ovenbirds that noisy compressor stations, indicating a direct negative numeric response as a result of noise pollution.
 
 ### Well sites
 
-Truncated gradient
+Well sites occupied `r round(getSE("WellSite")$perc, 2)`% of the land base in the Oil Sands region. We estimated a `r round(median(getSE("WellSite")$under), 2)`% local scale effect on the footprint itself. The effect of well sites on the regional population was `r round(median(getSE("WellSite")$reg), 2)`%
+was similar to extent of this footprint type. Unit area effects were `r round(median(getSE("WellSite")$unit), 2)` with 90% confidence intervals overlapping with -100, which indicated that population change is proportional to amount of habitat loss (Figure \@ref(fig:space-wellsite)). 
 
-```{r space-wellsite,fig.cap='Additive sector effects for well sites',out.width='100%',warning=FALSE,message=FALSE}
+Our estimtes did not differentiate between reclaimed/regenerating and active/non-reclaimed well sites. Our sample included an unknown proportion of well sites of different degrees of regneration, thus our estimates represented the overall northern Alberta population of well sites. It is possible that the relatively large uncertainty for the well site effects (90% confidence interval for the local scale effects ranging between -100% and -28%) was partly due to this variation among individual well sites, i.e. when the bootstrap sample included more regenerated well sites the effects were less severe.
+
+```{r space-wellsite,fig.cap='Effects of well sites on Ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE}
 d <- getSE("WellSite")
-op <- par(mfrow=c(1,3))
-hf(d$under, main="Under-HF", xlim=c(-100, 100))
-hf(d$reg, main="Regional", xlim=c(-5, 5))
-hf(d$unit, main="Regional", xlim=c(-200, 200))
+op <- par(mfrow=c(1,3), mar=c(4,4,3,0.1))
+hf(d$under, xlab="Under HF (%)", xlim=c(-100, 100), main="Well sites")
+hf(d$reg, xlab="Regional (%)", xlim=c(-1, 1), main="", ylab="")
+hf(d$unit, xlab="Unit effect", xlim=c(-200, 200), main="", ylab="")
 abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
+Bayne et al. (2016) studied bird responses to well sites using a paired sampling design to estimate impact ratios (treatment / control). They found that Ovenbird abundance in 50-m count radius was 30% of the control abundance found in forests 150--400 m from the nearest well site edge. This effects was significant, because the area of the 50-m radius counts (0.8 ha) was fully included within the well site footprint (usually 1 ha). Impact ratios for the larger sampling radii (100-m and unlimited) did not differ significantly from 1 due to encompassing more of the surrounding forest habitats (Figure \@ref(fig:b16-wellpad)).
 
-Condor paper results
-
-
-```{r b16-wellpad,fig.cap='Bayne et al. 2016 Wellpad.',out.width='100%'}
+```{r b16-wellpad,fig.cap='Relative effect sizes of well sites on Ovenbird relative abundances (paired control/impact design by Bayne et al. 2016).',out.width='100%'}
 i <- "Wellpad"
 v <- barplot(b16$est[,i],beside=TRUE, ylim=c(0, 1.5), 
-    main=colnames(b16$est)[i],
-    xlab="Point count radius", ylab="Relative effect size")
+    xlab="Point count radius", ylab="Relative effect size", main="Well sites")
 abline(h=1, col='#8da0cb')
 for (k in 1:3) {
     int <- c(b16$lwr[k,i], b16$upr[k,i])
@@ -404,43 +354,45 @@ for (k in 1:3) {
 }
 ```
 
+Wilson and Bayne (2019) used acoustic localization to determine the assemblage of songbirds on reclaimed well sites (ranging from 7 to 49 years since reclamation), and compared that to assemblages mature forest sites
+(greater than 80 years old). Songbird community composition became more similar to mature forest as canopy cover increased on reclaimed wellsites. Results from this study suggest that wellsite reclamation practices are allowing for initial suitable vegetation recovery that benefits forest songbirds. Wilson and Bayne (2018) found that use of wellsites by Ovenbirds increased with increasing canopy cover on the wellsite.
+
 ### Mine sites
 
-veg, pond ,active
+Mine sites occupied `r round(getSE("MineSite")$perc, 2)`% of the land base in the Oil Sands region. We estimated a `r round(median(getSE("MineSite")$under), 2)`% local scale effect on the footprint itself. The effect of well sites on the regional population was `r round(median(getSE("MineSite")$reg), 2)`%
+was similar to extent of this footprint type. Unit area effects were `r round(median(getSE("MineSite")$unit), 2)` with 90% confidence intervals overlapping with -100, which indicated that population change is proportional to amount of habitat loss (Figure \@ref(fig:space-wellsite)). These estimates incorporate the NDVI based correction for the amount of vegetated and non-vegetated mine sites.
 
-
-```{r space-mines,fig.cap='Additive sector effects for mine sites',out.width='100%',warning=FALSE,message=FALSE}
+```{r space-mines,fig.cap='Effects of mine sites on Ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE}
 d <- getSE("MineSite")
-op <- par(mfrow=c(1,3))
-hf(d$under, main="Under-HF", xlim=c(-100, 100))
-hf(d$reg, main="Regional", xlim=c(-5, 5))
-hf(d$unit, main="Regional", xlim=c(-200, 200))
+op <- par(mfrow=c(1,3), mar=c(4,4,3,0.1))
+hf(d$under, xlab="Under HF (%)", xlim=c(-100, 100), main="Mine sites")
+hf(d$reg, xlab="Regional (%)", xlim=c(-1, 1), main="", ylab="")
+hf(d$unit, xlab="Unit effect", xlim=c(-200, 200), main="", ylab="")
 abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
-### Pipelines
+### Pipe lines
 
-Truncated gradient
+Pipe lines occupied `r round(getSE("PipeTransLine")$perc, 2)`% of the land base in the Oil Sands region. We estimated a `r round(median(getSE("PipeTransLine")$under), 2)`% local scale effect on the footprint itself. The effect of pipe lines on the regional population was `r round(median(getSE("PipeTransLine")$reg), 2)`%, slightly higher than would been expected based on the extent of the footprint alone. Unit area effects were `r round(median(getSE("PipeTransLine")$unit), 2)` (Figure \@ref(fig:space-pipeline)).
 
 ```{r space-pipeline,fig.cap='Additive sector effects for pipe lines',out.width='100%',warning=FALSE,message=FALSE}
 d <- getSE("PipeTransLine")
-op <- par(mfrow=c(1,3))
-hf(d$under, main="Under-HF", xlim=c(-100, 100))
-hf(d$reg, main="Regional", xlim=c(-5, 5))
-hf(d$unit, main="Regional", xlim=c(-200, 200))
+op <- par(mfrow=c(1,3), mar=c(4,4,3,0.1))
+hf(d$under, xlab="Under HF (%)", xlim=c(-100, 100), main="Pipe lines")
+hf(d$reg, xlab="Regional (%)", xlim=c(-1, 1), main="", ylab="")
+hf(d$unit, xlab="Unit effect", xlim=c(-200, 200), main="", ylab="")
 abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
-Condor paper results
+Bayne et al. (2016) studied bird responses to well sites using a paired sampling design to estimate impact ratios (treatment / control). They found that Ovenbird abundance in 50-m count radius was not significantly different from control abundances found in forests 150--400 m from the nearest pipe line edge due to large uncertainty in these estimates. Pipe lines in the study were 25--40 m wide. Impact ratios for the larger sampling radii (100-m and unlimited) were significantly less than 1 (0.77; Figure \@ref(fig:b16-wellpad)).
 
 
 ```{r b16-pipeline,fig.cap='Bayne et al. 2016 pipeline.',out.width='100%'}
 i <- "Pipeline"
 v <- barplot(b16$est[,i],beside=TRUE, ylim=c(0, 1.5), 
-    main=colnames(b16$est)[i],
-    xlab="Point count radius", ylab="Relative effect size")
+    xlab="Point count radius", ylab="Relative effect size", main="Pipe lines")
 abline(h=1, col='#8da0cb')
 for (k in 1:3) {
     int <- c(b16$lwr[k,i], b16$upr[k,i])
@@ -449,41 +401,266 @@ for (k in 1:3) {
 }
 ```
 
-## Comparing direct impacts
+### Comparing local scale impacts
 
-Additive sector effects: talk about regional, under HF, and unit effects here
+Roads and pipelines had largest negative impact on Ovenbird abundance on both the local and regional scales. This severe impact can be explained by the following factors: (1) grass dominated rights of way along these linear features provide unsuitable habitat for Ovenbirds; (2) habitat use and crossing these features during breeding is also unlikely based on behavioural studies; (3) these footprint types tend to occur in upland forest stands thus disproportionately impacting suitable Ovenbird habitats in a largely wetland dominated landscape.
+
+Mine sites, Well sites, and industrial facilities occupied relatively small areas, and althought their local scale (under footprint) effects ranged widely, their effects on the regional population were proportional to the area they occupied. Mine sites had the most negative impact similar to roads and pipe lines. This was followd by well sites, and industrial facilities had smalles local scale effects.
+
+Sesimic lines were the most abundant energy footprint type in the Oil Sands region, however, their effect on Ovenbird abundance on the local scale was largely neutral.
+
+```{r se_tab,echo=FALSE}
+z <- t(sapply(c("RoadRailVerge", "SeismicLine", "WellSite", "PipeTransLine", "MineSite", "Industrial"),
+  function(z) unname(sapply(getSE(z)[1:4], quantile, c(0.5)))))
+colnames(z) <- c("Under HF %", "Regional %", "Unit effect", "HF area %")
+kable(z[order(z[,1]),], digits=2)
+```
 
 ## Landscape level effects
 
 Show SSH and km_HF results based on actual landscapes from prediction
 
-## Direct and indirect impacts
+```{r echo=FALSE}
+source("~/repos/abmianalytics/birds/00-functions.R")
+ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds"
+PROJ <- "north"
+spp <- "OVEN"
+resn <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
+b <- 240
+en <- new.env()
+load(file.path(ROOT, "data", "ab-birds-north-2018-12-07.RData"), envir=en)
 
-We don't do this here. It makes sense to compare sectors, but it is problematic for individual footprint types, because that kind of defeats using landscape effects (thos act at larger scales than the scale of individual footprint types, and thus e.g. under-HF effect doesn't even makes sense in isolation).
+ssh_labs <- list()
+for (i in seq_len(b)) {
+    ssh_labs[[i]] <- resn[[as.integer(i)]]$ssh$labels
+}
+sshf <- table(unlist(ssh_labs))
+sshf <- sshf[match(colnames(en$SSH), names(sshf))]
+names(sshf) <- colnames(en$SSH)
+sshf[is.na(sshf)] <- 0
+sshf <- rev(sort(sshf))/b
+lab <- names(sshf[sshf > 0.5])
+espall <- new.env()
+ehfall <- new.env()
+load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/OVEN-space-all.RData", envir=espall)
+load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/OVEN-hf-all.RData", envir=ehfall)
+
+EN <- c("EnSoftLin", "Seismic", "Mine", "Well", "Industrial")
+jd <- data.frame(ehfall$XSSH)
+colnames(jd) <- gsub("_KM", "", colnames(jd))
+
+jd$D1 <- rowMeans(espall$CR) / 100 # per ha density
+jd$D2 <- rowMeans(ehfall$CR) / 100 # per ha density
+jd$dD <- jd$D2 - jd$D1
+load("d:/abmi/AB_data_v2018/data/analysis/grid/veg-hf_transitions_v6hf2016v3noDistVeg.Rdata")
+kk <- row_std(groupSums(trVeg[rownames(ehfall$CR),rownames(ehfall$ch2veg)], 2, ehfall$ch2veg$cr3))
+jd <- data.frame(jd, as.matrix(kk[,EN]))
+jd$SSH <- rowSums(kk[,colnames(kk) %in% lab,drop=FALSE])
+jd$Energy <- as.numeric(rowSums(kk[,EN]))
+jd$Soft <- as.numeric(rowSums(kk[,c("EnSoftLin", "Seismic")]))
+jd$Ui <- as.numeric(rowSums(kk[,c("Mine", "Well", "Industrial")]))
+jd$Lin <- as.numeric(rowSums(kk[,c("EnSoftLin", "TrSoftLin", "HardLin")]))
+
+gf <- function(x, where="topright", k=6, ...) {
+  val <- jd[[x]]
+  m31 <- mgcv::gam(D1 ~ s(val, k=k), jd, family=gaussian)
+  m32 <- mgcv::gam(D2 ~ s(val, k=k), jd, family=gaussian)
+  
+  pr2 <- data.frame(val=seq(0, quantile(val, 0.999), length.out=200))
+  
+  pp <- qnorm(0.975)
+  tmp <- predict(m31, pr2, se.fit=TRUE)
+  pr2$D1 <- tmp$fit
+  pr2$D1cl <- tmp$se.fit*pp
+  tmp <- predict(m32, pr2, se.fit=TRUE)
+  pr2$D2 <- tmp$fit
+  pr2$D2cl <- tmp$se.fit*pp
+  
+  plot(D1 ~ val, pr2, type="n", col=4, lwd=2, ylim=c(0, max(pr2$D1, pr2$D2)), ...)
+  polygon(c(pr2$val, rev(pr2$val)), c(pr2$D1+pr2$D1cl, rev(pr2$D1-pr2$D1cl)), border=NA, col="#0000ff44")
+  polygon(c(pr2$val, rev(pr2$val)), c(pr2$D2+pr2$D2cl, rev(pr2$D2-pr2$D2cl)), border=NA, col="#ff000044")
+  lines(D1 ~ val, pr2, col=4, lwd=2)
+  lines(D2 ~ val, pr2, col=2, lwd=2)
+  legend(where, fill = c("#0000ff44", "#ff000044"), col=c(4,2), lty=1, lwd=2,
+    legend=c("With landscape", "No landscape"), bty="n", border=NA)
+  invisible(pr2)
+}
+```
+
+```{r echo=FALSE}
+m1 <- mgcv::gam(D1 ~ s(SSH, THF), jd, family=gaussian)
+m2 <- mgcv::gam(D2 ~ s(SSH, THF), jd, family=gaussian)
+SSH <- seq(0, 1, 0.01)
+THF <- seq(0, 1, 0.01)
+pr <- expand.grid(SSH=SSH, THF=THF)
+pr$D1 <- predict(m1, pr)
+pr$D2 <- predict(m2, pr)
+```
+
+
+```{r echo=FALSE,fig.height=6,fig.width=6}
+op <- par(las=1, mar=c(4,8,2,2))
+barplot(rbind(rev(sshf), 1-rev(sshf))*100, horiz=TRUE, beside=FALSE, space=0,
+  xlab="Suitable habitat selection %", cex.names=0.8)
+par(op)
+```
+
+```{r echo=FALSE,fig.height=5,fig.width=10}
+img1 <- list(x=SSH, y=THF, z=matrix(pr$D1, length(SSH), length(THF)))
+img2 <- list(x=SSH, y=THF, z=matrix(pr$D2, length(SSH), length(THF)))
+MAX <- c(max(img1$z), max(img2$z))
+
+levs <- seq(0.2, 1.2, 0.2)
+col <- hcl.colors(100, "YlOrRd", rev = TRUE)
+op <- par(mfrow=c(1,2))
+image(img1, xlab="SSH", ylab="THF", main="No landscape effects", 
+  col=col[seq_len(ceiling(100*MAX[1]/max(MAX)))])
+contour(img1, add=TRUE, levels=levs)
+box()
+image(img2, xlab="SSH", ylab="THF", main="With landscape effects",
+  col=col[seq_len(ceiling(100*MAX[2]/max(MAX)))])
+contour(img2, add=TRUE, levels=levs)
+box()
+par(op)
+```
+
+
+```{r echo=FALSE,fig.height=12,fig.width=10}
+op <- par(mfrow=c(3,2))
+gf("SSH", where="topleft", k=6,
+  ylab="Predicted density (males / ha)", 
+  xlab="Proportion of suitable habitat in landscape")
+#rug(jd$SSH, col="grey")
+gf("THF", k=6,
+  ylab="Predicted density (males / ha)", 
+  xlab="Proportion of total footprint in landscape")
+#rug(jd$THF, col="grey")
+gf("Energy", k=3,
+  ylab="Predicted density (males / ha)", 
+  xlab="Proportion of energy footprint in landscape")
+#rug(jd$Energy, col="grey")
+
+gf("Lin", k=6,
+  ylab="Predicted density (males / ha)", 
+  xlab="Proportion of roads, and pipe lines in landscape")
+#rug(jd$Lin, col="grey")
+gf("Ui", k=6,
+  ylab="Predicted density (males / ha)", 
+  xlab="Proportion of mines, wells, and facilities in landscape")
+#rug(jd$Ui, col="grey")
+gf("Seismic", k=6,
+  ylab="Predicted density (males / ha)", 
+  xlab="Proportion of seismic lines in landscape")
+#rug(jd$Seismic, col="grey")
+par(op)
+```
+
 
 
 # Conclusion
 
-Conclusions.
+Put some conclusions here.
 
 
-```{r eval=FALSE,echo=FALSE}
-HF <- list("Native", "Forestry", "RoadRailVerge", 
-  c("SeismicLine", "WellSite", "PipeTransLine", "MineSite", "Industrial"), 
-"RuralUrban", "Agriculture")
-out <- list()
-for (s in HF) {
-  load("data/pred/osm-oven-space-all.RData")
-  d1 <- getSE(s)[1:3]
-  load("data/pred/osm-oven-hf-all.RData")
-  d2 <- getSE(s)[1:3]
-  #load("data/pred/osm-oven-hf-energy.RData")
-  #d3 <- getSE(s)[1:3]
-  tmp <- matrix(sapply(c(d1, d2), median), nrow=2, byrow=TRUE)
-  dimnames(tmp) <- list(c("spall", "hfall"), c("under", "reg", "unit"))
-  out[[paste(s, collapse=" ")]] <- tmp
-}
-out
+```{echo=FALSE}
+---
+title: 'OSM Synthesis: Ovenbird'
+author: "Peter Solymos, Marcus Becker, and Erin Bayne"
+date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
+output:
+  bookdown::pdf_document2:
+    toc: true
+    toc_depth: 3
+    number_sections: false
+documentclass: report
+fontsize: 12pt
+classoption: letterpaper
+urlcolor: blue
+---
 
+---
+title: 'OSM Synthesis: Ovenbird'
+author: "Peter Solymos, Marcus Becker, and Erin Bayne"
+date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
+output: word_document
+---
 
 ```
+
+# References
+
+Alberta Biodiversity Monitoring Institute (ABMI), 2017. Alberta Wall-to-Wall Vegetation Layer Including "Backfilled" Vegetation in Human Footprints (Version 6). Alberta Biodiversity Monitoring Institute, Alberta, Canada. URL: https://www.abmi.ca/home/data-analytics/da-top/da-product-overview/GIS-Land-Surface/Detailed-Vegetation-Maps.html
+
+Alberta Biodiversity Monitoring Institute (ABMI), 2018. Human Footprint Inventory 2016 (Version 1). Alberta Biodiversity Monitoring Institute, Geospatial Centre, Alberta, Canada. URL: https://www.abmi.ca/home/data-analytics/da-top/da-product-overview/GIS-Land-Surface/HF-inventory.html
+
+Allen, B., Morrison, S., Kariyeva, J., Sparkes, S., Hutchings, C., Hricko, B., Solymos, P., and Huggard, D., 2019. Data collection. In: Alberta Biodiversity Monitoring Institute (ABMI), ABMI 10-year science and program review. pp. 29--64. https://abmi10years.ca/10-year-review/resources/
+
+Ball, J. R., P. Sólymos, F. K. A. Schmiegelow, S. Hache, J. Schieck, and E. Bayne. 2016. Regional habitat needs of a nationally listed species, Canada Warbler (Cardellina canadensis), in Alberta, Canada. Avian Conservation and Ecology 11(2):10. http://dx.doi.org/10.5751/ACE-00916-110210 
+
+Bayne, E., and B. Dale, 2011. Effects of Energy Development on Songbirds. In: D. E. Naugle ed. Energy Development and Wildlife Conservation in Western North America. pp. 95--114.
+
+Bayne, E. M., Steve L. Van Wilgenburg, Stan Boutin and Keith A. Hobson, 2005a. Modeling and field-testing of Ovenbird (Seiurus aurocapillus) responses to boreal forest dissection by energy sector development at multiple spatial scales. Landscape Ecology (2005) 20:203--216. DOI: 10.1007/s10980-004-2265-9
+
+Bayne, E. M., Boutin, S., Tracz, B., and Charest, K. 2005b. Functional and numerical responses of ovenbirds (Seiurus aurocapilla) to changing seismic exploration practices in Alberta’s boreal forest. Ecoscience, 12(2): 216--222.
+
+Bayne, E., L. Leston, C. L. Mahon, P. Sólymos, C. Machtans, H. Lankau, J. R. Ball, S. L. Van Wilgenburg, S. G. Cumming, T. Fontaine, F. K. A. Schmiegelow, and S. J. Song. 2016. Boreal bird abundance estimates within different energy sector disturbances vary with point count radius. Condor 118:376--390. http://dx.doi.org/10.1650/CONDOR-15-126.1
+
+Bayne, E. M., Habib, L., and Boutin, S. 2008. Impacts of Chronic Anthropogenic Noise from Energy-Sector Activity on Abundance of Songbirds in the Boreal Forest. Conservation Biology, 22, 1186--1193.
+
+Breiman, L. 1996. Bagging predictors. Machine Learning 24:123-140. http://dx.doi.org/10.1007/BF0005865510.1525/auk.2008.07115
+
+Chandler, R., and J. Hepinstall-Cymerman. 2016. Estimating the spatial scales of landscape effects on abundance. Landscape Ecology 31:1383-1394. http://dx.doi.org/10.1007/s10980-016-0380-z
+
+Efron, B. 2014. Estimation and accuracy after model selection. Journal of the American Statistical Association 109:991-1007. http://dx.doi.org/10.1080/01621459.2013.823775
+
+Habib, L., Bayne, E. M., and Boutin, S. 2007. Chronic industrial noise affects pairing success and age structure of ovenbirds Seiurus aurocapilla. Journal of Applied Ecology 44, 176--184.
+
+Lankau, H. E., E. M. Bayne, and C. S. Machtans. 2013. Ovenbird (Seiurus aurocapilla) territory placement near seismic lines is influenced by forest regeneration and conspecific density. Avian Conservation and Ecology 8(1):5. http://dx.doi.org/10.5751/ACE-00596-080105
+
+Mahon, C. L., Holloway, G., Solymos, P., Cumming, S. G., Bayne, E. M., Schmiegelow, F. K. A., and Song, S. J., 2016. Community structure and niche characteristics of upland and lowland western boreal birds at multiple spatial scales. Forest Ecology and Management, 361:99–116.
+
+Marques, T. A., S. T. Buckland, D. L. Borchers, D. Tosh, and R. A. McDonald. 2010. Point transect sampling along linear features. Biometrics 66:1247-1255. http://dx.doi.org/10.1111/j.1541-0420.2009.01381.x
+
+Matsuoka, S. M., Bayne, E. M., Sólymos, P., Fontaine, P., Cumming, S. G., Schmiegelow, F. K. A., & Song, S. A., 2012. Using binomial distance-sampling models to estimate the effective detection radius of point-counts surveys across boreal Canada. Auk 129:268--282. 
+
+Porneluzi, P., M. A. Van Horn, and T. M. Donovan (2011). Ovenbird (_Seiurus aurocapilla_), version 2.0. In The Birds of North America (A. F. Poole, Editor). Cornell Lab of Ornithology, Ithaca, NY, USA. https://doi.org/10.2173/bna.88
+
+R Core Team (2019). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+
+Shieck, J., Huggard, D., and Solymos, P. 2014. Human footprint in Alberta. ABMI Science Letters, September 5, 2014. URL: http://ftp.public.abmi.ca//home/publications/documents/364_Schieck_etal_2014_LetterHFInAlberta_ABMI.pdf
+
+Solymos, P. & Schieck, J. (2016): Effects of industrial sectors on species abundance in Alberta. ABMI Science Letters, Issue 5, October, 2016.
+
+Solymos, P. (2009). Processing Ecological Data in R with the mefa Package. Journal of Statistical Software 29(8), 1-28. URL http://www.jstatsoft.org/v29/i08/.
+
+Solymos, P. 2016. QPAD version 3 documentation. Technical Report, Boreal Avian Modelling Project, Edmonton, AB, Canada. Retrieved on April 2017, from http://www.borealbirds.ca/files/QPAD_v3_report_1.pdf
+
+Solymos, P. and E. T. Azeria (2018). opticut: Likelihood Based Optimal Partitioning and Indicator Species Analysis. R package version 0.1-2. https://CRAN.R-project.org/package=opticut
+
+Solymos, P., Azeria, E. T., Huggard, D. J., Roy, M.-C., and Schieck, J., 2019a. Predicting species status and relationships. In: Alberta Biodiversity Monitoring Institute (ABMI), ABMI 10-year science and program review. pp. 65--97. https://abmi10years.ca/10-year-review/resources/
+
+Solymos, P., Judith D. Toms,  Steven M. Matsuoka,  Steven G. Cumming,  Nicole K. S. Barker,  Wayne E. Thogmartin,  Diana Stralberg,  Andrew D. Crosby,  Francisco V. Denes,  Samuel Hache,  C. Lisa Mahon,  Fiona K. A. Schmiegelow,  Erin M. Bayne. 2019b. At the end of the road: Lessons learned from comparing model- and sample-based approaches to estimate population sizes of boreal birds in Alberta, Canada. Condor, under revision.
+
+Solymos, P., M. Moreno and S. R. Lele (2018b). detect: Analyzing Wildlife Data with Detection Error. R package version 0.4-2. https://CRAN.R-project.org/package=detect
+
+Solymos, P., Mahon, C. L., Fontaine, T., and Bayne, E. M. (2015). Predictive models for estimating the cumulative effects of human development on migratory landbirds in the oil sands areas of Alberta. Technical report, Joint Oil Sands Monitoring: Cause-Effects Assessment of Oil Sands Activity on Migratory Landbirds, Edmonton, AB. pp. 38+410 appendices.
+
+Solymos, P., Matsuoka, S. M., Bayne, E. M., Lele, S. R., Fontaine, P., Cumming, S. G., Stralberg, D., Schmiegelow, F. K. A. & Song, S. J., 2013. Calibrating indices of avian density from non-standardized survey data: making the most of a messy situation. Methods in Ecology and Evolution 4:1047--1058.
+
+Solymos, P., Matsuoka, S. M., Cumming, S. G., Stralberg, D., Fontaine, P., Schmiegelow, F. K. A., Song, S. J., and Bayne, E. M., 2018a. Evaluating time-removal models for estimating availability of boreal birds during point-count surveys: sample size requirements and model complexity. Condor 120: 765--786.
+
+Streby, H. M., and D. E. Andersen. 2013. Testing common assumptions in studies of songbird nest success. Ibis 155:327-337. http://dx.doi.org/10.1111/ibi.12018
+
+Van Wilgenburg, S. L., P. Sólymos, K. J. Kardynal, and M. D. Frey. 2017. Paired sampling standardizes point count data from humans and acoustic recorders. Avian Conservation and Ecology 12(1):13. https://doi.org/10.5751/ACE-00975-120113
+
+Wang, T., A. Hamann, D. L. Spittlehouse, and T. Q. Murdock. 2012. ClimateWNA–high-resolution spatial climate data for western North America. Journal of Applied Meteorology and Climatology 51:16-29. http://dx.doi.org/10.1175/JAMC-D-11-043.1
+
+Westwood, A. R., C. Staicer, P. Solymos, S. Hache, T. Fontaine, E. Bayne, and D. Mazerolle. 2019. Estimating the conservation value of protected areas in Maritime Canada for two species at risk: the Olive-sided Flycatcher (Contopus cooperi) and Canada Warbler (Cardellina canadensis). Avian Conservation and Ecology 14(1):16. https://doi.org/10.5751/ACE-01359-140116
+
+Wilson, S. J., and E. M. Bayne. 2018. Use of an acoustic location system to understand how presence of conspecifics and canopy cover influence Ovenbird (Seiurus aurocapilla) space use near reclaimed wellsites in the boreal forest of Alberta. Avian Conservation and Ecology 13(2):4. https://doi.org/10.5751/ACE-01248-130204
+
+Wilson S. J., Bayne E. M. (2019). Songbird community response to regeneration of reclaimed wellsites in the boreal forest of Alberta. Journal of Ecoacoustics. 3:#I4B2LF. https://doi.org/10.22261/JEA.I4B2LF
+
+Yip, D. A., L. Leston, E. M. Bayne, P. Sólymos, and A. Grover. 2017. Experimentally derived detection distances from audio recordings and human observers enable integrated analysis of point count data. Avian Conservation and Ecology 12(1):11. https://doi.org/10.5751/ACE-00997-120111
+Youden, W. J. (1950): Index for rating diagnostic tests. Cancer 3:32–5.
+
