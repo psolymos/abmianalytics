@@ -470,13 +470,13 @@ gf <- function(x, where="topright", k=6, ...) {
   pr2$D2 <- tmp$fit
   pr2$D2cl <- tmp$se.fit*pp
   
-  plot(D1 ~ val, pr2, type="n", col=4, lwd=2, ylim=c(0, max(pr2$D1, pr2$D2)), ...)
+  plot(D1 ~ val, pr2, type="n", ylim=c(0, max(pr2$D1, pr2$D2)), ...)
   polygon(c(pr2$val, rev(pr2$val)), c(pr2$D1+pr2$D1cl, rev(pr2$D1-pr2$D1cl)), border=NA, col="#0000ff44")
   polygon(c(pr2$val, rev(pr2$val)), c(pr2$D2+pr2$D2cl, rev(pr2$D2-pr2$D2cl)), border=NA, col="#ff000044")
   lines(D1 ~ val, pr2, col=4, lwd=2)
   lines(D2 ~ val, pr2, col=2, lwd=2)
   legend(where, fill = c("#0000ff44", "#ff000044"), col=c(4,2), lty=1, lwd=2,
-    legend=c("With landscape", "No landscape"), bty="n", border=NA)
+    legend=c("No landscape", "With landscape"), bty="n", border=NA)
   invisible(pr2)
 }
 ```
