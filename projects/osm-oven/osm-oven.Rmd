@@ -477,6 +477,7 @@ gf <- function(x, where="topright", k=6, ...) {
   lines(D2 ~ val, pr2, col=2, lwd=2)
   legend(where, fill = c("#0000ff44", "#ff000044"), col=c(4,2), lty=1, lwd=2,
     legend=c("No landscape", "With landscape"), bty="n", border=NA)
+  
   invisible(pr2)
 }
 ```
@@ -521,6 +522,7 @@ par(op)
 
 ```{r echo=FALSE,fig.height=12,fig.width=10}
 op <- par(mfrow=c(3,2))
+
 gf("SSH", where="topleft", k=6,
   ylab="Predicted density (males / ha)", 
   xlab="Proportion of suitable habitat in landscape")
@@ -546,6 +548,7 @@ gf("Seismic", k=6,
   ylab="Predicted density (males / ha)", 
   xlab="Proportion of seismic lines in landscape")
 #rug(jd$Seismic, col="grey")
+
 par(op)
 ```
 
