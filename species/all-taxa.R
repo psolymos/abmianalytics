@@ -3,8 +3,8 @@ source("~/repos/abmianalytics/species/abmi-r-api.R")
 #data.frame(table=get_table_names())
 
 ## settings
-TAXA <- c("vplants", "mosses", "mites")
-ROOT <- "d:/abmi/AB_data_v2018"
+TAXA <- c("vplants", "mites")
+ROOT <- "d:/abmi/AB_data_v2019"
 
 ## common stuff
 DATE <- as.Date(Sys.time(), tz=Sys.timezone(location = TRUE))
@@ -158,6 +158,7 @@ for (taxon in TAXA) {
 
     cat(" --- OK\n  - saving files")
     flush.console()
+
     ## save raw input
     save(list=save_list, file=file.path(ROOT, "data", "raw", "species",
         paste0(taxon, "_", DATE, ".Rdata")))
