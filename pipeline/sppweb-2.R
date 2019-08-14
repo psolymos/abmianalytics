@@ -433,17 +433,17 @@ file.copy(paste0("s:/Camera mammals Mar 2019/Figures South/Best model/Non-treed/
 ## jpg to png
 
 library(magick)
-fl <- list.files("s:/Camera mammals Mar 2019/Maps/Space climate North/")
+fl <- list.files("s:/Camera mammals Mar 2019/Maps/North Climate and spatial/")
 x <- gsub(".jpg", ".png", fl, fixed=TRUE)
 for (i in 1:length(fl)) {
-    img <- image_read(paste0("s:/Camera mammals Mar 2019/Maps/Space climate North/", fl[i]))
-    image_write(img, paste0("s:/Camera mammals Mar 2019/Maps/Space climate North/", x[i]), format="png")
+    img <- image_read(paste0("s:/Camera mammals Mar 2019/Maps/North Climate and spatial/", fl[i]))
+    image_write(img, paste0("s:/Camera mammals Mar 2019/Maps/North Climate and spatial/", x[i]), format="png")
 }
-fl <- list.files("s:/Camera mammals Mar 2019/Maps/Space climate South/")
+fl <- list.files("s:/Camera mammals Mar 2019/Maps/South Climate and spatial/")
 x <- gsub(".jpg", ".png", fl, fixed=TRUE)
 for (i in 1:length(fl)) {
-    img <- image_read(paste0("s:/Camera mammals Mar 2019/Maps/Space climate South/", fl[i]))
-    image_write(img, paste0("s:/Camera mammals Mar 2019/Maps/Space climate South/", x[i]), format="png")
+    img <- image_read(paste0("s:/Camera mammals Mar 2019/Maps/South Climate and spatial/", fl[i]))
+    image_write(img, paste0("s:/Camera mammals Mar 2019/Maps/South Climate and spatial/", x[i]), format="png")
 }
 
 
@@ -616,11 +616,18 @@ SPP <- c(
     "WolvesCoyotesandAllies" = "Wolves, Coyotes and Allies",
     "WoodlandCaribou" = "Woodland Caribou")
 
+
+z <- read.csv("d:/abmi/sppweb2018/Camera mammals Mar 2019/Mammal header table May 2019.csv")
+rownames(z) <- z[,1]
+mefa4::compare_sets(names(SPP), rownames(z))
+setdiff(names(SPP), rownames(z))
+SPP <- SPP[names(SPP) %in% rownames(z)]
+z <- z[names(SPP),]
+
 g <- grs[6]
 tmp[[g]] <- data.frame(SpeciesID=names(SPP), DisplayName=SPP, Group=g)
 tmp[[g]]$sppprevious <- c(rownames(tmp[[g]])[nrow(tmp[[g]])], rownames(tmp[[g]])[-nrow(tmp[[g]])])
 tmp[[g]]$sppnext <- c(rownames(tmp[[g]])[-1], rownames(tmp[[g]])[1])
-
 
 ALL <- do.call(rbind, tmp)
 
@@ -660,20 +667,57 @@ for (g in grs[1:5]) {
     }
 }
 
-figs <- list.dirs(file.path("d:/abmi/reports/2018", "images", g),full.names=FALSE)[-1]
 g <- grs[6]
+figs <- list.dirs(file.path("d:/abmi/reports/2018", "images", g),full.names=FALSE)[-1]
 s <- as.character(tmp[[g]]$SpeciesID)
 f <- list.files(file.path("d:/abmi/reports/2018", "images", g))
 m <- as.data.frame(matrix(FALSE, length(s), length(figs)))
 dimnames(m) <- list(s, figs)
 for (j in figs) {
     fff <- gsub(".png", "", list.files(file.path("d:/abmi/reports/2018", "images", g, j)))
+    fff <- fff[fff %in% names(SPP)]
     m[fff,j] <- TRUE
 }
+sum(as.matrix(m))
+for (i in s) {
+    if (!z[i,"ModelNorth"]) {
+        m[i,"coef-north-combo"] <- FALSE
+        m[i,"map-spclim-north"] <- FALSE
+    }
+    if (!z[i,"ModelNorthSummer"])
+        m[i,"coef-north-summer"] <- FALSE
+    if (!z[i,"ModelNorthWinter"])
+        m[i,"coef-north-winter"] <- FALSE
+    if (!z[i,"UseavailNorth"])
+        m[i,"useavail-north"] <- FALSE
+
+    if (!z[i,"ModelSouth"]) {
+        m[i,"coef-south-combo-treed"] <- FALSE
+        m[i,"coef-south-combo-nontreed"] <- FALSE
+        m[i,"map-spclim-south"] <- FALSE
+    }
+    if (!z[i,"ModelSouthSummer"]) {
+        m[i,"coef-south-summer-treed"] <- FALSE
+        m[i,"coef-south-summer-nontreed"] <- FALSE
+    }
+    if (!z[i,"ModelSouthWinter"]) {
+        m[i,"coef-south-winter-treed"] <- FALSE
+        m[i,"coef-south-winter-nontreed"] <- FALSE
+    }
+    if (!z[i,"UseavailSouth"])
+        m[i,"useavail-south"] <- FALSE
+
+    if (!z[i,"ModelNorth"] && !z[i,"ModelSouth"]) {
+        m[i,"map-cr"] <- FALSE
+        m[i,"map-rf"] <- FALSE
+        m[i,"map-df"] <- FALSE
+    }
+}
+sum(as.matrix(m))
 
 for (i in s) {
-    ff <- f[startsWith(f, i)]
-    ff <- gsub(".png", "", gsub(paste0(i, "-"), "", ff))
+    #ff <- f[startsWith(f, i)]
+    #ff <- gsub(".png", "", gsub(paste0(i, "-"), "", ff))
     v <- cbind(tmp[[g]][i,], m[i,])
     #toJSON(as.list(v), rownames=FALSE,pretty=TRUE,auto_unbox=TRUE)
     if (!dir.exists(file.path("d:/abmi/reports/2018", "api", g, i)))
