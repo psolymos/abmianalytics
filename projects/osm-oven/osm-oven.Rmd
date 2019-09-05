@@ -265,6 +265,8 @@ The 'regional' effect takes into account both the footprint and native habitats.
 
 The 'unit effects' highlights the specificity of a given footprint type with respect to the most suitable habitat for the species. For example, if footpring randomly targets land cover types, we would expect to have a -100 or +100 unit effect. If the footprint _avoids_ suitable habitats, we get a unit effects closer to 0 (within -100 and +100). If the footprint targets suitable habitat very selectively, we end up with unit effect less than -100 or greated than +100.
 
+The figures like Figure \@ref(fig:space-road) show the estimated effect as red line and the bootstrap distribution of values is the pale red density around it. The range of the bootstrap distribution indicates tha undertainty around the estimate effect.
+
 Roads themselves provide largely unsuitable breeding habitat for Ovenbirds that nest on the ground in sparse understory forest floor avoiding dense woody understory vegetation (Porneluzi et al. 2011). 
 Ovenbirds are also known exclude open areas from their territories because of lack of protective tree and shrub cover (Wilson and Bayne 2018) and because of reduced food resources (Lankau et al. 2013). Therefore, the expected abundance on paved and gravel road surfaces is zero, while road edges might be used by ovenbirds in narrow access roads without verges (neutral edge effect), verges along higher-traffic roads and rails are unsuitable as other early seral and open habitats, and often create edge effects (Bayne and Dale 2011).
 
@@ -272,7 +274,7 @@ We did not separate roads based on which sector built them or which sector is pr
 
 ### Seismic lines
 
-Seismic lines occupied `r round(getSE("SeismicLine")$perc, 2)`% of the land base in the Oil Sands region. We estimated a neutral local and regional scale effect, although the uncertainy around this neutral point estimate was rather wide ans skewed towards negative effects. Seismic lines do not discriminate among habitats and impact upland and lowland habitats in a systematic manner. Because wetlands predominate in the Oil Sands region, seismic lines impact suitable Ovenbird habitat less frequently, as indicated by the neutral unit area effects (Figure \@ref(fig:space-seismic)).
+Seismic lines occupied `r round(getSE("SeismicLine")$perc, 2)`% of the land base in the Oil Sands region. We estimated a neutral local and regional scale effect, although the uncertainy around this neutral point estimate was rather wide and tended towards a negative effect. Seismic lines do not discriminate among habitats and impact upland and lowland habitats in a systematic manner. Because wetlands predominate in the Oil Sands region, seismic lines impact suitable Ovenbird habitat less frequently, as indicated by the neutral unit area effects (Figure \@ref(fig:space-seismic)).
 
 
 ```{r space-seismic,fig.cap='Effects of seismic lines on Ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE}
@@ -285,9 +287,9 @@ abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
-Bayne et al. (2016) studied bird responses to seismic lines using a paired sampling design to estimate impact ratios (treatment / control). They found that Ovenbird abundance in 50-m count radius was 80% of the control abundance found in forests 150--400 m from the nearest seismic line edge. This effects was not significant due to the noisy nature of bird counts collected over small areas (50-m radius is 0.8 ha), and counts were also likely 'contaminated' by individuals detected in the surrounding forest habitats, because seismic lines tend to be narrow (5--8 m wide) making the actual footprint less than 10% of the area sampled by the bird count. By looking at the point estimate of 80% impact ratio, it is important to note that a less than 10% habitat loss resulted in 20% abundance decrease, therefore we suspect at least half of the impact is attributable to edge effects because the loss was greated than expected based on area alone.
+Bayne et al. (2016) studied bird responses to seismic lines using a paired sampling design to estimate impact ratios (treatment / control). They found that Ovenbird abundance in 50-m count radius was 80% of the control abundance found in forests 150--400 m from the nearest seismic line edge. This effects was not significant due to the noisy nature of bird counts collected over small areas (50-m radius is 0.8 ha), and counts were also likely 'contaminated' by individuals detected in the surrounding forest habitats, because seismic lines tend to be narrow (5--8 m wide) making the actual footprint less than 10% of the area sampled by the bird count. By looking at the point estimate of 80% impact ratio, it is important to note that a less than 10% habitat loss resulted in 20% abundance decrease, therefore we suspect at least half of the impact is attributable to edge effects because the loss was greater than expected based on area alone.
 Impact ratios were close to 1 (no effect) when using 100-m or unlimited distance counts, which minimized the relative area of the seismic line inside the surveyed area (Figure \@ref(fig:b16-seismic)).
-Given all this complexity, we can conclude that it is difficult to estimate seismic line effects,
+Given this complexity, we can conclude that it is difficult to estimate seismic line effects,
 mostly due to the narrow nature of the feature relative to counting area and Ovenbird territory sizes.
 Nevertheless, the two studies both point to a slight negative effect of seismic lines on Ovenbird abundance at the local scale.
 
@@ -303,7 +305,7 @@ for (k in 1:3) {
 }
 ```
 
-The neutral to negative response to edges of Ovenbirds was noted previously by Bayne and Dale (2011) based on literature review. Bayne et al. (2005a) and Lankau et al. (2013) found decreased habitat use along seismic lines by studying movement behaviour and territory placements. Bayne et al. (2005b) found that Ovenbirds perceived conventional seismic lines (8-m wide) as creating a gap in the forest and used it as a territory boundary. In contrast, Ovenbirds incorporated low-impact seismic lines (2-3 m wide) within their territories. They concluded that wide seismic lines without regenerating shrubs and treed vegetation are unsiutable for Ovenbirds. The behavioural response to narrow seismic lines was found not to translate into numeric response at the local scales.
+The neutral to negative response to edges of Ovenbirds was noted previously by Bayne and Dale (2011) based on literature review. Bayne et al. (2005a) and Lankau et al. (2013) found decreased habitat use along seismic lines by studying movement behaviour and territory placements. Bayne et al. (2005b) found that Ovenbirds perceived conventional seismic lines (8-m wide) as creating a gap in the forest and used it as a territory boundary. In contrast, Ovenbirds incorporated low-impact seismic lines (2-3 m wide) within their territories. They concluded that wide seismic lines without regenerating shrubs and treed vegetation are unsuitable for Ovenbirds. The behavioural response to narrow seismic lines was found not to translate into numeric response at the local scales. Part of the uncertainty in the impact of seismic lines on Ovenbirds depends on the state of vegetation recovery (Lankau et al. 2013).  Ovenbirds are less likely to include a seismic line in their territory if the canopy is more open, leaf litter depth on the line is low, and bare ground was high. However, this relationship was complicated by the fact that in areas with low densities of Ovenbirds, there was a much higher probability of Ovenbird including seismic lines in their territories. 
 
 ### Industrial facilities
 
@@ -324,14 +326,14 @@ Industrial facilities share similarities with rural residential and urban areas 
 Besides habitat effects, some facilities, e.g. compressor stations, impact Ovenbirds through noise pollution as well. Habib et al. (2007) found a significant reduction in ovenbird pairing success at compressor sites
 (77%) compared with noiseless wellpads (92%). They also found significantly more inexperienced birds
 breeding for the first time near noise-generating compressor stations than noiseless wellpads (48% vs. 30%).
-They hypothesized that noise interferes with a male’s song, such that females may not hear the male’s song at greater distances and/or females may perceive males to be of lower quality because of distortion of song characteristics. As a result, noisy industrial facilities might have more severe population effects on Ovenbirds through pairing success and reproductive rates. Bayne et al. (2008) found that noiseless energy sector facilities harbored 1.5x more Ovenbirds that noisy compressor stations, indicating a direct negative numeric response as a result of noise pollution.
+They hypothesized that noise interferes with a male’s song, such that females may not hear the male’s song at greater distances and/or females may perceive males to be of lower quality because of distortion of song characteristics. As a result, noisy industrial facilities might have more severe population effects on Ovenbirds through pairing success and reproductive rates. Bayne et al. (2008) found that noiseless energy sector facilities harbored 1.5x more Ovenbirds than noisy compressor stations, indicating a direct negative numeric response as a result of noise pollution.
 
 ### Well sites
 
 Well sites occupied `r round(getSE("WellSite")$perc, 2)`% of the land base in the Oil Sands region. We estimated a `r round(median(getSE("WellSite")$under), 2)`% local scale effect on the footprint itself. The effect of well sites on the regional population was `r round(median(getSE("WellSite")$reg), 2)`%
 was similar to extent of this footprint type. Unit area effects were `r round(median(getSE("WellSite")$unit), 2)` with 90% confidence intervals overlapping with -100, which indicated that population change is proportional to amount of habitat loss (Figure \@ref(fig:space-wellsite)). 
 
-Our estimtes did not differentiate between reclaimed/regenerating and active/non-reclaimed well sites. Our sample included an unknown proportion of well sites of different degrees of regneration, thus our estimates represented the overall northern Alberta population of well sites. It is possible that the relatively large uncertainty for the well site effects (90% confidence interval for the local scale effects ranging between -100% and -28%) was partly due to this variation among individual well sites, i.e. when the bootstrap sample included more regenerated well sites the effects were less severe.
+Our estimates did not differentiate between reclaimed/regenerating and active/non-reclaimed well sites because current GIS information on recovery does not exist at a provincial scale. Our sample included an unknown proportion of well sites of different degrees of regeneration, thus our estimates represented the overall northern Alberta population of well sites. It is possible that the relatively large uncertainty for the well site effects (90% confidence interval for the local scale effects ranging between -100% and -28%) was partly due to this variation among individual well sites, i.e. when the bootstrap sample included more regenerated well sites the effects were less severe.
 
 ```{r space-wellsite,fig.cap='Effects of well sites on Ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE}
 d <- getSE("WellSite")
@@ -358,7 +360,7 @@ for (k in 1:3) {
 ```
 
 Wilson and Bayne (2019) used acoustic localization to determine the assemblage of songbirds on reclaimed well sites (ranging from 7 to 49 years since reclamation), and compared that to assemblages mature forest sites
-(greater than 80 years old). Songbird community composition became more similar to mature forest as canopy cover increased on reclaimed wellsites. Results from this study suggest that wellsite reclamation practices are allowing for initial suitable vegetation recovery that benefits forest songbirds. Wilson and Bayne (2018) found that use of wellsites by Ovenbirds increased with increasing canopy cover on the wellsite.
+(greater than 80 years old). Songbird community composition became more similar to mature forest as canopy cover increased on reclaimed wellsites. Results from this study suggest that wellsite reclamation practices are allowing for initial suitable vegetation recovery that benefits forest songbirds. Wilson and Bayne (2018) also found that use of wellsites by Ovenbirds increased with increasing canopy cover on the wellsite  suggesting that well pads can become habitat for Ovenbirds after natural or human initiated revegetation occurs.
 
 ### Mine sites
 
@@ -389,7 +391,7 @@ abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
-Bayne et al. (2016) studied bird responses to well sites using a paired sampling design to estimate impact ratios (treatment / control). They found that Ovenbird abundance in 50-m count radius was not significantly different from control abundances found in forests 150--400 m from the nearest pipe line edge due to large uncertainty in these estimates. Pipe lines in the study were 25--40 m wide. Impact ratios for the larger sampling radii (100-m and unlimited) were significantly less than 1 (0.77; Figure \@ref(fig:b16-wellpad)).
+Bayne et al. (2016) studied bird responses to well sites using a paired sampling design to estimate impact ratios (treatment / control). They found that Ovenbird abundance in 50-m count radius was not significantly different from control abundances found in forests 150--400 m from the nearest pipe line edge due to large uncertainty in these estimates. Pipe lines in the study were 25--40 m wide. Impact ratios for the larger sampling radii (100-m and unlimited) were significantly less than 1 (0.77; Figure \@ref(fig:b16-wellpad)). Nest searching has never located an Ovenbird using pipelines (Ball 2013).
 
 
 ```{r b16-pipeline,fig.cap='Bayne et al. 2016 pipeline.',out.width='100%'}
@@ -406,11 +408,13 @@ for (k in 1:3) {
 
 ### Comparing local scale impacts
 
-Roads and pipelines had largest negative impact on Ovenbird abundance on both the local and regional scales. This severe impact can be explained by the following factors: (1) grass dominated rights of way along these linear features provide unsuitable habitat for Ovenbirds; (2) habitat use and crossing these features during breeding is also unlikely based on behavioural studies; (3) these footprint types tend to occur in upland forest stands thus disproportionately impacting suitable Ovenbird habitats in a largely wetland dominated landscape.
+Roads and pipelines had largest negative impact on Ovenbird abundance on both the local and regional scales. This severe impact can be explained by the following factors: (1) grass dominated rights of way along these linear features provide unsuitable habitat for Ovenbirds; (2) habitat use and crossing these features during breeding is also unlikely based on behavioral studies; (3) these footprint types tend to occur in upland forest stands thus disproportionately impacting suitable Ovenbird habitats in a largely wetland dominated landscape.
 
-Mine sites, Well sites, and industrial facilities occupied relatively small areas, and althought their local scale (under footprint) effects ranged widely, their effects on the regional population were proportional to the area they occupied. Mine sites had the most negative impact similar to roads and pipe lines. This was followd by well sites, and industrial facilities had smalles local scale effects.
+Mine sites, well sites, and industrial facilities occupied relatively small areas, and althought their local scale (under footprint) effects ranged widely, their effects on the regional population were proportional to the area they occupied. Mine sites had the most negative impact similar to roads and pipe lines. This was followd by well sites, and industrial facilities which had smaller local scale effects.
 
-Sesimic lines were the most abundant energy footprint type in the Oil Sands region, however, their effect on Ovenbird abundance on the local scale was largely neutral.
+Seismic lines were the most abundant energy footprint type in the Oil Sands region, however, their effect on Ovenbird abundance on the local scale was largely neutral.
+
+FIXME add legend to this table
 
 ```{r se_tab,echo=FALSE}
 z <- t(sapply(c("RoadRailVerge", "SeismicLine", "WellSite", "PipeTransLine", "MineSite", "Industrial"),
@@ -602,6 +606,8 @@ Alberta Biodiversity Monitoring Institute (ABMI), 2017. Alberta Wall-to-Wall Veg
 Alberta Biodiversity Monitoring Institute (ABMI), 2018. Human Footprint Inventory 2016 (Version 1). Alberta Biodiversity Monitoring Institute, Geospatial Centre, Alberta, Canada. URL: https://www.abmi.ca/home/data-analytics/da-top/da-product-overview/GIS-Land-Surface/HF-inventory.html
 
 Allen, B., Morrison, S., Kariyeva, J., Sparkes, S., Hutchings, C., Hricko, B., Solymos, P., and Huggard, D., 2019. Data collection. In: Alberta Biodiversity Monitoring Institute (ABMI), ABMI 10-year science and program review. pp. 29--64. https://abmi10years.ca/10-year-review/resources/
+
+Ball, J. R. 2013. Nest predation on forest songbirds in a western boreal forest landscape altered by energy-sector linear features. PhD Thesis, University of Alberta, pp. 232.
 
 Ball, J. R., P. Sólymos, F. K. A. Schmiegelow, S. Hache, J. Schieck, and E. Bayne. 2016. Regional habitat needs of a nationally listed species, Canada Warbler (Cardellina canadensis), in Alberta, Canada. Avian Conservation and Ecology 11(2):10. http://dx.doi.org/10.5751/ACE-00916-110210 
 
