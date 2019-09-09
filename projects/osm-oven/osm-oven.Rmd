@@ -1,16 +1,33 @@
 ---
 title: 'OSM Synthesis: Ovenbird'
-author: "Peter Solymos, Marcus Becker, and Erin Bayne"
+author:
+  - Peter Solymos:
+      email: solymos@ualberta.ca
+      institute: [abmi]
+      correspondence: false
+  - name: Marcus Becker
+    institute: abmi
+  - name: Erin Bayne
+    institute: abmi
+    email: bayne@ualberta.ca
+    correspondence: true
+institute:
+  - abmi: Alberta Biodiversity Monitoring Institute
 date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
 output:
   bookdown::pdf_document2:
     toc: true
     toc_depth: 3
-    number_sections: false
+    number_sections: true
+    pandoc_args:
+      - '--lua-filter=scholarly-metadata.lua'
+      - '--lua-filter=author-info-blocks.lua'
 documentclass: report
-fontsize: 12pt
+fontsize: 11pt
 classoption: letterpaper
 urlcolor: blue
+header-includes:
+  - \usepackage{float}
 ---
 
 ```{r preamble,include=FALSE}
@@ -22,7 +39,8 @@ library(opticut)
 library(rgdal)
 library(sp)
 source("~/repos/abmianalytics/birds/00-functions.R")
-knitr::opts_chunk$set(cache=TRUE, echo=FALSE, message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(cache=TRUE, echo=FALSE, message=FALSE, warning=FALSE, fig.pos="H", fig.align="center")
+
 ## Bayne et al 2016 Condor results for Ovenbird
 b16 <- list(est = structure(c(0.81, 0.98, 0.96, 0.98, 0.77, 0.76, 0.31, 
     0.89, 0.88), .Dim = c(3L, 3L), .Dimnames = list(c("50m", "100m", 
@@ -73,8 +91,7 @@ Its conservation status is secure based on AB Wildlife Act and AEP general statu
 Ovenbirds have become a model organism for understanding the effects of habitat fragmentation and 
 forest harvest on songbirds.
 We chose this species as an example because it is one of the most studied boreal songbird species,
-and it represents upland bird communities preferring mature and old-growth upland forests.
-
+and it has been used as an indicator species for upland bird communities preferring mature and old-growth upland forests.
 
 ```{r oven,echo=FALSE,fig.cap='Ovenbird (Seiurus aurocapilla).',out.width='50%'}
 include_graphics("images/Seiurus-aurocapilla-large.jpg")
@@ -101,7 +118,7 @@ include_graphics("images/Ovenbird-det.png")
 
 ## Biophysical attributes
 
-We used two spatial scales to derive predictor variables for each survey station. Local-scale variables were assessed in a 150-m radius of each station. This scale encompasses the average breeding territory of Ovenbird (1 ha; Lanaku et al. 2013) and the effective detection distance for the song of most forest songbirds (Matsuoka et al. 2012). It is also half the minimum distance between stations in our data set. Stand-scale variables were assessed in a 564-m radius (1 km$^2$) of each survey station. This stand scale was chosen for pragmatic reasons to match the mapping unit in our predictions and because it roughly corresponds to the scale deemed most appropriate for landscape variables based on smoothing kernel estimates for landscape variables (Chandler et al. 2016) and based on Ovenbirds shown to disperse up to 500 m from their natal territory post-fledge, suggesting habitat selection may also be operating at this scale (Streby and Andersen 2013).
+We used two spatial scales to derive predictor variables for each survey station. Local-scale variables were assessed in a 150-m radius of each station. This scale encompasses the average breeding territory of Ovenbird (1 ha; Lanaku et al. 2013) and the effective detection distance for the song of most forest songbirds (Matsuoka et al. 2012). It is also half the minimum distance between stations in our data set. Stand-scale variables were assessed in a 564-m radius (1 km$^2$) of each survey station. This stand scale was chosen for pragmatic reasons to match the mapping unit in our predictions and because it roughly corresponds to the scale deemed most appropriate for landscape variables based on smoothing kernel estimates for landscape variables (Chandler et al. 2016). Habitat selection may also be operating at this scale because Ovenbirds were shown to disperse up to 500 m from their natal territory post-fledge (Streby and Andersen 2013).
 
 At the local scale, land cover was assessed for each survey station using provincial land cover (ABMI 2017, Allen et al. 2019) information. Vegetation type included deciduous, mixedwood, white spruce, pine, black spruce forest stands, treed fen, shrub, grass/herb, graminoid fen, marsh, and swamp cover types. Human footprint was assessed at each survey point based on the year of sampling (interpreted at a 1:5000 scale; Allen et al. 2019, Schieck et al. 2014). Footprint type included cultivation, forestry, urban-industrial (mines, well sites, urban areas, industrial, rural residential), hard linear (road and rails), and vegetated soft linear (seismic lines, pipe lines, power lines, road verges) features (Table \@ref(tab:habtab)).
 
@@ -157,7 +174,7 @@ Proportional area of the land cover types was calculated at the local scale, and
 
 We modeled the effect of forest age on Ovenbird density by using weighted age and its quadratic and square root transformed terms as covariates and selected the better fit. We incorporated interactions between forest type and age. When the dominant land cover was a harvest block, the predisturbance vegetation type but not age was assumed based on available forest inventory data in the local 150-m buffer. Doing so treated harvested areas as young forest rather than a separate land cover type. We also created a contrast variable that ranged between 1 (recent harvest) and 0 (converged to natural stands) to describe the convergence trajectory of forestry cut blocks (Figure \@ref(fig:plot-recovery)). We assumed that convergence is complete at 60 years after harvest. This allowed us to differentiate young forests of natural (i.e., fire) versus anthropogenic (i.e., timber harvest) origin.
 
-```{r plot-recovery,echo=FALSE,fig.cap='Forest harvest recovery trajectories used in capturing harvest effects in the models.',out.width='100%'}
+```{r plot-recovery,echo=FALSE,fig.cap='Forest harvest recovery trajectories used in capturing harvest effects in the models.',out.width='100%',fig.height=8,fig.width=10}
 age <- c(0, 1:20*4)/200
 conif <- 1-c(0, 1.3, 4.7, 10, 17.3, 26, 35.5, 45.3, 54.6, 63.1, 70.7, 77.3,
     82.7, 87, 90.1, 92.3, 94, 95.3, 96.7, 98.2, 100)/100
@@ -177,7 +194,7 @@ Geographic variation was captured by including latitude, longitude, and climate 
 
 At the stand scale, we calculated the proportion of suitable habitat within a 564 m radius of each survey station. Surrounding suitable habitat (SSH) was defined based on fitting a model to land cover classes with forest age classes classified into young vs. mature/old-growth (following Mahon et al. 2016). We then predicted the expected abundance at each survey location in the training data set and constructed a Lorenz-curve based on the cumulative density. We then identified the population density threshold at the tangent of the Lorenz curve (also used to determine the Youden index in the binary classification case; Youden 1950) and assigned land cover types as suitable habitat when more than 50% of the surveys within that class were found to be above the threshold (Solymos and Azeria 2018) (Figure \@ref(fig:plot-lorenz)).
 
-```{r plot-lorenz,echo=FALSE,fig.cap='Lorenz tangent approach illustrated. L: cumulative abundance, p: cumulative portion of surveys, red: Lorenz tangent (slope = 1).',out.width='100%'}
+```{r plot-lorenz,echo=FALSE,fig.cap='Lorenz tangent approach illustrated. L: cumulative abundance, p: cumulative portion of surveys, red: Lorenz tangent (slope = 1).',out.width='100%',fig.height=8,fig.width=10}
 n <- 1000
 m <- 25
 g <- as.factor(sort(sample(LETTERS[1:m], n, replace=TRUE, prob=rexp(m))))
@@ -199,7 +216,7 @@ Area of total human footprint was also quantified at the stand scale for each su
 
 We used Poisson generalized linear models with a log link. The response variable was the number of Ovenbirds counted per survey. We used the QPAD approach to account for differences in sampling protocol and nuisance parameters affecting detectability (time of day, time of year, tree cover, habitat composition; Solymos et al. 2013, Solymos 2016). This approach converts sampling distances and durations to a common standard through statistical offsets and adjusts for differences in detection error and sampling area related to broad vegetation types and timing of surveys. The QPAD correction included time-varying singing rate estimates (Solymos et al. 2018a). Singing rates were used to estimate the probability of a Ovenbird being present and giving a cue that could be counted by the observer. We also calculated an effective detection radius (EDR) that uses distance sampling to determine the area sampled. EDRs are dependent on tree cover and habitat composition at the survey point (Solymos et al. 2013). Overall, this allowed us to estimate the density (number of singing males per hectare).
 
-We applied branching forward stepwise variable selection (Ball et al. 2016, Westwood et al. 2019) to minimize bias and variance in predictionsbased on an _a priori_ branching hierarchy. The branching process was applied instead of a simple add-one type of variable search to make variable selection computationally more efficient by narrowing the scope of potential predictors entering the active set at each stage. At each stage of the branching hierarchy, we compared support among candidate models using Akaike's information criterion. Variables for the top-ranked model in a given stage were fixed and added to models in the subsequent stage. Model sets at each stage also considered a null model, which was the top model from the previous level or, in the case of the first stage, a constant density model without covariates. We includes the following stages:
+We applied branching forward stepwise variable selection (Ball et al. 2016, Westwood et al. 2019) to minimize bias and variance in predictions based on an _a priori_ branching hierarchy. The branching process was applied instead of a simple add-one type of variable search to make variable selection computationally more efficient by narrowing the scope of potential predictors entering the active set at each stage. At each stage of the branching hierarchy, we compared support among candidate models using Akaike's information criterion. Variables for the top-ranked model in a given stage were fixed and added to models in the subsequent stage. Model sets at each stage also considered a null model, which was the top model from the previous level or, in the case of the first stage, a constant density model without covariates. We includes the following stages:
 
 1. Local scale land cover
 2. Forest age
@@ -221,7 +238,7 @@ We used the R language (R Core Team 2019) for data processing (Solymos 2009), an
 
 We summarized provincial land cover information (ABMI 2018) (human footprint interpreted at a 1:15,000 scale based on ABMI's 2016 wall-to-wall human footprint inventory) for the entire study area and calculated average Ovenbird density (males per ha) for each of 1 km$^2$ units in Alberta. Stand-level attributes (footprint and forest composition) were calculated for each unit based on all polygon attributes found within that unit. The centroid of the unit was used to assign latitude, longitude, and climate variable values. Local-scale variables were determined for each stand type–age polygon within each 1 km$^2$ unit using the same approach applied for the 150-m radius buffers. Predicted Ovenbird density for each 1 km$^2$ unit was the area-weighted average of the polygon-level densities. This procedure was repeated for all 240 bootstrap runs using the estimated coefficient matrix. Point prediction for each 1 km$^2$ unit was calculated as the mean of the 240 predicted values. We calculated the coefficient of variation (standard deviation/mean across bootstrap runs) for each unit as an estimate of prediction uncertainty.
 
-A visual inspection of the surveyed mine sites revealed that those were either at the margin of open pit mines or tailing ponds, or vegetated. This represented a challenge when predicting abundance for mine sites, because non-vegetated mine sites were not represented in our sample, thus applying the estimate based on vegetated mine sites will certainly overestimate abundance. Non-vegetated mine sites can safely be assumed as non-habitat for Ovenbird. We opted to quantify the proportion of non-vegetated mine sites based on 2017--2018 summer (June 1st -- Aug 15th) based on a normalized difference vegetation index (NDVI; from top of atmosphere corrected Sentinel-2 10 m data). We calculated average NDVI in each mine site polygon within the Oil Sands region (Figure \@ref(fig:plot-ndvi)). The percentage of total polygon area of vegetated areas with >0.1 average NDVI value was 44%. We predicted mine site abundance at the Oil Sands region scale as the weighted average of vegetated and non-vegetated mine site abundances (44% x estimate + 66% x 0).
+A visual inspection of the surveyed mine sites revealed that those were either at the margin of open pit mines or tailing ponds, or vegetated. This represented a challenge when predicting abundance for mine sites, because non-vegetated mine sites were not represented in our sample, thus applying the estimate based on vegetated mine sites will certainly overestimate abundance. Non-vegetated mine sites can safely be assumed as non-habitat for the Ovenbird. We opted to quantify the proportion of non-vegetated mine sites based on 2017--2018 summer (June 1st -- Aug 15th) based on a normalized difference vegetation index (NDVI; from top of atmosphere corrected Sentinel-2 10 m data). We calculated average NDVI in each mine site polygon within the Oil Sands region (Figure \@ref(fig:plot-ndvi)). The percentage of total polygon area of vegetated areas with >0.1 average NDVI value was 44%. We predicted mine site abundance at the Oil Sands region scale as the weighted average of vegetated and non-vegetated mine site abundances (44% x estimate + 66% x 0).
 
 ```{r plot-ndvi,echo=FALSE,fig.cap='Distribution of average NDVI valies in different types of mine site GIS polygons inside the Oil Sands region.',out.width='100%'}
 x <- read.csv("d:/abmi/AB_data_v2018/data/raw/HFI_Mines_NDVI.csv")
@@ -250,18 +267,19 @@ p
 
 ## Attributing effects to industrial sectors
 
-We used the Ovenbird models and predictions to estimate the effects of individual industrial sectors (or a set of human footprint categories) within the Oil Sands Region. We started with a summary of all combinations of vegetation types x footprint types in each 1 km$^2$ unit, for both the current (footprint included) and reference (backfilled, no footprint; ABMI 2017) conditions.  We could then 'turn on' only the footprint types associated with one industrial sector and compared the predicted abundances of each species with only that footprint type in the current land-base to the species' predicted abundance under reference land-base. This showed the degree to which the footprint from just that one industrial sector was predicted to have changed the abundance of that species (Solymos et al. 2015, Solymos and Schieck 2016). We did this calculation for each major industrial sectors (agriculture, forestry, energy, rural/urban and transportation), and also for individual footprint types related to energy sector (access roads, seismic lines, industrial facilities, well sites, mines, pipe lines). In other words, the regression coefficients from our models were used to compute the change in Ovenbird abundance on average from each type of disturbance.
+We used the Ovenbird models and predictions to estimate the effects of individual industrial sectors (or a set of human footprint categories) within the Oil Sands Region. We started with a summary of all combinations of vegetation types x footprint types in each 1 km$^2$ unit, for both the current (footprint included) and reference (backfilled, no footprint; ABMI 2017) conditions.  We could then 'turn on' only the footprint types associated with one industrial sector and compared the predicted abundances with only that footprint type in the current land-base to the Ovenbird's predicted abundance under reference land-base. This showed the degree to which the footprint from just that one industrial sector was predicted to have changed the abundance of Ovenbird (Solymos et al. 2015, Solymos and Schieck 2016). We did this calculation for each major industrial sectors (agriculture, forestry, energy, rural/urban and transportation), and also for individual footprint types related to energy sector (access roads, seismic lines, industrial facilities, well sites, mines, pipe lines). In other words, the regression coefficients from our models were used to compute the change in Ovenbird abundance on average from each type of disturbance (Figure \@ref(fig:s4t)).
 
-The procedure gave the predicted total population effect of the industrial sector on each species' abundance within the region (including native vegetation and footprint land cover types), and the effect per unit area of the industry's footprint (i.e., how "intensive" the effect of the industry's footprint is on the species, we call this the "unit effect"). We also quantified how the predicted abundance inside the human footprint polygons compared between current and reference conditions, i.e. how the local abundance under current footprint changed (we call this "under-footprint" effect).
+The procedure gave the predicted total population effect of the industrial sector on Ovenbird abundance within the region (including native vegetation and footprint land cover types), and the effect per unit area of the industry's footprint (i.e., how "intensive" the effect of the industry's footprint is on Ovenbirds, we call this the "unit effect"). We also quantified how the predicted abundance inside the human footprint polygons compared between current and reference conditions, i.e. how the local abundance under current footprint changed (we call this "under-footprint" effect).
 
-Sector effects on a species are plotted as the product of 1) the area of the sector's footprint (width of the bars), and 2) the average "per unit area" effect of that sector's footprint on the species (height of the bars). The area of footprint for a sector is the sum of all footprints belonging to it. The average effect of a sector is the difference between the predicted current and reference abundances in that sector's footprint type based on the species' model. A bar with a large area means that that sector has had a large effect on the population --- increasing the population if the bar is above 0, decreasing it if the bar is below 0.
-
-The effect of an industrial sector on a species is affected by three factors: 1) How much area is occupied by footprint of that sector, 2) How strongly -- positively or negatively, or a mix of both -- the species responds to each of the sector's footprint types, 3) How much of the sector's footprint is in higher- versus lower-quality habitat for the species. For example, a species that lives in old upland forest may be more affected by the forestry sector than the energy sector, because forestry focuses disturbance on older merchantable stands.
+The effect of an industrial sector is affected by three factors: 1) How much area is occupied by footprint of that sector, 2) How strongly -- positively or negatively, or a mix of both -- the species responds to each of the sector's footprint types, 3) How much of the sector's footprint is in higher- versus lower-quality habitat for the species. For example, Ovenbird that lives in old upland forest may be more affected by the forestry sector than the energy sector, because forestry focuses disturbance on older merchantable stands.
 
 We cannot tell which roads are associated with particular sectors (for example roads to well sites in forestry cutblocks). Thus, all roads are attributed to the transportation sector. Two sectors sometimes operate together to reduce cumulative effects, such as forestry cutblocks being placed where energy developments are planned. A forestry cutblock on a future wellsite, for example, would be assigned to forestry until the wellpad was built, when that area of footprint would change to the energy sector. In addition, we have difficulty separating some types of footprint, such as urban and industrial areas, so those types are assigned to only one sector. 
 
 Sector effects only include direct effects of footprint, not indirect effects (e.g., pollution, noise, access effects) or possible cumulative effects where two or more sectors interact (e.g., roads allowing weeds into an area, where they can then colonize harvest areas). In this report, we describe the results from studies that address these issues for the Ovenbird.
 
+```{r s4t,echo=FALSE,fig.cap='Habitat models are used to make predictions under different landscape conditions (reference and current) using space for time substitution to draw conclusions about expected changes in habitat supply for Ovenbirds in a cumulative effects framework. Different colors represent different footprint types (light green: harvest area, grey: access roads, yellow: well site) surrounded by mature forest (dark green). Number correspond to the number of silhouettes in each land cover type.',out.width='100%'}
+include_graphics("images/Slide1.jpg")
+```
 
 # Results
 
@@ -282,9 +300,9 @@ include_graphics("images/Ovenbird-cr.png")
 
 ## Local scale impacts
 
-We summarized local scale impacts based on the model incorporating local scale habitat associations and spatial and climate variables (stages 1--7), without the landscape level habitat and footprint effects (stages 8--9). This means that polygon level predictions do not change based on landscape context. We call this as local scale impacts, but the impact can be quantified over the whole Oil Sands region by summing up the effects within the region based on predictions under current conditions (native vegetation and footprint in the landscape) and reference (backfilled and native vegetation, no footprint). 
+We summarized local scale impacts based on the model incorporating local scale habitat associations and spatial and climate variables (stages 1--7), without the landscape level habitat and footprint effects (stages 8--9). This means that polygon level predictions do not change based on landscape context. We call these local scale impacts, but the impact can be quantified over the whole Oil Sands region by summing up the effects within the region based on predictions under current conditions (native vegetation and footprint in the landscape) and reference (backfilled and native vegetation, no footprint). 
 
-A simple way to understand the local scale effects of land conversion, e.g. from old mixedwood to footprint is to directly compare the two coefficients (e.g. the heights of the bars in Figure \@ref(fig:plot-cr)). The problem with this is that footprint types are not strictly selective. I.e. we cannot claim that old mixedwood forest will only ever become a forestry cutblocl, because it can be also agriculture, wellpad, seismic line, etc. Although we think this approach is still valid in a planning context, it does not convey regional total or average impacts very effectively. Therefore, a we chose to express local scale effects over the whole Oil Sands region, summarized by current footprint type, averaging over the original (reference) land cover. This implicitly weights the land conversion effects by the abount of each reference land cover type.
+A simple way to understand the local scale effects of land conversion, e.g. from old mixedwood to footprint is to directly compare the two coefficients (e.g. the heights of the bars in Figure \@ref(fig:plot-cr)). The problem with this is that footprint types are not strictly selective. I.e. we cannot claim that old mixedwood forest will only ever become a forestry cutblock, because it could eventually become also agriculture, wellpad, seismic line, etc. Although we think this approach is still valid in a planning context, it does not convey regional total or average impacts very effectively. Therefore, a we chose to express local scale effects over the whole Oil Sands region, summarized by current footprint type, averaging over the original (reference) land cover. This implicitly weights the land conversion effects by the abount of each reference land cover type.
 
 When we focus exclusively on areas that are encapsulated within current footprint polygons, we can talk about 'under-footprint' effects for individual energy sector footprint types. This summarizes the abundance change between current and reference landscapes inside the boundaries of the footprint polygons. This refers to a regional average of the impacts due to land cover transformation from native vegetation to a given footprint type without regard to other footprint types and native vegetation (areas outside of any current footprint).
 
@@ -296,7 +314,7 @@ The 'unit' effect is an area standardized version of the regional effect. A -100
 
 Roads and road verges occupied `r round(getSE("RoadRailVerge")$perc, 2)`% of the land base in the Oil Sands region. We estimated a -100% local scale effect for Ovenbirds from the footprint itself. Because roads are usually built in upland areas, it is more likely for roads and road verges to replace suitable Ovenbird habiat (upland mixed and deciduous forests and to some extent white spruce dominated conifer stands) than unsuitable lowland habitats. This selectivity results in a lower than -100 unit effect (`r round(median(getSE("RoadRailVerge")$unit), 2)`) and a regional population effect of `r round(median(getSE("RoadRailVerge")$reg), 2)`% that is larger than it would be expected based on road footprint alone (a roughly equal absolute population effects would be expected if footprint impacted suitable and unsuitable Ovenbird habitats randomly) (Figure \@ref(fig:space-road)).
 
-```{r space-road,fig.cap='Effects of roads/rails/verges on ovenbird abundance showing the 3 types of sector effects as explained in the text.',out.width='100%',warning=FALSE,message=FALSE}
+```{r space-road,fig.cap='Effects of roads/rails/verges on ovenbird abundance showing the 3 types of sector effects as explained in the text.',out.width='100%',warning=FALSE,message=FALSE,fig.height=3,fig.width=8}
 d <- getSE("RoadRailVerge")
 op <- par(mfrow=c(1,3), mar=c(4,4,3,0.1))
 hf(d$under, xlab="Under HF (%)", xlim=c(-100, 100), main="Roads, rails, verges")
@@ -306,16 +324,16 @@ abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
-The 'under footprint' effects cannot be lower tha -100%, which refer to a complete loss of habitat supply for a species, i.e. 0% of the originally present population can survive under such conditions. A 0% value indicates that the habitat supply is equal under the referece and current conditions. Positive values would indicate that the current habitat can provide supplies for more individuals than under reference conditions. This effect does not consider unimpacted native land cover surrounding human footprint in the region. That is why the road effects is highly detrimental to Ovenbirds, -100% with no uncertainty.
+The 'under footprint' effects cannot be lower tha -100%, which refer to a complete loss of habitat supply for a species, i.e. 0% of the originally present population can survive under such conditions. A 0% value indicates that the habitat supply is equal under the reference and current conditions. Positive values would indicate that the current habitat can provide supplies for more individuals than under reference conditions. This effect does not consider unimpacted native land cover surrounding human footprint in the region. That is why the road effects is highly detrimental to Ovenbirds, -100% with no uncertainty.
 
 The 'regional' effect takes into account both the footprint and native habitats. Because native land cover is still abundant in the Oil Sands region, these percentages are smaller in absolute value but same in sign as the 'under footprint' effects. The difference between the two types of effects is proportional to the extent of the footprint in the region. When for example all the region is impacted by footprint, the two numbers are identical. The smaller absolute change reflects that habitat supply is constant in native land cover types. 
 
-The 'unit effects' highlights the specificity of a given footprint type with respect to the most suitable habitat for the species. For example, if footpring randomly targets land cover types, we would expect to have a -100 or +100 unit effect. If the footprint _avoids_ suitable habitats, we get a unit effects closer to 0 (within -100 and +100). If the footprint targets suitable habitat very selectively, we end up with unit effect less than -100 or greated than +100.
+The 'unit effects' highlights the specificity of a given footprint type with respect to the most suitable habitat for the species. For example, if footprint randomly targets land cover types, we would expect to have a -100 or +100 unit effect. If the footprint _avoids_ suitable habitats, we get a unit effects closer to 0 (within -100 and +100). If the footprint targets suitable habitat very selectively, we end up with unit effect less than -100 or greater than +100. This selectivity is due to the 'interaction' between footprint and habitat because the effect will vary in different forest types for a selected species (cf. Figure \@ref(fig:plot-hab)).
 
 The figures like Figure \@ref(fig:space-road) show the estimated effect as red line and the bootstrap distribution of values is the pale red density around it. The range of the bootstrap distribution indicates tha undertainty around the estimate effect.
 
 Roads themselves provide largely unsuitable breeding habitat for Ovenbirds that nest on the ground in sparse understory forest floor avoiding dense woody understory vegetation (Porneluzi et al. 2011). 
-Ovenbirds are also known exclude open areas from their territories because of lack of protective tree and shrub cover (Wilson and Bayne 2018) and because of reduced food resources (Lankau et al. 2013). Therefore, the expected abundance on paved and gravel road surfaces is zero, while road edges might be used by ovenbirds in narrow access roads without verges (neutral edge effect), verges along higher-traffic roads and rails are unsuitable as other early seral and open habitats, and often create edge effects (Bayne and Dale 2011).
+Ovenbirds are also known to exclude open areas from their territories because of lack of protective tree and shrub cover (Wilson and Bayne 2018) and because of reduced food resources (Lankau et al. 2013). Therefore, the expected abundance on paved and gravel road surfaces is zero, while road edges might be used by ovenbirds in narrow access roads without verges (neutral edge effect), verges along higher-traffic roads and rails are unsuitable as other early seral and open habitats, and often create edge effects (Bayne and Dale 2011).
 
 We did not separate roads based on which sector built them or which sector is presently using them. These represent multi-use footprint types, and it was not our goal to separate effects at this time. If roads can be assigned to single-or multiple sectors, it is possible to attribute road/rail effects to the different sectors either based on average unit area effects x sector footprint area, or assess the effects in a spatially explicit fashion but more detailed mapping information is required.
 
@@ -324,7 +342,7 @@ We did not separate roads based on which sector built them or which sector is pr
 Seismic lines occupied `r round(getSE("SeismicLine")$perc, 2)`% of the land base in the Oil Sands region. We estimated a neutral local and regional scale effect, although the uncertainy around this neutral point estimate was rather wide and tended towards a negative effect. Seismic lines do not discriminate among habitats and impact upland and lowland habitats in a systematic manner. Because wetlands predominate in the Oil Sands region, seismic lines impact suitable Ovenbird habitat less frequently, as indicated by the neutral unit area effects (Figure \@ref(fig:space-seismic)).
 
 
-```{r space-seismic,fig.cap='Effects of seismic lines on Ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE}
+```{r space-seismic,fig.cap='Effects of seismic lines on Ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE,fig.height=3,fig.width=8}
 d <- getSE("SeismicLine")
 op <- par(mfrow=c(1,3), mar=c(4,4,3,0.1))
 hf(d$under, xlab="Under HF (%)", xlim=c(-100, 100), main="Seismic lines")
@@ -358,7 +376,7 @@ The neutral to negative response to edges of Ovenbirds was noted previously by B
 
 Industrial facilities occupied `r round(getSE("Industrial")$perc, 2)`% of the land base in the Oil Sands region. We estimated a `r round(median(getSE("Industrial")$under), 2)`% local scale effect on the footprint itself. The effect of facilities on the regional population was small (`r round(median(getSE("Industrial")$reg), 2)`%) due to the tiny extent of this footprint type, but 90% confidence interval did not overlap zero. Unit area effects were between -100 and 0 indicating a negative but not too severe effect as shown by local scale under-footprint effects as well (Figure \@ref(fig:space-industrial)).
 
-```{r space-industrial,fig.cap='Effects of industrial facilities on Ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE}
+```{r space-industrial,fig.cap='Effects of industrial facilities on Ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE,fig.height=3,fig.width=8}
 d <- getSE("Industrial")
 op <- par(mfrow=c(1,3), mar=c(4,4,3,0.1))
 hf(d$under, xlab="Under HF (%)", xlim=c(-100, 100), main="Industrial facilities")
@@ -382,7 +400,7 @@ was similar to extent of this footprint type. Unit area effects were `r round(me
 
 Our estimates did not differentiate between reclaimed/regenerating and active/non-reclaimed well sites because current GIS information on recovery does not exist at a provincial scale. Our sample included an unknown proportion of well sites of different degrees of regeneration, thus our estimates represented the overall northern Alberta population of well sites. It is possible that the relatively large uncertainty for the well site effects (90% confidence interval for the local scale effects ranging between -100% and -28%) was partly due to this variation among individual well sites, i.e. when the bootstrap sample included more regenerated well sites the effects were less severe.
 
-```{r space-wellsite,fig.cap='Effects of well sites on Ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE}
+```{r space-wellsite,fig.cap='Effects of well sites on Ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE,fig.height=3,fig.width=8}
 d <- getSE("WellSite")
 op <- par(mfrow=c(1,3), mar=c(4,4,3,0.1))
 hf(d$under, xlab="Under HF (%)", xlim=c(-100, 100), main="Well sites")
@@ -414,7 +432,7 @@ Wilson and Bayne (2019) used acoustic localization to determine the assemblage o
 Mine sites occupied `r round(getSE("MineSite")$perc, 2)`% of the land base in the Oil Sands region. We estimated a `r round(median(getSE("MineSite")$under), 2)`% local scale effect on the footprint itself. The effect of well sites on the regional population was `r round(median(getSE("MineSite")$reg), 2)`%
 was similar to extent of this footprint type. Unit area effects were `r round(median(getSE("MineSite")$unit), 2)` with 90% confidence intervals overlapping with -100, which indicated that population change is proportional to amount of habitat loss (Figure \@ref(fig:space-wellsite)). These estimates incorporate the NDVI based correction for the amount of vegetated and non-vegetated mine sites.
 
-```{r space-mines,fig.cap='Effects of mine sites on Ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE}
+```{r space-mines,fig.cap='Effects of mine sites on Ovenbird abundance.',out.width='100%',warning=FALSE,message=FALSE,fig.height=3,fig.width=8}
 d <- getSE("MineSite")
 op <- par(mfrow=c(1,3), mar=c(4,4,3,0.1))
 hf(d$under, xlab="Under HF (%)", xlim=c(-100, 100), main="Mine sites")
@@ -428,7 +446,7 @@ par(op)
 
 Pipe lines occupied `r round(getSE("PipeTransLine")$perc, 2)`% of the land base in the Oil Sands region. We estimated a `r round(median(getSE("PipeTransLine")$under), 2)`% local scale effect on the footprint itself. The effect of pipe lines on the regional population was `r round(median(getSE("PipeTransLine")$reg), 2)`%, slightly higher than would been expected based on the extent of the footprint alone. Unit area effects were `r round(median(getSE("PipeTransLine")$unit), 2)` (Figure \@ref(fig:space-pipeline)).
 
-```{r space-pipeline,fig.cap='Additive sector effects for pipe lines',out.width='100%',warning=FALSE,message=FALSE}
+```{r space-pipeline,fig.cap='Additive sector effects for pipe lines.',out.width='100%',warning=FALSE,message=FALSE,fig.height=3,fig.width=8}
 d <- getSE("PipeTransLine")
 op <- par(mfrow=c(1,3), mar=c(4,4,3,0.1))
 hf(d$under, xlab="Under HF (%)", xlim=c(-100, 100), main="Pipe lines")
@@ -438,7 +456,7 @@ abline(v=c(100, -100), lty=2)
 par(op)
 ```
 
-Bayne et al. (2016) studied bird responses to well sites using a paired sampling design to estimate impact ratios (treatment / control). They found that Ovenbird abundance in 50-m count radius was not significantly different from control abundances found in forests 150--400 m from the nearest pipe line edge due to large uncertainty in these estimates. Pipe lines in the study were 25--40 m wide. Impact ratios for the larger sampling radii (100-m and unlimited) were significantly less than 1 (0.77; Figure \@ref(fig:b16-wellpad)). Nest searching has never located an Ovenbird using pipelines (Ball 2013).
+Bayne et al. (2016) studied bird responses to pipelines using a paired sampling design to estimate impact ratios (treatment / control). They found that Ovenbird abundance in 50-m count radius was not significantly different from control abundances found in forests 150--400 m from the nearest pipe line edge due to large uncertainty in these estimates. Pipe lines in the study were 25--40 m wide. Impact ratios for the larger sampling radii (100-m and unlimited) were significantly less than 1 (0.77; Figure \@ref(fig:b16-wellpad)). Nest searching has never located an Ovenbird using pipelines (Ball 2013).
 
 
 ```{r b16-pipeline,fig.cap='Relative effect sizes of pipe lines on Ovenbird relative abundances (paired control/impact design by Bayne et al. 2016).',out.width='100%'}
@@ -461,7 +479,7 @@ Roads and pipelines had largest negative impact on Ovenbird abundance on both th
 2. Habitat use and crossing these features during breeding is also unlikely based on behavioural studies; 
 3. These footprint types tend to occur in upland forest stands thus disproportionately impacting suitable Ovenbird habitats in a largely wetland dominated landscape.
 
-Mine sites, wWell sites, and industrial facilities occupied relatively small areas, and althought their local scale (under footprint) effects ranged widely, their effects on the regional population were proportional to the area they occupied. Mine sites had the most negative impact similar to roads and pipe lines. This was followd by well sites, and industrial facilities which had smallers local scale effects.
+Mine sites, well sites, and industrial facilities occupied relatively small areas, and althought their local scale (under footprint) effects ranged widely, their effects on the regional population were proportional to the area they occupied. Mine sites had the most negative impact similar to roads and pipe lines. This was followd by well sites, and industrial facilities which had smallers local scale effects.
 
 Sesimic lines were the most abundant energy footprint type in the Oil Sands region, however, their effect on Ovenbird abundance on the local scale was largely neutral (Table \@ref(tab:setab)).
 
@@ -470,10 +488,10 @@ ENRGY <- c("RoadRailVerge", "SeismicLine", "WellSite", "PipeTransLine", "MineSit
 z <- t(sapply(ENRGY,
   function(z) unname(sapply(getSE(z)[1:4], quantile, c(0.5)))))
 z <- cbind(z, z[,2] * 0.01 * mean(2*colSums(HRF)/10^3))
-colnames(z) <- c("Under HF %", "Regional %", "Unit effect", "HF area %", "Population (1000 inds.)")
+colnames(z) <- c("Under HF %", "Regional %", "Unit effect", "HF area %", "N (1000 inds.)")
 kable(z[order(z[,1]),], digits=2,
   booktabs = TRUE, row.names = TRUE,
-  caption="Local scale impacts of individual energy sector footprint types on Ovenbird abundance summarized, including estimated absolute population size consequences of energy sector development.")
+  caption="Local scale impacts of individual energy sector footprint types on Ovenbird abundance (N) summarized, including estimated absolute population size consequences of energy sector development.")
 ```
 
 ### Population consequences of local scale impacts
@@ -483,9 +501,9 @@ Our approach adjusts the observed counts so that the models estimate singing mal
 The estimated number of Ovenbirds in the Oil Sands region is `r round(median(2*colSums(HCR)/10^6), 2)` million individuals (95% confidence interval: `r round(quantile(2*colSums(HCR)/10^6, 0.025), 2)` -- `r round(quantile(2*colSums(HCR)/10^6, 0.975), 2)`) based on predictions using current landscape conditions. The estimated population size in the reference (i.e. no human footprint) landscape in the same region for Ovenbird is `r round(median(2*colSums(HRF)/10^6), 2)` million individuals (95% confidence interval: `r round(quantile(2*colSums(HRF)/10^6, 0.025), 2)` -- `r round(quantile(2*colSums(HRF)/10^6, 0.975), 2)`). 
 The combined effect of _all_ kinds of human foorpting (forestry, energy, agriculture) in the Oil Sands region decreased habitat supply for Ovenbird by `r abs(round(median((2*colSums(HCR)-2*colSums(HRF))/10^6), 2))` million individuals.
 
-We can estimate the effects of the local scale impacts on the population in absolute terms using the reference population size estimate and the regional energy sector effects from Table \@ref(tab:setab). The total energy sector portion of lost habitat supply is `r round(sum(z[,5]), 2)` thousand Ovenbird individuals. This number does not represents actuall population loss as a consequence of oil sands development, but represents the number of individuals the landscape could sustained without the energy sector footprint. We have very limited knowledge of the saturation of habitats on the breeding grounds (i.e. the actual population vs. carrying capacity), thus we cannot claim the all the estimated difference as population loss. If , however, habitats are saturated near carrying capacity, our models would predict a significant population consequence as a result of the energy sector development.
+We can estimate the effects of the local scale impacts on the population in absolute terms using the reference population size estimate and the regional energy sector effects from Table \@ref(tab:setab). The total energy sector portion of lost habitat supply is `r round(sum(z[,5]), 2)` thousand Ovenbird individuals. This number does not represents actual population loss as a consequence of oil sands development, but represents the number of individuals the landscape could have sustained without the energy sector footprint. We have very limited knowledge of the saturation of habitats on the breeding grounds (i.e. the actual population vs. carrying capacity), thus we cannot claim the all the estimated difference as population loss. If , however, habitats are saturated near carrying capacity, our models would predict a significant population consequence as a result of the energy sector development.
 
-To put this result into a cumulative effects perspective, we can demonstrate that local scale energy sector development has a roughly proportionate effect on Ovenbird habitat supply when we compare the population consequences with the amount of footprint. Energy sector footprint in the Oil Sands is `r round(100*sum(A[ENRGY,])/sum(A[-1]), 2)`% of all the human footprint in the region, whereas energy footprint is responsible for `r round(100*sum(z[,5])/median(2*colSums(HCR)/10^3-2*colSums(HRF)/10^3), 2)`% of the population differences. This is, however, and average over all types of footprint. As we demonstrated in the previous sections, different energy sector activities have very different impacts on Ovenbird habitst and populations which needs to be and can be incorporated in land use planning.
+To put this result into a cumulative effects perspective, we can demonstrate that local scale energy sector development has a roughly proportionate effect on Ovenbird habitat supply when we compare the population consequences with the amount of footprint. Energy sector footprint in the Oil Sands is `r round(100*sum(A[ENRGY,])/sum(A[-1]), 2)`% of all the human footprint in the region, whereas energy footprint is responsible for `r round(100*sum(z[,5])/median(2*colSums(HCR)/10^3-2*colSums(HRF)/10^3), 2)`% of the population differences. This is, however, and average over all types of footprint. As we demonstrated in the previous sections, different energy sector activities have very different impacts on Ovenbird habitats and populations which needs to be and can be incorporated in land use planning.
 
 ## Landscape level effects
 
@@ -567,13 +585,17 @@ pr$D1 <- predict(m1, pr)
 pr$D2 <- predict(m2, pr)
 ```
 
-We made predictions for each 1 km2 pixel within the Oil Sands Region based on the models incorporating local scale habitat and spatial/climate effects (no landscape effects), and models with landscape level effects on top of local scale habitat and spatial/climate effects. Landscape scale variables included different classes of human footprint types (proportion of successional, alienating, linear, nonlinear, cultivation, and non-cultivation footprints). For the analyses below, we formed the following groups of footprint types, following the similarities in their of local scale effects on Ovenbird abundance:
+We made predictions for each 1 km2 pixel within the Oil Sands Region based on the models incorporating local scale habitat and spatial/climate effects (no landscape effects), and models with landscape level effects on top of local scale habitat and spatial/climate effects. Landscape scale variables included different classes of human footprint types (proportion of successional, alienating, linear, nonlinear, cultivation, and non-cultivation footprints; Figure \@ref(fig:hl) shows the concep). For the analyses below, we formed the following groups of footprint types, following the similarities in their of local scale effects on Ovenbird abundance:
 
 - Total human footprint (THF; incl. energy and other sectors);
 - Total energy sector footprintg;
 - Road and pipe lines (access and transportation related linear footprint);
 - Mines, wells, and facilities;
 - Seismic lines.
+
+```{r hl,echo=FALSE,fig.cap='When habitat models are combined with the landscape effects (i.e. amount of surrounding footprint) we modify the habitat level densities according to the surrounding landscape. As a result, we get higher or lower densities in the same land cover depending on the surrounding landscape.',out.width='100%'}
+include_graphics("images/Slide2.jpg")
+```
 
 We also calculate the proportion of suitable habitat for Ovenbirds. We repeated the suitable habitat identification in each bootstrap run, and as a result, we could calculate the percentage when each land cover category (forest stands were classified as young and old forest) was part of the suitable end of the spectrum based on a Lorenz-tangent based binary classification (see Figure \@ref(fig:landsc-freq)). The following land cover classes had 100% selection frequency: young and old deciduous and mixedwood forests, younger white spruce dominated coniferous stands. We used these land cover types to quantify the surrounding suitable habitat (SSH) for the following analyses.
 
@@ -590,7 +612,7 @@ The most obvious difference between the no-landscape-effects and the landscape-e
 
 The figure highlights that when we do not account for the landscape context, intermediate footprint levels might be charaterized by intermediate suitability values (a lot more medium shade color). When we account for the landscape context, however, we see that highest density is concentrated in the bottom right corner of the graph where footprint levels are lowest and suitable habitat levels are highest, and the rest of the plot is in contrast (i.e. a lot less intermediate colors, either verly low or highly suitable habitats).
 
-```{r lands-image,echo=FALSE,fig.height=5,fig.width=10,fig.cap='Ovenbird population density surfaces as a function of landscape level suitable habitat (SSH) and total human footprint (THF) in the Oil Sands region based on the 2 types of models.'}
+```{r landsc-image,echo=FALSE,fig.height=5,fig.width=10,fig.cap='Ovenbird population density surfaces as a function of landscape level suitable habitat (SSH) and total human footprint (THF) in the Oil Sands region based on the 2 types of models.'}
 img1 <- list(x=SSH, y=THF, z=matrix(pr$D1, length(SSH), length(THF)))
 img2 <- list(x=SSH, y=THF, z=matrix(pr$D2, length(SSH), length(THF)))
 MAX <- c(max(img1$z), max(img2$z))
@@ -609,7 +631,7 @@ box()
 par(op)
 ```
 
-The relationship between suitable habitat amount and Ovenbirds density was nearly linear and the two models closely matched each other (next figure), whereas the total footprint effects was nonlinear and the two models differed markedly showing similar patterns as in the bivariate surface (Figure \@ref(fig:landsc-lines)).
+The relationship between suitable habitat amount and Ovenbirds density was nearly linear and the two models closely matched each other, whereas the total footprint effects was nonlinear and the two models differed markedly showing similar patterns as in the bivariate surface (Figure \@ref(fig:landsc-lines)).
 
 ```{r landsc-lines,echo=FALSE,fig.height=12,fig.width=10,fig.cap='Ovenbird population density as a function of landscape level suitable habitat (SSH) and different groupings of human footprint in the Oil Sands region based on the 2 types of models (blue: no landscape effects, red: with landscape effects). Shaded are reflects 95 percent confidence intervals. Note x-axes vary in range across panels.'}
 op <- par(mfrow=c(3,2))
@@ -643,7 +665,7 @@ gf("Seismic", k=6,
 par(op)
 ```
 
-We then grouped footprint types to look at how those related to Ovenbird average densities in the 1km2 landscapes. Total energy sector footprint showed nonlinear relationship with Ovenbird density, density declined above 30% energy footprint. The downward slope for the model with landscape effects was steeper, indicating a synergistic effects or co-occurring energy footprints.  
+We then grouped footprint types to look at how those related to Ovenbird average densities in the 1 km$^2$ landscapes. Total energy sector footprint showed nonlinear relationship with Ovenbird density, density declined above 30% energy footprint. The downward slope for the model with landscape effects was steeper, indicating a synergistic effects or co-occurring energy footprints.
 
 Roads and pipelines had a linear effect on density, 25% linear footprint causing a roughly 25% drop in density (the graph shows a truncated gradient due to the non-existence of 1km2 landscapes with >25% road + pipe line amounts).
 
