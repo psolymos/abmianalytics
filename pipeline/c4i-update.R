@@ -324,13 +324,13 @@ names(pAm) <- names(pAj) <- e1$Lookup$SpeciesID[match(names(pAm), e1$Lookup$Code
 
 CFbirds <- list(
     marginal=list(
-        veg=e1$CoefNorthMarginal[SPPn,colnames(CF$lower$veg)],
-        soil=e1$CoefSouthMarginal[SPPs,colnames(CF$lower$soil)],
+        veg=log(e1$CoefNorthMarginal[SPPn,colnames(CF$lower$veg)]),
+        soil=log(e1$CoefSouthMarginal[SPPs,colnames(CF$lower$soil)]),
         paspen=cbind(pAspen=pAm[SPPs])
     ),
     joint=list(
-        veg=e1$CoefNorthJoint[SPPn,colnames(CF$lower$veg)],
-        soil=e1$CoefSouthJoint[SPPs,colnames(CF$lower$soil)],
+        veg=log(e1$CoefNorthJoint[SPPn,colnames(CF$lower$veg)]),
+        soil=log(e1$CoefSouthJoint[SPPs,colnames(CF$lower$soil)]),
         paspen=cbind(pAspen=pAj[SPPs])
     )
 )
@@ -340,6 +340,8 @@ colnames(c4i0$CFbirds[[1]][[1]])
 colnames(CFbirds[[1]][[1]])
 colnames(c4i0$CFbirds[[1]][[2]])
 colnames(CFbirds[[1]][[2]])
+
+sapply(c(CFbirds$marginal, CFbirds$joint), range, na.rm=TRUE)
 
 table(SP$habitat_assoc, useNA="a")
 SP$habitat_assoc[is.na(SP$habitat_assoc)] <- "NotAssessed"
