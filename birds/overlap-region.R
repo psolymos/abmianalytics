@@ -25,3 +25,12 @@ writeRaster(rol, "~/repos/cure4insect/inst/extdata/wNorth.tif")
 #kgrid[rownames(OverlapReg), "wN2"] <- OverlapReg$pAspen
 #rol2 <- .make_raster(kgrid$wN2, kgrid, rpa)
 #plot(rol2)
+
+
+## Drat
+library(drat)
+options("dratRepo"="~/repos/ABbiodiversity-drat")
+# only on setup!
+# pruneRepo(remove=TRUE)
+
+insertPackage("d:/abmi/AB_data_v2019/misc/cure4insect_0.1-1.tar.gz")
