@@ -7,17 +7,17 @@ opar <- set_options(path = "s:/reports") # this is optional if you have local co
 load_common_data()
 
 #tx <- "mammals"
-#tx <- "birds"
+tx <- "birds"
 #tx <- "mites"
 #tx <- "mosses"
 #tx <- "lichens"
-tx <- "vplants"
+#tx <- "vplants"
 
 id <- get_all_id()
 species <- get_all_species(tx)
 
 ## FALSE --> no single species maps/plots are saved
-save_spp_figs <- FALSE
+save_spp_figs <- TRUE
 ## setting limit
 limit <- 0.01
 
