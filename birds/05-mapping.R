@@ -64,6 +64,13 @@ kgrid$useS <- kgrid$NRNAME == "Grassland"
 kgrid$X <- kgrid$POINT_X
 kgrid$Y <- kgrid$POINT_Y
 
+load("d:/abmi/AB_data_v2019/misc/overlap/OverlapReg.RData")
+rownames(OverlapReg) <- OverlapReg$LinkID
+OverlapReg$pAspen <- kgrid[rownames(OverlapReg), "pAspen"]
+OverlapReg$wN <- OverlapReg$pAspen / (OverlapReg$pAspen + (1-OverlapReg$pForest))
+kgrid$wN <- ifelse(kgrid$NRNAME == "Grassland", 0, 1)
+kgrid[rownames(OverlapReg), "wN"] <- OverlapReg$wN
+
 load("d:/abmi/sppweb2018/c4i/tables/lookup-birds.RData")
 tax <- droplevels(Lookup[Lookup$ModelNorth | Lookup$ModelSouth,])
 rownames(tax) <- tax$Code
@@ -183,7 +190,7 @@ bbb <- bbb[bbb$ModelNorth | bbb$ModelSouth,]
 rownames(bbb) <- bbb$Code.1
 
 SPP <- rownames(bbb)
-DONE <- gsub(".RData", "", list.files("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-07-11/"))
+DONE <- gsub(".RData", "", list.files("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-09-20/"))
 SPP <- SPP[!(SPP %in% DONE)]
 
 b <- 100
@@ -289,7 +296,8 @@ for (spp in SPP) {
 
         if (RUN_OK[i]) {
             ## weighted average
-            wS <- 1-kgrid$pAspen
+            #wS <- 1-kgrid$pAspen
+            wS <- 1-kgrid$wN
             if (TYPE == "S")
                 wS[] <- 1
             if (TYPE == "N")
@@ -320,7 +328,7 @@ for (spp in SPP) {
     }
 
     save(CURR, REF, CURR1, REF1, CURRB, REFB,
-        file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-07-11/", spp, ".RData"))
+        file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-09-20/", spp, ".RData"))
 
     cat("DONE\n")
 }

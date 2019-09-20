@@ -1,0 +1,2850 @@
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6840 64-bit) (preloaded format=pdflatex 2018.11.22)  20 SEP 2019 13:29
+entering extended mode
+**./pif-pix-ab.tex
+(pif-pix-ab.tex
+LaTeX2e <2018-04-01> patch level 5
+("C:\Program Files\MiKTeX 2.9\tex\latex\base\report.cls"
+Document Class: report 2014/09/29 v1.4h Standard LaTeX document class
+("C:\Program Files\MiKTeX 2.9\tex\latex\base\size12.clo"
+File: size12.clo 2014/09/29 v1.4h Standard LaTeX file (size option)
+)
+\c@part=\count80
+\c@chapter=\count81
+\c@section=\count82
+\c@subsection=\count83
+\c@subsubsection=\count84
+\c@paragraph=\count85
+\c@subparagraph=\count86
+\c@figure=\count87
+\c@table=\count88
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+) ("C:\Program Files\MiKTeX 2.9\tex\latex\lm\lmodern.sty"
+Package: lmodern 2009/10/30 v1.6 Latin Modern Fonts
+LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
+(Font)                  OT1/cmr/m/n --> OT1/lmr/m/n on input line 22.
+LaTeX Font Info:    Overwriting symbol font `letters' in version `normal'
+(Font)                  OML/cmm/m/it --> OML/lmm/m/it on input line 23.
+LaTeX Font Info:    Overwriting symbol font `symbols' in version `normal'
+(Font)                  OMS/cmsy/m/n --> OMS/lmsy/m/n on input line 24.
+LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `normal'
+(Font)                  OMX/cmex/m/n --> OMX/lmex/m/n on input line 25.
+LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
+(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 26.
+LaTeX Font Info:    Overwriting symbol font `letters' in version `bold'
+(Font)                  OML/cmm/b/it --> OML/lmm/b/it on input line 27.
+LaTeX Font Info:    Overwriting symbol font `symbols' in version `bold'
+(Font)                  OMS/cmsy/b/n --> OMS/lmsy/b/n on input line 28.
+LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `bold'
+(Font)                  OMX/cmex/m/n --> OMX/lmex/m/n on input line 29.
+LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `normal'
+(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 31.
+LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `normal'
+(Font)                  OT1/cmss/m/n --> OT1/lmss/m/n on input line 32.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
+(Font)                  OT1/cmr/m/it --> OT1/lmr/m/it on input line 33.
+LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `normal'
+(Font)                  OT1/cmtt/m/n --> OT1/lmtt/m/n on input line 34.
+LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
+(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 35.
+LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
+(Font)                  OT1/cmss/bx/n --> OT1/lmss/bx/n on input line 36.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
+(Font)                  OT1/cmr/bx/it --> OT1/lmr/bx/it on input line 37.
+LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
+(Font)                  OT1/cmtt/m/n --> OT1/lmtt/m/n on input line 38.
+) ("C:\Program Files\MiKTeX 2.9\tex\latex\amsfonts\amssymb.sty"
+Package: amssymb 2013/01/14 v3.01 AMS font symbols
+("C:\Program Files\MiKTeX 2.9\tex\latex\amsfonts\amsfonts.sty"
+Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
+\@emptytoks=\toks14
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
+)) ("C:\Program Files\MiKTeX 2.9\tex\latex\amsmath\amsmath.sty"
+Package: amsmath 2017/09/02 v2.17a AMS math features
+\@mathmargin=\skip43
+For additional information on amsmath, use the `?' option.
+("C:\Program Files\MiKTeX 2.9\tex\latex\amsmath\amstext.sty"
+Package: amstext 2000/06/29 v2.01 AMS text
+("C:\Program Files\MiKTeX 2.9\tex\latex\amsmath\amsgen.sty"
+File: amsgen.sty 1999/11/30 v2.0 generic functions
+\@emptytoks=\toks15
+\ex@=\dimen103
+)) ("C:\Program Files\MiKTeX 2.9\tex\latex\amsmath\amsbsy.sty"
+Package: amsbsy 1999/11/29 v1.2d Bold Symbols
+\pmbraise@=\dimen104
+) ("C:\Program Files\MiKTeX 2.9\tex\latex\amsmath\amsopn.sty"
+Package: amsopn 2016/03/08 v2.02 operator names
+)
+\inf@bad=\count89
+LaTeX Info: Redefining \frac on input line 213.
+\uproot@=\count90
+\leftroot@=\count91
+LaTeX Info: Redefining \overline on input line 375.
+\classnum@=\count92
+\DOTSCASE@=\count93
+LaTeX Info: Redefining \ldots on input line 472.
+LaTeX Info: Redefining \dots on input line 475.
+LaTeX Info: Redefining \cdots on input line 596.
+\Mathstrutbox@=\box26
+\strutbox@=\box27
+\big@size=\dimen105
+LaTeX Font Info:    Redeclaring font encoding OML on input line 712.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 713.
+\macc@depth=\count94
+\c@MaxMatrixCols=\count95
+\dotsspace@=\muskip10
+\c@parentequation=\count96
+\dspbrk@lvl=\count97
+\tag@help=\toks16
+\row@=\count98
+\column@=\count99
+\maxfields@=\count100
+\andhelp@=\toks17
+\eqnshift@=\dimen106
+\alignsep@=\dimen107
+\tagshift@=\dimen108
+\tagwidth@=\dimen109
+\totwidth@=\dimen110
+\lineht@=\dimen111
+\@envbody=\toks18
+\multlinegap=\skip44
+\multlinetaggap=\skip45
+\mathdisplay@stack=\toks19
+LaTeX Info: Redefining \[ on input line 2817.
+LaTeX Info: Redefining \] on input line 2818.
+) ("C:\Program Files\MiKTeX 2.9\tex\generic\ifxetex\ifxetex.sty"
+Package: ifxetex 2010/09/12 v0.6 Provides ifxetex conditional
+) ("C:\Program Files\MiKTeX 2.9\tex\generic\oberdiek\ifluatex.sty"
+Package: ifluatex 2016/05/16 v1.4 Provides the ifluatex switch (HO)
+Package ifluatex Info: LuaTeX not detected.
+) ("C:\Program Files\MiKTeX 2.9\tex\latex\base\fixltx2e.sty"
+Package: fixltx2e 2016/12/29 v2.1a fixes to LaTeX (obsolete)
+Applying: [2015/01/01] Old fixltx2e package on input line 46.
+
+Package fixltx2e Warning: fixltx2e is not required with releases after 2015
+(fixltx2e)                All fixes are now in the LaTeX kernel.
+(fixltx2e)                See the latexrelease package for details.
+
+Already applied: [0000/00/00] Old fixltx2e package on input line 53.
+) ("C:\Program Files\MiKTeX 2.9\tex\latex\base\fontenc.sty"
+Package: fontenc 2017/04/05 v2.0i Standard LaTeX package
+("C:\Program Files\MiKTeX 2.9\tex\latex\base\t1enc.def"
+File: t1enc.def 2017/04/05 v2.0i Standard LaTeX file
+LaTeX Font Info:    Redeclaring font encoding T1 on input line 48.
+)) ("C:\Program Files\MiKTeX 2.9\tex\latex\base\inputenc.sty"
+Package: inputenc 2018/04/06 v1.3b Input encoding file
+\inpenc@prehook=\toks20
+\inpenc@posthook=\toks21
+)
+("C:\Users\Peter Solymos\AppData\Roaming\MiKTeX\2.9\tex\latex\upquote\upquote.s
+ty"
+Package: upquote 2012/04/19 v1.3 upright-quote and grave-accent glyphs in verba
+tim
+("C:\Program Files\MiKTeX 2.9\tex\latex\base\textcomp.sty"
+Package: textcomp 2017/04/05 v2.0i Standard LaTeX package
+Package textcomp Info: Sub-encoding information:
+(textcomp)               5 = only ISO-Adobe without \textcurrency
+(textcomp)               4 = 5 + \texteuro
+(textcomp)               3 = 4 + \textohm
+(textcomp)               2 = 3 + \textestimated + \textcurrency
+(textcomp)               1 = TS1 - \textcircled - \t
+(textcomp)               0 = TS1 (full)
+(textcomp)             Font families with sub-encoding setting implement
+(textcomp)             only a restricted character set as indicated.
+(textcomp)             Family '?' is the default used for unknown fonts.
+(textcomp)             See the documentation for details.
+Package textcomp Info: Setting ? sub-encoding to TS1/1 on input line 79.
+("C:\Program Files\MiKTeX 2.9\tex\latex\base\ts1enc.def"
+File: ts1enc.def 2001/06/05 v3.0e (jk/car/fm) Standard LaTeX file
+Now handling font encoding TS1 ...
+... processing UTF-8 mapping file for font encoding TS1
+("C:\Program Files\MiKTeX 2.9\tex\latex\base\ts1enc.dfu"
+File: ts1enc.dfu 2018/04/05 v1.2c UTF-8 support for inputenc
+   defining Unicode char U+00A2 (decimal 162)
+   defining Unicode char U+00A3 (decimal 163)
+   defining Unicode char U+00A4 (decimal 164)
+   defining Unicode char U+00A5 (decimal 165)
+   defining Unicode char U+00A6 (decimal 166)
+   defining Unicode char U+00A7 (decimal 167)
+   defining Unicode char U+00A8 (decimal 168)
+   defining Unicode char U+00A9 (decimal 169)
+   defining Unicode char U+00AA (decimal 170)
+   defining Unicode char U+00AC (decimal 172)
+   defining Unicode char U+00AE (decimal 174)
+   defining Unicode char U+00AF (decimal 175)
+   defining Unicode char U+00B0 (decimal 176)
+   defining Unicode char U+00B1 (decimal 177)
+   defining Unicode char U+00B2 (decimal 178)
+   defining Unicode char U+00B3 (decimal 179)
+   defining Unicode char U+00B4 (decimal 180)
+   defining Unicode char U+00B5 (decimal 181)
+   defining Unicode char U+00B6 (decimal 182)
+   defining Unicode char U+00B7 (decimal 183)
+   defining Unicode char U+00B9 (decimal 185)
+   defining Unicode char U+00BA (decimal 186)
+   defining Unicode char U+00BC (decimal 188)
+   defining Unicode char U+00BD (decimal 189)
+   defining Unicode char U+00BE (decimal 190)
+   defining Unicode char U+00D7 (decimal 215)
+   defining Unicode char U+00F7 (decimal 247)
+   defining Unicode char U+0192 (decimal 402)
+   defining Unicode char U+02C7 (decimal 711)
+   defining Unicode char U+02D8 (decimal 728)
+   defining Unicode char U+02DD (decimal 733)
+   defining Unicode char U+0E3F (decimal 3647)
+   defining Unicode char U+2016 (decimal 8214)
+   defining Unicode char U+2020 (decimal 8224)
+   defining Unicode char U+2021 (decimal 8225)
+   defining Unicode char U+2022 (decimal 8226)
+   defining Unicode char U+2030 (decimal 8240)
+   defining Unicode char U+2031 (decimal 8241)
+   defining Unicode char U+203B (decimal 8251)
+   defining Unicode char U+203D (decimal 8253)
+   defining Unicode char U+2044 (decimal 8260)
+   defining Unicode char U+204E (decimal 8270)
+   defining Unicode char U+2052 (decimal 8274)
+   defining Unicode char U+20A1 (decimal 8353)
+   defining Unicode char U+20A4 (decimal 8356)
+   defining Unicode char U+20A6 (decimal 8358)
+   defining Unicode char U+20A9 (decimal 8361)
+   defining Unicode char U+20AB (decimal 8363)
+   defining Unicode char U+20AC (decimal 8364)
+   defining Unicode char U+20B1 (decimal 8369)
+   defining Unicode char U+2103 (decimal 8451)
+   defining Unicode char U+2116 (decimal 8470)
+   defining Unicode char U+2117 (decimal 8471)
+   defining Unicode char U+211E (decimal 8478)
+   defining Unicode char U+2120 (decimal 8480)
+   defining Unicode char U+2122 (decimal 8482)
+   defining Unicode char U+2126 (decimal 8486)
+   defining Unicode char U+2127 (decimal 8487)
+   defining Unicode char U+212E (decimal 8494)
+   defining Unicode char U+2190 (decimal 8592)
+   defining Unicode char U+2191 (decimal 8593)
+   defining Unicode char U+2192 (decimal 8594)
+   defining Unicode char U+2193 (decimal 8595)
+   defining Unicode char U+2329 (decimal 9001)
+   defining Unicode char U+232A (decimal 9002)
+   defining Unicode char U+2422 (decimal 9250)
+   defining Unicode char U+25E6 (decimal 9702)
+   defining Unicode char U+25EF (decimal 9711)
+   defining Unicode char U+266A (decimal 9834)
+   defining Unicode char U+FEFF (decimal 65279)
+))
+LaTeX Info: Redefining \oldstylenums on input line 334.
+Package textcomp Info: Setting cmr sub-encoding to TS1/0 on input line 349.
+Package textcomp Info: Setting cmss sub-encoding to TS1/0 on input line 350.
+Package textcomp Info: Setting cmtt sub-encoding to TS1/0 on input line 351.
+Package textcomp Info: Setting cmvtt sub-encoding to TS1/0 on input line 352.
+Package textcomp Info: Setting cmbr sub-encoding to TS1/0 on input line 353.
+Package textcomp Info: Setting cmtl sub-encoding to TS1/0 on input line 354.
+Package textcomp Info: Setting ccr sub-encoding to TS1/0 on input line 355.
+Package textcomp Info: Setting ptm sub-encoding to TS1/4 on input line 356.
+Package textcomp Info: Setting pcr sub-encoding to TS1/4 on input line 357.
+Package textcomp Info: Setting phv sub-encoding to TS1/4 on input line 358.
+Package textcomp Info: Setting ppl sub-encoding to TS1/3 on input line 359.
+Package textcomp Info: Setting pag sub-encoding to TS1/4 on input line 360.
+Package textcomp Info: Setting pbk sub-encoding to TS1/4 on input line 361.
+Package textcomp Info: Setting pnc sub-encoding to TS1/4 on input line 362.
+Package textcomp Info: Setting pzc sub-encoding to TS1/4 on input line 363.
+Package textcomp Info: Setting bch sub-encoding to TS1/4 on input line 364.
+Package textcomp Info: Setting put sub-encoding to TS1/5 on input line 365.
+Package textcomp Info: Setting uag sub-encoding to TS1/5 on input line 366.
+Package textcomp Info: Setting ugq sub-encoding to TS1/5 on input line 367.
+Package textcomp Info: Setting ul8 sub-encoding to TS1/4 on input line 368.
+Package textcomp Info: Setting ul9 sub-encoding to TS1/4 on input line 369.
+Package textcomp Info: Setting augie sub-encoding to TS1/5 on input line 370.
+Package textcomp Info: Setting dayrom sub-encoding to TS1/3 on input line 371.
+Package textcomp Info: Setting dayroms sub-encoding to TS1/3 on input line 372.
+
+Package textcomp Info: Setting pxr sub-encoding to TS1/0 on input line 373.
+Package textcomp Info: Setting pxss sub-encoding to TS1/0 on input line 374.
+Package textcomp Info: Setting pxtt sub-encoding to TS1/0 on input line 375.
+Package textcomp Info: Setting txr sub-encoding to TS1/0 on input line 376.
+Package textcomp Info: Setting txss sub-encoding to TS1/0 on input line 377.
+Package textcomp Info: Setting txtt sub-encoding to TS1/0 on input line 378.
+Package textcomp Info: Setting lmr sub-encoding to TS1/0 on input line 379.
+Package textcomp Info: Setting lmdh sub-encoding to TS1/0 on input line 380.
+Package textcomp Info: Setting lmss sub-encoding to TS1/0 on input line 381.
+Package textcomp Info: Setting lmssq sub-encoding to TS1/0 on input line 382.
+Package textcomp Info: Setting lmvtt sub-encoding to TS1/0 on input line 383.
+Package textcomp Info: Setting lmtt sub-encoding to TS1/0 on input line 384.
+Package textcomp Info: Setting qhv sub-encoding to TS1/0 on input line 385.
+Package textcomp Info: Setting qag sub-encoding to TS1/0 on input line 386.
+Package textcomp Info: Setting qbk sub-encoding to TS1/0 on input line 387.
+Package textcomp Info: Setting qcr sub-encoding to TS1/0 on input line 388.
+Package textcomp Info: Setting qcs sub-encoding to TS1/0 on input line 389.
+Package textcomp Info: Setting qpl sub-encoding to TS1/0 on input line 390.
+Package textcomp Info: Setting qtm sub-encoding to TS1/0 on input line 391.
+Package textcomp Info: Setting qzc sub-encoding to TS1/0 on input line 392.
+Package textcomp Info: Setting qhvc sub-encoding to TS1/0 on input line 393.
+Package textcomp Info: Setting futs sub-encoding to TS1/4 on input line 394.
+Package textcomp Info: Setting futx sub-encoding to TS1/4 on input line 395.
+Package textcomp Info: Setting futj sub-encoding to TS1/4 on input line 396.
+Package textcomp Info: Setting hlh sub-encoding to TS1/3 on input line 397.
+Package textcomp Info: Setting hls sub-encoding to TS1/3 on input line 398.
+Package textcomp Info: Setting hlst sub-encoding to TS1/3 on input line 399.
+Package textcomp Info: Setting hlct sub-encoding to TS1/5 on input line 400.
+Package textcomp Info: Setting hlx sub-encoding to TS1/5 on input line 401.
+Package textcomp Info: Setting hlce sub-encoding to TS1/5 on input line 402.
+Package textcomp Info: Setting hlcn sub-encoding to TS1/5 on input line 403.
+Package textcomp Info: Setting hlcw sub-encoding to TS1/5 on input line 404.
+Package textcomp Info: Setting hlcf sub-encoding to TS1/5 on input line 405.
+Package textcomp Info: Setting pplx sub-encoding to TS1/3 on input line 406.
+Package textcomp Info: Setting pplj sub-encoding to TS1/3 on input line 407.
+Package textcomp Info: Setting ptmx sub-encoding to TS1/4 on input line 408.
+Package textcomp Info: Setting ptmj sub-encoding to TS1/4 on input line 409.
+))
+("C:\Users\Peter Solymos\AppData\Roaming\MiKTeX\2.9\tex\latex\microtype\microty
+pe.sty"
+Package: microtype 2018/01/14 v2.7a Micro-typographical refinements (RS)
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\keyval.sty"
+Package: keyval 2014/10/28 v1.15 key=value parser (DPC)
+\KV@toks@=\toks22
+)
+\MT@toks=\toks23
+\MT@count=\count101
+LaTeX Info: Redefining \textls on input line 793.
+\MT@outer@kern=\dimen112
+LaTeX Info: Redefining \textmicrotypecontext on input line 1339.
+\MT@listname@count=\count102
+
+("C:\Users\Peter Solymos\AppData\Roaming\MiKTeX\2.9\tex\latex\microtype\microty
+pe-pdftex.def"
+File: microtype-pdftex.def 2018/01/14 v2.7a Definitions specific to pdftex (RS)
+
+LaTeX Info: Redefining \lsstyle on input line 913.
+LaTeX Info: Redefining \lslig on input line 913.
+\MT@outer@space=\skip46
+)
+Package microtype Info: Loading configuration file microtype.cfg.
+
+("C:\Users\Peter Solymos\AppData\Roaming\MiKTeX\2.9\tex\latex\microtype\microty
+pe.cfg"
+File: microtype.cfg 2018/01/14 v2.7a microtype main configuration file (RS)
+)) ("C:\Program Files\MiKTeX 2.9\tex\latex\hyperref\hyperref.sty"
+Package: hyperref 2018/09/30 v6.88a Hypertext links for LaTeX
+("C:\Program Files\MiKTeX 2.9\tex\generic\oberdiek\hobsub-hyperref.sty"
+Package: hobsub-hyperref 2016/05/16 v1.14 Bundle oberdiek, subset hyperref (HO)
+
+("C:\Program Files\MiKTeX 2.9\tex\generic\oberdiek\hobsub-generic.sty"
+Package: hobsub-generic 2016/05/16 v1.14 Bundle oberdiek, subset generic (HO)
+Package: hobsub 2016/05/16 v1.14 Construct package bundles (HO)
+Package: infwarerr 2016/05/16 v1.4 Providing info/warning/error messages (HO)
+Package: ltxcmds 2016/05/16 v1.23 LaTeX kernel commands for general use (HO)
+Package hobsub Info: Skipping package `ifluatex' (already loaded).
+Package: ifvtex 2016/05/16 v1.6 Detect VTeX and its facilities (HO)
+Package ifvtex Info: VTeX not detected.
+Package: intcalc 2016/05/16 v1.2 Expandable calculations with integers (HO)
+Package: ifpdf 2018/09/07 v3.3 Provides the ifpdf switch
+Package: etexcmds 2016/05/16 v1.6 Avoid name clashes with e-TeX commands (HO)
+Package etexcmds Info: Could not find \expanded.
+(etexcmds)             That can mean that you are not using pdfTeX 1.50 or
+(etexcmds)             that some package has redefined \expanded.
+(etexcmds)             In the latter case, load this package earlier.
+Package: kvsetkeys 2016/05/16 v1.17 Key value parser (HO)
+Package: kvdefinekeys 2016/05/16 v1.4 Define keys (HO)
+Package: pdftexcmds 2018/09/10 v0.29 Utility functions of pdfTeX for LuaTeX (HO
+)
+Package pdftexcmds Info: LuaTeX not detected.
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+Package: pdfescape 2016/05/16 v1.14 Implements pdfTeX's escape features (HO)
+Package: bigintcalc 2016/05/16 v1.4 Expandable calculations on big integers (HO
+)
+Package: bitset 2016/05/16 v1.2 Handle bit-vector datatype (HO)
+Package: uniquecounter 2016/05/16 v1.3 Provide unlimited unique counter (HO)
+)
+Package hobsub Info: Skipping package `hobsub' (already loaded).
+Package: letltxmacro 2016/05/16 v1.5 Let assignment for LaTeX macros (HO)
+Package: hopatch 2016/05/16 v1.3 Wrapper for package hooks (HO)
+Package: xcolor-patch 2016/05/16 xcolor patch
+Package: atveryend 2016/05/16 v1.9 Hooks at the very end of document (HO)
+Package atveryend Info: \enddocument detected (standard20110627).
+Package: atbegshi 2016/06/09 v1.18 At begin shipout hook (HO)
+Package: refcount 2016/05/16 v3.5 Data extraction from label references (HO)
+Package: hycolor 2016/05/16 v1.8 Color options for hyperref/bookmark (HO)
+) ("C:\Program Files\MiKTeX 2.9\tex\latex\oberdiek\auxhook.sty"
+Package: auxhook 2016/05/16 v1.4 Hooks for auxiliary files (HO)
+) ("C:\Program Files\MiKTeX 2.9\tex\latex\oberdiek\kvoptions.sty"
+Package: kvoptions 2016/05/16 v3.12 Key value format for package options (HO)
+)
+\@linkdim=\dimen113
+\Hy@linkcounter=\count103
+\Hy@pagecounter=\count104
+("C:\Program Files\MiKTeX 2.9\tex\latex\hyperref\pd1enc.def"
+File: pd1enc.def 2018/09/30 v6.88a Hyperref: PDFDocEncoding definition (HO)
+Now handling font encoding PD1 ...
+... no UTF-8 mapping file for font encoding PD1
+)
+\Hy@SavedSpaceFactor=\count105
+("C:\Program Files\MiKTeX 2.9\tex\latex\00miktex\hyperref.cfg"
+File: hyperref.cfg 2002/06/06 v1.2 hyperref configuration of TeXLive
+)
+Package hyperref Info: Hyper figures OFF on input line 4535.
+Package hyperref Info: Link nesting OFF on input line 4540.
+Package hyperref Info: Hyper index ON on input line 4543.
+Package hyperref Info: Plain pages OFF on input line 4550.
+Package hyperref Info: Backreferencing OFF on input line 4555.
+Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
+Package hyperref Info: Bookmarks ON on input line 4788.
+\c@Hy@tempcnt=\count106
+("C:\Users\Peter Solymos\AppData\Roaming\MiKTeX\2.9\tex\latex\url\url.sty"
+\Urlmuskip=\muskip11
+Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
+)
+LaTeX Info: Redefining \url on input line 5141.
+\XeTeXLinkMargin=\dimen114
+\Fld@menulength=\count107
+\Field@Width=\dimen115
+\Fld@charsize=\dimen116
+Package hyperref Info: Hyper figures OFF on input line 6396.
+Package hyperref Info: Link nesting OFF on input line 6401.
+Package hyperref Info: Hyper index ON on input line 6404.
+Package hyperref Info: backreferencing OFF on input line 6411.
+Package hyperref Info: Link coloring OFF on input line 6416.
+Package hyperref Info: Link coloring with OCG OFF on input line 6421.
+Package hyperref Info: PDF/A mode OFF on input line 6426.
+LaTeX Info: Redefining \ref on input line 6466.
+LaTeX Info: Redefining \pageref on input line 6470.
+\Hy@abspage=\count108
+\c@Item=\count109
+\c@Hfootnote=\count110
+)
+Package hyperref Info: Driver (autodetected): hpdftex.
+("C:\Program Files\MiKTeX 2.9\tex\latex\hyperref\hpdftex.def"
+File: hpdftex.def 2018/09/30 v6.88a Hyperref driver for pdfTeX
+\Fld@listcount=\count111
+\c@bookmark@seq@number=\count112
+("C:\Program Files\MiKTeX 2.9\tex\latex\oberdiek\rerunfilecheck.sty"
+Package: rerunfilecheck 2016/05/16 v1.8 Rerun checks for auxiliary files (HO)
+Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
+82.
+)
+\Hy@SectionHShift=\skip47
+)
+Package hyperref Info: Option `unicode' set `true' on input line 33.
+("C:\Program Files\MiKTeX 2.9\tex\latex\hyperref\puenc.def"
+File: puenc.def 2018/09/30 v6.88a Hyperref: PDF Unicode definition (HO)
+Now handling font encoding PU ...
+... no UTF-8 mapping file for font encoding PU
+)
+Package hyperref Info: Option `colorlinks' set `true' on input line 33.
+Package hyperref Info: Option `breaklinks' set `true' on input line 33.
+("C:\Program Files\MiKTeX 2.9\tex\latex\tools\longtable.sty"
+Package: longtable 2014/10/28 v4.11 Multi-page Table package (DPC)
+\LTleft=\skip48
+\LTright=\skip49
+\LTpre=\skip50
+\LTpost=\skip51
+\LTchunksize=\count113
+\LTcapwidth=\dimen117
+\LT@head=\box28
+\LT@firsthead=\box29
+\LT@foot=\box30
+\LT@lastfoot=\box31
+\LT@cols=\count114
+\LT@rows=\count115
+\c@LT@tables=\count116
+\c@LT@chunks=\count117
+\LT@p@ftn=\toks24
+)
+("C:\Users\Peter Solymos\AppData\Roaming\MiKTeX\2.9\tex\latex\booktabs\booktabs
+.sty"
+Package: booktabs 2005/04/14 v1.61803 publication quality tables
+\heavyrulewidth=\dimen118
+\lightrulewidth=\dimen119
+\cmidrulewidth=\dimen120
+\belowrulesep=\dimen121
+\belowbottomsep=\dimen122
+\aboverulesep=\dimen123
+\abovetopsep=\dimen124
+\cmidrulesep=\dimen125
+\cmidrulekern=\dimen126
+\defaultaddspace=\dimen127
+\@cmidla=\count118
+\@cmidlb=\count119
+\@aboverulesep=\dimen128
+\@belowrulesep=\dimen129
+\@thisruleclass=\count120
+\@lastruleclass=\count121
+\@thisrulewidth=\dimen130
+) ("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\graphicx.sty"
+Package: graphicx 2017/06/01 v1.1a Enhanced LaTeX Graphics (DPC,SPQR)
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\graphics.sty"
+Package: graphics 2017/06/25 v1.2c Standard LaTeX Graphics (DPC,SPQR)
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\trig.sty"
+Package: trig 2016/01/03 v1.10 sin cos tan (DPC)
+) ("C:\Program Files\MiKTeX 2.9\tex\latex\graphics-cfg\graphics.cfg"
+File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
+)
+Package graphics Info: Driver file: pdftex.def on input line 99.
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics-def\pdftex.def"
+File: pdftex.def 2018/01/08 v1.0l Graphics/color driver for pdftex
+))
+\Gin@req@height=\dimen131
+\Gin@req@width=\dimen132
+) ("C:\Program Files\MiKTeX 2.9\tex\latex\oberdiek\grffile.sty"
+Package: grffile 2017/06/30 v1.18 Extended file name support for graphics (HO)
+Package grffile Info: Option `multidot' is set to `true'.
+Package grffile Info: Option `extendedchars' is set to `false'.
+Package grffile Info: Option `space' is set to `true'.
+Package grffile Info: \Gin@ii of package `graphicx' fixed on input line 494.
+)
+("C:\Users\Peter Solymos\AppData\Roaming\MiKTeX\2.9\tex\latex\parskip\parskip.s
+ty"
+Package: parskip 2018-08-24 v2.0a non-zero parskip adjustments
+
+("C:\Users\Peter Solymos\AppData\Roaming\MiKTeX\2.9\tex\latex\etoolbox\etoolbox
+.sty"
+Package: etoolbox 2018/08/19 v2.5f e-TeX tools for LaTeX (JAW)
+\etb@tempcnta=\count122
+))
+("C:\Users\Peter Solymos\AppData\Roaming\MiKTeX\2.9\tex\latex\titling\titling.s
+ty"
+Package: titling 2009/09/04 v2.1d maketitle typesetting
+\thanksmarkwidth=\skip52
+\thanksmargin=\skip53
+\droptitle=\skip54
+) ("C:\Program Files\MiKTeX 2.9\tex\latex\float\float.sty"
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count123
+\float@exts=\toks25
+\float@box=\box32
+\@float@everytoks=\toks26
+\@floatcapt=\box33
+) (pif-pix-ab.aux)
+\openout1 = `pif-pix-ab.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 93.
+LaTeX Font Info:    ... okay on input line 93.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 93.
+LaTeX Font Info:    ... okay on input line 93.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 93.
+LaTeX Font Info:    ... okay on input line 93.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 93.
+LaTeX Font Info:    ... okay on input line 93.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 93.
+LaTeX Font Info:    ... okay on input line 93.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 93.
+LaTeX Font Info:    ... okay on input line 93.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 93.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 93.
+("C:\Program Files\MiKTeX 2.9\tex\latex\base\ts1cmr.fd"
+File: ts1cmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    ... okay on input line 93.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 93.
+LaTeX Font Info:    ... okay on input line 93.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 93.
+LaTeX Font Info:    ... okay on input line 93.
+LaTeX Font Info:    Try loading font information for T1+lmr on input line 93.
+("C:\Program Files\MiKTeX 2.9\tex\latex\lm\t1lmr.fd"
+File: t1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Info: Redefining \microtypecontext on input line 93.
+Package microtype Info: Generating PDF output.
+Package microtype Info: Character protrusion enabled (level 2).
+Package microtype Info: Using protrusion set `basicmath'.
+Package microtype Info: Automatic font expansion enabled (level 2),
+(microtype)             stretch: 20, shrink: 20, step: 1, non-selected.
+Package microtype Info: Using default expansion set `basictext'.
+Package microtype Info: No adjustment of tracking.
+Package microtype Info: No adjustment of interword spacing.
+Package microtype Info: No adjustment of character kerning.
+
+("C:\Users\Peter Solymos\AppData\Roaming\MiKTeX\2.9\tex\latex\microtype\mt-cmr.
+cfg"
+File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman 
+(RS)
+)
+\AtBeginShipoutBox=\box34
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\color.sty"
+Package: color 2016/07/10 v1.1e Standard LaTeX Color (DPC)
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics-cfg\color.cfg"
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package color Info: Driver file: pdftex.def on input line 147.
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\dvipsnam.def"
+File: dvipsnam.def 2016/06/17 v3.0m Driver-dependent file (DPC,SPQR)
+))
+Package hyperref Info: Link coloring ON on input line 93.
+("C:\Program Files\MiKTeX 2.9\tex\latex\hyperref\nameref.sty"
+Package: nameref 2016/05/21 v2.44 Cross-referencing by name of section
+("C:\Program Files\MiKTeX 2.9\tex\generic\oberdiek\gettitlestring.sty"
+Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
+)
+\c@section@level=\count124
+)
+LaTeX Info: Redefining \ref on input line 93.
+LaTeX Info: Redefining \pageref on input line 93.
+LaTeX Info: Redefining \nameref on input line 93.
+(pif-pix-ab.out) (pif-pix-ab.out)
+\@outlinefile=\write3
+\openout3 = `pif-pix-ab.out'.
+
+
+("C:\Users\Peter Solymos\AppData\Roaming\MiKTeX\2.9\tex\context\base\supp-pdf.m
+kii"
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count125
+\scratchdimen=\dimen133
+\scratchbox=\box35
+\nofMPsegments=\count126
+\nofMParguments=\count127
+\everyMPshowfont=\toks27
+\MPscratchCnt=\count128
+\MPscratchDim=\dimen134
+\MPnumerator=\count129
+\makeMPintoPDFobject=\count130
+\everyMPtoPDFconversion=\toks28
+) ("C:\Program Files\MiKTeX 2.9\tex\latex\oberdiek\epstopdf-base.sty"
+Package: epstopdf-base 2016/05/15 v2.6 Base part for package epstopdf
+("C:\Program Files\MiKTeX 2.9\tex\latex\oberdiek\grfext.sty"
+Package: grfext 2016/05/16 v1.2 Manage graphics extensions (HO)
+)
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
+38.
+Package grfext Info: Graphics extension search list:
+(grfext)             [.pdf,.png,.jpg,.mps,.jpeg,.jbig2,.jb2,.PDF,.PNG,.JPG,.JPE
+G,.JBIG2,.JB2,.eps]
+(grfext)             \AppendGraphicsExtensions on input line 456.
+)
+LaTeX Font Info:    Try loading font information for OT1+lmr on input line 94.
+("C:\Program Files\MiKTeX 2.9\tex\latex\lm\ot1lmr.fd"
+File: ot1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Try loading font information for OML+lmm on input line 94.
+("C:\Program Files\MiKTeX 2.9\tex\latex\lm\omllmm.fd"
+File: omllmm.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Try loading font information for OMS+lmsy on input line 94.
+
+("C:\Program Files\MiKTeX 2.9\tex\latex\lm\omslmsy.fd"
+File: omslmsy.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Try loading font information for OMX+lmex on input line 94.
+
+("C:\Program Files\MiKTeX 2.9\tex\latex\lm\omxlmex.fd"
+File: omxlmex.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <14.4> on input line 94.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10> on input line 94.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <7> on input line 94.
+LaTeX Font Info:    Try loading font information for U+msa on input line 94.
+("C:\Program Files\MiKTeX 2.9\tex\latex\amsfonts\umsa.fd"
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+("C:\Users\Peter Solymos\AppData\Roaming\MiKTeX\2.9\tex\latex\microtype\mt-msa.
+cfg"
+File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 94.
+("C:\Program Files\MiKTeX 2.9\tex\latex\amsfonts\umsb.fd"
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
+("C:\Users\Peter Solymos\AppData\Roaming\MiKTeX\2.9\tex\latex\microtype\mt-msb.
+cfg"
+File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
+) [1
+
+{C:/Users/Peter Solymos/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map}] (pi
+f-pix-ab.toc
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <12> on input line 3.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <8> on input line 3.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <6> on input line 3.
+pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
+been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.27 ...llina canadensis})}{51}{subsection.3.0.20}
+                                                   [1
+
+] [2])
+\tf@toc=\write4
+\openout4 = `pif-pix-ab.toc'.
+
+[3]
+Chapter 1.
+[4
+
+]
+Chapter 2.
+[5
+
+] [6]
+<pif-pix-ab_files/figure-latex/plot-recovery-1.pdf, id=496, 722.7pt x 578.16pt>
+
+File: pif-pix-ab_files/figure-latex/plot-recovery-1.pdf Graphic file (type pdf)
+
+<use pif-pix-ab_files/figure-latex/plot-recovery-1.pdf>
+Package pdftex.def Info: pif-pix-ab_files/figure-latex/plot-recovery-1.pdf  use
+d on input line 167.
+(pdftex.def)             Requested size: 389.99855pt x 311.99884pt.
+[7pdfTeX warning (ext4): destination with the same identifier (name{table.2.1})
+ has been already used, duplicate ignored
+
+\AtBegShi@Output ...ipout \box \AtBeginShipoutBox 
+                                                  \fi \fi 
+l.173 
+      ] [8pdfTeX warning (ext4): destination with the same identifier (name{fig
+ure.2.1}) has been already used, duplicate ignored
+
+\AtBegShi@Output ...ipout \box \AtBeginShipoutBox 
+                                                  \fi \fi 
+l.177 
+       <./pif-pix-ab_files/figure-latex/plot-recovery-1.pdf>]
+
+LaTeX Warning: Reference `fig:plot-lorenz' on page 9 undefined on input line 18
+0.
+
+[9] [10] [11]
+
+LaTeX Warning: Reference `fig:plot-ndvi' on page 12 undefined on input line 225
+.
+
+[12]
+Chapter 3.
+
+Package hyperref Warning: Difference (2) between bookmark levels is greater 
+(hyperref)                than one, level fixed on input line 233.
+
+
+Overfull \hbox (37.98401pt too wide) in paragraph at lines 243--250
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/ALFL-habitats.png, i
+d=540, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/ALFL-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/ALFL-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/ALFL-habitats.png  used on input line 251.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/ALFL.png, id=54
+1, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/ALFL.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/ALFL.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/ALFL.png  used on input line 253.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[13
+
+ <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/ALFL-habitats.png (
+PNG copy)>] [14 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal
+/ALFL.png (PNG copy)>]
+Overfull \hbox (43.53297pt too wide) in paragraph at lines 308--315
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMCR-habitats.png, i
+d=552, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMCR-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMCR-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/AMCR-habitats.png  used on input line 316.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[15]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/AMCR.png, id=55
+8, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/AMCR.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/AMCR.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/AMCR.png  used on input line 318.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[16 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMCR-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/A
+MCR.png (PNG copy)>]
+Overfull \hbox (44.758pt too wide) in paragraph at lines 373--380
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMGO-habitats.png, i
+d=563, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMGO-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMGO-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/AMGO-habitats.png  used on input line 381.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[17]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/AMGO.png, id=56
+9, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/AMGO.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/AMGO.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/AMGO.png  used on input line 383.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[18 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMGO-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/A
+MGO.png (PNG copy)>]
+Overfull \hbox (31.29153pt too wide) in paragraph at lines 438--445
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMRE-habitats.png, i
+d=575, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMRE-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMRE-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/AMRE-habitats.png  used on input line 446.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[19]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/AMRE.png, id=58
+1, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/AMRE.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/AMRE.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/AMRE.png  used on input line 448.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[20 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMRE-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/A
+MRE.png (PNG copy)>]
+Overfull \hbox (37.98462pt too wide) in paragraph at lines 503--510
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMRO-habitats.png, i
+d=586, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMRO-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMRO-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/AMRO-habitats.png  used on input line 511.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[21]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/AMRO.png, id=59
+2, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/AMRO.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/AMRO.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/AMRO.png  used on input line 513.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[22 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/AMRO-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/A
+MRO.png (PNG copy)>]
+Overfull \hbox (41.4136pt too wide) in paragraph at lines 568--575
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BAOR-habitats.png, i
+d=597, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BAOR-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BAOR-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/BAOR-habitats.png  used on input line 576.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[23]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BAOR.png, id=60
+3, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BAOR.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BAOR.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/BAOR.png  used on input line 578.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[24 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BAOR-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/B
+AOR.png (PNG copy)>]
+Overfull \hbox (33.254pt too wide) in paragraph at lines 633--640
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BARS-habitats.png, i
+d=609, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BARS-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BARS-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/BARS-habitats.png  used on input line 641.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[25]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BARS.png, id=61
+5, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BARS.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BARS.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/BARS.png  used on input line 643.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[26 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BARS-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/B
+ARS.png (PNG copy)>]
+Overfull \hbox (46.7924pt too wide) in paragraph at lines 698--705
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BAWW-habitats.png, i
+d=620, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BAWW-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BAWW-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/BAWW-habitats.png  used on input line 706.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[27]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BAWW.png, id=62
+6, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BAWW.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BAWW.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/BAWW.png  used on input line 708.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[28 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BAWW-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/B
+AWW.png (PNG copy)>]
+Overfull \hbox (48.91698pt too wide) in paragraph at lines 763--770
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BBMA-habitats.png, i
+d=631, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BBMA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BBMA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/BBMA-habitats.png  used on input line 771.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[29]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BBMA.png, id=63
+7, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BBMA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BBMA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/BBMA.png  used on input line 773.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[30 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BBMA-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/B
+BMA.png (PNG copy)>]
+Overfull \hbox (43.0414pt too wide) in paragraph at lines 828--835
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BBWA-habitats.png, i
+d=643, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BBWA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BBWA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/BBWA-habitats.png  used on input line 836.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[31]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BBWA.png, id=64
+9, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BBWA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BBWA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/BBWA.png  used on input line 838.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[32 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BBWA-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/B
+BWA.png (PNG copy)>]
+Overfull \hbox (40.92595pt too wide) in paragraph at lines 893--900
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BCCH-habitats.png, i
+d=654, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BCCH-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BCCH-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/BCCH-habitats.png  used on input line 901.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[33]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BCCH.png, id=66
+0, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BCCH.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BCCH.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/BCCH.png  used on input line 903.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[34 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BCCH-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/B
+CCH.png (PNG copy)>]
+Overfull \hbox (35.704pt too wide) in paragraph at lines 958--965
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BHCO-habitats.png, i
+d=665, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BHCO-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BHCO-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/BHCO-habitats.png  used on input line 966.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[35]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BHCO.png, id=67
+1, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BHCO.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BHCO.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/BHCO.png  used on input line 968.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[36 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BHCO-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/B
+HCO.png (PNG copy)>]
+Overfull \hbox (37.00098pt too wide) in paragraph at lines 1023--1030
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BHVI-habitats.png, i
+d=677, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BHVI-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BHVI-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/BHVI-habitats.png  used on input line 1031.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[37]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BHVI.png, id=68
+3, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BHVI.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BHVI.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/BHVI.png  used on input line 1033.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[38 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BHVI-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/B
+HVI.png (PNG copy)>]
+Overfull \hbox (43.20647pt too wide) in paragraph at lines 1088--1095
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BLJA-habitats.png, i
+d=688, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BLJA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BLJA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/BLJA-habitats.png  used on input line 1096.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[39]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BLJA.png, id=69
+4, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BLJA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BLJA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/BLJA.png  used on input line 1098.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[40 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BLJA-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/B
+LJA.png (PNG copy)>]
+Overfull \hbox (36.67903pt too wide) in paragraph at lines 1153--1160
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BLPW-habitats.png, i
+d=699, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BLPW-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BLPW-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/BLPW-habitats.png  used on input line 1161.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[41]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BLPW.png, id=70
+5, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BLPW.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BLPW.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/BLPW.png  used on input line 1163.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[42 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BLPW-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/B
+LPW.png (PNG copy)>]
+Overfull \hbox (41.57898pt too wide) in paragraph at lines 1218--1225
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BOCH-habitats.png, i
+d=711, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BOCH-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BOCH-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/BOCH-habitats.png  used on input line 1226.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[43]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BOCH.png, id=71
+7, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BOCH.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BOCH.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/BOCH.png  used on input line 1228.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[44 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BOCH-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/B
+OCH.png (PNG copy)>]
+Overfull \hbox (39.4555pt too wide) in paragraph at lines 1283--1290
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BRBL-habitats.png, i
+d=722, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BRBL-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BRBL-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/BRBL-habitats.png  used on input line 1291.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[45]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BRBL.png, id=72
+8, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BRBL.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BRBL.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/BRBL.png  used on input line 1293.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[46 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BRBL-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/B
+RBL.png (PNG copy)>]
+Overfull \hbox (40.59958pt too wide) in paragraph at lines 1348--1355
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BRCR-habitats.png, i
+d=733, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BRCR-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BRCR-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/BRCR-habitats.png  used on input line 1356.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[47]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BRCR.png, id=73
+9, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BRCR.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BRCR.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/BRCR.png  used on input line 1358.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[48 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BRCR-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/B
+RCR.png (PNG copy)>]
+Underfull \hbox (badness 5817) in paragraph at lines 1403--1403
+[]\T1/lmr/bx/n/14.4 Black-throated Green War-bler (\T1/lmr/bx/it/14.4 Se-tophag
+a
+ []
+
+
+Overfull \hbox (38.637pt too wide) in paragraph at lines 1413--1420
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BTNW-habitats.png, i
+d=745, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BTNW-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BTNW-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/BTNW-habitats.png  used on input line 1421.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[49]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BTNW.png, id=75
+1, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BTNW.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/BTNW.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/BTNW.png  used on input line 1423.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[50 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/BTNW-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/B
+TNW.png (PNG copy)>]
+Overfull \hbox (36.51279pt too wide) in paragraph at lines 1478--1485
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CAWA-habitats.png, i
+d=756, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CAWA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CAWA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/CAWA-habitats.png  used on input line 1486.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[51]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CAWA.png, id=76
+2, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CAWA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CAWA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/CAWA.png  used on input line 1488.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[52 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CAWA-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/C
+AWA.png (PNG copy)>]
+Overfull \hbox (32.44446pt too wide) in paragraph at lines 1543--1550
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CCSP-habitats.png, i
+d=767, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CCSP-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CCSP-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/CCSP-habitats.png  used on input line 1551.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[53]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CCSP.png, id=77
+3, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CCSP.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CCSP.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/CCSP.png  used on input line 1553.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[54 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CCSP-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/C
+CSP.png (PNG copy)>]
+Overfull \hbox (44.02509pt too wide) in paragraph at lines 1608--1615
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CEDW-habitats.png, i
+d=779, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CEDW-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CEDW-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/CEDW-habitats.png  used on input line 1616.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[55]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CEDW.png, id=78
+5, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CEDW.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CEDW.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/CEDW.png  used on input line 1618.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[56 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CEDW-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/C
+EDW.png (PNG copy)>]
+Overfull \hbox (32.76648pt too wide) in paragraph at lines 1673--1680
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CHSP-habitats.png, i
+d=790, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CHSP-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CHSP-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/CHSP-habitats.png  used on input line 1681.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[57]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CHSP.png, id=79
+6, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CHSP.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CHSP.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/CHSP.png  used on input line 1683.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[58 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CHSP-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/C
+HSP.png (PNG copy)>]
+Overfull \hbox (45.65237pt too wide) in paragraph at lines 1738--1745
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CMWA-habitats.png, i
+d=801, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CMWA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CMWA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/CMWA-habitats.png  used on input line 1746.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[59]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CMWA.png, id=80
+7, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CMWA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CMWA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/CMWA.png  used on input line 1748.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[60 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CMWA-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/C
+MWA.png (PNG copy)>]
+Overfull \hbox (45.32999pt too wide) in paragraph at lines 1803--1810
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CONW-habitats.png, i
+d=813, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CONW-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CONW-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/CONW-habitats.png  used on input line 1811.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[61]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CONW.png, id=81
+9, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CONW.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CONW.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/CONW.png  used on input line 1813.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[62 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CONW-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/C
+ONW.png (PNG copy)>]
+Overfull \hbox (47.77997pt too wide) in paragraph at lines 1868--1875
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CORA-habitats.png, i
+d=824, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CORA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CORA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/CORA-habitats.png  used on input line 1876.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[63]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CORA.png, id=83
+0, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CORA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/CORA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/CORA.png  used on input line 1878.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[64 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/CORA-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/C
+ORA.png (PNG copy)>]
+Overfull \hbox (40.92609pt too wide) in paragraph at lines 1933--1940
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/COYE-habitats.png, i
+d=835, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/COYE-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/COYE-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/COYE-habitats.png  used on input line 1941.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[65]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/COYE.png, id=84
+1, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/COYE.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/COYE.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/COYE.png  used on input line 1943.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[66 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/COYE-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/C
+OYE.png (PNG copy)>]
+Overfull \hbox (32.7625pt too wide) in paragraph at lines 1998--2005
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/DEJU-habitats.png, i
+d=847, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/DEJU-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/DEJU-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/DEJU-habitats.png  used on input line 2006.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[67]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/DEJU.png, id=85
+3, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/DEJU.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/DEJU.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/DEJU.png  used on input line 2008.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[68 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/DEJU-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/D
+EJU.png (PNG copy)>]
+Overfull \hbox (39.62123pt too wide) in paragraph at lines 2063--2070
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/DOWO-habitats.png, i
+d=858, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/DOWO-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/DOWO-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/DOWO-habitats.png  used on input line 2071.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[69]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/DOWO.png, id=86
+4, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/DOWO.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/DOWO.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/DOWO.png  used on input line 2073.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[70 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/DOWO-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/D
+OWO.png (PNG copy)>]
+Overfull \hbox (37.00148pt too wide) in paragraph at lines 2128--2135
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/EAKI-habitats.png, i
+d=869, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/EAKI-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/EAKI-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/EAKI-habitats.png  used on input line 2136.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[71]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/EAKI.png, id=87
+5, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/EAKI.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/EAKI.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/EAKI.png  used on input line 2138.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[72 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/EAKI-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/E
+AKI.png (PNG copy)>]
+Underfull \hbox (badness 1005) in paragraph at lines 2183--2183
+[]\T1/lmr/bx/n/14.4 Evening Gros-beak (\T1/lmr/bx/it/14.4 Coc-cothraustes ves-p
+er-t-i-
+ []
+
+
+Overfull \hbox (29.41713pt too wide) in paragraph at lines 2193--2200
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/EVGR-habitats.png, i
+d=881, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/EVGR-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/EVGR-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/EVGR-habitats.png  used on input line 2201.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[73]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/EVGR.png, id=88
+7, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/EVGR.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/EVGR.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/EVGR.png  used on input line 2203.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[74 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/EVGR-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/E
+VGR.png (PNG copy)>]
+Overfull \hbox (43.70308pt too wide) in paragraph at lines 2258--2265
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/FOSP-habitats.png, i
+d=892, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/FOSP-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/FOSP-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/FOSP-habitats.png  used on input line 2266.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[75]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/FOSP.png, id=89
+8, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/FOSP.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/FOSP.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/FOSP.png  used on input line 2268.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[76 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/FOSP-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/F
+OSP.png (PNG copy)>]
+Overfull \hbox (37.90395pt too wide) in paragraph at lines 2323--2330
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/GCKI-habitats.png, i
+d=903, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/GCKI-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/GCKI-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/GCKI-habitats.png  used on input line 2331.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[77]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/GCKI.png, id=90
+9, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/GCKI.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/GCKI.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/GCKI.png  used on input line 2333.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[78 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/GCKI-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/G
+CKI.png (PNG copy)>]
+Overfull \hbox (39.53497pt too wide) in paragraph at lines 2388--2395
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/GRAJ-habitats.png, i
+d=915, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/GRAJ-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/GRAJ-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/GRAJ-habitats.png  used on input line 2396.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[79]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/GRAJ.png, id=92
+1, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/GRAJ.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/GRAJ.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/GRAJ.png  used on input line 2398.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[80 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/GRAJ-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/G
+RAJ.png (PNG copy)>]
+Overfull \hbox (35.78358pt too wide) in paragraph at lines 2453--2460
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/GRCA-habitats.png, i
+d=926, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/GRCA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/GRCA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/GRCA-habitats.png  used on input line 2461.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[81]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/GRCA.png, id=93
+2, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/GRCA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/GRCA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/GRCA.png  used on input line 2463.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[82 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/GRCA-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/G
+RCA.png (PNG copy)>]
+Overfull \hbox (44.02pt too wide) in paragraph at lines 2518--2525
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HAWO-habitats.png, i
+d=937, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HAWO-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HAWO-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/HAWO-habitats.png  used on input line 2526.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[83]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/HAWO.png, id=94
+3, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/HAWO.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/HAWO.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/HAWO.png  used on input line 2528.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[84 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HAWO-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/H
+AWO.png (PNG copy)>]
+Overfull \hbox (46.79646pt too wide) in paragraph at lines 2583--2590
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HETH-habitats.png, i
+d=949, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HETH-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HETH-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/HETH-habitats.png  used on input line 2591.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[85]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/HETH.png, id=95
+5, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/HETH.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/HETH.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/HETH.png  used on input line 2593.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[86 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HETH-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/H
+ETH.png (PNG copy)>]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HOLA-habitats.png, i
+d=960, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HOLA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HOLA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/HOLA-habitats.png  used on input line 2656.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[87]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/HOLA.png, id=96
+6, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/HOLA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/HOLA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/HOLA.png  used on input line 2658.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[88 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HOLA-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/H
+OLA.png (PNG copy)>]
+Overfull \hbox (45.16461pt too wide) in paragraph at lines 2713--2720
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HOWR-habitats.png, i
+d=971, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HOWR-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HOWR-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/HOWR-habitats.png  used on input line 2721.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[89]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/HOWR.png, id=97
+7, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/HOWR.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/HOWR.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/HOWR.png  used on input line 2723.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[90 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/HOWR-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/H
+OWR.png (PNG copy)>]
+Overfull \hbox (31.29999pt too wide) in paragraph at lines 2778--2785
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/LCSP-habitats.png, i
+d=983, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/LCSP-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/LCSP-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/LCSP-habitats.png  used on input line 2786.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[91]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/LCSP.png, id=98
+9, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/LCSP.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/LCSP.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/LCSP.png  used on input line 2788.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[92 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/LCSP-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/L
+CSP.png (PNG copy)>]
+Overfull \hbox (19.54556pt too wide) in paragraph at lines 2843--2850
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/LEFL-habitats.png, i
+d=994, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/LEFL-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/LEFL-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/LEFL-habitats.png  used on input line 2851.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[93]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/LEFL.png, id=10
+00, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/LEFL.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/LEFL.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/LEFL.png  used on input line 2853.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[94 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/LEFL-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/L
+EFL.png (PNG copy)>]
+Overfull \hbox (27.053pt too wide) in paragraph at lines 2908--2915
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/LISP-habitats.png, i
+d=1005, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/LISP-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/LISP-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/LISP-habitats.png  used on input line 2916.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[95]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/LISP.png, id=10
+11, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/LISP.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/LISP.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/LISP.png  used on input line 2918.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[96 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/LISP-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/L
+ISP.png (PNG copy)>]
+Overfull \hbox (44.6688pt too wide) in paragraph at lines 2973--2980
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/MAWA-habitats.png, i
+d=1017, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/MAWA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/MAWA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/MAWA-habitats.png  used on input line 2981.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[97]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/MAWA.png, id=10
+23, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/MAWA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/MAWA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/MAWA.png  used on input line 2983.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[98 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/MAWA-habitats.pn
+g (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/M
+AWA.png (PNG copy)>]
+Overfull \hbox (50.719pt too wide) in paragraph at lines 3038--3045
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/MODO-habitats.png, i
+d=1028, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/MODO-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/MODO-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/MODO-habitats.png  used on input line 3046.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[99]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/MODO.png, id=10
+34, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/MODO.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/MODO.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/MODO.png  used on input line 3048.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[100 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/MODO-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+MODO.png (PNG copy)>]
+Overfull \hbox (40.10402pt too wide) in paragraph at lines 3103--3110
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/MOWA-habitats.png, i
+d=1039, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/MOWA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/MOWA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/MOWA-habitats.png  used on input line 3111.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[101]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/MOWA.png, id=10
+45, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/MOWA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/MOWA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/MOWA.png  used on input line 3113.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[102 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/MOWA-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+MOWA.png (PNG copy)>]
+Overfull \hbox (33.90652pt too wide) in paragraph at lines 3168--3175
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/NOFL-habitats.png, i
+d=1051, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/NOFL-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/NOFL-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/NOFL-habitats.png  used on input line 3176.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[103]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/NOFL.png, id=10
+57, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/NOFL.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/NOFL.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/NOFL.png  used on input line 3178.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[104 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/NOFL-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+NOFL.png (PNG copy)>]
+Overfull \hbox (44.02pt too wide) in paragraph at lines 3233--3240
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/NOWA-habitats.png, i
+d=1062, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/NOWA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/NOWA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/NOWA-habitats.png  used on input line 3241.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[105]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/NOWA.png, id=10
+68, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/NOWA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/NOWA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/NOWA.png  used on input line 3243.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[106 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/NOWA-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+NOWA.png (PNG copy)>]
+Overfull \hbox (44.02438pt too wide) in paragraph at lines 3298--3305
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/OCWA-habitats.png, i
+d=1073, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/OCWA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/OCWA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/OCWA-habitats.png  used on input line 3306.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[107]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/OCWA.png, id=10
+79, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/OCWA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/OCWA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/OCWA.png  used on input line 3308.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[108 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/OCWA-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+OCWA.png (PNG copy)>]
+Overfull \hbox (37.5015pt too wide) in paragraph at lines 3363--3370
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/OSFL-habitats.png, i
+d=1085, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/OSFL-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/OSFL-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/OSFL-habitats.png  used on input line 3371.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[109]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/OSFL.png, id=10
+91, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/OSFL.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/OSFL.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/OSFL.png  used on input line 3373.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[110 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/OSFL-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+OSFL.png (PNG copy)>]
+Overfull \hbox (41.24811pt too wide) in paragraph at lines 3428--3435
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/OVEN-habitats.png, i
+d=1096, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/OVEN-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/OVEN-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/OVEN-habitats.png  used on input line 3436.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[111]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/OVEN.png, id=11
+02, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/OVEN.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/OVEN.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/OVEN.png  used on input line 3438.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[112 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/OVEN-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+OVEN.png (PNG copy)>]
+Overfull \hbox (35.04216pt too wide) in paragraph at lines 3493--3500
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PAWA-habitats.png, i
+d=1107, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PAWA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PAWA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/PAWA-habitats.png  used on input line 3501.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[113]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/PAWA.png, id=11
+13, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/PAWA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/PAWA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/PAWA.png  used on input line 3503.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[114 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PAWA-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+PAWA.png (PNG copy)>]
+Overfull \hbox (30.7995pt too wide) in paragraph at lines 3558--3565
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PHVI-habitats.png, i
+d=1119, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PHVI-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PHVI-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/PHVI-habitats.png  used on input line 3566.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[115]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/PHVI.png, id=11
+25, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/PHVI.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/PHVI.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/PHVI.png  used on input line 3568.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[116 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PHVI-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+PHVI.png (PNG copy)>]
+Overfull \hbox (45.81808pt too wide) in paragraph at lines 3623--3630
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PIWO-habitats.png, i
+d=1130, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PIWO-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PIWO-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/PIWO-habitats.png  used on input line 3631.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[117]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/PIWO.png, id=11
+36, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/PIWO.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/PIWO.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/PIWO.png  used on input line 3633.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[118 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PIWO-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+PIWO.png (PNG copy)>]
+Overfull \hbox (35.53448pt too wide) in paragraph at lines 3688--3695
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PUFI-habitats.png, i
+d=1141, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PUFI-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PUFI-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/PUFI-habitats.png  used on input line 3696.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[119]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/PUFI.png, id=11
+47, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/PUFI.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/PUFI.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/PUFI.png  used on input line 3698.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[120 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/PUFI-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+PUFI.png (PNG copy)>]
+Overfull \hbox (41.659pt too wide) in paragraph at lines 3753--3760
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RBGR-habitats.png, i
+d=1153, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RBGR-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RBGR-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/RBGR-habitats.png  used on input line 3761.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[121]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RBGR.png, id=11
+59, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RBGR.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RBGR.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/RBGR.png  used on input line 3763.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[122 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RBGR-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+RBGR.png (PNG copy)>]
+Overfull \hbox (35.53401pt too wide) in paragraph at lines 3818--3825
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RBNU-habitats.png, i
+d=1164, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RBNU-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RBNU-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/RBNU-habitats.png  used on input line 3826.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[123]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RBNU.png, id=11
+70, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RBNU.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RBNU.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/RBNU.png  used on input line 3828.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[124 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RBNU-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+RBNU.png (PNG copy)>]
+Overfull \hbox (31.13057pt too wide) in paragraph at lines 3883--3890
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RCKI-habitats.png, i
+d=1175, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RCKI-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RCKI-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/RCKI-habitats.png  used on input line 3891.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[125]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RCKI.png, id=11
+81, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RCKI.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RCKI.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/RCKI.png  used on input line 3893.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[126 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RCKI-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+RCKI.png (PNG copy)>]
+Overfull \hbox (30.6385pt too wide) in paragraph at lines 3948--3955
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/REVI-habitats.png, i
+d=1187, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/REVI-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/REVI-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/REVI-habitats.png  used on input line 3956.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[127]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/REVI.png, id=11
+93, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/REVI.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/REVI.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/REVI.png  used on input line 3958.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[128 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/REVI-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+REVI.png (PNG copy)>]
+Overfull \hbox (39.6161pt too wide) in paragraph at lines 4013--4020
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RUBL-habitats.png, i
+d=1198, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RUBL-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RUBL-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/RUBL-habitats.png  used on input line 4021.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[129]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RUBL.png, id=12
+04, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RUBL.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RUBL.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/RUBL.png  used on input line 4023.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[130 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RUBL-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+RUBL.png (PNG copy)>]
+Overfull \hbox (30.15094pt too wide) in paragraph at lines 4078--4085
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RWBL-habitats.png, i
+d=1209, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RWBL-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RWBL-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/RWBL-habitats.png  used on input line 4086.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[131]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RWBL.png, id=12
+15, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RWBL.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/RWBL.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/RWBL.png  used on input line 4088.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[132 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/RWBL-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+RWBL.png (PNG copy)>]
+Overfull \hbox (24.44139pt too wide) in paragraph at lines 4143--4150
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SAVS-habitats.png, i
+d=1221, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SAVS-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SAVS-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/SAVS-habitats.png  used on input line 4151.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[133]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/SAVS.png, id=12
+27, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/SAVS.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/SAVS.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/SAVS.png  used on input line 4153.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[134 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SAVS-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+SAVS.png (PNG copy)>]
+Overfull \hbox (37.01448pt too wide) in paragraph at lines 4208--4215
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SOSP-habitats.png, i
+d=1232, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SOSP-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SOSP-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/SOSP-habitats.png  used on input line 4216.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[135]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/SOSP.png, id=12
+38, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/SOSP.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/SOSP.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/SOSP.png  used on input line 4218.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[136 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SOSP-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+SOSP.png (PNG copy)>]
+Overfull \hbox (39.94748pt too wide) in paragraph at lines 4273--4280
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SWSP-habitats.png, i
+d=1243, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SWSP-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SWSP-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/SWSP-habitats.png  used on input line 4281.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[137]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/SWSP.png, id=12
+49, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/SWSP.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/SWSP.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/SWSP.png  used on input line 4283.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[138 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SWSP-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+SWSP.png (PNG copy)>]
+Overfull \hbox (36.84398pt too wide) in paragraph at lines 4338--4345
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SWTH-habitats.png, i
+d=1255, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SWTH-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SWTH-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/SWTH-habitats.png  used on input line 4346.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[139]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/SWTH.png, id=12
+61, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/SWTH.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/SWTH.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/SWTH.png  used on input line 4348.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[140 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/SWTH-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+SWTH.png (PNG copy)>]
+Overfull \hbox (42.87988pt too wide) in paragraph at lines 4403--4410
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/TEWA-habitats.png, i
+d=1266, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/TEWA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/TEWA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/TEWA-habitats.png  used on input line 4411.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[141]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/TEWA.png, id=12
+72, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/TEWA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/TEWA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/TEWA.png  used on input line 4413.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[142 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/TEWA-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+TEWA.png (PNG copy)>]
+Overfull \hbox (32.60548pt too wide) in paragraph at lines 4468--4475
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/TRES-habitats.png, i
+d=1277, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/TRES-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/TRES-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/TRES-habitats.png  used on input line 4476.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[143]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/TRES.png, id=12
+83, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/TRES.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/TRES.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/TRES.png  used on input line 4478.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[144 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/TRES-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+TRES.png (PNG copy)>]
+Overfull \hbox (39.45021pt too wide) in paragraph at lines 4533--4540
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/VATH-habitats.png, i
+d=1289, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/VATH-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/VATH-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/VATH-habitats.png  used on input line 4541.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[145]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/VATH.png, id=12
+95, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/VATH.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/VATH.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/VATH.png  used on input line 4543.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[146 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/VATH-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+VATH.png (PNG copy)>]
+Overfull \hbox (34.39339pt too wide) in paragraph at lines 4598--4605
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/VEER-habitats.png, i
+d=1300, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/VEER-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/VEER-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/VEER-habitats.png  used on input line 4606.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[147]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/VEER.png, id=13
+06, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/VEER.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/VEER.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/VEER.png  used on input line 4608.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[148 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/VEER-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+VEER.png (PNG copy)>]
+Overfull \hbox (44.02498pt too wide) in paragraph at lines 4663--4670
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/VESP-habitats.png, i
+d=1311, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/VESP-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/VESP-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/VESP-habitats.png  used on input line 4671.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[149]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/VESP.png, id=13
+17, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/VESP.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/VESP.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/VESP.png  used on input line 4673.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[150 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/VESP-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+VESP.png (PNG copy)>]
+Overfull \hbox (38.14078pt too wide) in paragraph at lines 4728--4735
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WAVI-habitats.png, i
+d=1323, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WAVI-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WAVI-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/WAVI-habitats.png  used on input line 4736.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[151]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WAVI.png, id=13
+29, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WAVI.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WAVI.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/WAVI.png  used on input line 4738.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[152 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WAVI-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+WAVI.png (PNG copy)>]
+Underfull \hbox (badness 6445) in paragraph at lines 4783--4783
+[]\T1/lmr/bx/n/14.4 White-crowned Spar-row (\T1/lmr/bx/it/14.4 Zonotrichia leu-
+
+ []
+
+
+Overfull \hbox (41.57907pt too wide) in paragraph at lines 4793--4800
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WCSP-habitats.png, i
+d=1334, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WCSP-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WCSP-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/WCSP-habitats.png  used on input line 4801.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[153]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WCSP.png, id=13
+40, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WCSP.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WCSP.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/WCSP.png  used on input line 4803.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[154 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WCSP-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+WCSP.png (PNG copy)>]
+Overfull \hbox (43.20633pt too wide) in paragraph at lines 4858--4865
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WETA-habitats.png, i
+d=1345, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WETA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WETA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/WETA-habitats.png  used on input line 4866.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[155]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WETA.png, id=13
+51, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WETA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WETA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/WETA.png  used on input line 4868.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[156 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WETA-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+WETA.png (PNG copy)>]
+Overfull \hbox (46.95802pt too wide) in paragraph at lines 4923--4930
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WEWP-habitats.png, i
+d=1357, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WEWP-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WEWP-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/WEWP-habitats.png  used on input line 4931.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[157]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WEWP.png, id=13
+63, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WEWP.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WEWP.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/WEWP.png  used on input line 4933.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[158 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WEWP-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+WEWP.png (PNG copy)>]
+Overfull \hbox (42.71039pt too wide) in paragraph at lines 4988--4995
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WIWA-habitats.png, i
+d=1368, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WIWA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WIWA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/WIWA-habitats.png  used on input line 4996.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[159]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WIWA.png, id=13
+74, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WIWA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WIWA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/WIWA.png  used on input line 4998.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[160 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WIWA-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+WIWA.png (PNG copy)>]
+Overfull \hbox (37.97969pt too wide) in paragraph at lines 5053--5060
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WIWR-habitats.png, i
+d=1379, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WIWR-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WIWR-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/WIWR-habitats.png  used on input line 5061.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[161]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WIWR.png, id=13
+85, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WIWR.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WIWR.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/WIWR.png  used on input line 5063.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[162 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WIWR-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+WIWR.png (PNG copy)>]
+Overfull \hbox (41.90547pt too wide) in paragraph at lines 5118--5125
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WTSP-habitats.png, i
+d=1391, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WTSP-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WTSP-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/WTSP-habitats.png  used on input line 5126.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[163]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WTSP.png, id=13
+97, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WTSP.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WTSP.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/WTSP.png  used on input line 5128.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[164 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WTSP-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+WTSP.png (PNG copy)>]
+Overfull \hbox (41.9006pt too wide) in paragraph at lines 5183--5190
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WWCR-habitats.png, i
+d=1402, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WWCR-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WWCR-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/WWCR-habitats.png  used on input line 5191.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[165]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WWCR.png, id=14
+08, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WWCR.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/WWCR.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/WWCR.png  used on input line 5193.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[166 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/WWCR-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+WWCR.png (PNG copy)>]
+Underfull \hbox (badness 5652) in paragraph at lines 5238--5238
+[]\T1/lmr/bx/n/14.4 Yellow-bellied Fly-catcher (\T1/lmr/bx/it/14.4 Em-pi-donax 
+fla-
+ []
+
+
+Overfull \hbox (38.9635pt too wide) in paragraph at lines 5248--5255
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YBFL-habitats.png, i
+d=1413, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YBFL-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YBFL-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/YBFL-habitats.png  used on input line 5256.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[167]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/YBFL.png, id=14
+19, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/YBFL.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/YBFL.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/YBFL.png  used on input line 5258.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[168 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YBFL-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+YBFL.png (PNG copy)>]
+Overfull \hbox (39.28998pt too wide) in paragraph at lines 5313--5320
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YBSA-habitats.png, i
+d=1425, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YBSA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YBSA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/YBSA-habitats.png  used on input line 5321.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[169]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/YBSA.png, id=14
+31, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/YBSA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/YBSA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/YBSA.png  used on input line 5323.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[170 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YBSA-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+YBSA.png (PNG copy)>]
+Overfull \hbox (43.2019pt too wide) in paragraph at lines 5378--5385
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YEWA-habitats.png, i
+d=1436, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YEWA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YEWA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/YEWA-habitats.png  used on input line 5386.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[171]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/YEWA.png, id=14
+42, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/YEWA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/YEWA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/YEWA.png  used on input line 5388.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[172 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YEWA-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+YEWA.png (PNG copy)>]
+Overfull \hbox (42.5488pt too wide) in paragraph at lines 5443--5450
+[][] 
+ []
+
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YRWA-habitats.png, i
+d=1447, 674.52pt x 337.26pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YRWA-habitats.p
+ng Graphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YRWA-habitats.pn
+g>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMed
+ian/YRWA-habitats.png  used on input line 5451.
+(pdftex.def)             Requested size: 390.00739pt x 195.00368pt.
+[173]
+<d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/YRWA.png, id=14
+53, 481.8pt x 385.44pt>
+File: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/YRWA.png G
+raphic file (type png)
+<use d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/YRWA.png>
+Package pdftex.def Info: d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSub
+setFinal/YRWA.png  used on input line 5453.
+(pdftex.def)             Requested size: 390.01324pt x 312.0106pt.
+[174 <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/YRWA-habitats.p
+ng (PNG copy)> <d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/
+YRWA.png (PNG copy)>] [175]
+Chapter 4.
+
+Underfull \hbox (badness 2980) in paragraph at lines 5502--5503
+[]\T1/lmr/m/n/12 (+20) Alberta Bio-di-ver-sity Mon-i-tor-ing In-sti-tute (ABMI)
+, 2018. Hu-man
+ []
+
+
+Underfull \hbox (badness 2119) in paragraph at lines 5502--5503
+\T1/lmr/m/n/12 (+20) Foot-print In-ven-tory 2016 (Ver-sion 1). Al-berta Bio-di-
+ver-sity Mon-i-
+ []
+
+
+Underfull \hbox (badness 1226) in paragraph at lines 5502--5503
+\T1/lmr/m/n/12 (+20) tor-ing In-sti-tute, Geospa-tial Cen-tre, Al-berta, Canada
+. URL: [][]$https :
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5502--5503
+\T1/lmr/m/n/12 (+20) / / www . abmi . ca / home / data-[]analytics / da-[]top /
+ da-[]product-[]overview /
+ []
+
+[176
+
+] [177]
+Underfull \hbox (badness 1028) in paragraph at lines 5542--5543
+[]\T1/lmr/m/n/12 (+20) Shieck, J., Hug-gard, D., and Soly-mos, P. 2014. Hu-man 
+foot-print
+ []
+
+
+Underfull \hbox (badness 2644) in paragraph at lines 5542--5543
+\T1/lmr/m/n/12 (+20) in Al-berta. ABMI Sci-ence Let-ters, Septem-ber 5, 2014. U
+RL:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5542--5543
+[][]$\T1/lmr/m/n/12 (+20) http : / / ftp . public . abmi . ca / /home / publica
+tions / documents / 364 _ Schieck _
+ []
+
+[178] [179]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 5582.
+[180]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 5582.
+(pif-pix-ab.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 5582.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 5582.
+
+Package rerunfilecheck Info: File `pif-pix-ab.out' has not changed.
+(rerunfilecheck)             Checksum: DF46D8EFC55EACCAC468A82788194E93;22631.
+
+LaTeX Warning: There were undefined references.
+
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 5582.
+ ) 
+Here is how much of TeX's memory you used:
+ 13515 strings out of 492970
+ 240863 string characters out of 3135828
+ 299655 words of memory out of 3000000
+ 16750 multiletter control sequences out of 15000+200000
+ 77920 words of font info for 111 fonts, out of 3000000 for 9000
+ 1141 hyphenation exceptions out of 8191
+ 33i,8n,38p,1264b,405s stack positions out of 5000i,500n,10000p,200000b,50000s
+{C:/Program Files/MiKTeX 2.9/fonts/enc/dvips/lm/lm-ec.enc}{C:/Program Files/M
+iKTeX 2.9/fonts/enc/dvips/lm/lm-rm.enc}<C:/Program Files/MiKTeX 2.9/fonts/type1
+/public/lm/lmbx12.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/lm/lmbxi1
+0.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/lm/lmr12.pfb><C:/Program 
+Files/MiKTeX 2.9/fonts/type1/public/lm/lmr17.pfb><C:/Program Files/MiKTeX 2.9/f
+onts/type1/public/lm/lmr8.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/l
+m/lmri10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/lm/lmri12.pfb>
+Output written on pif-pix-ab.pdf (181 pages, 88303576 bytes).
+PDF statistics:
+ 1636 PDF objects out of 1728 (max. 8388607)
+ 371 named destinations out of 1000 (max. 500000)
+ 17912 words of extra memory for PDF output out of 20736 (max. 10000000)
+
