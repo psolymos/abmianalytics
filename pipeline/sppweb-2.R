@@ -113,7 +113,6 @@ for (spp in SPP) {
         dev.off()
     }
 
-if (TRUE) {
     y <- load_species_data(spp, boot=TRUE)
     ry <- rasterize_results(y)
 
@@ -153,6 +152,7 @@ if (TRUE) {
         Rdf <- mask(Rdf, Rmaskm)
     }
 
+if (TRUE) {
     writeRaster(Rcr, paste0(ROOT, "/normalized-maps/", gr, "/", spp, "-cr.tif"), overwrite=TRUE)
     writeRaster(Rrf, paste0(ROOT, "/normalized-maps/", gr, "/", spp, "-rf.tif"), overwrite=TRUE)
     writeRaster(Rdf, paste0(ROOT, "/normalized-maps/", gr, "/", spp, "-df.tif"), overwrite=TRUE)
@@ -186,7 +186,9 @@ if (TRUE) {
     gc()
 }
 
-}}
+}
+
+}
 
 ## use avail figures
 

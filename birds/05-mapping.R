@@ -604,7 +604,7 @@ NAfound <- NULL
 for (spp in rownames(bbb)) {
 
     cat(spp, "\n");flush.console()
-    load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-07-11/", spp, ".RData"))
+    load(paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-09-20/", spp, ".RData"))
 
     TYPE <- "C" # combo
     if (bbb[spp, "ModelSouth"] && !bbb[spp, "ModelNorth"])
@@ -627,11 +627,15 @@ for (spp in rownames(bbb)) {
         q <- quantile(REFB[,i], 0.99, na.rm=TRUE)
         REFB[REFB[,i] > q,i] <- q
     }
-    Curr.Boot <- as.matrix(groupSums(CURRB, 1, kgrid[rownames(CURRB),"Row10_Col10"]))
-    Ref.Boot <- as.matrix(groupSums(REFB, 1, kgrid[rownames(CURRB),"Row10_Col10"]))
+#    Curr.Boot <- as.matrix(groupSums(CURRB, 1, kgrid[rownames(CURRB),"Row10_Col10"]))
+#    Ref.Boot <- as.matrix(groupSums(REFB, 1, kgrid[rownames(CURRB),"Row10_Col10"]))
+    Curr.Boot <- as.matrix(groupMeans(CURRB, 1, kgrid[rownames(CURRB),"Row10_Col10"]))
+    Ref.Boot <- as.matrix(groupMeans(REFB, 1, kgrid[rownames(CURRB),"Row10_Col10"]))
     CN <- c("Native", "Misc", "Agriculture", "Forestry", "RuralUrban", "Energy", "Transportation")
     SA.Curr <- as.matrix(CURR1[,CN])
     SA.Ref <- as.matrix(REF1[,CN])
+    sum(SA.Curr)
+    summary(colSums(Curr.Boot)*100)
 
     if (any(is.na(Curr.Boot)) || any(is.na(Ref.Boot)) || any(is.na(SA.Curr)) || any(is.na(SA.Ref))) {
         cat("\t--> NA found for", spp, "\n\n")

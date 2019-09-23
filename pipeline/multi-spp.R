@@ -4,7 +4,7 @@ library(mefa4)
 library(jsonlite)
 library(cure4insect)
 opar <- set_options(
-	path = "s:/reports", # this is optional if you have local copy
+	path = "d:/abmi/reports", # this is optional if you have local copy
 	boot=TRUE)
 load_common_data()
 
