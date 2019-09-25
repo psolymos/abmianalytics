@@ -852,7 +852,7 @@ dev.off()
 ## pop size
 
 pch <- 19 # ifelse(pop$Npif %[]% list(pop$NpixLo, pop$NpixHi), 21, 19)
-Min <- 3*2
+Min <- 5*2
 Siz <- 24*2
 Up <- 75
 pch2 <- 19 # ifelse(ppp$Npif %[]% list(ppp$NpixLo, ppp$NpixHi), 21, 19)
@@ -879,8 +879,8 @@ points(pp, pch=pch2, col="#00000080")
 points(pop[,c("Npif", "Npix")], pch=pch, col="#00000080")
 text(pop[,"Npif"]+1.2*2, pop[,"Npix"]+0, labels=ifelse(di, rownames(pop), ""), cex=0.5)
 text(pp[,"Npif"]+1.2*2, pp[,"Npix"]+0, labels=ifelse(di2, rownames(pp), ""), cex=0.5)
-segments(x0=c(Up-Siz+c(0, 1, 2, 3)*Siz/3), y0=rep(Siz, 4), y1=rep(Siz, 4)+0.5*2)
-text(c(Up-Siz+c(0, 1, 2, 3)*Siz/3), rep(Siz, 4)+1*2.5, 2*(0:3))
+segments(x0=c(Up-Siz+c(0:5)*Siz/5), y0=rep(Siz, 6), y1=rep(Siz, 6)+0.5*2)
+text(c(Up-Siz+c(0:5)*Siz/5), rep(Siz, 6)+1*2.5, 2*(0:5))
 dev.off()
 
 ## pop rank
