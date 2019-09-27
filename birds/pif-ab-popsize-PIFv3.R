@@ -461,6 +461,7 @@ if (FALSE) {
         vc[vc == i] <- nn[i]
     data.frame(table(vc)[rn])
     ndet <- table(vc)
+    #ndet <- table(vc[en$DAT$YEAR >= 2006 & en$DAT$YEAR <= 2015])
     ndet <- structure(as.numeric(ndet[rn]), names=rn)
 
     ## determine BBS in BCR6
@@ -1155,6 +1156,7 @@ Col <- Col0[cut(Cex, br)]
 names(Col) <- names(Cex)
 
 pdf("~/GoogleWork/bam/PIF-AB/draft6/Fig5-count-habitat.pdf", width=7, height=7)
+png("~/GoogleWork/bam/PIF-AB/draft6/Fig5-count-habitat.png", width=2000, height=2000, res=300)
 op <- par(las=1)
 cx <- 1 # pop$EDR/100
 topl <- pop[,c("DeltaR", "DeltaH")]
@@ -1187,6 +1189,8 @@ exp(mean(log(pop$Npix/pop$Npif)))
 
 table(pop$Npix_Npif)
 
+pop[pop$Npix_Npif < 0,]
+
 all(pop$EDR < pop$MDD)
 
 sum(pop$Npix > pop$Npif & pop[,c("Npix95lower","Npix95upper")] %)o(% pop[,c("Npif95lower","Npif95upper")])
@@ -1198,9 +1202,15 @@ get_p <- function(cf,se) {
     zval <- cf/se
     2 * pnorm(-abs(zval))
 }
-round(get_p(c(1.3, 1.6, 0.37, 1.1, 0.087, -0.028), c(1.9,1.2,0.38,0.33,0.72,0.58)),2)
+round(cbind(Mean=colMeans(pop[,paste0("Delta", c("T", "A", "R", "H"))]),
+SD=apply(pop[,paste0("Delta", c("T", "A", "R", "H"))], 2, sd),
+p=get_p(
+    colMeans(pop[,paste0("Delta", c("T", "A", "R", "H"))]),
+    apply(pop[,paste0("Delta", c("T", "A", "R", "H"))], 2, sd)
+)), 2)
+#round(get_p(c(1.3, 1.6, 0.37, 1.1, 0.087, -0.028), c(1.9,1.2,0.38,0.33,0.72,0.58)),2)
 
-
+table(pop$Y0_Y1)
 round(100*table(pop$Y0_Y1)/nrow(pop),1)
 table(sign(pop$Y0 - pop$Y1))
 dots_box_plot(log(pop[,c("Y0","Y1")]), lines=TRUE)
