@@ -1,7 +1,7 @@
 ---
 title: 'Appendix: Species Results'
-author: "Peter Solymos, Judith D. Toms, Steven M. Matsuoka, Steven G. Cumming, Nicole K. S. Barker, Wayne E. Thogmartin, Diana Stralberg, Andrew D. Crosby, Francisco V. Dénes, Samuel Hache, C. Lisa Mahon, Fiona K. A. Schmiegelow, and Erin M. Bayne"
-date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
+author: "Péter Sólymos, Judith D. Toms, Steven M. Matsuoka, Steven G. Cumming, Nicole K. S. Barker, Wayne E. Thogmartin, Diana Stralberg, Andrew D. Crosby, Francisco V. Dénes, Samuel Haché, C. Lisa Mahon, Fiona K. A. Schmiegelow, and Erin M. Bayne"
+date: "Version: 1.1"
 output:
   pdf_document:
     toc: false
@@ -13,6 +13,7 @@ classoption: letterpaper
 urlcolor: blue
 header-includes:
   - \usepackage{float}
+  - \usepackage{booktabs}
 ---
 
 ```{r preamble,include=FALSE}
@@ -39,6 +40,8 @@ rownames(TAB) <- TAB$Code
 #pop <- read.csv("~/GoogleWork/bam/PIF-AB/draft2/Table1-estimates.csv")
 pop <- read.csv("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-2006-2015-results.csv")
 rownames(pop) <- pop$Code
+pop[rownames(pop) %in% SPP,]
+SPP <- rownames(pop)
 
 Dall <- read.csv("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-densities-2006-2015.csv")
 rownames(Dall) <- Dall[,1]
@@ -46,9 +49,18 @@ Dall[,1] <- NULL
 DD <- as.matrix(t(Dall[,-(1:2)]))
 NN <- t(t(DD) * Dall$Ahab)
 NN <- t(NN / rowSums(NN))
+
+colnames(pop)[colnames(pop) == "H"] <- "h1"
+colnames(pop)[colnames(pop) == "TimeAdj"] <- "Tadj"
+colnames(pop)[colnames(pop) == "DeltaT"] <- "T"
+colnames(pop)[colnames(pop) == "DeltaA"] <- "A"
+colnames(pop)[colnames(pop) == "DeltaR"] <- "R"
+colnames(pop)[colnames(pop) == "DeltaH"] <- "H"
 ```
 
-We provide the following information for each of the 81 species:
+Supporting material for the manuscript 'At the end of the road: Lessons learned from comparing model- and design-based approaches to estimate population sizes of boreal birds in Alberta, Canada' by Peter Solymos et al. 
+
+We provide the following information for each of the 81 species used in the study:
 
 - pixel (PIX) and PIF based population size estimates with 95% confidence intervals (millions of individuals),
 - the metrics used for the calculations and AUC as a measure of classification accuracy,
@@ -56,26 +68,51 @@ We provide the following information for each of the 81 species:
 - maps: detections aggregated in 10 km x 10 km units (full study area), mean density and 95% confidence interval range as a measure of uncertainty (BCR 6 prediction area),
 - land cover level average densities and percent of the total population found in each land cover type within the BCR 6 prediction area.
 
+
+Common and scientific names of the species used in the paper, including species codes used in the figures, and population size estimates for Bird Conservation Region 6 in Alberta based on the pixel-based (Npix) and Partners in Flight (Npif) estimators with 95% confidence limits in parentheses. 
+Population sizes are in millions of individuals. 
+Species names follow the Chesser et al. 2018.
+
+We present the following metrics:
+
+- estimates of on-road (Y1) and off-road (Y0) bird densities were based on model predictions;
+- Partners in Flight time adjustment (Tadj) and maximum detection distances (MDD, in m) were based on Stanton et al. (2019);
+- average probability of availability given a 3-minutes point count (p3) was estimated based on dates and times in our Bird Conservation Region (BCR) 6 Boreal Taiga Plains / Alberta data set and removal-model estimates from Solymos et al. (2018b);
+- effective detection radius (EDR, in m) was based on land-cover and forest cover in our BCR 6 / Alberta data set and distance-sampling estimates from Solymos (2016); 
+- the habitat representation component (h1) was based on empirical estimates of bird densities, and availability and roadside sampling probabilities from Table 1;
+- the time adjustment (T), detection distance adjustment (A), roadside count (R), and habitat representation (H) log ratio components are calculated as described in the Methods.
+
+
 ```{r results='asis'}
 cn1 <- c("Npix", "Npix95lower", "Npix95upper", "Npif", "Npif95lower", "Npif95upper")
-cn2 <- c("Y1", "Y0", "TimeAdj", "p3", "MDD", "EDR", "AUC")
+cn2 <- c("Y1", "Y0", "h1", "Tadj", "p3", "MDD", "EDR", "AUC")
+cn3 <- c("T", "A", "R", "H")
 for (spp in SPP) {
   v <- as.list(pop[spp,])
-  cat("##", paste0(v$CommonName, " (_", v$ScientificName, "_)"))
-  cat(kable(round(pop[spp,cn1],4), format="latex", row.names = FALSE))
+  cat("\n\n\\newpage\n\n")
+  cat("##", paste0(v$CommonName, " (_", v$ScientificName, "_; ", spp, ")"))
+  cat("\n\nPopulation size estimates:\n\n")
+  cat(kable(round(pop[spp,cn1],4), format="latex", row.names = FALSE, booktabs = TRUE))
   cat("\n\n")
-  cat(kable(round(pop[spp,cn2],4), format="latex", row.names = FALSE))
+  cat("Metrics used to calculate log ratio components and AUC:\n")
+  cat(kable(round(pop[spp,cn2],4), format="latex", row.names = FALSE, booktabs = TRUE))
   cat("\n\n")
+  cat("Log ratio components:\n\n")
+  cat(kable(round(pop[spp,cn3],4), format="latex", row.names = FALSE, booktabs = TRUE))
+  cat("\n\n")
+  cat("Distribution and density map:\n\n")
+  cat("![](d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/", spp, ".png)", 
+    sep="")
+  cat("\n\n\\newpage\n\n")
+  cat("Land cover associations:\n\n")
   cat("![](d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsMedian/", spp, "-habitats.png)", 
     sep="")
   cat("\n\n")
-  cat("![](d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/mapsSubsetFinal/", spp, ".png)", 
-    sep="")
-  cat("\n\n")
+  cat("Land cover level densities and population percentages:\n\n")
   cat(kable(t(data.frame(Density=round(DD[spp,], 4), Percent=round(100*NN[,spp]/sum(NN[,spp]), 2)))[,1:10],
-    format="latex"))
+    format="latex", booktabs = TRUE))
   cat(kable(t(data.frame(Density=round(DD[spp,], 4), Percent=round(100*NN[,spp]/sum(NN[,spp]), 2)))[,11:18],
-    format="latex"))
+    format="latex", booktabs = TRUE))
 }
 ```
 
