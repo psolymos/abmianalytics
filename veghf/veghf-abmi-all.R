@@ -1026,14 +1026,14 @@ save(d2,
 
 save(dd_kgrid,
     file=file.path(ROOT, VER, "data", "analysis", "grid",
-        "veg-hf_grid_VEG61Cond2010HFI2010v2.Rdata"))
+        "veg-hf_grid_VEG61Cond2010HFI2010v2_HFfix.Rdata"))
 
 
 ## wide format: transitions --------------------------------------
 
-load(file.path(ROOT, VER, "data", "inter", "veghf", "grid",
-    "veg-hf_grid_v61hf2016v3WildFireUpTo2016-long-format.Rdata"))
-load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
+#load(file.path(ROOT, VER, "data", "inter", "veghf", "grid",
+#    "veg-hf_grid_v61hf2016v3WildFireUpTo2016-long-format.Rdata"))
+#load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
 
 age0class <- levels(d2$VEGHFAGEclass)[endsWith(levels(d2$VEGHFAGEclass), "0")]
 #ss1 <- d2$VEGHFAGEclass %in% age0class
