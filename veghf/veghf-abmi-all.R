@@ -958,15 +958,17 @@ t0 <- proc.time()
 load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
 #f <- file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
 #    "20181010_Grid_1sqkm_VEG61HFI2016v3fty.sqlite")
+#f <- file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
+#    "20190129_Grid_1sqkm_VEG61Cond2010HFI2010v2.sqlite")
 f <- file.path(ROOT, VER, "data", "raw", "veghf", "w2w",
-    "20190129_Grid_1sqkm_VEG61Cond2010HFI2010v2.sqlite")
+  "20190930_Grid_1sqkm_VEG61HFI2016v3.sqlite")
 db <- dbConnect(RSQLite::SQLite(), f)
 tn <- dbListTables(db) # "Summary_1sqkm_grid_FTY"
 
 hd <- dbGetQuery(db, paste('SELECT * FROM', tn, 'LIMIT 5'))
 d <- dbGetQuery(db,
     paste("SELECT
-      Origin_Year_2010cond,
+      Origin_Year,
       Pct_of_Larch,
       NSRNAME,
       Soil_Type_1,
@@ -981,15 +983,16 @@ d <- dbGetQuery(db,
 dbDisconnect(db)
 
 d <- make_char2fact(d)
-d$Origin_Year <- d$Origin_Year_2010cond
-Origin_Year_2010cond <- NULL
+#d$Origin_Year <- d$Origin_Year_2010cond
+#Origin_Year_2010cond <- NULL
 gc()
 
-d <- d[!is.na(d$GRID_LABEL),]
+if (sum(is.na(d$GRID_LABEL)) > 0)
+  d <- d[!is.na(d$GRID_LABEL),]
 d2 <- make_vegHF_wide_v6(d,
     col.label="GRID_LABEL",
-#    col.year=2016,
-    col.year=2010,
+    col.year=2016,
+#    col.year=2010,
     col.HFyear="YEAR",
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
@@ -1013,13 +1016,13 @@ proc.time() - t0
 
 save(dd,
     file=file.path(ROOT, VER, "data", "analysis", "grid",
-    "veg-hf_grid_v6hf2016v3noDistVeg-unsorted.Rdata"))
+    "veg-hf_grid_v61hf2016v3WildFireUpTo2016-unsorted.Rdata"))
 save(dd_kgrid,
     file=file.path(ROOT, VER, "data", "analysis", "grid",
-    "veg-hf_grid_v6hf2016v3noDistVeg.Rdata"))
+    "veg-hf_grid_v61hf2016v3WildFireUpTo2016.Rdata"))
 save(d2,
     file=file.path(ROOT, VER, "data", "inter", "veghf", "grid",
-    "veg-hf_grid_v6hf2016v3noDistVeg-long-format.Rdata"))
+    "veg-hf_grid_v61hf2016v3WildFireUpTo2016-long-format.Rdata"))
 
 save(dd_kgrid,
     file=file.path(ROOT, VER, "data", "analysis", "grid",
@@ -1029,7 +1032,7 @@ save(dd_kgrid,
 ## wide format: transitions --------------------------------------
 
 load(file.path(ROOT, VER, "data", "inter", "veghf", "grid",
-    "veg-hf_grid_v6hf2016v3noDistVeg-long-format.Rdata"))
+    "veg-hf_grid_v61hf2016v3WildFireUpTo2016-long-format.Rdata"))
 load(file.path(ROOT, VER, "data", "analysis", "kgrid_table_km.Rdata"))
 
 age0class <- levels(d2$VEGHFAGEclass)[endsWith(levels(d2$VEGHFAGEclass), "0")]
@@ -1118,8 +1121,8 @@ any(ch2veg$cr %in% age0class)
 
 save(trVeg, trSoil, ch2veg, ch2soil,
     file=file.path(ROOT, VER, "data", "analysis", "grid",
-    #"veg-hf_transitions_v6hf2016v3noDistVeg.Rdata"))
-    "veg-hf_transitions_VEG61Cond2010HFI2010v2.Rdata"))
+    "veg-hf_transitions_v61hf2016v3WildFireUpTo2016.Rdata"))
+    #"veg-hf_transitions_VEG61Cond2010HFI2010v2.Rdata"))
 
 
 ## w2w 1km^2 scale ---------- long version ----------------------------

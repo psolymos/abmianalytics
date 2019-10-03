@@ -85,7 +85,8 @@ Xclim <- model.matrix(as.formula(paste0("~-1+", paste(cfs$spclim, collapse="+"))
 colnames(Xclim) <- fix_names(colnames(Xclim))
 
 ## ch2soil ch2veg trSoil trVeg
-load("d:/abmi/AB_data_v2018/data/analysis/grid/veg-hf_transitions_v6hf2016v3noDistVeg.Rdata")
+#load("d:/abmi/AB_data_v2018/data/analysis/grid/veg-hf_transitions_v6hf2016v3noDistVeg.Rdata")
+load("d:/abmi/AB_data_v2018/data/analysis/grid/veg-hf_transitions_v61hf2016v3WildFireUpTo2016.Rdata")
 stopifnot(all(rownames(kgrid) == rownames(trVeg)))
 stopifnot(all(rownames(kgrid) == rownames(trSoil)))
 
@@ -194,6 +195,11 @@ DONE <- gsub(".RData", "", list.files("d:/abmi/AB_data_v2018/data/analysis/birds
 SPP <- SPP[!(SPP %in% DONE)]
 
 b <- 100
+
+#SPP <- SPP[1:30]
+#SPP <- SPP[31:60]
+#SPP <- SPP[61:90]
+#SPP <- SPP[91:126]
 
 for (spp in SPP) {
     gc()
