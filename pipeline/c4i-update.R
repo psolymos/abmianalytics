@@ -498,23 +498,48 @@ for (tx in c("vplants", "mites", "mosses", "lichens")) {
 ## /sector files
 
 tx <- "vplants"
+
+issue <- list()
+notfound <- list()
 for (tx in c("vplants", "mites", "mosses", "lichens")) {
 
     dirin <- paste0("s:/Result from Ermias_2018/", tx, "/combined/Sector effects/Sector abundance summary/")
+    #dirin2 <- paste0("s:/Result from Ermias_2018/", tx, "/combined/Km2 summaries/")
 
     SPP <- rownames(SP)[SP$taxon == tx]
     #SPP <- gsub(".RData", "", list.files(dirin))
     for (spp in SPP) {
-        cat(tx, spp, "\n");flush.console()
+        cat(tx, spp);flush.console()
         ee <- new.env()
-        load(paste0(dirin, spp, ".RData"), envir=ee)
-        SA.Curr <- as.matrix(ee$SA.curr[,colnames(KA_2016)])
-        SA.Ref <- as.matrix(ee$SA.ref[,colnames(KA_2016)])
+        l <- try(load(paste0(dirin, spp, ".RData"), envir=ee))
+        if (!inherits(l, "try-error")) {
+            SA.Curr <- as.matrix(ee$SA.curr[,colnames(KA_2016)])
+            SA.Ref <- as.matrix(ee$SA.ref[,colnames(KA_2016)])
+            #ee2 <- new.env()
+            #load(paste0(dirin2, spp, ".RData"), envir=ee2)
+            #rc <- ee2$RefCurr
+            #rownames(rc) <- rc[,1]
+            #rc <- as.matrix(rc[,-1])
+            #rc <- rc[rownames(SA.Curr),]
+            s0 <- rowSums(SA.Ref)
+            s1 <- rowSums(SA.Curr)
+            mx <- max(s0, s1)
+            if (mx > 1) {
+                issue[[length(issue)+1L]] <- list(taxon=tx, species=spp, max=mx)
+                cat("\t\tMAX > 1\n")
+            } else {
+                cat("\n")
+            }
 
-        save(SA.Curr, SA.Ref, file=paste0("d:/abmi/reports/2018/results/", tx, "/sector/",
-            spp, ".RData"))
+            save(SA.Curr, SA.Ref, file=paste0("d:/abmi/reports/2018/results/", tx, "/sector/",
+                spp, ".RData"))
+        } else {
+            notfound[[length(notfound)+1L]] <- list(taxon=tx, species=spp)
+        }
     }
 }
+
+
 
 load("d:/abmi/sppweb2018/c4i/tables/lookup-birds.RData")
 tax <- droplevels(Lookup[Lookup$ModelNorth | Lookup$ModelSouth,])

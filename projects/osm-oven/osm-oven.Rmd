@@ -673,6 +673,20 @@ The combined effect of mines, wells, and facilities were also negative. Slope ba
 
 Seismic lines, on the other hand, showed an opposite pattern: landscape level effects appeared above the line of the low-landscape-effects model. The slight increase in density when we considered the landscape effects was likely due to positive effects of landscape level suitable habitats present beside low amounts (<10% at the 1km2 scale) of seismic lines. The effects of increasing seismic line amounts in the landscapes were negative for both model types and showed a significant drop after 5% seismic line amount.
 
+## Vital Rates and Population Trends
+
+The Boreal Monitoring Avian Productivity and Survivorship in the Oil Sands Region of Northeastern Alberta (Boreal MAPS[^1]) program provides data for use in estimating population-level vital rates for bird species nesting in the boreal forest. Data are collected through banding (marking) and recapturing birds. These data are used to derive adult population size, productivity and survivorship indices. Low or declining productivity would indicate that effects are occurring on the breeding grounds, while low or declining adult and/or juvenile survivorship would suggest that the effects are caused on the wintering grounds or during migration (Newton 2004, Wilson et al. 2018). 
+
+From 2011 to 2018, 1,378 Ovenbird captures (representing 1,092 individuals) were recorded, including birds newly banded and recaptures of birds banded earlier in the same season or of those banded in previous seasons. Significant decreases in adult population size by about 50% (slope of $-0.515 \pm 0.151$; $p=0.014$) and productivity by about 60% (slope of $-0.086 \pm 0.034$; $p=0.042$) are apparent during this period (Figure \@ref(fig:plot-trend)). Survivorship was 0.278, a relatively low value relative to the survivorship estimate based on continental MAPS data  (0.559[^2]). 
+
+[^1]: Data and analyses from the Boreal MAPS program sponsored by Syncrude Canada Ltd., Hammerstone Corporation, Canadian Natural Resources Limited, Cenovus Energy, ConocoPhillips Canada Resources Corp., Devon Energy, Husky Oil Operations Ltd., Imperial Oil Ltd., Suncor Energy Inc., TOTAL E&P Canada, CNOOC International, and the Oil Sands Developers Group.
+
+[^2]: https://vitalratesofnorthamericanlandbirds.org/pages/bird.php?id=OVEN
+
+```{r plot-trend,fig.cap='Ovenbird adult population size and productivity in the Oil Sands Region (2011 to 2018 based on data and analyses from the Boreal MAPS program).',out.width='100%'}
+include_graphics("images/oven-trend.png")
+```
+
 # Conclusions and Outlook
 
 This report provides an example of what the impacts of oilsands development are on the Ovenbird.  The Ovenbird is one of hundreds of bird species that can be evaluated in this way.  This report clearly shows that habitat loss and to a lesser degree habitat fragmentation and pollutants have negative effects on this species.  The Ovenbird is a common bird and thus there is limited concern that oilsands development will lead to regional extinction.  However, this work clearly demonstrates that the cumulative effects of oilsands and other activities are altering the size of Ovenbird populations in the region based on changes in habitat availability.  
@@ -721,6 +735,8 @@ Marques, T. A., S. T. Buckland, D. L. Borchers, D. Tosh, and R. A. McDonald. 201
 
 Matsuoka, S. M., Bayne, E. M., Sólymos, P., Fontaine, P., Cumming, S. G., Schmiegelow, F. K. A., & Song, S. A., 2012. Using binomial distance-sampling models to estimate the effective detection radius of point-counts surveys across boreal Canada. Auk 129:268--282. 
 
+Newton, I., 2004. Population limitation in migrants. Ibis 146:197--226.
+
 Porneluzi, P., M. A. Van Horn, and T. M. Donovan (2011). Ovenbird (_Seiurus aurocapilla_), version 2.0. In The Birds of North America (A. F. Poole, Editor). Cornell Lab of Ornithology, Ithaca, NY, USA. https://doi.org/10.2173/bna.88
 
 R Core Team (2019). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
@@ -760,6 +776,8 @@ Westwood, A. R., C. Staicer, P. Solymos, S. Hache, T. Fontaine, E. Bayne, and D.
 Wilson, S. J., and E. M. Bayne. 2018. Use of an acoustic location system to understand how presence of conspecifics and canopy cover influence Ovenbird (Seiurus aurocapilla) space use near reclaimed wellsites in the boreal forest of Alberta. Avian Conservation and Ecology 13(2):4. https://doi.org/10.5751/ACE-01248-130204
 
 Wilson S. J., Bayne E. M. (2019). Songbird community response to regeneration of reclaimed wellsites in the boreal forest of Alberta. Journal of Ecoacoustics. 3:#I4B2LF. https://doi.org/10.22261/JEA.I4B2LF
+
+Wilson, S., Saracco, J. S., Krikun, R., Flockhart, D. T. T., Godwin, C. M., and Foster, K. R., 2018. Drivers of demographic decline across the annual cycle of a threatened migratory bird. Scientific Reports 8:7316. https://doi.org/10.1038/s41598-018-25633-z
 
 Yip, D. A., L. Leston, E. M. Bayne, P. Sólymos, and A. Grover. 2017. Experimentally derived detection distances from audio recordings and human observers enable integrated analysis of point count data. Avian Conservation and Ecology 12(1):11. https://doi.org/10.5751/ACE-00997-120111
 Youden, W. J. (1950): Index for rating diagnostic tests. Cancer 3:32–5.

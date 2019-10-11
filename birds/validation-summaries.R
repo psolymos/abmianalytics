@@ -60,15 +60,21 @@ validate <- function(res, Groups, stage="HF") {
     yobs <- Y[,"x"]
     npool <- Y[,"by"]
     ypred <- apply(Predm, 1, median)
-    m1 <- get_mass(yo, evo)
-    m <- get_mass(yobs, ypred)
+    m1 <- suppressWarnings(get_mass(yo, evo))
+    m <- suppressWarnings(get_mass(yobs, ypred))
 
     AUCo <- simple_auc(simple_roc(ifelse(yo>0, 1, 0), evo))
     CORo <- cor(yobs, ypred, method="spearman")
     CORUo <- .cor_uncentered(yobs, ypred)
+    R2o <- summary(lm(ypred ~ yobs))$r.squared
+    oc <- epiR::epi.occc(cbind(yobs, ypred))
+    PRCo <- oc$oprec
+    ACCo <- oc$oaccu
+
     list(spp=res[[1]]$species,
         Groups=Groups,
         AUC=AUCo, COR=CORo, CORU=CORUo,
+        R2=R2o, PRC=PRCo, ACC=ACCo,
         y1obs=yo, lam1=evo, yobs=yobs, lam=ypred,
         cmf1=m1, cmf=m, npool=npool,
         mu=muo, off=offo)
@@ -82,10 +88,15 @@ validate <- function(res, Groups, stage="HF") {
     ypred <- apply(Predm, 1, median)
     CORo <- cor(yobs, ypred, method="spearman")
     CORUo <- .cor_uncentered(yobs, ypred)
-    c(COR=CORo, CORU=CORUo)
+    R2o <- summary(lm(ypred ~ yobs))$r.squared
+    oc <- epiR::epi.occc(cbind(yobs, ypred))
+    PRCo <- oc$oprec
+    ACCo <- oc$oaccu
+    c(COR=CORo, CORU=CORUo, R2=R2o, PRC=PRCo, ACC=ACCo)
 }
 randomize <- function(v, B=199) {
-    cbind(c(COR=v$COR, CORU=v$CORU), replicate(B, .randomize(v)))
+    cbind(c(COR=v$COR, CORU=v$CORU, R2=v$R2, PRC=v$PRC, ACC=v$ACC),
+        replicate(B, .randomize(v)))
 }
 summarize <- function(r) {
     q <- t(apply(r, 1, quantile, c(0.025, 0.5, 0.975)))
@@ -110,15 +121,63 @@ for (spp in SPP) {
     }
     for (g in c("TS1", "TS2", "TS3", "TS4", "TR1", "TR2", "TR3", "TR4")) {
         v <- validate(res, Groups=as.factor(DATv[,g]), stage="HF")
-        VV[[g]] <- cbind(c(COR=v$COR, CORU=v$CORU))
+        VV[[g]] <- cbind(c(COR=v$COR, CORU=v$CORU, R2=v$R2, PRC=v$PRC, ACC=v$ACC))
     }
     ALL[[spp]] <- VV
 }
 
-save(ALL, file=file.path(ROOT, "validation-BG-results-2019-05-13.RData"))
+save(ALL, file=file.path(ROOT, "validation-BG-results-2019-10-08.RData"))
 
 
-pdf(file.path(ROOT, "validation-BG-results-2019-05-13.pdf"), onefile = TRUE, width=15, height=5)
+## include 1x1 landscapes?
+
+## TS=time series, EX=extent (what extent of 1x1 is aggregated), GR=grain (how far the endpoints are)
+
+
+RES <- lapply(structure(names(ALL), names=names(ALL)), function(spp)
+    sapply(ALL[[spp]][c("EX2x2", "EX3x3", "EX4x4", "EX5x5", "EX10x10")], function(z) z[,1]))
+
+sc <- c("EX2x2", "EX3x3", "EX4x4", "EX5x5", "EX10x10")
+names(sc) <- sc
+RES2 <- lapply(sc, function(z) t(sapply(RES, function(zz) zz[,z])))
+
+library(car)
+#op <- par(mfrow=c(2,3))
+i <- 1
+z <- data.frame(RES2[[i]][,c("PRC","ACC")])
+plot(ACC ~ PRC, z, main=i, xlim=c(0,1), ylim=c(0,1), type="n")
+col <- 1:5
+for (i in 1:5) {
+    z <- data.frame(RES2[[i]][,c("PRC","ACC")])
+    #plot(ACC ~ PRC, z, main=i, xlim=c(0,1), ylim=c(0,1), type="n")
+    points(mean(z$PRC), mean(z$ACC), col=i, pch=3, cex=2)
+    #abline(v=mean(z$PRC), h=mean(z$ACC), col=4)
+    ch <- chull(z$PRC, z$ACC)
+#    lines(z[c(ch, ch[1]),], col=i)
+    el <- car::dataEllipse(z$PRC, z$ACC, levels=c(0.9), draw=FALSE)
+    lines(el, col=i)
+}
+#par(op)
+
+
+VV <- ALL[[spp]]
+TS <- do.call(cbind, VV[c("TS1", "TS2", "TS3", "TS4")])
+TR <- do.call(cbind, VV[c("TR1", "TR2", "TR3", "TR4")])
+colnames(TS) <- colnames(TR) <- paste0("Visit", 1:4)
+EX <- sapply(VV[c("EX2x2", "EX3x3", "EX4x4", "EX5x5", "EX10x10")], function(z) z[,1])
+GR <- sapply(VV[c("GR2x2", "GR3x3", "GR4x4", "GR5x5", "GR10x10")], function(z) z[,1])
+EXr <- sapply(VV[c("EX2x2", "EX3x3", "EX4x4", "EX5x5", "EX10x10")], function(z)
+    apply(z, 1, quantile, c(0.025, 0.975), na.rm=TRUE))
+GRr <- sapply(VV[c("GR2x2", "GR3x3", "GR4x4", "GR5x5", "GR10x10")], function(z)
+    apply(z, 1, quantile, c(0.025, 0.975), na.rm=TRUE))
+rownames(EXr) <- rownames(GRr) <- c("COR_lower", "COR_upper", "CORU_lower", "CORU_upper")
+
+
+
+
+
+
+pdf(file.path(ROOT, "validation-BG-results-2019-10-08.pdf"), onefile = TRUE, width=15, height=5)
 
 op <- par(mfrow=c(1,3))
 
