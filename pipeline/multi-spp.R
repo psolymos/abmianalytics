@@ -9,11 +9,11 @@ opar <- set_options(
 load_common_data()
 
 #tx <- "mammals"
-tx <- "birds"
+#tx <- "birds"
 #tx <- "mites"
 #tx <- "mosses"
 #tx <- "lichens"
-#tx <- "vplants"
+tx <- "vplants"
 
 id <- get_all_id()
 species <- get_all_species(tx)
@@ -256,7 +256,15 @@ for (i in seq_along(species)) {
     KEEP[i] <- z$Keep
 
     ## use object regs to evaluate in/out by smaller regions
-    DAT <- cbind(NR=rowSums(y$SA.Ref), NC=rowSums(y$SA.Curr))
+    if (getOption("cure4insect")$version != "2017" && y$taxon != "birds") {
+        DAT <- cbind(
+            NR=.truncate(y$Totals[,"Ref"]),
+            NC=.truncate(y$Totals[,"Curr"]))
+    } else {
+        DAT <- cbind(
+            NR=.truncate(rowSums(y$SA.Ref)),
+            NC=.truncate(rowSums(y$SA.Curr)))
+    }
     DAT <- DAT[match(rownames(TAB), rownames(DAT)),]
     DAT[is.na(DAT)] <- 0
     MEAN <- apply(groupMeans(DAT, 1, regs), 1, max)

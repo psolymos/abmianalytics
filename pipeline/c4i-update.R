@@ -495,46 +495,87 @@ for (tx in c("vplants", "mites", "mosses", "lichens")) {
     }
 }
 
+## rename files
+fl <- list.files("s:/Result from Ermias_2018/", recursive=TRUE, full.names=TRUE)
+fl <- fl[endsWith(fl, "..RData")]
+length(fl)
+fl2 <- paste0(substr(fl, 1, nchar(fl)-7), ".RData")
+file.rename(fl, fl2)
+
 ## /sector files
 
-tx <- "vplants"
+library(cure4insect)
+load_common_data()
+SP <- get_species_table()
 
-issue <- list()
-notfound <- list()
-for (tx in c("vplants", "mites", "mosses", "lichens")) {
+load("d:/abmi/AB_data_v2018/data/analysis/kgrid_table_km.Rdata")
+load("d:/abmi/reports/2018/data/kgrid_areas_by_sector.RData")
+kgrid$Sonly <- rownames(kgrid) %in% get_all_id("south")
+kgrid$Nonly <- rownames(kgrid) %in% get_all_id("north")
+
+load("s:/R km2 grid current and backfilled processed SOUTH.Rdata")
+rownames(km2) <- km2$LinkID
+kgrid$Sx <- rownames(kgrid) %in% rownames(km2)
+table(kgrid$Sonly, kgrid$Sx)
+kgrid$SxS <- interaction(kgrid$Sonly, kgrid$Sx)
+levels(kgrid$SxS) <- c("Out", "Ponly", "Eonly", "OK")
+by(kgrid$pSoil, kgrid$SxS, mean)
+
+str(KT)
+
+#tx <- "vplants"
+for (tx in c("mites", "vplants", "mosses", "lichens")) {
 
     dirin <- paste0("s:/Result from Ermias_2018/", tx, "/combined/Sector effects/Sector abundance summary/")
-    #dirin2 <- paste0("s:/Result from Ermias_2018/", tx, "/combined/Km2 summaries/")
+    dirin2 <- paste0("s:/Result from Ermias_2018/", tx, "/combined/Km2 summaries/")
 
     SPP <- rownames(SP)[SP$taxon == tx]
     #SPP <- gsub(".RData", "", list.files(dirin))
+    #spp <- SPP[1]
     for (spp in SPP) {
-        cat(tx, spp);flush.console()
-        ee <- new.env()
-        l <- try(load(paste0(dirin, spp, ".RData"), envir=ee))
-        if (!inherits(l, "try-error")) {
-            SA.Curr <- as.matrix(ee$SA.curr[,colnames(KA_2016)])
-            SA.Ref <- as.matrix(ee$SA.ref[,colnames(KA_2016)])
-            #ee2 <- new.env()
-            #load(paste0(dirin2, spp, ".RData"), envir=ee2)
-            #rc <- ee2$RefCurr
-            #rownames(rc) <- rc[,1]
-            #rc <- as.matrix(rc[,-1])
-            #rc <- rc[rownames(SA.Curr),]
-            s0 <- rowSums(SA.Ref)
-            s1 <- rowSums(SA.Curr)
-            mx <- max(s0, s1)
-            if (mx > 1) {
-                issue[[length(issue)+1L]] <- list(taxon=tx, species=spp, max=mx)
-                cat("\t\tMAX > 1\n")
-            } else {
-                cat("\n")
-            }
+        TYPE <- "C"
+        if (SP[spp,"model_north"] && !SP[spp,"model_south"])
+            TYPE <- "N"
+        if (!SP[spp,"model_north"] && SP[spp,"model_south"])
+            TYPE <- "S"
+        if (TYPE == "S") {
+        cat(tx, spp, TYPE, "\n")
+        flush.console()
 
-            save(SA.Curr, SA.Ref, file=paste0("d:/abmi/reports/2018/results/", tx, "/sector/",
-                spp, ".RData"))
-        } else {
-            notfound[[length(notfound)+1L]] <- list(taxon=tx, species=spp)
+        ee <- new.env()
+        load(paste0(dirin, spp, ".RData"), envir=ee)
+        SA.Curr <- as.matrix(ee$SA.curr[,colnames(KA_2016)])
+        SA.Ref <- as.matrix(ee$SA.ref[,colnames(KA_2016)])
+        SA.Curr <- SA.Curr[match(rownames(kgrid), rownames(SA.Curr)),]
+        SA.Ref <- SA.Ref[match(rownames(kgrid), rownames(SA.Ref)),]
+
+        ee2 <- new.env()
+        load(paste0(dirin2, spp, ".RData"), envir=ee2)
+        Totals <- ee2$RefCurr
+        rownames(Totals) <- Totals[,1]
+        Totals <- as.matrix(Totals[,-1])
+        Totals <- Totals[match(rownames(kgrid), rownames(Totals)),]
+        rownames(Totals) <- rownames(kgrid)
+
+        #summary(Totals[kgrid$SxS,])
+        #summary(SA.Curr[kgrid$SxS,])
+
+        if (TYPE == "S") {
+            SA.Curr <- SA.Curr[kgrid$Sonly,]
+            SA.Ref <- SA.Ref[kgrid$Sonly,]
+            Totals <- Totals[kgrid$Sonly,]
+        }
+        if (TYPE == "N") {
+            SA.Curr <- SA.Curr[kgrid$Nonly,]
+            SA.Ref <- SA.Ref[kgrid$Nonly,]
+            Totals <- Totals[kgrid$Nonly,]
+        }
+        SA.Curr[is.na(SA.Curr)] <- 0
+        SA.Ref[is.na(SA.Ref)] <- 0
+        Totals[is.na(Totals)] <- 0
+
+        save(SA.Curr, SA.Ref, Totals, file=paste0("d:/abmi/reports/2018/results/", tx, "/sector/",
+            spp, ".RData"))
         }
     }
 }
