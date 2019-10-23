@@ -355,6 +355,40 @@ save(XY, KT, KA_2016, SP, QT2KT, VER, CF, CFbirds,
 #save(XY, KT, KA_2016, SP, QT2KT, VER, CF, # CFbirds,
 #    file="s:/reports/2018/data/kgrid_areas_by_sector.RData")
 
+## update mammal coefs
+
+library(mefa4)
+library(sp)
+library(readxl)
+load("d:/abmi/reports/2018/data/kgrid_areas_by_sector.RData")
+mm <- list(
+    coef_veg=read_xlsx("d:/abmi/sppweb2018/snow-tracking/mammals.xlsx", "N"),
+    coef_soil=read_xlsx("d:/abmi/sppweb2018/snow-tracking/mammals.xlsx", "S"),
+    coef_paspen=read_xlsx("d:/abmi/sppweb2018/snow-tracking/mammals.xlsx", "SA"),
+    lower_veg=read_xlsx("d:/abmi/sppweb2018/snow-tracking/mammals.xlsx", "NL"),
+    lower_soil=read_xlsx("d:/abmi/sppweb2018/snow-tracking/mammals.xlsx", "SL"),
+    higher_veg=read_xlsx("d:/abmi/sppweb2018/snow-tracking/mammals.xlsx", "NU"),
+    higher_soil=read_xlsx("d:/abmi/sppweb2018/snow-tracking/mammals.xlsx", "SU"))
+for (i in 1:length(mm)) {
+    mm[[i]] <- as.data.frame(mm[[i]])
+    rownames(mm[[i]]) <- mm[[i]][,1]
+    mm[[i]] <- as.matrix(mm[[i]][,-1,drop=FALSE])
+}
+
+
+sn <- rownames(SP[SP$taxon=="mammals" & SP$model_north,])
+ss <- rownames(SP[SP$taxon=="mammals" & SP$model_south,])
+
+CF$coef$veg[sn,] <- mm$coef_veg[sn,colnames(CF$coef$veg)]
+CF$coef$soil[ss,] <- mm$coef_soil[ss,colnames(CF$coef$soil)]
+CF$coef$paspen[ss,] <- mm$coef_paspen[ss,colnames(CF$coef$paspen)]
+CF$lower$veg[sn,] <- mm$lower_veg[sn,colnames(CF$lower$veg)]
+CF$lower$soil[ss,] <- mm$lower_soil[ss,colnames(CF$lower$soil)]
+CF$higher$veg[sn,] <- mm$higher_veg[sn,colnames(CF$higher$veg)]
+CF$higher$soil[ss,] <- mm$higher_soil[ss,colnames(CF$higher$soil)]
+
+save(XY, KT, KA_2016, SP, QT2KT, VER, CF, CFbirds,
+    file="d:/abmi/reports/2018/data/kgrid_areas_by_sector.RData")
 
 ## calculate spclim raster for /spclim
 
@@ -495,6 +529,69 @@ for (tx in c("vplants", "mites", "mosses", "lichens")) {
     }
 }
 
+
+library(readxl)
+load("d:/abmi/reports/2018/data/kgrid_areas_by_sector.RData")
+Cn <- as.data.frame(read_xlsx("d:/abmi/sppweb2018/snow-tracking/mammals.xlsx", "NC"))
+rownames(Cn) <- Cn[,1]
+Cn <- as.matrix(Cn[,-1])
+Cs <- as.data.frame(read_xlsx("d:/abmi/sppweb2018/snow-tracking/mammals.xlsx", "SC"))
+rownames(Cs) <- Cs[,1]
+Cs <- as.matrix(Cs[,-1])
+
+cn <- colnames(Cn)
+compare_sets(cn, colnames(kgrid))
+kgrid$Intercept <- 1
+kgrid$V1 <- 1
+kgrid$V2 <- 1
+kgrid$Lat <- kgrid$POINT_Y
+kgrid$Long <- kgrid$POINT_X
+kgrid$Lat2 <- kgrid$Lat^2
+kgrid$Long2 <- kgrid$Long^2
+kgrid$LatLong <- kgrid$Lat*kgrid$Long
+kgrid$MAPPET <- kgrid$MAP*kgrid$PET
+kgrid$MATAHM <- kgrid$MAT*kgrid$AHM
+kgrid$MAPFFP <- kgrid$MAP*kgrid$FFP
+kgrid$MAT2 <- kgrid$MAT*abs(kgrid$MAT) # only mammals!!!
+kgrid$MWMT2 <- kgrid$MWMT^2
+setdiff(cn, colnames(kgrid))
+Xclim <- as.matrix(kgrid[,cn])
+
+tx <- "mammals"
+SPP <- rownames(SP)[SP$taxon == tx]
+for (spp in SPP) {
+    cat(tx, spp, "\n");flush.console()
+
+    TYPE <- "C" # combo
+    if (SP[spp, "model_south"] && !SP[spp, "model_north"])
+        TYPE <- "S"
+    if (!SP[spp, "model_south"] && SP[spp, "model_north"])
+        TYPE <- "N"
+
+    if (TYPE != "N") {
+        ests <- Cs[spp,]
+        ests <- ests[names(ests) != "pAspen"]
+        musClim <- drop(Xclim[,names(ests)] %*% ests)
+        rsoil <- make_raster(musClim, kgrid, rt)
+    } else {
+        rsoil <- NULL
+    }
+
+    if (TYPE != "S") {
+        estn <- Cn[spp,]
+        munClim <- drop(Xclim[,names(estn)] %*% estn)
+        rveg <- make_raster(munClim, kgrid, rt)
+    } else {
+        rveg <- NULL
+    }
+
+    save(rveg, rsoil, file=paste0("d:/abmi/reports/2018/results/", tx, "/spclim/",
+        spp, ".RData"))
+
+}
+
+
+
 ## rename files
 fl <- list.files("s:/Result from Ermias_2018/", recursive=TRUE, full.names=TRUE)
 fl <- fl[endsWith(fl, "..RData")]
@@ -524,6 +621,7 @@ by(kgrid$pSoil, kgrid$SxS, mean)
 str(KT)
 
 #tx <- "vplants"
+#tx <- "mammals"
 for (tx in c("mites", "vplants", "mosses", "lichens")) {
 
     dirin <- paste0("s:/Result from Ermias_2018/", tx, "/combined/Sector effects/Sector abundance summary/")
@@ -538,7 +636,6 @@ for (tx in c("mites", "vplants", "mosses", "lichens")) {
             TYPE <- "N"
         if (!SP[spp,"model_north"] && SP[spp,"model_south"])
             TYPE <- "S"
-        if (TYPE == "S") {
         cat(tx, spp, TYPE, "\n")
         flush.console()
 
@@ -576,9 +673,47 @@ for (tx in c("mites", "vplants", "mosses", "lichens")) {
 
         save(SA.Curr, SA.Ref, Totals, file=paste0("d:/abmi/reports/2018/results/", tx, "/sector/",
             spp, ".RData"))
-        }
     }
 }
+
+
+## birds
+SPP <- rownames(SP)[SP$taxon == "birds"]
+AOU <- as.character(e1$Lookup[SPP,"Code"])
+
+for (i in 1:length(AOU)) {
+    spp <- AOU[i]
+    cat(spp, "\n");flush.console()
+
+    TYPE <- "C" # combo
+    if (SP[SPP[i], "model_south"] && !SP[SPP[i], "model_north"])
+        TYPE <- "S"
+    if (!SP[SPP[i], "model_south"] && SP[SPP[i], "model_north"])
+        TYPE <- "N"
+
+    if (TYPE != "N") {
+        ests <- e1$CoefSouthBootlistSpace[[spp]][1,cfs$spclim]
+        musClim <- drop(Xclim[,cfs$spclim] %*% ests[cfs$spclim])
+        rsoil <- make_raster(musClim, kgrid, rt)
+    } else {
+        rsoil <- NULL
+    }
+
+    if (TYPE != "S") {
+        estn <- e1$CoefNorthBootlistSpace[[spp]][1,cfs$spclim]
+        munClim <- drop(Xclim[,cfs$spclim] %*% estn[cfs$spclim])
+        rveg <- make_raster(munClim, kgrid, rt)
+    } else {
+        rveg <- NULL
+    }
+
+    save(rveg, rsoil, file=paste0("d:/abmi/reports/2018/results/birds/spclim/",
+        SPP[i], ".RData"))
+
+}
+
+
+
 
 
 

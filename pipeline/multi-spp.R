@@ -8,12 +8,12 @@ opar <- set_options(
 	boot=TRUE)
 load_common_data()
 
-#tx <- "mammals"
+tx <- "mammals"
 #tx <- "birds"
 #tx <- "mites"
 #tx <- "mosses"
 #tx <- "lichens"
-tx <- "vplants"
+#tx <- "vplants"
 
 id <- get_all_id()
 species <- get_all_species(tx)
