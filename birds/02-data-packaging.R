@@ -817,3 +817,70 @@ save(#DAT, YY, OFF, SSH, BB,
     mods, DATv, YYv, OFFv, SSHv,
     file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-biggrids-2019-05-13.RData")
 
+
+## FORSITE mixedwood redefinitions
+
+#tmp <- read.csv("d:/bam/BAM_data_v2019/forsite/stands2PSpoints.csv")
+tmp <- read.csv("d:/bam/BAM_data_v2019/forsite/stands2ALLpoints.csv")
+
+compare_sets(dd$PKEY, tmp$PKEY)
+
+dd$mw <- tmp$StandType[match(dd$PKEY, tmp$PKEY)]
+table(dd$mw, dd$vegc)
+table(tmp$StandType)
+data.frame(table(dd$mw, useNA="a"))
+table(dd$mw, dd$vegc, useNA="a")
+
+dd$mw[dd$mw == "Unidentified or no data"] <- NA
+dd$mw <- droplevels(dd$mw)
+dd <- dd[!is.na(dd$mw),]
+
+table(dd$mw, grepl("Mixedwood", as.character(dd$mw), fixed=TRUE))
+dd$isMix <- ifelse(grepl("Mixedwood", as.character(dd$mw), fixed=TRUE), 1, 0)
+dd$isWSpruce <- ifelse(dd$mw %in% c("pureWhiteSpruce"), 1, 0)
+dd$isPine <- ifelse(dd$mw %in% c("purePine"), 1, 0)
+dd$isBSpruce <- ifelse(dd$mw %in% c("pureBlackSpruce"), 1, 0)
+dd$isLarch <- 0
+dd$isBSLarch <- pmax(dd$isLarch, dd$isBSpruce)
+isUpCon <- ifelse(dd$mw %in% c("pureConifer_allcon", "pureConifer_Pl",
+    "pureConifer_Sx", "purePine", "pureWhiteSpruce"), 1, 0)
+isCon <- ifelse(dd$mw %in% c("pureConifer_allcon", "pureConifer_Pl",
+    "pureConifer_Sx", "purePine", "pureWhiteSpruce", "pureBlackSpruce"), 1, 0)
+dd$vegc <- dd$mw
+dd$vegw <- 1
+
+
+source("~/repos/abmianalytics/birds/models-veg.R")
+#mods_veg$Hab <- list(.~. + mw)
+
+
+setdiff(get_terms(mods_veg, "list"), colnames(dd))
+rm(DAT, YY, OFF, OFFmean, SSH, BB, mods)
+
+cn2 <- c(cn, get_terms(mods_veg, "list"), "vegw", "vegca")
+DAT <- dd[, cn2]
+YY <- yy[rownames(DAT),]
+YY <- YY[,colSums(YY>0) >= NMIN]
+#YY <- YY[,colSums(groupSums(YY, 1, DAT$SS) > 0) >= NMIN]
+OFF <- off[rownames(DAT), intersect(colnames(off), colnames(YY))]
+YY <- YY[,colnames(OFF)]
+mods <- mods_veg
+mods$SSH <- NULL
+mods$HF <- NULL
+mods$ARU <- NULL
+#SSH <- SSH_veg[rownames(DAT),]
+
+BB <- pbapply::pbsapply(1:B, bfun, DAT$SS, DAT$BLOCK_XYT)
+nrow(DAT)
+max(BB)
+(lu <- length(unique(as.numeric(BB))))
+stopifnot(all(BB <= nrow(DAT)))
+stopifnot(lu <= nrow(DAT))
+nrow(BB)
+
+z <- .run_path1(1, "AMRO", mods, CAICalpha=1)
+z$timer
+cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(YY)*B*z$timer[3])/(60*60)), "hrs\n")
+
+save(DAT, YY, OFF, BB, mods,
+    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-mixedwood-2019-10-31.RData")
