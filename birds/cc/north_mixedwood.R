@@ -23,8 +23,6 @@ library(mefa4)
 library(opticut)
 source("~/repos/abmianalytics/birds/00-functions.R")
 
-## this version of the function subsets the data to 2006-2015
-## so that we can compare to PIF v3 estimates
 .run_path2 <- function(j, i, mods, CAICalpha=1, wcol=NULL,
     ssh_class=NULL, ssh_fit=NULL)
 {
@@ -44,7 +42,6 @@ source("~/repos/abmianalytics/birds/00-functions.R")
     x <- DAT
     x$order <- seq_len(nrow(x))
     x <- x[BB[,j],]
-    x <- x[x$YEAR >= 2006 & x$YEAR <= 2015,]
     y <- as.numeric(YY[x$order, i])
     off <- OFF[x$order, i]
     w <- if (is.null(wcol))
