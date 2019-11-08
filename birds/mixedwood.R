@@ -1,10 +1,3 @@
-#' ---
-#' title: "Summarizing north and south model results"
-#' author: "Peter Solymos, <solymos@ualberta.ca>"
-#' date: "Dec 19, 2018"
-#' output: pdf_document
-#' ---
-#'
 library(mefa4)
 library(intrval)
 source("~/repos/abmianalytics/birds/00-functions.R")
@@ -14,17 +7,25 @@ ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
 
 en <- new.env()
 load("d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-mixedwood-2019-10-31.RData", envir=en)
-Xn <- get_model_matrix(en$DAT, en$mods)
+xn <- en$DAT
+Xn <- get_model_matrix(xn, en$mods)
 
 Xage <- as.matrix(read.csv("~/repos/abmianalytics/lookup/Xn-veg-v61.csv"))
 colnames(Xage) <- colnames(Xn)[match(colnames(Xage), make.names(colnames(Xn)))]
 
 
-spp <- "ALFL"
+spp <- "OVEN"
 resn <- load_species(file.path(ROOT, "out", "mixedwood", paste0(spp, ".RData")))
 
 estn <- get_coef(resn, Xn, stage="Space", na.out=FALSE)
 printCoefmat(get_summary(estn))
+
+mu <- Xn %*% t(estn[,colnames(Xn)])
+lam <- t(apply(exp(mu), 1, quantile, c(0.5, 0.05, 0.95)))
+lbc <- aggregate(list(D=lam[,1]), list(LandCov=xn$vegc), summary)
+rownames(lbc) <- lbc[,1]
+lbc[,1] <- NULL
+round(lbc, 4)
 
 b <- estn[,"mWell"]
 p <- 1/7
