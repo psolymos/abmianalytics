@@ -9,12 +9,12 @@ en <- new.env()
 load("d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-mixedwood-2019-10-31.RData", envir=en)
 xn <- en$DAT
 Xn <- get_model_matrix(xn, en$mods)
-
+SPP <- colnames(en$YY)
 Xage <- as.matrix(read.csv("~/repos/abmianalytics/lookup/Xn-veg-v61.csv"))
 colnames(Xage) <- colnames(Xn)[match(colnames(Xage), make.names(colnames(Xn)))]
 
 
-spp <- "OVEN"
+spp <- "ALFL"
 resn <- load_species(file.path(ROOT, "out", "mixedwood", paste0(spp, ".RData")))
 
 estn <- get_coef(resn, Xn, stage="Space", na.out=FALSE)
@@ -26,6 +26,26 @@ lbc <- aggregate(list(D=lam[,1]), list(LandCov=xn$vegc), summary)
 rownames(lbc) <- lbc[,1]
 lbc[,1] <- NULL
 round(lbc, 4)
+
+RES <- list()
+for (spp in SPP) {
+    cat(spp, "\n");flush.console()
+    resn <- load_species(file.path(ROOT, "out", "mixedwood", paste0(spp, ".RData")))
+    estn <- get_coef(resn, Xn, stage="Space", na.out=FALSE)
+    mu <- Xn %*% t(estn[,colnames(Xn)])
+    lam <- t(apply(exp(mu), 1, quantile, c(0.5, 0.05, 0.95)))
+    lbc <- aggregate(list(D=lam[,1]), list(LandCov=xn$vegc), summary)
+    rownames(lbc) <- lbc[,1]
+    lbc[,1] <- NULL
+    RES[[spp]] <- lbc
+}
+save(RES, file=file.path(ROOT, "mixedwood-summaries.RData"))
+
+tab <- t(sapply(RES, function(z) z$D[,"Median"]))
+colnames(tab) <- rownames(RES[[1]])
+tab <- round(tab, 6)
+tab[tab < 10^-6] <- 0
+write.csv(tab, file=file.path(ROOT, "mixedwood-summaries.csv"))
 
 b <- estn[,"mWell"]
 p <- 1/7
