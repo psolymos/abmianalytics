@@ -842,9 +842,9 @@ dd$isPine <- ifelse(dd$mw %in% c("purePine"), 1, 0)
 dd$isBSpruce <- ifelse(dd$mw %in% c("pureBlackSpruce"), 1, 0)
 dd$isLarch <- 0
 dd$isBSLarch <- pmax(dd$isLarch, dd$isBSpruce)
-isUpCon <- ifelse(dd$mw %in% c("pureConifer_allcon", "pureConifer_Pl",
+dd$isUpCon <- ifelse(dd$mw %in% c("pureConifer_allcon", "pureConifer_Pl",
     "pureConifer_Sx", "purePine", "pureWhiteSpruce"), 1, 0)
-isCon <- ifelse(dd$mw %in% c("pureConifer_allcon", "pureConifer_Pl",
+dd$isCon <- ifelse(dd$mw %in% c("pureConifer_allcon", "pureConifer_Pl",
     "pureConifer_Sx", "purePine", "pureWhiteSpruce", "pureBlackSpruce"), 1, 0)
 dd$vegc <- dd$mw
 dd$vegw <- 1
