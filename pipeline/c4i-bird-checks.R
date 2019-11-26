@@ -40,6 +40,11 @@ ss <- sample(seq_len(nrow(kgrid)), 10^4)
 
 res <- list()
 
+#ps[,c("HardLin", "SoftLin")] <- 0
+#ps[,"SoftLin"] <- 0
+
+#spp <- "CommonYellowthroat"
+
 for (spp in SPP) {
 
     cat(spp, "\n")
@@ -74,7 +79,6 @@ for (spp in SPP) {
         prs <- rowSums(pr$soil)
     }
     v2 <- combine_veg_soil(XY, prv, prs)
-    #v2 <- ifelse(is.na(v2), 0, v2)
     q <- quantile(v2, 0.99, na.rm=TRUE)
     v3 <- v2
     v3[!is.na(v3) & v3 > q] <- q
@@ -82,22 +86,17 @@ for (spp in SPP) {
     r2 <- .make_raster(v2, kgrid, .read_raster_template())
     r3 <- .make_raster(v3, kgrid, .read_raster_template())
 
-    #summary(v1)
-    #summary(v2)
-    #summary(v3)
     ct2 <- cor.test(v1, v2, method = "spearman")
     ct3 <- cor.test(v1, v3, method = "spearman")
     mx1 <- max(v1, na.rm=TRUE)
     mx2 <- max(v2, na.rm=TRUE)
     mx3 <- max(v3, na.rm=TRUE)
 
-    #plot(v1[ss], v2[ss]);abline(0,1,col=2)
-
 
     crr <- cut(ct3$est, c(-Inf, 0.25, 0.5, 0.75, 0.9, Inf))
     flag <- c("0000check-", "000check-", "00check-", "0check-",
         "")[crr]
-    png(paste0("d:/tmp/birds-check/", flag, spp, ".png"), height=600, width=400*3, pointsize=20)
+    png(paste0("d:/tmp/birds-check-2x/", flag, spp, ".png"), height=600, width=400*3, pointsize=20)
     op <- par(mfrow=c(1,3), mar=c(6, 1, 4, 4))
     plot(r, "NC", sub="stored", box=FALSE, axes=FALSE, main=spp)
     plot(r3, sub="pred + trunc", box=FALSE, axes=FALSE,
@@ -115,6 +114,97 @@ for (spp in SPP) {
         mean_stored=mean(v1, na.rm=TRUE), mean_prtr=mean(v3, na.rm=TRUE),
         rho_prtr=ct3$estimate)
 }
+
+## check what is going on wrt land cover
+#spp <- "Ovenbird"
+#spp <- "PineSiskin" # south model is wrong
+#spp <- "BlackburnianWarbler" # something is funny ~ scaling + roads?
+#spp <- "SpottedSandpiper" # south model is wrong
+#spp <- "GrayCatbird"
+#spp <- "CommonYellowthroat"
+spp <- "Veery"
+
+sort(cure4insect:::.c4if$CFbirds$joint$soil[spp,c("HardLin", "SoftLin")])
+sort(cure4insect:::.c4if$CFbirds$joint$veg[spp,c("HardLin", "SoftLin")])
+
+x <- cure4insect:::.c4if$CFbirds$joint$soil
+xm <- apply(x[,!(colnames(x) %in% c("HardLin", "SoftLin"))], 1, max, na.rm=TRUE)
+xl <- apply(x[,(colnames(x) %in% c("HardLin", "SoftLin"))], 1, max, na.rm=TRUE)
+
+plot(xm, xl)
+abline(0,1)
+text(xm, xl, ifelse(xl-xm > 5, rownames(x), ""), cex=0.6)
+
+x[xl > xm,]
+
+
+spp <- "BlackburnianWarbler"
+x <- cure4insect:::.c4if$CFbirds$joint$veg
+sort(x[spp,])
+
+es <- c("WhiteSpruce_0-10", "Pine_0-10", "Deciduous_0-10", "Mixedwood_0-10",
+    "BlackSpruce_0-10", "CCWhiteSpruce_0-10", "CCPine_0-10", "CCDeciduous_0-10",
+    "CCMixedwood_0-10", "Shrub", "Grass")
+xm <- apply(x[,(colnames(x) %in% es)], 1, max, na.rm=TRUE)
+xl <- apply(x[,(colnames(x) %in% c("HardLin", "SoftLin"))], 1, max, na.rm=TRUE)
+
+plot(xm, xl)
+abline(0,1)
+text(xm, xl, ifelse(xl-xm > 5, rownames(x), ""), cex=0.6)
+
+for (lc in colnames(ps)) {
+    rr <- .make_raster(ps[,lc], kgrid, .read_raster_template())
+    png(paste0("d:/tmp/", spp, "-", lc, ".png"), height=600, width=400)
+    op <- par(mar=c(6, 1, 4, 4))
+    plot(rr, box=FALSE, axes=FALSE, main=lc)
+    par(op)
+    dev.off()
+}
+
+y <- load_species_data(spp)
+r <- rasterize_results(y)
+v1 <- extract(r[["NC"]], XY)
+object <- load_spclim_data(spp)
+for (lc in colnames(ps)) {
+
+    cat(lc, "\n")
+    flush.console()
+
+    psx <- ps
+    psx[,lc] <- 0
+
+    pr <- predict_mat(object, XY, pv, psx)
+
+    if (!is.null(pr$veg))
+        pr$veg[is.na(pr$veg)] <- 0
+    if (!is.null(pr$soil))
+        pr$soil[is.na(pr$soil)] <- 0
+
+    if (is.null(pr$veg)) {
+        prv <- rep(0, nrow(pr$soil))
+    } else {
+        prv <- rowSums(pr$veg)
+    }
+    if (is.null(pr$soil)) {
+        prs <- rep(0, nrow(pr$veg))
+    } else {
+        prs <- rowSums(pr$soil)
+    }
+    v2 <- combine_veg_soil(XY, prv, prs)
+    q <- quantile(v2, 0.99, na.rm=TRUE)
+    v3 <- v2
+    v3[!is.na(v3) & v3 > q] <- q
+
+    r3 <- .make_raster(v3, kgrid, .read_raster_template())
+
+    png(paste0("d:/tmp/", spp, "-", lc, ".png"), height=600, width=400*2, pointsize=14)
+    op <- par(mfrow=c(1,2), mar=c(6, 1, 4, 4))
+    plot(r, "NC", sub="stored", box=FALSE, axes=FALSE, main=paste(spp, lc))
+    plot(r3, sub="pred + trunc", box=FALSE, axes=FALSE)
+    par(op)
+    dev.off()
+}
+
 
 ## compare bootstrap mean and individual coefs for 100 runs
 
@@ -134,12 +224,11 @@ tf <- function(x, p=0.99) {
 }
 
 #spp <- "Ovenbird"
-spp <- "PineSiskin" # south model is wrong
+#spp <- "PineSiskin" # south model is wrong
 #spp <- "BlackburnianWarbler" # something is funny ~ scaling + roads?
 #spp <- "SpottedSandpiper" # south model is wrong
 #spp <- "GrayCatbird"
-#spp <- "CommonYellowthroat"
-
+spp <- "CommonYellowthroat"
 
 aou <- rownames(tax)[tax$sppid == spp]
 

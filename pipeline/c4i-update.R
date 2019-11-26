@@ -343,13 +343,48 @@ colnames(CFbirds[[1]][[2]])
 
 sapply(c(CFbirds$marginal, CFbirds$joint), range, na.rm=TRUE)
 
+## address JOING SoftLin in the south
+
+x <- CFbirds$joint$soil
+xm <- apply(x[,!(colnames(x) %in% c("HardLin", "SoftLin"))], 1, max, na.rm=TRUE)
+xl <- apply(x[,(colnames(x) %in% c("HardLin", "SoftLin"))], 1, max, na.rm=TRUE)
+
+plot(xm, xl)
+abline(0,1)
+text(xm, xl, ifelse(xl-xm > 5, rownames(x), ""), cex=0.6)
+
+x[xl - xm > 5, c("HardLin")] <- xm[xl - xm > 5]
+#x[, c("HardLin")] <- (-Inf)
+x[xl - xm > 5, c("SoftLin")] <- xm[xl - xm > 5]
+CFbirds$joint$soil <- x
+
+x <- CFbirds$joint$veg
+
+es <- c("WhiteSpruce_0-10", "Pine_0-10", "Deciduous_0-10", "Mixedwood_0-10",
+    "BlackSpruce_0-10", "CCWhiteSpruce_0-10", "CCPine_0-10", "CCDeciduous_0-10",
+    "CCMixedwood_0-10", "Shrub", "Grass")
+xm <- apply(x[,(colnames(x) %in% es)], 1, max, na.rm=TRUE)
+xl <- apply(x[,(colnames(x) %in% c("HardLin", "SoftLin"))], 1, max, na.rm=TRUE)
+
+plot(xm, xl)
+abline(0,1)
+text(xm, xl, ifelse(xl-xm > 5, rownames(x), ""), cex=0.6)
+
+x[xl - xm > 5, c("HardLin")] <- xm[xl - xm > 5]
+#x[, c("HardLin")] <- (-Inf)
+x[xl - xm > 5, c("SoftLin")] <- xm[xl - xm > 5]
+
+CFbirds$joint$veg <- x
+
+## final tweaks
+
 table(SP$habitat_assoc, useNA="a")
 SP$habitat_assoc[is.na(SP$habitat_assoc)] <- "NotAssessed"
 
 ## save
-write.csv(spt, row.names=FALSE, file="d:/abmi/reports/2018/data/species-info.csv")
 save(XY, KT, KA_2016, SP, QT2KT, VER, CF, CFbirds,
     file="d:/abmi/reports/2018/data/kgrid_areas_by_sector.RData")
+write.csv(spt, row.names=FALSE, file="d:/abmi/reports/2018/data/species-info.csv")
 
 #write.csv(spt, row.names=FALSE, file="s:/reports/2018/data/species-info.csv")
 #save(XY, KT, KA_2016, SP, QT2KT, VER, CF, # CFbirds,
