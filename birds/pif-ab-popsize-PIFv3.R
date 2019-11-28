@@ -834,15 +834,18 @@ proj4string(xypt) <-
 xypt <- spTransform(xypt, proj4string(r))
 xypt2BCR <- over(xypt, BCR)
 
+raster::scalebar()
 
-pdf("~/GoogleWork/bam/PIF-AB/draft6/Fig1-maps.pdf", width=12, height=9)
+pdf("~/GoogleWork/bam/PIF-AB/draft7/Fig1-maps.pdf", width=12, height=9)
 op <- par(mfrow=c(1,2), mar=c(1,1,1,1))
 plot(BCR2AB, col=c(NA, "grey", rep(NA, 11)), border=NA, main="Roadside surveys")
+scalebar(200*1000, xy=c(170840, 5425575), type='bar', divs=4, label=c("0", "100", "200 km"))
 #plot(lak, col="white", border=NA,add=TRUE)
 plot(AB, col=NA, border=1,add=TRUE)
 plot(xy[xy@data$ROAD == 1,], add=TRUE, pch=19, col=1, cex=0.25)
 
 plot(BCR2AB, col=c(NA, "grey", rep(NA, 11)), border=NA, main="Off-road surveys")
+scalebar(200*1000, xy=c(170840, 5425575), type='bar', divs=4, label=c("0", "100", "200 km"))
 #plot(lak, col="white", border=NA,add=TRUE)
 plot(AB, col=NA, border=1,add=TRUE)
 plot(xy[xy@data$ROAD == 0,], add=TRUE, pch=19, col=1, cex=0.25)
