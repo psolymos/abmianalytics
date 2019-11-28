@@ -72,33 +72,25 @@ writeRaster(l, "d:/collaborations/foresite/climate-stack.grd")
 library(raster)
 library(mefa4)
 
+DIR <- "e:/Incidental Take Risk Ranking Matrix for Westfraser/AlPac polygon analysis Nov 25 2019"
+
 # some functions defined here that we'll need
-source("d:/collaborations/foresite/00-functions.R")
+source(file.path(DIR, "00-functions.R"))
 
 # this is the data used to fit the model
 en <- new.env()
-load("d:/collaborations/foresite/ab-birds-mixedwood-2019-10-31.RData", envir=en)
+load(file.path(DIR, "ab-birds-mixedwood-2019-10-31.RData"), envir=en)
 
 # this is your input data
-x <- read.csv("d:/collaborations/foresite/first28rows.csv")
+x <- read.csv(file.path(DIR, "first28rows.csv"))
 
 # this has the spatial predictors as a raster stack
-l <- list()
-for (i in 1:14) {
-    tmp <- raster("d:/collaborations/foresite/climate-stack.grd", band=i)
-    l[[names(tmp)[1]]] <- tmp
-}
-l <- stack(l)
-
-# check stand types
-compare_sets(x$StandType, en$DAT$vegc)
-setdiff(x$StandType, xn$vegc) # class '0' won't work --> drop
-x <- droplevels(x[x$StandType != "0",])
-compare_sets(x$StandType, en$DAT$vegc)
+l <- stack(file.path(DIR, "climate-stack.grd"))
 
 # these are the terms we need
 get_terms(en$mods, "list")
 
+# now we'll create the relevant variables
 # stand type
 x$vegc <- x$StandType
 
@@ -136,20 +128,36 @@ proj4string(xy) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
 xy <- spTransform(xy, proj4string(l))
 
 # extract space/climate values
-v <- ipa <- extract(l, xy)
+v <- extract(l, xy)
 
 # get model matrix for prediction
 Xn <- get_model_matrix(data.frame(x, v), en$mods)
 
+# check stand types
+compare_sets(x$StandType, en$DAT$vegc)
+setdiff(x$StandType, en$DAT$vegc) # class '0' won't work --> drop
+x <- droplevels(x[x$StandType != "0",])
+compare_sets(x$StandType, en$DAT$vegc)
+
 # predict
 
-spp <- "ALFL"
-# this is the model output for the species
-resn <- load_species(file.path(ROOT, "out", "mixedwood", paste0(spp, ".RData")))
+SPP <- gsub(".RData", "", list.files(file.path(DIR, "out", "mixedwood")))
 
-estn <- get_coef(resn, Xn, stage="Space", na.out=FALSE)
+# define which species
+#spp <- "ALFL"
+OUTPUT <- list()
+for (spp in SPP) {
+    # this is the model output for the species
+    resn <- load_species(file.path(DIR, "out", "mixedwood", paste0(spp, ".RData")))
+    # this makes the 240 x length(coef) matrix
+    estn <- get_coef(resn, Xn, stage="Space", na.out=FALSE)
 
-mu <- Xn %*% t(estn[,colnames(Xn)])
-lam <- t(apply(exp(mu), 1, quantile, c(0.5, 0.05, 0.95)))
-summary(lam)
+    # we get 240 log scale predictions for each row in the prediction data
+    mu <- Xn %*% t(estn[,colnames(Xn)])
+    # here we exponentiate and calculate quantiles (median + 90%CI)
+    lam <- t(apply(exp(mu), 1, quantile, c(0.5, 0.05, 0.95)))
+    # summary
+    #summary(lam)
+    OUTPUT[[spp]] <- lam
+}
 
