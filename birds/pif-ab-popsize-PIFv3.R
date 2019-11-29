@@ -1230,4 +1230,18 @@ round(pop[c("CAWA","WEWP","OSFL","BTNW","RUBL","BRCR"),c("Npix","Npix95lower","N
 
 
 
+## model table
+m <- en$mods
+m$Year <- NULL
+mm <- lapply(m, function(mm) lapply(mm, function(z) as.character(z)[3]))
+
+f <- file("~/GoogleWork/bam/PIF-AB/draft7/mods-table.txt", open="at")
+for (i in 1:length(mm)) {
+    writeLines(names(mm)[i], f)
+    for (j in 1:length(mm[[i]]))
+        writeLines(mm[[i]][[j]], f)
+}
+close(f)
+
+
 
