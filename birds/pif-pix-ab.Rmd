@@ -1,5 +1,5 @@
 ---
-title: 'Appendix: Species Results'
+title: 'At the end of the road: Lessons learned from comparing spatially explicit models and the Partners in Flight approaches to estimate population sizes of boreal birds in Alberta, Canada - Appendix: Species Results'
 author: "Péter Sólymos, Judith D. Toms, Steven M. Matsuoka, Steven G. Cumming, Nicole K. S. Barker, Wayne E. Thogmartin, Diana Stralberg, Andrew D. Crosby, Francisco V. Dénes, Samuel Haché, C. Lisa Mahon, Fiona K. A. Schmiegelow, and Erin M. Bayne"
 date: "Version: 1.1"
 output:

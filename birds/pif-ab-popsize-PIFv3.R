@@ -744,6 +744,7 @@ library(raster)
 library(MASS)
 library(KernSmooth)
 library(vegan)
+library(intrval)
 #library(gstat)
 #library(viridis)
 ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds"
@@ -791,6 +792,20 @@ BCR2AB <- gIntersection(AB, BCR, byid=TRUE)
 pop <- read.csv("d:/abmi/AB_data_v2018/data/analysis/birds/bcr6/pifpix-v3-2006-2015-results.csv")
 rownames(pop) <- pop$Code
 SPP <- rownames(pop)
+
+## Appendix table:
+h <- function(x, digits=3) {
+    as.character(round(x, digits=3))
+
+}
+
+pop$Nice <- with(pop, paste0(CommonName, " (", ScientificName, ") [", Code, "]",
+    ifelse(pop[,c("Npif95lower","Npif95upper")] %)o(% pop[,c("Npix95lower","Npix95upper")], "*", "")))
+pop$NpifNice <- with(pop, paste0(h(Npif), " (", h(Npif95lower), " - ", h(Npif95upper), ")"))
+pop$NpixNice <- with(pop, paste0(h(Npix), " (", h(Npix95lower), " - ", h(Npix95upper), ")"))
+head(pop)
+write.csv(pop[,c("Nice","AUC", "NpifNice", "NpixNice")],
+    file="~/GoogleWork/bam/PIF-AB/draft7/AppTab4.csv")
 
 
 ## subset years of 2006-2015
