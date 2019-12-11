@@ -82,11 +82,12 @@ dbListTables(con)
 d <- dbReadTable(con, "veghf")
 dbDisconnect(con)
 
+rownames(d) <- d$UID
+
 ## make sp points object
 xy <- d[,c("Easting", "Northing")]
 coordinates(xy) <- ~ Easting + Northing
 proj4string(xy) <- proj4string(.read_raster_template())
-#save(xy, file="s:/AB_data_v2019/bdqt/bdqt-poly-xy_2019-12-04.RData")
 
 ## make veg/soil/hf table (current only)
 x <- d[,c("UID", "VEGHFAGEclass", "SOILHFclass")]
@@ -95,12 +96,11 @@ x$SOILHFclass <- as.factor(x$SOILHFclass)
 rm(d)
 gc()
 
-## manage labels
-
 compare_sets(get_levels()$soil, levels(x$SOILHFclass))
 ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v61.csv")
 rownames(ts) <- ts[,1]
 cbind(class=levels(x$SOILHFclass), reclass=as.character(ts[levels(x$SOILHFclass), "UseInAnalysisCoarse"]))
+
 levels(x$SOILHFclass) <- as.character(ts[levels(x$SOILHFclass), "UseInAnalysisCoarse"])
 ## NA will be treated as 0 (water and HFor)
 x$SOILHFclass[x$SOILHFclass %in% setdiff(levels(x$SOILHFclass), get_levels()$soil)] <- NA
@@ -113,8 +113,13 @@ setdiff(levels(x$SOILHFclass), get_levels()$soil)
 compare_sets(get_levels()$veg, levels(x$VEGHFAGEclass))
 tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
 rownames(tv) <- tv[,1]
-cbind(class=levels(x$VEGHFAGEclass), reclass=as.character(tv[levels(x$VEGHFAGEclass), "CoefTabs"]))
-levels(x$VEGHFAGEclass) <- as.character(tv[levels(x$VEGHFAGEclass), "CoefTabs"])
+cbind(class=levels(x$VEGHFAGEclass), reclass=as.character(tv[levels(x$VEGHFAGEclass), "CoefTabsBDQT"]))
+
+levels(x$VEGHFAGEclass) <- as.character(tv[levels(x$VEGHFAGEclass), "CoefTabsBDQT"])
+## NA will be treated as 0 (SnowIce)
+x$VEGHFAGEclass[x$VEGHFAGEclass %in% setdiff(levels(x$VEGHFAGEclass), get_levels()$veg)] <- NA
+x$VEGHFAGEclass <- droplevels(x$VEGHFAGEclass)
+
 compare_sets(get_levels()$veg, levels(x$VEGHFAGEclass))
 
 x <- droplevels(x)
@@ -127,8 +132,8 @@ wNorth2 <- extract(rw, xy[is.na(wNorth),], method="bilinear")
 summary(wNorth2)
 wNorth[is.na(wNorth)] <- wNorth2
 
-plot(rw)
-plot(xy[is.na(wNorth),], add=TRUE)
+#plot(rw)
+#plot(xy[is.na(wNorth),], add=TRUE)
 wNorth[is.na(wNorth)] <- 1
 summary(wNorth)
 
@@ -146,7 +151,10 @@ x$chunk[x$wNorth < 1 & x$wNorth > 0] <- c(rep("O1", 5894543), rep("O2", 5894542)
 x$chunk[is.na(x$chunk)] <- sample(paste0("N", 1:11), sum(is.na(x$chunk)), replace=TRUE)
 table(x$chunk, useNA="a")/10^6
 
-#save(x, file="s:/AB_data_v2019/bdqt/bdqt-poly-hab_2019-12-04.RData")
+all(rownames(x) == as.character(x$UID))
+all(rownames(xy) == as.character(x$UID))
+#save(xy, file="s:/AB_data_v2019/bdqt/bdqt-poly-xy_2019-12-10.RData")
+#save(x, file="s:/AB_data_v2019/bdqt/bdqt-poly-hab_2019-12-10.RData")
 
 for (i in levels(x$chunk)) {
     cat(i, "\n")
@@ -155,6 +163,6 @@ for (i in levels(x$chunk)) {
     xi$chunk <- NULL
     if (!(i %in% c("O1", "O2")))
         xi$wNorth <- NULL
-    save(xi, xyi, file=paste0("s:/AB_data_v2019/bdqt/chunks/bdqt-poly-hab-", i, "_2019-12-04.RData"))
+    save(xi, xyi, file=paste0("s:/AB_data_v2019/bdqt/chunks/bdqt-poly-hab-", i, "_2019-12-10.RData"))
     gc()
 }

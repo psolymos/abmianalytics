@@ -13,12 +13,9 @@ ST <- get_species_table()
 taxa <- levels(ST$taxon)
 CH <- c("S1", "O1", "O2", paste0("N", 1:11))
 
-#tax <- "mammals"
+#tax <- "birds"
 for (tax in taxa) {
     cat("Starting", tax, "============================\n")
-
-    ## define species list
-    SPP <- rownames(ST)[ST$taxon == tax]
 
     ## which chunk and taxon
     #ch <- "S1"
@@ -28,9 +25,14 @@ for (tax in taxa) {
 
         ## load chunk
         type <- substr(ch, 1, 1)
-        load(paste0("s:/AB_data_v2019/bdqt/chunks/bdqt-poly-hab-", ch, "_2019-12-04.RData"))
+        load(paste0("s:/AB_data_v2019/bdqt/chunks/bdqt-poly-hab-", ch, "_2019-12-10.RData"))
         n <- nrow(xi)
 
+        ## define species list
+        SPP <- switch(type,
+            "S"=rownames(ST)[ST$taxon == tax & ST$model_south],
+            "O"=rownames(ST)[ST$taxon == tax],
+            "N"=rownames(ST)[ST$taxon == tax & ST$model_north])
 
         ## output object
         OUT <- matrix(0, n, length(SPP))
@@ -39,7 +41,7 @@ for (tax in taxa) {
 
         #spp <- "Ovenbird"
         for (spp in SPP) {
-            cat(tax, "-", spp, "in", ch)
+            cat(tax, "-", spp, which(SPP == spp), "/", length(SPP),  "in", ch)
             flush.console()
             gc()
             t0 <- proc.time()
