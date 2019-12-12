@@ -21,6 +21,17 @@ d2010$FEATURE_TY <- d2010$FEATURE_TY_2010
 d2010$Origin_Year <- d2010$Origin_Year_2010cond
 d2010$YEAR <- d2010$YEAR_2010
 
+table(d2010$Origin_Year == d$Origin_Year)
+ii <- d2010$Origin_Year == d$Origin_Year &
+    d2010$Origin_Year < 2000 &
+    d$Origin_Year < 2000 &
+    d2010$Origin_Year %% 10 == 0
+table(ii)
+set.seed(1)
+rnd <- sample.int(10, sum(ii), replace=TRUE)-5
+d2010$Origin_Year[ii] <- d2010$Origin_Year[ii] + rnd
+d$Origin_Year[ii] <- d$Origin_Year[ii] + rnd
+
 dd2010 <- make_vegHF_wide_v6(d2010,
     col.label="GRID_LABEL",
     col.year=2010,
@@ -44,6 +55,30 @@ dd$veghf16 <- as.character(dd2016$VEGHFAGEclass)
 #table(i) / 10^6
 #dd$veghfch[i] <- paste0(dd$veghf10[i], "->", dd$veghf16[i])
 dd$veghfch <- paste0(dd$veghf10, "->", dd$veghf16)
+
+if (FALSE) {
+## troubleshooting the ages
+table(was=dd2010$AgeCr, is=dd2016$AgeCr)
+lev1 <- c("was_R", "was_1", "was_2", "was_3", "was_4", "was_5",
+    "was_6", "was_7", "was_8", "was_9", "was_0", "was_")
+lev2 <- c("is_R", "is_1", "is_2", "is_3", "is_4", "is_5",
+    "is_6", "is_7", "is_8", "is_9", "is_0", "is_")
+dd$age10 <- factor(paste0("was_", dd2010$AgeCr), lev1)
+dd$age16 <- factor(paste0("is_", dd2016$AgeCr), lev2)
+x <- as.matrix(Xtab(Shape_Area ~ age10 + age16, dd)) / 10^6
+round(x, 0)
+
+aa=sum_by(d$Shape_Area/10^6, d$Origin_Year)
+aa=data.frame(aa[order(aa[,1], decreasing = TRUE),])
+aa$perc <- 100*aa[,1]/sum(aa[,1])
+#data.frame(table(d$Origin_Year_2010))
+
+dd$yr <- d$Origin_Year
+ii <- dd$yr %% 10 == 0 & dd$yr < 2000
+dd$yr2 <- dd$yr
+dd$yr2[ii] <- dd$yr[ii] + sample.int(10, sum(ii), replace=TRUE)-5
+plot(table(dd$yr2[dd$yr < 9999]))
+}
 
 ## using AlPac FMA only
 trVeg <- Xtab(Shape_Area ~ GRID_LABEL + veghfch, dd[d$FMA_NAME=="Alberta-Pacific Forest Industries Inc.",])
@@ -201,18 +236,24 @@ Tot$iscc <- startsWith(Tot$veghf16, "CC")
 Tot$wasforest <- Tot$veghf10 %in% rownames(tv)[tv$is_forest]
 Tot$isforest <- Tot$veghf16 %in% rownames(tv)[tv$is_forest]
 
-Tot$type <- factor("Other", c("NewFor", "OldFor", "NewHF", "OldHF", "Fire", "Aging", "Other"))
-Tot$type[Tot$isforest & Tot$wasforest] <- "Aging"
-Tot$type[Tot$ishf & !Tot$washf & !Tot$iscc] <- "NewHF"
+Tot$type <- factor("Other", c("NewFor", "OldFor", "NewHF", "OldHF", "Fire", "Aging0", "Aging1", "Other"))
+Tot$type[Tot$isforest & Tot$wasforest] <- "Aging0"
+Tot$type[Tot$ishf & !Tot$washf] <- "NewHF"
 Tot$type[Tot$ishf & Tot$washf] <- "OldHF"
-Tot$type[Tot$iscc & !Tot$wascc & !Tot$washf] <- "NewFor"
+Tot$type[Tot$iscc & !Tot$wascc] <- "NewFor"
 Tot$type[Tot$iscc & Tot$wascc] <- "OldFor"
 Tot$type[!Tot$ishf & !Tot$washf & Tot$diff < 0] <- "Fire"
-Tot$type[!Tot$ishf & !Tot$washf & Tot$diff > 0] <- "Aging"
+Tot$type[!Tot$ishf & !Tot$washf & Tot$diff > 0] <- "Aging1"
 
 table(Tot$type, useNA="a")
+table(Tot$type, Tot$ishf, Tot$iscc)
 
 aa <- sum_by(100*Tot$prop, Tot$type)
 round(aa, 2)
 
+round(as.matrix(Xtab(area ~ an10 + an16, Tot)))
+
 save(trVeg3, Tot, file="d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-2010-2016-transitions.RData")
+
+
+
