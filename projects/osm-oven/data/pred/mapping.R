@@ -1,7 +1,7 @@
 ## common stuff -----------------------------------------------------------
 
 PROJ <- "north"
-spp <- "CAWA"
+spp <- "OVEN"
 #STAGE <- "Space"
 STAGE <- "HF"
 
