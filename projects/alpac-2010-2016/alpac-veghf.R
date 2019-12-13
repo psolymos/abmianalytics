@@ -48,6 +48,7 @@ dd2016 <- make_vegHF_wide_v6(d,
     wide=FALSE, sparse=TRUE, HF_fine=TRUE) # use refined classes
 
 dd <- d[,c("GRID_LABEL", "Shape_Area")]
+dd$veghf0 <- as.character(dd2010$VEGAGEclass)
 dd$veghf10 <- as.character(dd2010$VEGHFAGEclass)
 dd$veghf16 <- as.character(dd2016$VEGHFAGEclass)
 #dd$veghfch <- dd$veghf10
@@ -81,7 +82,9 @@ plot(table(dd$yr2[dd$yr < 9999]))
 }
 
 ## using AlPac FMA only
-trVeg <- Xtab(Shape_Area ~ GRID_LABEL + veghfch, dd[d$FMA_NAME=="Alberta-Pacific Forest Industries Inc.",])
+#trVeg <- Xtab(Shape_Area ~ GRID_LABEL + veghfch, dd[d$FMA_NAME=="Alberta-Pacific Forest Industries Inc.",])
+## using AlPac FMA + other bits
+trVeg <- Xtab(Shape_Area ~ GRID_LABEL + veghfch, dd)
 dim(trVeg)
 
 
@@ -255,5 +258,17 @@ round(as.matrix(Xtab(area ~ an10 + an16, Tot)))
 
 save(trVeg3, Tot, file="d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-2010-2016-transitions.RData")
 
+## reference
 
+veghf_2010 <- groupSums(trVeg3, 2, Tot$veghf10)
+veghf_2016 <- groupSums(trVeg3, 2, Tot$veghf16)
+veghf_ref <- Xtab(Shape_Area ~ GRID_LABEL + veghf0, dd)
+veghf_ref <- veghf_ref[rownames(veghf_2010),]
+veghf_2016 <- veghf_2016[,colnames(veghf_2010)]
 
+compare_sets(colnames(veghf_2010), colnames(veghf_2016))
+compare_sets(colnames(veghf_ref), colnames(veghf_2016))
+setdiff(colnames(veghf_ref), colnames(veghf_2016))
+setdiff(colnames(veghf_2016), colnames(veghf_ref))
+
+save(veghf_2010, veghf_2016, veghf_ref, file="d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-ref-2010-2016-veghf.RData")
