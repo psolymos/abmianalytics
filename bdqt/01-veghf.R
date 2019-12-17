@@ -151,17 +151,25 @@ x$chunk[x$wNorth < 1 & x$wNorth > 0] <- c(rep("O1", 5894543), rep("O2", 5894542)
 x$chunk[is.na(x$chunk)] <- sample(paste0("N", 1:11), sum(is.na(x$chunk)), replace=TRUE)
 table(x$chunk, useNA="a")/10^6
 
+#load("s:/AB_data_v2019/bdqt/bdqt-poly-xy_2019-12-10.RData")
+#load("s:/AB_data_v2019/bdqt/bdqt-poly-hab_2019-12-10.RData")
+#x$chunko=x$chunk
+levels(x$chunk) <- c(levels(x$chunk), "O3")
+x$chunk[x$chunk %in% c("O1", "O2")] <- sample(c("O1", "O2", "O3"),
+  sum(x$chunk %in% c("O1", "O2")), replace=TRUE)
+#table(x$chunk,x$chunko)
+
 all(rownames(x) == as.character(x$UID))
 all(rownames(xy) == as.character(x$UID))
 #save(xy, file="s:/AB_data_v2019/bdqt/bdqt-poly-xy_2019-12-10.RData")
 #save(x, file="s:/AB_data_v2019/bdqt/bdqt-poly-hab_2019-12-10.RData")
 
-for (i in levels(x$chunk)) {
+for (i in c("O1", "O2", "O3")) {#levels(x$chunk)) {
     cat(i, "\n")
     xi <- x[x$chunk == i,]
     xyi <- xy[x$chunk == i,]
     xi$chunk <- NULL
-    if (!(i %in% c("O1", "O2")))
+    if (!(i %in% c("O1", "O2", "O3")))
         xi$wNorth <- NULL
     save(xi, xyi, file=paste0("s:/AB_data_v2019/bdqt/chunks/bdqt-poly-hab-", i, "_2019-12-10.RData"))
     gc()
