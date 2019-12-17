@@ -272,3 +272,155 @@ setdiff(colnames(veghf_ref), colnames(veghf_2016))
 setdiff(colnames(veghf_2016), colnames(veghf_ref))
 
 save(veghf_2010, veghf_2016, veghf_ref, file="d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-ref-2010-2016-veghf.RData")
+
+## checking 0 and R
+
+library(cure4insect)
+library(mefa4)
+set_options(path = "d:/abmi/reports")
+
+load_common_data()
+ST <- get_species_table()
+taxa <- rev(levels(ST$taxon))
+
+load("d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-ref-2010-2016-veghf.RData")
+
+PT <- get_id_table()
+
+rt <- .read_raster_template()
+
+for (AGE in c("R", 0:9)) {
+#AGE <- "R"
+cn <- colnames(veghf_2010)[endsWith(colnames(veghf_2010), AGE)]
+v10 <- rowSums(veghf_2010[,cn]) / rowSums(veghf_2010)
+v10 <- v10[match(rownames(PT), names(v10))]
+v10[is.na(v10)] <- -1
+summary(v10)
+v16 <- rowSums(veghf_2016[,cn]) / rowSums(veghf_2016)
+v16 <- v16[match(rownames(PT), names(v16))]
+v16[is.na(v16)] <- -1
+summary(v16)
+
+r10 <- .make_raster(v10, PT, rt)
+values(r10)[!is.na(values(r10)) & values(r10) < 0] <- NA
+r10 <- trim(r10)
+r16 <- .make_raster(v16, PT, rt)
+values(r16)[!is.na(values(r16)) & values(r16) < 0] <- NA
+r16 <- trim(r16)
+rdf <- r16 - r10
+
+col1 <- rev(viridis::viridis(100))[1:50]
+col2 <- rev(viridis::cividis(100))
+png(paste0("d:/tmp/alpac-ages/age-", AGE, ".png"), height=600, width=400*3, pointsize=20)
+op <- par(mfrow=c(1,3), mar=c(6, 1, 4, 4))
+plot(r10, main=paste("2010: age", AGE), box=FALSE, axes=FALSE, col=col1)
+plot(r16, main=paste("2016: age", AGE), box=FALSE, axes=FALSE, col=col1)
+plot(rdf, main=paste("2016-2010: age", AGE), box=FALSE, axes=FALSE, col=col2)
+par(op)
+dev.off()
+}
+
+
+## running transition predictions for species
+
+library(cure4insect)
+library(mefa4)
+set_options(path = "d:/abmi/reports")
+load_common_data()
+
+## load soil & veg
+load("d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-ref-2010-2016-veghf.RData")
+load("d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-2010-2016-transitions.RData")
+rt <- .read_raster_template()
+PT <- get_id_table()
+XY <- get_id_locations()
+ID <- rownames(trVeg3)
+XY <- XY[ID,]
+v <- ifelse(rownames(PT) %in% ID, 1, 0)
+r <- .make_raster(v, PT, rt)
+values(r)[!is.na(values(r)) & values(r) < 1] <- NA
+#r <- trim(r)
+trVeg3 <- trVeg3 / rowSums(trVeg3)
+
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
+rownames(tv) <- tv[,1]
+
+h <- Tot$veghf10[endsWith(Tot$veghf10, "0")]
+h <- paste0(substr(h, 1, nchar(h)-1), "8")
+Tot$veghf10[endsWith(Tot$veghf10, "0")] <- h
+
+h <- Tot$veghf16[endsWith(Tot$veghf16, "0")]
+h <- paste0(substr(h, 1, nchar(h)-1), "8")
+Tot$veghf16[endsWith(Tot$veghf16, "0")] <- h
+
+Tot$cn10 <- tv[Tot$veghf10, "CoefTabs"]
+Tot$cn16 <- tv[Tot$veghf16, "CoefTabs"]
+
+compare_sets(get_levels()$veg, colnames(groupSums(trVeg3, 2, Tot$cn10)))
+compare_sets(get_levels()$veg, colnames(groupSums(trVeg3, 2, Tot$cn16)))
+
+mats10 <- list()
+mats16 <- list()
+for (i in levels(Tot$type)) {
+    j <- Tot$type == i
+    mats10[[i]] <- groupSums(trVeg3[,j], 2, Tot$cn10[j])
+    mats10[[i]] <- mats10[[i]][,!(colnames(mats10[[i]]) %in% c("Bare", "Water"))]
+    mats16[[i]] <- groupSums(trVeg3[,j], 2, Tot$cn16[j])
+    mats16[[i]] <- mats16[[i]][,!(colnames(mats16[[i]]) %in% c("Bare", "Water"))]
+}
+
+rfun <- function(x) {
+    x <- rowSums(pr10)
+    x <- x[match(rownames(PT), ID)]
+    x[is.na(x)] <- 0
+    r10 <- .make_raster(x, PT, rt)
+    trim(mask(r10, r))
+}
+
+SPP <- get_all_species("birds")
+spp <- "CommonYellowthroat"
+spp = "Ovenbird"
+
+for (spp in SPP) {
+
+    cat(spp, "\n")
+    flush.console()
+
+    object <- load_spclim_data(spp)
+
+    pr10 <- matrix(0, nrow(trVeg3), nlevels(Tot$type))
+    dimnames(pr10) <- list(rownames(trVeg3), levels(Tot$type))
+    pr16 <- pr10
+
+    for (i in levels(Tot$type)) {
+        pr10[,i] <- rowSums(predict_mat(object, XY, mats10[[i]])$veg)
+        pr16[,i] <- rowSums(predict_mat(object, XY, mats16[[i]])$veg)
+    }
+    pr10[is.na(pr10)] <- 0
+    pr16[is.na(pr16)] <- 0
+
+    prdf <- pr16 - pr10
+
+    z <- rbind(pr2010=colSums(pr10),
+        pr2016=colSums(pr16))
+    z <- rbind(z, perc_change=100*(z[2,]-z[1,])/z[1,])
+    round(z, 1)
+
+    summary(pr10)
+    summary(pr16)
+    summary(prdf)
+    if (FALSE) {
+        r10 <- rfun(rowSums(pr10))
+        r16 <- rfun(rowSums(pr16))
+        rdf <- rfun(rowSums(prdf))
+        col1 <- rev(viridis::viridis(100))[1:50]
+        col2 <- rev(viridis::cividis(100))
+        png(paste0("d:/tmp/alpac-ages/", spp, ".png"), height=600, width=400*3, pointsize=20)
+        op <- par(mfrow=c(1,3), mar=c(6, 1, 4, 4))
+        plot(r10, main=paste("2010:", spp), box=FALSE, axes=FALSE, col=col1)
+        plot(r16, main=paste("2016:", spp), box=FALSE, axes=FALSE, col=col1)
+        plot(rdf, main=paste("2016-2010:", spp), box=FALSE, axes=FALSE, col=col2)
+        par(op)
+        dev.off()
+    }
+}
