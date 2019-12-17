@@ -11,7 +11,7 @@ set_options(path = "d:/abmi/reports")
 load_common_data()
 ST <- get_species_table()
 taxa <- levels(ST$taxon)
-CH <- c("S1", "O1", "O2", paste0("N", 1:11))
+CH <- c("S1", "O1", "O2", "O3", paste0("N", 1:11))
 
 #tax <- "birds"
 for (tax in taxa) {
