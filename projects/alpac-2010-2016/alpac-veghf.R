@@ -341,14 +341,22 @@ r <- .make_raster(v, PT, rt)
 values(r)[!is.na(values(r)) & values(r) < 1] <- NA
 #r <- trim(r)
 trVeg3 <- trVeg3 / rowSums(trVeg3)
+Tot0 <- Tot
 
 tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
 rownames(tv) <- tv[,1]
+hf <- rownames(tv)[tv$is_HF]
 
+h <- Tot$veghf10[endsWith(Tot$veghf10, "9")]
+h <- paste0(substr(h, 1, nchar(h)-1), "8")
+Tot$veghf10[endsWith(Tot$veghf10, "9")] <- h
 h <- Tot$veghf10[endsWith(Tot$veghf10, "0")]
 h <- paste0(substr(h, 1, nchar(h)-1), "8")
 Tot$veghf10[endsWith(Tot$veghf10, "0")] <- h
 
+h <- Tot$veghf16[endsWith(Tot$veghf16, "9")]
+h <- paste0(substr(h, 1, nchar(h)-1), "8")
+Tot$veghf16[endsWith(Tot$veghf16, "9")] <- h
 h <- Tot$veghf16[endsWith(Tot$veghf16, "0")]
 h <- paste0(substr(h, 1, nchar(h)-1), "8")
 Tot$veghf16[endsWith(Tot$veghf16, "0")] <- h
@@ -358,6 +366,41 @@ Tot$cn16 <- tv[Tot$veghf16, "CoefTabs"]
 
 compare_sets(get_levels()$veg, colnames(groupSums(trVeg3, 2, Tot$cn10)))
 compare_sets(get_levels()$veg, colnames(groupSums(trVeg3, 2, Tot$cn16)))
+
+## reassign 'type'
+Tot$changed <- Tot$veghf10 != Tot$veghf16
+Tot$washf <- Tot$veghf10 %in% hf
+Tot$ishf <- Tot$veghf16 %in% hf
+Tot$sect10 <- tv$Sector61[match(Tot$veghf10, rownames(tv))]
+Tot$sect16 <- tv$Sector61[match(Tot$veghf16, rownames(tv))]
+Tot$age10 <- tv$AGE[match(Tot$veghf10, rownames(tv))]
+Tot$age16 <- tv$AGE[match(Tot$veghf16, rownames(tv))]
+Tot$ageUnk10 <- endsWith(Tot$veghf10, "0")
+Tot$ageUnk16 <- endsWith(Tot$veghf16, "0")
+
+Tot$an10 <- factor(as.character(Tot$age10), c("", "R", "1", "2", "3", "4", "5", "6", "7", "8", "9"))
+levels(Tot$an10) <- c("0", "0", "10", "20", "40", "60", "80", "100", "120", "140", "140")
+Tot$an10 <- as.integer(Tot$an10) - 1
+Tot$an16 <- factor(as.character(Tot$age16), c("", "R", "1", "2", "3", "4", "5", "6", "7", "8", "9"))
+levels(Tot$an16) <- c("0", "0", "10", "20", "40", "60", "80", "100", "120", "140", "140")
+Tot$an16 <- as.integer(Tot$an16) - 1
+Tot$diff <- Tot$an16 - Tot$an10
+
+Tot$wascc <- startsWith(Tot$veghf10, "CC")
+Tot$iscc <- startsWith(Tot$veghf16, "CC")
+Tot$wasforest <- Tot$veghf10 %in% rownames(tv)[tv$is_forest]
+Tot$isforest <- Tot$veghf16 %in% rownames(tv)[tv$is_forest]
+
+Tot$type <- factor("Other", c("NewFor", "OldFor", "NewHF", "OldHF", "Fire", "Aging0", "Aging1", "Other"))
+Tot$type[Tot$isforest & Tot$wasforest] <- "Aging0"
+Tot$type[Tot$ishf & !Tot$washf] <- "NewHF"
+Tot$type[Tot$ishf & Tot$washf] <- "OldHF"
+Tot$type[Tot$iscc & !Tot$wascc] <- "NewFor"
+Tot$type[Tot$iscc & Tot$wascc] <- "OldFor"
+Tot$type[!Tot$ishf & !Tot$washf & Tot$diff < 0] <- "Fire"
+Tot$type[!Tot$ishf & !Tot$washf & Tot$diff > 0] <- "Aging1"
+
+table(Re0=Tot$type, In=Tot0$type)
 
 mats10 <- list()
 mats16 <- list()
@@ -377,13 +420,48 @@ rfun <- function(x) {
     trim(mask(r10, r))
 }
 
-SPP <- get_all_species("birds")
-spp <- "CommonYellowthroat"
-spp = "Ovenbird"
+SPP <- get_all_species(mregion="north")
+str(SPP)
+Sums2010 <- matrix(0, length(SPP), nlevels(Tot$type))
+dimnames(Sums2010) <- list(SPP, levels(Tot$type))
+Sums2016 <- Sums2010
+
+pr <- matrix(0, nrow(trVeg3), nlevels(Tot$type))
+dimnames(pr) <- list(rownames(trVeg3), levels(Tot$type))
 
 for (spp in SPP) {
+    cat("2010:", spp, which(SPP==spp), "/", length(SPP), as.character(Sys.time()), "\n")
+    flush.console()
+    object <- load_spclim_data(spp)
+    pr10 <- pr
+    for (i in levels(Tot$type)) {
+        pr10[,i] <- rowSums(predict_mat(object, XY, mats10[[i]])$veg)
+    }
+    pr10[is.na(pr10)] <- 0
+    Sums2010[spp,] <- colSums(pr10)
+}
+save(Sums2010,
+    file="d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-2010.RData")
 
-    cat(spp, "\n")
+for (spp in SPP) {
+    cat("2016:", spp, which(SPP==spp), "/", length(SPP), as.character(Sys.time()), "\n")
+    flush.console()
+    object <- load_spclim_data(spp)
+    pr16 <- pr
+    for (i in levels(Tot$type)) {
+        pr16[,i] <- rowSums(predict_mat(object, XY, mats16[[i]])$veg)
+    }
+    pr16[is.na(pr16)] <- 0
+    Sums2016[spp,] <- colSums(pr16)
+}
+save(Sums2016,
+    file="d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-2016.RData")
+
+#spp <- "CommonYellowthroat"
+#spp = "Ovenbird"
+for (spp in SPP) {
+
+    cat(spp, which(SPP==spp), "/", length(SPP), as.character(Sys.time()), "\n")
     flush.console()
 
     object <- load_spclim_data(spp)
@@ -399,17 +477,21 @@ for (spp in SPP) {
     pr10[is.na(pr10)] <- 0
     pr16[is.na(pr16)] <- 0
 
-    prdf <- pr16 - pr10
+    Sums2010[spp,] <- colSums(pr10)
+    Sums2016[spp,] <- colSums(pr16)
 
-    z <- rbind(pr2010=colSums(pr10),
-        pr2016=colSums(pr16))
-    z <- rbind(z, perc_change=100*(z[2,]-z[1,])/z[1,])
-    round(z, 1)
-
-    summary(pr10)
-    summary(pr16)
-    summary(prdf)
     if (FALSE) {
+        prdf <- pr16 - pr10
+
+        z <- rbind(pr2010=colSums(pr10),
+            pr2016=colSums(pr16))
+        z <- rbind(z, perc_change=100*(z[2,]-z[1,])/z[1,])
+        round(z, 1)
+
+        summary(pr10)
+        summary(pr16)
+        summary(prdf)
+
         r10 <- rfun(rowSums(pr10))
         r16 <- rfun(rowSums(pr16))
         rdf <- rfun(rowSums(prdf))
@@ -424,3 +506,40 @@ for (spp in SPP) {
         dev.off()
     }
 }
+
+
+## save into Excel file: spp table, 2010, 2016
+
+load("d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-2010.RData")
+load("d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-2016.RData")
+ST <- get_species_table(mregion="north")
+all(rownames(ST)==SPP)
+
+library(openxlsx)
+A <- 100*colMeans(groupSums(trVeg3, 2, Tot$type))
+A <- A[colnames(Sums2010)]
+l <- list(
+    Perc_Area=data.frame(TransitionType=names(A), Perc_Area=100*A),
+    Species=ST,
+    Sums_2010=data.frame(ST[,1:2], round(Sums2010, 6)),
+    Sums_2016=data.frame(ST[,1:2], round(Sums2016, 6)),
+    Perc_Ch_by_type=data.frame(ST[,1:2],
+        round(100*(Sums2016-Sums2010)/Sums2010, 6)),
+    Perc_Ch_total=data.frame(ST[,1:2],
+        round(100*(Sums2016-Sums2010)/rowSums(Sums2010), 6)))
+write.xlsx(l, "d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results.xlsx")
+
+
+z1 <- 100*(Sums2016-Sums2010)/rowSums(Sums2010)
+z2 <- 100*(Sums2016-Sums2010)/Sums2010
+z3 <- 100 * t(t(z1) / A[colnames(z1)])
+
+op <- par(mfrow=c(3,1))
+boxplot(z1, ylim=c(-20, 20), col="#0000ff88", main="% of 2010 total")
+abline(h=0, col=2)
+boxplot(z2, ylim=c(-100, 200), col="#0000ff88", main="% of 2010 by type (~under HF)")
+abline(h=0, col=2)
+boxplot(z3, ylim=c(-200, 200), col="#0000ff88", main="unit effect")
+abline(h=0, col=2)
+abline(h=c(-100, 100), col=2, lty=2)
+par(op)
