@@ -322,6 +322,7 @@ dev.off()
 
 
 ## running transition predictions for species
+## (use s:/ instead of d:/abmi/)
 
 library(cure4insect)
 library(mefa4)
@@ -343,10 +344,12 @@ values(r)[!is.na(values(r)) & values(r) < 1] <- NA
 trVeg3 <- trVeg3 / rowSums(trVeg3)
 Tot0 <- Tot
 
-tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
+#tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
+tv <- read.csv("https://raw.githubusercontent.com/psolymos/abmianalytics/master/lookup/lookup-veg-hf-age-v61.csv")
 rownames(tv) <- tv[,1]
 hf <- rownames(tv)[tv$is_HF]
 
+## dealing with unknown ages (making age class 9 to be 8)
 h <- Tot$veghf10[endsWith(Tot$veghf10, "9")]
 h <- paste0(substr(h, 1, nchar(h)-1), "8")
 Tot$veghf10[endsWith(Tot$veghf10, "9")] <- h
@@ -361,13 +364,14 @@ h <- Tot$veghf16[endsWith(Tot$veghf16, "0")]
 h <- paste0(substr(h, 1, nchar(h)-1), "8")
 Tot$veghf16[endsWith(Tot$veghf16, "0")] <- h
 
+## matching the coefs used in the package
 Tot$cn10 <- tv[Tot$veghf10, "CoefTabs"]
 Tot$cn16 <- tv[Tot$veghf16, "CoefTabs"]
 
 compare_sets(get_levels()$veg, colnames(groupSums(trVeg3, 2, Tot$cn10)))
 compare_sets(get_levels()$veg, colnames(groupSums(trVeg3, 2, Tot$cn16)))
 
-## reassign 'type'
+## reassign 'type' variable after unknown age fix
 Tot$changed <- Tot$veghf10 != Tot$veghf16
 Tot$washf <- Tot$veghf10 %in% hf
 Tot$ishf <- Tot$veghf16 %in% hf
@@ -402,6 +406,7 @@ Tot$type[!Tot$ishf & !Tot$washf & Tot$diff > 0] <- "Aging1"
 
 table(Re0=Tot$type, In=Tot0$type)
 
+## making matrices for each type
 mats10 <- list()
 mats16 <- list()
 for (i in levels(Tot$type)) {
@@ -420,15 +425,18 @@ rfun <- function(x) {
     trim(mask(r10, r))
 }
 
+## preallocating for storing results
 SPP <- get_all_species(mregion="north")
 str(SPP)
 Sums2010 <- matrix(0, length(SPP), nlevels(Tot$type))
 dimnames(Sums2010) <- list(SPP, levels(Tot$type))
 Sums2016 <- Sums2010
 
+## this is a template for storing predictions before summing
 pr <- matrix(0, nrow(trVeg3), nlevels(Tot$type))
 dimnames(pr) <- list(rownames(trVeg3), levels(Tot$type))
 
+## run this in a separate process for speedup
 for (spp in SPP) {
     cat("2010:", spp, which(SPP==spp), "/", length(SPP), as.character(Sys.time()), "\n")
     flush.console()
@@ -443,6 +451,7 @@ for (spp in SPP) {
 save(Sums2010,
     file="d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-2010.RData")
 
+## run this in a separate process for speedup
 for (spp in SPP) {
     cat("2016:", spp, which(SPP==spp), "/", length(SPP), as.character(Sys.time()), "\n")
     flush.console()
@@ -457,6 +466,7 @@ for (spp in SPP) {
 save(Sums2016,
     file="d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-2016.RData")
 
+## ignore this part inside the loop
 #spp <- "CommonYellowthroat"
 #spp = "Ovenbird"
 for (spp in SPP) {
@@ -529,6 +539,7 @@ l <- list(
         round(100*(Sums2016-Sums2010)/rowSums(Sums2010), 6)))
 write.xlsx(l, "d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results.xlsx")
 
+## some plots
 
 z1 <- 100*(Sums2016-Sums2010)/rowSums(Sums2010)
 z2 <- 100*(Sums2016-Sums2010)/Sums2010
