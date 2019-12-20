@@ -403,8 +403,10 @@ Tot$type[Tot$iscc & !Tot$wascc] <- "NewFor"
 Tot$type[Tot$iscc & Tot$wascc] <- "OldFor"
 Tot$type[!Tot$ishf & !Tot$washf & Tot$diff < 0] <- "Fire"
 Tot$type[!Tot$ishf & !Tot$washf & Tot$diff > 0] <- "Aging1"
+Tot$type[Tot$wascc & Tot$ishf & !Tot$iscc] <- "NewHF"
 
 table(Re0=Tot$type, In=Tot0$type)
+write.csv(Tot, row.names=FALSE, file="d:/abmi/AB_data_v2019/data/analysis/alpac/Tot-table-lookup.csv")
 
 ## making matrices for each type
 mats10 <- list()
@@ -425,46 +427,132 @@ rfun <- function(x) {
     trim(mask(r10, r))
 }
 
+## this is subset: change the subset vector here
+tmp <- read.csv("d:/abmi/AB_data_v2019/data/analysis/alpac/AlpacFMA-LinkID_2019.csv")
+ss <- list(
+    AEI=rownames(trVeg3),
+    FMA=as.character(tmp$LinkID)
+)
+
 ## preallocating for storing results
-SPP <- get_all_species(mregion="north")
+tmp1 <- read.csv("d:/abmi/AB_data_v2019/data/analysis/alpac/ALPAC_AEI_2019-12-19.csv")
+tmp2 <- read.csv("d:/abmi/AB_data_v2019/data/analysis/alpac/ALPAC_FMA_2019-12-19.csv")
+## MountainChickadee should also be part of AEI not just FMA
+SPP <- list(
+    AEI=c("MountainChickadee", as.character(tmp1$SpeciesID[tmp1$Pred_Keep & tmp1$Model_north])),
+    FMA=as.character(tmp2$SpeciesID[tmp2$Pred_Keep & tmp2$Model_north])
+)
 str(SPP)
-Sums2010 <- matrix(0, length(SPP), nlevels(Tot$type))
-dimnames(Sums2010) <- list(SPP, levels(Tot$type))
-Sums2016 <- Sums2010
+
+Sums2010_AEI <- matrix(0, length(SPP$AEI), nlevels(Tot$type))
+dimnames(Sums2010_AEI) <- list(SPP$AEI, levels(Tot$type))
+Sums2016_AEI <- Sums2010_AEI
+
+Sums2010_FMA <- matrix(0, length(SPP$FMA), nlevels(Tot$type))
+dimnames(Sums2010_FMA) <- list(SPP$FMA, levels(Tot$type))
+Sums2016_FMA <- Sums2010_FMA
 
 ## this is a template for storing predictions before summing
 pr <- matrix(0, nrow(trVeg3), nlevels(Tot$type))
 dimnames(pr) <- list(rownames(trVeg3), levels(Tot$type))
 
 ## run this in a separate process for speedup
-for (spp in SPP) {
-    cat("2010:", spp, which(SPP==spp), "/", length(SPP), as.character(Sys.time()), "\n")
+for (spp in SPP$AEI) {
+    cat("2010:", spp, which(SPP$AEI==spp), "/", length(SPP$AEI), as.character(Sys.time()), "\n")
     flush.console()
     object <- load_spclim_data(spp)
     pr10 <- pr
     for (i in levels(Tot$type)) {
-        pr10[,i] <- rowSums(predict_mat(object, XY, mats10[[i]])$veg)
+        pr10[,i] <- rowSums(predict_mat(object, XY, mats10[[i]], method="bilinear")$veg)
+        pr10[is.na(pr10[,i]),i] <- 0
+        q <- quantile(pr10[,i], 0.99)
+        pr10[pr10[,i]>q,i] <- q
     }
-    pr10[is.na(pr10)] <- 0
-    Sums2010[spp,] <- colSums(pr10)
+    Sums2010_AEI[spp,] <- colSums(pr10[ss$AEI,,drop=FALSE])
+    if (spp %in% SPP$FMA)
+        Sums2010_FMA[spp,] <- colSums(pr10[ss$FMA,,drop=FALSE])
 }
-save(Sums2010,
+save(Sums2010_AEI, Sums2010_FMA,
     file="d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-2010.RData")
 
 ## run this in a separate process for speedup
-for (spp in SPP) {
-    cat("2016:", spp, which(SPP==spp), "/", length(SPP), as.character(Sys.time()), "\n")
+for (spp in SPP$AEI) {
+    cat("2016:", spp, which(SPP$AEI==spp), "/", length(SPP$AEI), as.character(Sys.time()), "\n")
     flush.console()
     object <- load_spclim_data(spp)
     pr16 <- pr
     for (i in levels(Tot$type)) {
-        pr16[,i] <- rowSums(predict_mat(object, XY, mats16[[i]])$veg)
+        pr16[,i] <- rowSums(predict_mat(object, XY, mats16[[i]], method="bilinear")$veg)
+        pr16[is.na(pr16[,i]),i] <- 0
+        q <- quantile(pr16[,i], 0.99)
+        pr16[pr16[,i]>q,i] <- q
     }
-    pr16[is.na(pr16)] <- 0
-    Sums2016[spp,] <- colSums(pr16)
+    Sums2016_AEI[spp,] <- colSums(pr16[ss$AEI,,drop=FALSE])
+    if (spp %in% SPP$FMA)
+        Sums2016_FMA[spp,] <- colSums(pr16[ss$FMA,,drop=FALSE])
 }
-save(Sums2016,
+save(Sums2016_AEI, Sums2016_FMA,
     file="d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-2016.RData")
+
+
+predict_mat.c4ispclim <-
+function(object, xy, veg, soil, method="simple", ...)
+{
+    xy <- .tr_xy(xy)
+    ## coefs in object are on log/logit scale, need linkinv
+    fi <- if (object$taxon == "birds")
+        poisson("log")$linkinv else binomial("logit")$linkinv
+    if (missing(veg) && missing(soil))
+        stop("veg or soil must be provided")
+    xy <- spTransform(xy, proj4string(.read_raster_template()))
+    if (!missing(veg) && !is.null(veg)) {
+        if (is.null(object$cveg)) {
+            warning(sprintf("veg based estimates are unavailable for %s", object$species))
+            Nveg <- NULL
+        } else {
+            if (nrow(veg) != nrow(coordinates(xy)))
+                stop("nrow(veg) must equal number of points in xy")
+            .check(as.factor(colnames(veg)), names(object$cveg))
+            iveg <- extract(object$rveg, xy, method)
+            imatv <- t(array(iveg, dim(veg), dimnames(veg)))
+            mveg <- object$cveg[match(colnames(veg), names(object$cveg))]
+            Nveg <- fi(t(mveg + imatv)) * veg
+            if (any(colnames(veg) == "SoftLin") && object$taxon == "birds" && object$version == "2017") {
+                warning("veg contained SoftLin: check your assumptions")
+                Nveg[,colnames(veg) == "SoftLin"] <- NA
+            }
+        }
+    } else {
+        Nveg <- NULL
+    }
+    if (!missing(soil) && !is.null(soil)) {
+        if (is.null(object$csoil)) {
+            warning(sprintf("soil based estimates are unavailable for %s", object$species))
+            Nsoil <- NULL
+        } else {
+            if (nrow(soil) != nrow(coordinates(xy)))
+                stop("nrow(veg) must equal number of points in xy")
+            .check(as.factor(colnames(soil)), names(object$csoil))
+            isoil <- extract(object$rsoil, xy, method)
+            ## pAspen here used as habitat covariate NOT as North weight
+            rpa <- raster(system.file("extdata/pAspen.tif", package="cure4insect"))
+            ipa <- extract(rpa, xy, method)
+            imats <- t(array(object$caspen * ipa + isoil, dim(soil), dimnames(soil)))
+            msoil <- object$csoil[match(colnames(soil), names(object$csoil))]
+            Nsoil <- fi(t(msoil + imats)) * soil
+            if (any(colnames(soil) == "SoftLin") && object$taxon == "birds" && object$version == "2017") {
+                warning("soil contained SoftLin: check your assumptions")
+                Nsoil[,colnames(soil) == "SoftLin"] <- NA
+            }
+        }
+    } else {
+        Nsoil <- NULL
+    }
+    OUT <- list(veg=Nveg, soil=Nsoil)
+    class(OUT) <- c("c4ippredmat")
+    OUT
+}
+
 
 ## ignore this part inside the loop
 #spp <- "CommonYellowthroat"
@@ -520,37 +608,48 @@ for (spp in SPP) {
 
 ## save into Excel file: spp table, 2010, 2016
 
+load("d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-MAX.RData")
 load("d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-2010.RData")
 load("d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-2016.RData")
 ST <- get_species_table(mregion="north")
 all(rownames(ST)==SPP)
-
-library(openxlsx)
 A <- 100*colMeans(groupSums(trVeg3, 2, Tot$type))
 A <- A[colnames(Sums2010)]
+
+ST$MAX <- MAX
+ST$MEAN <- 0.5 * (rowSums(Sums2010)/nrow(trVeg3) + rowSums(Sums2016)/nrow(trVeg3))
+ST$IN <- ST$MEAN > ST$MAX * 0.01
+
+library(openxlsx)
 l <- list(
-    Perc_Area=data.frame(TransitionType=names(A), Perc_Area=100*A),
-    Species=ST,
-    Sums_2010=data.frame(ST[,1:2], round(Sums2010, 6)),
-    Sums_2016=data.frame(ST[,1:2], round(Sums2016, 6)),
+    Perc_Area=data.frame(TransitionType=names(A), Perc_Area=A),
+    Species=ST[ST$IN,],
+    Sums_2010=data.frame(ST[,1:2], round(Sums2010, 6))[ST$IN,],
+    Sums_2016=data.frame(ST[,1:2], round(Sums2016, 6))[ST$IN,],
     Perc_Ch_by_type=data.frame(ST[,1:2],
-        round(100*(Sums2016-Sums2010)/Sums2010, 6)),
+        round(100*(Sums2016-Sums2010)/Sums2010, 6))[ST$IN,],
     Perc_Ch_total=data.frame(ST[,1:2],
-        round(100*(Sums2016-Sums2010)/rowSums(Sums2010), 6)))
+        round(100*(Sums2016-Sums2010)/rowSums(Sums2010), 6))[ST$IN,])
 write.xlsx(l, "d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results.xlsx")
 
 ## some plots
 
-z1 <- 100*(Sums2016-Sums2010)/rowSums(Sums2010)
-z2 <- 100*(Sums2016-Sums2010)/Sums2010
+z1 <- (100*(Sums2016-Sums2010)/rowSums(Sums2010))[ST$IN,]
+z2 <- (100*(Sums2016-Sums2010)/Sums2010)[ST$IN,]
 z3 <- 100 * t(t(z1) / A[colnames(z1)])
 
 op <- par(mfrow=c(3,1))
-boxplot(z1, ylim=c(-20, 20), col="#0000ff88", main="% of 2010 total")
+boxplot(z1, ylim=c(-30, 30), col="#0000ff88", main="% of 2010 total")
 abline(h=0, col=2)
-boxplot(z2, ylim=c(-100, 200), col="#0000ff88", main="% of 2010 by type (~under HF)")
+boxplot(z2, ylim=c(-100, 300), col="#0000ff88", main="% of 2010 by type (~under HF)")
 abline(h=0, col=2)
-boxplot(z3, ylim=c(-200, 200), col="#0000ff88", main="unit effect")
+boxplot(z3, ylim=c(-300, 300), col="#0000ff88", main="unit effect")
 abline(h=0, col=2)
 abline(h=c(-100, 100), col=2, lty=2)
 par(op)
+
+
+x <- rowSums(Sums2016)/rowSums(Sums2010)
+v <- z1[,"Fire"]
+head(data.frame(v=v,ST[ST$IN,c("taxon","native")])[order(v, decreasing=TRUE),])
+
