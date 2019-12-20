@@ -608,29 +608,65 @@ for (spp in SPP) {
 
 ## save into Excel file: spp table, 2010, 2016
 
-load("d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-MAX.RData")
+library(cure4insect)
+library(mefa4)
+library(openxlsx)
+set_options(path = "d:/abmi/reports")
+load_common_data()
+
 load("d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-2010.RData")
 load("d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-2016.RData")
 ST <- get_species_table(mregion="north")
-all(rownames(ST)==SPP)
-A <- 100*colMeans(groupSums(trVeg3, 2, Tot$type))
-A <- A[colnames(Sums2010)]
+load("d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-2010-2016-transitions.RData")
 
-ST$MAX <- MAX
-ST$MEAN <- 0.5 * (rowSums(Sums2010)/nrow(trVeg3) + rowSums(Sums2016)/nrow(trVeg3))
-ST$IN <- ST$MEAN > ST$MAX * 0.01
+tmp <- read.csv("d:/abmi/AB_data_v2019/data/analysis/alpac/AlpacFMA-LinkID_2019.csv")
+ss <- list(
+    AEI=rownames(trVeg3),
+    FMA=as.character(tmp$LinkID)
+)
 
-library(openxlsx)
+## preallocating for storing results
+tmp1 <- read.csv("d:/abmi/AB_data_v2019/data/analysis/alpac/ALPAC_AEI_2019-12-19.csv")
+tmp2 <- read.csv("d:/abmi/AB_data_v2019/data/analysis/alpac/ALPAC_FMA_2019-12-19.csv")
+## MountainChickadee should also be part of AEI not just FMA
+SPP <- list(
+    AEI=c("MountainChickadee", as.character(tmp1$SpeciesID[tmp1$Pred_Keep & tmp1$Model_north])),
+    FMA=as.character(tmp2$SpeciesID[tmp2$Pred_Keep & tmp2$Model_north])
+)
+str(SPP)
+
+A <- colSums(groupSums(trVeg3, 2, Tot$type))
+A <- A[colnames(Sums2010_AEI)]
+A_AEI <- A
+
+A <- colSums(groupSums(trVeg3[ss$FMA,], 2, Tot$type))
+A <- A[colnames(Sums2010_AEI)]
+A_FMA <- A
+
+cbind(A_AEI, A_FMA)
+sum(A_AEI)
+sum(A_FMA)
+
+ST$Keep_AEI <- rownames(ST) %in% SPP$AEI
+ST$Keep_FMA <- rownames(ST) %in% SPP$FMA
+summary(ST)
+
 l <- list(
-    Perc_Area=data.frame(TransitionType=names(A), Perc_Area=A),
-    Species=ST[ST$IN,],
-    Sums_2010=data.frame(ST[,1:2], round(Sums2010, 6))[ST$IN,],
-    Sums_2016=data.frame(ST[,1:2], round(Sums2016, 6))[ST$IN,],
-    Perc_Ch_by_type=data.frame(ST[,1:2],
-        round(100*(Sums2016-Sums2010)/Sums2010, 6))[ST$IN,],
-    Perc_Ch_total=data.frame(ST[,1:2],
-        round(100*(Sums2016-Sums2010)/rowSums(Sums2010), 6))[ST$IN,])
-write.xlsx(l, "d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results.xlsx")
+    Perc_Area=data.frame(TransitionType=names(A),
+        Area_AEI_km2=A_AEI/10^6,
+        Perc_AEI=100*A_AEI/sum(A_AEI),
+        Area_FMA_km2=A_FMA/10^6,
+        Perc_FMA=100*A_FMA/sum(A_FMA)),
+    Species=ST,
+    Sums_AEI_2010=data.frame(ST[rownames(Sums2010_AEI),1:2], round(Sums2010_AEI, 6)),
+    Sums_AEI_2016=data.frame(ST[rownames(Sums2016_AEI),1:2], round(Sums2016_AEI, 6)),
+    Perc_Ch_total_AEI=data.frame(ST[rownames(Sums2010_AEI),1:2],
+        round(100*(Sums2016_AEI-Sums2010_AEI)/rowSums(Sums2010_AEI), 6)),
+    Sums_FMA_2010=data.frame(ST[rownames(Sums2010_FMA),1:2], round(Sums2010_FMA, 6)),
+    Sums_FMA_2016=data.frame(ST[rownames(Sums2016_FMA),1:2], round(Sums2016_FMA, 6)),
+    Perc_Ch_total_FMA=data.frame(ST[rownames(Sums2010_FMA),1:2],
+        round(100*(Sums2016_FMA-Sums2010_FMA)/rowSums(Sums2010_FMA), 6)))
+write.xlsx(l, "d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-tr-results-XmasEdition.xlsx")
 
 ## some plots
 
