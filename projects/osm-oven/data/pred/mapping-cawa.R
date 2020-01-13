@@ -1,7 +1,7 @@
 ## common stuff -----------------------------------------------------------
 
 PROJ <- "north"
-spp <- "OVEN"
+spp <- "CAWA"
 #STAGE <- "Space"
 STAGE <- "HF"
 
@@ -313,11 +313,11 @@ save(CR, RF, HABRF, HABCR, ch2veg, tv, AVegSS, XSSH,
 espall <- new.env()
 ehfall <- new.env()
 #ehfen <- new.env()
-load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/OVEN-space-all.RData", envir=espall)
-load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/OVEN-hf-all.RData", envir=ehfall)
+#load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/OVEN-space-all.RData", envir=espall)
+#load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/OVEN-hf-all.RData", envir=ehfall)
 #load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/OVEN-hf-energy.RData", envir=ehfen)
-#load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/CAWA-space-all.RData", envir=espall)
-#load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/CAWA-hf-all.RData", envir=ehfall)
+load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/CAWA-space-all.RData", envir=espall)
+load("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/CAWA-hf-all.RData", envir=ehfall)
 
 
 ssh_labs <- list()
@@ -408,7 +408,7 @@ lines(D2 ~ val, pr2, col=2, lwd=2)
 
 ## sector effects
 
-spp <- "OVEN"
+spp <- "CAWA"
 STAGE <- "Space"
 SEC <- "All"
 file <- paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/oven/",
@@ -450,7 +450,7 @@ HRF <- groupSums(HABRF, 1, sect)
 A <- groupSums(matrix(AVegSS, ncol=1), 1, sect)
 
 save(HCR, HRF, A, file=paste0(
-    "~/repos/abmianalytics/projects/osm-oven/data/pred/osm-oven-",
+    "~/repos/abmianalytics/projects/osm-oven/data/pred/osm-cawa-",
     tolower(STAGE), "-", tolower(SEC), ".RData"))
 
 

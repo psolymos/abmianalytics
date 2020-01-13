@@ -88,7 +88,7 @@ sum(pl3@data$area_sqkm)
 rgdal::writeOGR(pl3, paste0("s:/Cure4Insect-tutorial/data/base/examples/veghf3x7-", SITE, "_", yri),
     layer="current-veg-soil", driver="ESRI Shapefile", overwrite_layer=TRUE)
 # check if it is correct
-In <- readOGR(paste0("s:/Cure4Insect-tutorial/data/base/examples/veghf3x7-", SITE, "_", yri,
+pl3 <- readOGR(paste0("s:/Cure4Insect-tutorial/data/base/examples/veghf3x7-", SITE, "_", yri,
     "/current-veg-soil.shp"))
 
 rt <- cure4insect::.read_raster_template()
@@ -99,7 +99,7 @@ sl <- list()
 for (i in levels(pl3@data$soil)) {
     j <- pl3@data$soil == i
     p <- pl3[j,]
-    r1 <- rasterize(p, rt, field="area_sqkm", fun=sum)
+    r1 <- rasterize(p, rt, field="area_sqkm", fun=mean)
     r1 <- trim(r1)
 }
 r1 <- rasterize(pl3, rt, field="area", fun=sum)
