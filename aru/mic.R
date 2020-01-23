@@ -15,18 +15,35 @@
 #Observer	Person doing testing, should not be needed and not completely consistently filled in
 #Channel	IMPORTANT for SM3 and SM4 units because each unit has two lines of data, one for left and one for right channel.
 
-x <- read.csv("~/Dropbox/abmi/aru/mic/BU-Microphone-Data-Take-1-30November2017xlsx.csv")
+x <- read.csv("~/GoogleWork/abmi/aru/mic/BU-Microphone-Data-Take-1-30November2017xlsx.csv")
 
-dyr <- as.integer(substr(as.character(x$Date_Cal),8,9)) + 2000 - x$PurchaseYear
-dbd <- sqrt(abs(x$dBDiff))
-ii <- !is.na(dyr) & !is.na(dbd)
-dyr <- dyr[ii]
-dbd <- dbd[ii]
+x$dyr <- as.integer(substr(as.character(x$Date_Cal),8,9)) + 2000 - x$PurchaseYear
+x$dbd <- sqrt(abs(x$dBDiff))
+ii <- !is.na(x$dyr) & !is.na(x$dbd) & x$MicDamage == "NONE"
 
-m <- lm(dbd ~ dyr)
+m <- lm(dbd ~ dyr, x[ii,])
 summary(m)
 
-plot(dbd ~ jitter(dyr), pch=19, col="#00000020",
+plot(dbd ~ jitter(dyr), x[ii,], pch=19, col="#00000020",
     ylab="sqrt(abs(dB difference))", xlab="Calibration year - Purchase year")
 #lines(lowess(dbd ~ dyr), col=2, lwd=2)
-abline(m, col=2, lwd=2)
+abline(m, col=2, lwd=2, lty=2)
+lines(lowess(x=x[ii,"dyr"], y=x[ii,"dbd"]), col=2, lwd=2)
+legend("topright", lwd=2, lty=c(1,2), col=2, legend=c("lowess", "lm"), bty="n")
+
+m1 <- lm(dbd ~ dyr * MODEL, x[ii,])
+summary(m1)
+AIC(m, m1)
+
+op <- par(mfrow=c(1,3))
+for (i in levels(x$MODEL)) {
+    xx <- x[ii & x$MODEL==i,]
+    mx <- lm(dbd ~ dyr, xx)
+    plot(dbd ~ jitter(dyr), xx, pch=19, col="#00000020", main=i, ylim=c(0,8), xlim=c(0,6),
+        ylab="sqrt(abs(dB difference))", xlab="Calibration year - Purchase year")
+    abline(mx, col=2, lwd=2, lty=2)
+    lines(lowess(x=xx[,"dyr"], y=xx[,"dbd"]), col=2, lwd=2)
+    legend("topright", lwd=2, lty=c(1,2), col=2, legend=c("lowess", "lm"), bty="n")
+}
+
+par(op)

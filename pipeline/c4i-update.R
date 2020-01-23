@@ -873,3 +873,26 @@ for (spp in SPP) {
     }
 }
 
+## udating upland/lowland for BMF v2018
+
+load("d:/abmi/reports/2018/data/kgrid_areas_by_sector.RData")
+table(SP$habitat_assoc, useNA="a")
+
+x <- read.csv("d:/abmi/AB_data_v2019/custom-reporting-lookup_2020-01-21.csv")
+table(x$HabitatAssoc, useNA="a")
+SP$tmp <- x$HabitatAssoc[match(SP$SpeciesID, x$SpeciesID)]
+table(SP$habitat_assoc, SP$tmp, useNA="a")
+SP[is.na(SP$tmp),]
+SP$ha <- SP$habitat_assoc
+SP$habitat_assoc[] <- "NotAssessed"
+SP$habitat_assoc[!is.na(SP$tmp) & SP$tmp == "Lowland"] <- "Lowland"
+SP$habitat_assoc[!is.na(SP$tmp) & SP$tmp == "Upland"] <- "Upland"
+table(SP$habitat_assoc, SP$tmp, useNA="a")
+SP$tmp <- NULL
+SP$ha <- NULL
+rm(x)
+save(list=c("CF", "CFbirds", "KA_2016", "KT", "QT2KT", "SP", "VER", "XY"),
+    file="d:/abmi/reports/2018/data/kgrid_areas_by_sector.RData")
+write.csv(SP, row.names=FALSE, file="d:/abmi/reports/2018/data/species-info.csv")
+
+

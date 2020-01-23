@@ -149,3 +149,29 @@ save(dd_aei, dd_fma,
     file="d:/abmi/AB_data_v2019/data/analysis/alpac/SC_AEIandFMA_veghfSummary_20200110.RData")
 
 
+
+
+d <- read.csv("~/Desktop/Sites_id_VegVhf3by7_2017.csv")
+
+dd <- make_vegHF_wide_v6(d,
+    col.label="OBJECTID",
+    col.year=2017,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    wide=FALSE, HF_fine=TRUE) # use refined classes
+str(dd)
+
+d2 <- read.csv("~/Desktop/Sites_id_VegHf_2017.csv")
+
+dd2 <- make_vegHF_wide_v6(d2,
+    col.label="OBJECTID",
+    col.year=2017,
+    col.HFyear="YEAR",
+    col.HABIT="Combined_ChgByCWCS",
+    col.SOIL="Soil_Type_1",
+    wide=FALSE, HF_fine=TRUE) # use refined classes
+str(dd2)
+
+write.csv(dd, row.names=FALSE, file="~/Desktop/Sites_id_VegVhf3by7_2017-output.csv")
+write.csv(dd2, row.names=FALSE, file="~/Desktop/Sites_id_VegHf_2017-output.csv")

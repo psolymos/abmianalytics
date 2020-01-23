@@ -101,3 +101,32 @@ SR[,"ofbirds"] <- SR[,"ofbirds"] / M
 summary(SR)
 
 save(SR, file="s:/AB_data_v2019/bdqt/bdqt-richness_2019-12-18.RData")
+
+## uploading layers to DB
+
+library(DBI)
+source("~/.ssh/postgres")
+data.frame(..postgres_science)
+con <- dbConnect(
+    odbc::odbc(),
+    driver   = "PostgreSQL Unicode(x64)",
+    server   = ..postgres_science$host,
+    database = ..postgres_science$database,
+    uid      = ..postgres_science$username,
+    pwd      = ..postgres_science$password,
+    port     = ..postgres_science$port)
+(dbl <- dbListTables(con))
+
+#tmp <- data.frame(x=1:3, y=5:7)
+#dbWriteTable(con, "test", tmp)
+#dbSendQuery(con, "drop table test")
+
+#d0 <- dbReadTable(con, "map_YellowheadedBlackbird")
+#dbSendQuery(con, "DROP TABLE map_YellowheadedBlackbird;")
+
+load("s:/AB_data_v2019/bdqt/bdqt-richness_2019-12-18.RData")
+
+
+
+dbDisconnect(con)
+
