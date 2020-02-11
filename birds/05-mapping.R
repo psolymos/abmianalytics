@@ -185,7 +185,7 @@ stemp <- as(stemp, "dgCMatrix")
 #spp <- "ALFL"
 #SPP <- rownames(tax)
 
-bbb <- read.csv("d:/abmi/sppweb2018/c4i/tables/StandardizedOutput-birds-final-lookup-withChecks.csv")
+bbb <- read.csv("s:/sppweb2018/c4i/tables/StandardizedOutput-birds-final-lookup-withChecks.csv")
 bbb <- bbb[is.na(bbb$Exclude),]
 bbb <- bbb[bbb$ModelNorth | bbb$ModelSouth,]
 rownames(bbb) <- bbb$Code.1
@@ -333,8 +333,10 @@ for (spp in SPP) {
         }
     }
 
+#    save(CURR, REF, CURR1, REF1, CURRB, REFB,
+#        file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-09-20/", spp, ".RData"))
     save(CURR, REF, CURR1, REF1, CURRB, REFB,
-        file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/2019-09-20/", spp, ".RData"))
+        file=paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/tmp/", spp, ".RData"))
 
     cat("DONE\n")
 }
@@ -909,3 +911,47 @@ load("d:/abmi/sppweb2018/c4i/tables/lookup-birds.RData")
 tax <- droplevels(Lookup[Lookup$ModelNorth | Lookup$ModelSouth,])
 rownames(tax) <- tax$Code
 
+
+## species tables for data portal
+
+library(cure4insect)
+set_options(path="d:/abmi/reports")
+load_common_data()
+SP <- get_species_table()
+SPP <- rownames(SP)
+KT <- get_id_table()
+
+for (spp in SPP) {
+
+    cat(spp, which(SPP==spp), "/", length(SPP), "\n")
+    flush.console()
+
+    tx <- as.character(SP[spp, "taxon"])
+
+    TYPE <- "C" # combo
+    if (SP[spp, "model_south"] && !SP[spp, "model_north"])
+        TYPE <- "S"
+    if (!SP[spp, "model_south"] && SP[spp, "model_north"])
+        TYPE <- "N"
+
+    y <- load_species_data(spp, boot=FALSE)
+    Dcr <- rowSums(y$SA.Curr[match(rownames(KT), rownames(y$SA.Curr)),])
+    q <- quantile(Dcr, 0.99, na.rm=TRUE)
+    Dcr[!is.na(Dcr) & Dcr > q] <- q
+    Drf <- rowSums(y$SA.Ref[match(rownames(KT), rownames(y$SA.Ref)),])
+    q <- quantile(Drf, 0.99, na.rm=TRUE)
+    Drf[!is.na(Drf) & Drf > q] <- q
+    MAX <- max(Dcr, Drf, na.rm=TRUE)
+
+    df <- (Dcr-Drf) / MAX
+    df <- sign(df) * abs(df)^0.5
+    df <- pmin(200, ceiling(99 * df)+100)
+    df[df==0] <- 1
+    cr <- pmin(100, ceiling(99 * sqrt(Dcr / MAX))+1)
+    rf <- pmin(100, ceiling(99 * sqrt(Drf / MAX))+1)
+    d <- data.frame(Row10_Col10=KT$Row10_Col10, Curr=cr, Ref=rf, Diff=df)
+    i <- !is.na(cr) & !is.na(rf)
+    d <- d[i,]
+    write.csv(d, row.names = FALSE,
+        file=paste0("s:/BDQT/species-tables-1km/", tx, "/", spp, ".csv"))
+}
