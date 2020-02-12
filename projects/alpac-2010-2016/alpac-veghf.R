@@ -47,6 +47,30 @@ dd2016 <- make_vegHF_wide_v6(d,
     col.SOIL="Soil_Type_1",
     wide=FALSE, sparse=TRUE, HF_fine=TRUE) # use refined classes
 
+if (FALSE) {
+    setwd("~/repos/recurring/veghf")
+    source("00-setup.R")
+
+    dd2010x <- make_vegHF_wide_v6(dd2010,
+        col.label="GRID_LABEL",
+        col.year=2010,
+        col.HFyear="YEAR",
+        col.HABIT="Combined_ChgByCWCS",
+        col.SOIL="Soil_Type_1",
+        widen_only = TRUE, sparse=TRUE, HF_fine=TRUE, tol=0.002) # use refined classes
+    dd2010x <- fill_in_0ages_v6(dd2010x, rep("Central Mixedwood", nrow(dd2010x[[1]])), ages_list)
+    dd2016x <- make_vegHF_wide_v6(dd2016,
+        col.label="GRID_LABEL",
+        col.year=2016,
+        col.HFyear="YEAR",
+        col.HABIT="Combined_ChgByCWCS",
+        col.SOIL="Soil_Type_1",
+        widen_only = TRUE, sparse=TRUE, HF_fine=TRUE, tol=0.002) # use refined classes
+    dd2016x <- fill_in_0ages_v6(dd2016x, rep("Central Mixedwood", nrow(dd2016x[[1]])), ages_list)
+
+    save(dd2010x, dd2016x, file="d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-2010-2016-veghf.RData")
+}
+
 dd <- d[,c("GRID_LABEL", "Shape_Area")]
 dd$veghf0 <- as.character(dd2010$VEGAGEclass)
 dd$veghf10 <- as.character(dd2010$VEGHFAGEclass)
