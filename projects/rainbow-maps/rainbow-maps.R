@@ -76,14 +76,15 @@ tx <- names(ABMI$detections)
 
 i <- tx[1]
 BP <- list()
+OC <- list()
 
 cl <- makeCluster(8)
 for (i in tx) {
     cat(i, "\n")
     rn <- rownames(ABMI$detections[[i]])
     yy <- ABMI$detections[[i]][rn,]
-    if (i == "vascular_plants")
-        yy <- yy[,!ABMI$species[[i]]$nonnative]
+#    if (i == "vascular_plants")
+#        yy <- yy[,!ABMI$species[[i]]$nonnative]
     yy[yy > 0] <- 1
     yy <- yy[,colSums(yy) > 0]
     xx <- ABMI$sites[rn,]
@@ -93,14 +94,66 @@ for (i in tx) {
     oc1 <- opticut(yy ~ 1, strata=xx$g1, dist="binomial", cl=cl)
     bp1 <- summary(oc1)$bestpart
     BP[[i]] <- bp1
+    OC[[i]] <- oc1
 }
 stopCluster(cl)
 
 
-op <- par(mfrow=c(2,3))
-for (i in tx)
-plot(hclust(vegan::vegdist(t(BP[[i]]), "bray"), "ward.D2"), xlab="Natural Regions", sub="", main=i)
+cl <- makeCluster(8)
+
+i <- "vascular_plants"
+
+rn <- rownames(ABMI$detections[[i]])
+
+yy <- ABMI$detections[[i]][rn,]
+yy <- yy[,!ABMI$species[[i]]$nonnative]
+yy[yy > 0] <- 1
+yy <- yy[,colSums(yy) > 0]
+xx <- ABMI$sites[rn,]
+xx$g1 <- xx$NRNAME
+levels(xx$g1) <- c("B", "S", "F", "G", "P", "R")
+oc1n <- opticut(yy ~ 1, strata=xx$g1, dist="binomial", cl=cl)
+bp1n <- summary(oc1n)$bestpart
+
+yy <- ABMI$detections[[i]][rn,]
+yy <- yy[,ABMI$species[[i]]$nonnative]
+yy[yy > 0] <- 1
+yy <- yy[,colSums(yy) > 0]
+xx <- ABMI$sites[rn,]
+xx$g1 <- xx$NRNAME
+levels(xx$g1) <- c("B", "S", "F", "G", "P", "R")
+
+oc1nn <- opticut(yy ~ 1, strata=xx$g1, dist="binomial", cl=cl)
+bp1nn <- summary(oc1nn)$bestpart
+
+stopCluster(cl)
+
+bp1n <- summary(oc1n)$bestpart
+bp1nn <- summary(oc1nn)$bestpart
+
+
+pdf("~/GoogleWork/abmi/rainbow-maps/clusters.pdf", height=7, width=12)
+op <- par(mfrow=c(2,4))
+for (i in tx[c(1,2,5,4,3)])
+plot(hclust(vegan::vegdist(t(BP[[i]]), "bray"), "ward.D2"), xlab="Natural Regions", sub="", main=i,
+    hang=-1)
+plot(hclust(vegan::vegdist(t(bp1n), "bray"), "ward.D2"), xlab="Natural Regions", sub="",
+    main=paste(i, "(native)"), hang=-1)
+plot(hclust(vegan::vegdist(t(bp1nn), "bray"), "ward.D2"), xlab="Natural Regions", sub="",
+    main=paste(i, "(non-native)"), hang=-1)
 par(op)
+dev.off()
+
+pdf(paste0("~/GoogleWork/abmi/rainbow-maps/indicators.pdf"), height=10, width=10)
+for (i in tx) {
+plot(OC[[i]], cex.axis=0.3, show_I=FALSE, show_S=FALSE, mar=c(4,8,2,2), xlab="", ylab="", bty="n")
+title(main=i)
+}
+plot(oc1n, cex.axis=0.3, show_I=FALSE, show_S=FALSE, mar=c(4,8,4,2), xlab="", ylab="", bty="n")
+title(main="vascular_plants (native)")
+plot(oc1nn, cex.axis=0.3, show_I=FALSE, show_S=FALSE, mar=c(4,8,2,2), xlab="", ylab="", bty="n")
+title(main="vascular_plants (non-native)")
+dev.off()
 
 bp <- groupSums(bp1, 2, c("B", "FSR", "FSR", "GP", "GP", "FSR"))
 bp[bp > 0] <- 1
@@ -116,6 +169,8 @@ for (i in tx) {
 
 
 
+
+
 #' Process predictions
 
 
@@ -123,7 +178,9 @@ bpl$mites <- bpl$mites[,c("BS", "GP", "FR")] # hack to reorg mites
 bp <- do.call(rbind, bpl)
 
 SppTab <- get_species_table()
-SppTab <- SppTab[SppTab$native,]
+SppTab$native[!SppTab$native & SppTab$taxon != "vplants"] <- TRUE
+#SppTab <- SppTab[SppTab$native,]
+
 #Spp <- intersect(SppTab$SpeciesID, unname(unlist(lapply(bpl, rownames))))
 Spp <- intersect(SppTab$SpeciesID, rownames(bp))
 bp <- bp[Spp,]
@@ -155,10 +212,10 @@ tmp <- clusterEvalQ(cl, library(cure4insect))
 tmp <- clusterEvalQ(cl, set_options(path = "d:/abmi/reports"))
 tmp <- clusterEvalQ(cl, load_common_data())
 tmp <- clusterExport(cl, c("rt", "KT", "rasterize_results_cr", "SppTab"))
-All1 <- pblapply(Spp, f, current=TRUE, cl=cl)
+#All1 <- pblapply(Spp, f, current=TRUE, cl=cl)
 All2 <- pblapply(Spp, f, current=FALSE, cl=cl)
 stopCluster(cl)
-names(All1) <- Spp
+#names(All1) <- Spp
 names(All2) <- Spp
 
 All <- All2
@@ -172,14 +229,24 @@ RRall <- stack(list(r=255*Rred/Rall, g=255*Rgreen/Rall, b=255*Rblue/Rall))
 R0 <- stack(list(r=0*rt, g=0*rt, b=0*rt))
 
 plotRGB(R0)
-plotRGB(RRall, stretch="hist")
+plotRGB(RRall, stretch="hist", add=TRUE)
 
-h <- function(TT) {
-    ss <- SppTab$taxon == TT
+h <- function(TT, what="both") {
+    if (what == "native")
+        ns <- SppTab$native
+    if (what == "nonnative")
+        ns <- !SppTab$native
+    if (what == "both")
+        ns <- TRUE
+    ss <- SppTab$taxon == TT & ns
     Rall <- Reduce("+", All[ss])
     Rred   <- Reduce("+", All[bp[,"GP"]==1 & ss])
     Rgreen <- Reduce("+", All[bp[,"SBF"]==1 & ss])
     Rblue  <- Reduce("+", All[bp[,"R"]==1 & ss])
+    if (what == "nonnative") {
+        tmp <- Rgreen + Rblue
+        Rblue <- Rgreen <- 0.5*tmp
+    }
     RR <- stack(list(r=255*Rred/Rall, g=255*Rgreen/Rall, b=255*Rblue/Rall))
 }
 
@@ -188,10 +255,12 @@ RRlichens <- h("lichens")
 RRmites <- h("mites")
 RRmosses <- h("mosses")
 RRvplants <- h("vplants")
-
+RRvplantsNonly <- h("vplants", "native")
+RRvplantsNNonly <- h("vplants", "nonnative")
 
 hacked_plotRGB <-
-function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, interpolate=FALSE, colNA='white', alpha, bgalpha, addfun=NULL, zlim=NULL, zlimcol=NULL, axes=FALSE, xlab='', ylab='', asp=NULL, add=FALSE, ...) {
+function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, interpolate=FALSE, colNA='white',
+alpha, bgalpha, addfun=NULL, zlim=NULL, zlimcol=NULL, axes=FALSE, xlab='', ylab='', asp=NULL, add=FALSE, ...) {
 
 	if (missing(scale)) {
 		scale <- 255
@@ -308,17 +377,60 @@ function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, inte
     invisible(NULL)
 }
 
+stretch="lin"
 #pdf("d:/abmi/sppweb2018/rainbow-maps/results-rainbow-maps-curr.pdf")
-pdf("d:/abmi/sppweb2018/rainbow-maps/results-rainbow-maps-ref.pdf")
-op <- par(mfrow=c(2,3), mar=c(2,2,2,2))
-hacked_plotRGB(RRall, stretch="hist", main="All")
-hacked_plotRGB(RRbirds, stretch="hist", main="Birds")
-hacked_plotRGB(RRlichens, stretch="hist", main="Lichens")
-hacked_plotRGB(RRmites, stretch="hist", main="Mites")
-#plot.new()
-hacked_plotRGB(RRmosses, stretch="hist", main="Bryophytes")
-hacked_plotRGB(RRvplants, stretch="hist", main="Vascular Plants")
+pdf("~/GoogleWork/abmi/rainbow-maps/results-rainbow-maps-ref.pdf", height=12, width=8, onefile=TRUE)
+#op <- par(mfrow=c(2,4), mar=c(2,2,2,2))
+op <- par(mar=c(2,2,2,2))
+hacked_plotRGB(RRall, stretch=stretch, main="All")
+hacked_plotRGB(RRbirds, stretch=stretch, main="Birds")
+hacked_plotRGB(RRlichens, stretch=stretch, main="Lichens")
+hacked_plotRGB(RRmites, stretch=stretch, main="Mites")
+hacked_plotRGB(RRmosses, stretch=stretch, main="Bryophytes")
+hacked_plotRGB(RRvplants, stretch=stretch, main="Vascular Plants (all)")
+hacked_plotRGB(RRvplantsNonly, stretch=stretch, main="Vascular Plants (native)")
+hacked_plotRGB(RRvplantsNNonly, stretch=stretch, main="Vascular Plants (non-native)")
 par(op)
+dev.off()
+
+
+op <- par(mar=c(2,2,2,2))
+pdf("~/GoogleWork/abmi/rainbow-maps/results-rainbow-maps-all.pdf", height=12, width=8)
+hacked_plotRGB(RRall, stretch=stretch, main="All")
+dev.off()
+pdf("~/GoogleWork/abmi/rainbow-maps/results-rainbow-maps-birds.pdf", height=12, width=8)
+hacked_plotRGB(RRbirds, stretch=stretch, main="Birds")
+dev.off()
+pdf("~/GoogleWork/abmi/rainbow-maps/results-rainbow-maps-lichens.pdf", height=12, width=8)
+hacked_plotRGB(RRlichens, stretch=stretch, main="Lichens")
+dev.off()
+pdf("~/GoogleWork/abmi/rainbow-maps/results-rainbow-maps-mites.pdf", height=12, width=8)
+hacked_plotRGB(RRmites, stretch=stretch, main="Mites")
+dev.off()
+pdf("~/GoogleWork/abmi/rainbow-maps/results-rainbow-maps-mosses.pdf", height=12, width=8)
+hacked_plotRGB(RRmosses, stretch=stretch, main="Bryophytes")
+dev.off()
+pdf("~/GoogleWork/abmi/rainbow-maps/results-rainbow-maps-vplants-all.pdf", height=12, width=8)
+hacked_plotRGB(RRvplants, stretch=stretch, main="Vascular Plants (all)")
+dev.off()
+pdf("~/GoogleWork/abmi/rainbow-maps/results-rainbow-maps-vplants-native.pdf", height=12, width=8)
+hacked_plotRGB(RRvplantsNonly, stretch=stretch, main="Vascular Plants (native)")
+dev.off()
+pdf("~/GoogleWork/abmi/rainbow-maps/results-rainbow-maps-vplants-nonnative.pdf", height=12, width=8)
+hacked_plotRGB(RRvplantsNNonly, stretch=stretch, main="Vascular Plants (non-native)")
+dev.off()
+par(op)
+
+pdf("~/GoogleWork/abmi/rainbow-maps/results-rainbow-maps-mosses.pdf", height=12, width=8, onefile=TRUE)
+hacked_plotRGB(RRmosses, stretch=NULL, main="Bryophytes")
+hacked_plotRGB(RRmosses, stretch="lin", main="Bryophytes")
+hacked_plotRGB(RRmosses, stretch="hist", main="Bryophytes")
+plot(RRmosses, 1)
+plot(RRmosses, 2)
+plot(RRmosses, 3)
+dev.off()
+
+
 
 op <- par(mfrow=c(2,3), mar=c(2,2,2,2))
 hacked_plotRGB(RRall, main="All")
@@ -334,3 +446,11 @@ par(op)
 fno <- "d:/abmi/sppweb2018/rainbow-maps/results-rainbow-maps-ref-2019-01-30.RData"
 save(RRall, RRbirds, RRlichens, RRmites, RRmosses, RRvplants,
     file=fno)
+
+
+## post processing the results
+
+load("s:/sppweb2018/rainbow-maps/results-rainbow-maps-ref-2019-01-30.RData")
+
+
+
