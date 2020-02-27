@@ -949,7 +949,7 @@ for (spp in SPP) {
     df[df==0] <- 1
     cr <- pmin(100, ceiling(99 * sqrt(Dcr / MAX))+1)
     rf <- pmin(100, ceiling(99 * sqrt(Drf / MAX))+1)
-    d <- data.frame(Row10_Col10=KT$Row10_Col10, Curr=cr, Ref=rf, Diff=df)
+    d <- data.frame(Row_Col=rownames(KT), Curr=cr, Ref=rf, Diff=df)
     i <- !is.na(cr) & !is.na(rf)
     d <- d[i,]
     write.csv(d, row.names = FALSE,
