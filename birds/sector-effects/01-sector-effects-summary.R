@@ -113,49 +113,79 @@ SPP <- c("ALFL", "AMCR", "AMGO", "AMRE", "AMRO", "ATTW", "BAOR", "BARS",
 save(SPP, AVegSS, ch2veg,
     file=paste0(INDIR, "/sector-tools.RData"))
 
+## summarize species
 
+library(mefa4)
+library(intrval)
+
+#INDIR <- paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/sector")
+INDIR <- paste0("~/GoogleWork/tmp/sector")
 load(paste0(INDIR, "/sector-tools.RData"))
+
+A <- groupSums(matrix(AVegSS, ncol=1), 1, ch2veg$sector)
+
+load_spp <- function(spp) {
+    out <- list()
+    for (SEC in c("All", "Agr", "For", "Energy", "Urban","Transp")) {
+        e <- new.env()
+        load(paste0(INDIR, "/", spp, "/", spp, "-HF-", toupper(SEC), ".RData"), envir=e)
+        out[[SEC]] <- list(
+            HCR = groupSums(e$HABCR, 1, ch2veg$sector),
+            HRF = groupSums(e$HABRF, 1, ch2veg$sector))
+    }
+    out
+}
+
+se_fun <- function(i, H) {
+    Nsect <- list()
+    for (SEC in names(H)) {
+        Nsect[[SEC]] <- cbind(
+            cr=H[[SEC]]$HCR[,i],
+            rf=H[[SEC]]$HRF[,i])
+    }
+    Nref <- Nsect[[1]][,2]
+    Diffs <- sapply(Nsect, function(z) z[,1]-Nref)
+    Diffs <- Diffs[,c("All", "For", "Transp", "Energy", "Urban", "Agr")]
+    Ahf <- A[,1]
+    Df2 <- cbind(Native=0,Diffs[,-1])
+    Df2 <- Df2[,c("Native", "For", "Transp", "Energy", "Urban", "Agr")]
+    Tots <- data.frame(#All=Diffs[,1],
+        Joint=Diffs[rownames(Diffs) != "Misc","All"], # joint
+        Direct=diag(Df2), # pbf direct (pbf=partial backfilled)
+        Spillover=colSums(Df2)-diag(Df2)) # indirect effects: pbf all - pbf direct
+    Tots <- 100*Tots/sum(Nref)
+    Tots$Indirect <- Tots[,"Joint"]-Tots[,"Direct"]
+    as.matrix(Tots)
+}
+
+sector <- function(spp, level=0.95) {
+    a <- c((1-level)/2, 1-((1-level)/2))
+    H <- load_spp(spp)
+    B <- ncol(H[[1]][[1]])
+    tmp <- se_fun(1, H)
+    S <- array(0, c(dim(tmp), B))
+    dimnames(S) <- list(rownames(tmp), colnames(tmp), NULL)
+    for (i in seq_len(B))
+        S[,,i] <- se_fun(i, H)
+    OUT <- list(estimate=tmp, lower=tmp, upper=tmp)
+    for (j in seq_len(nrow(tmp))) {
+        for (k in seq_len(ncol(tmp))) {
+            z <- quantile(S[j,k,], c(0.5, a))
+            OUT$estimate[j,k] <- z[1]
+            OUT$lower[j,k] <- z[2]
+            OUT$upper[j,k] <- z[3]
+        }
+    }
+    OUT
+}
 
 sector_res <- list()
 for (spp in SPP) {
     cat(spp, "\n");flush.console()
-
-    ## !!! evaluate $range !!!
-
-    Nsect <- list()
-    for (SEC in c("All", sectors_all)) {
-        e <- new.env()
-        load(paste0(INDIR, "/", spp, "/", spp, "-HF-", toupper(SEC), ".RData"), envir=e)
-
-        HCR <- groupSums(e$HABCR, 1, ch2veg$sector)
-        HRF <- groupSums(e$HABRF, 1, ch2veg$sector)
-        A <- groupSums(matrix(AVegSS, ncol=1), 1, ch2veg$sector)
-
-        Nsect[[SEC]] <- cbind(cr=apply(HCR, 1, median), rf=apply(HRF, 1, median), a=A[,1])
-    }
-
-    Nref <- Nsect[[1]][,2]
-    Diffs <- sapply(Nsect, function(z) z[,1]-Nref)
-    Diffs <- Diffs[,c("All", "For", "Transp", "Energy", "Urban", "Agr")]
-    Ahf <- Nsect[[1]][,3]
-    Df2 <- cbind(Native=0,Diffs[,-1])
-    Df2 <- Df2[,c("Native", "For", "Transp", "Energy", "Urban", "Agr")]
-
-    Tots <- cbind(#All=Diffs[,1],
-        Joint=Diffs[rownames(Diffs) != "Misc","All"], # joint
-        Direct=diag(Df2), # pbf direct (pbf=partial backfilled)
-        Indirect=colSums(Df2)-diag(Df2)) # indirect effects: pbf all - pbf direct
-    Tots <- 100*Tots/sum(Nref)
-    U <- (Tots/100) / (Ahf[rownames(Tots)]/sum(Ahf[rownames(Tots)]))
-    attr(Tots, "Nref") <- sum(Nref)
-    attr(Tots, "synergy") <- 100*(sum(Df2)-sum(Diffs[,1]))/sum(Nref) # (isolated-joint)/Nref
-
-#    round(Tots, 2)
-#    100*Ahf/sum(Ahf)
-
-    sector_res[[spp]] <- list(diff=Diffs, total=Tots, unit=U, ref=Nref, ahf=Ahf)
-
+    sector_res[[spp]] <- sector(spp)
 }
+save(sector_res, file=paste0(INDIR, "/sector-res.RData"))
+
 
 library(intrval)
 
