@@ -110,6 +110,11 @@ SPP <- c("ALFL", "AMCR", "AMGO", "AMRE", "AMRO", "ATTW", "BAOR", "BARS",
     "WAVI", "WBNU", "WCSP", "WETA", "WEWP", "WIWA", "WIWR", "WTSP",
     "WWCR", "YBFL", "YBSA", "YEWA", "YRWA")
 
+save(SPP, AVegSS, ch2veg,
+    file=paste0(INDIR, "/sector-tools.RData"))
+
+
+load(paste0(INDIR, "/sector-tools.RData"))
 
 sector_res <- list()
 for (spp in SPP) {
@@ -128,16 +133,6 @@ for (spp in SPP) {
 
         Nsect[[SEC]] <- cbind(cr=apply(HCR, 1, median), rf=apply(HRF, 1, median), a=A[,1])
     }
-#    e <- new.env()
-#    load(paste0(INDIR, "/", spp, "/", spp, "-SPACE-ALL.RData"), envir=e)
-#    HCR <- groupSums(e$HABCR, 1, ch2veg$sector)
-#    HRF <- groupSums(e$HABRF, 1, ch2veg$sector)
-#    A <- groupSums(matrix(AVegSS, ncol=1), 1, ch2veg$sector)
-#    NsectSp <- cbind(cr=apply(HCR, 1, median), rf=apply(HRF, 1, median), a=A[,1])
-
-    ## reference abundance should not differ
-    #round(100*sapply(Nsect, function(z) (z[,2]-Nsect[[1]][,2])/sum(Nsect[[1]][,2])), 3)
-    #max(abs(round(100*sapply(Nsect, function(z) (z[,2]-Nsect[[1]][,2])/sum(Nsect[[1]][,2])), 3)))
 
     Nref <- Nsect[[1]][,2]
     Diffs <- sapply(Nsect, function(z) z[,1]-Nref)
