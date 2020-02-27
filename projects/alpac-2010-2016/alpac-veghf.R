@@ -48,8 +48,12 @@ dd2016 <- make_vegHF_wide_v6(d,
     wide=FALSE, sparse=TRUE, HF_fine=TRUE) # use refined classes
 
 if (FALSE) {
-    setwd("~/repos/recurring/veghf")
+
+    table(d$FMA_NAME)
+
+    od <- setwd("~/repos/recurring/veghf")
     source("00-setup.R")
+    setwd(od)
 
     dd2010x <- make_vegHF_wide_v6(dd2010,
         col.label="GRID_LABEL",
@@ -68,7 +72,52 @@ if (FALSE) {
         widen_only = TRUE, sparse=TRUE, HF_fine=TRUE, tol=0.002) # use refined classes
     dd2016x <- fill_in_0ages_v6(dd2016x, rep("Central Mixedwood", nrow(dd2016x[[1]])), ages_list)
 
-    save(dd2010x, dd2016x, file="d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-2010-2016-veghf.RData")
+    dd2010fma <- make_vegHF_wide_v6(dd2010[dd2016$FMA_NAME == "Alberta-Pacific Forest Industries Inc.",],
+        col.label="GRID_LABEL",
+        col.year=2010,
+        col.HFyear="YEAR",
+        col.HABIT="Combined_ChgByCWCS",
+        col.SOIL="Soil_Type_1",
+        widen_only = TRUE, sparse=TRUE, HF_fine=TRUE, tol=0.002) # use refined classes
+    dd2010fma <- fill_in_0ages_v6(dd2010fma, rep("Central Mixedwood", nrow(dd2010fma[[1]])), ages_list)
+    dd2016fma <- make_vegHF_wide_v6(dd2016[dd2016$FMA_NAME == "Alberta-Pacific Forest Industries Inc.",],
+        col.label="GRID_LABEL",
+        col.year=2016,
+        col.HFyear="YEAR",
+        col.HABIT="Combined_ChgByCWCS",
+        col.SOIL="Soil_Type_1",
+        widen_only = TRUE, sparse=TRUE, HF_fine=TRUE, tol=0.002) # use refined classes
+    dd2016fma <- fill_in_0ages_v6(dd2016fma, rep("Central Mixedwood", nrow(dd2016fma[[1]])), ages_list)
+
+    dd <- d[,c("GRID_LABEL", "Shape_Area", "FMA_NAME")]
+    dd$veg10 <- as.character(dd2010$VEGAGEclass)
+    dd$veg16 <- as.character(dd2016$VEGAGEclass)
+    dd$veghf10 <- as.character(dd2010$VEGHFAGEclass)
+    dd$veghf16 <- as.character(dd2016$VEGHFAGEclass)
+    dd$veghfch10 <- factor(paste0(dd$veg10, "->", dd$veghf10))
+    dd$veghfch16 <- factor(paste0(dd$veg16, "->", dd$veghf16))
+
+    trVeg <- Xtab(Shape_Area ~ GRID_LABEL + veghfch16, dd)
+    trVegFma <- Xtab(Shape_Area ~ GRID_LABEL + veghfch16,
+        dd[dd$FMA_NAME == "Alberta-Pacific Forest Industries Inc.",])
+    all(colnames(trVeg)==colnames(trVegFma))
+    Tot <- data.frame(veghfch=colnames(trVeg))
+    tmp <- strsplit(colnames(trVeg), "->")
+    Tot$veg16 <- sapply(tmp, "[[", 1)
+    Tot$veghf16 <- sapply(tmp, "[[", 2)
+
+    trVeg10 <- Xtab(Shape_Area ~ GRID_LABEL + veghfch10, dd)
+    trVegFma10 <- Xtab(Shape_Area ~ GRID_LABEL + veghfch10,
+        dd[dd$FMA_NAME == "Alberta-Pacific Forest Industries Inc.",])
+    all(colnames(trVeg10)==colnames(trVegFma10))
+    Tot10 <- data.frame(veghfch=colnames(trVeg10))
+    tmp <- strsplit(colnames(trVeg10), "->")
+    Tot10$veg10 <- sapply(tmp, "[[", 1)
+    Tot10$veghf10 <- sapply(tmp, "[[", 2)
+
+    save(dd2010x, dd2016x, dd2010fma, dd2016fma,
+        trVeg, trVegFma, Tot, trVeg10, trVegFma10, Tot10,
+        file="d:/abmi/AB_data_v2019/data/analysis/alpac/alpac-2010-2016-veghf.RData")
 }
 
 dd <- d[,c("GRID_LABEL", "Shape_Area")]
