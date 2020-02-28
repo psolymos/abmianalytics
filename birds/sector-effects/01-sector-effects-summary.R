@@ -146,7 +146,6 @@ se_fun <- function(i, H) {
     Nref <- Nsect[[1]][,2]
     Diffs <- sapply(Nsect, function(z) z[,1]-Nref)
     Diffs <- Diffs[,c("All", "For", "Transp", "Energy", "Urban", "Agr")]
-    Ahf <- A[,1]
     Df2 <- cbind(Native=0,Diffs[,-1])
     Df2 <- Df2[,c("Native", "For", "Transp", "Energy", "Urban", "Agr")]
     Tots <- data.frame(#All=Diffs[,1],
@@ -186,12 +185,14 @@ for (spp in SPP) {
 }
 save(sector_res, file=paste0(INDIR, "/sector-res.RData"))
 
-
+load(paste0(INDIR, "/sector-res.RData"))
 library(intrval)
 
-v <- lapply(1:6, function(i) t(sapply(sector_res, function(z) z$total[i,1:2])))
-names(v) <- rownames(sector_res[[1]]$total)
+v <- lapply(1:6, function(i)
+    t(sapply(sector_res, function(z) z$estimate[i,1:2])))
+names(v) <- rownames(sector_res[[1]]$estimate)
 
+pdf(paste0(INDIR, "/sector-all.pdf"), width=12, height=8)
 op <- par(mfrow=c(2,3))
 hist(v[[1]][,1], main="Native", sub="", breaks=20, xlim=c(-50,250),
     xlab="Indirect", col="#00000066")
@@ -210,6 +211,91 @@ for (i in 2:6) {
     abline(h=0,v=0, col=3, lty=1)
 }
 par(op)
+dev.off()
+
+A <- groupSums(matrix(AVegSS, ncol=1), 1, ch2veg$sector)
+A <- A[,1]/sum(A)
+
+tab_fun <- function(spp, cn, unit=FALSE) {
+    z <- sector_res[[spp]]
+    if (unit) {
+        z[[1]] <- z[[1]]/A[rownames(z[[1]])]
+        z[[2]] <- z[[2]]/A[rownames(z[[1]])]
+        z[[3]] <- z[[3]]/A[rownames(z[[1]])]
+    }
+    out <- data.matrix(c(z[[1]][,cn], lower=z[[2]][,cn], upper=z[[3]][,cn]))
+    out <- data.frame(spp=spp, cn=cn, unit=unit, as.data.frame(t(out)))
+}
+Res <- rbind(do.call(rbind, lapply(SPP, tab_fun, "Joint")),
+    do.call(rbind, lapply(SPP, tab_fun, "Joint", TRUE)),
+    do.call(rbind, lapply(SPP, tab_fun, "Direct")),
+    do.call(rbind, lapply(SPP, tab_fun, "Direct", TRUE)))
+write.csv(Res, row.names = FALSE, file=paste0(INDIR, "/sector-results.csv"))
+
+plot_sect <- function(spp, unit=FALSE) {
+
+    z <- sector_res[[spp]]
+    if (unit) {
+        z[[1]] <- z[[1]]/A[rownames(z[[1]])]
+        z[[2]] <- z[[2]]/A[rownames(z[[1]])]
+        z[[3]] <- z[[3]]/A[rownames(z[[1]])]
+    }
+    rr1 <- range(z[[1]][,1:2])
+    rr2 <- range(z[[1]][,1:2], z[[2]][,1:2], z[[3]][,1:2])
+    rr <- rr2
+    rr[1] <- if (abs(rr2[1] - rr1[1])/diff(rr1) > 0.5)
+        rr1[1]-0.5*diff(rr1) else rr2[1]
+    rr[2] <- if (abs(rr2[2] - rr1[2])/diff(rr1) > 0.5)
+        rr1[2]+0.5*diff(rr1) else rr2[2]
+    #rr <- rr - (rr %% 10)
+    #rr <- rr + c(-10, 10)
+
+    YLAB <- if (unit)
+        "Unit effect" else "Regional effect"
+    plot(0, type="n", xlim=c(0.5, 6.5), ylim=rr, ann=FALSE, axes=FALSE)
+    w <- 0.4
+    Cols <- c('#66c2a5','#fc8d62','#8da0cb','#e78ac3','#a6d854','#ffd92f')
+    for (i in 1:6) {
+        COL <- paste0(Cols[i], '66')
+        polygon(
+            i + c(0, -w, -w, 0),
+            c(0, 0, z$estimate[i, "Direct"], z$estimate[i, "Direct"]),
+            col=paste0(Cols[i], '44'), border=paste0(Cols[i], 'aa'))
+        polygon(
+            i + c(0, -w, -w, 0) + w,
+            c(z$estimate[i, "Direct"], z$estimate[i, "Direct"],
+              z$estimate[i, "Joint"], z$estimate[i, "Joint"]),
+            col=paste0(Cols[i], '88'), border=paste0(Cols[i], 'aa'))
+        NONSIG <- 0 %[]% c(z$lower[i, "Joint"], z$upper[i, "Joint"])
+        lines(
+            i + c(w, w)/2,
+            c(z$lower[i, "Joint"], z$upper[i, "Joint"]),
+            lwd=if (NONSIG) 1.5 else 3,lend=1,
+            col=if (NONSIG) paste0(Cols[i], 'aa') else paste0(Cols[i], 'ff'))
+        lines(
+            i + c(0, w),
+            c(z$estimate[i, "Joint"], z$estimate[i, "Joint"]),
+            lwd=3, lend=1,
+            col=if (NONSIG) paste0(Cols[i], 'aa') else paste0(Cols[i], 'ff'))
+    }
+    title(ylab=YLAB)
+    axis(2, col="grey")
+    abline(h=0, col="grey")
+    if (unit)
+        abline(h=c(-100, 100), lty=2)
+    axis(1, 1:6, substr(rownames(z[[1]]),1,1), tick=FALSE)
+    invisible(z)
+}
+
+pdf(paste0(INDIR, "/sector-results.pdf"), onefile=TRUE)
+for (spp in SPP) {
+    op <- par(mfrow=c(2,1), las=1, mar=c(4,4,4,1))
+    plot_sect(spp)
+    title(main=spp)
+    plot_sect(spp, TRUE)
+    par(op)
+}
+dev.off()
 
 vvv <- data.frame(sapply(v, function(z) z[,1] - z[,2]))
 plot(vvv)
