@@ -220,6 +220,7 @@ names(All2) <- Spp
 
 All <- All2
 
+
 Rall <- Reduce("+", All)
 Rred   <- Reduce("+", All[bp[,"GP"]==1])
 Rgreen <- Reduce("+", All[bp[,"SBF"]==1])
@@ -231,14 +232,16 @@ R0 <- stack(list(r=0*rt, g=0*rt, b=0*rt))
 plotRGB(R0)
 plotRGB(RRall, stretch="hist", add=TRUE)
 
-h <- function(TT, what="both") {
-    if (what == "native")
-        ns <- SppTab$native
-    if (what == "nonnative")
-        ns <- !SppTab$native
-    if (what == "both")
-        ns <- TRUE
-    ss <- SppTab$taxon == TT & ns
+h <- function(TT, what="both", ss=NULL) {
+    if (is.null(ss)) {
+        if (what == "native")
+            ns <- SppTab$native
+        if (what == "nonnative")
+            ns <- !SppTab$native
+        if (what == "both")
+            ns <- TRUE
+        ss <- SppTab$taxon == TT & ns
+    }
     Rall <- Reduce("+", All[ss])
     Rred   <- Reduce("+", All[bp[,"GP"]==1 & ss])
     Rgreen <- Reduce("+", All[bp[,"SBF"]==1 & ss])
@@ -250,6 +253,21 @@ h <- function(TT, what="both") {
     RR <- stack(list(r=255*Rred/Rall, g=255*Rgreen/Rall, b=255*Rblue/Rall))
 }
 
+## intacthess
+fn="http://sc-dev.abmi.ca/reports/2018/misc/raw_all.rda"
+con <- url(fn)
+load(con)
+close(con)
+z <- do.call(rbind, lapply(res, flatten))
+class(z) <- c("c4idf", class(z))
+
+z=z[Spp,]
+Inc <- z$SI2_Est > 100 & z$SI_Est < 80
+table(z$SI2_Est > 100, SppTab$taxon)
+
+RRbirdsInc <- h(ss=SppTab$taxon == "birds" & z$SI2_Est > 120)
+RRvplantsInc <- h(ss=SppTab$taxon == "vplants" & z$SI2_Est > 120)
+
 RRbirds <- h("birds")
 RRlichens <- h("lichens")
 RRmites <- h("mites")
@@ -260,7 +278,8 @@ RRvplantsNNonly <- h("vplants", "nonnative")
 
 hacked_plotRGB <-
 function(x, r=1, g=2, b=3, scale, maxpixels=500000, stretch=NULL, ext=NULL, interpolate=FALSE, colNA='white',
-alpha, bgalpha, addfun=NULL, zlim=NULL, zlimcol=NULL, axes=FALSE, xlab='', ylab='', asp=NULL, add=FALSE, ...) {
+alpha, bgalpha, addfun=NULL, zlim=NULL, zlimcol=NULL, axes=FALSE, xlab='', ylab='', asp=NULL, add=FALSE,
+plug=NULL, ...) {
 
 	if (missing(scale)) {
 		scale <- 255
@@ -322,6 +341,9 @@ alpha, bgalpha, addfun=NULL, zlim=NULL, zlimcol=NULL, axes=FALSE, xlab='', ylab=
 		}
 	}
 
+	if (!is.null(plug)) {
+	    RGB <- plug
+	}
 
 	naind <- as.vector( attr(RGB, "na.action") )
 	if (!is.null(naind)) {
@@ -337,7 +359,6 @@ alpha, bgalpha, addfun=NULL, zlim=NULL, zlimcol=NULL, axes=FALSE, xlab='', ylab=
 
 	requireNamespace("grDevices")
 	bb <- as.vector(t(bbox(r)))
-
 
 	if (!add) {
 		#if (!axes) graphics::par(plt=c(0,1,0,1))
@@ -374,22 +395,33 @@ alpha, bgalpha, addfun=NULL, zlim=NULL, zlimcol=NULL, axes=FALSE, xlab='', ylab=
 			addfun()
 		}
 	}
-    invisible(NULL)
+
+    invisible(RGB)
 }
 
-stretch="lin"
+stretch="hist"
+if (stretch == "hist") {
+    RGBlin <- hacked_plotRGB(RRmosses, stretch="lin", main="Bryophytes")
+    RGBhist <- hacked_plotRGB(RRmosses, stretch="hist", main="Bryophytes")
+    RGB <- RGBhist#cbind(RGBhist[,2],RGBhist[,2],RGBhist[,2])
+    RGB[,2] <- 160*RGBlin[,2]/255
+    attributes(RGB) <- attributes(RGBlin)
+}
 #pdf("d:/abmi/sppweb2018/rainbow-maps/results-rainbow-maps-curr.pdf")
-pdf("~/GoogleWork/abmi/rainbow-maps/results-rainbow-maps-ref.pdf", height=12, width=8, onefile=TRUE)
+pdf("~/GoogleWork/abmi/rainbow-maps/results-rainbow-maps-ref2.pdf", height=12, width=8, onefile=TRUE)
 #op <- par(mfrow=c(2,4), mar=c(2,2,2,2))
 op <- par(mar=c(2,2,2,2))
 hacked_plotRGB(RRall, stretch=stretch, main="All")
 hacked_plotRGB(RRbirds, stretch=stretch, main="Birds")
+hacked_plotRGB(RRbirdsInc, stretch=stretch, main="Birds (increasers)")
 hacked_plotRGB(RRlichens, stretch=stretch, main="Lichens")
 hacked_plotRGB(RRmites, stretch=stretch, main="Mites")
-hacked_plotRGB(RRmosses, stretch=stretch, main="Bryophytes")
+hacked_plotRGB(RRmosses, stretch=stretch, main="Bryophytes", plug=RGB)
+#hacked_plotRGB(RRmosses, stretch=stretch, main="Bryophytes", plug=NULL)
 hacked_plotRGB(RRvplants, stretch=stretch, main="Vascular Plants (all)")
 hacked_plotRGB(RRvplantsNonly, stretch=stretch, main="Vascular Plants (native)")
 hacked_plotRGB(RRvplantsNNonly, stretch=stretch, main="Vascular Plants (non-native)")
+hacked_plotRGB(RRvplantsInc, stretch=stretch, main="Vascular Plants (increasers)")
 par(op)
 dev.off()
 
