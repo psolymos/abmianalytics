@@ -117,37 +117,66 @@ save(SPP, AVegSS, ch2veg,
 
 library(mefa4)
 library(intrval)
+library(ggplot2)
 
-#INDIR <- paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/sector")
-INDIR <- paste0("~/GoogleWork/tmp/sector")
+INDIR <- paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/sector")
+#INDIR <- paste0("~/GoogleWork/tmp/sector")
 load(paste0(INDIR, "/sector-tools.RData"))
 
-A <- groupSums(matrix(AVegSS, ncol=1), 1, ch2veg$sector)
+sectors_list <- list(
+    Agr=c("Crop", "RoughP", "TameP"),
+    Transp=c("HardLin", "TrSoftLin"),
+    EnSoft=c("EnSoftLin", "Seismic"),
+    EnHard=c("Mine", "Well", "Industrial"),
+    Urb=c("Rural", "Urban"),
+    For=c("ForHarv"))
+ch2veg$sector <- as.character(ch2veg$sector)
+ch2veg$sector2 <- as.character(ch2veg$sector)
+ch2veg$sector2[ch2veg$cr3 %in% sectors_list$EnSoft] <- "EnSoft"
+ch2veg$sector2[ch2veg$cr3 %in% sectors_list$EnHard] <- "EnHard"
+## note: predictions treated Rural/Industrial as Energy and not RuralUrban, peat mine also Energy
+ch2veg$sector[ch2veg$sector=="Misc" & ch2veg$sector2=="EnHard"] <- "Energy"
+ch2veg$sector[ch2veg$sector=="RuralUrban" & ch2veg$sector2=="EnHard"] <- "Energy"
+table(ch2veg$sector2, ch2veg$sector)
 
-load_spp <- function(spp) {
+
+A <- groupSums(matrix(AVegSS, ncol=1), 1, ch2veg$sector)
+A <- A[,1]/sum(A)
+A2 <- groupSums(matrix(AVegSS, ncol=1), 1, ch2veg$sector2)
+A2 <- A2[,1]/sum(A2)
+
+load_spp <- function(spp, EN=FALSE) {
+    if (EN) {
+        SECS <- c("All", "For", "Transp", "EnS", "EnH", "Urban", "Agr")
+        sv <- ch2veg$sector2
+    } else {
+        SECS <- c("All", "For", "Transp", "Energy", "Urban", "Agr")
+        sv <- ch2veg$sector
+    }
     out <- list()
-    for (SEC in c("All", "Agr", "For", "Energy", "Urban","Transp")) {
+    for (SEC in SECS) {
         e <- new.env()
         load(paste0(INDIR, "/", spp, "/", spp, "-HF-", toupper(SEC), ".RData"), envir=e)
         out[[SEC]] <- list(
-            HCR = groupSums(e$HABCR, 1, ch2veg$sector),
-            HRF = groupSums(e$HABRF, 1, ch2veg$sector))
+            HCR = groupSums(e$HABCR, 1, sv),
+            HRF = groupSums(e$HABRF, 1, sv))
     }
     out
 }
 
 se_fun <- function(i, H) {
+    SECS <- names(H)
     Nsect <- list()
-    for (SEC in names(H)) {
+    for (SEC in SECS) {
         Nsect[[SEC]] <- cbind(
             cr=H[[SEC]]$HCR[,i],
             rf=H[[SEC]]$HRF[,i])
     }
     Nref <- Nsect[[1]][,2]
     Diffs <- sapply(Nsect, function(z) z[,1]-Nref)
-    Diffs <- Diffs[,c("All", "For", "Transp", "Energy", "Urban", "Agr")]
+    Diffs <- Diffs[,SECS]
     Df2 <- cbind(Native=0,Diffs[,-1])
-    Df2 <- Df2[,c("Native", "For", "Transp", "Energy", "Urban", "Agr")]
+    Df2 <- Df2[,c("Native", SECS[-1])]
     Tots <- data.frame(#All=Diffs[,1],
         Joint=Diffs[rownames(Diffs) != "Misc","All"], # joint
         Direct=diag(Df2), # pbf direct (pbf=partial backfilled)
@@ -157,9 +186,9 @@ se_fun <- function(i, H) {
     as.matrix(Tots)
 }
 
-sector <- function(spp, level=0.95) {
+sector <- function(spp, level=0.95, EN=FALSE) {
     a <- c((1-level)/2, 1-((1-level)/2))
-    H <- load_spp(spp)
+    H <- load_spp(spp, EN=EN)
     B <- ncol(H[[1]][[1]])
     tmp <- se_fun(1, H)
     S <- array(0, c(dim(tmp), B))
@@ -181,19 +210,23 @@ sector <- function(spp, level=0.95) {
 sector_res <- list()
 for (spp in SPP) {
     cat(spp, "\n");flush.console()
-    sector_res[[spp]] <- sector(spp)
+    sector_res[[spp]] <- list(coarse=sector(spp), fine=sector(spp, EN=TRUE))
 }
 save(sector_res, file=paste0(INDIR, "/sector-res.RData"))
 
-load(paste0(INDIR, "/sector-res.RData"))
-library(intrval)
 
-v <- lapply(1:6, function(i)
-    t(sapply(sector_res, function(z) z$estimate[i,1:2])))
-names(v) <- rownames(sector_res[[1]]$estimate)
+load(paste0(INDIR, "/sector-res.RData"))
+
+v1 <- lapply(1:6, function(i)
+    t(sapply(sector_res, function(z) z$coarse$estimate[i,1:2])))
+names(v1) <- rownames(sector_res[[1]]$coarse$estimate)
+v2 <- lapply(1:7, function(i)
+    t(sapply(sector_res, function(z) z$fine$estimate[i,1:2])))
+names(v2) <- rownames(sector_res[[1]]$fine$estimate)
 
 pdf(paste0(INDIR, "/sector-all.pdf"), width=12, height=8)
 op <- par(mfrow=c(2,3))
+v <- v1
 hist(v[[1]][,1], main="Native", sub="", breaks=20, xlim=c(-50,250),
     xlab="Indirect", col="#00000066")
 abline(v=0, col=3, lty=1, lwd=2)
@@ -213,32 +246,82 @@ for (i in 2:6) {
 par(op)
 dev.off()
 
-A <- groupSums(matrix(AVegSS, ncol=1), 1, ch2veg$sector)
-A <- A[,1]/sum(A)
-
-tab_fun <- function(spp, cn, unit=FALSE) {
-    z <- sector_res[[spp]]
-    if (unit) {
-        z[[1]] <- z[[1]]/A[rownames(z[[1]])]
-        z[[2]] <- z[[2]]/A[rownames(z[[1]])]
-        z[[3]] <- z[[3]]/A[rownames(z[[1]])]
-    }
-    out <- data.matrix(c(z[[1]][,cn], lower=z[[2]][,cn], upper=z[[3]][,cn]))
-    out <- data.frame(spp=spp, cn=cn, unit=unit, as.data.frame(t(out)))
+pdf(paste0(INDIR, "/sector-all-en.pdf"), width=16, height=8)
+op <- par(mfrow=c(2,4))
+v <- v2
+hist(v[[1]][,1], main="Native", sub="", breaks=20, xlim=c(-50,250),
+    xlab="Indirect", col="#00000066")
+abline(v=0, col=3, lty=1, lwd=2)
+for (i in 2:7) {
+    vv <- v[[i]]
+    vv <- vv[order(abs(vv[,1] - vv[,2])),]
+    lim <- c(-10, 25)
+    if (i == 6)
+        lim <- c(-50, 300)
+    col <- ifelse(vv[,1] > vv[,2], "#ff000066", "#0000ff66")
+    col[abs(vv[,1] - vv[,2]) %[]% c(0, 1)] <- "#00000066"
+    plot(vv, col=col, main=names(v)[i],
+        xlim=lim, ylim=lim, pch=19, cex=1.5)
+    abline(0,1, col="grey")
+    abline(h=0,v=0, col=3, lty=1)
 }
-Res <- rbind(do.call(rbind, lapply(SPP, tab_fun, "Joint")),
-    do.call(rbind, lapply(SPP, tab_fun, "Joint", TRUE)),
-    do.call(rbind, lapply(SPP, tab_fun, "Direct")),
-    do.call(rbind, lapply(SPP, tab_fun, "Direct", TRUE)))
-write.csv(Res, row.names = FALSE, file=paste0(INDIR, "/sector-results.csv"))
+par(op)
+dev.off()
 
-plot_sect <- function(spp, unit=FALSE) {
+v <- NULL
+for (i in names(v1)) {
+    AA <- if (i == "Native")
+        sum(A) else A[i]
+    v <- rbind(v, data.frame(Sector=i,
+        Species=rownames(v1[[i]]),
+        Type=rep(colnames(v1[[i]]), each=nrow(v1[[i]])),
+        Total=c(v1[[i]][,1], v1[[i]][,2]),
+        Unit=c(v1[[i]][,1], v1[[i]][,2])/AA))
+}
+v1x <- v
+ggplot(v[v$Total <= 25,], aes(x=Sector, y=Total, fill=Type)) +
+    geom_boxplot() + geom_abline(intercept = 0, slope=0)
+ggsave(paste0(INDIR, "/sector-box-total.pdf"))
+ggplot(v[v$Unit %[]% c(-200, 200),], aes(x=Sector, y=Unit, fill=Type)) +
+    geom_boxplot() + geom_abline(intercept = 0, slope=0) +
+    geom_abline(intercept = c(-100, 100), slope=0, lty=2)
+ggsave(paste0(INDIR, "/sector-box-unit.pdf"))
 
-    z <- sector_res[[spp]]
+v <- NULL
+for (i in names(v2)) {
+    AA <- if (i == "Native")
+        sum(A2) else A2[i]
+    v <- rbind(v, data.frame(Sector=i,
+        Species=rownames(v2[[i]]),
+        Type=rep(colnames(v2[[i]]), each=nrow(v2[[i]])),
+        Total=c(v2[[i]][,1], v2[[i]][,2]),
+        Unit=c(v2[[i]][,1], v2[[i]][,2])/AA))
+}
+v2x <- v
+ggplot(v[v$Total <= 25,], aes(x=Sector, y=Total, fill=Type)) +
+    geom_boxplot() + geom_abline(intercept = 0, slope=0)
+ggsave(paste0(INDIR, "/sector-box-total-en.pdf"))
+ggplot(v[v$Unit %[]% c(-200, 200),], aes(x=Sector, y=Unit, fill=Type)) +
+    geom_boxplot() + geom_abline(intercept = 0, slope=0) +
+    geom_abline(intercept = c(-100, 100), slope=0, lty=2)
+ggsave(paste0(INDIR, "/sector-box-unit-en.pdf"))
+
+write.csv(v1x, row.names = FALSE, file=paste0(INDIR, "/sector-results.csv"))
+write.csv(v2x, row.names = FALSE, file=paste0(INDIR, "/sector-results-en.csv"))
+
+
+
+plot_sect <- function(spp, unit=FALSE, EN=FALSE) {
+
+    z <- if (EN) sector_res[[spp]]$fine else sector_res[[spp]]$coarse
+    AA <- if (EN) A2 else A
+    z[[1]][1,"Direct"] <- sum(z[[1]][,"Indirect"])
+    z[[2]][1,"Direct"] <- sum(z[[2]][,"Indirect"])
+    z[[3]][1,"Direct"] <- sum(z[[3]][,"Indirect"])
     if (unit) {
-        z[[1]] <- z[[1]]/A[rownames(z[[1]])]
-        z[[2]] <- z[[2]]/A[rownames(z[[1]])]
-        z[[3]] <- z[[3]]/A[rownames(z[[1]])]
+        z[[1]] <- z[[1]]/AA
+        z[[2]] <- z[[2]]/AA
+        z[[3]] <- z[[3]]/AA
     }
     rr1 <- range(z[[1]][,1:2])
     rr2 <- range(z[[1]][,1:2], z[[2]][,1:2], z[[3]][,1:2])
@@ -252,29 +335,26 @@ plot_sect <- function(spp, unit=FALSE) {
 
     YLAB <- if (unit)
         "Unit effect" else "Regional effect"
-    plot(0, type="n", xlim=c(0.5, 6.5), ylim=rr, ann=FALSE, axes=FALSE)
+    plot(0, type="n", xlim=c(0.5, length(AA)+0.5), ylim=rr, ann=FALSE, axes=FALSE)
     w <- 0.4
     Cols <- c('#66c2a5','#fc8d62','#8da0cb','#e78ac3','#a6d854','#ffd92f')
-    for (i in 1:6) {
+    if (EN)
+        Cols <- Cols[c(1,2,3,4,4,5,6)]
+    for (i in 1:length(AA)) {
         COL <- paste0(Cols[i], '66')
         polygon(
-            i + c(0, -w, -w, 0),
+            i + c(w, -w, -w, w),
             c(0, 0, z$estimate[i, "Direct"], z$estimate[i, "Direct"]),
             col=paste0(Cols[i], '44'), border=paste0(Cols[i], 'aa'))
-        polygon(
-            i + c(0, -w, -w, 0) + w,
-            c(z$estimate[i, "Direct"], z$estimate[i, "Direct"],
-              z$estimate[i, "Joint"], z$estimate[i, "Joint"]),
-            col=paste0(Cols[i], '88'), border=paste0(Cols[i], 'aa'))
-        NONSIG <- 0 %[]% c(z$lower[i, "Joint"], z$upper[i, "Joint"])
+        NONSIG <- 0 %[]% c(z$lower[i, "Direct"], z$upper[i, "Direct"])
         lines(
-            i + c(w, w)/2,
-            c(z$lower[i, "Joint"], z$upper[i, "Joint"]),
+            c(i,i),
+            c(z$lower[i, "Direct"], z$upper[i, "Direct"]),
             lwd=if (NONSIG) 1.5 else 3,lend=1,
             col=if (NONSIG) paste0(Cols[i], 'aa') else paste0(Cols[i], 'ff'))
         lines(
-            i + c(0, w),
-            c(z$estimate[i, "Joint"], z$estimate[i, "Joint"]),
+            i + c(-w, w),
+            c(z$estimate[i, "Direct"], z$estimate[i, "Direct"]),
             lwd=3, lend=1,
             col=if (NONSIG) paste0(Cols[i], 'aa') else paste0(Cols[i], 'ff'))
     }
@@ -283,16 +363,21 @@ plot_sect <- function(spp, unit=FALSE) {
     abline(h=0, col="grey")
     if (unit)
         abline(h=c(-100, 100), lty=2)
-    axis(1, 1:6, substr(rownames(z[[1]]),1,1), tick=FALSE)
+    LAB <- c("Indirect", "Forestry", "Transp.", "Energy", "Urban", "Agricult.")
+    if (EN)
+        LAB <- c("Indirect", "Forestry", "Transp.", "En. Lin.", "En. M&W", "Urban", "Agricult.")
+    axis(1, 1:length(AA), LAB, tick=FALSE)
     invisible(z)
 }
 
-pdf(paste0(INDIR, "/sector-results.pdf"), onefile=TRUE)
+pdf(paste0(INDIR, "/sector-results.pdf"), onefile=TRUE, height=12*0.8, width=16*0.8)
 for (spp in SPP) {
-    op <- par(mfrow=c(2,1), las=1, mar=c(4,4,4,1))
+    op <- par(mfrow=c(2,2), las=1, mar=c(4,4,4,1))
     plot_sect(spp)
     title(main=spp)
+    plot_sect(spp, EN=TRUE)
     plot_sect(spp, TRUE)
+    plot_sect(spp, TRUE, EN=TRUE)
     par(op)
 }
 dev.off()
@@ -307,3 +392,118 @@ hist(vvv[,i], main=colnames(vvv)[i], sub="", col="#00000066",
 abline(v=0, col=3, lty=1, lwd=2)
 }
 par(op)
+
+## looking at pixel level effects
+
+As <- groupSums(trVegSS, 2, ch2veg$sector)
+A2s <- groupSums(trVegSS, 2, ch2veg$sector2)
+
+load_spp_pixel <- function(spp) {
+    SECS <- c("All", "For", "Transp", "EnS", "EnH", "Urban", "Agr")
+    sv <- ch2veg$sector2
+    CN <- c(
+        "Agr"="Agriculture",
+        "Transp"="Transportation",
+        "Energy"="Energy",
+        "EnS"="EnSoft",
+        "EnH"="EnHard",
+        "Urban"="RuralUrban",
+        "For"="Forestry")
+    CR <- list()
+    for (SEC in SECS) {
+        e <- new.env()
+        load(paste0(INDIR, "/", spp, "/", spp, "-HF-", toupper(SEC), "-pixel.RData"), envir=e)
+        CR[[SEC]] <- as.matrix(e$SCR)
+        if (SEC == "All") {
+            RF <- as.matrix(e$SRF)
+            XD <- RF
+            XD[] <- 0
+        } else {
+            XD[,CN[SEC]] <- CR[[SEC]][,CN[SEC]]
+        }
+    }
+    XI <- CR[["All"]] - XD
+    X <- XD
+    colnames(X)[1L] <- "Indirect"
+    X[,"Indirect"] <- rowSums(XI)
+    X
+}
+
+
+library(mgcv)
+k <- 5
+
+pdf(paste0(INDIR, "/sector-indirect.pdf"), onefile=TRUE, height=8, width=15)
+spp <- "OVEN"
+for (spp in SPP) {
+    cat(spp, "\n")
+    flush.console()
+    X <- load_spp_pixel(spp)
+
+    d <- data.frame(Indirect=as.numeric(X[,1]), as.matrix(A2s))
+    ss <- sample(which(d$Native < 0.95), 5000)
+    sss <- sample(ss, 1000)
+    #hist(d[ss,1])
+    #plot(d[ss,])
+
+    #library(mgcv)
+    q <- quantile(d[ss,1], c(0.01, 0.99))
+
+    m1 <- gam(Indirect ~ s(Native, k=k), data=d[ss,])
+    m2 <- gam(Indirect ~ s(Forestry, k=k), data=d[ss,])
+    m3 <- gam(Indirect ~ s(Transportation, k=k), data=d[ss,])
+    m4 <- gam(Indirect ~ s(EnSoft, k=k), data=d[ss,])
+    m5 <- gam(Indirect ~ s(EnHard, k=k), data=d[ss,])
+    m6 <- gam(Indirect ~ s(RuralUrban, k=k), data=d[ss,])
+    m7 <- gam(Indirect ~ s(Agriculture, k=k), data=d[ss,])
+    mm <- list(m1, m2, m3, m4, m5, m6, m7)
+    names(mm) <- colnames(d)[-1]
+    a <- sapply(mm, AIC)
+    a <- a - min(a)
+    best <- names(mm)[which.min(a)]
+
+    op <- par(mfrow=c(2,4))
+    for (i in colnames(d)[-1]) {
+        nd <- data.frame(x=seq(0, quantile(d[,i], 0.99), length.out = 200))
+        colnames(nd) <- i
+        p <- predict(mm[[i]], newdata=nd)
+        plot(d[sss,i], d[sss,1], xlab=i, ylab="Indirect", ylim=q,
+            col=if (i == best) "#0000ff22" else "#00000022",
+            sub=paste("dAIC =", round(a[i], 2)))
+        if (i == "Native")
+            title(main=spp)
+        abline(h=0,col=1)
+        #lines(lowess(d[ss,i], d[ss,1]), col=2, lwd=2, lty=2)
+        lines(nd[,1], p, col=2, lwd=2, lty=1)
+    }
+    par(op)
+}
+dev.off()
+
+
+aic <- list()
+best <- list()
+for (spp in SPP) {
+    cat(spp, "\n")
+    flush.console()
+    X <- load_spp_pixel(spp)
+    d <- data.frame(Indirect=as.numeric(X[,1]), as.matrix(A2s))
+    ss <- sample(which(d$Native < 0.95), 5000)
+    m1 <- gam(Indirect ~ s(Native, k=k), data=d)
+    m2 <- gam(Indirect ~ s(Forestry, k=k), data=d)
+    m3 <- gam(Indirect ~ s(Transportation, k=k), data=d)
+    m4 <- gam(Indirect ~ s(EnSoft, k=k), data=d)
+    m5 <- gam(Indirect ~ s(EnHard, k=k), data=d)
+    m6 <- gam(Indirect ~ s(RuralUrban, k=k), data=d)
+    m7 <- gam(Indirect ~ s(Agriculture, k=k), data=d)
+    mm <- list(m1, m2, m3, m4, m5, m6, m7)
+    names(mm) <- colnames(d)[-1]
+    a <- sapply(mm, AIC)
+    a <- a - min(a)
+    aic[[spp]] <- a
+    best[[spp]] <- names(mm)[which.min(a)]
+}
+
+aic <- do.call(rbind, aic)
+best <- unlist(best)
+data.frame(best=table(best))
