@@ -507,3 +507,20 @@ for (spp in SPP) {
 aic <- do.call(rbind, aic)
 best <- unlist(best)
 data.frame(best=table(best))
+
+#    best.best best.Freq
+#1 Agriculture        22
+#2      EnSoft         2
+#3    Forestry         1
+#4      Native        59
+#5  RuralUrban         1
+#> best[best=="Forestry"]
+#      WIWR
+#"Forestry"
+#> best[best=="EnSoft"]
+#    BHCO     BTNW
+#"EnSoft" "EnSoft"
+#> best[best=="RuralUrban"]
+#        AMCR
+#"RuralUrban"
+
