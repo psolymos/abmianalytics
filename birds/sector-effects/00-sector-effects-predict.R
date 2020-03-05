@@ -17,7 +17,7 @@ STAGE <- "HF"
 #SEC <- "EnS"
 #SEC <- "EnH"
 #SEC <- "Urban"
-SEC <- "For"
+#SEC <- "For"
 
 sectors_list <- list(
     Agr=c("Crop", "RoughP", "TameP"),
@@ -27,42 +27,9 @@ sectors_list <- list(
     Urb=c("Rural", "Urban"),
     For=c("ForHarv"))
 
-## BF_THIS is the list of HF that is to be backfilled
-## sector that is NOT being backfilled
-BF_THIS <- unname(unlist(sectors_list))
-if (SEC == "All") {
-    ## keep all the HF
-    BF_THIS <- character(0) # all current
-}
-if (SEC == "None") {
-    BF_THIS <- unname(unlist(sectors_list)) # backfill all
-}
-if (SEC == "Agr") {
-    BF_THIS <- BF_THIS[!(BF_THIS %in% sectors_list$Agr)]
-}
-if (SEC == "Transp") {
-    BF_THIS <- BF_THIS[!(BF_THIS %in% sectors_list$Transp)]
-}
-if (SEC == "Energy") {
-    BF_THIS <- BF_THIS[!(BF_THIS %in% c(sectors_list$EnSoft, sectors_list$EnHard))]
-}
-if (SEC == "EnS") {
-    BF_THIS <- BF_THIS[!(BF_THIS %in% sectors_list$EnSoft)]
-}
-if (SEC == "EnH") {
-    BF_THIS <- BF_THIS[!(BF_THIS %in% sectors_list$EnHard)]
-}
-if (SEC == "Urban") {
-    BF_THIS <- BF_THIS[!(BF_THIS %in% sectors_list$Urb)]
-}
-if (SEC == "For") {
-    BF_THIS <- BF_THIS[!(BF_THIS %in% sectors_list$For)]
-}
-
-
 
 ## max boot runs or NULL
-BMAX <- NULL
+BMAX <- 1#NULL
 
 SPP <- c("ALFL", "AMCR", "AMGO", "AMRE", "AMRO", "ATTW", "BAOR", "BARS",
     "BAWW", "BBMA", "BBWA", "BBWO", "BCCH", "BHCO", "BHVI", "BLJA",
@@ -75,7 +42,6 @@ SPP <- c("ALFL", "AMCR", "AMGO", "AMRE", "AMRO", "ATTW", "BAOR", "BARS",
     "SOSP", "SWSP", "SWTH", "TEWA", "TRES", "VATH", "VEER", "VESP",
     "WAVI", "WBNU", "WCSP", "WETA", "WEWP", "WIWA", "WIWR", "WTSP",
     "WWCR", "YBFL", "YBSA", "YEWA", "YRWA")
-
 
 library(mefa4)
 library(intrval)
@@ -155,6 +121,16 @@ ch2veg$sector <- tv$Sector61[match(ch2veg$cr, rownames(tv))]
 ch2veg$rf3 <- tv$ao[match(ch2veg$rf, rownames(tv))]
 ch2veg$cr3 <- tv$ao[match(ch2veg$cr, rownames(tv))]
 
+ch2veg$sector <- as.character(ch2veg$sector)
+ch2veg$sector2 <- as.character(ch2veg$sector)
+ch2veg$sector2[ch2veg$cr3 %in% sectors_list$EnSoft] <- "EnSoft"
+ch2veg$sector2[ch2veg$cr3 %in% sectors_list$EnHard] <- "EnHard"
+## note: predictions treated Rural/Industrial as Energy and not RuralUrban, peat mine also Energy
+ch2veg$sector[ch2veg$sector=="Misc" & ch2veg$sector2=="EnHard"] <- "Energy"
+ch2veg$sector[ch2veg$sector=="RuralUrban" & ch2veg$sector2=="EnHard"] <- "Energy"
+table(ch2veg$sector2, ch2veg$sector)
+
+
 EXCL <- c("HWater", "SoilUnknown", "SoilWater", "Water")
 MODIF <- c("SoftLin", "Well", "EnSoftLin", "TrSoftLin", "Seismic")
 
@@ -184,82 +160,118 @@ pveg_mine <- 0.44 # proportion of vegetated mines in OSR from NDVI
 trVegSS <- trVeg[ss,]
 AVegSS <- colSums(trVegSS)
 
-## define SSH based on actuall partial backfill here based on trVeg
+SECS <- c("All", "Agr", "Transp", "Energy", "EnS", "EnH", "Urban", "For")
+for (SEC in SECS) {
 
-SSH <- en$SSH
-compare_sets(colnames(en$SSH), levels(ch2veg$cr3))
-setdiff(colnames(en$SSH), levels(ch2veg$cr3))
-SSH_EXCL <- setdiff(levels(ch2veg$cr3), colnames(en$SSH)) # do not count for SSH
-ZERO <- c("Bare", "SnowIce", "HWater", "Water") # non-habitat
-ALL_HF <- c("Crop", "RoughP", "TameP",
-    "HardLin", "TrSoftLin",
-    "EnSoftLin", "Seismic",
-    "Mine", "Well",
-    "Industrial", "Rural", "Urban",
-    "ForHarv") # backfill these
-LIN_HF <- c(    "HardLin", "TrSoftLin", "EnSoftLin", "Seismic")
-Alien_HF <- c("Crop", "TameP", #"RoughP",
-    "HardLin", "Mine", "Well", "Industrial", "Rural", "Urban")
+    ## BF_THIS is the list of HF that is to be backfilled
+    ## sector that is NOT being backfilled
+    BF_THIS <- unname(unlist(sectors_list))
+    if (SEC == "All") {
+        ## keep all the HF
+        BF_THIS <- character(0) # all current
+    }
+    if (SEC == "None") {
+        BF_THIS <- unname(unlist(sectors_list)) # backfill all
+    }
+    if (SEC == "Agr") {
+        BF_THIS <- BF_THIS[!(BF_THIS %in% sectors_list$Agr)]
+    }
+    if (SEC == "Transp") {
+        BF_THIS <- BF_THIS[!(BF_THIS %in% sectors_list$Transp)]
+    }
+    if (SEC == "Energy") {
+        BF_THIS <- BF_THIS[!(BF_THIS %in% c(sectors_list$EnSoft, sectors_list$EnHard))]
+    }
+    if (SEC == "EnS") {
+        BF_THIS <- BF_THIS[!(BF_THIS %in% sectors_list$EnSoft)]
+    }
+    if (SEC == "EnH") {
+        BF_THIS <- BF_THIS[!(BF_THIS %in% sectors_list$EnHard)]
+    }
+    if (SEC == "Urban") {
+        BF_THIS <- BF_THIS[!(BF_THIS %in% sectors_list$Urb)]
+    }
+    if (SEC == "For") {
+        BF_THIS <- BF_THIS[!(BF_THIS %in% sectors_list$For)]
+    }
 
-## fully backfilled
-bf0 <- as.character(ch2veg$rf3)
-SSH0 <- row_std(groupSums(trVeg[ss,], 2, bf0))
 
-## this does not separate forestry --> for SSH_KM variable
-pbf <- as.character(ch2veg$cr3)
-bfi <- pbf %in% BF_THIS
-pbf[bfi] <- as.character(ch2veg$rf3[bfi])
-SSH <- row_std(groupSums(trVeg[ss,], 2, pbf))
-## this does separate forestry --> for HF_KM variables
-pbfFor <- as.character(ch2veg$cr3)
-pbfFor[ch2veg$sector == "Forestry"] <- "ForHarv"
-pbfFor[bfi] <- as.character(ch2veg$rf3[bfi])
-SSHfor <- row_std(groupSums(trVeg[ss,], 2, pbfFor))
+    ## define SSH based on actuall partial backfill here based on trVeg
 
-## placeholder matrix
-dd <- data.frame(SSH_KM = rep(0, sum(ss)))
-dd$SSH05_KM <- 0
-dd$THF_KM <- rowSums(SSHfor[,colnames(SSHfor) %in% ALL_HF,drop=FALSE])
-dd$Lin_KM <- rowSums(SSHfor[,colnames(SSHfor) %in% LIN_HF,drop=FALSE])
-## note: no abandoned or rough pasture here
-dd$Cult_KM <- rowSums(SSHfor[,colnames(SSHfor) %in% c("Crop", "TameP"),drop=FALSE])
-dd$Alien_KM <- rowSums(SSHfor[,colnames(SSHfor) %in% Alien_HF,drop=FALSE])
+    SSH <- en$SSH
+    compare_sets(colnames(en$SSH), levels(ch2veg$cr3))
+    setdiff(colnames(en$SSH), levels(ch2veg$cr3))
+    SSH_EXCL <- setdiff(levels(ch2veg$cr3), colnames(en$SSH)) # do not count for SSH
+    ZERO <- c("Bare", "SnowIce", "HWater", "Water") # non-habitat
+    ALL_HF <- c("Crop", "RoughP", "TameP",
+        "HardLin", "TrSoftLin",
+        "EnSoftLin", "Seismic",
+        "Mine", "Well",
+        "Industrial", "Rural", "Urban",
+        "ForHarv") # backfill these
+    LIN_HF <- c(    "HardLin", "TrSoftLin", "EnSoftLin", "Seismic")
+    Alien_HF <- c("Crop", "TameP", #"RoughP",
+        "HardLin", "Mine", "Well", "Industrial", "Rural", "Urban")
 
-dd$Nonlin_KM <- dd$THF_KM - dd$Lin_KM
-dd$Noncult_KM <- dd$THF_KM - dd$Cult_KM
-dd$Succ_KM <- dd$THF_KM - dd$Alien_KM
-dd$THF2_KM <- dd$THF_KM^2
-dd$Succ2_KM <- dd$Succ_KM^2
-dd$Alien2_KM <- dd$Alien_KM^2
-dd$Noncult2_KM <- dd$Noncult_KM^2
-dd$Nonlin2_KM <- dd$Nonlin_KM^2
+    ## fully backfilled
+    bf0 <- as.character(ch2veg$rf3)
+    SSH0 <- row_std(groupSums(trVeg[ss,], 2, bf0))
 
-Xssh <- model.matrix(as.formula(paste0("~-1+", paste(cfn$ssh, collapse="+"))), dd)
-colnames(Xssh) <- fix_names(colnames(Xssh))
-Xssh0 <- Xssh
-Xssh0[] <- 0
+    ## this does not separate forestry --> for SSH_KM variable
+    pbf <- as.character(ch2veg$cr3)
+    bfi <- pbf %in% BF_THIS
+    pbf[bfi] <- as.character(ch2veg$rf3[bfi])
+    SSH <- row_std(groupSums(trVeg[ss,], 2, pbf))
+    ## this does separate forestry --> for HF_KM variables
+    pbfFor <- as.character(ch2veg$cr3)
+    pbfFor[ch2veg$sector == "Forestry"] <- "ForHarv"
+    pbfFor[bfi] <- as.character(ch2veg$rf3[bfi])
+    SSHfor <- row_std(groupSums(trVeg[ss,], 2, pbfFor))
 
-for (spp in SPP) {
-    cat(spp)
+    ## placeholder matrix
+    dd <- data.frame(SSH_KM = rep(0, sum(ss)))
+    dd$SSH05_KM <- 0
+    dd$THF_KM <- rowSums(SSHfor[,colnames(SSHfor) %in% ALL_HF,drop=FALSE])
+    dd$Lin_KM <- rowSums(SSHfor[,colnames(SSHfor) %in% LIN_HF,drop=FALSE])
+    ## note: no abandoned or rough pasture here
+    dd$Cult_KM <- rowSums(SSHfor[,colnames(SSHfor) %in% c("Crop", "TameP"),drop=FALSE])
+    dd$Alien_KM <- rowSums(SSHfor[,colnames(SSHfor) %in% Alien_HF,drop=FALSE])
 
-    resn <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
+    dd$Nonlin_KM <- dd$THF_KM - dd$Lin_KM
+    dd$Noncult_KM <- dd$THF_KM - dd$Cult_KM
+    dd$Succ_KM <- dd$THF_KM - dd$Alien_KM
+    dd$THF2_KM <- dd$THF_KM^2
+    dd$Succ2_KM <- dd$Succ_KM^2
+    dd$Alien2_KM <- dd$Alien_KM^2
+    dd$Noncult2_KM <- dd$Noncult_KM^2
+    dd$Nonlin2_KM <- dd$Nonlin_KM^2
 
-    ## north estimates
-    names(en$mods)
-    ESTN <- suppressWarnings(get_coef(resn, Xn, stage=STAGE, na.out=FALSE))
+    Xssh <- model.matrix(as.formula(paste0("~-1+", paste(cfn$ssh, collapse="+"))), dd)
+    colnames(Xssh) <- fix_names(colnames(Xssh))
+    Xssh0 <- Xssh
+    Xssh0[] <- 0
 
-    b <- nrow(ESTN)
-    if (!is.null(BMAX))
-        b <- min(BMAX, b)
+    for (spp in SPP) {
+        cat(SEC, spp)
 
-    CR <- matrix(0, sum(ss), b)
-    rownames(CR) <- rownames(kgrid)[ss]
-    RF <- CR
-    HABCR <- matrix(0, nrow(ch2veg), b)
-    rownames(HABCR) <- rownames(ch2veg)
-    HABRF <- HABCR
+        resn <- load_species(file.path(ROOT, "out", PROJ, paste0(spp, ".RData")))
 
-    for (i in seq_len(b)) {
+        ## north estimates
+        names(en$mods)
+        ESTN <- suppressWarnings(get_coef(resn, Xn, stage=STAGE, na.out=FALSE))
+
+        b <- nrow(ESTN)
+        if (!is.null(BMAX))
+            b <- min(BMAX, b)
+
+        CR <- matrix(0, sum(ss), b)
+        rownames(CR) <- rownames(kgrid)[ss]
+        RF <- CR
+        HABCR <- matrix(0, nrow(ch2veg), b)
+        rownames(HABCR) <- rownames(ch2veg)
+        HABRF <- HABCR
+
+        for (i in seq_len(b)) {
             ir <- i %% round(b/10)
             if (is.na(ir) || ir == 0) {
                 cat(".")
@@ -315,19 +327,29 @@ for (spp in SPP) {
             ADnCr[,ch2veg$cr == "MineSite"] <- pveg_mine * ADnCr[,ch2veg$cr == "MineSite"]
 
             ## quantiles not applied -- look at that post hoc before summing up
-#            CR[,i] <- rowSums(ADnCr) # no pair adjustment applied, just ha to km
-#            RF[,i] <- rowSums(ADnRf) # no pair adjustment applied, just ha to km
+            CR[,i] <- rowSums(ADnCr) # no pair adjustment applied, just ha to km
+            RF[,i] <- rowSums(ADnRf) # no pair adjustment applied, just ha to km
+            if (i == 1L) {
+                SCR <- groupSums(ADnCr, 2, ch2veg$sector2)
+                SRF <- groupSums(ADnRf, 2, ch2veg$sector2)
+            }
             HABCR[colnames(ADnCr),i] <- colSums(ADnCr)
             HABRF[colnames(ADnRf),i] <- colSums(ADnRf)
+        }
+        CR <- apply(CR, 1, median)
+        RF <- apply(RF, 1, median)
+        DIRO <- paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/sector/", spp)
+        if (!dir.exists(DIRO))
+            dir.create(DIRO)
+        save(
+            SCR, SRF,
+            file=paste0(DIRO, "/", spp, "-", toupper(STAGE), "-", toupper(SEC), "-pixel.RData"))
+    #    save(
+    #        CR, RF,
+    #        HABRF, HABCR,
+    #        file=paste0(DIRO, "/", spp, "-", toupper(STAGE), "-", toupper(SEC), ".RData"))
+        cat("OK\n")
     }
-    DIRO <- paste0("d:/abmi/AB_data_v2018/data/analysis/birds/pred/sector/", spp)
-    if (!dir.exists(DIRO))
-        dir.create(DIRO)
-    save(
-#        CR, RF,
-        HABRF, HABCR,
-        file=paste0(DIRO, "/", spp, "-", toupper(STAGE), "-", toupper(SEC), ".RData"))
-    cat("OK\n")
-}
 
+}
 
