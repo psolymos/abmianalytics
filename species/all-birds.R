@@ -9,7 +9,7 @@ source("~/repos/abmianalytics/species/abmi-r-api.R")
 
 ## settings
 taxon <- "birds"
-ROOT <- "d:/abmi/AB_data_v2018"
+ROOT <- "d:/abmi/AB_data_v2019"
 
 ## common stuff
 DATE <- as.Date(Sys.time(), tz=Sys.timezone(location = TRUE))
@@ -45,44 +45,62 @@ normalize_species <- function(res) {
 
     res
 }
-find_max <- function(x) {
-    if (is.null(dim(x)))
-        stop("x must be matrix like object with dim attribute")
-    if (is.null(colnames(x)))
-        colnames(x) <- paste0("X", seq_len(ncol(x)))
-    m <- ncol(x)
-    idx <- integer(nrow(x))+1L
-    val <- x[,1L]
-    for (j in seq_len(m)[-1L]) {
-        s <- x[,j] > val
-        val[s] <- x[s,j]
-        idx[s] <- j
-    }
-    i <- factor(idx, levels = seq_len(m))
-    levels(i) <- colnames(x)
-    out <- data.frame(index = i, value = val)
-    rownames(out) <- rownames(x)
-    out
-}
-find_min <- function (x)
-{
-    out <- find_max(-1 * x)
-    out$value <- -1 * out$value
-    out
-}
 cn1 <- c("ABMISite", "Year", "subunit", "site_year", "site_year_sub", "offgrid", "nearest")
 cn2 <- c("SpeciesID", "CommonName", "ScientificName", "TaxonomicResolution",
     "UniqueTaxonomicIdentificationNumber")
 
 resRF0 <- get_table("T26A")
 resSM0 <- get_table("T26B")
+resSM00 <- resSM0
+
+resSM18 <- read.csv("d:/abmi/AB_data_v2019/data/raw/species/ABMI_2018_WILDTRAX_REPORT.csv")
+resSM18 <- droplevels(resSM18[resSM18$status == "Transcribed",])
+resSM18$Year <- 2018
+resSM18$Resol <- "Species"
+resSM18$TSN <- NA
+resSM18$Rotation <- NA
+for (i in c("Precipitation", "Wind Conditions",  "Industrial Noise", "Backgroud Noise"))
+    resSM0[[i]] <- as.numeric(as.character(resSM0[[i]]))
+
+cn <- c("Rotation"="Rotation",
+    "ABMI Site"="site",
+    "Year"="Year",
+    "Quadrant"="station",
+    "Identification Date"="recording_date",
+    "Identification Analyst"="transcriber",
+    "Method"="method",
+    "Precipitation"="rain",
+    "Wind Conditions"="wind",
+    "Industrial Noise"="industry_noise",
+    "Backgroud Noise"="noise",
+    "Recording Date"="recording_date",
+    "Recording Time"="recording_time",
+    "Individual Number"="species_individual_name",
+    "Interval 1 (1 minute)"="min0_start",
+    "Interval 2 (1 minute)"="min1_start",
+    "Interval 3 (1 minute)"="min2_start",
+    "Common Name"="species_english_name",
+    "Scientific Name"="scientific_name",
+    "Taxonomic Resolution"="Resol",
+    "Unique Taxonomic Identification Number"="TSN",
+    "Abundance Code"="abundance",
+    "Behaviour"="min0_voc")
+resSM18 <- resSM18[,cn]
+colnames(resSM18) <- names(cn)
+
+resSM18$`ABMI Site` <- as.character(resSM18$`ABMI Site`)
+resSM0$`ABMI Site` <- as.character(resSM0$`ABMI Site`)
+
+resSM0 <- rbind(resSM0, resSM18)
+
 resRF <- resRF0
 resSM <- resSM0
 table(resRF$Year)
 table(resSM$Year)
 
-save(resRF0, resSM0, file=file.path(ROOT, "data", "raw", "species",
+save(resRF0, resSM0, resSM18, file=file.path(ROOT, "data", "raw", "species",
     paste0(taxon, "_", DATE, ".Rdata")))
+
 
 ## River Forks, 3 intervals ------------------------------
 
@@ -143,7 +161,9 @@ resSM$Duration <- NA
 resSM$Duration[resSM$Method %in% c("11", "14")] <- 3
 resSM$Duration[resSM$Method %in% c("12", "13")] <- 1
 
-resSM <- add_labels(resSM, sub_col="Quadrant")
+#resSM <- add_labels(resSM, sub_col="Quadrant")
+resSM$site_year_sub <- interaction(resSM$ABMISite, resSM$Year, resSM$Quadrant, drop=TRUE, sep="_")
+table(is.na(resSM$ABMISite))
 #resSM <- normalize_species(resSM)
 resSM$SpeciesID <- resSM$CommonName
 levels(resSM$SpeciesID) <- nameAlnum(levels(resSM$SpeciesID), capitalize="mixed", collapse="")
