@@ -1,3 +1,4 @@
+library(parallel)
 library(mgcv)
 library(mefa4)
 library(pbapply)
@@ -23,11 +24,11 @@ SPP <- c(
     "CanadaWarbler", "CanadianToad", "CapeMayWarbler", "CedarWaxwing",
     "ChestnutcollaredLongspur", "ChippingSparrow", "ClaycoloredSparrow",
     "CommonGrackle", "CommonLoon", "CommonNighthawk", "CommonRaven",
-    "CommonRedpoll", "CommonYellowthroat", "ConnecticutWarbler", "DarkeyedJunco", "DownyWoodpecker",
+    "CommonYellowthroat", "ConnecticutWarbler", "DarkeyedJunco", "DownyWoodpecker",
     "EasternKingbird", "EuropeanStarling", "EveningGrosbeak",
     "FoxSparrow", "FranklinsGull", "Gadwall", "GoldencrownedKinglet",
     "GrasshopperSparrow", "GrayCatbird", "GrayJay", "GreatHornedOwl",
-    "GreaterWhitefrontedGoose", "GreaterYellowlegs", "GreenwingedTeal",
+    "GreaterYellowlegs", "GreenwingedTeal",
     "HairyWoodpecker", "HermitThrush", "HornedLark",
     "HouseSparrow", "HouseWren", "Killdeer", "LeContesSparrow", "LeastFlycatcher",
     "LesserYellowlegs", "LincolnsSparrow", "LongbilledCurlew", "MagnoliaWarbler",
@@ -35,14 +36,14 @@ SPP <- c(
     "MourningWarbler", "NelsonsSparrow", "NorthernFlicker", "NorthernPintail",
     "NorthernSawwhetOwl", "NorthernShoveler", "NorthernWaterthrush",
     "OlivesidedFlycatcher", "OrangecrownedWarbler", "Ovenbird", "PalmWarbler",
-    "PerchingBirdsSongbirds", "PhiladelphiaVireo", "PiedbilledGrebe",
+    "PhiladelphiaVireo", "PiedbilledGrebe",
     "PileatedWoodpecker", "PineSiskin", "PurpleFinch", "RedbreastedNuthatch",
     "RedeyedVireo", "RedneckedGrebe", "RedneckedPhalarope", "RedwingedBlackbird",
     "RedSquirrel", "RingbilledGull", "RingneckedPheasant", "RockPigeon",
     "RosebreastedGrosbeak", "RubycrownedKinglet", "RuffedGrouse",
     "RustyBlackbird", "SandhillCrane",
     "SavannahSparrow", "SedgeWren", "SharptailedGrouse",
-    "SnowGoose", "SolitarySandpiper", "SongSparrow", "Sora",
+    "SolitarySandpiper", "SongSparrow", "Sora",
     "SpottedSandpiper", "SpraguesPipit", "SwainsonsThrush", "SwampSparrow",
     "TennesseeWarbler", "TreeSwallow",
     "UplandSandpiper", "VariedThrush",
@@ -54,32 +55,34 @@ SPP <- c(
     "YellowheadedBlackbird", "YellowrumpedWarbler", "YellowRail",
     "YellowWarbler")
 
+#sort(colSums(xt_vis[x_vis$ToY > 150,]))
+
 xt_vis[xt_vis > 0] <- 1
 xt_vis <- xt_vis[,SPP]
 
 dim(xt_vis)
+
+cl <- makeCluster(8)
+clusterEvalQ(cl, library(mefa4))
+clusterEvalQ(cl, library(mgcv))
+clusterExport(cl, c("xt_vis", "x_vis"))
 
 gamfun <- function(spp, sub=FALSE) {
     x <- data.frame(spp=as.numeric(xt_vis[,spp]),
         ToY=x_vis$ToY,
         site=x_vis$ABMISite)
     if (sub) {
-        z <- aggregate(x$spp, list(site=x$site), sum)
+        j <- x$ToY > 150
+        z <- aggregate(x$spp[j], list(site=x$site[j]), sum)
         x <- x[x$site %in% rownames(z)[z$x > 0],]
     }
 
     m <- gam(spp ~ s(ToY), data=x, family="binomial")
-    xn <- data.frame(ToY=seq(0, 365, 1))
+    xn <- data.frame(ToY=seq(70, 208, 1))
     xn$p <- predict(m, newdata=xn, type="response")
     m[["_predicted"]] <- xn
     m
 }
-
-M <- pblapply(colnames(xt_vis), gamfun)
-names(M) <- colnames(xt_vis)
-
-Mx <- pblapply(colnames(xt_vis), gamfun, sub=TRUE)
-names(Mx) <- colnames(xt_vis)
 
 glmfun <- function(spp, sub=FALSE) {
     x <- data.frame(spp=as.numeric(xt_vis[,spp]),
@@ -89,17 +92,25 @@ glmfun <- function(spp, sub=FALSE) {
     x$ToY3 <- x$ToY^3
     x$ToY4 <- x$ToY^4
     if (sub) {
-        z <- aggregate(x$spp, list(site=x$site), sum)
+        j <- x$ToY > 150
+        z <- aggregate(x$spp[j], list(site=x$site[j]), sum)
         x <- x[x$site %in% rownames(z)[z$x > 0],]
     }
-    m <- list(m0 = glm(spp ~ 1, data=x, family="binomial"),
-        m1 = update(m0, . ~ . + ToY),
-        m2 = update(m1, . ~ . + ToY2),
-        m3 = update(m2, . ~ . + ToY3),
-        m4 = update(m3, . ~ . + ToY4))
-    m <- m[[which.min(sapply(list(m0, m1, m2, m3, m4), BIC))]]
+    m0 <- glm(spp ~ 1, data=x, family="binomial")
+    m1 <- update(m0, . ~ . + ToY)
+    m2 <- update(m1, . ~ . + ToY2)
+    m3 <- update(m2, . ~ . + ToY3)
+    m4 <- update(m3, . ~ . + ToY4)
+    m <- list(m0=m0, m1=m1, m2=m2, m3=m3, m4=m4)
+    b <- sapply(m, BIC)
+    if (!m0$converged) b[1] <- Inf
+    if (!m1$converged) b[2] <- Inf
+    if (!m2$converged) b[3] <- Inf
+    if (!m3$converged) b[4] <- Inf
+    if (!m4$converged) b[5] <- Inf
+    m <- m[[which.min(b)]]
 
-    xn <- data.frame(ToY=seq(0, 365, 1))
+    xn <- data.frame(ToY=seq(70, 208, 1))
     xn$ToY2 <- xn$ToY^2
     xn$ToY3 <- xn$ToY^3
     xn$ToY4 <- xn$ToY^4
@@ -108,38 +119,101 @@ glmfun <- function(spp, sub=FALSE) {
     m
 }
 
-M2 <- pblapply(colnames(xt_vis), glmfun)
+M <- pblapply(colnames(xt_vis), gamfun, cl=cl)
+names(M) <- colnames(xt_vis)
+#Mx <- pblapply(colnames(xt_vis), gamfun, sub=TRUE, cl=cl)
+#names(Mx) <- colnames(xt_vis)
+
+M2 <- pblapply(colnames(xt_vis), glmfun, cl=cl)
 names(M2) <- colnames(xt_vis)
-M2x <- pblapply(colnames(xt_vis), glmfun, sub=TRUE)
-names(M2x) <- colnames(xt_vis)
+#M2x <- pblapply(colnames(xt_vis), glmfun, sub=TRUE, cl=cl)
+#names(M2x) <- colnames(xt_vis)
 
+dfun <- function(x, y, v) {
+    md <- floor(max(diff(sort(x[y > 0])))*2)
+    v <- max(v, md)
+    sig <- v/4
+    r <- range(x)
+    k <- r[1]:(r[2]-v)
+    xo <- 0.5 * (k + (k+v))
+    yo <- xo
+    yo[] <- NA
+    for (i in seq_along(k)) {
+        j <- which(x >= k[i] & x <= k[i]+v)
+        if (length(j) & sum(y[j])>0) {
+            w <- dnorm(x[j], xo[i], sig) / dnorm(xo[i], xo[i], sig)
+            #yo[i] <- sum(y[j])/length(j)
+            yo[i] <- sum(w*y[j])/sum(w)
+        }
+    }
+    data.frame(x=xo, y=yo)
+}
 
-ss <- M[[1]][["_predicted"]][,1] >= 70 & M[[1]][["_predicted"]][,1] <= 208
+M3 <- pblapply(colnames(xt_vis), function(spp) {
+    dfun(x = x_vis$ToY,
+        y = as.numeric(xt_vis[,spp]),
+        v = 14)
+})
+names(M3) <- colnames(xt_vis)
 
-
-pdf("phenol.pdf",onefile=TRUE, width=8, height=10)
+pdf("phenol.pdf",onefile=TRUE, width=6, height=4)
 for (i in names(sort(colSums(xt_vis)))) {
-    Max <- max(M[[i]][["_predicted"]][ss,2], M2[[i]][["_predicted"]][ss,2],
-        Mx[[i]][["_predicted"]][ss,2], M2x[[i]][["_predicted"]][ss,2])
-    op <- par(mfrow=c(2,2))
-    plot(M[[i]][["_predicted"]], type="l", main=paste(i, "GAM"), sub=paste("n =", sum(xt_vis[,i])),
-        col=2, ylim=c(0,Max))
-    lines(M[[i]][["_predicted"]][ss,])
+    Max <- max(M[[i]][["_predicted"]][,2], M3[[i]][,2], na.rm=TRUE)
+    op <- par(mfrow=c(1,1))
+    plot(M[[i]][["_predicted"]], type="l", main=i, sub=paste("n =", sum(xt_vis[,i])),
+        col=1, ylim=c(0, Max))
+    lines(M2[[i]][["_predicted"]], col=2)
+    lines(M3[[i]], col=4)
     rug(jitter(x_vis$ToY[xt_vis[,i] > 0]))
-    plot(M2[[i]][["_predicted"]], type="l", main="GLM", sub=paste("n =", sum(xt_vis[,i])),
-        col=2, ylim=c(0,Max))
-    lines(M2[[i]][["_predicted"]][ss,])
-    rug(jitter(x_vis$ToY[xt_vis[,i] > 0]))
-
-    plot(Mx[[i]][["_predicted"]], type="l", main=paste(i, "GAM"), sub=paste("n =", sum(xt_vis[,i])),
-        col=2, ylim=c(0,Max))
-    lines(Mx[[i]][["_predicted"]][ss,])
-    rug(jitter(x_vis$ToY[xt_vis[,i] > 0]))
-    plot(M2x[[i]][["_predicted"]], type="l", main="GLM", sub=paste("n =", sum(xt_vis[,i])),
-        col=2, ylim=c(0,Max))
-    lines(M2x[[i]][["_predicted"]][ss,])
-    rug(jitter(x_vis$ToY[xt_vis[,i] > 0]))
+    legend("topleft", lty=1, col=c(1,2,4), bty="n", legend=c("GAM", "GLM", "KDE"))
     par(op)
 }
 dev.off()
 
+
+
+gamfun2 <- function(spp, B=99) {
+    x <- data.frame(spp=as.numeric(xt_vis[,spp]),
+        ToY=x_vis$ToY)
+    m <- gam(spp ~ s(ToY), data=x, family="binomial")
+    xn <- data.frame(ToY=seq(70, 208, 1))
+    p <- matrix(0, nrow(xn), B+1)
+    j <- 1
+    p[,1] <- predict(m, newdata=xn, type="response")
+    while (j <= 99) {
+        x1 <- x[sample(nrow(x), nrow(x), replace=TRUE),]
+        if (sum(x1$spp) > 0) {
+            m1 <- update(m, data=x1)
+            p[,j+1] <- predict(m1, newdata=xn, type="response")
+            j <- j + 1
+            if (j > 200) break
+        }
+    }
+    p <- p[,1:(j-1)]
+    q <- t(apply(p, 1, quantile, c(0.5, 0.05, 0.95)))
+    Mean <- rowMeans(p)
+    z1 <- q[,3]-q[,2]
+    z2 <- min(z1)/z1
+    y <- Mean*z2+q[,2]*(1-z2)
+    list(x=xn$ToY, y=y, m=Mean, p=p, q=q)
+}
+
+M4 <- pblapply(colnames(xt_vis), gamfun2, cl=cl)
+names(M4) <- colnames(xt_vis)
+
+
+pdf("phenol.pdf",onefile=TRUE, width=7, height=5)
+for (i in names(sort(colSums(xt_vis)))) {
+    z <- M4[[i]]
+    matplot(z$x, z$p, type="l", lty=1, col="#00000022", main=i,
+        ylim=c(0, max(z$q[z$x > 100 & z$x < 180,])))
+    lines(z$x, z$m, col=4,lwd=2)
+    z1 <- z$q[,3]-z$q[,2]
+    z2 <- min(z1)/z1
+    y <- z$q[,1]*z2+z$q[,2]*(1-z2)
+    lines(spline(z$x, y, n=50), col=2,lwd=2)
+    rug(jitter(x_vis$ToY[xt_vis[,i] > 0]), col="grey")
+}
+dev.off()
+
+stopCluster(cl)
