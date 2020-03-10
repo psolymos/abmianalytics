@@ -10,6 +10,15 @@ str(xt_vis)
 str(x_vis)
 head(x_vis)
 
+xy <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+z <- x_vis$ABMISite
+z <- gsub("B", "", z)
+z <- strsplit(z, "-")
+z <- sapply(z, function(a) if (length(a) > 1) a[3] else a[1])
+z <- as.integer(z)
+#sort(unique(z))
+#range(z)
+x_vis <- data.frame(x_vis, xy[match(z, xy$SITE_ID),])
 
 SPP <- c(
     "AlderFlycatcher", "AmericanBittern", "AmericanCoot", "AmericanCrow",
@@ -217,3 +226,71 @@ for (i in names(sort(colSums(xt_vis)))) {
 dev.off()
 
 stopCluster(cl)
+
+
+
+spp="CanadaWarbler"
+x <- data.frame(spp=as.numeric(xt_vis[,spp]),
+    ToY=x_vis$ToY,
+    Yr=x_vis$Year,
+    Yrf=as.factor(x_vis$Year),
+    x=x_vis$PUBLIC_LONGITUDE,
+    y=x_vis$PUBLIC_LATTITUDE)
+m0 <- gam(spp ~ 1, data=x, family="binomial")
+m1 <- gam(spp ~ Yr, data=x, family="binomial")
+m1f <- gam(spp ~ Yrf, data=x, family="binomial")
+m2 <- gam(spp ~ s(ToY), data=x, family="binomial")
+m3 <- gam(spp ~ Yr + s(ToY), data=x, family="binomial")
+m3f <- gam(spp ~ Yrf + s(ToY), data=x, family="binomial")
+
+m4 <- gam(spp ~ Yrf + s(ToY) + s(x))
+m5 <- gam(spp ~ Yrf + s(ToY) + s(y))
+m6 <- gam(spp ~ Yrf + s(ToY) + s(x) + s(y))
+m7 <- gam(spp ~ Yrf + s(ToY) + s(x, y))
+
+AIC(m0, m1, m2, m3, m1f, m3f, m4)
+
+AIC(m4, m5, m6, m7)
+
+plot(m7)
+points(y ~ x, x)
+
+summary(m4)
+summary(m3f)
+
+x$ToY2 <- x$ToY^2
+x$ToY3 <- x$ToY^3
+x$ToY4 <- x$ToY^4
+x$x2 <- x$x^2
+x$x3 <- x$x^3
+x$x4 <- x$x^4
+x$y2 <- x$y^2
+x$y3 <- x$y^3
+x$y4 <- x$y^4
+
+
+spp="CanadaWarbler"
+pdf("phenol2.pdf",onefile=TRUE, width=7, height=5)
+for (spp in SPP) {
+x <- data.frame(spp=as.numeric(xt_vis[,spp]),
+    ToY=x_vis$ToY,
+    Yr=x_vis$Year,
+    Yrf=as.factor(x_vis$Year),
+    x=x_vis$PUBLIC_LONGITUDE,
+    y=x_vis$PUBLIC_LATTITUDE)
+x$ToY2 <- x$ToY^2
+x$ToY3 <- x$ToY^3
+x$ToY4 <- x$ToY^4
+m <- glm(spp ~ y * (ToY + ToY2 + ToY3), x, family=binomial)
+nd <- expand.grid(ToY=80:200, y=c(50, 54, 58))
+nd$ToY2 <- nd$ToY^2
+nd$ToY3 <- nd$ToY^3
+nd$ToY4 <- nd$ToY^4
+nd$p <- predict(m, newdata=nd, type="response")
+
+plot(p ~ ToY, nd[nd$y==50,], type="l", ylim=c(0, max(nd$p)), main=spp)
+lines(p ~ ToY, nd[nd$y==54,], col=2)
+lines(p ~ ToY, nd[nd$y==58,], col=4)
+legend("topleft", lty=1,col=c(1,2,4), legend=c("lat=50","lat=54","lat=58"))
+}
+dev.off()
