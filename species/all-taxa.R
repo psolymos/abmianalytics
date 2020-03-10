@@ -181,6 +181,26 @@ for (taxon in TAXA) {
         file=file.path(ROOT, "data", "analysis", "species",
         paste0(taxon, "_out_", DATE, ".Rdata")))
 
+    ## vascular plants common/dominant
+    if (taxon == "vplants") {
+        res$comdom <- res$Present
+        levels(res$comdom)[!(levels(res$comdom) %in% c("Dominant", "Common"))] <- "Uncommon"
+        table(res$comdom)
+        xt0 <- Xtab(~ site_year_sub + SpeciesID + comdom, res,
+            cdrop=c("NONE","SNI", "VNA", "DNC", "PNA"))
+        xt1 <- xt0$Uncommon
+        xt1[xt1>0] <- 1
+        xt10 <- xt0$Common * 10
+        xt10[xt10>0] <- 10
+        xt100 <- xt0$Dominant * 100
+        xt100[xt100>0] <- 100
+        y_comdom <- xt1
+        y_comdom[xt10>0] <- xt10[xt10>0]
+        y_comdom[xt100>0] <- xt100[xt100>0]
+        save(y_comdom, file=file.path(ROOT, "data", "inter", "species",
+            paste0(taxon, "_comdom_", DATE, ".Rdata")))
+    }
+
     cat(" --- OK\n")
     flush.console()
 }
