@@ -87,6 +87,7 @@ ch2soil$sector <- ts$Sector61[match(ch2soil$cr, rownames(ts))]
 ch2veg$rf2 <- tv$UseInAnalysisFineAge[match(ch2veg$rf, rownames(tv))]
 ch2veg$cr2 <- tv$UseInAnalysisFineAge[match(ch2veg$cr, rownames(tv))]
 ch2veg$sector <- tv$Sector61[match(ch2veg$cr, rownames(tv))]
+colSums(groupSums(trVeg, 2, ch2veg$sector))/sum(trVeg)
 
 str(ch2soil)
 str(ch2veg)
@@ -101,9 +102,15 @@ make_raster <- function(value, rc, rt)
     raster(x=r, template=rt)
 }
 
+EXCL <- c("HWater", "SoilUnknown", "SoilWater", "Water")
+
+keepn <- rownames(ch2veg)[!(ch2veg$cr2 %in% EXCL) & !(ch2veg$rf2 %in% EXCL)]
+trVeg <- trVeg[,keepn]
+ch2veg <- ch2veg[keepn,]
 rsn <- rowSums(trVeg)
 rsn[rsn==0] <- 1
 trVeg <- trVeg / rsn
+colSums(groupSums(trVeg, 2, ch2veg$sector))/sum(trVeg)
 
 CN <- c("Native", "Misc", "Agriculture", "Forestry", "RuralUrban", "Energy", "Transportation")
 
@@ -145,6 +152,8 @@ for (spp in SPP) {
     munHab["Spruce9"] <- munHab["Spruce8"]
 
     munHab[is.na(munHab)] <- 0 # water, snow/ice, mine
+    #compare_sets(ch2veg$cr2, names(munHab))
+    #compare_sets(ch2veg$rf2, names(munHab))
 
     ## expand coefficients for north
     prnCr <- munHab[match(ch2veg$cr2, names(munHab))]
@@ -196,6 +205,7 @@ KA <- 100*colMeans(Aveg[rn,])
 
 SEff <- list()
 
+#spp <- SPP[1]
 for (spp in SPP) {
 
     cat(spp, "\n")
@@ -276,6 +286,8 @@ for (spp in SPP) {
         dev.off()
     }
 }
+
+save(SEff, file=paste0(ROOT, "/SEff-mammals.RData"))
 
 
 ## compare
