@@ -97,6 +97,8 @@ dd$ROAD <- ifelse(dd$mHard >= 0.01, 1, 0)
 dd$CMETHOD <- factor("SM", c("HS", "RF", "SM"))
 rownames(dd) <- rownames(vc1)
 
+dd$YR <- 2017 - 1993
+
 ## ----------- climate stuff
 
 gg <- read.csv("d:/abmi/AB_data_v2019/data/misc/bg/bg-from-peter-GRIDS-2019-11-14.csv")
@@ -132,12 +134,14 @@ vc2 <- dd17$veg_current
 ao <- paste0(as.character(tv[colnames(vc2), "UseInAnalysisFine"]),
     ifelse(tv[colnames(vc2), "MatureOld"], "O", ""))
 SSH <- row_std(groupSums(vc2[rownames(dd),], 2, ao))
-SSH <- SSH[,colnames(SSH_veg) %ni% c("Water","HWater", "SnowIce", "Bare",
+SSH <- SSH[,colnames(SSH) %ni% c("Water","HWater", "SnowIce", "Bare",
     "Seismic", "HardLin", "TrSoftLin", "EnSoftLin", "Well")]
 SSH <- SSH[rownames(dd),]
 
 dd$SSH_KM <- 0
 dd$SSH05_KM <- sqrt(dd$SSH_KM)
+dd$pWater_KM <- rowSums(row_std(vc2[rownames(dd),])[,tv[colnames(vc2), "is_water"]])
+dd$pWater2_KM <- dd$pWater_KM^2
 
 ## ----------- landscape level variables: KM_HF
 
@@ -336,17 +340,24 @@ for (spp in colnames(off)) {
 
 }
 
+sum(is.na(off))
+range(off)
 
 ## ----------- checks/saving
 
 en <- new.env()
 load("d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-north-2018-12-07.RData", envir=en)
+Xn <- get_model_matrix(dd, en$mods)
 
+compare_sets(colnames(SSH), colnames(en$SSH))
 
-es <- new.env()
-load(file.path(ROOT, "data", "ab-birds-south-2018-12-07.RData"), envir=es)
-Xn <- get_model_matrix(en$DAT, en$mods)
-Xs <- get_model_matrix(es$DAT, es$mods)
+names(en)
 
-Xage <- as.matrix(read.csv("~/repos/abmianalytics/lookup/Xn-veg-v61.csv"))
-colnames(Xage) <- colnames(Xn)[match(colnames(Xage), make.names(colnames(Xn)))]
+YY <- yy
+OFF <- off
+DAT <- data.frame(pp, dd[match(pp$Key, rownames(dd)),])
+
+all(rownames(YY)==rownames(OFF))
+all(rownames(YY)==rownames(DAT))
+
+save(DAT, OFF, YY, gg, vv, file="d:/abmi/AB_data_v2019/data/misc/bg/bg-data-package.RData")
