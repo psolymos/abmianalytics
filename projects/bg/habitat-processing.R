@@ -6,6 +6,10 @@ load("d:/abmi/AB_data_v2019/data/misc/bg/veghf-summaries.RData")
 tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
 rownames(tv) <- tv[,1]
 
+en <- new.env()
+load("d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-north-2018-12-07.RData", envir=en)
+Xn <- get_model_matrix(dd, en$mods)
+
 ## --------------- point level variables
 
 ## 150m point
@@ -345,10 +349,6 @@ range(off)
 
 ## ----------- checks/saving
 
-en <- new.env()
-load("d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-north-2018-12-07.RData", envir=en)
-Xn <- get_model_matrix(dd, en$mods)
-
 compare_sets(colnames(SSH), colnames(en$SSH))
 
 names(en)
@@ -356,8 +356,11 @@ names(en)
 YY <- yy
 OFF <- off
 DAT <- data.frame(pp, dd[match(pp$Key, rownames(dd)),])
+SSH <- SSH[match(pp$Key, rownames(SSH)),]
+rownames(SSH) <- rownames(DAT) <- rownames(YY)
 
-all(rownames(YY)==rownames(OFF))
-all(rownames(YY)==rownames(DAT))
+compare_sets(levels(DAT$vegc), levels(en$DAT$vegc))
 
-save(DAT, OFF, YY, gg, vv, file="d:/abmi/AB_data_v2019/data/misc/bg/bg-data-package.RData")
+DAT$vegc <- factor(as.character(DAT$vegc), levels(en$DAT$vegc))
+
+save(DAT, OFF, YY, SSH, gg, vv, file="d:/abmi/AB_data_v2019/data/misc/bg/bg-data-package.RData")
