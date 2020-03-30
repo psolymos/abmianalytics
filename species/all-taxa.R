@@ -3,7 +3,7 @@ source("~/repos/abmianalytics/species/abmi-r-api.R")
 #data.frame(table=get_table_names())
 
 ## settings
-TAXA <- c("vplants", "mites")
+TAXA <- c("vplants", "mites", "mosses", "lichens")
 ROOT <- "d:/abmi/AB_data_v2019"
 
 ## common stuff
@@ -70,6 +70,34 @@ for (taxon in TAXA) {
     if (taxon == "mosses") {
         tab1 <- "T19A" # T19A Moss Identification (2003-2008)
         tab2 <- "T19B" # T19B Moss Identification (since 2009)
+        sub_col <- "Quadrant"
+        allowed_subunits <- c("NE", "NW", "SE", "SW", "1ha")
+        allowed_resolution <- c("Genus", "Species")
+        sub_max <- 4
+
+        res1 <- get_table(tab1)
+        res2 <- get_table(tab2)
+        res01 <- res1
+        res02 <- res2
+        save_list <- c("res01", "res02")
+
+        colnames(res1) <- gsub(" ", "", colnames(res1))
+        res1[[sub_col]] <- as.factor("1ha")
+        res1 <- add_labels(res1, sub_col=sub_col)
+        res1 <- normalize_species(res1)
+
+        colnames(res2) <- gsub(" ", "", colnames(res2))
+        res2 <- add_labels(res2, sub_col=sub_col)
+        res2 <- normalize_species(res2)
+
+        tmp <- intersect(colnames(res1), colnames(res2))
+        res <- rbind(res1[,tmp], res2[,tmp])
+    }
+
+    ## lichens -------------------------
+    if (taxon == "lichens") {
+        tab1 <- "T20A" # T20A Lichen Identification (2003-2008)
+        tab2 <- "T20B" # T20B Lichen Identification (since 2009)
         sub_col <- "Quadrant"
         allowed_subunits <- c("NE", "NW", "SE", "SW", "1ha")
         allowed_resolution <- c("Genus", "Species")
