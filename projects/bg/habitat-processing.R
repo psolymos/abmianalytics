@@ -8,7 +8,6 @@ rownames(tv) <- tv[,1]
 
 en <- new.env()
 load("d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-north-2018-12-07.RData", envir=en)
-Xn <- get_model_matrix(dd, en$mods)
 
 ## --------------- point level variables
 
@@ -129,7 +128,8 @@ colnames(xyc)[colnames(xyc)=="Eref"] <- "PET"
 
 xyt <- transform_clim(xyc)
 xyt <- xyt[rownames(dd),]
-dd <- data.frame(dd, xyt)
+xyc <- xyc[rownames(dd),]
+dd <- data.frame(dd, xyc, xyt)
 
 ## ----------- landscape level variables: SSH
 
@@ -349,6 +349,8 @@ range(off)
 
 ## ----------- checks/saving
 
+Xn <- get_model_matrix(dd, en$mods)
+
 compare_sets(colnames(SSH), colnames(en$SSH))
 
 names(en)
@@ -363,4 +365,45 @@ compare_sets(levels(DAT$vegc), levels(en$DAT$vegc))
 
 DAT$vegc <- factor(as.character(DAT$vegc), levels(en$DAT$vegc))
 
-save(DAT, OFF, YY, SSH, gg, vv, file="d:/abmi/AB_data_v2019/data/misc/bg/bg-data-package.RData")
+pv <- row_std(groupSums(ddp17$veg_current, 2, tv[colnames(ddp17$veg_current),"CoefTabs"]))
+
+
+## predict abundance using c4i
+
+library(mefa4)
+library(cure4insect)
+set_options(path = "d:/abmi/reports")
+load_common_data()
+source("~/repos/abmianalytics/birds/00-functions.R")
+load("d:/abmi/AB_data_v2019/data/misc/bg/bg-data-package.RData")
+
+compare_sets(get_levels()$veg, colnames(pv))
+
+vv <- read.csv("d:/abmi/AB_data_v2019/data/misc/bg/bg-from-peter-IDS-2019-11-14.csv")
+xy <- vv[,c("x_gis", "y_gis")]
+colnames(xy) <- c("X", "Y")
+coordinates(xy) <- ~ X + Y
+proj4string(xy) <- proj4string(.read_raster_template())
+
+st <- read.csv("~/repos/abmispecies/_data/birds.csv")
+rownames(st) <- st$AOU
+SPPx <- structure(as.character(st[colnames(YY), "sppid"]), names=colnames(YY))
+
+DM <- matrix(0, nrow(vv), ncol(YY))
+dimnames(DM) <- list(rownames(pv), colnames(YY))
+
+#spp <- "OVEN"
+for (spp in colnames(YY)) {
+    cat(spp, "\n")
+    flush.console()
+    y <- load_spclim_data(SPPx[spp])
+
+    pr <- predict_mat(y, xy, pv)$veg
+    pr[is.na(pr)] <- 0 # water & bare
+    DM[,spp] <- rowMeans(pv * pr)
+
+}
+
+
+save(DAT, OFF, YY, SSH, gg, vv, pv, DM, xy,
+  file="d:/abmi/AB_data_v2019/data/misc/bg/bg-data-package.RData")
