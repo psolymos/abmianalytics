@@ -366,7 +366,7 @@ boxplot(t(sapply(RSTAT, function(z) z["R2B",])))
 ## compare c4i predictions
 
 
-pool2 <- function(spp, k) {
+pool2 <- function(spp, k, grid=TRUE, correct=FALSE) {
     g <- switch(as.character(k),
         "1"="Key",
         "2"="g2x2",
@@ -374,8 +374,17 @@ pool2 <- function(spp, k) {
         "4"="g4x4",
         "5"="g5x5",
         "10"="Site")
+
     Yobs <- YY[,spp]
-    Ypred <- DM[match(DAT$Key, rownames(DM)),spp]*6*6
+
+    if (grid && !correct)
+        Ypred <- DM[match(DAT$Key, rownames(DM)),spp] * 36
+    if (grid && correct)
+        Ypred <- DM[match(DAT$Key, rownames(DM)),spp] * exp(OFF[,spp])
+    if (!grid && !correct)
+        Ypred <- DMp[match(DAT$Key, rownames(DMp)),spp] * (1.5^2*pi)
+    if (!grid && correct)
+        Ypred <- DMp[match(DAT$Key, rownames(DMp)),spp] * exp(OFF[,spp])
 
     Yobs <- Yobs[!duplicated(DAT$Key)]
     Ypred <- Ypred[!duplicated(DAT$Key)]
@@ -420,41 +429,59 @@ pool2 <- function(spp, k) {
     list(results=out, stats=c(COR=COR, CORU=CORU, R2=R2, PRC=PRC, ACC=ACC))
 }
 
+
 #spp <- "OVEN"
 sapply(lapply(m, function(k) pool2(spp, k)), "[[", "stats")
 
 ALLC <- list()
 for (spp in SPP) {
-    ALLC[[spp]] <- lapply(m, function(k) pool2(spp, k))
+    ALLC[[spp]] <- list(
+        grid=lapply(m, function(k) pool2(spp, k, grid=TRUE, correct=FALSE)),
+        gridc=lapply(m, function(k) pool2(spp, k, grid=TRUE, correct=TRUE)),
+        point=lapply(m, function(k) pool2(spp, k, grid=FALSE, correct=FALSE)),
+        pointc=lapply(m, function(k) pool2(spp, k, grid=FALSE, correct=TRUE))
+    )
 }
 
 tabc <- NULL
-taba <- NULL
 for (spp in names(ALLC)) {
-    for (i in names(ALLC[[spp]])) {
-        tmp <- data.matrix(ALLC[[spp]][[i]]$stats)
-        tabc <- rbind(tabc, data.frame(Species=spp, Scale=i, t(tmp)))
+    for (ty in c("grid", "gridc", "point", "pointc")) {
+        for (i in names(ALLC[[spp]][[ty]])) {
+            tmp <- data.matrix(ALLC[[spp]][[ty]][[i]]$stats)
+            tabc <- rbind(tabc, data.frame(Species=spp, Type=ty, Scale=i, t(tmp)))
+        }
+    }
+    for (i in names(ALL[[spp]][["HF"]])) {
         tmp <- data.matrix(ALL[[spp]][["HF"]][[i]]$stats)
-        taba <- rbind(taba, data.frame(Species=spp, Scale=i, t(tmp)))
+        tabc <- rbind(tabc, data.frame(Species=spp, Type="yhat", Scale=i, t(tmp)))
     }
 }
 summary(tabc)
-summary(taba)
 
-plot(taba$COR, tabc$COR)
+m <- lm(R2 ~ Type + Scale, tabc)
+m <- step(m)
+summary(m)
+
+boxplot(COR ~ Type, tabc)
+boxplot(R2 ~ Type, tabc)
+
+abline(0,1)
+abline(h=0,v=0)
 plot(taba$R2, tabc$R2)
+abline(0,1)
+abline(h=0,v=0)
 
 boxplot(COR ~ Scale, tabc)
 boxplot(R2 ~ Scale, tabc)
 
 
 
-p_lotc <- function(x, k, ...) {
-    xx <- x[[as.character(k)]]$results
+p_lotc <- function(x, k, type="grid", ...) {
+    xx <- x[[type]][[as.character(k)]]$results
     plot(yhat ~ jitter(yobs), xx,
         pch=19, col="#65d7fc", xlab="Observed", ylab="Predicted", ...)
     abline(lm(yhat ~ yobs, xx))
-    s <- x[[as.character(k)]]$stats
+    s <- x[[type]][[as.character(k)]]$stats
     g <- switch(as.character(k),
         "1"="1x1",
         "2"="2x2",
@@ -467,18 +494,42 @@ p_lotc <- function(x, k, ...) {
     invisible()
 }
 
+Type <- "grid"
 pdf("d:/abmi/AB_data_v2019/data/misc/bg/bg-predictions-ALLC.pdf", onefile=TRUE, height=7, width=10)
 for (spp in names(ALLC)) {
     l <- ALLC[[spp]]
+    for (ty in c("grid", "gridc", "point", "pointc")) {
 
-    op <- par(mfrow=c(2,3))
-    p_lotc(l, 1, main=spp)
-    p_lotc(l, 2)
-    p_lotc(l, 3)
-    p_lotc(l, 4)
-    p_lotc(l, 5)
-    p_lotc(l, 10)
-    par(op)
+        op <- par(mfrow=c(2,3))
+        p_lotc(l, 1, ty, main=paste(spp, ty))
+        p_lotc(l, 2, ty)
+        p_lotc(l, 3, ty)
+        p_lotc(l, 4, ty)
+        p_lotc(l, 5, ty)
+        p_lotc(l, 10, ty)
+        par(op)
+    }
 }
 dev.off()
 
+
+spp <- "OVEN"
+stage <- "HF"
+res <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
+mu <- predict_with_SSH(res, X, SSH, stage=stage)
+off <- OFF[,spp]
+
+d1 <- data.frame(
+    DAT[,c("Key", "Site", "g2x2", "g3x3", "g4x4", "g5x5")],
+    yhat = as.numeric(apply(exp(mu+off), 1, median)),
+    yobs = as.numeric(YY[,spp]),
+    mu=as.numeric(apply(exp(mu), 1, median)),
+    off=as.numeric(off),
+    expoff=as.numeric(exp(off)),
+    Dpred=DM[match(DAT$Key, rownames(DM)),spp])
+d1 <- d1[sample(nrow(d1)),]
+d1 <- nonDuplicated(d1, Key, TRUE)
+
+summary(d1)
+
+## compare scaling: point/square, correction etc

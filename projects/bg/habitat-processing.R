@@ -365,7 +365,8 @@ compare_sets(levels(DAT$vegc), levels(en$DAT$vegc))
 
 DAT$vegc <- factor(as.character(DAT$vegc), levels(en$DAT$vegc))
 
-pv <- row_std(groupSums(ddp17$veg_current, 2, tv[colnames(ddp17$veg_current),"CoefTabs"]))
+pv <- row_std(groupSums(dd17$veg_current, 2, tv[colnames(ddp17$veg_current),"CoefTabs"]))
+pv1 <- row_std(groupSums(ddp17$veg_current, 2, tv[colnames(ddp17$veg_current),"CoefTabs"]))
 
 
 ## predict abundance using c4i
@@ -391,6 +392,7 @@ SPPx <- structure(as.character(st[colnames(YY), "sppid"]), names=colnames(YY))
 
 DM <- matrix(0, nrow(vv), ncol(YY))
 dimnames(DM) <- list(rownames(pv), colnames(YY))
+DMp <- DM
 
 #spp <- "OVEN"
 for (spp in colnames(YY)) {
@@ -398,12 +400,17 @@ for (spp in colnames(YY)) {
     flush.console()
     y <- load_spclim_data(SPPx[spp])
 
+    ## this is density because pv is already row standardized
     pr <- predict_mat(y, xy, pv)$veg
     pr[is.na(pr)] <- 0 # water & bare
-    DM[,spp] <- rowMeans(pv * pr)
+    DM[,spp] <- rowSums(pr)
+
+    pr <- predict_mat(y, xy, pv1)$veg
+    pr[is.na(pr)] <- 0 # water & bare
+    DMp[,spp] <- rowSums(pr)
 
 }
 
 
-save(DAT, OFF, YY, SSH, gg, vv, pv, DM, xy,
+save(DAT, OFF, YY, SSH, gg, vv, pv, DM, DMp, xy,
   file="d:/abmi/AB_data_v2019/data/misc/bg/bg-data-package.RData")
