@@ -20,7 +20,7 @@ vv$KM <- as.character(cure4insect:::.c4if$QT2KT[rownames(vv)])
 
 ## save results (spp x id) + metadata
 
-ST <- get_species_table()
+ST <- get_species_table(mregion="north")
 SPP <- rownames(ST)
 
 CR <- matrix(0, length(SPP), length(unique(vv$RT)))
