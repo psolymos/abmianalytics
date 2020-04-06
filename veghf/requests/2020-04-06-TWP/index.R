@@ -1,8 +1,9 @@
 ## Need c4i based suitabilities for spp in:
 ## Twp 102,103, Rg 9,10
 
-library(cure4insect)
 library(mefa4)
+library(cure4insect)
+set_options(path = "d:/abmi/reports")
 load_common_data()
 
 ## QS IDs are built up as MER-RGE-TWP-SEC-QS
@@ -28,6 +29,8 @@ colnames(CR) <- sort(unique(vv$RT))
 
 #spp <- SPP[1]
 for (spp in SPP) {
+    cat(spp, which(SPP==spp), "/", length(SPP), "\n")
+    flush.console()
     y <- load_species_data(spp, boot=FALSE)
     names(y)
     cr <- rowMeans(groupSums(y$SA.Curr[vv$KM,], 1, vv$RT))
