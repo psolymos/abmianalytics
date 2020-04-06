@@ -32,12 +32,17 @@ for (spp in SPP) {
     cat(spp, which(SPP==spp), "/", length(SPP), "\n")
     flush.console()
     y <- load_species_data(spp, boot=FALSE)
-    names(y)
-    cr <- rowMeans(groupSums(y$SA.Curr[vv$KM,], 1, vv$RT))
+    x <- rowSums(y$SA.Curr[vv$KM,])
+    x <- sum_by(x, vv$RT)
+    cr <- x[,"x"]/x[,"by"]
     CR[spp, names(cr)] <- cr
 }
 
-out <- data.frame(ST, CR)
+range(CR)
+
+CR[which(apply(CR, 1, max) > 2),]
+M <- apply(CR, 1, max)
+out <- data.frame(ST[,c(1:5, 11)], round(CR, 6))[M > 0.00001 & M < 2,]
 write.csv(out, row.names=FALSE,
     file="GRE-9-10-TWP-102-103_ABMI-species_2020-04-06.csv")
 
