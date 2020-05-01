@@ -1,9 +1,139 @@
+## summarizing 2019 camera mammale results for data portal
+
+## --- coefficients
+ROOT <- "d:/abmi/AB_data_v2019/misc/mammals"
+load(file.path(ROOT,
+    "Mammal coefficients North Feb 2019 Best model OFFICIAL coefficients ORIGINAL NAMES.Rdata"))
+
+write.csv(Coef.official, file="s:/Camera mammals Mar 2019/Peter-CoefN.csv")
+write.csv(Coef.official.lci, file="s:/Camera mammals Mar 2019/Peter-CoefN-lo.csv")
+write.csv(Coef.official.uci, file="s:/Camera mammals Mar 2019/Peter-CoefN-hi.csv")
+
+ROOT <- "d:/abmi/AB_data_v2019/misc/mammals"
+load(file.path(ROOT,
+    "Mammal coefficients South Feb 2019 Best model OFFICIAL coefficients.Rdata"))
+pA <- read.csv("s:/Camera mammals Mar 2019/Mammal coefficients South Feb 2019 Best model pAspen coefficients.csv")
+rownames(pA) <- pA[,1]
+
+write.csv(Coef.official, file="s:/Camera mammals Mar 2019/Peter-CoefS.csv")
+write.csv(Coef.official.lci, file="s:/Camera mammals Mar 2019/Peter-CoefS-lo.csv")
+write.csv(Coef.official.uci, file="s:/Camera mammals Mar 2019/Peter-CoefS-hi.csv")
+
+f <- function(Coef.official) {
+tr <- exp(log(Coef.official) + pA[rownames(Coef.official), "pAspen.agp"])
+tr <- cbind(tr[,c("Productive", "Clay", "Saline", "RapidDrain")],
+    Water=0,
+    tr[,c("Crop", "TameP", "RoughP")],
+    UrbInd=rowMeans(tr[,c("UrInd", "RuralResInd", "Wells")]))
+tr
+}
+
+tr <- f(Coef.official)
+trl <- f(Coef.official.lci)
+tru <- f(Coef.official.uci)
+
+write.csv(cbind(tr, Lower=trl, Upper=tru), file="s:/Camera mammals Mar 2019/Peter-CoefS-tr.csv")
+
+## maps
+SPP2 <- c("Badger",
+"BlackBear",
+"CanadaLynx",
+"Cougar",
+"Coyote",
+"Deer",
+"Elk",
+"Fisher",
+"GrayWolf",
+"Marten",
+"Moose",
+"Muledeer",
+"Pronghorn",
+"Redfox",
+"RichardsonsGroundSquirrel",
+"SnowshoeHare",
+"StripedSkunk",
+"WeaselsandErmine",
+"WhitetailedDeer",
+"WhitetailedJackRabbit",
+"Wolverine")
+
+load("d:/abmi/AB_data_v2018/data/analysis/kgrid_table_km.Rdata")
+KT <- kgrid
+
+range(as.integer(sapply(strsplit(rownames(y), "_"), "[[", 1)))
+range(as.integer(sapply(strsplit(rownames(y), "_"), "[[", 2)))
+range(as.integer(sapply(strsplit(rownames(KT), "_"), "[[", 1)))
+range(as.integer(sapply(strsplit(rownames(KT), "_"), "[[", 2)))
+
+spp <- SPP2[1]
+for (spp in SPP2) {
+    cat(spp, "\n")
+    flush.console()
+    y <- read.csv(paste0("s:/Camera mammals Mar 2019/predictions/Km2 ALL Reference and current May 2019 DJH/",
+        spp, ".csv"))
+    rownames(y) <- y$LinkID
+    y$SA.Curr <- y$Curr
+    y$SA.Ref <- y$Ref
+
+
+    Dcr <- y$SA.Curr[match(rownames(KT), rownames(y))]
+    q <- quantile(Dcr, 0.99, na.rm=TRUE)
+    Dcr[!is.na(Dcr) & Dcr > q] <- q
+    Drf <- y$SA.Ref[match(rownames(KT), rownames(y))]
+    q <- quantile(Drf, 0.99, na.rm=TRUE)
+    Drf[!is.na(Drf) & Drf > q] <- q
+    MAX <- max(Dcr, Drf, na.rm=TRUE)
+
+    df <- (Dcr-Drf) / MAX
+    df <- sign(df) * abs(df)^0.5
+    df <- pmin(200, ceiling(99 * df)+100)
+    df[df==0] <- 1
+    cr <- pmin(100, ceiling(99 * sqrt(Dcr / MAX))+1)
+    rf <- pmin(100, ceiling(99 * sqrt(Drf / MAX))+1)
+    d <- data.frame(Row_Col=rownames(KT), Curr=cr, Ref=rf, Diff=df)
+    i <- !is.na(cr) & !is.na(rf)
+    d <- d[i,]
+    write.csv(d, row.names = FALSE,
+        file=paste0("s:/BDQT/species-tables-1km/camera-mammals/", spp, ".csv"))
+
+        cr[is.na(cr)] <- -1
+        Rcr <- make_raster(cr, kgrid, rt)
+        values(Rcr)[values(Rcr) < 0] <- NA
+        rf[is.na(rf)] <- -1
+        Rrf <- make_raster(rf, kgrid, rt)
+        values(Rrf)[values(Rrf) < 0] <- NA
+        df[is.na(df)] <- -999
+        Rdf <- make_raster(df-100, kgrid, rt)
+        values(Rdf)[values(Rdf) < -100] <- NA
+        df[df < 100] <- 0
+
+        png(paste0("s:/BDQT/species-tables-1km/camera-mammals/", spp, ".png"),
+            height=1500*1, width=1000*3, res=300)
+        op <- par(mfrow=c(1,3), mar=c(2,1,2,3))
+        plot(rt, col=CE, axes=FALSE, box=FALSE, main="Reference", legend=FALSE)
+        plot(Rrf, add=TRUE, col=col1[1:max(rf)])
+        plot(Rw, add=TRUE, col=CW, legend=FALSE)
+        plot(rt, col=CE, axes=FALSE, box=FALSE, main="Current", legend=FALSE)
+        plot(Rcr, add=TRUE, col=col1[1:max(cr)])
+        plot(Rw, add=TRUE, col=CW, legend=FALSE)
+        plot(rt, col=CE, axes=FALSE, box=FALSE, main="Difference", legend=FALSE)
+        plot(Rdf, add=TRUE, col=col3[min(df):max(df)])
+        plot(Rw, add=TRUE, col=CW, legend=FALSE)
+        par(op)
+        dev.off()
+
+}
+
+
+
+
 ## summaries for camera mammals for data portal
 library(mefa4)
 library(raster)
 source("~/repos/abmianalytics/birds/00-functions.R")
 
 ROOT <- "d:/abmi/AB_data_v2019/misc/mammals"
+
 load(file.path(ROOT,
     "Mammal coefficients North Feb 2019 Best model OFFICIAL coefficients ORIGINAL NAMES.Rdata"))
 
@@ -116,6 +246,50 @@ CN <- c("Native", "Misc", "Agriculture", "Forestry", "RuralUrban", "Energy", "Tr
 
 SPP <- rownames(Coef.official)
 
+CoefN <- NULL
+for (spp in SPP) {
+    gc()
+    cat(spp)
+    flush.console()
+
+    estnclim <- Res.coef.official[spp,]
+    munClim <- drop(Xclim[,names(estnclim)] %*% estnclim)
+    munClim[munClim > 2] <- 2
+
+    tmp <- Coef.official[spp,]
+    names(tmp)[names(tmp) == "CultivationCrop"] <- "Crop"
+    names(tmp)[names(tmp) == "CultivationTamePasture"] <- "TameP"
+    names(tmp)[names(tmp) == "CultivationRoughPasture"] <- "RoughP"
+    names(tmp)[names(tmp) == ""] <- "TreeShrubSwamp"
+    #names(tmp)[names(tmp) == "RuralResidentialIndustrial"] <- "Urban"
+    names(tmp)[names(tmp) == "WellSite"] <- "Well"
+    names(tmp)[names(tmp) == "UrbanIndustrial"] <- "Industrial"
+    names(tmp)[names(tmp) == "TreeShrubSwamp"] <- "Swamp"
+
+    munHab <- structure(rep(NA, nlevels(ch2veg$cr2)), names=levels(ch2veg$cr2))
+    munHab[intersect(names(tmp), names(munHab))] <- tmp[intersect(names(tmp), names(munHab))]
+
+    names(tmp) <- gsub("TreedBog", "BSpr", names(tmp))
+    munHab[names(tmp)[grep("BSpr", names(tmp))]] <- tmp[names(tmp)[grep("BSpr", names(tmp))]]
+    munHab[grep("Larch", names(munHab))] <- tmp["TreedFen"]
+    munHab[c("Seismic", "TrSoftLin", "EnSoftLin")] <- tmp["SoftLin"]
+    munHab[c("GraminoidFen", "Marsh")] <- tmp["NonTreeFenMarsh"]
+    munHab[c("Urban", "Rural")] <- tmp["RuralResidentialIndustrial"]
+
+    munHab["BSpr9"] <- munHab["BSpr8"]
+    munHab["Decid9"] <- munHab["Decid8"]
+    munHab["Mixedwood9"] <- munHab["Mixedwood8"]
+    munHab["Pine9"] <- munHab["Pine8"]
+    munHab["Spruce9"] <- munHab["Spruce8"]
+
+    munHab[is.na(munHab)] <- 0 # water, snow/ice, mine
+    CoefN <- rbind(CoefN, munHab)
+}
+rownames(CoefN) <- SPP
+
+SPP2N <- SPP2[SPP2 %in% SPP]
+write.csv(CoefN[SPP2N,], file=)
+
 for (spp in SPP) {
     gc()
     cat(spp)
@@ -204,6 +378,25 @@ Aveg <- groupSums(trVeg, 2, ch2veg$sector)[,cn]
 KA <- 100*colMeans(Aveg[rn,])
 
 SEff <- list()
+
+# save
+resN <- list()
+for (spp in SPP) {
+    cat(spp, "\n")
+    flush.console()
+
+    load(paste0(ROOT, "/pred/", spp, ".RData"))
+
+    Dcr <- rowSums(Curr)
+    q <- quantile(Dcr, 0.99)
+    Dcr[Dcr > q] <- q
+    Drf <- rowSums(Ref)
+    q <- quantile(Drf, 0.99)
+    Drf[Drf > q] <- q
+    resN[[spp]] <- cbind(Ref=Drf, Curr=Dcr)
+}
+save(resN, file=paste0(ROOT, "/pred/resN-mammals.RData"))
+
 
 #spp <- SPP[1]
 for (spp in SPP) {
