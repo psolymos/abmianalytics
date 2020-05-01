@@ -1,0 +1,60 @@
+---
+title: 'Bird Model Validation using Big Grid Data'
+author: Peter Solymos
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output: word_document
+---
+
+```{r preamble,include=FALSE}
+library(ggplot)
+library(mefa4)
+library(sp)
+library(raster)
+library(cure4insect)
+library(rgdal)
+set_options(path = "d:/abmi/reports")
+load_common_data()
+source("~/repos/abmianalytics/birds/00-functions.R")
+knitr::opts_chunk$set(cache=TRUE, echo=FALSE, message=FALSE, warning=FALSE, fig.pos="H", fig.align="center")
+
+load("d:/abmi/AB_data_v2019/data/misc/bg/bg-data-package.RData")
+
+rt <- .read_raster_template()
+
+b <- readOGR(dsn=system.file("extdata/AB_bound.geojson", package="cure4insect"))
+b <- spTransform(b, proj4string(xy))
+
+load("d:/abmi/AB_data_v2019/data/misc/bg/veghf-summaries.RData")
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
+rownames(tv) <- tv[,1]
+
+vt <- ddp17$veg_current
+vt <- row_std(groupSums(vt, 2, tv[colnames(vt), "Sector61"]))
+vt <- as.matrix(vt)
+vt1 <- groupMeans(vt, 1, vv$site)
+vt1 <- vt1[order(vt1[,1], decreasing=TRUE),]
+```
+
+```{r plot-ab,fig.cap='Location of Big Grids in Alberta.',out.width='100%',fig.height=9,fig.width=6}
+tmp <- xy[!duplicated(vv$site),]
+plot(b, col="lightgrey", border="darkgrey")
+plot(xy, col="white", add=TRUE, pch=".")
+text(tmp, label=vv$site[!duplicated(vv$site)], cex=0.5)
+```
+
+```{r}
+col <- hcl.colors(100, "Green-Orange")
+op <- par(mfrow=c(3,5), mar=c(1,1,4,1))
+for (i in as.integer(rownames(vt1)))
+    plot(xy[vv$site==i,], col=col[ceiling(100*(1-vt[vv$site==i,1]))], 
+        cex=2, pch=19, main=paste("Site", i))
+par(op)
+```
+
+```{r}
+knitr::kable(data.frame(Site=rownames(vt1), vt1[,-1]*100, TotalHF=100*(1-vt1[,1])), 
+    digits=2, row.names = FALSE)
+```
+
+
+

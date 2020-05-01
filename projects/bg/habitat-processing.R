@@ -365,7 +365,7 @@ compare_sets(levels(DAT$vegc), levels(en$DAT$vegc))
 
 DAT$vegc <- factor(as.character(DAT$vegc), levels(en$DAT$vegc))
 
-pv <- row_std(groupSums(dd17$veg_current, 2, tv[colnames(ddp17$veg_current),"CoefTabs"]))
+pv <- row_std(groupSums(dd17$veg_current, 2, tv[colnames(dd17$veg_current),"CoefTabs"]))
 pv1 <- row_std(groupSums(ddp17$veg_current, 2, tv[colnames(ddp17$veg_current),"CoefTabs"]))
 
 

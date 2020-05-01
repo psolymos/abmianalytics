@@ -155,7 +155,8 @@ for (spp in SPP) {
 #save(ALLW, ALLB, file="d:/abmi/AB_data_v2019/data/misc/bg/bg-predictions-ALLWB.RData")
 
 
-
+library(mefa4)
+load("d:/abmi/AB_data_v2019/data/misc/bg/bg-data-package.RData")
 load("d:/abmi/AB_data_v2019/data/misc/bg/bg-predictions-ALL.RData")
 load("d:/abmi/AB_data_v2019/data/misc/bg/bg-predictions-ALLWB.RData")
 
@@ -211,8 +212,7 @@ summary(m)
 #m <- lmer(COR ~ Stage + Scale + (1|Species), tab)
 #summary(m)
 
-
-t(sapply(l, "[[", "stats"))
+#t(sapply(l, "[[", "stats"))
 
 p_lot <- function(x, k, ...) {
     xx <- x[[as.character(k)]]$results
