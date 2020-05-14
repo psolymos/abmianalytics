@@ -26,10 +26,21 @@ d <- dbGetQuery(db,
       FEATURE_TY,
       Combined_ChgByCWCS,
       YEAR,
-      Shape_Area
+      SHAPE_Area
     FROM
       `Veg61HF2017BDQT`;")
+
+Area <- dbGetQuery(db,
+    "SELECT
+      UID,
+      SHAPE_Area
+    FROM
+      `Veg61HF2017BDQT`;")
+
 dbDisconnect(db)
+
+#save(Area, file="s:/AB_data_v2019/bdqt/bdqt-poly-area_2020-05-12.RData")
+
 
 d <- make_char2fact(d)
 gc()
@@ -56,7 +67,7 @@ data.frame(table(d2$VEGAGEclass))
 
 d2 <- d2[,c("UID", "Easting", "Northing", "NSRNAME",
     "VEGAGEclass", "VEGHFAGEclass",
-    "SOILclass", "SOILHFclass")]
+    "SOILclass", "SOILHFclass", "SHAPE_Area")]
 gc()
 
 
@@ -93,6 +104,7 @@ proj4string(xy) <- proj4string(.read_raster_template())
 x <- d[,c("UID", "VEGHFAGEclass", "SOILHFclass")]
 x$VEGHFAGEclass <- as.factor(x$VEGHFAGEclass)
 x$SOILHFclass <- as.factor(x$SOILHFclass)
+
 rm(d)
 gc()
 
