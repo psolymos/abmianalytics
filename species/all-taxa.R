@@ -4,7 +4,7 @@ source("~/repos/abmianalytics/species/abmi-r-api.R")
 
 ## settings
 TAXA <- c("vplants", "mites", "mosses", "lichens")
-ROOT <- "d:/abmi/AB_data_v2019"
+ROOT <- "s:/AB_data_v2020"
 
 ## common stuff
 DATE <- as.Date(Sys.time(), tz=Sys.timezone(location = TRUE))
@@ -232,6 +232,63 @@ for (taxon in TAXA) {
     cat(" --- OK\n")
     flush.console()
 }
+
+## habitat elements
+
+HEtabs <- list(
+    "T11"  = list(
+        name="Canopy cover",
+        slug="canopy-cover",
+        sub="Sub-ordinaltransect"),
+    "T12B" = list(
+        name="Cover layers",
+        slug="cover-layers",
+        sub="Quadrant"),
+    "T08"  = list(
+        name="CWD",
+        slug="cwd",
+        sub="Transect"),
+    "T01D" = list(
+        name="Ground cover",
+        slug="ground-cover",
+        sub=NULL),
+    "T25"  = list(
+        name="Mineral soil",
+        slug="mineral-soil",
+        sub="Quadrant"),
+    "T02A" = list(
+        name="Surface substrate",
+        slug="surface-substrate",
+        sub=NULL),
+    "T09"  = list(
+        name="Trees snags",
+        slug="trees-snags",
+        sub="Quadrant"))
+HabElem <- list()
+for (i in seq_along(HEtabs)) {
+    cat("* Pulling ", HEtabs[[i]]$name, "...")
+    res <- get_table(names(HEtabs)[i])
+    colnames(res) <- gsub(" ", "", colnames(res))
+    if (is.null(HEtabs[[i]]$sub)) {
+        subcol <- "sub_col"
+        res$sub_col <- rep("DNC", nrow(res))
+    } else {
+        subcol <- HEtabs[[i]]$sub
+    }
+    res <- add_labels(res, sub_col=subcol)
+    HabElem[[HEtabs[[i]]$slug]] <- res
+
+    write.csv(res, row.names=FALSE,
+        file=file.path(ROOT, "data", "analysis", "species",
+        paste0("habitatelements_", HEtabs[[i]]$slug, "_", DATE, ".csv")))
+
+    cat(" OK\n")
+}
+
+save(HabElem,
+    file=file.path(ROOT, "data", "analysis", "species",
+    paste0("habitatelements_out_", DATE, ".Rdata")))
+
 
 if (FALSE) {
 
