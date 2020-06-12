@@ -184,10 +184,11 @@ tab$pocc <- p[match(tab$Species, names(p))]
 plot(tab[,4:8])
 
 boxplot(COR ~ Stage, tab)
+boxplot(R2 ~ Stage, tab)
 
 boxplot(COR ~ Scale, tab)
 boxplot(CORU ~ Scale, tab)
-#boxplot(CORU ~ Stage+Scale, tab)
+boxplot(R2 ~ Scale, tab)
 #boxplot(CORU ~ Scale, tab[tab$Stage=="HF",])
 plot(CORU ~ pocc, tab)
 plot(COR ~ pocc, tab)

@@ -27,6 +27,14 @@ Xs <- get_model_matrix(es$DAT, es$mods)
 Xage <- as.matrix(read.csv("~/repos/abmianalytics/lookup/Xn-veg-v61.csv"))
 colnames(Xage) <- colnames(Xn)[match(colnames(Xage), make.names(colnames(Xn)))]
 
+if (FALSE) {
+    for (spp in colnames(en$OFF)) {
+        resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
+        estn <- suppressWarnings(get_coef(resn, Xn, stage="HF", na.out=FALSE))
+        write.csv(estn, file=paste0("_tmp/", spp, ".HFmodelcoefficients.csv"))
+    }
+
+}
 
 spp <- "ALFL"
 resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
