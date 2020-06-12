@@ -56,3 +56,5 @@ Temporary Items
 .Rproj.user*
 .Rproj.user
 .Rapp.history
+
+/_tmp/*

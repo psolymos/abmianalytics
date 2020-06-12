@@ -6,7 +6,7 @@ output: word_document
 ---
 
 ```{r preamble,include=FALSE}
-library(ggplot)
+library(ggplot2)
 library(mefa4)
 library(sp)
 library(raster)
@@ -36,6 +36,7 @@ vt1 <- vt1[order(vt1[,1], decreasing=TRUE),]
 ```
 
 ```{r plot-ab,fig.cap='Location of Big Grids in Alberta.',out.width='100%',fig.height=9,fig.width=6}
+rownames(xy@coords) <- vv$id_final
 tmp <- xy[!duplicated(vv$site),]
 plot(b, col="lightgrey", border="darkgrey")
 plot(xy, col="white", add=TRUE, pch=".")
