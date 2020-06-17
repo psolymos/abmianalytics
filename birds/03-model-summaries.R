@@ -30,8 +30,16 @@ colnames(Xage) <- colnames(Xn)[match(colnames(Xage), make.names(colnames(Xn)))]
 if (FALSE) {
     for (spp in colnames(en$OFF)) {
         resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
-        estn <- suppressWarnings(get_coef(resn, Xn, stage="HF", na.out=FALSE))
-        write.csv(estn, file=paste0("_tmp/", spp, ".HFmodelcoefficients.csv"))
+
+        estn1 <- suppressWarnings(get_coef(resn, Xn, stage="ARU", na.out=FALSE))
+        write.csv(estn1, file=paste0("s:/_tmp/birds-north-aru/", TAX[spp,"sppid"], "_coef.csv"))
+
+        estn2 <- suppressWarnings(get_coef(resn, Xn, stage="Space", na.out=FALSE))
+        write.csv(estn2, file=paste0("s:/_tmp/birds-north-space/", TAX[spp,"sppid"], "_coef.csv"))
+
+        estn3 <- suppressWarnings(get_coef(resn, Xn, stage="HF", na.out=FALSE))
+        #write.csv(estn3, file=paste0("_tmp/", spp, ".HFmodelcoefficients.csv"))
+        write.csv(estn3, file=paste0("s:/_tmp/birds-north-hf/", TAX[spp,"sppid"], "_coef.csv"))
     }
 
 }
