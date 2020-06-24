@@ -12,19 +12,19 @@ library(sp)
 library(raster)
 library(cure4insect)
 library(rgdal)
-set_options(path = "d:/abmi/reports")
+#set_options(path = "d:/abmi/reports")
 load_common_data()
 source("~/repos/abmianalytics/birds/00-functions.R")
 knitr::opts_chunk$set(cache=TRUE, echo=FALSE, message=FALSE, warning=FALSE, fig.pos="H", fig.align="center")
 
-load("d:/abmi/AB_data_v2019/data/misc/bg/bg-data-package.RData")
+load("~/GoogleWork/abmi/validation/bg-data-package.RData")
 
 rt <- .read_raster_template()
 
 b <- readOGR(dsn=system.file("extdata/AB_bound.geojson", package="cure4insect"))
 b <- spTransform(b, proj4string(xy))
 
-load("d:/abmi/AB_data_v2019/data/misc/bg/veghf-summaries.RData")
+load("~/GoogleWork/abmi/validation/veghf-summaries.RData")
 tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
 rownames(tv) <- tv[,1]
 
@@ -38,13 +38,18 @@ vt1 <- vt1[order(vt1[,1], decreasing=TRUE),]
 ```{r plot-ab,fig.cap='Location of Big Grids in Alberta.',out.width='100%',fig.height=9,fig.width=6}
 rownames(xy@coords) <- vv$id_final
 tmp <- xy[!duplicated(vv$site),]
+op <- par(mar=c(0,0,0,0)+0.2)
 plot(b, col="lightgrey", border="darkgrey")
 plot(xy, col="white", add=TRUE, pch=".")
 text(tmp, label=vv$site[!duplicated(vv$site)], cex=0.5)
+par(op)
 ```
 
 ```{r}
-col <- hcl.colors(100, "Green-Orange")
+#col <- hcl.colors(100, "Green-Orange")
+bc <- c("#576a26", "#919e39", "#b1ab3e", "#d6c350", "#eece5a", 
+        "#d1a123", "#966521", "#5c361f", "#261d19")
+col <- colorRampPalette(bc)(101)
 op <- par(mfrow=c(3,5), mar=c(1,1,4,1))
 for (i in as.integer(rownames(vt1)))
     plot(xy[vv$site==i,], col=col[ceiling(100*(1-vt[vv$site==i,1]))], 
