@@ -56,7 +56,7 @@ pool <- function(d, k) {
     }
     COR <- cor(out$yobs, out$yhat, method="spearman")
     CORU <- .cor_uncentered(out$yobs, out$yhat)
-    R2 <- summary(lm(yhat ~ yobs, out))$r.squared
+    R2 <- summary(lm(yobs ~ yhat, out))$r.squared
     oc <- epiR::epi.occc(cbind(out$yobs, out$yhat))
     PRC <- oc$oprec
     ACC <- oc$oaccu
@@ -93,10 +93,10 @@ for (spp in SPP) {
     }
 }
 
-#save(ALL, file="d:/abmi/AB_data_v2019/data/misc/bg/bg-predictions-ALL.RData")
+#save(ALL, file="d:/abmi/AB_data_v2019/data/misc/bg/bg-predictions-ALL-2020-06-23.RData")
 
 ## randomize
-B <- 100
+B <- 200
 stage <- "HF"
 
 ALLW <- list() # WS within site random
@@ -152,7 +152,7 @@ for (spp in SPP) {
     }
 }
 
-#save(ALLW, ALLB, file="d:/abmi/AB_data_v2019/data/misc/bg/bg-predictions-ALLWB.RData")
+#save(ALLW, ALLB, file="d:/abmi/AB_data_v2019/data/misc/bg/bg-predictions-ALLWB-2020-06-23.RData")
 
 
 library(mefa4)
