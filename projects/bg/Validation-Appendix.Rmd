@@ -1,0 +1,67 @@
+---
+title: 'Assessing the predictive capabilities of songbird abundance models for cumulative effects management in Alberta - Appendix 3'
+author: "Péter Sólymos, Lionel Leston, Judith D. Toms, and Erin M. Bayne"
+date: "Version: 1.0"
+output:
+  pdf_document:
+    toc: false
+    toc_depth: 3
+    number_sections: false
+documentclass: report
+fontsize: 10pt
+classoption: letterpaper
+urlcolor: blue
+header-includes:
+  - \usepackage{float}
+  - \usepackage{booktabs}
+---
+
+```{r preamble,include=FALSE}
+library(knitr)
+opts_chunk$set(cache=FALSE, echo=FALSE, message=FALSE, warning=FALSE, fig.pos="H", fig.align="center")
+SPP <- c("ALFL", "AMCR", "AMRE", "AMRO", "BAWW", "BBWA", "BCCH", "BHVI", 
+"BOCH", "BRCR", "CCSP", "CEDW", "CHSP", "CONW", "CORA", "COYE", 
+"DEJU", "GCKI", "GRAJ", "HETH", "LCSP", "LEFL", "LISP", "MAWA", 
+"MOWA", "OVEN", "PAWA", "PISI", "RBGR", "RBNU", "RCKI", "REVI", 
+"RWBL", "SOSP", "SWSP", "SWTH", "TEWA", "TRES", "WAVI", "WETA", 
+"WIWR", "WTSP", "WWCR", "YBSA", "YEWA", "YRWA")
+ROOT <- "/Users/Peter/GoogleWork/abmi/validation"
+tax <- read.csv("~/repos/abmispecies/_data/birds.csv")
+rownames(tax) <- tax$AOU
+tax <- tax[SPP,]
+```
+
+This appendix present species specific results for `r length(SPP)`
+songbird species. For each species we present two visual summary plots.
+Both these plots are based on the most complex model (stage HF).
+
+The first plot present the relationship between the observed counts
+and the predicted abundances. The perfect alignment is through the
+1:1 line (scattered line). Facets show the different spatial scales.
+The fitted line (brown solid line) and confidence bands (in grey)
+is based on linear regression. The Poisson distribution based
+prediction intervals are displayed via the dot colors (green:
+observed value is inside the 95% prediction interval; yellow:
+observed value is outside the 95% prediction interval).
+
+The second plot shows the results from the randomization.
+The two validation statistics ($r$: rank correlation,
+$R^2$ coefficient of determination; facet rows).
+Results are displayed by randomization type (withing vs. between;
+facet columns). Violin plots describe the randomization based null
+distribution, colors and x-axis corresponds to spatial scales.
+The black dot represents the non-randomized statistic values.
+
+
+```{r results='asis'}
+for (spp in SPP) {
+  f1 <- file.path(ROOT, "species", paste0("comb-", spp, ".png"))
+  #cat("\n\n\\newpage\n\n")
+  cat("\n\n")
+  cat("##", paste0(tax[spp, "species"], " (_", tax[spp, "scinam"], "_; ", spp, ")"))
+  cat("\n\n")
+  cat("![](", f1, ")", sep="")
+}
+```
+
+
