@@ -55,12 +55,15 @@ The black dot represents the non-randomized statistic values.
 
 ```{r results='asis'}
 for (spp in SPP) {
-  f1 <- file.path(ROOT, "species", paste0("comb-", spp, ".png"))
-  #cat("\n\n\\newpage\n\n")
+  f1 <- file.path(ROOT, "species", paste0("all-", spp, ".png"))
+  f2 <- file.path(ROOT, "species", paste0("rand-", spp, ".png"))
+  cat("\n\n\\newpage\n\n")
   cat("\n\n")
-  cat("##", paste0(tax[spp, "species"], " (_", tax[spp, "scinam"], "_; ", spp, ")"))
+  cat("###", paste0(tax[spp, "species"], " (_", tax[spp, "scinam"], "_; ", spp, ")"))
   cat("\n\n")
   cat("![](", f1, ")", sep="")
+  cat("\n\n")
+  cat("![](", f2, ")", sep="")
 }
 ```
 

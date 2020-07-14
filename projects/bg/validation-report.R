@@ -159,13 +159,15 @@ ggsave(file.path(ROOT, "fig4-cor.png"), p2, width=7, height=5)
 
 ## all effects move in the positive directions
 ## interactions are not important
-mr <- lm(Value ~ (Stage + Scale + Pocc)^3, tmp1[tmp1$Scale != "10",])
-mr <- step(mr)
+#mr <- lm(Value ~ (Stage + Scale + Pocc)^3, tmp1[tmp1$Scale != "10",])
+#mr <- step(mr)
+mr <- lm(Value ~ Stage + Scale + Pocc, tmp1[tmp1$Scale != "10",])
 summary(mr)
 knitr::kable(coefficients(summary(mr)))
 
-mr2 <- lm(Value ~ (Stage + Scale + Pocc)^3, tmp2[tmp2$Scale != "10",])
-mr2 <- step(mr2)
+#mr2 <- lm(Value ~ (Stage + Scale + Pocc)^3, tmp2[tmp2$Scale != "10",])
+#mr2 <- step(mr2)
+mr2 <- lm(Value ~ Stage + Scale + Pocc, tmp2[tmp2$Scale != "10",])
 summary(mr2)
 knitr::kable(coefficients(summary(mr2)))
 
@@ -197,6 +199,7 @@ c_oefp <- function(spp, stage="HF") {
     out
 }
 
+n <- 10^3
 level <- 0.95
 a <- (1 - level)/2
 a <- c(a, 1 - a)
@@ -259,7 +262,38 @@ p01$pEqual <- p01$Equal/(p01$Over+p01$Equal+p01$Under)
 p01$pOver <- p01$Over/(p01$Over+p01$Equal+p01$Under)
 p01$pUnder <- p01$Under/(p01$Over+p01$Equal+p01$Under)
 
+p01$Scale <- paste0(p01$scale, "x", p01$scale)
 with(b01[b01$scale != "10",], table(int=is00, slp=is11, scale))
+
+df3 <- rbind(df2[,colnames(df2) != "Pocc",],
+                  data.frame(Species=p01$spp,
+                             Stage=p01$stage,
+                             Scale=paste0(p01$scale, "x", p01$scale),
+                             Value=p01$pEqual,
+                             Statistic="Coverage"))
+
+tmp3 <- df3[df3$Scale != "10x10" & df3$Statistic=="Coverage",]
+tmp3$Pocc <- po[match(tmp3$Species, names(po))]
+
+mr3 <- lm(Value ~ Stage + Scale + Pocc, tmp3)
+#mr3 <- step(mr3)
+summary(mr3)
+
+p1x <- ggplot(df3[df3$Scale != "10x10",],
+             aes(x = Scale, y = Value, fill=Scale)) +
+    geom_boxplot() +
+    facet_grid(rows=vars(Statistic), cols=vars(Stage)) +
+    labs(title = "Validation statistics",
+        subtitle = "Between predicted abundance and observed counts",
+        caption = "Statistics: r = rank correlation, R2 = coefficient of determination.",
+        y = "Statistic value",
+        x = "Scale") +
+    theme_abmi(font = "montserrat") +
+    theme(legend.position = "none") +
+    scale_fill_manual(values=bc[5:1])
+p1x
+ggsave(file.path(ROOT, "fig3x-cor-by.png"), p1x)
+
 
 df3 <- data.frame(with(b01, table(slp=is11, int=is00)))
 rownames(df3) <- paste(df3$int, df3$slp)
@@ -308,9 +342,9 @@ for (i in 1:3) {
              "3"=mtext(expression(beta[1]>1), 3))
     if (j==3)
       switch(i,
-             "1"=mtext(expression(beta[0]>1), 4, line=1),
-             "2"=mtext(expression(beta[0]==1), 4, line=1),
-             "3"=mtext(expression(beta[0]<1), 4, line=1))
+             "1"=mtext(expression(beta[0]>0), 4, line=1),
+             "2"=mtext(expression(beta[0]==0), 4, line=1),
+             "3"=mtext(expression(beta[0]<0), 4, line=1))
     if (i==2 & j==1)
       mtext("Overestimate\nObserved < Predicted", 1, col=bc[3], line=4)
     if (i==1 & j==3)
@@ -328,6 +362,8 @@ str(tab)
 rownames(tab) <- with(tab, paste(Species, Stage, Scale))
 str(b01)
 rownames(b01) <- with(b01, paste(spp, stage, scale))
+str(p01)
+rownames(p01) <- with(p01, paste(spp, stage, scale))
 
 tax <- read.csv("~/repos/abmispecies/_data/birds.csv")
 rownames(tax) <- tax$AOU
@@ -335,10 +371,28 @@ tax <- tax[SPP,]
 
 tab2 <- data.frame(tax[match(tab$Species, tax$AOU),c(2,3,6)],
                   tab,
-                  b01[rownames(tab), 1:4])
+                  b01[rownames(tab), 1:4],
+                  p01[rownames(tab), 7:9])
 tab2 <- tab2[tab2$Scale != "10",]
-tab2$CORU <- tab2$PRC <- tab2$ACC <- NULL
+#tab2$CORU <- tab2$PRC <- tab2$ACC <- NULL
 write.csv(tab2, row.names=FALSE, file=file.path(ROOT, "Appendix.csv"))
+
+ggplot(tab2, aes(x=Scale, y=pEqual)) +
+  geom_boxplot() +
+  facet_wrap(vars(Stage))
+
+ggplot(tab2[tab2$Stage=="HF",],
+       aes(x=R2, y=pEqual)) +
+  geom_point() +
+  facet_wrap(vars(Scale)) +
+  geom_smooth(method="lm")
+
+ggplot(tab2[tab2$Stage=="HF",],
+       aes(x=R2, y=pUnder, group=Scale, color=Scale)) +
+  geom_point() +
+  scale_color_manual(values=bc[1:5])
+
+round(as.dist(cor(tab2[,sapply(tab2, is.numeric)])),2)
 
 ps <- ggplot(b01[b01$scale != "10" & b01$stage=="HF",],
             aes(x = scale, y=sig, color=scale, group=scale, fill=scale)) +
@@ -359,6 +413,12 @@ ddd <- data.frame(scale=rep(tmp$scale, 3),
                   Bias=factor(rep(c("OBS > PRED", "OBS = PRED", "OBS < PRED"),
                     each=nrow(tmp)), c("OBS > PRED", "OBS = PRED", "OBS < PRED")),
                   value=c(tmp$pUnder, tmp$pEqual, tmp$pOver))
+#tmp <- droplevels(p01[p01$scale != "10",])
+#ddd <- data.frame(scale=tmp$scale,
+#                  stage=tmp$stage,
+#                  Bias=factor(rep(c("OBS > PRED", "OBS = PRED", "OBS < PRED"),
+#                    each=nrow(tmp)), c("OBS > PRED", "OBS = PRED", "OBS < PRED")),
+#                  value=c(tmp$pUnder, tmp$pEqual, tmp$pOver))
 
 levels(ddd$scale) <- paste0(levels(ddd$scale), "x", levels(ddd$scale))
 ps <- ggplot(ddd,
@@ -415,6 +475,36 @@ sc1 <- c("1", "2", "3", "4", "5")
 sc2 <- c("1x1", "2x2", "3x3", "4x4", "5x5")
 #sc1 <- c("1", "2", "3", "4", "5", "10")
 #sc2 <- c("1x1", "2x2", "3x3", "4x4", "5x5", "10x10")
+
+for (spp in SPP) {
+  cat(spp, "\n")
+  vals <- NULL
+  for (stage in names(ALL[[spp]])) {
+    for (scale in sc1) {
+      tmp <- data.frame(ALL[[spp]][[stage]][[scale]]$results)
+      tmp$Scale <- factor(paste0(scale, "x", scale), sc2)
+      tmp$Stage <- factor(stage, names(ALL[[spp]]))
+      vals <- rbind(vals, tmp)
+    }
+  }
+  p40 <- ggplot(vals, aes(x = yhat, y = yobs)) +
+    geom_point(color=ifelse(vals$inPI==0,paste0(bc[1],"80"), paste0(bc[5],"80"))) +
+    geom_smooth(method="lm", color=bc[8], se=FALSE) +
+    #facet_grid(rows=vars(Scale), cols=vars(Stage), scales="free") +
+    facet_wrap(. ~ Scale + Stage, scales="free", nrow=5, ncol=3) +
+    labs(title = as.character(tax[spp,"species"]),
+            subtitle = "Regression summaries by scale and stage",
+            caption = "Model stages: local + space + landscape.",
+            x = "Predicted",
+            y = "Observed") +
+    theme_new +
+    scale_color_manual(values=bc[length(sc1):1]) +
+    geom_abline(intercept=0, slope = 1, col=1, lty=2)
+  p40
+  ggsave(file.path(ROOT, "species", paste0("all-", spp, ".png")), p40,
+         height=10, width=7)
+}
+
 for (spp in SPP) {
     cat(spp, "\n")
     vals <- NULL
@@ -474,7 +564,7 @@ for (spp in SPP) {
     V <- rbind(CORW, CORB, R2W, R2B)
     V$What <- "Randomized"
 
-
+if (FALSE) {
     p4 <- ggplot(vals,
                 aes(x = yhat, y = yobs, group=scale)) +
         geom_point(color=ifelse(vals$inPI==0,
@@ -492,7 +582,6 @@ for (spp in SPP) {
     p4
     ggsave(file.path(ROOT, "species", paste0("regr-", spp, ".png")), p4)
 
-if (FALSE) {
     p5 <- ggplot(V,
                 aes(x = Scale, y = Value, fill=Scale, color=Scale)) +
         geom_violin() +
@@ -508,6 +597,8 @@ if (FALSE) {
         geom_point(data=STATS, aes(y=Value), col=1)
     p5
     ggsave(file.path(ROOT, "species", paste0("rand-", spp, ".png")), p5)
+}
+
     if (spp == SPP[1]) {
         ALLRES <- rbind(STATS, V)
         ALLRES[[spp]] <- ALLRES$Value
@@ -521,7 +612,6 @@ if (FALSE) {
                     stdfun(QCORW, "Within", "r"), stdfun(QCORB, "Between", "r"),
                     stdfun(QR2W, "Within", "R2"), stdfun(QR2B, "Between", "R2"))
     }
-}
 
 }
 
@@ -542,6 +632,17 @@ for (spp in SPP) {
     image_write(i12, file.path(ROOT, "species", paste0("comb-", spp, ".png")))
 }
 
+for (spp in SPP) {
+    cat(spp, "\n")
+    f1 <- file.path(ROOT, "species", paste0("all-", spp, ".png"))
+    f2 <- file.path(ROOT, "species", paste0("rand-", spp, ".png"))
+    i1 <- image_read(f1)
+    i2 <- image_read(f2)
+    i1 <- image_resize(i1, "1000x")
+    i2 <- image_resize(i2, "1000x")
+    image_write(i1, file.path(ROOT, "species", paste0("all-", spp, ".png")))
+    image_write(i2, file.path(ROOT, "species", paste0("rand-", spp, ".png")))
+}
 
 for (spp in SPP) {
   cat(spp, "\n")
