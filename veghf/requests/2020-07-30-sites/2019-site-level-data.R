@@ -25,10 +25,6 @@ load(f4, envir=e4)
 
 xy <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 
-f5 <- "d:/abmi/AB_data_v2018/data/analysis/site/veg-hf_CameraARU_v6verif_2017-2018-sites.Rdata"
-e5 <- new.env()
-load(f5, envir=e5)
-
 
 table(e1$xx$survey_year)
 
@@ -130,26 +126,19 @@ for (i in 1:4)
 dd_1ha$scale <- NULL
 dd_1ha$sample_year <- c(e1$dd_1ha[[5]], e4$d_wide_1ha[[5]])
 compare_sets(rownames(SITES), rownames(dd_1ha[[1]]))
-clim_1ha <- SITES[rownames(dd_1ha[[1]]),]
-all(rownames(clim_1ha) == rownames(dd_1ha[[1]]))
 
 ## qha
 dd_qha <- e1$dd_qha
 for (i in 1:4)
     dd_qha[[i]] <- rbind(
         e1$dd_qha[[i]],
-        e4$d_wide_qha[[i]][,colnames(e1$dd_qha[[i]])])
+        e4$d_wide[[i]][,colnames(e1$dd_qha[[i]])])
 dd_qha$scale <- NULL
-dd_qha$sample_year <- c(e1$dd_qha[[5]], e4$d_wide_qha[[5]])
+dd_qha$sample_year <- c(e1$dd_qha[[5]], e4$d_wide[[5]])
 
-clim_qha <- rbind(
-    data.frame(SITES, quadrant="NE"),
-    data.frame(SITES, quadrant="NW"),
-    data.frame(SITES, quadrant="SE"),
-    data.frame(SITES, quadrant="SW"))
-rownames(clim_qha) <- paste0(clim_qha$UID, "_", clim_qha$quadrant)
-compare_sets(rownames(clim_qha), rownames(dd_qha[[1]]))
-clim_qha <- clim_qha[rownames(dd_qha[[1]]),]
+table(dd_qha$sample_year)
+
+
 
 ## 1km
 dd_564m <- e3$dd_564m
@@ -160,14 +149,123 @@ for (i in 1:4)
 dd_564m$scale <- NULL
 dd_564m$sample_year <- c(e3$dd_564m[[5]], e4$d_wide_1km[[5]])
 
+for (i in 1:4)
+    rownames(dd_564m[[i]]) <- gsub("Confidential_", "Confidential-", rownames(dd_564m[[i]]))
+
+compare_sets(rownames(SITES), rownames(dd_564m[[1]]))
+data.frame(x=setdiff(rownames(dd_564m[[1]]), rownames(SITES)))
+
+## use 2018 w2w results
+library(cure4insect)
+load("s:/AB_data_v2020/data/analysis/veghf/w2w_veghf2018_grid1sqkm.RData")
+load_common_data()
+TB <- get_id_table()
+XY <- get_id_locations()
+XY <- spTransform(XY, proj4string(rr))
+XY <- coordinates(XY)
+
+cr <- SITES[!(rownames(SITES) %in% rownames(dd_564m[[1]])),]
+coordinates(cr) <- ~ X + Y
+proj4string(cr) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
+cr <- spTransform(cr, proj4string(rr))
+cr <- coordinates(cr)
+
+id <- character(nrow(cr))
+names(id) <- rownames(cr)
+
+for (i in 1:nrow(cr)) {
+    Dis <- sqrt((XY[,1] - cr[i,1])^2 + (XY[,2] - cr[i,2])^2)
+    id[[i]] <- rownames(XY)[which.min(Dis)]
+}
+compare_sets(rownames(dd18[[1]]), id)
+
+for (i in 1:4) {
+    tmp <- dd18[[i]][id,]
+    rownames(tmp) <- names(id)
+    dd_564m[[i]] <- rbind(
+        dd_564m[[i]],
+        tmp)
+}
+dd_564m$sample_year <- c(dd_564m[[5]], rep(2018, length(id)))
+names(dd_564m$sample_year) <- rownames(dd_564m[[1]])
+
+for (i in 1:4)
+    dd_564m[[i]] <- dd_564m[[i]][rownames(SITES),]
+dd_564m[[5]] <- dd_564m[[5]][rownames(SITES)]
+
 compare_sets(rownames(SITES), rownames(dd_564m[[1]]))
 
+SITES$km_source <- ifelse(rownames(SITES) %in% names(id), "w2w_HFI2018", "exact")
 
-## use 2018 w2w results???
+rn <- matrix(c(
+c("OG-ABMI-448-2_2013", "OG-ABMI-448-1_2013",
+"OG-ABMI-1057-1_2014", "OG-ABMI-1057-11_2014",
+"OG-ABMI-468-11_2014", "OG-ABMI-468-1_2014",
+"OG-ABMI-531-11_2014", "OG-ABMI-531-1_2014",
+"OG-ABMI-543-11_2014", "OG-ABMI-543-1_2014",
+"OG-ABMI-562-11_2014", "OG-ABMI-562-1_2014",
+"OG-ABMI-590-11_2014", "OG-ABMI-590-1_2014",
+"OG-ABMI-653-11_2014", "OG-ABMI-653-1_2014",
+"OG-ABMI-660-11_2014", "OG-ABMI-660-1_2014",
+"OG-ABMI-687-11_2014", "OG-ABMI-687-1_2014",
+"OG-ABMI-720-11_2014", "OG-ABMI-720-1_2014",
+"OG-ABMI-783-11_2014", "OG-ABMI-783-1_2014",
+"OG-ABMI-927-11_2014", "OG-ABMI-927-1_2014",
+"OG-ABMI-910-11_2014", "OG-ABMI-910-3_2014",
+"OG-ABMI-943-11_2014", "OG-ABMI-943-2_2014")
+), ncol=2, byrow=TRUE)
+colnames(rn) <- c("Species", "GIS")
+
+names(dd_1ha$sample_year) <- rownames(dd_1ha$veg_current)
+names(dd_qha$sample_year) <- rownames(dd_qha$veg_current)
+names(dd_564m$sample_year) <- rownames(dd_564m$veg_current)
+
+for (i in 1:4) {
+  dd_1ha[[i]] <- dd_1ha[[i]][rownames(SITES),]
+  dd_564m[[i]] <- dd_564m[[i]][rownames(SITES),]
+}
+dd_1ha[[5]] <- dd_1ha[[5]][rownames(SITES)]
+dd_564m[[5]] <- dd_564m[[5]][rownames(SITES)]
 
 
+SITES$WrongUID <- SITES$UID
+for (i in 1:nrow(rn))
+    SITES$UID[SITES$UID == rn[i,"GIS"]] <- rn[i,"Species"]
+rownames(SITES) <- SITES$UID
+
+for (i in 1:4) {
+  rownames(dd_1ha[[i]]) <- SITES$UID
+  rownames(dd_564m[[i]]) <- SITES$UID
+}
+names(dd_1ha[[5]]) <- SITES$UID
+names(dd_564m[[5]]) <- SITES$UID
 
 
+clim_1ha <- SITES[rownames(dd_1ha[[1]]),]
+all(rownames(clim_1ha) == rownames(dd_1ha[[1]]))
+
+clim_qha <- rbind(
+    data.frame(SITES, quadrant="NE"),
+    data.frame(SITES, quadrant="NW"),
+    data.frame(SITES, quadrant="SE"),
+    data.frame(SITES, quadrant="SW"))
+rownames(clim_qha) <- paste0(clim_qha$WrongUID, "_", clim_qha$quadrant)
+compare_sets(rownames(clim_qha), rownames(dd_qha[[1]]))
+clim_qha <- clim_qha[rownames(dd_qha[[1]]),]
+
+rownames(clim_qha) <- paste0(clim_qha$UID, "_", clim_qha$quadrant)
+for (i in 1:4) {
+  rownames(dd_qha[[i]]) <- rownames(clim_qha)
+}
+names(dd_qha[[5]]) <-rownames(clim_qha)
+all(rownames(clim_qha) == rownames(dd_qha[[1]]))
+
+
+save(
+#    SITES,
+    clim_1ha, clim_qha,
+    dd_1ha, dd_qha, dd_564m,
+    file="s:/AB_data_v2020/data/analysis/site/veg-hf_SITE-all-years-combined.Rdata")
 
 
 od <- setwd("~/repos/recurring/veghf")
