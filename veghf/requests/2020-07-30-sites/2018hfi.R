@@ -212,8 +212,11 @@ sum(dd$Shape_Area[dd$cr_age_10=="0"])/sum(dd$Shape_Area)
 sum(dd$Shape_Area[dd$cr_age_18=="0"])/sum(dd$Shape_Area)
 
 
-
 save(dd, file="s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_grid1sqkm_merged_clean_long.RData")
+
+## transitions
+
+load("s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_grid1sqkm_merged_clean_long.RData")
 
 veg10 <- as.character(dd$cr_veg_10)
 veg18 <- as.character(dd$cr_veg_18)
@@ -437,6 +440,9 @@ dt <- up(dt)
 100*sum(dt$area[dt$tr != dt$tr2])/sum(dt$area)
 table(dt$type)
 
+save(dt, file="s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_transitions.RData")
+
+
 s <- mefa4::sum_by(dt$area, dt$tr2)
 dt2 <- mefa4::nonDuplicated(dt, tr2, TRUE)
 s <- s[rownames(dt2),]
@@ -448,3 +454,120 @@ dt2 <- dt2[,c("v10", "a10",  "an10", "v18", "a18", "an18",  "area", "diff", "tr2
 
 write.csv(dt2, row.names = FALSE, file="~/GoogleWork/abmi/tr1018/transitions-w2w-2010-2018.csv")
 
+## use clean transitions to process dd
+
+od <- setwd("~/repos/recurring/veghf")
+source("00-setup.R")
+setwd(od)
+
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
+rownames(tv) <- tv[,1]
+hf <- rownames(tv)[tv$is_HF]
+
+load("s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_grid1sqkm_merged_clean_long.RData")
+load("s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_transitions.RData")
+
+veg10 <- as.character(dd$cr_veg_10)
+veg18 <- as.character(dd$cr_veg_18)
+
+dd$rf_age <- dd$cr_age_10 <- dd$cr_age_18 <- NULL
+dd$NSRNAME <- NULL
+for (i in c("rf_veg", "rf_soil", "cr_veg_10", "cr_soil_10", "cr_veg_18", "cr_soil_18"))
+  dd[[i]] <- as.character(dd[[i]])
+
+dd$tr <- paste0(veg10, "->", veg18)
+dd$tr[veg10 == veg18] <- veg10[veg10 == veg18]
+
+dd$tr2 <- dt$tr2[match(dd$tr, dt$tr)]
+dd$cr_veg_10 <- dt$v10[match(dd$tr, dt$tr)]
+dd$cr_veg_18 <- dt$v18[match(dd$tr, dt$tr)]
+
+ss <- dd$cr_soil_10 %in% hf & !(dd$cr_veg_10 %in% hf)
+100*sum(dd$Shape_Area[ss])/sum(dd$Shape_Area)
+dd$cr_soil_10[ss] <- dd$rf_soil[ss]
+
+ss <- dd$cr_soil_18 %in% hf & !(dd$cr_veg_18 %in% hf)
+100*sum(dd$Shape_Area[ss])/sum(dd$Shape_Area)
+
+
+dd$tr <- dd$tr2 <- NULL
+
+## 2010 and 2018 w2w
+dd_2010 <- list(
+  veg_current=Xtab(Shape_Area ~ GRID_LABEL + cr_veg_10, dd),
+  veg_reference=Xtab(Shape_Area ~ GRID_LABEL + rf_veg, dd),
+  soil_current=Xtab(Shape_Area ~ GRID_LABEL + cr_soil_10, dd),
+  soil_reference=Xtab(Shape_Area ~ GRID_LABEL + rf_soil, dd))
+dd_2018 <- list(
+  veg_current=Xtab(Shape_Area ~ GRID_LABEL + cr_veg_18, dd),
+  veg_reference=Xtab(Shape_Area ~ GRID_LABEL + rf_veg, dd),
+  soil_current=Xtab(Shape_Area ~ GRID_LABEL + cr_soil_18, dd),
+  soil_reference=Xtab(Shape_Area ~ GRID_LABEL + rf_soil, dd))
+
+## ref->2018 transitions
+dd$trv_1018 <- ifelse(dd$cr_veg_10 == dd$cr_veg_18, dd$cr_veg_10, paste0(dd$cr_veg_10, "->", dd$cr_veg_18))
+dd$trv_rf18 <- ifelse(dd$rf_veg == dd$cr_veg_18, dd$rf_veg, paste0(dd$rf_veg, "->", dd$cr_veg_18))
+dd$trs_rf18 <- ifelse(dd$rf_soil == dd$cr_soil_18, dd$rf_soil, paste0(dd$rf_soil, "->", dd$cr_soil_18))
+
+trVeg_1018 <- Xtab(Shape_Area ~ GRID_LABEL + trv_1018, dd)
+trVeg <- Xtab(Shape_Area ~ GRID_LABEL + trv_rf18, dd)
+trSoil <- Xtab(Shape_Area ~ GRID_LABEL + trs_rf18, dd)
+
+lts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v2020.csv")
+rownames(lts) <- lts[,1]
+colnames(lts)[1] <- "ID"
+lts <- lts[colnames(dd_2018$soil_current),]
+ltv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v2020.csv")
+rownames(ltv) <- ltv[,1]
+colnames(ltv)[1] <- "ID"
+ltv <- ltv[colnames(dd_2018$veg_current),]
+
+cn <- colnames(trVeg_1018)
+tmp <- strsplit(cn, "->")
+chVeg_1018 <- data.frame(
+  label=cn,
+  cr10=sapply(tmp, "[[", 1),
+  cr18=sapply(tmp, function(z) if (length(z) > 1) z[2] else z[1]))
+chVeg_1018$sector10 <- ltv$Sector[match(chVeg_1018$cr10, ltv$ID)]
+chVeg_1018$sector18 <- ltv$Sector[match(chVeg_1018$cr18, ltv$ID)]
+chVeg_1018$type <- dt$type[match(chVeg_1018$label, dt$tr2)]
+rownames(chVeg_1018) <- cn
+
+cn <- colnames(trVeg)
+tmp <- strsplit(cn, "->")
+chVeg <- data.frame(
+  label=cn,
+  rf=sapply(tmp, "[[", 1),
+  cr=sapply(tmp, function(z) if (length(z) > 1) z[2] else z[1]))
+chVeg$sector <- ltv$Sector[match(chVeg$cr, ltv$ID)]
+rownames(chVeg) <- cn
+
+cn <- colnames(trSoil)
+tmp <- strsplit(cn, "->")
+chSoil <- data.frame(
+  label=cn,
+  rf=sapply(tmp, "[[", 1),
+  cr=sapply(tmp, function(z) if (length(z) > 1) z[2] else z[1]))
+chSoil$sector <- lts$Sector[match(chSoil$cr, lts$ID)]
+rownames(chSoil) <- cn
+
+save(
+  ltv, lts,
+  dd_2010,
+  file="s:/AB_data_v2020/data/inter/veghf/veghf_w2w_2010_wide.RData"
+)
+save(
+  ltv, lts,
+  dd_2018,
+  file="s:/AB_data_v2020/data/inter/veghf/veghf_w2w_2018_wide.RData"
+)
+
+save(
+  trVeg,  trSoil,
+  chVeg, chSoil,
+  file="s:/AB_data_v2020/data/inter/veghf/veghf_w2w_ref_2018_transitions_wide.RData"
+)
+
+save(trVeg_1018, chVeg_1018,
+  file="s:/AB_data_v2020/data/inter/veghf/veghf_w2w_2010_2018_transitions_wide.RData"
+)
