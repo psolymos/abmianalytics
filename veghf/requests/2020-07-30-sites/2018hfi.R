@@ -122,6 +122,11 @@ save(dd18, file="s:/AB_data_v2020/data/analysis/veghf/w2w_veghf2018_grid1sqkm.RD
 
 
 ## transitions
+od <- setwd("~/repos/recurring/veghf")
+source("00-setup.R")
+setwd(od)
+
+load("s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_grid1sqkm_merged_clean.RData")
 
 
 ds$Origin_Year <- ds$oyear18
@@ -134,7 +139,6 @@ d18 <- make_vegHF_wide_v6(ds,
     col.SOIL="Soil_Type_1",
     HF_fine=TRUE, wide=FALSE)
 
-
 ds$Origin_Year <- ds$oyear10
 ds$FEATURE_TY <- ds$FEATURE_TY_2010cond
 d10 <- make_vegHF_wide_v6(ds,
@@ -145,6 +149,302 @@ d10 <- make_vegHF_wide_v6(ds,
     col.SOIL="Soil_Type_1",
     HF_fine=TRUE, wide=FALSE)
 
+dd <- data.frame(d10[,c("GRID_LABEL", "NSRNAME", "Shape_Area")])
+dd$rf_veg <- d10$VEGAGEclass
+dd$rf_age <- d10$AgeRf
+dd$rf_soil <- d10$SOILclass
+dd$cr_veg_10 <- d10$VEGHFAGEclass
+dd$cr_age_10 <- d10$AgeCr
+dd$cr_soil_10 <- d10$SOILHFclass
+dd$cr_veg_18 <- d18$VEGHFAGEclass
+dd$cr_age_18 <- d18$AgeCr
+dd$cr_soil_18 <- d18$SOILHFclass
+
+levels(dd$rf_veg) <- gsub("0", "8", levels(dd$rf_veg))
+levels(dd$rf_veg) <- gsub("9", "8", levels(dd$rf_veg))
+
+levels(dd$cr_veg_10) <- gsub("0", "8", levels(dd$cr_veg_10))
+levels(dd$cr_veg_10) <- gsub("9", "8", levels(dd$cr_veg_10))
+
+levels(dd$cr_veg_18) <- gsub("0", "8", levels(dd$cr_veg_18))
+levels(dd$cr_veg_18) <- gsub("9", "8", levels(dd$cr_veg_18))
+
+levels(dd$rf_age) <- gsub("0", "8", levels(dd$rf_age))
+levels(dd$rf_age) <- gsub("9", "8", levels(dd$rf_age))
+
+levels(dd$cr_age_10) <- gsub("0", "8", levels(dd$cr_age_10))
+levels(dd$cr_age_10) <- gsub("9", "8", levels(dd$cr_age_10))
+
+levels(dd$cr_age_18) <- gsub("0", "8", levels(dd$cr_age_18))
+levels(dd$cr_age_18) <- gsub("9", "8", levels(dd$cr_age_18))
+
+rm(ds, d10, d18)
+gc()
+dd$u <- with(dd, paste(GRID_LABEL, rf_veg, rf_soil, cr_veg_10, cr_veg_18, cr_soil_10, cr_soil_18))
+#dd$u <- as.integer(as.factor(dd$u))
+table(duplicated(dd$u))
+
+dd$rf_age <- factor(as.character(dd$rf_age), c("", "R", "1", "2", "3", "4", "5", "6", "7", "8"))
+dd$cr_age_10 <- factor(as.character(dd$cr_age_10), c("", "R", "1", "2", "3", "4", "5", "6", "7", "8"))
+dd$cr_age_18 <- factor(as.character(dd$cr_age_18), c("", "R", "1", "2", "3", "4", "5", "6", "7", "8"))
 
 
+
+s <- mefa4::sum_by(dd$Shape_Area, dd$u)
+head(s)
+dds <- dd[!duplicated(dd$u),]
+rownames(dds) <- dds$u
+
+s <- s[rownames(dds),]
+dds$Shape_Area <- s[, "x"]
+
+sum(dds$Shape_Area)
+sum(dd$Shape_Area)
+
+dd <- dds
+dd$u <- NULL
+rm(dds, s)
+gc()
+
+
+sum(dd$Shape_Area[dd$rf_age=="0"])/sum(dd$Shape_Area)
+sum(dd$Shape_Area[dd$cr_age_10=="0"])/sum(dd$Shape_Area)
+sum(dd$Shape_Area[dd$cr_age_18=="0"])/sum(dd$Shape_Area)
+
+
+
+save(dd, file="s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_grid1sqkm_merged_clean_long.RData")
+
+veg10 <- as.character(dd$cr_veg_10)
+veg18 <- as.character(dd$cr_veg_18)
+
+dd$tr <- paste0(veg10, "->", veg18)
+dd$tr[veg10 == veg18] <- veg10[veg10 == veg18]
+
+keep <- c("tr", "cr_veg_10", "cr_age_10", "cr_veg_18", "cr_age_18")
+dt <- nonDuplicated(dd[,keep], tr, TRUE)
+colnames(dt) <- c("tr", "v10", "a10", "v18", "a18")
+for (i in 1:ncol(dt))
+  dt[[i]] <- as.character(dt[[i]])
+
+trVeg <- Xtab(Shape_Area ~ GRID_LABEL + tr, dd)
+
+rownames(dt) <- dt$tr
+dt <- dt[colnames(trVeg),]
+dt$area <- colSums(trVeg)
+
+dt <- dt[order(rownames(dt)),]
+
+save(dt, file="s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_transitions.RData")
+
+## cleaning up tr
+library(mefa4)
+
+load("s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_transitions.RData")
+
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
+rownames(tv) <- tv[,1]
+hf <- rownames(tv)[tv$is_HF]
+hfw <- rownames(tv)[tv$is_HF & tv$is_water]
+hfcc <- rownames(tv)[tv$is_harvest]
+fores <- rownames(tv)[tv$is_forest]
+cult <- hf[grep("Cultivation", hf)]
+
+up <- function(dt) {
+
+  dt$changed <- dt$v10 != dt$v18
+  dt$washf <- dt$v10 %in% hf
+  dt$ishf <- dt$v18 %in% hf
+  dt$washw <- dt$v10 %in% hfw
+  dt$ishw <- dt$v18 %in% hfw
+  dt$wascc <-  dt$v10 %in% hfcc
+  dt$iscc <-  dt$v18 %in% hfcc
+  dt$wasforest <-  dt$v10 %in% fores
+  dt$isforest <-  dt$v18 %in% fores
+  dt$wascc2 <- startsWith(dt$v10, "CC")
+  dt$iscc2 <- startsWith(dt$v18, "CC")
+  dt$wascult <- dt$v10 %in% cult
+  dt$iscult <- dt$v10 %in% cult
+
+  dt$an10 <- factor(dt$a10, c("", "R", "1", "2", "3", "4", "5", "6", "7", "8"))
+  levels(dt$an10) <- c("0", "0", "10", "20", "40", "60", "80", "100", "120", "140")
+  dt$an10 <- as.integer(dt$an10) - 1
+  dt$an18 <- factor(dt$a18, c("", "R", "1", "2", "3", "4", "5", "6", "7", "8"))
+  levels(dt$an18) <- c("0", "0", "10", "20", "40", "60", "80", "100", "120", "140")
+  dt$an18 <- as.integer(dt$an18) - 1
+  dt$diff <- dt$an18 - dt$an10
+
+  dt$tr2 <-  ifelse(dt$changed, paste0(dt$v10, "->", dt$v18), dt$v10)
+
+  dt$type <- factor("Other", c("NewFor", "OldFor", "NewHF", "OldHF", "Fire", "Aging0", "Aging1", "Other"))
+  dt$type[dt$isforest & dt$wasforest] <- "Aging0"
+  dt$type[dt$ishf & !dt$washf] <- "NewHF"
+  dt$type[dt$ishf & dt$washf] <- "OldHF"
+  dt$type[dt$iscc & !dt$wascc] <- "NewFor"
+  dt$type[dt$iscc & dt$wascc] <- "OldFor"
+  dt$type[!dt$ishf & !dt$washf & dt$diff < 0] <- "Fire"
+  dt$type[!dt$ishf & !dt$washf & dt$diff > 0] <- "Aging1"
+
+  dt
+
+}
+
+dt <- up(dt)
+summary(dt)
+plot(table(dt$diff))
+
+
+## HF -> forest with >1 age diff (0.11%)
+ss <- dt$washf & !dt$ishf & dt$diff > 1
+100*sum(dt$area[ss])/sum(dt$area)
+dt$tr2[ss]
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+plot(table(dt$diff))
+
+## assume 2018 veghf is better when age diff >1 (0.01%)
+ss <- dt$diff > 1
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+plot(table(dt$diff))
+
+## HF water -> HF !water (0.002%)
+ss <- dt$washw & dt$ishf & !dt$ishw
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+
+## Non merchantable harvest (0.001%)
+ss <- dt$wascc2 & !dt$wascc
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+
+ss <- dt$iscc2 & !dt$iscc
+rownames(dt)[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+
+## 2010 pipeline fixed in 2018 (0.34%)
+ss <- dt$v10 == "Pipeline"
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+
+
+## forest -> harvest where age is increasing (0.004%)
+ss <- !dt$wascc & dt$iscc & dt$diff > 0
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+
+## open -> forest (<0.0001%)
+ss <- !dt$wasforest & dt$isforest & dt$diff > 0
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+
+## open -> harvest irrespective of age diff (0.01%)
+ss <- !dt$wasforest & dt$iscc
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+
+## forest -> harvest where age is NOT decreasing (0.01%)
+table(dt$diff[!dt$wascc & dt$iscc])
+ss <- !dt$wascc & dt$iscc & dt$diff == 0
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+
+## young forest (should not be harvested) -> harvest (0.008%)
+ss <- !dt$wascc & dt$iscc & dt$an10 < 4
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+
+## recently harvested forest --> harvest where CC is not R (0.03%)
+ss <- !dt$wascc & dt$iscc & dt$an18 > 0
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+
+## hatvest -> harvest that got younger (harvested before regen) (0.006%)
+ss <- dt$wascc & dt$iscc & dt$diff < 0
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+
+## harvest -> forest (<0.0001%)
+ss <- dt$wascc & dt$isforest & !dt$iscc
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+
+## HF water -> !HF (0.001%)
+ss <- dt$washw & !dt$ishf
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+
+## !CC HF -> !HF (0.008%)
+ss <- dt$washf & !dt$ishf
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+
+## !CC forest -> !CC forest and age does not go to R (<0.00001%)
+ss <- dt$wasforest & !dt$wascc & dt$isforest & !dt$iscc & dt$diff < 0 & dt$a18 != "R"
+dt$tr2[ss]
+100*sum(dt$area[ss])/sum(dt$area)
+dt$v10[ss] <- dt$v18[ss]
+dt$a10[ss] <- dt$a18[ss]
+dt <- up(dt)
+
+
+
+## overall changes: lots of labels, 0.314% of area
+100*sum(dt$tr != dt$tr2)/nrow(dt)
+100*sum(dt$area[dt$tr != dt$tr2])/sum(dt$area)
+table(dt$type)
+
+s <- mefa4::sum_by(dt$area, dt$tr2)
+dt2 <- mefa4::nonDuplicated(dt, tr2, TRUE)
+s <- s[rownames(dt2),]
+dt2$area <- s[, "x"]
+
+dt2 <- dt2[order(dt2$tr2),]
+dt2 <- dt2[order(dt2$type),]
+dt2 <- dt2[,c("v10", "a10",  "an10", "v18", "a18", "an18",  "area", "diff", "tr2", "type")]
+
+write.csv(dt2, row.names = FALSE, file="~/GoogleWork/abmi/tr1018/transitions-w2w-2010-2018.csv")
 
