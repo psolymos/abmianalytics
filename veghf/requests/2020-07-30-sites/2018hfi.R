@@ -554,20 +554,135 @@ rownames(chSoil) <- cn
 save(
   ltv, lts,
   dd_2010,
-  file="s:/AB_data_v2020/data/inter/veghf/veghf_w2w_2010_wide.RData"
+  file="s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_2010_wide.RData"
 )
 save(
   ltv, lts,
   dd_2018,
-  file="s:/AB_data_v2020/data/inter/veghf/veghf_w2w_2018_wide.RData"
+  file="s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_2018_wide.RData"
 )
 
 save(
   trVeg,  trSoil,
   chVeg, chSoil,
-  file="s:/AB_data_v2020/data/inter/veghf/veghf_w2w_ref_2018_transitions_wide.RData"
+  file="s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2018_transitions_wide.RData"
 )
 
 save(trVeg_1018, chVeg_1018,
-  file="s:/AB_data_v2020/data/inter/veghf/veghf_w2w_2010_2018_transitions_wide.RData"
+  file="s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_2010_2018_transitions_wide.RData"
 )
+
+
+## checking HFI compared to 2016
+
+
+library(mefa4)
+library(raster)
+
+load("s:/AB_data_v2018/data/analysis/grid/veg-hf_grid_v61hf2016v3WildFireUpTo2016.Rdata")
+load("s:/AB_data_v2018/data/analysis/kgrid_table_km.Rdata")
+load("s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_2010_wide.RData")
+load("s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_2018_wide.RData")
+
+
+rt <- raster(system.file("extdata/AB_1km_mask.tif", package="cure4insect"))
+
+make_raster <- function(value, rc, rt)
+{
+    value <- as.numeric(value)
+    r <- as.matrix(Xtab(value ~ Row + Col, rc))
+    r[is.na(as.matrix(rt))] <- NA
+    raster(x=r, template=rt)
+}
+
+cv <- rownames(ltv)
+cs <- rownames(lts)
+
+dd_2016 <- dd_kgrid
+a9 <- c("Decid9", "Mixedwood9", "Pine9", "Spruce9", "TreedBog9", "TreedFen9", "TreedSwamp9")
+a8 <- c("Decid8", "Mixedwood8", "Pine8", "Spruce8", "TreedBog8", "TreedFen8", "TreedSwamp8")
+cn1 <- colnames(dd_kgrid[[1]])
+names(cn1) <- cn1
+cn1[a9] <- a8
+dd_2016[[1]] <- groupSums(dd_kgrid[[1]], 2, cn1)[,cv]
+
+cn2 <- colnames(dd_kgrid[[2]])
+names(cn2) <- cn2
+cn2[a9] <- a8
+dd_2016[[2]] <- groupSums(dd_kgrid[[2]], 2, cn2)[,colnames(dd_2010[[2]])]
+
+compare_sets(cv, colnames(dd_2016[[1]]))
+compare_sets(cv, colnames(dd_2010[[1]]))
+compare_sets(cv, colnames(dd_2018[[1]]))
+
+compare_sets(cs, colnames(dd_2016[[3]]))
+compare_sets(cs, colnames(dd_2010[[3]]))
+compare_sets(cs, colnames(dd_2018[[3]]))
+
+
+v2010 <- dd_2010[[1]][,cv]
+v2016 <- dd_2016[[1]][rownames(v2010),cv]
+v2018 <- dd_2018[[1]][rownames(v2010),cv]
+v2010 <- v2010/rowSums(v2010)
+v2016 <- v2016/rowSums(v2016)
+v2018 <- v2018/rowSums(v2018)
+
+s2010 <- dd_2010[[3]][,cs]
+s2016 <- dd_2016[[3]][rownames(s2010),cs]
+s2018 <- dd_2018[[3]][rownames(s2010),cs]
+s2010 <- s2010/rowSums(s2010)
+s2016 <- s2016/rowSums(s2016)
+s2018 <- s2018/rowSums(s2018)
+
+dv10 <- v2016-v2010
+dv18 <- v2018-v2016
+ds10 <- s2016-s2010
+ds18 <- s2018-s2016
+
+dv <- data.frame(
+  #max10=apply(abs(dv10), 2, max),
+  avg10=apply(abs(dv10), 2, mean),
+  #max18=apply(abs(dv18), 2, max),
+  avg18=apply(abs(dv18), 2, mean))
+
+ds <- data.frame(
+  #max10=apply(abs(dv10), 2, max),
+  avg10=apply(abs(ds10), 2, mean),
+  #max18=apply(abs(dv18), 2, max),
+  avg18=apply(abs(ds18), 2, mean))
+
+round(data.frame(avg=colMeans(abs(v2018-v2010))), 4)
+round(data.frame(avg=colMeans(abs(s2018-s2010))), 4)
+
+v2010x <- groupSums(v2010, 2, gsub("[:0-9:]", "", cv))
+v2016x <- groupSums(v2016, 2, gsub("[:0-9:]", "", cv))
+v2018x <- groupSums(v2018, 2, gsub("[:0-9:]", "", cv))
+
+ddv <- data.frame(
+  tv10 = colSums(v2010)/sum(v2010),
+  tv16 = colSums(v2016)/sum(v2016),
+  tv18 = colSums(v2018)/sum(v2018))
+ddvx <- data.frame(
+  tv10 = colSums(v2010x)/sum(v2010x),
+  tv16 = colSums(v2016x)/sum(v2016x),
+  tv18 = colSums(v2018x)/sum(v2018x))
+
+dds <- data.frame(
+  ts10 = colSums(s2010)/sum(s2010),
+  ts16 = colSums(s2016)/sum(s2016),
+  ts18 = colSums(s2018)/sum(s2018))
+
+plot(ts16 ~ ts10, dds);abline(0,1)
+plot(ts18 ~ ts10, dds);abline(0,1)
+plot(ts18 ~ ts16, dds);abline(0,1)
+
+plot(tv16 ~ tv10, ddv);abline(0,1)
+plot(tv18 ~ tv10, ddv);abline(0,1)
+plot(tv18 ~ tv16, ddv);abline(0,1)
+
+plot(tv16 ~ tv10, ddvx);abline(0,1)
+plot(tv18 ~ tv10, ddvx);abline(0,1)
+plot(tv18 ~ tv16, ddvx);abline(0,1)
+
+
+
