@@ -19,14 +19,21 @@ e3 <- new.env()
 load(f3, envir=e3)
 
 ## 2019 updates
-f4 <- "s:/AB_data_v2020/data/analysis/site/veg-hf_SITE1HA-2019_Veg61-vHF.Rdata"
+f4 <- "d:/abmi/AB_data_v2020/data/analysis/site/veg-hf_SITE1HA-2019_Veg61-vHF.Rdata"
 e4 <- new.env()
 load(f4, envir=e4)
+
+## 2017-2018 updates
+f5 <- "d:/abmi/AB_data_v2020/data/analysis/site/veg-hf_SITES-2017-2018_Veg61-vHF.Rdata"
+e5 <- new.env()
+load(f5, envir=e5)
 
 xy <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
 
 
 table(e1$xx$survey_year)
+
+compare_sets(rownames(e1$dd_1ha$veg_current), rownames(e5$d_wide_1ha$veg_current))
 
 ## site IDs and regions
 SITES <- e1$xx[,1:6]
@@ -35,6 +42,14 @@ s19 <- s19[,c("UID_old", "ABMI_ID_WithB", "survey_year", "NSRNAME", "NRNAME", "L
 colnames(s19) <- colnames(SITES)
 SITES <- rbind(SITES, s19)
 table(SITES$survey_year)
+table(e5$clim$survey_year)
+s78 <- e5$clim[,c("survey_year","NSRNAME","NRNAME","LUF_NAME")]
+tmp <- strsplit(rownames(s78), "_")
+s78$UID <- rownames(s78)
+s78$site_id <- sapply(tmp, "[[", 1)
+s78 <- s78[,colnames(SITES)]
+SITES <-SITES[SITES$survey_year %notin% c(2017, 2018),]
+SITES <- rbind(SITES, s78)
 
 SITES$offgrid <- grepl("OG-", SITES$site_id) | grepl("OGW-", SITES$site_id)
 table(SITES$offgrid)
@@ -68,10 +83,15 @@ compare_sets(rownames(SITES), rownames(cl))
 setdiff(rownames(SITES), rownames(cl))
 setdiff(rownames(cl), rownames(SITES))
 
+cl2 <- e5$clim[,colnames(cl)]
+compare_sets(rownames(cl), rownames(cl2))
+cl <- rbind(cl, cl2)
+
 SITES <- data.frame(SITES, cl[match(rownames(SITES), rownames(cl)),])
 
 summary(SITES)
 
+if (FALSE) { # not necessary, has been extracted properly
 ## try to use previously visited info to be used for 2018 sites
 tmp <- nonDuplicated(SITES[!is.na(SITES$AHM),], nearest)
 SITES[is.na(SITES$AHM), colnames(cl)] <- SITES[match(SITES$nearest[is.na(SITES$AHM)], tmp$nearest), colnames(cl)]
@@ -101,6 +121,7 @@ v$PET <- v$Eref
 v$pAspen <- v$Populus_tremuloides_brtpred_nofp
 SITES[is.na(SITES$AHM), colnames(cl)] <- v[,colnames(cl)]
 summary(SITES)
+}
 
 ## ----------- veghf 1ha level
 
@@ -138,7 +159,18 @@ dd_qha$sample_year <- c(e1$dd_qha[[5]], e4$d_wide[[5]])
 
 table(dd_qha$sample_year)
 
+# drop 2017-2018 years
+ss <- dd_qha$sample_year %notin% c(2017, 2018)
+for (i in 1:4)
+    dd_qha[[i]] <- rbind(dd_qha[[i]][ss,],
+        e5$d_wide_qha[[i]][,colnames(dd_qha[[i]])])
+dd_qha$sample_year <- c(dd_qha$sample_year, e5$d_wide_qha$sample_year)
 
+ss <- dd_1ha$sample_year %notin% c(2017, 2018)
+for (i in 1:4)
+    dd_1ha[[i]] <- rbind(dd_1ha[[i]][ss,],
+        e5$d_wide_1ha[[i]][,colnames(dd_1ha[[i]])])
+dd_1ha$sample_year <- c(dd_1ha$sample_year, e5$d_wide_1ha$sample_year)
 
 ## 1km
 dd_564m <- e3$dd_564m
@@ -152,9 +184,16 @@ dd_564m$sample_year <- c(e3$dd_564m[[5]], e4$d_wide_1km[[5]])
 for (i in 1:4)
     rownames(dd_564m[[i]]) <- gsub("Confidential_", "Confidential-", rownames(dd_564m[[i]]))
 
+ss <- dd_564m$sample_year %notin% c(2017, 2018)
+for (i in 1:4)
+    dd_564m[[i]] <- rbind(dd_564m[[i]][ss,],
+        e5$d_wide_1km[[i]][,colnames(dd_564m[[i]])])
+dd_564m$sample_year <- c(dd_564m$sample_year, e5$d_wide_1km$sample_year)
+
 compare_sets(rownames(SITES), rownames(dd_564m[[1]]))
 data.frame(x=setdiff(rownames(dd_564m[[1]]), rownames(SITES)))
 
+if (FALSE) { # no need, fixed now
 ## use 2018 w2w results
 library(cure4insect)
 load("s:/AB_data_v2020/data/analysis/veghf/w2w_veghf2018_grid1sqkm.RData")
@@ -196,24 +235,26 @@ dd_564m[[5]] <- dd_564m[[5]][rownames(SITES)]
 compare_sets(rownames(SITES), rownames(dd_564m[[1]]))
 
 SITES$km_source <- ifelse(rownames(SITES) %in% names(id), "w2w_HFI2018", "exact")
+}
 
+## some messed up site names
 rn <- matrix(c(
-c("OG-ABMI-448-2_2013", "OG-ABMI-448-1_2013",
-"OG-ABMI-1057-1_2014", "OG-ABMI-1057-11_2014",
-"OG-ABMI-468-11_2014", "OG-ABMI-468-1_2014",
-"OG-ABMI-531-11_2014", "OG-ABMI-531-1_2014",
-"OG-ABMI-543-11_2014", "OG-ABMI-543-1_2014",
-"OG-ABMI-562-11_2014", "OG-ABMI-562-1_2014",
-"OG-ABMI-590-11_2014", "OG-ABMI-590-1_2014",
-"OG-ABMI-653-11_2014", "OG-ABMI-653-1_2014",
-"OG-ABMI-660-11_2014", "OG-ABMI-660-1_2014",
-"OG-ABMI-687-11_2014", "OG-ABMI-687-1_2014",
-"OG-ABMI-720-11_2014", "OG-ABMI-720-1_2014",
-"OG-ABMI-783-11_2014", "OG-ABMI-783-1_2014",
-"OG-ABMI-927-11_2014", "OG-ABMI-927-1_2014",
-"OG-ABMI-910-11_2014", "OG-ABMI-910-3_2014",
-"OG-ABMI-943-11_2014", "OG-ABMI-943-2_2014")
-), ncol=2, byrow=TRUE)
+  c("OG-ABMI-448-2_2013", "OG-ABMI-448-1_2013",
+  "OG-ABMI-1057-1_2014", "OG-ABMI-1057-11_2014",
+  "OG-ABMI-468-11_2014", "OG-ABMI-468-1_2014",
+  "OG-ABMI-531-11_2014", "OG-ABMI-531-1_2014",
+  "OG-ABMI-543-11_2014", "OG-ABMI-543-1_2014",
+  "OG-ABMI-562-11_2014", "OG-ABMI-562-1_2014",
+  "OG-ABMI-590-11_2014", "OG-ABMI-590-1_2014",
+  "OG-ABMI-653-11_2014", "OG-ABMI-653-1_2014",
+  "OG-ABMI-660-11_2014", "OG-ABMI-660-1_2014",
+  "OG-ABMI-687-11_2014", "OG-ABMI-687-1_2014",
+  "OG-ABMI-720-11_2014", "OG-ABMI-720-1_2014",
+  "OG-ABMI-783-11_2014", "OG-ABMI-783-1_2014",
+  "OG-ABMI-927-11_2014", "OG-ABMI-927-1_2014",
+  "OG-ABMI-910-11_2014", "OG-ABMI-910-3_2014",
+  "OG-ABMI-943-11_2014", "OG-ABMI-943-2_2014")
+  ), ncol=2, byrow=TRUE)
 colnames(rn) <- c("Species", "GIS")
 
 names(dd_1ha$sample_year) <- rownames(dd_1ha$veg_current)
@@ -265,94 +306,11 @@ save(
 #    SITES,
     clim_1ha, clim_qha,
     dd_1ha, dd_qha, dd_564m,
-    file="s:/AB_data_v2020/data/analysis/site/veg-hf_SITE-all-years-combined.Rdata")
-
-
-od <- setwd("~/repos/recurring/veghf")
-source("00-setup.R")
-setwd(od)
-
-
-f <- "s:/AB_data_v2018/data/raw/veghf/site_all/20180706_All_Sites.sqlite"
-
-f <- "d:/abmi/AB_data_v2019/data/raw/veghf/site_all/20190318_SummaryTables_1ha_TerrestrialSites_Veg61_vHF_LandFacets_SurveyYear_2003_2018.sqlite"
-f <- "d:/abmi/AB_data_v2019/data/raw/veghf/site_all/20190129_SummaryTables_CAMARU_2017_2018_Veg61_vHFSPOT2017.sqlite"
-
-
-f <- "s:/GC_eric/FromEric/Sites_summaries/Round2020/20200602_SC_Sites_visit2019_V61HFI2018v1_SummaryTables_Round_2020_batch04.sqlite"
-
-u <- "s:/GC_eric/FromEric/Sites_summaries/Round2020/"
-f <- "20200224_CAMARU_SurveyYear_2019_Buffers_facet_batch01"
-f <- "20200224_SC_Sites_SummaryTables_Round_2020.sqlite"
-f <- "20200429_SC_Sites_SummaryTables_Round_2020_batch01.sqlite"
-
-f <- "20200429_SC_Sites_SummaryTables_Round_2020_batch02.sqlite"
-f <- "20200506_SC_Sites_SummaryTables_Round_2020_batch03.sqlite"
-f <- "20200602_SC_Sites_visit2019_V61HFI2018v1_SummaryTables_Round_2020_batch04.sqlite"
-f <- "20200702_Bird_Sites.sqlite"
-db <- dbConnect(RSQLite::SQLite(), paste0(u,f))
-dbListTables(db)
-dbDisconnect(db)
-
-
-db <- dbConnect(RSQLite::SQLite(), f)
-tt <- dbListTables(db)
-tt
-d0 <- dbReadTable(db, "Summary_1ha")
-
-d1 <- dbReadTable(db, "All_Sites_1ha")
-d2 <- dbReadTable(db, "All_Sites_SiteCentre")
-d3 <- dbReadTable(db, "All_Sites_buffer564m")
-d1 <- make_char2fact(d1)
-d2 <- make_char2fact(d2)
-d3 <- make_char2fact(d3)
-
-## climate 2003-2016
-d4 <- read.csv("d:/abmi/AB_data_v2017/data/raw/veghf/site_all/siteCenter_climate.csv",
-    stringsAsFactors = TRUE)
-
-
-dbDisconnect(db)
-
-
-## 2003-2017
-f <- "s:/AB_data_v2018/data/analysis/site/veg-hf_SiteCenter_v6verified.Rdata"
-#f <- "s:/AB_data_v2018/data/analysis/site/veg-hf_allSites_v6hfi2016.Rdata"
-load(f)
-
-ls()
-table(dd_point$SampleYear)
-
-
-
-
-## read in data
-if (endsWith(tolower(FILE), ".csv")) {
-  cat("Reading CSV file:\n", FILE, "... ")
-  d <- read.csv(FILE)
-} else {
-  cat("Connecting to SQLite database:\n", FILE)
-  db <- dbConnect(RSQLite::SQLite(), FILE)
-  cat("\n\nFound the following tables:\n")
-  cat(paste(dbListTables(db), collapse="\n"))
-  cat("\n\nLoading table:\n", TABLE)
-  d <- dbReadTable(db, TABLE)
-  cat("\n\nDisconnecting ... ")
-  dbDisconnect(db)
-  d <- make_char2fact(d)
-}
-
-## take a subset if needed
-if (!is.null(SUB_COL)) {
-  cat("OK\n\nTaking subset ... ")
-  d <- d[d[[SUB_COL]] %in% SUB_VAL,]
-}
-
-if (AREA_COL != "Shape_Area") {
-  d[["Shape_Area"]] <- d[[AREA_COL]]
-  d[[AREA_COL]] <- NULL
-}
-cat("OK\n\n")
-
+    file="s:/AB_data_v2020/data/analysis/site/veg-hf_SITE-all-years-combined.RData")
+save(
+#    SITES,
+    clim_1ha, clim_qha,
+    dd_1ha, dd_qha, dd_564m,
+    file="d:/abmi/AB_data_v2020/data/analysis/site/veg-hf_SITE-all-years-combined.RData")
 
 

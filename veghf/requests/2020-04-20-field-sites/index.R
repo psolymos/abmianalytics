@@ -455,5 +455,159 @@ OUTPUT     = "s:/AB_data_v2020/data/analysis/site/veg-hf_CAMARU-2019_Veg61-vHF.R
 
 source("04-save.R")
 
+## ------------------ batch 5: 2017-2018 site updates
+
+rm(list=objects())
+od <- setwd("~/repos/recurring/veghf")
+source("00-setup.R")
+FILE       = paste0("s:/GC_eric/FromEric/Sites_summaries/Round2020/",
+                    "20200826_SC_Sites_SummaryTables_Round_2020_batch05.sqlite")
 
 
+db <- dbConnect(RSQLite::SQLite(), FILE)
+(tb <- dbListTables(db))
+
+d <- dbReadTable(db, "20200826_SummaryTable_terr_sites_2017_points_Climate_batch05")
+clim <- data.frame(as.matrix(Xtab(RASTERVALU ~ UID + param, d)))
+clim$PET <- clim$Eref
+clim$Eref <- NULL
+clim$pAspen <- clim$Populus_tremuloides_brtpred_nofp
+clim$Populus_tremuloides_brtpred_nofp <- NULL
+clim17 <- clim
+
+d <- dbReadTable(db, "20200826_SummaryTable_terr_sites_2018_points_Climate_batch05")
+clim <- data.frame(as.matrix(Xtab(RASTERVALU ~ UID + param, d)))
+clim$PET <- clim$Eref
+clim$Eref <- NULL
+clim$pAspen <- clim$Populus_tremuloides_brtpred_nofp
+clim$Populus_tremuloides_brtpred_nofp <- NULL
+clim18 <- clim
+
+dbDisconnect(db)
+
+## 2017
+
+TABLE      = "20200826_SummaryTable_terr_sites_2017_batch05_Buffer"
+SUB_COL    = NULL
+SUB_VAL    = NULL
+VEG_COL    = "Combined_ChgByCWCS"
+BASE_YR    = "survey_year"
+AREA_COL   = "Shape_Area"
+AREA       = TRUE
+TOL        = 0
+UNROUND    = FALSE
+
+source("01-data.R")
+fire_year_update <- !is.na(d$Origin_Year) & d$WILDFIRE_YEAR > d$Origin_Year & d$WILDFIRE_YEAR < d[[BASE_YR]]
+d$Origin_Year[fire_year_update] <- d$WILDFIRE_YEAR[fire_year_update]
+tmp <- strsplit(as.character(d$UID), "_")
+table(sapply(tmp, "[[", 3))
+d$SUB <- sapply(tmp, "[[", 3)
+d0 <- d
+x17 <- nonDuplicated(d0, UID_old, TRUE)
+
+## 564m buffer
+UID_COL    = "UID_old"
+d[[UID_COL]] <- droplevels(d[[UID_COL]])
+source("02-long.R")
+source("03-wide.R")
+summary(rowSums(d_wide[[1]]))
+d_long_1km_17 <- d_long
+d_wide_1km_17 <- d_wide
+
+## 1ha
+UID_COL    = "UID_old"
+d <- d0[d0$SUB %in% c("NE", "NW", "SE", "SW"),]
+d[[UID_COL]] <- droplevels(d[[UID_COL]])
+source("02-long.R")
+source("03-wide.R")
+summary(rowSums(d_wide[[1]]))
+d_long_1ha_17 <- d_long
+d_wide_1ha_17 <- d_wide
+
+## quadrants (1/4 ha)
+UID_COL    = "UID"
+d <- d0[d0$SUB %in% c("NE", "NW", "SE", "SW"),]
+d[[UID_COL]] <- droplevels(d[[UID_COL]])
+source("02-long.R")
+source("03-wide.R")
+summary(rowSums(d_wide[[1]]))
+d_long_qha_17 <- d_long
+d_wide_qha_17 <- d_wide
+
+## 2018
+
+TABLE      = "20200826_SummaryTable_terr_sites_2018_batch05_Buffer"
+
+source("01-data.R")
+fire_year_update <- !is.na(d$Origin_Year) & d$WILDFIRE_YEAR > d$Origin_Year & d$WILDFIRE_YEAR < d[[BASE_YR]]
+d$Origin_Year[fire_year_update] <- d$WILDFIRE_YEAR[fire_year_update]
+tmp <- strsplit(as.character(d$UID), "_")
+table(sapply(tmp, "[[", 3))
+d$SUB <- sapply(tmp, "[[", 3)
+d0 <- d
+x18 <- nonDuplicated(d0, UID_old, TRUE)
+
+## 564m buffer
+UID_COL    = "UID_old"
+source("02-long.R")
+source("03-wide.R")
+summary(rowSums(d_wide[[1]]))
+d_long_1km_18 <- d_long
+d_wide_1km_18 <- d_wide
+
+## 1ha
+UID_COL    = "UID_old"
+d <- d0[d0$SUB %in% c("NE", "NW", "SE", "SW"),]
+d[[UID_COL]] <- droplevels(d[[UID_COL]])
+source("02-long.R")
+source("03-wide.R")
+summary(rowSums(d_wide[[1]]))
+d_long_1ha_18 <- d_long
+d_wide_1ha_18 <- d_wide
+
+## quadrants (1/4 ha)
+UID_COL    = "UID"
+d <- d0[d0$SUB %in% c("NE", "NW", "SE", "SW"),]
+d[[UID_COL]] <- droplevels(d[[UID_COL]])
+source("02-long.R")
+source("03-wide.R")
+summary(rowSums(d_wide[[1]]))
+d_long_qha_18 <- d_long
+d_wide_qha_18 <- d_wide
+
+## combine the 2 years
+
+x17 <- x17[rownames(clim17),]
+x18 <- x18[rownames(clim18),]
+
+clim17 <- data.frame(clim17, x17[,c("survey_year", "NSRNAME", "NRNAME", "LUF_NAME")])
+clim18 <- data.frame(clim18, x18[,c("survey_year", "NSRNAME", "NRNAME", "LUF_NAME")])
+
+clim <- rbind(clim17, clim18)
+table(clim$survey_year)
+
+d_wide_1km <- d_wide_1km_17
+for (i in 1:4)
+    d_wide_1km[[i]] <- rbind(d_wide_1km_17[[i]], d_wide_1km_18[[i]])
+d_wide_1km[[5]] <- c(d_wide_1km_17[[5]], d_wide_1km_18[[5]])
+
+d_wide_1ha <- d_wide_1ha_17
+for (i in 1:4)
+    d_wide_1ha[[i]] <- rbind(d_wide_1ha_17[[i]], d_wide_1ha_18[[i]])
+d_wide_1ha[[5]] <- c(d_wide_1ha_17[[5]], d_wide_1ha_18[[5]])
+
+d_wide_qha <- d_wide_qha_17
+for (i in 1:4)
+    d_wide_qha[[i]] <- rbind(d_wide_qha_17[[i]], d_wide_qha_18[[i]])
+d_wide_qha[[5]] <- c(d_wide_qha_17[[5]], d_wide_qha_18[[5]])
+
+compare_sets(rownames(clim), rownames(d_wide_1km[[1]]))
+compare_sets(rownames(clim), rownames(d_wide_1ha[[1]]))
+compare_sets(rownames(clim), rownames(d_wide_qha[[1]]))
+
+
+save(clim, d_wide_1km, d_wide_1ha, d_wide_qha,
+    file="s:/AB_data_v2020/data/analysis/site/veg-hf_SITES-2017-2018_Veg61-vHF.Rdata")
+save(clim, d_wide_1km, d_wide_1ha, d_wide_qha,
+    file="d:/abmi/AB_data_v2020/data/analysis/site/veg-hf_SITES-2017-2018_Veg61-vHF.Rdata")
