@@ -1,57 +1,57 @@
-﻿ID,UseInAnalysis,Sector
-Cy,Clay,Native
-Li,Productive,Native
-Lo,Productive,Native
-Sb,Subirrigated,Native
-Sy,Sandy,Native
-BdL,Clay,Native
-CS,RapidDrain,Native
-Gr,RapidDrain,Native
-Sa,Sandy,Native
-SwG,RapidDrain,Native
-TB,Clay,Native
-BlO,Saline,Native
-Ov,Saline,Native
-SL,Saline,Native
-UNK,SoilUnknown,Native
-Water,SoilWater,Native
-Len,SoilWetland,Native
-LenA,Saline,Native
-LenS,SoilWetland,Native
-LenSP,SoilWetland,Native
-LenT,SoilWetland,Native
-LenW,SoilWetland,Native
-LtcC,Lotic,Native
-LtcD,Lotic,Native
-LtcH,Lotic,Native
-LtcS,Lotic,Native
-Ltc,Lotic,Native
-LtcR,Lotic,Native
-UrbanIndustrial,Urban,RuralUrban
-UrbanResidence,Urban,RuralUrban
-RuralResidentialIndustrial,Rural,RuralUrban
-IndustrialSiteRural,Industrial,RuralUrban
-WindGenerationFacility,Industrial,Energy
-OtherDisturbedVegetation,Rural,Misc
-MineSite,Mine,Energy
-PeatMine,Mine,Misc
-WellSite,Well,Energy
-Pipeline,EnSoftLin,Energy
-TransmissionLine,EnSoftLin,Energy
-SeismicLineNarrow,EnSeismic,Energy
-SeismicLineWide,EnSeismic,Energy
-RoadHardSurface,HardLin,Transportation
-RailHardSurface,HardLin,Transportation
-RoadTrailVegetated,TrSoftLin,Transportation
-RoadVegetatedVerge,TrSoftLin,Transportation
-RailVegetatedVerge,TrSoftLin,Transportation
-CultivationCrop,Crop,Agriculture
-CultivationAbandoned,RoughP,Agriculture
-CultivationRoughPasture,RoughP,Agriculture
-CultivationTamePasture,TameP,Agriculture
-HighDensityLivestockOperation,TameP,Agriculture
-BorrowpitsDugoutsSumps,HWater,Misc
-MunicipalWaterSewage,HWater,Misc
-Reservoirs,HWater,Misc
-Canals,HWater,Misc
-CutBlocks,HFor,Forestry
+﻿ID,UseInAnalysis,Sector,Description
+Cy,ClaySub,Native,clayey
+Len,Other,Native,Lentic
+LenS,Other,Native,Lentic: Seasonal
+LenSP,Other,Native,Lentic: semi permanent to permanent
+LenT,Other,Native,Lentic: Temporary
+LenW,Other,Native,Lentic: Permanent
+Li,RapidDrain,Native,Limy-Eroded  or immature soils with free lime (CaCO3) at the soil surface
+Lo,Loamy,Native,loamy
+Ltc,Other,Native,Lotic
+LtcC,Other,Native,Lotic: Coniferous
+LtcD,Other,Native,Lotic: Deciduous
+LtcH,Other,Native,Lotic- Herbaceous
+LtcS,Other,Native,Lotic: Shrub
+LtcR,Other,Native,Lotic: River
+Sb,ClaySub,Native,sub-irrigated: water table close to surface during growing season
+Sy,SandyLoam,Native,sandy-loam-textured soils; SandyLoam
+BdL,RapidDrain,Native,Badland/Bedrock
+CS,RapidDrain,Native,Choppy sandhills (Loamy sand and san soils with duned land surface)
+Gr,RapidDrain,Native,Gravel
+Sa,RapidDrain,Native,"Sand: Loams sand and sand soils, and not with a dune surface; LoamySand and Sand"
+SwG,RapidDrain,Native,Shallow to Gravel
+TB,ThinBreak,Native,Thin Breaks (Areas with bedrock at or near the soil surface)
+BlO,Blowout,Native,Blowouts/solonetzic
+LenA,Other,Native,Lentic Alkaline:poorly drained Saline Gleysolic soils
+Ov,Other,Native,"overflow; receive additional moisture from overland flow, non-saline chernozomic and regosolic soils"
+SL,Blowout,Native,Saline lowland
+UNK,SoilUnknown,Native,Unknown soil
+Water,SoilWater,Native,Undiffferentiated permananet water bodies including lakes 
+UrbanIndustrial,Urban,RuralUrban,
+UrbanResidence,Urban,RuralUrban,
+RuralResidentialIndustrial,Rural,RuralUrban,
+IndustrialSiteRural,Industrial,RuralUrban,
+WindGenerationFacility,Industrial,Energy,
+OtherDisturbedVegetation,Rural,Misc,
+MineSite,Mine,Energy,
+PeatMine,Mine,Misc,
+WellSite,Well,Energy,
+Pipeline,EnSoftLin,Energy,
+TransmissionLine,EnSoftLin,Energy,
+SeismicLineNarrow,EnSeismic,Energy,
+SeismicLineWide,EnSeismic,Energy,
+RoadHardSurface,HardLin,Transportation,
+RailHardSurface,HardLin,Transportation,
+RoadTrailVegetated,TrSoftLin,Transportation,
+RoadVegetatedVerge,TrSoftLin,Transportation,
+RailVegetatedVerge,TrSoftLin,Transportation,
+CultivationCrop,Crop,Agriculture,
+CultivationAbandoned,RoughP,Agriculture,
+CultivationRoughPasture,RoughP,Agriculture,
+CultivationTamePasture,TameP,Agriculture,
+HighDensityLivestockOperation,TameP,Agriculture,
+BorrowpitsDugoutsSumps,HWater,Misc,
+MunicipalWaterSewage,HWater,Misc,
+Reservoirs,HWater,Misc,
+Canals,HWater,Misc,
+CutBlocks,HFor,Forestry,
