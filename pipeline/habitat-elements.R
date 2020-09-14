@@ -181,19 +181,28 @@ names(OUT) <- names(e)
 
 write.xlsx(OUT, file=file.path(ROOT, "DataPortalUpdate_2020-09-14_habitatelements.xlsx"))
 
-## dig up cr/rf/df mapping piece
 
 
 ## writing csv files with current and reference abundances
 
-for (spp in SPP) {
+fl <- list.files("d:/abmi/AB_data_v2020/misc/Habitat elements May 2020/Km2 summaries/")
+a <- gsub(".csv", "",
+    gsub("Km2 North reference and current May 2020 ", "", fl, fixed=TRUE), fixed=TRUE)
+mefa4::compare_sets(a, rownames(t1))
+setdiff(a, rownames(t1))
+setdiff(rownames(t1), a)
+
+for (spp in a) {
 
     cat(spp, "\n");flush.console()
 
-    fin <- file.path(ROOT,
-        "Km2 North reference and current May 2020 ADecid7_25.csv")
-    fout <- paste0("d:/abmi/AB_data_v2018/www/maps/", gr, "/", spp, ".csv")
+
+    fin <- paste0("d:/abmi/AB_data_v2020/misc/Habitat elements May 2020/Km2 summaries/",
+        "Km2 North reference and current May 2020 ", spp, ".csv")
+
+    fout <- paste0("d:/abmi/AB_data_v2020/misc/Habitat elements May 2020/_dataportal/normalized_maps/", spp, ".csv")
     y <- read.csv(fin)
+    print(round(range(y$Curr), 4))
 
     Curr <- y$Curr
     Ref <- y$Ref
@@ -209,14 +218,7 @@ for (spp in SPP) {
     d$Current[d$Current < 10^-6] <- 0
     d$Reference[d$Reference < 10^-6] <- 0
     write.csv(d, row.names=FALSE, file=fout)
-#    zip(paste0(spp, ".zip"), paste0(spp, ".csv"))
-#    unlink(paste0(spp, ".csv"))
 
 }
 
-
-
-## process csv's
-## deposit
-## notify
 
