@@ -203,6 +203,11 @@ for (spp in a) {
     fout <- paste0("d:/abmi/AB_data_v2020/misc/Habitat elements May 2020/_dataportal/normalized_maps/", spp, ".csv")
     y <- read.csv(fin)
     print(round(range(y$Curr), 4))
+    if (spp == "pH") {
+        MIN <- min(y$Ref, y$Curr)
+        y$Ref <- y$Ref+abs(MIN)
+        y$Curr <- y$Curr+abs(MIN)
+    }
 
     Curr <- y$Curr
     Ref <- y$Ref
@@ -222,3 +227,45 @@ for (spp in a) {
 }
 
 
+
+library(mefa4)
+library(sf)
+
+ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
+load(file.path(ROOT, "data", "ab-birds-north-2019-01-30.RData"))
+
+bound <- st_read("s:/GC_eric/FromEric/Reporting_Boundaries/20191029_Boundaries_2019.gdb",
+    'FMA_Current_ALPAC')
+
+d <- DAT[,c("PKEY","SS","X", "Y", "vegc", "vegw")]
+a <- c(0, 10, 20, 40, 60, 80, 100, 120, Inf)
+d$Age <- DAT$wtAge*200
+d$agec <- cut(d$Age, a, include.lowest=TRUE)
+table(d$agec, useNA="a")
+levels(d$agec) <- paste0(a[-length(a)], "-", a[-1])
+d$agec <- as.character(d$agec)
+d$agec[!(d$vegc %in% c("Decid", "BSpr", "Mixedwood", "Pine", "Spruce"))] <- ""
+table(d$agec, useNA="a")
+
+d$stand_age <- paste0(ifelse(DAT$fCC2 != 0, "CC", ""), as.character(d$vegc), "_", d$agec)
+table(d$stand_age)
+
+
+d <- st_as_sf(d, coords=c("X", "Y"), crs=4326)
+d <- st_transform(d, st_crs(bound))
+
+plot(d$geometry)
+plot(bound$SHAPE, add=TRUE, col=2)
+
+dd <- st_intersection(d, bound)
+dd$Age <- round(dd$Age)
+
+plot(dd$geometry)
+plot(bound$SHAPE, add=TRUE, col=2)
+
+table(dd$vegc, dd$agec)
+
+
+dd <- as.data.frame(dd[,1:8])
+dd$geometry <- NULL
+save(dd, file="alpac-bird-points.RData")
