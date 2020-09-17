@@ -186,3 +186,44 @@ for (i in c("O1", "O2", "O3")) {#levels(x$chunk)) {
     save(xi, xyi, file=paste0("s:/AB_data_v2019/bdqt/chunks/bdqt-poly-hab-", i, "_2019-12-10.RData"))
     gc()
 }
+
+
+## checking overlap zone and assigning weights as distance to grassland NR
+
+library(sp)
+library(rgdal)
+library(rgeos)
+
+p <- readOGR("s:/Base_shapefiles/NSR/Natural_Regions_Subregions_of_Alberta.shp")
+pp <- p[p@data$NRNAME == "Grassland",]
+pp <- gUnaryUnion(pp, id = rep(1, nrow(pp@data)))
+p <- gUnaryUnion(p, id=p@data$NRNAM)
+
+PART <- "O1"
+f1 <- paste0("s:/AB_data_v2019/bdqt/chunks/bdqt-poly-hab-",
+  PART, "_2019-12-10.RData")
+f2 <- paste0("s:/AB_data_v2019/bdqt/chunks/bdqt-poly-hab-",
+  PART, "_2020-09-16.RData")
+load(f1)
+pp <- spTransform(pp, proj4string(xyi))
+p <- spTransform(p, proj4string(xyi))
+
+q <- quantile(1:nrow(xi), seq(0, 1, 1/4000))
+k <- cut(1:nrow(xi), q, include.lowest=TRUE, labels=FALSE)
+xi$wDistance <- 0
+
+for (i in 1:4000) {
+  if (i %% 10 == 0)
+    cat(".")
+  if (i %% 100 == 0)
+    cat(i, "\n")
+  flush.console()
+  xy <- xyi[k==i,]
+  d <- gDistance(xy, pp, byid=TRUE) / 10^3
+  d <- d/50
+  d[d > 1] <- 1
+  xi$wDistance[k==i] <- d
+}
+
+save(xi, xyi, file=f2)
+
