@@ -611,3 +611,24 @@ save(clim, d_wide_1km, d_wide_1ha, d_wide_qha,
     file="s:/AB_data_v2020/data/analysis/site/veg-hf_SITES-2017-2018_Veg61-vHF.Rdata")
 save(clim, d_wide_1km, d_wide_1ha, d_wide_qha,
     file="d:/abmi/AB_data_v2020/data/analysis/site/veg-hf_SITES-2017-2018_Veg61-vHF.Rdata")
+
+
+
+## 2018 CAMARU data
+
+rm(list=ls())
+od <- setwd("~/repos/recurring/veghf")
+source("00-setup.R")
+
+FILE = "d:/abmi/AB_data_v2020/data/raw/birds/20190129_SummaryTables_CAMARU_2017_2018_Veg61_vHFSPOT2017.sqlite"
+
+db <- dbConnect(RSQLite::SQLite(), FILE)
+dbListTables(db)
+d <- dbReadTable(db, "Summary_Buffers")
+dc <- dbReadTable(db, "Summary_Points")
+
+dbDisconnect(db)
+
+table(d$Survey_Year)
+table(d$Section)
+
