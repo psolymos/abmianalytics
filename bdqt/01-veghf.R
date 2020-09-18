@@ -37,9 +37,22 @@ Area <- dbGetQuery(db,
     FROM
       `Veg61HF2017BDQT`;")
 
+Nr <- dbGetQuery(db,
+    "SELECT
+      UID, Easting, Northing,
+      NRNAME,
+      NSRNAME
+    FROM
+      `Veg61HF2017BDQT`;")
+rownames(Nr) <- as.character(Nr$UID)
+Nr$NRNAME <- as.factor(Nr$NRNAME)
+Nr$NSRNAME <- as.factor(Nr$NSRNAME)
+str(Nr)
+
 dbDisconnect(db)
 
 #save(Area, file="s:/AB_data_v2019/bdqt/bdqt-poly-area_2020-05-12.RData")
+#save(Nr, file="s:/AB_data_v2019/bdqt/bdqt-poly-nr-nsr_2020-09-16.RData")
 
 
 d <- make_char2fact(d)

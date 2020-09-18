@@ -87,3 +87,63 @@ for (tax in taxa) {
         save(OUT, file=paste0("s:/AB_data_v2019/bdqt/inter/", tax, "/", ch, ".RData"))
     }
 }
+
+
+
+
+## fixing overlap zone
+
+## preamble
+library(cure4insect)
+library(mefa4)
+set_options(path = "d:/abmi/reports")
+load_common_data()
+ST <- get_species_table()
+taxa <- levels(ST$taxon)
+CH <- c("O1", "O2", "O3")
+
+for (ch in CH) {
+    cat("Loading", ch, "--------------------------\n")
+    type <- "O"
+    load(paste0("s:/AB_data_v2019/bdqt/chunks/bdqt-poly-hab-", ch, "_2020-09-16.RData"))
+    ss <- is.na(xi$SOILHFclass)
+    xi <- xi[ss,]
+    xyi <- xyi[ss]
+    n <- nrow(xi)
+
+    for (tax in taxa) {
+        cat("Starting", tax, "============================\n")
+
+
+        ## define species list
+        SPP <- rownames(ST)[ST$taxon == tax & ST$model_south & ST$model_north]
+
+
+        OUT <- matrix(0, n, length(SPP))
+        rownames(OUT) <- xi$UID
+        colnames(OUT) <- SPP
+
+        #spp <- "Ovenbird"
+        for (spp in SPP) {
+            cat(tax, "-", spp, which(SPP == spp), "/", length(SPP),  "in", ch)
+            flush.console()
+            gc()
+            t0 <- proc.time()
+
+            object <- load_spclim_data(spp)
+            pr <- if (ST[spp, "model_north"])
+                predict(object, xyi, veg=xi$VEGHFAGEclass)$veg else rep(0, n)
+
+            pr[is.na(pr)] <- 0
+            summary(pr)
+            ## transform lambda to p for birds
+            if (tax == "birds")
+                pr <- p_bird(pr, area="ha", pair_adj=2)
+
+            ## store results
+            OUT[,spp] <- pr
+            cat("\t", proc.time()[3] - t0[3], "sec\n")
+        }
+        save(OUT, file=paste0("s:/AB_data_v2019/bdqt/inter/", tax, "/", ch, "-weight-fix.RData"))
+    }
+}
