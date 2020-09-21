@@ -613,7 +613,6 @@ save(clim, d_wide_1km, d_wide_1ha, d_wide_qha,
     file="d:/abmi/AB_data_v2020/data/analysis/site/veg-hf_SITES-2017-2018_Veg61-vHF.Rdata")
 
 
-
 ## 2018 CAMARU data
 
 rm(list=ls())

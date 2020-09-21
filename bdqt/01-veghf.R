@@ -240,3 +240,32 @@ for (i in 1:4000) {
 
 save(xi, xyi, file=f2)
 
+
+
+
+
+load("s:/AB_data_v2019/bdqt/bdqt-poly-nr-nsr_2020-09-16.RData")
+
+#f <- "s:/AB_data_v2019/bdqt/chunks/bdqt-poly-hab-O1_2020-09-16.RData"
+f <- "s:/AB_data_v2019/bdqt/chunks/bdqt-poly-hab-O2_2020-09-16.RData"
+#f <- "s:/AB_data_v2019/bdqt/chunks/bdqt-poly-hab-O3_2020-09-16.RData"
+load(f)
+nr <- Nr[rownames(xi),]
+xi$NRNAME <- nr$NRNAME
+xi$NSRNAME <- nr$NSRNAME
+save(xi, xyi, file=f)
+
+
+
+f <- "s:/AB_data_v2019/bdqt/chunks/bdqt-poly-hab-S1_2019-12-10.RData"
+load(f)
+
+table(is.na(xi$SOILHFclass))
+
+nr <- Nr[rownames(xi),]
+xi$NRNAME <- nr$NRNAME
+xi$NSRNAME <- nr$NSRNAME
+table(xi$NRNAME)
+save(xi, xyi, file=f)
+
+

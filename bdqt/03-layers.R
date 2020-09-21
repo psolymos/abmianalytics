@@ -7,7 +7,8 @@
 ## preamble
 #library(mefa4)
 taxa <- c("mammals", "birds", "lichens", "mites", "mosses", "vplants")
-CH <- c("S1", "O1", "O2", "O3", paste0("N", 1:11))
+#CH <- c("S1", "O1", "O2", "O3", paste0("N", 1:11))
+CH <- c("S1", "O1", "O2", "O3", "N12")
 
 #ch="O1"
 #tax="mammals"
@@ -39,7 +40,7 @@ ST2 <- read.csv("~/repos/abmispecies/_data/birds.csv")
 nnp <- rownames(ST)[!ST$native & ST$taxon == "vplants"]
 ofb <- as.character(ST2$sppid[ST2$oldforest == 1])
 
-for (ch in CH[1:14]) {
+for (ch in CH) {
     cat(ch, "\n")
     flush.console()
     load(paste0("s:/AB_data_v2019/bdqt/inter/", "vplants", "/", ch, ".RData")) # OUT
@@ -56,7 +57,8 @@ for (ch in CH[1:14]) {
 ## stitching the pieces
 
 taxa <- c("mammals", "birds", "lichens", "mites", "mosses", "vplants")
-CH <- c("S1", "O1", "O2", "O3", paste0("N", 1:11))
+CH <- c("S1", "O1", "O2", "O3", paste0("N", 1:12))
+#CH <- c("S1", "O1", "O2", "O3", "N12")
 
 load("s:/AB_data_v2019/bdqt/bdqt-poly-hab_2019-12-10.RData")
 SR <- matrix(0, nrow(x), length(taxa)+3)
@@ -100,7 +102,7 @@ M <- max(SR[,"ofbirds"])
 SR[,"ofbirds"] <- SR[,"ofbirds"] / M
 summary(SR)
 
-save(SR, file="s:/AB_data_v2019/bdqt/bdqt-richness_2019-12-18.RData")
+save(SR, file="s:/AB_data_v2019/bdqt/bdqt-richness_2020-09-21.RData")
 
 ## uploading layers to DB
 
