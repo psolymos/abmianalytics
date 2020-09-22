@@ -580,3 +580,18 @@ function(y, x)
     class(res) <- c("wrsi", "data.frame")
     res
 }
+
+ssh_freq <- function(res) {
+    LAB <- sort(rownames(res[[1]]$ssh$lorenz)[-1L])
+    lab <- list()
+    for (i in seq_len(length(res))) {
+        if (!inherits(res[[i]], "try-error"))
+            lab[[length(lab)+1L]] <- res[[i]]$ssh$labels
+    }
+    labv <- factor(unlist(lab), LAB)
+    o <- data.frame(table(Label=labv))
+    o$Prop <- o$Freq / length(lab)
+    o[order(o$Prop, decreasing = TRUE),]
+}
+
+
