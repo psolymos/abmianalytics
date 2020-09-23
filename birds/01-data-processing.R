@@ -521,4 +521,265 @@ if (FALSE) {
     out <- data.frame(dd, as.matrix(yy), as.matrix(vc2))
     write.csv(out, row.names=FALSE, file="bird-data-AB-all-2019-01-22.csv")
 }
-#' The End
+#'
+#'
+#' # Adding 2018-2019 data and combing together all the needed info
+#'
+#'
+#'
+library(mefa4)
+## previous, up to 2017
+load("d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-all-2018-11-29.RData")
+## 2017-2019
+load("d:/abmi/AB_data_v2020/data/analysis/site/veg-hf_ARU-2017-2019_Veg61-vHF.Rdata")
+
+sm <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
+
+dd2 <- clim[,c("AHM", "FFP", "MAP", "MAT", "MCMT", "MWMT", "PET", "pAspen")]
+dd3 <- d_long_pt[,c("NRNAME", "NSRNAME", "LUF_NAME")]
+
+tmp <- strsplit(as.character(d_long_pt$Site_ID), "-")
+tmp <- sapply(tmp, function(z) if (length(z)==1) z else z[3])
+tmp <- gsub("W", "", tmp)
+tmp <- gsub("B", "", tmp)
+tmp[tmp=="CAL97"] <-  "725"
+tmp[tmp=="CHR123"] <- "638"
+tmp[tmp=="LL143"] <-  "729"
+
+dd3$X <- sm$PUBLIC_LONGITUDE[match(tmp, sm$SITE_ID)]
+dd3$Y <- sm$PUBLIC_LATTITUDE[match(tmp, sm$SITE_ID)]
+
+vs0x <- d_long_pt[,colnames(vs0)]
+
+vc1x <- d_wide_150m$veg_current[,colnames(vc1)]
+vr1x <- d_wide_150m$veg_reference[,colnames(vr1)]
+sc1x <- d_wide_150m$soil_current[,colnames(sc1)]
+sr1x <- d_wide_150m$soil_reference[,colnames(sr1)]
+
+vc2x <- d_wide_150m$veg_current[,colnames(vc2)]
+vr2x <- d_wide_150m$veg_reference[,colnames(vr2)]
+sc2x <- d_wide_150m$soil_current[,colnames(sc2)]
+sr2x <- d_wide_150m$soil_reference[,colnames(sr2)]
+
+## bird counts from WT
+
+x1 <- read.csv("d:/abmi/AB_data_v2020/data/analysis/species/birds/APPENDED_WILDTRAX_REPORT_pre2019.csv")
+x2 <- read.csv("d:/abmi/AB_data_v2020/data/analysis/species/birds/APPENDED_WILDTRAX_REPORT_2019-noQAQC.csv")
+compare_sets(colnames(x1), colnames(x2))
+setdiff(colnames(x1), colnames(x2))
+setdiff(colnames(x2), colnames(x1))
+x1 <- x1[,colnames(x2)]
+
+data.frame(x1=sapply(x1,class), x2=sapply(x2,class))
+
+x1$min0_start <- as.character(x1$min0_start)
+x1$min1_start <- as.character(x1$min1_start)
+x1$min2_start <- as.character(x1$min2_start)
+x2$min0_start <- as.character(x2$min0_start)
+x2$min1_start <- as.character(x2$min1_start)
+x2$min2_start <- as.character(x2$min2_start)
+
+x <- rbind(x1, x2)
+levels(x$method)[levels(x$method) == "7mVS+3m1SPM"] <- "3m1SPM+7mVS"
+x <- x[x$method %in% c("1m 1SPM", "1m 2SPM", "3m 1SPM", "3m 2SPM"),]
+x$maxdur <- as.integer(sapply(strsplit(as.character(x$method), "m"), "[[", 1))
+
+f <- function(v) {
+    v <- strsplit(as.character(v), ",")
+    v <- sapply(v, function(z) if (length(z) < 1) NA else z[1])
+    v <- as.numeric(v)
+    v
+}
+x$min0_start_num <- f(x$min0_start)
+x$min1_start_num <- f(x$min1_start)
+x$min2_start_num <- f(x$min2_start)
+
+tmp <- paste(x$recording_date, x$recording_time)
+x$Start <- strptime(paste(x$recording_date, x$recording_time),  "%Y-%m-%d %H:%M:%S")
+
+compare_sets(tax$code, x$species_code)
+intersect(tax$code, x$species_code)
+setdiff(tax$code, x$species_code)
+setdiff(x$species_code, tax$code)
+
+tx <- nonDuplicated(x[,c("species_code", "scientific_name","species_english_name")], species_code, TRUE)
+tx$m1 <- as.character(tax$code[match(tx$species_code, tax$code)])
+tx$m2 <- as.character(tax$code[match(tx$species_english_name, tax$species)])
+tx$m3 <- as.character(tax$code[match(tx$scientific_name, tax$scinam)])
+tx$m1[is.na(tx$m1)] <- tx$m2[is.na(tx$m1)]
+tx$m1[is.na(tx$m1)] <- tx$m3[is.na(tx$m1)]
+#table(tx$m1, useNA="a")
+tx$m1[tx$species_code=="NONE"] <- "NONE"
+tx$m1[is.na(tx$m1)] <- "Other"
+
+x$Spp <- as.factor(tx$m1)[match(x$species_code, tx$species_code)]
+
+
+x$site_stn <- x$location
+x$ToY <- x$Start$yday
+x$ToYc <- as.integer(cut(x$ToY, c(0, 105, 120, 140, 150, 160, 170, 180, 365)))
+x$replicate <- as.character(x$Start)
+x$replicate <- gsub("[[:punct:]]", "", x$replicate)
+x$replicate <- gsub("[[:space:]]", "", x$replicate)
+x$visit <- paste0("ABMISM::", x$site_stn, "::", x$replicate)
+
+
+
+x$ToD <- x$Start$hour + x$Start$min / 60
+x$ToDx <- round(x$ToD, 0)
+x$ToDc <- as.factor(ifelse(x$ToDx == 0, "Midnight", "Morning"))
+
+
+xt_stn <- as.matrix(Xtab(~ site_stn + Spp, x, cdrop=c("Other", "NONE")))
+xt_vis <- as.matrix(Xtab(~ visit + Spp, x, cdrop=c("Other", "NONE")))
+
+xt_tod <- data.frame(as.matrix(Xtab(~ Spp + ToDc, x, rdrop="NONE")))
+xt_tod$MidP <- round(xt_tod$Midnight / (xt_tod$Midnight + xt_tod$Morning), 4)
+xt_tod[order(xt_tod$MidP),]
+
+xt_toy <- as.matrix(Xtab(~ Spp + ToYc, x, rdrop=c("Other", "NONE")))
+
+Class <- nonDuplicated(x[!is.na(x$visit),], visit, TRUE)
+Class <- Class[rownames(xt_vis),]
+Class$STR2 <- factor(NA, c("A_Early", "B_Mid", "C_Late"))
+Class$STR2[Class$ToYc %in% 1:3] <- "A_Early"
+Class$STR2[Class$ToYc %in% 4:7] <- "B_Mid"
+Class$STR2[Class$ToYc %in% 8] <- "C_Late"
+table(Class$STR2, Class$ToYc)
+
+table(x$ToYc, x$maxdur)
+
+## crosstab for all-in-one models
+
+keep <- x$maxdur == 3 & x$ToDc == "Morning" & x$ToYc %in% 4:7
+keep[is.na(keep)] <- FALSE
+x3 <- x[keep,]
+#x3$visit <- droplevels(x3$visit)
+xt3min <- as.matrix(Xtab(~ visit + Spp, x3, cdrop=c("Other", "NONE")))
+xx3min <- nonDuplicated(x3, visit, TRUE)
+range(xt3min)
+
+## Use the 1st 1-minute segment only
+
+table(is.na(x$min0_start_num), is.na(x$min1_start_num))
+keep <- rep(TRUE, nrow(x))
+keep[is.na(x$min0_start_num) & !is.na(x$min1_start_num)] <- FALSE
+table(keep)
+keep[is.na(x$min0_start_num) & !is.na(x$min2_start_num)] <- FALSE
+table(keep)
+
+x4 <- x[keep,]
+xt1min <- as.matrix(Xtab(~ visit + Spp, x4, cdrop=c("Other", "NONE")))
+xx1min <- nonDuplicated(x4, visit, TRUE)
+range(xt1min)
+
+save(xt3min, xt1min, xx3min, xx1min, x,
+    file="d:/abmi/AB_data_v2020/data/analysis/species/birds/WildTrax_2015-2019_2020-09-23.RData")
+
+
+compare_sets(colnames(yy), colnames(xt3min))
+cn <- intersect(colnames(yy), colnames(xt3min))
+yy <- yy[,cn]
+yyx <- xt3min[,cn]
+
+
+tmp <- data.frame(PCODE="ABMISM",
+    SS=paste0(d_long_pt$Site_ID, "-", d_long_pt$Cam_ARU_Bi),
+    SSYR=d_long_pt$key,
+    YEAR=d_long_pt$Survey_Year)
+## dd1 will have these from bird side of things
+## c("DATE", "DATI", MAXDUR)
+tmp <- droplevels(tmp[tmp$YEAR >= 2018,])
+
+dd1x <- data.frame(PCODE="ABMISM",
+    SS=xx3min$location,
+    SSYR=paste0(xx3min$location, "_", xx3min$Start$year + 1900),
+    PKEY=xx3min$visit,
+    YEAR=xx3min$Start$year + 1900,
+    CMETHOD="SM",
+    ROAD=0,
+    MAXDIS=Inf,
+    DATE=as.Date(xx3min$Start),
+    DATI=xx3min$Start,
+    MAXDUR=xx3min$maxdur)
+dd1x <- droplevels(dd1x[dd1x$YEAR >= 2018,])
+
+compare_sets(dd1x$SSYR, tmp$SSYR)
+setdiff(tmp$SSYR, dd1x$SSYR)
+setdiff(dd1x$SSYR, tmp$SSYR)
+
+table(dd1x$YEAR, OK=dd1x$SSYR %in% tmp$SSYR)
+ss <- intersect(tmp$SSYR, dd1x$SSYR)
+dim(dd1x[dd1x$SSYR %in% ss,])
+dim(tmp[tmp$SSYR %notin% ss,])
+
+dd1x <- dd1x[dd1x$SSYR %in% ss,]
+
+ddx <- data.frame(dd1x,
+    dd2[match(dd1x$SSYR, rownames(dd2)),],
+    dd3[match(dd1x$SSYR, rownames(dd3)),])
+rownames(ddx) <- ddx$PKEY
+
+yyx <- yyx[rownames(ddx),]
+
+
+vs0x <- vs0x[match(dd1x$SSYR, rownames(vs0x)),]
+vc1x <- vc1x[match(dd1x$SSYR, rownames(vc1x)),]
+vr1x <- vr1x[match(dd1x$SSYR, rownames(vr1x)),]
+sc1x <- sc1x[match(dd1x$SSYR, rownames(sc1x)),]
+sr1x <- sr1x[match(dd1x$SSYR, rownames(sr1x)),]
+vc2x <- vc2x[match(dd1x$SSYR, rownames(vc2x)),]
+vr2x <- vr2x[match(dd1x$SSYR, rownames(vr2x)),]
+sc2x <- sc2x[match(dd1x$SSYR, rownames(sc2x)),]
+sr2x <- sr2x[match(dd1x$SSYR, rownames(sr2x)),]
+
+rownames(vs0x) <- rownames(ddx)
+rownames(vc1x) <- rownames(ddx)
+rownames(vr1x) <- rownames(ddx)
+rownames(sc1x) <- rownames(ddx)
+rownames(sr1x) <- rownames(ddx)
+rownames(vc2x) <- rownames(ddx)
+rownames(vr2x) <- rownames(ddx)
+rownames(sc2x) <- rownames(ddx)
+rownames(sr2x) <- rownames(ddx)
+
+yy <- rbind(yy, yyx)
+tax <- droplevels(tax[colnames(yyx),])
+
+dd <- rbind(dd, ddx[,colnames(dd)])
+vs0 <- rbind(vs0, vs0x)
+
+vc1 <- rbind(vc1, vc1x)
+vr1 <- rbind(vr1, vr1x)
+sc1 <- rbind(sc1, sc1x)
+sr1 <- rbind(sr1, sr1x)
+
+vc2 <- rbind(vc2, vc2x)
+vr2 <- rbind(vr2, vr2x)
+sc2 <- rbind(sc2, sc2x)
+sr2 <- rbind(sr2, sr2x)
+
+all(rownames(dd) == rownames(yy))
+all(rownames(dd) == rownames(vs0))
+all(rownames(dd) == rownames(vc1))
+
+
+load("d:/abmi/AB_data_v2018/data/analysis/kgrid_table_km.Rdata")
+cn0 <- c("AHM", "FFP", "MAP", "MAT", "MCMT", "MWMT", "PET", "pAspen", "NRNAME", "NSRNAME", "LUF_NAME")
+
+iii <- which((is.na(dd$AHM) | is.na(dd$NRNAME)) & !is.na(dd$X))
+for (i in iii) {
+    cat(round(100*which(iii==i)/length(iii),2), "\n")
+    ii <- which.min(sqrt((kgrid$POINT_X - dd$X[i])^2 + (kgrid$POINT_Y - dd$Y[i])^2))
+    dd[i,cn0] <- kgrid[ii,cn0]
+}
+
+
+dd$MAXDUR[is.na(dd$MAXDUR)] <- 1 # ABMI SM bits
+
+data.frame(colSums(is.na(dd)))
+
+
+save(tax, yy, dd, vs0, vc1, vr1, sc1, sr1, vc2, vr2, sc2, sr2,
+    file="d:/abmi/AB_data_v2020/data/analysis/species/birds/ab-birds-all-2020-09-23.RData")
+

@@ -613,21 +613,248 @@ save(clim, d_wide_1km, d_wide_1ha, d_wide_qha,
     file="d:/abmi/AB_data_v2020/data/analysis/site/veg-hf_SITES-2017-2018_Veg61-vHF.Rdata")
 
 
-## 2018 CAMARU data
+## 2017-2018 CAMARU data
 
 rm(list=ls())
 od <- setwd("~/repos/recurring/veghf")
 source("00-setup.R")
 
-FILE = "d:/abmi/AB_data_v2020/data/raw/birds/20190129_SummaryTables_CAMARU_2017_2018_Veg61_vHFSPOT2017.sqlite"
+#FILE = "d:/abmi/AB_data_v2020/data/raw/birds/20190129_SummaryTables_CAMARU_2017_2018_Veg61_vHFSPOT2017.sqlite"
+FILE = "s:/GC_eric/FromEric/Sites_summaries/Round2019/20190129_SummaryTables_CAMARU_2017_2018_Veg61_vHFSPOT2017.sqlite"
 
 db <- dbConnect(RSQLite::SQLite(), FILE)
 dbListTables(db)
-d <- dbReadTable(db, "Summary_Buffers")
-dc <- dbReadTable(db, "Summary_Points")
-
+d0 <- dbReadTable(db, "Summary_Buffers")
+pt <- dbReadTable(db, "Summary_Points")
+cl <- dbReadTable(db, "Climate_data_2017_2018_wo_index")
 dbDisconnect(db)
 
-table(d$Survey_Year)
-table(d$Section)
+d0 <- droplevels(d0[d0$deployment %in% c("ARU", "BOTH"),])
+d0$key <- paste0(d0$Site_ID, "-", d0$Cam_ARU_Bi, "_", d0$Survey_Year)
+
+table(d0$Survey_Year)
+table(d0$Section)
+
+VEG_COL    = "Combined_ChgByCWCS"
+BASE_YR    = "Survey_Year"
+AREA_COL   = "Shape_Area"
+AREA       = TRUE
+TOL        = 0
+UNROUND    = FALSE
+UID_COL    = "key"
+
+
+## 564m buffer
+d <- d0
+source("02-long.R")
+source("03-wide.R")
+summary(rowSums(d_wide[[1]])/10^6)
+d_long_1km <- d_long
+d_wide_1km <- d_wide
+
+d <- d0[d0$Section %in% c("0-56m","100-150m","56-100m"),]
+source("02-long.R")
+source("03-wide.R")
+summary(rowSums(d_wide[[1]])/10^4)
+d_long_150m <- d_long
+d_wide_150m <- d_wide
+
+pt$key <- paste0(pt$Site_ID, "-", pt$Cam_ARU_Bi, "_", pt$Survey_Year)
+pt <- droplevels(pt[pt$deployment %in% c("ARU", "BOTH"),])
+rownames(pt) <- pt$key
+d <- pt
+source("02-long.R")
+d_long_pt <- d_long
+
+compare_sets(d_long_pt$UID, cl$UID)
+cl$key <- d_long_pt$key[match(cl$UID, d_long_pt$UID)]
+cl <- cl[!is.na(cl$key),]
+rownames(cl) <- cl$key
+cl$UID <- NULL
+
+cl$PET <- cl$Eref
+cl$pAspen <- cl$Populus_tremuloides_brtpred_nofp
+cl$Populus_tremuloides_brtpred_nofp <- cl$Eref <- NULL
+
+d_long_pt <- d_long_pt[rownames(d_wide_150m[[1]]),]
+clim <- cl[rownames(d_wide_150m[[1]]),]
+
+save(clim, d_wide_1km, d_wide_150m, d_long_pt, d_long_150m, d_long_1km,
+    file="d:/abmi/AB_data_v2020/data/analysis/site/veg-hf_ARU-2017-2018_Veg61-vHF.Rdata")
+
+
+## all the UIDs (not just ARUs)
+
+rm(list=ls())
+od <- setwd("~/repos/recurring/veghf")
+source("00-setup.R")
+
+#FILE = "d:/abmi/AB_data_v2020/data/raw/birds/20190129_SummaryTables_CAMARU_2017_2018_Veg61_vHFSPOT2017.sqlite"
+FILE = "s:/GC_eric/FromEric/Sites_summaries/Round2019/20190129_SummaryTables_CAMARU_2017_2018_Veg61_vHFSPOT2017.sqlite"
+
+db <- dbConnect(RSQLite::SQLite(), FILE)
+dbListTables(db)
+d0 <- dbReadTable(db, "Summary_Buffers")
+pt <- dbReadTable(db, "Summary_Points")
+cl <- dbReadTable(db, "Climate_data_2017_2018_wo_index")
+dbDisconnect(db)
+
+#d0 <- droplevels(d0[d0$deployment %in% c("ARU", "BOTH"),])
+d0$key <- d0$UID
+
+table(d0$Survey_Year)
+table(d0$Section)
+
+VEG_COL    = "Combined_ChgByCWCS"
+BASE_YR    = "Survey_Year"
+AREA_COL   = "Shape_Area"
+AREA       = TRUE
+TOL        = 0
+UNROUND    = FALSE
+UID_COL    = "key"
+
+
+## 564m buffer
+d <- d0
+source("02-long.R")
+source("03-wide.R")
+summary(rowSums(d_wide[[1]])/10^6)
+d_long_1km <- d_long
+d_wide_1km <- d_wide
+
+d <- d0[d0$Section %in% c("0-56m","100-150m","56-100m"),]
+source("02-long.R")
+source("03-wide.R")
+summary(rowSums(d_wide[[1]])/10^4)
+d_long_150m <- d_long
+d_wide_150m <- d_wide
+
+pt$key <-pt$UID
+pt <- droplevels(pt[pt$deployment %in% c("ARU", "BOTH"),])
+rownames(pt) <- pt$key
+d <- pt
+source("02-long.R")
+d_long_pt <- d_long
+
+compare_sets(d_long_pt$UID, cl$UID)
+cl$key <- cl$UID
+cl <- cl[!is.na(cl$key),]
+rownames(cl) <- cl$key
+cl$UID <- NULL
+
+cl$PET <- cl$Eref
+cl$pAspen <- cl$Populus_tremuloides_brtpred_nofp
+
+d_long_pt <- d_long_pt[rownames(d_wide_150m[[1]]),]
+clim <- cl[rownames(d_wide_150m[[1]]),]
+
+save(clim, d_wide_1km, d_wide_150m, d_long_pt, d_long_150m, d_long_1km,
+    file="d:/abmi/AB_data_v2020/data/analysis/site/veg-hf_CAMARU-2017-2018_Veg61-vHF.Rdata")
+
+
+## process 2019 ARUs only
+
+rm(list=ls())
+od <- setwd("~/repos/recurring/veghf")
+source("00-setup.R")
+
+FILE       = "s:/GC_eric/FromEric/Sites_summaries/Round2020/20200224_SC_Sites_SummaryTables_Round_2020.sqlite"
+
+db <- dbConnect(RSQLite::SQLite(), FILE)
+dbListTables(db)
+
+d <- dbReadTable(db, "20200224_CAMARU_SurveyYear_2019_Points_ClimateData_batch01")
+clim <- data.frame(as.matrix(Xtab(RASTERVALU ~ UID + param, d)))
+clim$PET <- clim$Eref
+clim$Eref <- NULL
+clim$pAspen <- clim$Populus_tremuloides_brtpred_nofp
+clim$Populus_tremuloides_brtpred_nofp <- NULL
+rm(d)
+d0 <- dbReadTable(db,  "20200224_CAMARU_SurveyYear_2019_Buffers_batch01")
+pt <- dbReadTable(db, "20200224_CAMARU_SurveyYear_2019_Points_batch01")
+dbDisconnect(db)
+
+d0 <- droplevels(d0[d0$deployment %in% c("ARU", "BOTH"),])
+d0$key <- paste0(d0$Site_ID, "-", d0$Cam_ARU_Bi, "_", d0$survey_year)
+
+table(d0$survey_year)
+table(d0$Section)
+
+VEG_COL    = "Combined_ChgByCWCS"
+BASE_YR    = "survey_year"
+AREA_COL   = "Shape_Area"
+AREA       = TRUE
+TOL        = 0
+UNROUND    = FALSE
+UID_COL    = "key"
+
+## update fire year
+fire_year_update <- !is.na(pt$Origin_Year) & pt$WILDFIRE_YEAR > pt$Origin_Year & pt$WILDFIRE_YEAR < pt[[BASE_YR]]
+pt$Origin_Year[fire_year_update] <- pt$WILDFIRE_YEAR[fire_year_update]
+
+fire_year_update <- !is.na(d0$Origin_Year) & d0$WILDFIRE_YEAR > d0$Origin_Year & d0$WILDFIRE_YEAR < d0[[BASE_YR]]
+d0$Origin_Year[fire_year_update] <- d0$WILDFIRE_YEAR[fire_year_update]
+
+
+## 564m buffer
+d <- d0
+source("02-long.R")
+source("03-wide.R")
+summary(rowSums(d_wide[[1]])/10^6)
+d_long_1km <- d_long
+d_wide_1km <- d_wide
+
+d <- d0[d0$Section %in% c("0-56m","100-150m","56-100m"),]
+source("02-long.R")
+source("03-wide.R")
+summary(rowSums(d_wide[[1]])/10^4)
+d_long_150m <- d_long
+d_wide_150m <- d_wide
+
+pt$key <- paste0(pt$Site_ID, "-", pt$Cam_ARU_Bi, "_", pt$survey_year)
+pt <- droplevels(pt[pt$deployment %in% c("ARU", "BOTH"),])
+rownames(pt) <- pt$key
+d <- pt
+source("02-long.R")
+d_long_pt <- d_long
+
+
+rownames(d_long_pt) <- d_long_pt$UID
+clim <- clim[rownames(d_long_pt),]
+rownames(d_long_pt) <- rownames(clim) <- d_long_pt$key
+
+d_long_pt <- d_long_pt[rownames(d_wide_150m[[1]]),]
+clim <- clim[rownames(d_wide_150m[[1]]),]
+
+save(clim, d_wide_1km, d_wide_150m, d_long_pt, d_long_150m, d_long_1km,
+    file="d:/abmi/AB_data_v2020/data/analysis/site/veg-hf_ARU-2019_Veg61-vHF.Rdata")
+
+
+## combine 2017-2018-2019 ARU data
+
+rm(list=ls())
+library(mefa4)
+
+load("d:/abmi/AB_data_v2020/data/analysis/site/veg-hf_ARU-2017-2018_Veg61-vHF.Rdata")
+e <- new.env()
+load("d:/abmi/AB_data_v2020/data/analysis/site/veg-hf_ARU-2019_Veg61-vHF.Rdata", envir=e)
+
+clim$key <- NULL
+clim <- rbind(clim, e$clim[,colnames(clim)])
+
+e$d_long_pt$Survey_Year <- e$d_long_pt$survey_year
+compare_sets(colnames(d_long_pt), colnames(e$d_long_pt))
+cn <- intersect(colnames(d_long_pt), colnames(e$d_long_pt))
+
+d_long_pt <- rbind(d_long_pt[,cn], e$d_long_pt[,cn])
+
+for (i in 1:4) {
+    d_wide_1km[[i]] <- rbind(d_wide_1km[[i]], e$d_wide_1km[[i]])
+    d_wide_150m[[i]] <- rbind(d_wide_150m[[i]], e$d_wide_150m[[i]])
+}
+d_wide_1km[[5]] <- c(d_wide_1km[[5]], e$d_wide_1km[[5]])
+d_wide_150m[[5]] <- c(d_wide_150m[[5]], e$d_wide_150m[[5]])
+
+save(clim, d_wide_1km, d_wide_150m, d_long_pt,
+    file="d:/abmi/AB_data_v2020/data/analysis/site/veg-hf_ARU-2017-2019_Veg61-vHF.Rdata")
 

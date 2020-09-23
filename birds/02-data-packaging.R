@@ -1,7 +1,7 @@
 #' ---
 #' title: "Bird data packaging"
 #' author: "Peter Solymos, <solymos@ualberta.ca>"
-#' date: "Nov 28, 2018"
+#' date: "Sep 23, 2020"
 #' output: pdf_document
 #' ---
 #'
@@ -14,7 +14,8 @@ library(intrval)
 library(maptools)
 source("~/repos/abmianalytics/birds/00-functions.R")
 knitr::opts_chunk$set(eval=FALSE)
-load("d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-all-2018-11-29.RData")
+#load("d:/abmi/AB_data_v2018/data/analysis/birds/ab-birds-all-2018-11-29.RData")
+load("d:/abmi/AB_data_v2020/data/analysis/species/birds/ab-birds-all-2020-09-23.RData")
 if (FALSE) {
     ## quick hack to get reference data set for prediction
     vc1[] <- 0
@@ -39,12 +40,10 @@ dd$vshf <- ifelse(rowSums(is.na(vc1)) > 0, NA, 0)
 #' - `DATE` and `DATI`: we use use constant singing rate where these are NA
 #' - `X` and `Y`: should be dropped
 dd <- droplevels(dd[!is.na(dd$X) & !is.na(dd$vshf),])
-#' - `MAXDUR`: very few NA and it must be 1 min
-dd$MAXDUR[is.na(dd$MAXDUR)] <- 1 # ABMI SM bits
 #' - climate: out-of-AB-bound issue, to be dropped
 dd <- dd[!is.na(dd$pAspen) & !is.na(dd$NRNAME),]
 #' - `YEAR`: must be in this range
-dd <- dd[dd$YEAR %[]% c(1993, 2017),]
+dd <- dd[dd$YEAR %[]% c(1993, 2019),]
 #' - date and time: constrain the ranges to match QPAD expectations
 dd$JULIAN <- as.POSIXlt(dd$DATE)$yday
 dd$start <- as.POSIXlt(dd$DATI)$hour + as.POSIXlt(dd$DATI)$min / 60
@@ -82,10 +81,22 @@ dd$YR <- dd$YEAR - min(dd$YEAR)
 #' Point level intersection (veg+soil+HF)
 dd <- data.frame(dd, vs0[rownames(dd),])
 #' Read lookup tables
-tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
+tv0 <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
+rownames(tv0) <- tv0[,1]
+tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v2020.csv")
 rownames(tv) <- tv[,1]
-ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v61.csv")
+tv0 <- tv0[rownames(tv),]
+tv <- data.frame(tv, tv0)
+tv$UseInAnalysisNoAge <- gsub("CC", "", gsub("[[:digit:]]", "", as.character(tv$UseInAnalysis)))
+tv$UseInAnalysisNoAge[endsWith(tv$UseInAnalysisNoAge, "R")] <-
+    substr(tv$UseInAnalysisNoAge[endsWith(tv$UseInAnalysisNoAge, "R")], 1,
+        nchar(tv$UseInAnalysisNoAge[endsWith(tv$UseInAnalysisNoAge, "R")])-1)
+ts0 <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v61.csv")
+rownames(ts0) <- ts0[,1]
+ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v2020.csv")
 rownames(ts) <- ts[,1]
+ts0 <- ts0[rownames(ts),]
+ts <- data.frame(ts, ts0)
 #' 7 ha (150 m radius) level proportions used downsream
 dd$pWater <- rowSums(row_std(vc1[rownames(dd),])[,tv[colnames(vc1), "is_water"]])
 dd$pRoad <- rowSums(row_std(vc1[rownames(dd),])[,tv[colnames(vc1), "is_road"]])
@@ -133,33 +144,34 @@ table(dd$ROAD, dd$pRoad > 0.04, useNA="a")
 #'
 #' ## Land cover reclass
 #'
-vc1r <- row_std(groupSums(vc1[rownames(dd),], 2, tv[colnames(vc1),"UseInAnalysisFine"]))
-vr1r <- row_std(groupSums(vr1[rownames(dd),], 2, tv[colnames(vr1),"UseInAnalysisFine"]))
-vc2r <- row_std(groupSums(vc2[rownames(dd),], 2, tv[colnames(vc2),"UseInAnalysisFine"]))
-vr2r <- row_std(groupSums(vr2[rownames(dd),], 2, tv[colnames(vr2),"UseInAnalysisFine"]))
-sc1r <- row_std(groupSums(sc1[rownames(dd),], 2, ts[colnames(sc1),"UseInAnalysisCoarse"]))
-sr1r <- row_std(groupSums(sr1[rownames(dd),], 2, ts[colnames(sr1),"UseInAnalysisCoarse"]))
-sc2r <- row_std(groupSums(sc2[rownames(dd),], 2, ts[colnames(sc2),"UseInAnalysisCoarse"]))
-sr2r <- row_std(groupSums(sr2[rownames(dd),], 2, ts[colnames(sr2),"UseInAnalysisCoarse"]))
+vc1r <- row_std(groupSums(vc1[rownames(dd),], 2, tv[colnames(vc1),"UseInAnalysisNoAge"]))
+vr1r <- row_std(groupSums(vr1[rownames(dd),], 2, tv[colnames(vr1),"UseInAnalysisNoAge"]))
+vc2r <- row_std(groupSums(vc2[rownames(dd),], 2, tv[colnames(vc2),"UseInAnalysisNoAge"]))
+vr2r <- row_std(groupSums(vr2[rownames(dd),], 2, tv[colnames(vr2),"UseInAnalysisNoAge"]))
+
+sc1r <- row_std(groupSums(sc1[rownames(dd),], 2, ts[colnames(sc1),"UseInAnalysis"]))
+sr1r <- row_std(groupSums(sr1[rownames(dd),], 2, ts[colnames(sr1),"UseInAnalysis"]))
+sc2r <- row_std(groupSums(sc2[rownames(dd),], 2, ts[colnames(sc2),"UseInAnalysis"]))
+sr2r <- row_std(groupSums(sr2[rownames(dd),], 2, ts[colnames(sr2),"UseInAnalysis"]))
 #' Point intersection based reclassified variables (w/o forest age)
-dd$vegpt <- as.factor(tv$UseInAnalysisFine[match(dd$VEGHFAGEclass, rownames(tv))])
-dd$soilpt <- as.factor(ts$UseInAnalysisCoarse[match(dd$SOILHFclass, rownames(ts))])
+dd$vegpt <- as.factor(tv$UseInAnalysisNoAge[match(dd$VEGHFAGEclass, rownames(tv))])
+dd$soilpt <- as.factor(ts$UseInAnalysis[match(dd$SOILHFclass, rownames(ts))])
 #' Dominant land cover type: veg+HF.
 #' Calculate proportion without classes we do not use, because:
 #' - it is not a stratum we are interested in (water, snow/ice is 0 density),
 #' - its is too small of a feature to make up a full 7-ha buffer.
-tmp <- find_max(vc1r[,colnames(vc1r) %ni% c("Water","HWater", "SnowIce", "Bare",
-    "Seismic", "HardLin", "TrSoftLin", "EnSoftLin", "Well")])
+tmp <- find_max(vc1r[,colnames(vc1r) %nin% c("Water","HWater", "SnowIce", "Bare",
+    "EnSeismic", "HardLin", "TrSoftLin", "EnSoftLin", "Well")])
 #' Keep levels consistent
 dd$vegc <- factor(as.character(tmp$index), levels(dd$vegpt))
 dd$vegv <- tmp$value
 #'
 #' Finding harvest areas
 cc <- paste0(ifelse(tv[colnames(vc1), "is_harvest"], "CC", ""),
-    as.character(tv[colnames(vc1), "UseInAnalysisFine"]))
+    as.character(tv[colnames(vc1), "UseInAnalysisNoAge"]))
 tmp <- row_std(groupSums(vc1[rownames(dd),], 2, cc))
 tmp <- find_max(tmp[,colnames(tmp) %ni% c("Water","HWater", "SnowIce", "Bare",
-    "Seismic", "HardLin", "TrSoftLin", "EnSoftLin", "Well")])
+    "EnSeismic", "HardLin", "TrSoftLin", "EnSoftLin", "Well")])
 dd$vegccc <- factor(as.character(tmp$index), c(levels(dd$vegc),
     paste0("CC", c(c("Spruce","Decid","Mixedwood","Pine")))))
 dd$vegvcc <- tmp$value
@@ -180,26 +192,30 @@ dd$vegw <- pmax(0, pmin(1, 2*dd$vegv-0.5))
 a <- table(pt=dd$vegpt,bf=droplevels(dd$vegc))
 a <- a[colnames(a),]
 sum(diag(a))/sum(a) # pretty good
-#' Finally: drop unused levels and relevel to haveDecid as reference
+#' Finally: drop unused levels and relevel to have Decid as reference
 dd$vegc <- droplevels(dd$vegc)
 dd$vegc <- relevel(dd$vegc, "Decid")
 dd$vegccc <- droplevels(dd$vegccc)
 dd$vegccc <- relevel(dd$vegccc, "Decid")
-#' Indicator variables for stand types
+data.frame(table(dd$vegc))
+
+#' Indicator variables for stand types (don't use age for TreedSwamp)
 dd$isMix <- ifelse(dd$vegc == "Mixedwood", 1L, 0L)
 dd$isWSpruce <- ifelse(dd$vegc == "Spruce", 1L, 0L)
 dd$isPine <- ifelse(dd$vegc == "Pine", 1L, 0L)
-dd$isBSpruce <- ifelse(dd$vegc == "BSpr", 1L, 0L)
-dd$isLarch <- ifelse(dd$vegc == "Larch", 1L, 0L)
-dd$isBSLarch <- ifelse(dd$vegc %in% c("BSpr", "Larch"), 1L, 0L)
+dd$isBog <- ifelse(dd$vegc == "TreedBog", 1L, 0L)
+dd$isFen <- ifelse(dd$vegc == "TreedFen", 1L, 0L)
+dd$isBogFen <- ifelse(dd$vegc %in% c("TreedBog", "TreedFen"), 1L, 0L)
 dd$isUpCon <- ifelse(dd$vegc %in% c("Spruce", "Pine"), 1L, 0L)
-dd$isCon <- ifelse(dd$vegc %in% c("BSpr", "Larch",
+dd$isCon <- ifelse(dd$vegc %in% c("TreedBog", "TreedFen",
     "Spruce", "Pine"), 1L, 0L)
 #'
 #' ## Weighted age calculation
 #'
-ac <- as.character(tv[colnames(vc1), "AGE"])
+tv <- tv[colnames(vc1),]
+ac <- as.character(tv[, "AGE"])
 ac[is.na(ac)] <- ""
+ac[tv$UseInAnalysisNoAge == "TreedSwamp"] <- ""
 vc1age <- row_std(groupSums(vc1[rownames(dd),], 2, ac))
 ## exclude unknown (0) and non-forest (blank)
 AgePtCr <- t(vc1age[,c("R", "1", "2", "3", "4", "5", "6", "7", "8", "9")])
@@ -207,7 +223,7 @@ AgeMin <- structure(c(0,10,20,40,60,80,100,120,140,160)/200,
     names=c("R", "1", "2", "3", "4", "5", "6", "7", "8", "9"))
 dd$wtAge <- colSums(AgePtCr * AgeMin) / colSums(AgePtCr)
 dd$wtAge[is.na(dd$wtAge)] <- 0
-dd$isFor <- dd$vegc %in% c("Spruce","Decid","Mixedwood","Pine","BSpr", "Larch")
+dd$isFor <- dd$vegc %in% c("Spruce","Decid","Mixedwood","Pine","TreedBog", "TreedFen")
 dd$wtAge[!dd$isFor] <- 0
 dd$wtAge2 <- dd$wtAge^2
 dd$wtAge05 <- sqrt(dd$wtAge)
@@ -248,7 +264,7 @@ by(dd$wtAge*200, list(veg=interaction(dd$isCC,dd$vegc,drop=TRUE)), fstat, level=
 #' Modifiers used only in the north
 dd$mEnSft <- vc1r[,"EnSoftLin"]
 dd$mTrSft <- vc1r[,"TrSoftLin"]
-dd$mSeism <- vc1r[,"Seismic"]
+dd$mSeism <- vc1r[,"EnSeismic"]
 #' Modifiers used in the north and the south
 dd$mWell <- vc1r[,"Well"]
 dd$mHard <- vc1r[,"HardLin"] # optional, use ROAD instead
@@ -266,25 +282,25 @@ dd$useNorth[dd$vegw == 0] <- FALSE
 #'
 #' Surrounding habitat and classification
 dd$vegca <- dd$vegc
-levels(dd$vegca) <- c(levels(dd$vegca), "SpruceO","DecidO","MixedwoodO","PineO","BSprO", "LarchO")
-ii <- dd$vegc %in% c("Spruce","Pine","BSpr", "Larch") & dd$wtAge*200 >= 80
+levels(dd$vegca) <- c(levels(dd$vegca), "SpruceO","DecidO","MixedwoodO","PineO","TreedBogO", "TreedFenO")
+ii <- dd$vegc %in% c("Spruce","Pine","TreedBog", "TreedFen") & dd$wtAge*200 >= 80
 dd$vegca[ii] <- paste0(as.character(dd$vegc[ii]), "O")
 ii <- dd$vegc %in% c("Decid","Mixedwood") & dd$wtAge*200 >= 50
 dd$vegca[ii] <- paste0(as.character(dd$vegc[ii]), "O")
 table(dd$vegca, dd$isCC)
 
-ao <- paste0(as.character(tv[colnames(vc1), "UseInAnalysisFine"]),
+ao <- paste0(as.character(tv[colnames(vc1), "UseInAnalysisNoAge"]),
     ifelse(tv[colnames(vc1), "MatureOld"], "O", ""))
 SSH_veg <- row_std(groupSums(vc2[rownames(dd),], 2, ao))
 SSH_veg <- SSH_veg[,colnames(SSH_veg) %ni% c("Water","HWater", "SnowIce", "Bare",
-    "Seismic", "HardLin", "TrSoftLin", "EnSoftLin", "Well")]
+    "EnSeismic", "HardLin", "TrSoftLin", "EnSoftLin", "Well")]
 compare_sets(levels(dd$vegca), colnames(SSH_veg))
 #'
 #' ## Soil reclass for the south
 #'
 #' Dominant land cover type: soil+HF (similarly to the veg counterpart).
 tmp <- find_max(sc1r[,colnames(sc1r) %ni% c("SoilWater", "SoilUnknown", "HWater",
-    "SoftLin", "HardLin", "Well")])
+    "EnSeismic", "EnSoftLin", "TrSoftLin", "HardLin", "Well")])
 dd$soilc <- factor(as.character(tmp$index), levels(dd$soilpt))
 dd$soilv <- tmp$value
 #' Use backfilled soil type where HFor is dominant
@@ -297,7 +313,7 @@ a <- table(pt=dd$soilpt,bf=droplevels(dd$soilc))
 a <- a[colnames(a),]
 sum(diag(a))/sum(a) # pretty good
 dd$soilc <- droplevels(dd$soilc)
-dd$soilc <- relevel(dd$soilc, "Productive")
+dd$soilc <- relevel(dd$soilc, "Loamy")
 #'
 #' Data subset to be used in the south:
 dd$useSouth <- FALSE
@@ -429,7 +445,7 @@ ddd=dd[,cn]
 tmp <- nonDuplicated(ddd, SS, TRUE)
 cx <- cut(tmp$X, c(-121, -116, -112,-109))
 cy <- cut(tmp$Y, c(48, 51, 54, 57, 61))
-ct <- cut(tmp$YEAR, c(1992, 2001, 2009, 2013, 2018))
+ct <- cut(tmp$YEAR, c(1992, 2001, 2009, 2013, 2019))
 table(cy, cx)
 table(ct)
 ftable(ct, cy, cx)
@@ -484,9 +500,7 @@ z$timer
 cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(YY)*B*z$timer[3])/(60*60)), "hrs\n")
 
 save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
-    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-south-2018-12-07.RData")
-#save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
-#    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-south-2019-07-29-reference.RData")
+    file="d:/abmi/AB_data_v2020/data/analysis/species/birds/ab-birds-south-2020-09-23.RData")
 #'
 #' ## North
 #'
@@ -518,9 +532,7 @@ z$timer
 cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(YY)*B*z$timer[3])/(60*60)), "hrs\n")
 
 save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
-    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-north-2019-01-30.RData")
-#save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
-#    file="d:/abmi/AB_data_v2018/data/analysis/birds/data/ab-birds-north-2019-07-29-reference.RData")
+    file="d:/abmi/AB_data_v2020/data/analysis/species/birds/ab-birds-north-2020-09-23.RData")
 #'
 #' ## Validation subsets
 #'
