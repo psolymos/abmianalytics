@@ -1,6 +1,6 @@
 ## --- settings ---
 ## file name for data bundle, need to be in /data/ dir
-fn <- "ab-birds-south-2018-12-07.RData"
+fn <- "ab-birds-south-2020-09-23.RData"
 ## project name for storing the output
 PROJ <- "south"
 
@@ -27,7 +27,7 @@ source("~/repos/abmianalytics/birds/00-functions.R")
 if (interactive()) {
     nodeslist <- 2
     BBB <- 2
-    setwd("d:/abmi/AB_data_v2018/data/analysis/birds")
+    setwd("d:/abmi/AB_data_v2020/data/analysis/species/birds")
 } else {
     cat("OK\n* Getting nodes list ... ")
     nodeslist <- unlist(strsplit(Sys.getenv("NODESLIST"), split=" "))

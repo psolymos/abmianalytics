@@ -468,7 +468,7 @@ library(mefa4)
 library(opticut)
 source("~/repos/abmianalytics/birds/00-functions.R")
 NMIN <- 20
-B <- 240
+B <- 256 # 240
 #'
 #' ## South
 #'
@@ -500,7 +500,7 @@ z$timer
 cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(YY)*B*z$timer[3])/(60*60)), "hrs\n")
 
 save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
-    file="d:/abmi/AB_data_v2020/data/analysis/species/birds/ab-birds-south-2020-09-23.RData")
+    file="d:/abmi/AB_data_v2020/data/analysis/species/birds/data/ab-birds-south-2020-09-23.RData")
 #'
 #' ## North
 #'
@@ -532,7 +532,7 @@ z$timer
 cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(YY)*B*z$timer[3])/(60*60)), "hrs\n")
 
 save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
-    file="d:/abmi/AB_data_v2020/data/analysis/species/birds/ab-birds-north-2020-09-23.RData")
+    file="d:/abmi/AB_data_v2020/data/analysis/species/birds/data/ab-birds-north-2020-09-23.RData")
 #'
 #' ## Validation subsets
 #'
