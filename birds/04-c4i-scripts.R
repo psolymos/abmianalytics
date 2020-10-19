@@ -157,8 +157,8 @@ get_coef_north <- function(resn, STAGE="ARU", subset=NULL, ...) {
     lam1 <- exp(mu)
     lam1 <- lam1[!grepl("9", rownames(lam1)),,drop=FALSE]
     #lamUI <- lam1[xwalk[rownames(lam1),2] == "UrbInd",]
-    lam1 <- groupMeans(lam1, 1, xwalk[rownames(lam1),2])
-    lam1 <- lam1[rownames(lam1) != "UrbInd",,drop=FALSE]
+    #lam1 <- groupMeans(lam1, 1, xwalk[rownames(lam1),2])
+    #lam1 <- lam1[rownames(lam1) != "UrbInd",,drop=FALSE]
     lam1 <- t(apply(lam1, 1, quantile, c(0.5, 0.05, 0.95)))
     lamCC <- lam1[grepl("CC", rownames(lam1)),,drop=FALSE]
 
@@ -205,16 +205,17 @@ get_coef_north <- function(resn, STAGE="ARU", subset=NULL, ...) {
         estSeism <- ESMAX
 
     ## UrbInd
-    Xn2 <- Xn[en$DAT$vegc %ni% c("Industrial", "Mine", "Rural", "Urban"), colnames(Xage)]
-    nUI <- nrow(Xn2)
-    lamUI <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2),drop=FALSE])), 2, median)
-    estUI <- quantile((nUI * lamUI + nWell * lamWell) / (nUI + nWell),
-        c(0.5, 0.05, 0.95))
+    #Xn2 <- Xn[en$DAT$vegc %ni% c("Industrial", "Mine", "Rural", "Urban"), colnames(Xage)]
+    #nUI <- nrow(Xn2)
+    #lamUI <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2),drop=FALSE])), 2, median)
+    #estUI <- quantile((nUI * lamUI + nWell * lamWell) / (nUI + nWell),
+    #    c(0.5, 0.05, 0.95))
 
     lam1 <- rbind(lam1,
-        UrbInd=estUI,
+        #UrbInd=estUI,
         SoftLin=(nSeism * estSeism + nEnSoft * estEnSft) / (nSeism + nEnSoft),
         HardLin=estTrSft)
+    ## add here what's needed for final output as defined (seismic, ensoft, trsoft, hardlin, well)
     colnames(lam1) <- c("Estimate", "Lower", "Upper")
     lam1
 }
@@ -444,8 +445,12 @@ get_coef_south <- function(ress, STAGE="ARU", subset=NULL, ...) {
         subset <- seq_len(nrow(ests))
     ests <- ests[subset,,drop=FALSE]
 
-    LCC <- c("soilcClay", "soilcCrop", "soilcRapidDrain",
-        "soilcRoughP", "soilcSaline", "soilcTameP", "soilcUrbInd")
+#    LCC <- c("soilcClay", "soilcCrop", "soilcRapidDrain",
+#        "soilcRoughP", "soilcSaline", "soilcTameP", "soilcUrbInd")
+    LCC <- c("soilcBlowout", "soilcClaySub", "soilcCrop",
+        "soilcIndustrial", "soilcMine", "soilcOther", "soilcRapidDrain",
+        "soilcRoughP", "soilcRural", "soilcSandyLoam", "soilcTameP",
+        "soilcThinBreak", "soilcUrban")
     muLCC <- t(cbind(ests[,1,drop=FALSE], ests[,1]+ests[,LCC,drop=FALSE]))
     rownames(muLCC) <- levels(es$DAT$soilc)
     qfun <- function(x)
@@ -453,7 +458,9 @@ get_coef_south <- function(ress, STAGE="ARU", subset=NULL, ...) {
     lamLCC0 <- t(apply(exp(muLCC), 1, qfun)) # nontred
     # RoughP: Abandoned and RoughPasture (closer to natural grass)
     # TameP: TamePasture + HD livestock operations (closer to crop)
-    o <- c("Productive", "Clay", "Saline", "RapidDrain", "RoughP", "TameP", "Crop", "UrbInd")
+#    o <- c("Productive", "Clay", "Saline", "RapidDrain", "RoughP", "TameP", "Crop", "UrbInd")
+    o <- c("Loamy", "Blowout", "ClaySub", "RapidDrain", "SandyLoam", "ThinBreak", "Other",
+        "RoughP", "TameP","Crop","Urban", "Rural", "Industrial", "Mine")
     lamLCC0 <- lamLCC0[o,]
 
     lamLCC1 <- t(apply(exp(muLCC + ests[,"pAspen"]), 1, qfun)) # treed
@@ -467,12 +474,17 @@ get_coef_south <- function(ress, STAGE="ARU", subset=NULL, ...) {
     lamMOD <- t(apply(Z, 2, qfun))
     rownames(lamMOD) <- c("Road", "Well", "Soft")
 
-    HFc <- c("Crop", "RoughP", "TameP", "UrbInd")
+    HFc <- c("RoughP", "TameP","Crop","Urban", "Rural", "Industrial", "Mine")
 
     Xs2 <- Xs[es$DAT$mSoft > 0 & es$DAT$soilc %ni% HFc, colnames(Xs)]
     nSoft <- nrow(Xs2)
     lamSoft <- apply(exp(Xs2 %*% t(ests[,colnames(Xs2),drop=FALSE])), 2, median)
     estSoft <- quantile(lamSoft * Z[,"mSoft"], c(0.5, 0.05, 0.95))
+
+    Xs2 <- Xs[es$DAT$mWell > 0 & es$DAT$soilc %ni% HFc, colnames(Xs)]
+    nWell <- nrow(Xs2)
+    lamWell <- apply(exp(Xs2 %*% t(ests[,colnames(Xs2),drop=FALSE])), 2, median)
+    estWell <- quantile(lamWell * Z[,"mSoft"], c(0.5, 0.05, 0.95))
 
     Xs2 <- Xs[es$DAT$ROAD > 0 & es$DAT$soilc %ni% HFc, colnames(Xs)]
     nROAD <- nrow(Xs2)
@@ -480,8 +492,11 @@ get_coef_south <- function(ress, STAGE="ARU", subset=NULL, ...) {
     estROAD <- quantile(lamROAD * Z[,"mSoft"], c(0.5, 0.05, 0.95))
 
     lam0 <- rbind(lamLCC0,
-        SoftLin=estSoft,
-        HardLin=estROAD)
+        EnSeismic=estSoft,
+        EnSoftLin=estSoft,
+        TrSoftLin=estSoft,
+        HardLin=estROAD,
+        Well=estWell)
     colnames(lam0) <- c("Estimate", "Lower", "Upper")
     attr(lam0, "pAspen") <- mean(exp(ests[,"pAspen"]))
     attr(lam0, "Treed") <- lamLCC1

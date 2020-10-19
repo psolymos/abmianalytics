@@ -1,7 +1,7 @@
 #' ---
 #' title: "Summarizing north and south model results"
 #' author: "Peter Solymos, <solymos@ualberta.ca>"
-#' date: "Dec 19, 2018"
+#' date: "Sept, 2020"
 #' output: pdf_document
 #' ---
 #'
@@ -9,22 +9,27 @@ library(mefa4)
 library(intrval)
 source("~/repos/abmianalytics/birds/00-functions.R")
 
-ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
+ROOT <- "d:/abmi/AB_data_v2020/data/analysis/species/birds" # change this bit
+#ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
 #ROOT <- "~/GoogleWork/tmp"
 
 ee <- new.env()
-load(file.path(ROOT, "ab-birds-all-2018-11-29.RData"), envir=ee)
+load(file.path(ROOT, "ab-birds-all-2020-09-23.RData"), envir=ee)
+#load(file.path(ROOT, "ab-birds-all-2018-11-29.RData"), envir=ee)
 TAX <- ee$tax
 rm(ee)
 
 en <- new.env()
-load(file.path(ROOT, "data", "ab-birds-north-2019-01-30.RData"), envir=en)
+load(file.path(ROOT, "data", "ab-birds-north-2020-09-23.RData"), envir=en)
+#load(file.path(ROOT, "data", "ab-birds-north-2019-01-30.RData"), envir=en)
 es <- new.env()
-load(file.path(ROOT, "data", "ab-birds-south-2018-12-07.RData"), envir=es)
+load(file.path(ROOT, "data", "ab-birds-south-2020-09-23.RData"), envir=es)
+#load(file.path(ROOT, "data", "ab-birds-south-2018-12-07.RData"), envir=es)
 Xn <- get_model_matrix(en$DAT, en$mods)
 Xs <- get_model_matrix(es$DAT, es$mods)
 
-Xage <- as.matrix(read.csv("~/repos/abmianalytics/lookup/Xn-veg-v61.csv"))
+#Xage <- as.matrix(read.csv("~/repos/abmianalytics/lookup/Xn-veg-v61.csv"))
+Xage <- as.matrix(read.csv("~/repos/abmianalytics/lookup/Xn-veg-v2020.csv"))
 colnames(Xage) <- colnames(Xn)[match(colnames(Xage), make.names(colnames(Xn)))]
 
 if (FALSE) {
@@ -165,7 +170,7 @@ explore_modifs <- function(resn, plot=TRUE, ...) {
     invisible(lam)
 }
 
-pdf(file.path(ROOT, "explore-modif.pdf"), onefile=TRUE, width=10, height=8)
+pdf(file.path(ROOT, "misc", "explore-modif.pdf"), onefile=TRUE, width=10, height=8)
 expln <- list()
 for (i in colnames(en$YY)) {
     cat(i, "\n");flush.console()
@@ -241,7 +246,7 @@ explore_north <- function(resn, plot=TRUE, lin=TRUE, ...) {
     invisible(list(lam=lam1, mod=lamMOD))
 }
 
-pdf(file.path(ROOT, "explore-north.pdf"), onefile=TRUE, width=10, height=10)
+pdf(file.path(ROOT, "misc", "explore-north.pdf"), onefile=TRUE, width=10, height=10)
 expln <- list()
 for (i in colnames(en$YY)) {
     cat(i, "\n");flush.console()
@@ -254,17 +259,24 @@ dev.off()
 
 explore_south <- function(ress, plot=TRUE, lin=TRUE, ...) {
     ests <- suppressWarnings(get_coef(ress, Xs, stage="ARU", na.out=FALSE))
-    LCC <- c("soilcClay", "soilcCrop", "soilcRapidDrain",
-        "soilcRoughP", "soilcSaline", "soilcTameP", "soilcUrbInd")
+    #LCC <- c("soilcClay", "soilcCrop", "soilcRapidDrain",
+    #    "soilcRoughP", "soilcSaline", "soilcTameP", "soilcUrbInd")
+    LCC <- c("soilcBlowout", "soilcClaySub", "soilcCrop",
+        "soilcIndustrial", "soilcMine", "soilcOther", "soilcRapidDrain",
+        "soilcRoughP", "soilcRural", "soilcSandyLoam", "soilcTameP",
+        "soilcThinBreak", "soilcUrban")
     muLCC <- t(cbind(ests[,1], ests[,1]+ests[,LCC]))
     rownames(muLCC) <- levels(es$DAT$soilc)
-    qfun <- function(x)
+    qfun <- function(x) {
         c(quantile(x, c(0.5, 0.05, 0.95)), "1st"=x[1])
+    }
     lamLCC0 <- t(apply(exp(muLCC), 1, qfun)) # nontred
     lamLCC1 <- t(apply(exp(muLCC + ests[,"pAspen"]), 1, qfun)) # treed
     # RoughP: Abandoned and RoughPasture (closer to natural grass)
     # TameP: TamePasture + HD livestock operations (closer to crop)
-    o <- c("Productive", "Clay", "Saline", "RapidDrain", "RoughP", "TameP", "Crop", "UrbInd")
+    #o <- c("Productive", "Clay", "Saline", "RapidDrain", "RoughP", "TameP", "Crop", "UrbInd")
+    o <- c("Loamy", "Blowout", "ClaySub", "RapidDrain", "SandyLoam", "ThinBreak", "Other",
+        "RoughP", "TameP","Crop","Urban", "Rural", "Industrial", "Mine")
     lamLCC0 <- lamLCC0[o,]
     lamLCC1 <- lamLCC1[o,]
     MOD <- c("ROAD", "mWell", "mSoft", "CMETHODSM", "CMETHODRF")
@@ -316,7 +328,12 @@ explore_south <- function(ress, plot=TRUE, lin=TRUE, ...) {
     invisible(list(lcc0=lamLCC0, lcc1=lamLCC1, mod=lamMOD))
 }
 
-pdf(file.path(ROOT, "explore-south.pdf"), onefile=TRUE, width=10)
+
+ts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v2020.csv")
+rownames(ts) <- ts[,1]
+levels(ts$UseInAnalysis)
+
+pdf(file.path(ROOT, "misc", "explore-south.pdf"), onefile=TRUE, width=10)
 expls <- list()
 for (i in colnames(es$YY)) {
     cat(i, "\n");flush.console()
