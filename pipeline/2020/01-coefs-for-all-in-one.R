@@ -3,7 +3,7 @@
 ROOT <- "s:/AB_data_v2020/Results/Results from Ermias/Preliminary/"
 
 TAXA <- c("lichens", "mites", "mosses", "vplants")
-taxon <- "mites"
+#taxon <- "mites"
 
 COEFS <- list()
 B <- 100
