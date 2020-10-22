@@ -155,6 +155,125 @@ for (taxon in TAXA) {
 
 save(COEFS, file="s:/AB_data_v2020/Results/COEFS-EA.RData")
 
+## bootstrap based coef tables (i.e. not normal SEs)
+
+ROOT <- "s:/AB_data_v2020/Results/Results from Ermias/Boot coef/"
+
+TAXA <- c("lichens", "mites", "mosses", "vplants")
+#taxon <- "mites"
+
+COEFS <- list()
+B <- 250
+
+for (taxon in TAXA) {
+
+    if (taxon == "lichens") {
+        fn <- "Lichen_North Bootstrap coefficents 2020.Rdata"
+        fs <- "Lichen_South Bootstrap coefficents 2020.Rdata"
+    }
+    if (taxon == "mites") {
+        fn <- "Mite_North Bootstrap coefficents 2020.Rdata"
+        fs <- "Mite_South Bootstrap coefficents 2020.Rdata"
+    }
+    if (taxon == "mosses") {
+        fn <- "Moss_North Bootstrap coefficents 2020.Rdata"
+        fs <- "Moss_South Bootstrap coefficents 2020.Rdata"
+    }
+    if (taxon == "vplants") {
+        fn <- "VPlant_North Bootstrap coefficents 2020.Rdata"
+        fs <- "VPlant_South Bootstrap coefficents 2020.Rdata"
+    }
+
+    #' load North and south coefs into their respective environments
+    en <- new.env()
+    load(paste0(ROOT, fn), envir=en)
+    es <- new.env()
+    load(paste0(ROOT, fs), envir=es)
+
+    #' # North
+    #' Combine together the pieces into a logit scaled matrix (no surrounding effects)
+    i <- 1
+    cfn <- en$Coef.bs[,,i]
+    colnames(cfn) <- gsub("BlackSpruce", "TreedBog", colnames(cfn))
+    cfn <- cbind(cfn,
+            TreedFenR=cfn[,"TreedFen"],
+            TreedFen1=cfn[,"TreedFen"],
+            TreedFen2=cfn[,"TreedFen"],
+            TreedFen3=cfn[,"TreedFen"],
+            TreedFen4=cfn[,"TreedFen"],
+            TreedFen5=cfn[,"TreedFen"],
+            TreedFen6=cfn[,"TreedFen"],
+            TreedFen7=cfn[,"TreedFen"],
+            TreedFen8=cfn[,"TreedFen"],
+            Rural=cfn[,"UrbInd"],
+            Urban=cfn[,"UrbInd"],
+            Industrial=cfn[,"UrbInd"],
+            Mine=0, MineV=0, Water=0,
+            GrassHerb=cfn[,"Grass"])
+    cfn <- cfn[,!(colnames(cfn) %in% c("TreedFen", "UrbInd", "Grass"))]
+    xCFn <- cbind(qlogis(cfn), en$Sc.coef.bs[,,i])
+    #' array: bootstrap x species x coefs
+    CFn <- array(0, c(nrow(xCFn), ncol(xCFn), B),
+        dimnames=list(rownames(xCFn), colnames(xCFn), NULL))
+    for (i in 1:B) {
+        cfn <- en$Coef.bs[,,i]
+        colnames(cfn) <- gsub("BlackSpruce", "TreedBog", colnames(cfn))
+        cfn <- cbind(cfn,
+            TreedFenR=cfn[,"TreedFen"],
+            TreedFen1=cfn[,"TreedFen"],
+            TreedFen2=cfn[,"TreedFen"],
+            TreedFen3=cfn[,"TreedFen"],
+            TreedFen4=cfn[,"TreedFen"],
+            TreedFen5=cfn[,"TreedFen"],
+            TreedFen6=cfn[,"TreedFen"],
+            TreedFen7=cfn[,"TreedFen"],
+            TreedFen8=cfn[,"TreedFen"],
+            Rural=cfn[,"UrbInd"],
+            Urban=cfn[,"UrbInd"],
+            Industrial=cfn[,"UrbInd"],
+            Mine=0, MineV=0, Water=0,
+            GrassHerb=cfn[,"Grass"])
+        cfn <- cfn[,!(colnames(cfn) %in% c("TreedFen", "UrbInd", "Grass"))]
+        CFn[,,i] <- cbind(qlogis(cfn), en$Sc.coef.bs[,,i])
+    }
+
+
+    #' # South
+    #' Combine together the pieces into a logit scaled matrix (no surrounding effects)
+    i <- 1
+    cfs <- es$Coef.bs[,,i]
+    cfs <- cbind(cfs,
+            Rural=cfs[,"UrbInd"],
+            Urban=cfs[,"UrbInd"],
+            Industrial=cfs[,"UrbInd"],
+            Mine=0, MineV=0, Water=0)
+    cfs <- cfs[,colnames(cfs) != "UrbInd"]
+    xCFs <- cbind(qlogis(cfs), pAspen=es$Coef.pAspen.bs[[i]], es$Sc.coef.bs[,,i])
+    #' array: bootstrap x species x coefs
+    CFs <- array(0, c(nrow(xCFs), ncol(xCFs), B),
+        dimnames=list(rownames(xCFs), colnames(xCFs), NULL))
+    for (i in 1:B) {
+        cfs <- es$Coef.bs[,,i]
+        cfs <- cbind(cfs,
+            Rural=cfs[,"UrbInd"],
+            Urban=cfs[,"UrbInd"],
+            Industrial=cfs[,"UrbInd"],
+            Mine=0, MineV=0, Water=0)
+        cfs <- cfs[,colnames(cfs) != "UrbInd"]
+        CFs[,,i] <- cbind(qlogis(cfs), pAspen=es$Coef.pAspen.bs[[i]], es$Sc.coef.bs[,,i])
+    }
+    CFn[CFn < -10^4] <- -10^4
+    CFn[CFn > 10^4] <- 10^4
+    CFs[CFs < -10^4] <- -10^4
+    CFs[CFs > 10^4] <- 10^4
+
+    COEFS[[taxon]] <- list(north=CFn, south=CFs)
+
+}
+
+save(COEFS, file="s:/AB_data_v2020/Results/COEFS-EAboot.RData")
+
+
 #' Birds
 #'
 #' Organize coefs: compare land cover classes N/S
@@ -182,7 +301,7 @@ Xs <- get_model_matrix(es$DAT, es$mods)
 Xage <- as.matrix(read.csv("~/repos/abmianalytics/lookup/Xn-veg-v2020.csv"))
 colnames(Xage) <- colnames(Xn)[match(colnames(Xage), make.names(colnames(Xn)))]
 
-load("s:/AB_data_v2020/Results/COEFS-EA.RData")
+load("s:/AB_data_v2020/Results/COEFS-EAboot.RData")
 
 get_coef_north <- function(resn, STAGE="ARU", subset=1, ...) {
     estn <- suppressWarnings(get_coef(resn, Xn, stage=STAGE, na.out=FALSE))
@@ -372,7 +491,8 @@ load(file.path(ROOT, "ab-birds-all-2020-09-23.RData"), envir=ee)
 TAX <- ee$tax
 rm(ee)
 
-load("s:/AB_data_v2020/Results/COEFS-EA.RData")
+#load("s:/AB_data_v2020/Results/COEFS-EA.RData")
+load("s:/AB_data_v2020/Results/COEFS-EAboot.RData")
 load("s:/AB_data_v2020/Results/BIRDS-North.RData")
 load("s:/AB_data_v2020/Results/BIRDS-South.RData")
 
@@ -395,37 +515,39 @@ cnb <- c("pWater_KM", "pWater2_KM", "xPET",
     "xMAT", "xAHM", "xFFP", "xMAP", "xMWMT", "xMCMT", "xY", "xX",
     "xY2", "xX2", "xFFP:xMAP", "xMAP:xPET", "xAHM:xMAT", "xX:xY")
 
+BMAX <- 100
+
 # south
 spp <- 1
-B <- min(100, nrow(cfs[[spp]]$estSpace))
+B <- min(BMAX, nrow(cfs[[spp]]$estSpace))
 cfsm <- rbind(log(cfs[[spp]]$coefARU), pAspen=cfs[[spp]]$estARU[1:B,"pAspen"])
 cfsj <- rbind(log(cfs[[spp]]$coefSpace), t(cfs[[spp]]$estSpace[1:B,c("pAspen", cnb)]))
 cfsm[cfsm > 10^4] <- 10^4
 cfsm[cfsm < -10^4] <- -10^4
 cfsj[cfsj > 10^4] <- 10^4
 cfsj[cfsj < -10^4] <- -10^4
-if (ncol(cfsm) < 100) {
-    b <- sample.int(ncol(cfsm), 100-ncol(cfsm), replace=TRUE)
+if (ncol(cfsm) < BMAX) {
+    b <- sample.int(ncol(cfsm), BMAX-ncol(cfsm), replace=TRUE)
     cfsm <- cbind(cfsm, cfsm[,b])
     cfsj <- cbind(cfsj, cfsj[,b])
 }
 compare_sets(rownames(cfsm),dimnames(COEFS$lichens$south)[[2]])
 
-CFsm <- array(0, c(length(cfs), nrow(cfsm), 100))
+CFsm <- array(0, c(length(cfs), nrow(cfsm), BMAX))
 dimnames(CFsm) <- list(names(cfs), rownames(cfsm), NULL)
-CFsj <- array(0, c(length(cfs), nrow(cfsj), 100))
+CFsj <- array(0, c(length(cfs), nrow(cfsj), BMAX))
 dimnames(CFsj) <- list(names(cfs), rownames(cfsj), NULL)
 
 for (spp in names(cfs)) {
-    B <- min(100, nrow(cfs[[spp]]$estSpace))
+    B <- min(BMAX, nrow(cfs[[spp]]$estSpace))
     cfsm <- rbind(log(cfs[[spp]]$coefARU), pAspen=cfs[[spp]]$estARU[1:B,"pAspen"])
     cfsj <- rbind(log(cfs[[spp]]$coefSpace), t(cfs[[spp]]$estSpace[1:B,c("pAspen", cnb)]))
     cfsm[cfsm > 10^4] <- 10^4
     cfsm[cfsm < -10^4] <- -10^4
     cfsj[cfsj > 10^4] <- 10^4
     cfsj[cfsj < -10^4] <- -10^4
-    if (ncol(cfsm) < 100) {
-        b <- sample.int(ncol(cfsm), 100-ncol(cfsm), replace=TRUE)
+    if (ncol(cfsm) < BMAX) {
+        b <- sample.int(ncol(cfsm), BMAX-ncol(cfsm), replace=TRUE)
         cfsm <- cbind(cfsm, cfsm[,b])
         cfsj <- cbind(cfsj, cfsj[,b])
     }
@@ -435,35 +557,35 @@ for (spp in names(cfs)) {
 
 # north
 spp <- 1
-B <- min(100, nrow(cfn[[spp]]$estSpace))
+B <- min(BMAX, nrow(cfn[[spp]]$estSpace))
 cfnm <- rbind(log(cfn[[spp]]$coefARU))
 cfnj <- rbind(log(cfn[[spp]]$coefSpace), t(cfn[[spp]]$estSpace[1:B,cnb]))
 cfnm[cfnm > 10^4] <- 10^4
 cfnm[cfnm < -10^4] <- -10^4
 cfnj[cfnj > 10^4] <- 10^4
 cfnj[cfnj < -10^4] <- -10^4
-if (ncol(cfnm) < 100) {
-    b <- sample.int(ncol(cfnm), 100-ncol(cfnm), replace=TRUE)
+if (ncol(cfnm) < BMAX) {
+    b <- sample.int(ncol(cfnm), BMAX-ncol(cfnm), replace=TRUE)
     cfnm <- cbind(cfnm, cfnm[,b])
     cfnj <- cbind(cfnj, cfnj[,b])
 }
 compare_sets(rownames(cfnm),dimnames(COEFS$lichens$north)[[2]])
 
-CFnm <- array(0, c(length(cfn), nrow(cfnm), 100))
+CFnm <- array(0, c(length(cfn), nrow(cfnm), BMAX))
 dimnames(CFnm) <- list(names(cfn), rownames(cfnm), NULL)
-CFnj <- array(0, c(length(cfn), nrow(cfnj), 100))
+CFnj <- array(0, c(length(cfn), nrow(cfnj), BMAX))
 dimnames(CFnj) <- list(names(cfn), rownames(cfnj), NULL)
 
 for (spp in names(cfn)) {
-    B <- min(100, nrow(cfn[[spp]]$estSpace))
+    B <- min(BMAX, nrow(cfn[[spp]]$estSpace))
     cfnm <- rbind(log(cfn[[spp]]$coefARU))
     cfnj <- rbind(log(cfn[[spp]]$coefSpace), t(cfn[[spp]]$estSpace[1:B,cnb]))
     cfnm[cfnm > 10^4] <- 10^4
     cfnm[cfnm < -10^4] <- -10^4
     cfnj[cfnj > 10^4] <- 10^4
     cfnj[cfnj < -10^4] <- -10^4
-    if (ncol(cfnm) < 100) {
-        b <- sample.int(ncol(cfnm), 100-ncol(cfnm), replace=TRUE)
+    if (ncol(cfnm) < BMAX) {
+        b <- sample.int(ncol(cfnm), BMAX-ncol(cfnm), replace=TRUE)
         cfnm <- cbind(cfnm, cfnm[,b])
         cfnj <- cbind(cfnj, cfnj[,b])
     }

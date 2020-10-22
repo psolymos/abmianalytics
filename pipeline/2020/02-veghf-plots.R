@@ -410,6 +410,7 @@ RESULTS <- list(
     soilhfnontreed=list(),
     soilhftreed=list()
 )
+SPECIES <- NULL
 
 for (taxon in TAXA) {
     if (!dir.exists(file.path(ROOT, taxon)))
@@ -417,8 +418,8 @@ for (taxon in TAXA) {
     ## North
     A <- if (taxon == "birds")
         COEFS[[taxon]]$north$marginal else COEFS[[taxon]]$north
-    SPP <- dimnames(A)[[1]]
-    for (spp in SPP) {
+    SPPn <- dimnames(A)[[1]]
+    for (spp in SPPn) {
         cat(taxon, spp, "north\n")
         flush.console()
 
@@ -440,8 +441,8 @@ for (taxon in TAXA) {
     ## south
     A <- if (taxon == "birds")
         COEFS[[taxon]]$south$marginal else COEFS[[taxon]]$south
-    SPP <- dimnames(A)[[1]]
-    for (spp in SPP) {
+    SPPs <- dimnames(A)[[1]]
+    for (spp in SPPs) {
         cat(taxon, spp, "south\n")
         flush.console()
 
@@ -467,13 +468,17 @@ for (taxon in TAXA) {
         RESULTS$soilhftreed[[spp]] <- shf1
         ## linear N plot
         png(file.path(ROOT, taxon, spp, "lin-south.png"), width=500, height=500)
-        linn <- .plot_abundance_lin_2020(cf, main=spp, veg=FALSE, bird=taxon=="birds")
+        lins <- .plot_abundance_lin_2020(cf, main=spp, veg=FALSE, bird=taxon=="birds")
         dev.off()
-        RESULTS$linn[[spp]] <- linn
+        RESULTS$lins[[spp]] <- lins
     }
+
+    SPP <- data.frame(sppid=sort(unique(c(SPPn, SPPs))), taxon=taxon)
+    SPP$north <- SPP$sppid %in% SPPn
+    SPP$south <- SPP$sppid %in% SPPs
+    SPECIES <- rbind(SPECIES, SPP)
 
 }
 
-save(RESULTS, file="s:/AB_data_v2020/Results/BB-ESTIMATES.RData")
-
+save(RESULTS, SPECIES, file="s:/AB_data_v2020/Results/BB-ESTIMATES.RData")
 
