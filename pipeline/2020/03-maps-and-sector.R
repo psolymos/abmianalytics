@@ -1,30 +1,16 @@
-
 ## mapping and sector effects
+library(mefa4)
 
+load("s:/AB_data_v2020/Results/COEFS-ALL.RData")
+load("d:/abmi/AB_data_v2020/data/analysis/kgrid_table_km.RData") # kgrid
+## chSoil/chVeg/trSoil/trVeg
 load("d:/abmi/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2018_transitions_wide.RData")
-load("d:/abmi/AB_data_v2020/data/analysis/kgrid_table_km.RData")
+trVeg <- trVeg[rownames(kgrid),rownames(chVeg)]
+trSoil <- trSoil[rownames(kgrid),rownames(chSoil)]
 
+## common functions and variables
 
-ksc <- dd_2018$soil_current
-ksc <- ksc / ifelse(rowSums(ksc) > 0, rowSums(ksc), 1)
-
-cns <- rownames(COEFS$mites$south[1,,])
-cns0 <- cns[1:(which(cns=="Intercept")-2)]
-cns1 <- cns[which(cns=="Intercept"):length(cns)]
-cnn <- rownames(COEFS$mites$north[1,,])
-cnn0 <- cnn[1:(which(cnn=="Intercept")-1)]
-cnn1 <- cnn[which(cnn=="Intercept"):length(cnn)]
-all(cns1==cnn1)
-
-LTs <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v2020.csv")
-rownames(LTs) <- LTs[,1]
-LTs$Map <- as.character(LTs$UseInAnalysis)
-LTs$Map[LTs$Map == "Well"] <- "Wellsites"
-LTs$Map[LTs$Map %in% c("SoilWater", "HWater")] <- "Water"
-LTs$Map[LTs$Map %in% c("SoilUnknown", "HFor")] <- "UNK"
-LTs <- LTs[,c("Map", "Sector")]
-
-
+## organize space-climate variables using kgrid table
 make_clim <- function(x, birds=FALSE) {
     if (birds) {
         z <- with(x, cbind(
@@ -67,13 +53,40 @@ make_clim <- function(x, birds=FALSE) {
             MAT2=x$MAT^2,
             MWMT2=x$MWMT^2))
     }
+    rownames(z) <- rownames(x)
     z
 }
+## making space-climate model matrix
+Xclim_bird <- make_clim(kgrid, birds=TRUE)
+Xclim_nonb <- make_clim(kgrid, birds=FALSE)
 
-## south - non birds
+kgrid$useN <- !(kgrid$NRNAME %in% c("Grassland", "Parkland") | kgrid$NSRNAME == "Dry Mixedwood")
+kgrid$useN[kgrid$NSRNAME == "Dry Mixedwood" & kgrid$POINT_Y > 56.7] <- TRUE
+kgrid$useS <- kgrid$NRNAME == "Grassland"
 
+Xclim_bird_S <- Xclim_bird[!kgrid$useN,]
+Xclim_nonb_S <- Xclim_nonb[!kgrid$useN,]
+pA <- kgrid[!kgrid$useN, "pAspen"]
+Xclim_bird_N <- Xclim_bird[!kgrid$useS,]
+Xclim_nonb_N <- Xclim_nonb[!kgrid$useS,]
+
+## weights for overlap region
+load("d:/abmi/AB_data_v2019/misc/overlap/OverlapReg.RData")
+rownames(OverlapReg) <- OverlapReg$LinkID
+OverlapReg$pAspen <- kgrid[rownames(OverlapReg), "pAspen"]
+OverlapReg$wN <- OverlapReg$pAspen / (OverlapReg$pAspen + (1-OverlapReg$pForest))
+
+kgrid$wN <- ifelse(kgrid$NRNAME == "Grassland", 0, 1)
+kgrid[rownames(OverlapReg), "wN"] <- OverlapReg$wN
+kgrid$wN[kgrid$useN] <- 1
+summary(kgrid$wN[kgrid$useS]) # S only
+summary(kgrid$wN[kgrid$useN]) # N only
+summary(kgrid$wN[!kgrid$useS & !kgrid$useN]) # overlap
+
+
+## lookup tables
 lt <- list(
-    south=structure(list(Map = c("ClaySub", "Other", "Other", "Other",
+    south=structure(list(Label = c("ClaySub", "Other", "Other", "Other",
         "Other", "Other", "RapidDrain", "Loamy", "Other", "Other", "Other",
         "Other", "Other", "Other", "ClaySub", "SandyLoam", "RapidDrain",
         "RapidDrain", "RapidDrain", "RapidDrain", "RapidDrain", "ThinBreak",
@@ -104,6 +117,185 @@ lt <- list(
         "CultivationTamePasture", "HighDensityLivestockOperation", "BorrowpitsDugoutsSumps",
         "MunicipalWaterSewage", "Reservoirs", "Canals", "CutBlocks"), class = "data.frame"),
     north=list())
+
+
+## process south monster matrix and find some efficiencies
+
+compare_sets(chSoil$cr, rownames(lt$south))
+compare_sets(chSoil$rf, rownames(lt$south))
+chSoil$cr2 <- lt$south$Label[match(chSoil$cr, rownames(lt$south))]
+chSoil$rf2 <- lt$south$Label[match(chSoil$rf, rownames(lt$south))]
+#chSoil$sector2 <- lt$south$Sector[match(chSoil$cr, rownames(lt$south))]
+#with(chSoil, table(sector, sector2)) # sector definition is up to date
+
+## define sectors to be used here
+chSoil$sector_use <- chSoil$sector
+
+# aggregating the monster matrix
+chSoil$tr2 <- paste0(chSoil$rf2, "->", chSoil$cr2)
+chSoil$tr2[chSoil$rf2 == chSoil$cr2] <- chSoil$rf2[chSoil$rf2 == chSoil$cr2]
+chSoil$tr2[chSoil$cr2=="UNK" | chSoil$rf2=="UNK"] <- "UNK"
+length(unique(chSoil$tr2))/nrow(chSoil) # savings!
+
+table(rn=grepl("UNK", rownames(chSoil)), tr2=chSoil$tr2=="UNK")
+
+trSoil <- groupSums(trSoil, 2, chSoil$tr2)
+chSoil <- nonDuplicated(chSoil, tr2, TRUE)[colnames(trSoil),c("sector_use","cr2", "rf2")]
+## either sol inf is unknown or Sector is Forestry --> exclude these
+s <- chSoil$cr2=="UNK" | chSoil$rf2=="UNK" | rownames(chSoil) == "UNK"
+chSoil[s,]
+trSoil <- trSoil[,!s]
+chSoil <- chSoil[!s,]
+
+## reference=water is not part of the landbase, so does not count for averaging
+s <- chSoil$rf2=="Water" | chSoil$cr2=="Water"
+chSoil[s,]
+## but some of this is not Water->Water: we cannot attribute and it is implausible
+sum(trSoil[,s])/sum(trSoil) - sum(trSoil[,chSoil$rf2=="Water" & chSoil$cr2=="Water"])/sum(trSoil)
+## so we drop this ~3% together with open water
+trSoil <- trSoil[,!s]
+chSoil <- chSoil[!s,]
+
+## now we make sure rows sum to 1 (or 0)
+rs <- rowSums(trSoil)
+Ps <- trSoil / ifelse(rs > 0, rs, 1)
+## take subset that contains only the south study region
+Ps <- Ps[!kgrid$useN,]
+summary(rowSums(Ps))
+
+## here comes trVeg processing
+
+## here comes the N/S weight variable
+
+## figure out if a species is N/S/Combo
+
+spp <- "AlderFlycatcher"
+taxon <- "birds"
+
+spp <- "Actaea.rubra"
+taxon <- "vplants"
+
+i <- 1
+
+type <- "C" # combo species (N+S)
+if (taxon == "birds") {
+    M <- list(
+        N=spp %in% dimnames( COEFS[[taxon]]$north$joint)[[1]],
+        S=spp %in% dimnames( COEFS[[taxon]]$south$joint)[[1]])
+    if (M$N & !M$S)
+        type <- "N"
+    if (!M$N & M$S)
+        type <- "S"
+    cfn <- if (type == "S")
+        NULL else COEFS[[taxon]]$north$joint[spp,,]
+    cfs <- if (type == "N")
+        NULL else COEFS[[taxon]]$south$joint[spp,,]
+    XclimS <- Xclim_bird_S
+    XclimN <- Xclim_bird_N
+    FUN <- poisson()$linkinv
+} else {
+    M <- list(
+        N=spp %in% dimnames( COEFS[[taxon]]$north)[[1]],
+        S=spp %in% dimnames( COEFS[[taxon]]$south)[[1]])
+    if (M$N & !M$S)
+        type <- "N"
+    if (!M$N & M$S)
+        type <- "S"
+    cfn <- if (type == "S")
+        NULL else COEFS[[taxon]]$north[spp,,]
+    cfs <- if (type == "N")
+        NULL else COEFS[[taxon]]$south[spp,,]
+    XclimS <- Xclim_nonb_S
+    XclimN <- Xclim_nonb_N
+    FUN <- binomial()$linkinv
+}
+
+if (type != "N") {
+    ## south calculations for the i'th run
+    #compare_sets(rownames(cfs), chSoil$cr2)
+    bscr <- cfs[chSoil$cr2, i] # current land cover
+    bsrf <- cfs[chSoil$rf2, i] # reference land cover
+    ## space-climate coefs
+    bscl <- if (taxon == "birds")
+        cfs[colnames(Xclim_bird), i] else cfs[colnames(Xclim_nonb), i]
+    bspa <- cfs["pAspen", i]
+    ## additive components for south
+    muscl <- drop(XclimS %*% bscl)
+    muspa <- pA * bspa
+    mus <- as.matrix(0*Ps)
+    mus[] <- muscl + muspa
+    muscr <- t(t(mus) + bscr)
+    musrf <- t(t(mus) + bsrf)
+    NScr <- as.matrix(groupSums(Ps * FUN(muscr), 2, chSoil$sector_use))
+    NSrf <- as.matrix(groupSums(Ps * FUN(musrf), 2, chSoil$sector_use))
+} else {
+    NScr <- NULL
+    NSrf <- NULL
+}
+if (type != "S") {
+    ## north calculations for the i'th run
+    #compare_sets(rownames(cfn), chVeg$cr2)
+    bncr <- cfn[chVeg$cr2, i] # current land cover
+    bnrf <- cfn[chVeg$rf2, i] # reference land cover
+    ## space-climate coefs
+    bncl <- if (taxon == "birds")
+        cfn[colnames(Xclim_bird), i] else cfn[colnames(Xclim_nonb), i]
+    ## additive components for north
+    muncl <- drop(XclimN %*% bncl)
+    mun <- as.matrix(0*Pn)
+    mun[] <- muscl
+    muncr <- t(t(mun) + bncr)
+    munrf <- t(t(mun) + nsrf)
+    NNcr <- as.matrix(groupSums(Pn * FUN(muncr), 2, chVeg$sector_use))
+    NNrf <- as.matrix(groupSums(Pn * FUN(munrf), 2, chVeg$sector_use))
+} else {
+    NNcr <- NULL
+    NNrf <- NULL
+}
+
+## combine NS and NN together (weighted avg in overlap zone) for species with Combo (N+S)
+if (type == "C") {
+    # averaging comes here
+    NNcr <- NNcr[rownames(kgrid),]
+    NNrf <- NNrf[rownames(kgrid),]
+    NNcr[is.na(NNcr)] <- 0
+    NNrf[is.na(NNrf)] <- 0
+    NScr <- NNcr[rownames(kgrid),]
+    NSrf <- NNrf[rownames(kgrid),]
+    NScr[is.na(NScr)] <- 0
+    NSrf[is.na(NSrf)] <- 0
+    Ncr <- kgrid$wN * NNcr + (1-kgrid$wN) * NScr
+    Nrf <- kgrid$wN * NNrf + (1-kgrid$wN) * NSrf
+}
+if (type == "S") {
+    Ncr <- NScr
+    Nrf <- NSrf
+}
+if (type == "N") {
+    Ncr <- NNcr
+    Nrf <- NNrf
+}
+
+
+ksc <- dd_2018$soil_current
+ksc <- ksc / ifelse(rowSums(ksc) > 0, rowSums(ksc), 1)
+
+cns <- rownames(COEFS$mites$south[1,,])
+cns0 <- cns[1:(which(cns=="Intercept")-2)]
+cns1 <- cns[which(cns=="Intercept"):length(cns)]
+cnn <- rownames(COEFS$mites$north[1,,])
+cnn0 <- cnn[1:(which(cnn=="Intercept")-1)]
+cnn1 <- cnn[which(cnn=="Intercept"):length(cnn)]
+all(cns1==cnn1)
+
+LTs <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v2020.csv")
+rownames(LTs) <- LTs[,1]
+LTs$Map <- as.character(LTs$UseInAnalysis)
+LTs$Map[LTs$Map == "Well"] <- "Wellsites"
+LTs$Map[LTs$Map %in% c("SoilWater", "HWater")] <- "Water"
+LTs$Map[LTs$Map %in% c("SoilUnknown", "HFor")] <- "UNK"
+LTs <- LTs[,c("Map", "Sector")]
+
 
 
 ## -- this is not for sector effects!
