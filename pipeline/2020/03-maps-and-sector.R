@@ -288,146 +288,198 @@ chVcr <- nonDuplicated(chVeg, cr2s, TRUE)[colnames(Pncr), c("cr2", "sector_use")
 sapply(chSoil,function(z) nlevels(droplevels(as.factor(z))))/ncol(Ps)
 sapply(chVeg,function(z) nlevels(droplevels(as.factor(z))))/ncol(Pn)
 
+## this is the current landscape only
+Pncr2 <- groupSums(Pn, 2, chVeg$cr2)
+Pscr2 <- groupSums(Ps, 2, chSoil$cr2)
 
 ## species specific part begins here
 
-spp <- "AlderFlycatcher"
-taxon <- "birds"
+#spp <- "AlderFlycatcher"
+#taxon <- "birds"
 
-spp <- "Actaea.rubra"
-taxon <- "vplants"
+#spp <- "Actaea.rubra"
+#taxon <- "vplants"
 
-i <- 1
+BOOT <- FALSE # do bootstrap?
+SEFF <- TRUE  # non bootstrapped map/SE stuff
 
 ROOT <- "s:/AB_data_v2020/Results/pred"
+ROOT2 <- "s:/AB_data_v2020/Results/boot"
 
 for (taxon in names(COEFS)) {
 
-if (!dir.exists(file.path(ROOT, taxon)))
-    dir.create(file.path(ROOT, taxon))
+    if (!dir.exists(file.path(ROOT, taxon)))
+        dir.create(file.path(ROOT, taxon))
+    if (!dir.exists(file.path(ROOT2, taxon)))
+        dir.create(file.path(ROOT2, taxon))
 
-SPPn <- if (taxon!="birds")
-    dimnames(COEFS[[taxon]]$north)[[1]] else dimnames(COEFS[[taxon]]$north$joint)[[1]]
-SPPs <- if (taxon!="birds")
-    dimnames(COEFS[[taxon]]$south)[[1]] else dimnames(COEFS[[taxon]]$south$joint)[[1]]
-SPP <- sort(union(SPPn, SPPs))
+    SPPn <- if (taxon!="birds")
+        dimnames(COEFS[[taxon]]$north)[[1]] else dimnames(COEFS[[taxon]]$north$joint)[[1]]
+    SPPs <- if (taxon!="birds")
+        dimnames(COEFS[[taxon]]$south)[[1]] else dimnames(COEFS[[taxon]]$south$joint)[[1]]
+    SPP <- sort(union(SPPn, SPPs))
 
-for (spp in SPP) {
+    for (spp in SPP) {
 
-t0 <- proc.time()
-cat(taxon, spp)
-flush.console()
+        t0 <- proc.time()
+        cat(taxon, spp)
+        flush.console()
+
+        type <- "C" # combo species (N+S)
+        M <- list(N=spp %in% SPPn, S=spp %in% SPPs)
+        if (M$N & !M$S)
+            type <- "N"
+        if (!M$N & M$S)
+            type <- "S"
+        if (taxon == "birds") {
+            cfn <- if (type == "S")
+                NULL else COEFS[[taxon]]$north$joint[spp,,]
+            cfs <- if (type == "N")
+                NULL else COEFS[[taxon]]$south$joint[spp,,]
+            XclimS <- Xclim_bird_S
+            XclimN <- Xclim_bird_N
+            #FUN <- poisson()$linkinv
+            FUN <- function (eta)
+                pmin(pmax(exp(eta), .Machine$double.eps), .Machine$double.xmax)
+        } else {
+            cfn <- if (type == "S")
+                NULL else COEFS[[taxon]]$north[spp,,]
+            cfs <- if (type == "N")
+                NULL else COEFS[[taxon]]$south[spp,,]
+            XclimS <- Xclim_nonb_S
+            XclimN <- Xclim_nonb_N
+            FUN <- binomial()$linkinv
+        }
 
 
-type <- "C" # combo species (N+S)
-M <- list(N=spp %in% SPPn, S=spp %in% SPPs)
-if (M$N & !M$S)
-    type <- "N"
-if (!M$N & M$S)
-    type <- "S"
-if (taxon == "birds") {
-    cfn <- if (type == "S")
-        NULL else COEFS[[taxon]]$north$joint[spp,,]
-    cfs <- if (type == "N")
-        NULL else COEFS[[taxon]]$south$joint[spp,,]
-    XclimS <- Xclim_bird_S
-    XclimN <- Xclim_bird_N
-    FUN <- poisson()$linkinv
-} else {
-    cfn <- if (type == "S")
-        NULL else COEFS[[taxon]]$north[spp,,]
-    cfs <- if (type == "N")
-        NULL else COEFS[[taxon]]$south[spp,,]
-    XclimS <- Xclim_nonb_S
-    XclimN <- Xclim_nonb_N
-    FUN <- binomial()$linkinv
-}
+        ## bootstrap for current map
+        ## note: it is still slow. wait and run final set on westgid
+        if (BOOT) {
+            for (i in 1:B) {
+                if (type != "N") {
+                    gc()
+                    ## south calculations for the i'th run
+                    bscr <- cfs[colnames(Pscr2), i] # current land cover
+                    ## space-climate coefs
+                    bscl <- if (taxon == "birds")
+                        cfs[colnames(Xclim_bird), i] else cfs[colnames(Xclim_nonb), i]
+                    bspa <- cfs["pAspen", i]
+                    ## additive components for south
+                    muscl <- drop(XclimS %*% bscl)
+                    muspa <- pA * bspa
+                    muscr <- matrix(muscl + muspa, nrow=nrow(Pscr2), ncol=ncol(Pscr2))
+                    muscr <- t(t(muscr) + bscr)
+                    NScr <- rowSums(Pscr2 * FUN(muscr))
+                } else {
+                    NScr <- NULL
+                }
+                if (type != "S") {
+                    gc()
+                    ## north calculations for the i'th run
+                    tmpn <- c(cfn[,i], Bare=-10^4, SnowIce= -10^4)
+                    bncr <- tmpn[colnames(Pncr2)] # current land cover
+                    ## space-climate coefs
+                    bncl <- if (taxon == "birds")
+                        cfn[colnames(Xclim_bird), i] else cfn[colnames(Xclim_nonb), i]
+                    ## additive components for north
+                    muncl <- drop(XclimN %*% bncl)
+                    muncr <- matrix(muncl, nrow=nrow(Pncr2), ncol=ncol(Pncr2))
+                    muncr <- t(t(muncr) + bncr)
+                    NNcr <- rowSums(Pncr2 * FUN(muncr))
+                } else {
+                    NNcr <- NULL
+                }
+            }
+        }
 
-## bootstrap specific part - only doing 1 run now
+        ## only doing 1 run for sector effects
+        if (SEFF) {
+            i <- 1
+            if (type != "N") {
+                gc()
+                ## south calculations for the i'th run
+                #compare_sets(rownames(cfs), chSoil$cr2)
+                bscr <- cfs[chScr$cr2, i] # current land cover
+                bsrf <- cfs[chSrf$rf2, i] # reference land cover
+                ## space-climate coefs
+                bscl <- if (taxon == "birds")
+                    cfs[colnames(Xclim_bird), i] else cfs[colnames(Xclim_nonb), i]
+                bspa <- cfs["pAspen", i]
+                ## additive components for south
+                muscl <- drop(XclimS %*% bscl)
+                muspa <- pA * bspa
 
-if (type != "N") {
-    gc()
-    ## south calculations for the i'th run
-    #compare_sets(rownames(cfs), chSoil$cr2)
-    bscr <- cfs[chScr$cr2, i] # current land cover
-    bsrf <- cfs[chSrf$rf2, i] # reference land cover
-    ## space-climate coefs
-    bscl <- if (taxon == "birds")
-        cfs[colnames(Xclim_bird), i] else cfs[colnames(Xclim_nonb), i]
-    bspa <- cfs["pAspen", i]
-    ## additive components for south
-    muscl <- drop(XclimS %*% bscl)
-    muspa <- pA * bspa
+                muscr <- matrix(muscl + muspa, nrow=nrow(Pscr), ncol=ncol(Pscr))
+                muscr <- t(t(muscr) + bscr)
+                NScr <- as.matrix(groupSums(Pscr * FUN(muscr), 2, chScr$sector_use))
 
-    muscr <- matrix(muscl + muspa, nrow=nrow(Pscr), ncol=ncol(Pscr))
-    muscr <- t(t(muscr) + bscr)
-    NScr <- as.matrix(groupSums(Pscr * FUN(muscr), 2, chScr$sector_use))
+                musrf <- matrix(muscl + muspa, nrow=nrow(Psrf), ncol=ncol(Psrf))
+                musrf <- t(t(musrf) + bsrf)
+                NSrf <- as.matrix(groupSums(Psrf * FUN(musrf), 2, chSrf$sector_use))
+            } else {
+                NScr <- NULL
+                NSrf <- NULL
+            }
+            if (type != "S") {
+                gc()
+                ## north calculations for the i'th run
+                #compare_sets(rownames(cfn), chVeg$cr2)
+                tmpn <- c(cfn[,i], Bare=-10^4, SnowIce= -10^4)
+                bncr <- tmpn[chVcr$cr2] # current land cover
+                bnrf <- tmpn[chVrf$rf2] # reference land cover
+                ## space-climate coefs
+                bncl <- if (taxon == "birds")
+                    cfn[colnames(Xclim_bird), i] else cfn[colnames(Xclim_nonb), i]
+                ## additive components for north
+                muncl <- drop(XclimN %*% bncl)
+                muncr <- matrix(muncl, nrow=nrow(Pncr), ncol=ncol(Pncr))
+                muncr <- t(t(muncr) + bncr)
+                NNcr <- as.matrix(groupSums(Pncr * FUN(muncr), 2, chVcr$sector_use))
+                munrf <- matrix(muncl, nrow=nrow(Pnrf), ncol=ncol(Pnrf))
+                munrf <- t(t(munrf) + bnrf)
+                NNrf <- as.matrix(groupSums(Pnrf * FUN(munrf), 2, chVrf$sector_use))
+            } else {
+                NNcr <- NULL
+                NNrf <- NULL
+            }
 
-    musrf <- matrix(muscl + muspa, nrow=nrow(Psrf), ncol=ncol(Psrf))
-    musrf <- t(t(musrf) + bsrf)
-    NSrf <- as.matrix(groupSums(Psrf * FUN(musrf), 2, chSrf$sector_use))
-} else {
-    NScr <- NULL
-    NSrf <- NULL
-}
-if (type != "S") {
-    gc()
-    ## north calculations for the i'th run
-    #compare_sets(rownames(cfn), chVeg$cr2)
-    tmpn <- c(cfn[,i], Bare=-10^4, SnowIce= -10^4)
-    tmps <- c(cfs[,i], Bare=-10^4, SnowIce= -10^4)
-    bncr <- tmpn[chVcr$cr2] # current land cover
-    bnrf <- tmpn[chVrf$rf2] # reference land cover
-    ## space-climate coefs
-    bncl <- if (taxon == "birds")
-        cfn[colnames(Xclim_bird), i] else cfn[colnames(Xclim_nonb), i]
-    ## additive components for north
-    muncl <- drop(XclimN %*% bncl)
-    muncr <- matrix(muncl, nrow=nrow(Pncr), ncol=ncol(Pncr))
-    muncr <- t(t(muncr) + bncr)
-    NNcr <- as.matrix(groupSums(Pncr * FUN(muncr), 2, chVcr$sector_use))
-    munrf <- matrix(muncl, nrow=nrow(Pnrf), ncol=ncol(Pnrf))
-    munrf <- t(t(munrf) + bnrf)
-    NNrf <- as.matrix(groupSums(Pnrf * FUN(munrf), 2, chVrf$sector_use))
-} else {
-    NNcr <- NULL
-    NNrf <- NULL
-}
+            ## combine NS and NN together (weighted avg in overlap zone) for species with Combo (N+S)
+            if (type == "C") {
+                # averaging comes here
+                NNcr <- NNcr[match(rownames(kgrid), rownames(NNcr)),]
+                NNrf <- NNrf[match(rownames(kgrid), rownames(NNrf)),]
+                NNcr[is.na(NNcr)] <- 0
+                NNrf[is.na(NNrf)] <- 0
+                NScr <- NNcr[match(rownames(kgrid), rownames(NScr)),]
+                NSrf <- NNrf[match(rownames(kgrid), rownames(NSrf)),]
+                NScr[is.na(NScr)] <- 0
+                NSrf[is.na(NSrf)] <- 0
+                Ncr <- kgrid$wN * NNcr + (1-kgrid$wN) * NScr
+                Nrf <- kgrid$wN * NNrf + (1-kgrid$wN) * NSrf
+            }
+            if (type == "S") {
+                Ncr <- NScr
+                Nrf <- NSrf
+            }
+            if (type == "N") {
+                Ncr <- NNcr
+                Nrf <- NNrf
+            }
 
-## combine NS and NN together (weighted avg in overlap zone) for species with Combo (N+S)
-if (type == "C") {
-    # averaging comes here
-    NNcr <- NNcr[match(rownames(kgrid), rownames(NNcr)),]
-    NNrf <- NNrf[match(rownames(kgrid), rownames(NNrf)),]
-    NNcr[is.na(NNcr)] <- 0
-    NNrf[is.na(NNrf)] <- 0
-    NScr <- NNcr[match(rownames(kgrid), rownames(NScr)),]
-    NSrf <- NNrf[match(rownames(kgrid), rownames(NSrf)),]
-    NScr[is.na(NScr)] <- 0
-    NSrf[is.na(NSrf)] <- 0
-    Ncr <- kgrid$wN * NNcr + (1-kgrid$wN) * NScr
-    Nrf <- kgrid$wN * NNrf + (1-kgrid$wN) * NSrf
-}
-if (type == "S") {
-    Ncr <- NScr
-    Nrf <- NSrf
-}
-if (type == "N") {
-    Ncr <- NNcr
-    Nrf <- NNrf
-}
+            save(Ncr, Nrf,
+                file=file.path(ROOT, taxon, paste0(spp, ".RData")))
+            cat("\t", proc.time()[3]-t0[3], "\n")
 
-save(Ncr, Nrf,
-    file=file.path(ROOT, taxon, paste0(spp, ".RData")))
-cat("\t", proc.time()[3]-t0[3], "\n")
+        } # end SEFF
 
-}
+    }
 
 }
 
 
 
 ## -- etc
+if (FALSE) {
 
 ksc <- dd_2018$soil_current
 ksc <- ksc / ifelse(rowSums(ksc) > 0, rowSums(ksc), 1)
@@ -525,3 +577,6 @@ setdiff(v$Label, cnn0)
 
 v <- v[v$Label %in% cnn0,]
 dput(v)
+
+
+}

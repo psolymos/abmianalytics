@@ -687,3 +687,14 @@ for (i in 1:4) {
 
 }
 
+
+## TODO
+##
+## Coefs
+## - Bare, SnowIce: 0 and placeholder
+## - add Mammals
+## - heads up for 150m mammal and amphibian models
+##
+## Preds
+## - develop alternative code (current only) for bootstrap
+## -
