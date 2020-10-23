@@ -314,7 +314,8 @@ SPP <- sort(union(SPPn, SPPs))
 
 for (spp in SPP) {
 
-cat(taxon, spp, "\n")
+t0 <- proc.time()
+cat(taxon, spp)
 flush.console()
 
 
@@ -418,6 +419,7 @@ if (type == "N") {
 
 save(Ncr, Nrf,
     file=file.path(ROOT, taxon, paste0(spp, ".RData")))
+cat("\t", proc.time()[3]-t0[3], "\n")
 
 }
 
