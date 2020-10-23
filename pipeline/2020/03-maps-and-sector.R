@@ -116,7 +116,79 @@ lt <- list(
         "CultivationCrop", "CultivationAbandoned", "CultivationRoughPasture",
         "CultivationTamePasture", "HighDensityLivestockOperation", "BorrowpitsDugoutsSumps",
         "MunicipalWaterSewage", "Reservoirs", "Canals", "CutBlocks"), class = "data.frame"),
-    north=list())
+    north=structure(list(Label = c("DeciduousR", "Deciduous1", "Deciduous2",
+        "Deciduous3", "Deciduous4", "Deciduous5", "Deciduous6", "Deciduous7",
+        "Deciduous8", "MixedwoodR", "Mixedwood1", "Mixedwood2", "Mixedwood3",
+        "Mixedwood4", "Mixedwood5", "Mixedwood6", "Mixedwood7", "Mixedwood8",
+        "PineR", "Pine1", "Pine2", "Pine3", "Pine4", "Pine5", "Pine6",
+        "Pine7", "Pine8", "WhiteSpruceR", "WhiteSpruce1", "WhiteSpruce2",
+        "WhiteSpruce3", "WhiteSpruce4", "WhiteSpruce5", "WhiteSpruce6",
+        "WhiteSpruce7", "WhiteSpruce8", "TreedBogR", "TreedBog1", "TreedBog2",
+        "TreedBog3", "TreedBog4", "TreedBog5", "TreedBog6", "TreedBog7",
+        "TreedBog8", "TreedFenR", "TreedFen1", "TreedFen2", "TreedFen3",
+        "TreedFen4", "TreedFen5", "TreedFen6", "TreedFen7", "TreedFen8",
+        "TreedSwamp", "TreedSwamp", "TreedSwamp", "TreedSwamp", "TreedSwamp",
+        "TreedSwamp", "TreedSwamp", "TreedSwamp", "TreedSwamp", "GrassHerb",
+        "Shrub", "GraminoidFen", "Marsh", "ShrubbyBog", "ShrubbyFen",
+        "ShrubbySwamp", "Water", "Urban", "Urban", "Rural", "Industrial",
+        "Industrial", "Rural", "Mine", "Mine", "Wellsites", "EnSoftLin",
+        "EnSoftLin", "EnSeismic", "EnSeismic", "HardLin", "HardLin",
+        "TrSoftLin", "TrSoftLin", "TrSoftLin", "Crop", "RoughP", "RoughP",
+        "TameP", "TameP", "CCDeciduousR", "CCDeciduous1", "CCDeciduous2",
+        "CCDeciduous3", "CCDeciduous4", "CCMixedwoodR", "CCMixedwood1",
+        "CCMixedwood2", "CCMixedwood3", "CCMixedwood4", "CCPineR", "CCPine1",
+        "CCPine2", "CCPine3", "CCPine4", "CCWhiteSpruceR", "CCWhiteSpruce1",
+        "CCWhiteSpruce2", "CCWhiteSpruce3", "CCWhiteSpruce4", "Water",
+        "Water", "Water", "Water", "Water", "Water"), Sector = c("Native",
+        "Native", "Native", "Native", "Native", "Native", "Native", "Native",
+        "Native", "Native", "Native", "Native", "Native", "Native", "Native",
+        "Native", "Native", "Native", "Native", "Native", "Native", "Native",
+        "Native", "Native", "Native", "Native", "Native", "Native", "Native",
+        "Native", "Native", "Native", "Native", "Native", "Native", "Native",
+        "Native", "Native", "Native", "Native", "Native", "Native", "Native",
+        "Native", "Native", "Native", "Native", "Native", "Native", "Native",
+        "Native", "Native", "Native", "Native", "Native", "Native", "Native",
+        "Native", "Native", "Native", "Native", "Native", "Native", "Native",
+        "Native", "Native", "Native", "Native", "Native", "Native", "Native",
+        "RuralUrban", "RuralUrban", "RuralUrban", "RuralUrban", "Energy",
+        "Misc", "Energy", "Misc", "Energy", "Energy", "Energy", "Energy",
+        "Energy", "Transportation", "Transportation", "Transportation",
+        "Transportation", "Transportation", "Agriculture", "Agriculture",
+        "Agriculture", "Agriculture", "Agriculture", "Forestry", "Forestry",
+        "Forestry", "Forestry", "Forestry", "Forestry", "Forestry", "Forestry",
+        "Forestry", "Forestry", "Forestry", "Forestry", "Forestry", "Forestry",
+        "Forestry", "Forestry", "Forestry", "Forestry", "Forestry", "Forestry",
+        "Misc", "Misc", "Misc", "Misc", "Misc", "Misc")), row.names = c("DecidR",
+        "Decid1", "Decid2", "Decid3", "Decid4", "Decid5", "Decid6", "Decid7",
+        "Decid8", "MixedwoodR", "Mixedwood1", "Mixedwood2", "Mixedwood3",
+        "Mixedwood4", "Mixedwood5", "Mixedwood6", "Mixedwood7", "Mixedwood8",
+        "PineR", "Pine1", "Pine2", "Pine3", "Pine4", "Pine5", "Pine6",
+        "Pine7", "Pine8", "SpruceR", "Spruce1", "Spruce2", "Spruce3",
+        "Spruce4", "Spruce5", "Spruce6", "Spruce7", "Spruce8", "TreedBogR",
+        "TreedBog1", "TreedBog2", "TreedBog3", "TreedBog4", "TreedBog5",
+        "TreedBog6", "TreedBog7", "TreedBog8", "TreedFenR", "TreedFen1",
+        "TreedFen2", "TreedFen3", "TreedFen4", "TreedFen5", "TreedFen6",
+        "TreedFen7", "TreedFen8", "TreedSwampR", "TreedSwamp1", "TreedSwamp2",
+        "TreedSwamp3", "TreedSwamp4", "TreedSwamp5", "TreedSwamp6", "TreedSwamp7",
+        "TreedSwamp8", "GrassHerb", "Shrub", "GraminoidFen", "Marsh",
+        "ShrubbyBog", "ShrubbyFen", "ShrubbySwamp", "Water", "UrbanIndustrial",
+        "UrbanResidence", "RuralResidentialIndustrial", "IndustrialSiteRural",
+        "WindGenerationFacility", "OtherDisturbedVegetation", "MineSite",
+        "PeatMine", "WellSite", "Pipeline", "TransmissionLine", "SeismicLineNarrow",
+        "SeismicLineWide", "RoadHardSurface", "RailHardSurface", "RoadTrailVegetated",
+        "RoadVegetatedVerge", "RailVegetatedVerge", "CultivationCrop",
+        "CultivationAbandoned", "CultivationRoughPasture", "CultivationTamePasture",
+        "HighDensityLivestockOperation", "CCDecidR", "CCDecid1", "CCDecid2",
+        "CCDecid3", "CCDecid4", "CCMixedwoodR", "CCMixedwood1", "CCMixedwood2",
+        "CCMixedwood3", "CCMixedwood4", "CCPineR", "CCPine1", "CCPine2",
+        "CCPine3", "CCPine4", "CCSpruceR", "CCSpruce1", "CCSpruce2",
+        "CCSpruce3", "CCSpruce4", "Bare", "BorrowpitsDugoutsSumps", "Canals",
+        "MunicipalWaterSewage", "Reservoirs", "SnowIce"), class = "data.frame"))
+
+## define sectors to be used here
+## i.e. change to attribution stuff or keep finer level transitions etc
+chVeg$sector_use <- chVeg$sector
+chSoil$sector_use <- chSoil$sector
 
 
 ## process south monster matrix and find some efficiencies
@@ -127,9 +199,6 @@ chSoil$cr2 <- lt$south$Label[match(chSoil$cr, rownames(lt$south))]
 chSoil$rf2 <- lt$south$Label[match(chSoil$rf, rownames(lt$south))]
 #chSoil$sector2 <- lt$south$Sector[match(chSoil$cr, rownames(lt$south))]
 #with(chSoil, table(sector, sector2)) # sector definition is up to date
-
-## define sectors to be used here
-chSoil$sector_use <- chSoil$sector
 
 # aggregating the monster matrix
 chSoil$tr2 <- paste0(chSoil$rf2, "->", chSoil$cr2)
@@ -165,9 +234,62 @@ summary(rowSums(Ps))
 
 ## here comes trVeg processing
 
-## here comes the N/S weight variable
+compare_sets(chVeg$cr, rownames(lt$north))
+setdiff(chVeg$cr, rownames(lt$north))
+setdiff(rownames(lt$north), chVeg$cr)
+compare_sets(chVeg$rf, rownames(lt$north))
+chVeg$cr2 <- lt$north$Label[match(chVeg$cr, rownames(lt$north))]
+chVeg$rf2 <- lt$north$Label[match(chVeg$rf, rownames(lt$north))]
+#chVeg$sector2 <- lt$north$Sector[match(chVeg$cr, rownames(lt$north))]
+#with(chVeg, table(sector, sector2)) # sector definition is up to date
 
-## figure out if a species is N/S/Combo
+# aggregating the monster matrix
+chVeg$tr2 <- paste0(chVeg$rf2, "->", chVeg$cr2)
+chVeg$tr2[chVeg$rf2 == chVeg$cr2] <- chVeg$rf2[chVeg$rf2 == chVeg$cr2]
+chVeg$tr2[chVeg$cr2=="UNK" | chVeg$rf2=="UNK"] <- "UNK"
+length(unique(chVeg$tr2))/nrow(chVeg) # savings!
+
+trVeg <- groupSums(trVeg, 2, chVeg$tr2)
+chVeg <- nonDuplicated(chVeg, tr2, TRUE)[colnames(trVeg),c("sector_use","cr2", "rf2")]
+
+## reference=water is not part of the landbase, so does not count for averaging
+s <- chVeg$rf2=="Water" | chVeg$cr2=="Water"
+chVeg[s,]
+## but some of this is not Water->Water: we cannot attribute and it is implausible
+sum(trVeg[,s])/sum(trVeg) - sum(trVeg[,chVeg$rf2=="Water" & chVeg$cr2=="Water"])/sum(trVeg)
+## so we drop this ~3% together with open water
+trVeg <- trVeg[,!s]
+chVeg <- chVeg[!s,]
+
+## now we make sure rows sum to 1 (or 0)
+rn <- rowSums(trVeg)
+Pn <- trVeg / ifelse(rn > 0, rn, 1)
+## take subset that contains only the north study region
+Pn <- Pn[!kgrid$useS,]
+summary(rowSums(Pn))
+
+
+## need to make Pscr/Psrf and Pncr/Pnrf based on cr*sector and rf*sector
+## this will reduce number of columns considerably
+chSoil$cr2s <- paste0(chSoil$cr2, "/", chSoil$sector_use)
+chSoil$rf2s <- paste0(chSoil$rf2, "/", chSoil$sector_use)
+Psrf <- groupSums(Ps, 2, chSoil$rf2s)
+chSrf <- nonDuplicated(chSoil, rf2s, TRUE)[colnames(Psrf), c("rf2", "sector_use")]
+Pscr <- groupSums(Ps, 2, chSoil$cr2s)
+chScr <- nonDuplicated(chSoil, cr2s, TRUE)[colnames(Pscr), c("cr2", "sector_use")]
+
+chVeg$cr2s <- paste0(chVeg$cr2, "/", chVeg$sector_use)
+chVeg$rf2s <- paste0(chVeg$rf2, "/", chVeg$sector_use)
+Pnrf <- groupSums(Pn, 2, chVeg$rf2s)
+chVrf <- nonDuplicated(chVeg, rf2s, TRUE)[colnames(Pnrf), c("rf2", "sector_use")]
+Pncr <- groupSums(Pn, 2, chVeg$cr2s)
+chVcr <- nonDuplicated(chVeg, cr2s, TRUE)[colnames(Pncr), c("cr2", "sector_use")]
+
+sapply(chSoil,function(z) nlevels(droplevels(as.factor(z))))/ncol(Ps)
+sapply(chVeg,function(z) nlevels(droplevels(as.factor(z))))/ncol(Pn)
+
+
+## species specific part begins here
 
 spp <- "AlderFlycatcher"
 taxon <- "birds"
@@ -210,11 +332,14 @@ if (taxon == "birds") {
     FUN <- binomial()$linkinv
 }
 
+## bootstrap specific part
+
 if (type != "N") {
+    gc()
     ## south calculations for the i'th run
     #compare_sets(rownames(cfs), chSoil$cr2)
-    bscr <- cfs[chSoil$cr2, i] # current land cover
-    bsrf <- cfs[chSoil$rf2, i] # reference land cover
+    bscr <- cfs[chScr$cr2, i] # current land cover
+    bsrf <- cfs[chSrf$rf2, i] # reference land cover
     ## space-climate coefs
     bscl <- if (taxon == "birds")
         cfs[colnames(Xclim_bird), i] else cfs[colnames(Xclim_nonb), i]
@@ -222,32 +347,35 @@ if (type != "N") {
     ## additive components for south
     muscl <- drop(XclimS %*% bscl)
     muspa <- pA * bspa
-    mus <- as.matrix(0*Ps)
-    mus[] <- muscl + muspa
-    muscr <- t(t(mus) + bscr)
-    musrf <- t(t(mus) + bsrf)
-    NScr <- as.matrix(groupSums(Ps * FUN(muscr), 2, chSoil$sector_use))
-    NSrf <- as.matrix(groupSums(Ps * FUN(musrf), 2, chSoil$sector_use))
+
+    muscr <- matrix(muscl + muspa, nrow=nrow(Pscr), ncol=ncol(Pscr))
+    muscr <- t(t(muscr) + bscr)
+    NScr <- as.matrix(groupSums(Pscr * FUN(muscr), 2, chScr$sector_use))
+
+    musrf <- matrix(muscl + muspa, nrow=nrow(Psrf), ncol=ncol(Psrf))
+    musrf <- t(t(musrf) + bsrf)
+    NSrf <- as.matrix(groupSums(Psrf * FUN(musrf), 2, chSrf$sector_use))
 } else {
     NScr <- NULL
     NSrf <- NULL
 }
 if (type != "S") {
+    gc()
     ## north calculations for the i'th run
     #compare_sets(rownames(cfn), chVeg$cr2)
-    bncr <- cfn[chVeg$cr2, i] # current land cover
-    bnrf <- cfn[chVeg$rf2, i] # reference land cover
+    bncr <- cfn[chVcr$cr2, i] # current land cover
+    bnrf <- cfn[chVrf$rf2, i] # reference land cover
     ## space-climate coefs
     bncl <- if (taxon == "birds")
         cfn[colnames(Xclim_bird), i] else cfn[colnames(Xclim_nonb), i]
     ## additive components for north
     muncl <- drop(XclimN %*% bncl)
-    mun <- as.matrix(0*Pn)
-    mun[] <- muscl
-    muncr <- t(t(mun) + bncr)
-    munrf <- t(t(mun) + nsrf)
-    NNcr <- as.matrix(groupSums(Pn * FUN(muncr), 2, chVeg$sector_use))
-    NNrf <- as.matrix(groupSums(Pn * FUN(munrf), 2, chVeg$sector_use))
+    muncr <- matrix(muncl, nrow=nrow(Pncr), ncol=ncol(Pncr))
+    muncr <- t(t(muncr) + bncr)
+    NNcr <- as.matrix(groupSums(Pncr * FUN(muncr), 2, chVcr$sector_use))
+    munrf <- matrix(muncl, nrow=nrow(Pnrf), ncol=ncol(Pnrf))
+    munrf <- t(t(munrf) + bnrf)
+    NNrf <- as.matrix(groupSums(Pnrf * FUN(munrf), 2, chVrf$sector_use))
 } else {
     NNcr <- NULL
     NNrf <- NULL
@@ -256,12 +384,12 @@ if (type != "S") {
 ## combine NS and NN together (weighted avg in overlap zone) for species with Combo (N+S)
 if (type == "C") {
     # averaging comes here
-    NNcr <- NNcr[rownames(kgrid),]
-    NNrf <- NNrf[rownames(kgrid),]
+    NNcr <- NNcr[match(rownames(kgrid), rownames(NNcr)),]
+    NNrf <- NNrf[match(rownames(kgrid), rownames(NNrf)),]
     NNcr[is.na(NNcr)] <- 0
     NNrf[is.na(NNrf)] <- 0
-    NScr <- NNcr[rownames(kgrid),]
-    NSrf <- NNrf[rownames(kgrid),]
+    NScr <- NNcr[match(rownames(kgrid), rownames(NScr)),]
+    NSrf <- NNrf[match(rownames(kgrid), rownames(NSrf)),]
     NScr[is.na(NScr)] <- 0
     NSrf[is.na(NSrf)] <- 0
     Ncr <- kgrid$wN * NNcr + (1-kgrid$wN) * NScr
@@ -341,61 +469,35 @@ pa <- kgrid[ss,"pAspen"]
 
 
 
-## plots
+lt1 <- nonDuplicated(chVeg, cr, TRUE)[,c("cr", "sector")]
+lt2 <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v2020.csv")
+rownames(lt2) <- lt2[,1]
+lt2 <- lt2[!endsWith(rownames(lt2), "0"),]
+lt2[,1] <- NULL
+lt2$cr <- as.character(lt2$UseInAnalysis)
+lt2$cr <- gsub("Decid", "Deciduous", lt2$cr)
+lt2$cr <- gsub("Spruce", "WhiteSpruce", lt2$cr)
+lt2$cr <- gsub("Well", "Wellsites", lt2$cr)
+lt2$cr <- gsub("9", "8", lt2$cr)
 
+cnn <- rownames(COEFS$mites$north[1,,])
+cnn0 <- cnn[1:(which(cnn=="Intercept")-1)]
+cnn1 <- cnn[which(cnn=="Intercept"):length(cnn)]
+compare_sets(cnn0, lt2$cr)
+setdiff(cnn0, lt2$cr)
+setdiff(lt2$cr, cnn0)
 
-## south
-cns <- c("Loamy", "SandyLoam", "RapidDrain", "ClaySub", "ThinBreak", "Blowout", "Other",
-    "Crop", "TameP", "RoughP",
-    "EnSeismic", "EnSoftLin", "TrSoftLin", "HardLin",
-    "Wellsites", "Rural", "Urban", "Industrial",
-    "Mine", "MineV", "Water")
-cnn <- c(
-    "WhiteSpruceR", "WhiteSpruce1", "WhiteSpruce2", "WhiteSpruce3",
-    "WhiteSpruce4", "WhiteSpruce5", "WhiteSpruce6", "WhiteSpruce7",
-    "WhiteSpruce8", "PineR", "Pine1", "Pine2", "Pine3", "Pine4",
-    "Pine5", "Pine6", "Pine7", "Pine8", "DeciduousR", "Deciduous1",
-    "Deciduous2", "Deciduous3", "Deciduous4", "Deciduous5", "Deciduous6",
-    "Deciduous7", "Deciduous8", "MixedwoodR", "Mixedwood1", "Mixedwood2",
-    "Mixedwood3", "Mixedwood4", "Mixedwood5", "Mixedwood6", "Mixedwood7",
-    "Mixedwood8", "TreedBogR", "TreedBog1", "TreedBog2", "TreedBog3",
-    "TreedBog4", "TreedBog5", "TreedBog6", "TreedBog7", "TreedBog8",
-    "TreedSwamp", "ShrubbySwamp", "ShrubbyBog", "ShrubbyFen", "GraminoidFen",
-    "Marsh", "Shrub", "CCWhiteSpruceR", "CCWhiteSpruce1", "CCWhiteSpruce2",
-    "CCWhiteSpruce3", "CCWhiteSpruce4", "CCPineR", "CCPine1", "CCPine2",
-    "CCPine3", "CCPine4", "CCDeciduousR", "CCDeciduous1", "CCDeciduous2",
-    "CCDeciduous3", "CCDeciduous4", "CCMixedwoodR", "CCMixedwood1",
-    "CCMixedwood2", "CCMixedwood3", "CCMixedwood4", "Crop", "TameP",
-    "RoughP", "Wellsites", "EnSeismic", "EnSoftLin", "TrSoftLin",
-    "HardLin", "TreedFenR", "TreedFen1", "TreedFen2", "TreedFen3",
-    "TreedFen4", "TreedFen5", "TreedFen6", "TreedFen7", "TreedFen8",
-    "Rural", "Urban", "Industrial", "Mine", "MineV", "Water", "GrassHerb",
-    "Intercept", "Lat", "Long", "AHM", "PET", "FFP", "MAP", "MAT",
-    "MCMT", "MWMT", "Lat2", "Long2", "LatLong", "MAPPET", "MATAHM",
-    "MAPFFP", "MAT2", "MWMT2")
+lt2$Label <- as.character(lt2$cr)
+lt2$Sector <- as.character(lt2$Sector)
+v=lt2[,c("Label", "Sector")]
 
-taxon <- "vplants"
-spp <- "Achillea.borealis"
-cf <- COEFS[[taxon]]$south[spp,,]
+compare_sets(rownames(lt1), rownames(v))
+setdiff(rownames(lt1), rownames(v))
+setdiff(rownames(lt2), rownames(v))
+v <- v[v$Label %in% chVeg$cr,]
+compare_sets(cnn0, v$Label)
+setdiff(cnn0, v$Label)
+setdiff(v$Label, cnn0)
 
-
-FUN <- plogis
-
-ra <- rbind(data.frame(pAspen="Non-treed", get_stats(FUN(cf[cns,]))),
-    data.frame(pAspen="Treed", get_stats(FUN(t(t(cf[cns,]) + cf["pAspen",])))))
-
-library(ggplot2)
-
-p <- ggplot(ra, aes(x=Label, y=First, fill=Label, group=pAspen)) +
-    geom_bar(stat="identity") +
-    geom_errorbar(aes(ymin=Lower, ymax=Upper),
-                  width=0.2, color="#105A73") +
-    ylab("Relative abundance") +
-    xlab("Land cover class") +
-    facet_wrap(~pAspen) +
-    scale_x_discrete(guide = guide_axis(angle = 90)) +
-    theme_minimal() +
-    labs(title=paste0(spp, " (", taxon, ")")) +
-    theme(legend.position="none")
-
-
+v <- v[v$Label %in% cnn0,]
+dput(v)
