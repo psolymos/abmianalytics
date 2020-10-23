@@ -138,8 +138,8 @@ lt <- list(
         "CCDeciduous3", "CCDeciduous4", "CCMixedwoodR", "CCMixedwood1",
         "CCMixedwood2", "CCMixedwood3", "CCMixedwood4", "CCPineR", "CCPine1",
         "CCPine2", "CCPine3", "CCPine4", "CCWhiteSpruceR", "CCWhiteSpruce1",
-        "CCWhiteSpruce2", "CCWhiteSpruce3", "CCWhiteSpruce4", "Water",
-        "Water", "Water", "Water", "Water", "Water"), Sector = c("Native",
+        "CCWhiteSpruce2", "CCWhiteSpruce3", "CCWhiteSpruce4", "Bare",
+        "Water", "Water", "Water", "Water", "SnowIce"), Sector = c("Native",
         "Native", "Native", "Native", "Native", "Native", "Native", "Native",
         "Native", "Native", "Native", "Native", "Native", "Native", "Native",
         "Native", "Native", "Native", "Native", "Native", "Native", "Native",
@@ -158,7 +158,7 @@ lt <- list(
         "Forestry", "Forestry", "Forestry", "Forestry", "Forestry", "Forestry",
         "Forestry", "Forestry", "Forestry", "Forestry", "Forestry", "Forestry",
         "Forestry", "Forestry", "Forestry", "Forestry", "Forestry", "Forestry",
-        "Misc", "Misc", "Misc", "Misc", "Misc", "Misc")), row.names = c("DecidR",
+        "Native", "Misc", "Misc", "Misc", "Misc", "Native")), row.names = c("DecidR",
         "Decid1", "Decid2", "Decid3", "Decid4", "Decid5", "Decid6", "Decid7",
         "Decid8", "MixedwoodR", "Mixedwood1", "Mixedwood2", "Mixedwood3",
         "Mixedwood4", "Mixedwood5", "Mixedwood6", "Mixedwood7", "Mixedwood8",
@@ -299,15 +299,32 @@ taxon <- "vplants"
 
 i <- 1
 
+ROOT <- "s:/AB_data_v2020/Results/pred"
+
+for (taxon in names(COEFS)) {
+
+if (!dir.exists(file.path(ROOT, taxon)))
+    dir.create(file.path(ROOT, taxon))
+
+SPPn <- if (taxon!="birds")
+    dimnames(COEFS[[taxon]]$north)[[1]] else dimnames(COEFS[[taxon]]$north$joint)[[1]]
+SPPs <- if (taxon!="birds")
+    dimnames(COEFS[[taxon]]$south)[[1]] else dimnames(COEFS[[taxon]]$south$joint)[[1]]
+SPP <- sort(union(SPPn, SPPs))
+
+for (spp in SPP) {
+
+cat(taxon, spp, "\n")
+flush.console()
+
+
 type <- "C" # combo species (N+S)
+M <- list(N=spp %in% SPPn, S=spp %in% SPPs)
+if (M$N & !M$S)
+    type <- "N"
+if (!M$N & M$S)
+    type <- "S"
 if (taxon == "birds") {
-    M <- list(
-        N=spp %in% dimnames( COEFS[[taxon]]$north$joint)[[1]],
-        S=spp %in% dimnames( COEFS[[taxon]]$south$joint)[[1]])
-    if (M$N & !M$S)
-        type <- "N"
-    if (!M$N & M$S)
-        type <- "S"
     cfn <- if (type == "S")
         NULL else COEFS[[taxon]]$north$joint[spp,,]
     cfs <- if (type == "N")
@@ -316,13 +333,6 @@ if (taxon == "birds") {
     XclimN <- Xclim_bird_N
     FUN <- poisson()$linkinv
 } else {
-    M <- list(
-        N=spp %in% dimnames( COEFS[[taxon]]$north)[[1]],
-        S=spp %in% dimnames( COEFS[[taxon]]$south)[[1]])
-    if (M$N & !M$S)
-        type <- "N"
-    if (!M$N & M$S)
-        type <- "S"
     cfn <- if (type == "S")
         NULL else COEFS[[taxon]]$north[spp,,]
     cfs <- if (type == "N")
@@ -332,7 +342,7 @@ if (taxon == "birds") {
     FUN <- binomial()$linkinv
 }
 
-## bootstrap specific part
+## bootstrap specific part - only doing 1 run now
 
 if (type != "N") {
     gc()
@@ -363,8 +373,10 @@ if (type != "S") {
     gc()
     ## north calculations for the i'th run
     #compare_sets(rownames(cfn), chVeg$cr2)
-    bncr <- cfn[chVcr$cr2, i] # current land cover
-    bnrf <- cfn[chVrf$rf2, i] # reference land cover
+    tmpn <- c(cfn[,i], Bare=-10^4, SnowIce= -10^4)
+    tmps <- c(cfs[,i], Bare=-10^4, SnowIce= -10^4)
+    bncr <- tmpn[chVcr$cr2] # current land cover
+    bnrf <- tmpn[chVrf$rf2] # reference land cover
     ## space-climate coefs
     bncl <- if (taxon == "birds")
         cfn[colnames(Xclim_bird), i] else cfn[colnames(Xclim_nonb), i]
@@ -404,6 +416,16 @@ if (type == "N") {
     Nrf <- NNrf
 }
 
+save(Ncr, Nrf,
+    file=file.path(ROOT, taxon, paste0(spp, ".RData")))
+
+}
+
+}
+
+
+
+## -- etc
 
 ksc <- dd_2018$soil_current
 ksc <- ksc / ifelse(rowSums(ksc) > 0, rowSums(ksc), 1)
