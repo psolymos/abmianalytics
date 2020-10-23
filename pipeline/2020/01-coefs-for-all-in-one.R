@@ -496,6 +496,23 @@ load("s:/AB_data_v2020/Results/COEFS-EAboot.RData")
 load("s:/AB_data_v2020/Results/BIRDS-North.RData")
 load("s:/AB_data_v2020/Results/BIRDS-South.RData")
 
+if (FALSE) { # testing CC effects
+spp <- "OSFL"
+h <- c("CCWhiteSpruceR", "CCWhiteSpruce1",
+"CCWhiteSpruce2", "CCWhiteSpruce3", "CCWhiteSpruce4", "CCPineR",
+"CCPine1", "CCPine2", "CCPine3", "CCPine4", "CCDeciduousR", "CCDeciduous1",
+"CCDeciduous2", "CCDeciduous3", "CCDeciduous4", "CCMixedwoodR",
+"CCMixedwood1", "CCMixedwood2", "CCMixedwood3", "CCMixedwood4")
+h1 <- gsub("CC", "", h)
+m  <- matrix(rowMeans(cfn[[spp]]$coefARU)[h], 5, 4)
+m1 <- matrix(rowMeans(cfn[[spp]]$coefARU)[h1], 5, 4)
+plot(0, type="n", xlim=c(0,4), ylim=c(0,max(m,m1)))
+for (i in 1:4) {
+    lines(0:4, m[,i], col=i, lty=2)
+    lines(0:4, m1[,i], col=i, lty=1)
+}
+}
+
 SPPn <- as.character(TAX$sppid[match(names(cfn), TAX$code)])
 SPPs <- as.character(TAX$sppid[match(names(cfs), TAX$code)])
 rownames(TAX) <- TAX$sppid
@@ -507,15 +524,16 @@ names(cfn) <- SPPn
 
 cns <- rownames(COEFS$mites$south[1,,])
 cns0 <- cns[1:(which(cns=="Intercept")-2)]
+cns1 <- cns[(which(cns=="Intercept")-1):length(cns)]
 cnn <- rownames(COEFS$mites$north[1,,])
 cnn0 <- cnn[1:(which(cnn=="Intercept")-1)]
-
+cnn1 <- cnn[which(cnn=="Intercept"):length(cnn)]
 
 cnb <- c("pWater_KM", "pWater2_KM", "xPET",
     "xMAT", "xAHM", "xFFP", "xMAP", "xMWMT", "xMCMT", "xY", "xX",
     "xY2", "xX2", "xFFP:xMAP", "xMAP:xPET", "xAHM:xMAT", "xX:xY")
 
-BMAX <- 100
+BMAX <- 250
 
 # south
 spp <- 1
@@ -593,6 +611,39 @@ for (spp in names(cfn)) {
     CFnj[spp,,] <- cfnj
 }
 
+## bare & ice -- this is not really working well, no time to debog and not needed
+if (FALSE) {
+for (j in names(COEFS)) {
+    zn <- COEFS[[j]]$north
+    xn <- array(NA, dim(zn)+c(0,2,0))
+    dimnames(xn) <- list(dimnames(zn)[[1]],
+        c(cnn0, "Bare", "SnowIce", cnn1),
+        NULL)
+    xn[,cnn,] <- zn
+    xn[is.na(xn)] <- -10^4
+    COEFS[[j]]$north <- xn
+}
+
+zn <- CFnm
+xn <- array(NA, dim(zn)+c(0,2,0))
+dimnames(xn) <- list(dimnames(zn)[[1]],
+    c(cnn0, "Bare", "SnowIce"),
+    NULL)
+xn[,cnn0,] <- zn
+xn[is.na(xn)] <- -10^4
+CFnm <- xn
+
+zn <- CFnj
+bbb <- dimnames(zn)[[2]]
+xn <- array(NA, dim(zn)+c(0,2,0))
+dimnames(xn) <- list(dimnames(zn)[[1]],
+    c(cnn0, "Bare", "SnowIce", bbb[!(bbb %in% cnn0)]),
+    NULL)
+xn[,bbb,] <- zn
+xn[is.na(xn)] <- -10^4
+CFnj <- xn
+}
+
 COEFS$birds <- list(
     north=list(marginal=CFnm, joint=CFnj),
     south=list(marginal=CFsm, joint=CFsj),
@@ -601,4 +652,38 @@ COEFS$birds <- list(
 save(COEFS,
     file="s:/AB_data_v2020/Results/COEFS-ALL.RData")
 
+if (FALSE) { # testing CC effects
+spp <- "AlderFlycatcher"
+h <- c("CCWhiteSpruceR", "CCWhiteSpruce1",
+"CCWhiteSpruce2", "CCWhiteSpruce3", "CCWhiteSpruce4", "CCPineR",
+"CCPine1", "CCPine2", "CCPine3", "CCPine4", "CCDeciduousR", "CCDeciduous1",
+"CCDeciduous2", "CCDeciduous3", "CCDeciduous4", "CCMixedwoodR",
+"CCMixedwood1", "CCMixedwood2", "CCMixedwood3", "CCMixedwood4")
+h1 <- gsub("CC", "", h)
+
+m  <- matrix(rowMeans(exp(COEFS$birds$north$marginal[spp,,]))[h], 5, 4)
+m1 <- matrix(rowMeans(exp(COEFS$birds$north$marginal[spp,,]))[h1], 5, 4)
+plot(0, type="n", xlim=c(0,4), ylim=c(0,max(m,m1)))
+for (i in 1:4) {
+    lines(0:4, m[,i], col=i, lty=2)
+    lines(0:4, m1[,i], col=i, lty=1)
+}
+
+m  <- matrix(rowMeans(exp(CFnm[spp,,]))[h], 5, 4)
+m1 <- matrix(rowMeans(exp(CFnm[spp,,]))[h1], 5, 4)
+plot(0, type="n", xlim=c(0,4), ylim=c(0,max(m,m1)))
+for (i in 1:4) {
+    lines(0:4, m[,i], col=i, lty=2)
+    lines(0:4, m1[,i], col=i, lty=1)
+}
+
+m  <- matrix(rowMeans(cfn[[spp]]$coefARU)[h], 5, 4)
+m1 <- matrix(rowMeans(cfn[[spp]]$coefARU)[h1], 5, 4)
+plot(0, type="n", xlim=c(0,4), ylim=c(0,max(m,m1)))
+for (i in 1:4) {
+    lines(0:4, m[,i], col=i, lty=2)
+    lines(0:4, m1[,i], col=i, lty=1)
+}
+
+}
 
