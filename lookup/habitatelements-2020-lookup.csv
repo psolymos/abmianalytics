@@ -1,0 +1,46 @@
+﻿SpeciesID,ScientificName,TSNID,CommonName,ModelNorth,ModelSouth,UseavailNorth,UseavailSouth,SizeNorth,SizeSouth,Nonnative,LinkHabitat,LinkSpclim,AUCNorth,AUCSouth,Comments,Group,Unit
+ADecidlt7,,,Live Deciduous <7cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+ADecid7_25,,,Live Deciduous 7-25cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+ADecidgt25,,,Live Deciduous >25cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+AUpConlt7,,,Live Upland Conifer <7cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+AUpCon7_25,,,Live Upland Conifer 7-25cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+AUpCongt25,,,Live Upland Conifer >25cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+ALowConlt7,,,Live Lowland Conifer <7cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+ALowCon7_25,,,Live Lowland Conifer 7-25cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+ALowCongt25,,,Live Lowland Conifer >25cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+DDecidlt7,,,Dead Deciduous <7cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+DDecid7_25,,,Dead Deciduous 7-25cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+DDecidgt25,,,Dead Deciduous >25cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+DConlt7,,,Dead Conifer <7cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+DCon7_25,,,Dead Conifer 7-25cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+DCongt25,,,Dead Conifer >25cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+DUnklt7,,,Dead Unknown <7cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+DUnk7_25,,,Dead Unknown 7-25cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+DUnkgt25,,,Dead Unknown >25cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/plot
+DWD7_13,,,DWD 7-13cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/transect
+DWD13_19,,,DWD 13-19cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/transect
+DWD19_25,,,DWD 19-25cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/transect
+DWDgt25,,,DWD >25cm,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,/transect
+CanopyClosure,,,Canopy Closure,TRUE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
+GrassCover,,,Grass Cover,TRUE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
+Lichen,,,Lichen Cover,TRUE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
+Litter,,,Litter Cover,TRUE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
+Moss,,,Moss Cover,TRUE,FALSE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
+Other.Vascular,,,Other Vascular Cover,TRUE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
+Rock,,,Rock Cover,TRUE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
+ShrubCover,,,Shrub Cover,TRUE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
+pcBare,,,Bare Ground,TRUE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
+OrgDepth,,,Organic Depth,TRUE,TRUE,FALSE,FALSE,,,FALSE,Log-normal,Log-normal,,,,habitatelements,cm
+SoilCarbon,,,Soil Carbon,TRUE,TRUE,FALSE,FALSE,,,FALSE,Log-normal,Log-normal,,,,habitatelements,%
+pH,,,pH,TRUE,TRUE,FALSE,FALSE,,,FALSE,Normal,Normal,,,,habitatelements,
+Live Deciduous BA,,,Live Deciduous BA,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,m^2/ha
+Live Upland Conifer BA,,,Live Upland Conifer BA,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,m^2/ha
+Live Lowland Conifer BA,,,Live Lowland Conifer BA,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,m^2/ha
+All Live BA,,,All Live BA,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,m^2/ha
+Snag BA,,,Snag BA,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,m^2/ha
+CWD Volume,,,CWD Volume,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,m^3/ha
+Grasslt10,,,Grass <10cm,FALSE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
+Grass11_25,,,Grass 11-25cm,FALSE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
+Grass26_50,,,Grass 26-50cm,FALSE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
+Grassgt50,,,Grass >50cm,FALSE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
+pcDead,,,Percent dead vegetation,FALSE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
