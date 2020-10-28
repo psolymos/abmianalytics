@@ -617,6 +617,9 @@ COEFS$birds <- list(
     south=list(marginal=CFsm, joint=CFsj),
     species=TAX)
 
+COEFS$lichens$north <- COEFS$lichens$north[dimnames(COEFS$lichens$north)[[1]] != "Do.not.analyze",,]
+COEFS$lichens$south <- COEFS$lichens$south[dimnames(COEFS$lichens$south)[[1]] != "Do.not.analyze",,]
+
 save(COEFS,
     file="s:/AB_data_v2020/Results/COEFS-ALL.RData")
 

@@ -539,6 +539,62 @@ for (taxon in TAXA) {
 }
 
 
+## check correlations for use-avail
+
+x1 <- c("WhiteSpruceR", "WhiteSpruce1", "WhiteSpruce2", "WhiteSpruce3",
+"WhiteSpruce4", "WhiteSpruce5", "WhiteSpruce6", "WhiteSpruce7",
+"WhiteSpruce8", "PineR", "Pine1", "Pine2", "Pine3", "Pine4",
+"Pine5", "Pine6", "Pine7", "Pine8", "DeciduousR", "Deciduous1",
+"Deciduous2", "Deciduous3", "Deciduous4", "Deciduous5", "Deciduous6",
+"Deciduous7", "Deciduous8", "MixedwoodR", "Mixedwood1", "Mixedwood2",
+"Mixedwood3", "Mixedwood4", "Mixedwood5", "Mixedwood6", "Mixedwood7",
+"Mixedwood8", "TreedBogR", "TreedBog1", "TreedBog2", "TreedBog3",
+"TreedBog4", "TreedBog5", "TreedBog6", "TreedBog7", "TreedBog8",
+"TreedFenR", "TreedFen1", "TreedFen2", "TreedFen3", "TreedFen4",
+"TreedFen5", "TreedFen6", "TreedFen7", "TreedFen8", "GrassHerb",
+"Shrub", "GraminoidFen", "Marsh", "RoughP", "TameP", "Crop",
+"Industrial", "Rural", "Urban", "CCWhiteSpruceR", "CCWhiteSpruce1",
+"CCWhiteSpruce2", "CCWhiteSpruce3", "CCWhiteSpruce4", "CCPineR",
+"CCPine1", "CCPine2", "CCPine3", "CCPine4", "CCDeciduousR", "CCDeciduous1",
+"CCDeciduous2", "CCDeciduous3", "CCDeciduous4", "CCMixedwoodR",
+"CCMixedwood1", "CCMixedwood2", "CCMixedwood3", "CCMixedwood4",
+"ShrubbySwamp", "ShrubbyBog", "ShrubbyFen", "TreedSwamp", "Wellsites",
+"EnSeismic", "EnSoftLin", "TrSoftLin", "HardLin")
+x2 <- c("Loamy", "Blowout", "ClaySub", "RapidDrain", "SandyLoam", "ThinBreak",
+"Other", "RoughP", "TameP", "Crop", "Urban", "Rural", "Industrial",
+"EnSeismic", "EnSoftLin", "TrSoftLin", "HardLin", "Wellsites")
+
+CFS <- CFN <- NULL
+for (taxon in names(COEFS)) {
+        if (taxon == "birds") {
+            cfn <- COEFS[[taxon]]$north$marginal[,x1,1]
+            cfs <- COEFS[[taxon]]$south$marginal[,x2,1]
+            FUN <- function (eta) {
+                lam <- pmin(pmax(exp(eta), .Machine$double.eps), .Machine$double.xmax)
+                1-exp(-lam*7*2)
+            }
+        } else {
+            cfn <- COEFS[[taxon]]$north[,x1,1]
+            cfs <- COEFS[[taxon]]$south[,x2,1]
+            FUN <- binomial()$linkinv
+        }
+    CFS <- rbind(CFS, FUN(cfs))
+    CFN <- rbind(CFN, FUN(cfn))
+}
+
+max(CFN)
+max(CFS)
+u <- colnames(CFN)
+u <- gsub("CC", "", u)
+for (i in c("WhiteSpruce", "Pine", "Mixedwood", "Deciduous", "TreedBog", "TreedFen"))
+    u[grep(i, u)] <- i
+CFN2 <- mefa4::groupMeans(CFN, 2, u)
+
+ds <- as.dist(1-abs(cor(CFS)))
+dn <- as.dist(1-abs(cor(CFN2)))
+
+plot(hclust(ds, "ward.D"))
+plot(hclust(dn, "ward.D"))
 
 
 ## create sector effects plots
@@ -576,8 +632,7 @@ if (DEL_FOR)
 
 rt <- raster(system.file("extdata/AB_1km_mask.tif", package="cure4insect"))
 
-make_raster <- function(value, rc, rt)
-{
+make_raster <- function(value, rc, rt) {
     value <- as.numeric(value)
     r <- as.matrix(Xtab(value ~ Row + Col, rc))
     r[is.na(as.matrix(rt))] <- NA
@@ -632,7 +687,7 @@ SEs <- cure4insect:::.plot_sector1(CurrS[sectors], RefS[sectors], AreaS, RefTota
 }
 
 SE <- list()
-for (taxon in names(COEFS)) {
+for (taxon in names(COEFS)[5]) {
     if (!dir.exists(file.path(ROOT2, taxon)))
         dir.create(file.path(ROOT2, taxon))
     SE[[taxon]] <- list()
@@ -694,9 +749,11 @@ for (taxon in names(COEFS)) {
 
 
         Dcr <- rowSums(Ncr)[match(rownames(kgrid), rownames(Ncr))]
+        Dcr[is.na(Dcr)] <- 0
         q <- quantile(Dcr, 0.99)
         Dcr[Dcr > q] <- q
         Drf <- rowSums(Nrf)[match(rownames(kgrid), rownames(Nrf))]
+        Drf[is.na(Drf)] <- 0
         q <- quantile(Drf, 0.99)
         Drf[Drf > q] <- q
         MAX <- max(Dcr, Drf)
@@ -721,11 +778,11 @@ for (taxon in names(COEFS)) {
             Rrf <- mask(Rrf, Msk)
             Rdf <- mask(Rdf, Msk)
         }
-        if (taxon != "birds") {
-            Rcr <- mask(Rcr, Rmaskm)
-            Rrf <- mask(Rrf, Rmaskm)
-            Rdf <- mask(Rdf, Rmaskm)
-        }
+#        if (taxon != "birds") {
+#            Rcr <- mask(Rcr, Rmaskm)
+#            Rrf <- mask(Rrf, Rmaskm)
+#            Rdf <- mask(Rdf, Rmaskm)
+#        }
 
         png(file.path(ROOT2, taxon, spp, "map.png"),
             height=1500*1, width=1000*3, res=300)
@@ -764,216 +821,8 @@ for (taxon in names(COEFS)) {
 
 save(SE,  file="s:/AB_data_v2020/Results/SE-ESTIMATES.RData")
 
-## maps
 
-
-
-
-spp <- "AlderFlycatcher"
-taxon <- "birds"
-
-spp <- "Actaea.rubra"
-taxon <- "vplants"
-
-load(file.path(ROOT, taxon, paste0(spp, ".RData"))) # Ncr, Nrf
-
-
-
-
-
-
-# --
-
-
-library(cure4insect)
-library(mefa4)
-#set_options(path = "s:/reports")
-set_options(path = "d:/abmi/reports")
-load_common_data()
-
-load("d:/abmi/sppweb2018/c4i/tables/sector-effects.RData")
-load("d:/abmi/reports/2018/misc/DataPortalUpdate.RData")
-ROOT <- "d:/abmi/AB_data_v2018/www"
-#ROOT <- "d:/abmi/sppweb2018/www/"
-
-## kgrid
-load("d:/abmi/AB_data_v2018/data/analysis/kgrid_table_km.Rdata")
-kgrid$useN <- !(kgrid$NRNAME %in% c("Grassland", "Parkland") | kgrid$NSRNAME == "Dry Mixedwood")
-kgrid$useN[kgrid$NSRNAME == "Dry Mixedwood" & kgrid$POINT_Y > 56.7] <- TRUE
-kgrid$useS <- kgrid$NRNAME == "Grassland"
-
-rt <- raster(system.file("extdata/AB_1km_mask.tif", package="cure4insect"))
-
-make_raster <- function(value, rc, rt)
-{
-    value <- as.numeric(value)
-    r <- as.matrix(Xtab(value ~ Row + Col, rc))
-    r[is.na(as.matrix(rt))] <- NA
-    raster(x=r, template=rt)
-}
-
-Rmaskn <- make_raster(as.integer(1-kgrid$useS), kgrid, rt)
-values(Rmaskn)[values(Rmaskn) == 0] <- NA
-Rmasks <- make_raster(as.integer(1-kgrid$useN), kgrid, rt)
-values(Rmasks)[values(Rmasks) == 0] <- NA
-Rmaskm <- make_raster(as.integer(!kgrid$NRNAME == "Rocky Mountain"), kgrid, rt)
-values(Rmaskm)[values(Rmaskm) == 0] <- NA
-Rw <- make_raster(as.integer(kgrid$pWater > 0.99), kgrid, rt)
-values(Rw)[values(Rw) == 0] <- NA
-
-col1 <- colorRampPalette(rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8","#91BFDB","#4575B4")))(100)
-col2 <- colorRampPalette(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B", "#D9EF8B",
-    "#A6D96A", "#66BD63", "#1A9850", "#006837"))(100)
-col3 <- colorRampPalette(c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0","#A1D76A","#4D9221"))(200)
-CW <- rgb(0.4,0.3,0.8) # water
-CE <- "lightcyan4" # exclude
-
-
-for (gr in c("birds","vplants","lichens","mosses","mites")) {
-#gr <- "birds"
-#gr <- "vplants"
-#gr <- "lichens"
-#gr <- "mosses"
-#gr <- "mites"
-
-#SPP <- rownames(resn[resn$Taxon == gr,])
-SPP <- rownames(OUT$Species[(OUT$Species$ModelNorth |
-        OUT$Species$ModelSouth) & OUT$Species$Group == gr,])
-#spp <- "AlderFlycatcher"
-
-for (spp in SPP) {
-
-    cat(gr, spp, "\n");flush.console()
-
-    TYPE <- "C"
-    if (OUT$Species[spp, "ModelNorth"] && !OUT$Species[spp, "ModelSouth"])
-        TYPE <- "N"
-    if (!OUT$Species[spp, "ModelNorth"] && OUT$Species[spp, "ModelSouth"])
-        TYPE <- "S"
-
-    NAM <- OUT$Species[spp, "CommonName"]
-    if (is.na(NAM))
-        NAM <- OUT$Species[spp, "ScientificName"]
-    NAM <- as.character(NAM)
-
-    if (TYPE != "S") {
-        ## hab-north
-        png(paste0(ROOT, "/figs/", gr, "/", spp, "-coef-north.png"),
-            height=800, width=2200, res=150)
-        layout(matrix(c(1,1,2), nrow=1))
-        plot_abundance(spp, "veg_coef")
-        par(mar=c(12,5,4,3))
-        plot_abundance(spp, "veg_lin", main="")
-        dev.off()
-
-        png(paste0(ROOT, "/figs/", gr, "/", spp, "-sector-north.png"),
-            height=2*500, width=2*1500, res=150)
-        op <- par(mfrow=c(1,3))
-        plot_sector(resn[spp,], "unit")
-        plot_sector(resn[spp,], "regional", main="")
-        plot_sector(resn[spp,], "underhf", main="")
-        par(op)
-        dev.off()
-    }
-    if (TYPE != "N") {
-        ## hab-south
-        png(paste0(ROOT, "/figs/", gr, "/", spp, "-coef-south.png"),
-            height=800, width=2000, res=150)
-        layout(matrix(c(1,2,3), nrow=1))
-        p1 <- plot_abundance(spp, "soil_coef", paspen=0, plot=FALSE)
-        p2 <- plot_abundance(spp, "soil_coef", paspen=1, plot=FALSE)
-        plot_abundance(spp, "soil_coef", paspen=0, ylim=c(0, max(p1, p2)), main=paste0(NAM, " - non treed"))
-        plot_abundance(spp, "soil_coef", paspen=1, ylim=c(0, max(p1, p2)), main="treed")
-        par(mar=c(11,5,4,3))
-        plot_abundance(spp, "soil_lin", main="")
-        dev.off()
-
-        png(paste0(ROOT, "/figs/", gr, "/", spp, "-sector-south.png"),
-            height=2*500, width=2*1500, res=150)
-        op <- par(mfrow=c(1,3))
-        plot_sector(ress[spp,], "unit")
-        plot_sector(ress[spp,], "regional", main="")
-        plot_sector(ress[spp,], "underhf", main="")
-        par(op)
-        dev.off()
-    }
-
-    y <- load_species_data(spp, boot=TRUE)
-    ry <- rasterize_results(y)
-
-    Curr <- y$SA.Curr[match(rownames(kgrid), rownames(y$SA.Curr)),]
-    Ref <- y$SA.Ref[match(rownames(kgrid), rownames(y$SA.Ref)),]
-
-    Dcr <- rowSums(Curr)
-    q <- quantile(Dcr, 0.99)
-    Dcr[Dcr > q] <- q
-    Drf <- rowSums(Ref)
-    q <- quantile(Drf, 0.99)
-    Drf[Drf > q] <- q
-    MAX <- max(Dcr, Drf)
-
-    df <- (Dcr-Drf) / MAX
-    df <- sign(df) * abs(df)^0.5
-    df <- pmin(200, ceiling(99 * df)+100)
-    df[df==0] <- 1
-    cr <- pmin(100, ceiling(99 * sqrt(Dcr / MAX))+1)
-    rf <- pmin(100, ceiling(99 * sqrt(Drf / MAX))+1)
-
-    Rcr <- make_raster(cr, kgrid, rt)
-    Rrf <- make_raster(rf, kgrid, rt)
-    Rdf <- make_raster(df-100, kgrid, rt)
-    if (TYPE == "S")
-        Msk <- Rmasks
-    if (TYPE == "N")
-        Msk <- Rmaskn
-    if (TYPE != "C") {
-        Rcr <- mask(Rcr, Msk)
-        Rrf <- mask(Rrf, Msk)
-        Rdf <- mask(Rdf, Msk)
-    }
-    if (gr != "birds") {
-        Rcr <- mask(Rcr, Rmaskm)
-        Rrf <- mask(Rrf, Rmaskm)
-        Rdf <- mask(Rdf, Rmaskm)
-    }
-
-if (TRUE) {
-    writeRaster(Rcr, paste0(ROOT, "/normalized-maps/", gr, "/", spp, "-cr.tif"), overwrite=TRUE)
-    writeRaster(Rrf, paste0(ROOT, "/normalized-maps/", gr, "/", spp, "-rf.tif"), overwrite=TRUE)
-    writeRaster(Rdf, paste0(ROOT, "/normalized-maps/", gr, "/", spp, "-df.tif"), overwrite=TRUE)
-}
-
-    ## add here mask for Rockies if needed
-if (TRUE) {
-    png(paste0(ROOT, "/figs/", gr, "/", spp, "-map.png"),
-        height=1500*2, width=1000*2, res=300)
-    op <- par(mfrow=c(2,2), mar=c(2,1,2,3))
-
-    plot(rt, col=CE, axes=FALSE, box=FALSE, main="Reference", legend=FALSE)
-    plot(Rrf, add=TRUE, col=col1[1:max(rf)])
-    plot(Rw, add=TRUE, col=CW, legend=FALSE)
-
-    plot(rt, col=CE, axes=FALSE, box=FALSE, main="Current", legend=FALSE)
-    plot(Rcr, add=TRUE, col=col1[1:max(cr)])
-    plot(Rw, add=TRUE, col=CW, legend=FALSE)
-
-    plot(rt, col=CE, axes=FALSE, box=FALSE, main="Difference", legend=FALSE)
-    plot(Rdf, add=TRUE, col=col3[min(df):max(df)])
-    plot(Rw, add=TRUE, col=CW, legend=FALSE)
-
-    plot(rt, col=CE, axes=FALSE, box=FALSE, main="Std. Error (Current)", legend=FALSE)
-    plot(ry[["SE"]]/MAX, add=TRUE, col=rev(col2))
-    plot(Rw, add=TRUE, col=CW, legend=FALSE)
-
-    par(op)
-    dev.off()
-
-    gc()
-}
-
-}
-
-}
+## detection map and use avail
 
 ## use avail figures
 
@@ -1160,375 +1009,4 @@ for (spp in rownames(tax)) {
     plot(sam1,add=TRUE, col="red4", legend=FALSE)
     par(op)
     dev.off()
-}
-
-
-
-
-## mammal camera dump
-
-fl <- list.files("s:/Camera mammals Mar 2019/Figures North/Best model")
-x <- gsub("Veg+HF figure best model ", "", fl, fixed=TRUE)
-#x[endsWith(x, "Winter.png")] <- gsub("Winter.png", "-winter.png", x[endsWith(x, "Winter.png")])
-#x[endsWith(x, "Summer.png")] <- gsub("Summer.png", "-summer.png", x[endsWith(x, "Summer.png")])
-
-i1 <- endsWith(x, "Winter.png")
-i2 <- endsWith(x, "Summer.png")
-
-## combined (fine coef, summer+winter)
-file.copy(paste0("s:/Camera mammals Mar 2019/Figures North/Best model/", fl[!i1 & !i2]),
-    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-north-combo/", x[!i1 & !i2]))
-## honest models, winter
-file.copy(paste0("s:/Camera mammals Mar 2019/Figures North/Best model/", fl[i1]),
-    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-north-winter/",
-    gsub("Winter.png", ".png", x[i1])))
-## honest models, summer
-file.copy(paste0("s:/Camera mammals Mar 2019/Figures North/Best model/", fl[i2]),
-    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-north-summer/",
-    gsub("Summer.png", ".png", x[i2])))
-
-fl1 <- list.files("s:/Camera mammals Mar 2019/Figures South/Best model/Treed")
-fl2 <- list.files("s:/Camera mammals Mar 2019/Figures South/Best model/Non-treed")
-x1 <- gsub("Soil+HF figure best model ", "", fl1, fixed=TRUE)
-x2 <- gsub("Soil+HF figure best model ", "", fl2, fixed=TRUE)
-all(x1 == x2)
-
-i1 <- endsWith(x1, "Winter.png")
-i2 <- endsWith(x1, "Summer.png")
-
-## combined (fine coef, summer+winter)
-file.copy(paste0("s:/Camera mammals Mar 2019/Figures South/Best model/Treed/", fl1[!i1 & !i2]),
-    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-south-combo-treed/", x1[!i1 & !i2]))
-## honest models, winter
-file.copy(paste0("s:/Camera mammals Mar 2019/Figures South/Best model/Treed/", fl1[i1]),
-    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-south-winter-treed/",
-    gsub("Winter.png", ".png", x1[i1])))
-## honest models, summer
-file.copy(paste0("s:/Camera mammals Mar 2019/Figures South/Best model/Treed/", fl1[i2]),
-    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-south-summer-treed/",
-    gsub("Summer.png", ".png", x1[i2])))
-
-file.copy(paste0("s:/Camera mammals Mar 2019/Figures South/Best model/Non-treed/", fl2[!i1 & !i2]),
-    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-south-combo-nontreed/", x2[!i1 & !i2]))
-file.copy(paste0("s:/Camera mammals Mar 2019/Figures South/Best model/Non-treed/", fl2[i1]),
-    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-south-winter-nontreed/",
-    gsub("Winter.png", ".png", x2[i1])))
-file.copy(paste0("s:/Camera mammals Mar 2019/Figures South/Best model/Non-treed/", fl2[i2]),
-    paste0("d:/abmi/reports/2018/images/mammals-camera/coef-south-summer-nontreed/",
-    gsub("Summer.png", ".png", x2[i2])))
-
-## jpg to png
-
-library(magick)
-fl <- list.files("s:/Camera mammals Mar 2019/Maps/North Climate and spatial/")
-x <- gsub(".jpg", ".png", fl, fixed=TRUE)
-for (i in 1:length(fl)) {
-    img <- image_read(paste0("s:/Camera mammals Mar 2019/Maps/North Climate and spatial/", fl[i]))
-    image_write(img, paste0("s:/Camera mammals Mar 2019/Maps/North Climate and spatial/", x[i]), format="png")
-}
-fl <- list.files("s:/Camera mammals Mar 2019/Maps/South Climate and spatial/")
-x <- gsub(".jpg", ".png", fl, fixed=TRUE)
-for (i in 1:length(fl)) {
-    img <- image_read(paste0("s:/Camera mammals Mar 2019/Maps/South Climate and spatial/", fl[i]))
-    image_write(img, paste0("s:/Camera mammals Mar 2019/Maps/South Climate and spatial/", x[i]), format="png")
-}
-
-
-## lookup table
-
-r <- "d:/abmi/reports/2018/images/mammals-camera/"
-fl <- list.files("d:/abmi/reports/2018/images/mammals-camera/map-det")
-
-d <- list.dirs(r, full.names=FALSE)[-1]
-
-ls <- lapply(d, function(z) list.files(paste0(r, z)))
-names(ls) <- d
-
-spp <- sort(unique(unlist(ls)))
-
-mefa4::compare_sets(fl, spp)
-setdiff(fl, spp)
-setdiff(spp, fl)
-intersect(spp, fl)
-
-
-SPP <- c(
-    "Badger" = "Badger",
-    "Beaver" = "Beaver",
-    "Bighornsheep" = "Bighorn Sheep",
-    "Bison" = "Bison",
-    "BlackBear" = "Black Bear",
-    "Bobcat" = "Bobcat",
-    "CanadaLynx" = "Canada Lynx",
-    "ColumbianGroundSquirrel" = "Columbian Ground Squirrel",
-    "Cougar" = "Cougar",
-    "Coyote" = "Coyote",
-    "Deer" = "Deer",
-    "Elk" = "Elk",
-    "Fisher" = "Fisher",
-    "Foxes" = "Foxes",
-    "GoldenMantledGroundSquirrel" = "Golden Mantled Ground Squirrel",
-    "GrayWolf" = "Gray Wolf",
-    "Grizzlybear" = "Grizzly Bear",
-    "Groundhog" = "Groundhog",
-    "HoaryMarmot" = "Hoary Marmot",
-    "LeastChipmunk" = "Least Chipmunk",
-    "Marten" = "Marten",
-    "Mink" = "Mink",
-    "Moose" = "Moose",
-    "Mountaingoat" = "Mountain Goat",
-    "Muledeer" = "Muledeer",
-    "Muskrat" = "Muskrat",
-    "NorthernFlyingSquirrel" = "Northern Flying Squirrel",
-    "Porcupine" = "Porcupine",
-    "Pronghorn" = "Pronghorn",
-    "Raccoon" = "Raccoon",
-    "Redfox" = "Red Fox",
-    "RedSquirrel" = "Red Squirrel",
-    "RichardsonsGroundSquirrel" = "Richardson's Ground Squirrel",
-    "RiverOtter" = "River Otter",
-    "SnowshoeHare" = "Snowshoe Hare",
-    "StripedSkunk" = "Striped Skunk",
-    "VolesMiceandAllies" = "Voles, Mice and Allies",
-    "WeaselsandErmine" = "Weasels and Ermine",
-    "WhitetailedDeer" = "White-tailed Deer",
-    "WhitetailedJackRabbit" = "Whitetailed Jack Rabbit",
-    "Wolverine" = "Wolverine",
-    "WolvesCoyotesandAllies" = "Wolves, Coyotes and Allies",
-    "WoodlandCaribou" = "Woodland Caribou")
-
-tab <- data.frame(SpeciesID=names(SPP), CommonName=SPP)
-for (i in d) {
-    tab[[i]] <- names(SPP) %in% gsub(".png", "", ls[[i]])
-}
-
-
-library(jsonlite)
-toJSON(tab, rownames=FALSE,pretty=TRUE)
-
-
-
-
-library(cure4insect)
-library(mefa4)
-set_options(path = "s:/reports")
-load_common_data()
-
-tab <- get_species_table()
-tab$DisplayName <- paste0(tab$CommonName, " (", tab$ScientificName, ")")
-toJSON(tab[c("AlderFlycatcher", "Ovenbird"),], rownames=FALSE,pretty=TRUE)
-
-
-gr <- "birds"
-SPP <- rownames(resn[resn$Taxon == gr,])
-
-
-## API ----------------------------------
-## all species: display name, group, speciesID
-
-library(jsonlite)
-
-load("d:/abmi/reports/2018/misc/DataPortalUpdate.RData")
-tab <- OUT$Species
-
-dot <- endsWith(rownames(tab), ".")
-dotBad <- rownames(tab)[dot]
-dotOK <- substr(dotBad, 1, nchar(dotBad)-1)
-data.frame(Bad=dotBad,Good=dotOK, tab$Group[dot])
-
-for (i in seq_along(dotBad)) {
-    levels(tab$SpeciesID)[levels(tab$SpeciesID) == dotBad[i]] <- dotOK[i]
-    rownames(tab)[rownames(tab) == dotBad[i]] <- dotOK[i]
-}
-any(endsWith(rownames(tab), "."))
-
-tab$DisplayName <- ifelse(is.na(tab$CommonName), as.character(tab$ScientificName),
-    paste0(tab$CommonName, " (", tab$ScientificName, ")"))
-
-grs <- c("birds", "vplants", "mites", "lichens", "mosses", "mammals-camera")
-
-tmp <- list()
-for (g in grs[1:5]) {
-    p <- file.path("d:/abmi/reports/2018", "images", g)
-    f <- list.files(p)
-    s <- unique(sapply(strsplit(f, "-"), "[[", 1))
-    tmp[[g]] <- tab[s,c("SpeciesID","DisplayName", "Group")]
-    tmp[[g]]$sppprevious <- c(rownames(tmp[[g]])[nrow(tmp[[g]])], rownames(tmp[[g]])[-nrow(tmp[[g]])])
-    tmp[[g]]$sppnext <- c(rownames(tmp[[g]])[-1], rownames(tmp[[g]])[1])
-}
-
-
-SPP <- c(
-    "Badger" = "Badger",
-    "Beaver" = "Beaver",
-    "Bighornsheep" = "Bighorn Sheep",
-    "Bison" = "Bison",
-    "BlackBear" = "Black Bear",
-    "Bobcat" = "Bobcat",
-    "CanadaLynx" = "Canada Lynx",
-    "ColumbianGroundSquirrel" = "Columbian Ground Squirrel",
-    "Cougar" = "Cougar",
-    "Coyote" = "Coyote",
-    "Deer" = "Deer",
-    "Elk" = "Elk",
-    "Fisher" = "Fisher",
-    "Foxes" = "Foxes",
-    "GoldenMantledGroundSquirrel" = "Golden Mantled Ground Squirrel",
-    "GrayWolf" = "Gray Wolf",
-    "Grizzlybear" = "Grizzly Bear",
-    "Groundhog" = "Groundhog",
-    "HoaryMarmot" = "Hoary Marmot",
-    "LeastChipmunk" = "Least Chipmunk",
-    "Marten" = "Marten",
-    "Mink" = "Mink",
-    "Moose" = "Moose",
-    "Mountaingoat" = "Mountain Goat",
-    "Muledeer" = "Muledeer",
-    "Muskrat" = "Muskrat",
-    "NorthernFlyingSquirrel" = "Northern Flying Squirrel",
-    "Porcupine" = "Porcupine",
-    "Pronghorn" = "Pronghorn",
-    "Raccoon" = "Raccoon",
-    "Redfox" = "Red Fox",
-    "RedSquirrel" = "Red Squirrel",
-    "RichardsonsGroundSquirrel" = "Richardson's Ground Squirrel",
-    "RiverOtter" = "River Otter",
-    "SnowshoeHare" = "Snowshoe Hare",
-    "StripedSkunk" = "Striped Skunk",
-    "VolesMiceandAllies" = "Voles, Mice and Allies",
-    "WeaselsandErmine" = "Weasels and Ermine",
-    "WhitetailedDeer" = "White-tailed Deer",
-    "WhitetailedJackRabbit" = "Whitetailed Jack Rabbit",
-    "Wolverine" = "Wolverine",
-    "WolvesCoyotesandAllies" = "Wolves, Coyotes and Allies",
-    "WoodlandCaribou" = "Woodland Caribou")
-
-
-z <- read.csv("d:/abmi/sppweb2018/Camera mammals Mar 2019/Mammal header table May 2019.csv")
-rownames(z) <- z[,1]
-mefa4::compare_sets(names(SPP), rownames(z))
-setdiff(names(SPP), rownames(z))
-SPP <- SPP[names(SPP) %in% rownames(z)]
-z <- z[names(SPP),]
-
-g <- grs[6]
-tmp[[g]] <- data.frame(SpeciesID=names(SPP), DisplayName=SPP, Group=g)
-tmp[[g]]$sppprevious <- c(rownames(tmp[[g]])[nrow(tmp[[g]])], rownames(tmp[[g]])[-nrow(tmp[[g]])])
-tmp[[g]]$sppnext <- c(rownames(tmp[[g]])[-1], rownames(tmp[[g]])[1])
-
-ALL <- do.call(rbind, tmp)
-
-writeLines(toJSON(ALL, rownames=FALSE), file.path("d:/abmi/reports/2018", "api", "index.json"))
-
-for (g in grs) {
-    writeLines(toJSON(tmp[[g]], rownames=FALSE), file.path("d:/abmi/reports/2018", "api", g, "index.json"))
-}
-
-figs <- c("det", "useavail-north", "useavail-south",
-    "coef-north", "coef-south", "map", "sector-north", "sector-south")
-
-for (g in grs[1:5]) {
-    s <- as.character(tmp[[g]]$SpeciesID)
-    f <- list.files(file.path("d:/abmi/reports/2018", "images", g))
-    m <- as.data.frame(matrix(FALSE, length(s), length(figs)))
-    dimnames(m) <- list(s, figs)
-
-    for (i in s) {
-#        ff <- f[startsWith(f, i)]
-#        ff <- gsub(".png", "", gsub(paste0(i, "-"), "", ff))
-        d <- OUT$Species[i,]
-        ff <- c("det",
-            if (d$ModelNorth) c("sector-north", "coef-north") else NULL,
-            if (d$ModelSouth) c("sector-south", "coef-south") else NULL,
-            if (d$ModelNorth || d$ModelSouth) c("map") else NULL,
-            if (d$UseavailNorth && !d$ModelNorth) c("useavail-north") else NULL,
-            if (d$UseavailSouth && !d$ModelSouth) c("useavail-south") else NULL
-        )
-        m[i,] <- figs %in% ff
-        v <- cbind(tab[i,], tmp[[g]][i,c("sppprevious", "sppnext")], m[i,])
-        #toJSON(as.list(v), rownames=FALSE,pretty=TRUE,auto_unbox=TRUE)
-        if (!dir.exists(file.path("d:/abmi/reports/2018", "api", g, i)))
-            dir.create(file.path("d:/abmi/reports/2018", "api", g, i))
-        writeLines(toJSON(as.list(v), rownames=FALSE, auto_unbox=TRUE,pretty=TRUE),
-            file.path("d:/abmi/reports/2018", "api", g, i, "index.json"))
-    }
-}
-
-g <- grs[6]
-figs <- list.dirs(file.path("d:/abmi/reports/2018", "images", g),full.names=FALSE)[-1]
-s <- as.character(tmp[[g]]$SpeciesID)
-f <- list.files(file.path("d:/abmi/reports/2018", "images", g))
-m <- as.data.frame(matrix(FALSE, length(s), length(figs)))
-dimnames(m) <- list(s, figs)
-for (j in figs) {
-    fff <- gsub(".png", "", list.files(file.path("d:/abmi/reports/2018", "images", g, j)))
-    fff <- fff[fff %in% names(SPP)]
-    m[fff,j] <- TRUE
-}
-sum(as.matrix(m))
-for (i in s) {
-    if (!z[i,"ModelNorth"]) {
-        m[i,"coef-north-combo"] <- FALSE
-        m[i,"map-spclim-north"] <- FALSE
-    }
-    if (!z[i,"ModelNorthSummer"])
-        m[i,"coef-north-summer"] <- FALSE
-    if (!z[i,"ModelNorthWinter"])
-        m[i,"coef-north-winter"] <- FALSE
-    if (!z[i,"UseavailNorth"])
-        m[i,"useavail-north"] <- FALSE
-
-    if (!z[i,"ModelSouth"]) {
-        m[i,"coef-south-combo-treed"] <- FALSE
-        m[i,"coef-south-combo-nontreed"] <- FALSE
-        m[i,"map-spclim-south"] <- FALSE
-    }
-    if (!z[i,"ModelSouthSummer"]) {
-        m[i,"coef-south-summer-treed"] <- FALSE
-        m[i,"coef-south-summer-nontreed"] <- FALSE
-    }
-    if (!z[i,"ModelSouthWinter"]) {
-        m[i,"coef-south-winter-treed"] <- FALSE
-        m[i,"coef-south-winter-nontreed"] <- FALSE
-    }
-    if (!z[i,"UseavailSouth"])
-        m[i,"useavail-south"] <- FALSE
-
-    if (!z[i,"ModelNorth"] && !z[i,"ModelSouth"]) {
-        m[i,"map-cr"] <- FALSE
-        m[i,"map-rf"] <- FALSE
-        m[i,"map-df"] <- FALSE
-    }
-}
-sum(as.matrix(m))
-
-for (i in s) {
-    #ff <- f[startsWith(f, i)]
-    #ff <- gsub(".png", "", gsub(paste0(i, "-"), "", ff))
-    v <- cbind(tmp[[g]][i,], m[i,])
-    #toJSON(as.list(v), rownames=FALSE,pretty=TRUE,auto_unbox=TRUE)
-    if (!dir.exists(file.path("d:/abmi/reports/2018", "api", g, i)))
-        dir.create(file.path("d:/abmi/reports/2018", "api", g, i))
-    writeLines(toJSON(as.list(v), rownames=FALSE, auto_unbox=TRUE,pretty=TRUE),
-        file.path("d:/abmi/reports/2018", "api", g, i, "index.json"))
-}
-
-## clean up dotted names
-if (FALSE) {
-fl <- list.files("d:/abmi/reports/2018", recursive = TRUE)
-xx <- NULL
-for (i in seq_along(dotBad)) {
-    xx <- c(xx, grep(dotBad[i], fl))
-}
-xx <- sort(unique(xx))
-str(xx)
-fl[xx]
-for (j in xx) {
-    In <- Out <- fl[j]
-    for (i in seq_along(dotBad)) {
-        Out <- gsub(dotBad[i], dotOK[i], Out)
-    }
-    file.rename(file.path("d:/abmi/reports/2018", In),
-        file.path("d:/abmi/reports/2018", Out))
-}
 }
