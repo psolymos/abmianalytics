@@ -1,57 +1,57 @@
-﻿ID,UseInAnalysis,Sector,Description
-Cy,ClaySub,Native,clayey
-Len,Other,Native,Lentic
-LenS,Other,Native,Lentic: Seasonal
-LenSP,Other,Native,Lentic: semi permanent to permanent
-LenT,Other,Native,Lentic: Temporary
-LenW,Other,Native,Lentic: Permanent
-Li,RapidDrain,Native,Limy-Eroded  or immature soils with free lime (CaCO3) at the soil surface
-Lo,Loamy,Native,loamy
-Ltc,Other,Native,Lotic
-LtcC,Other,Native,Lotic: Coniferous
-LtcD,Other,Native,Lotic: Deciduous
-LtcH,Other,Native,Lotic- Herbaceous
-LtcS,Other,Native,Lotic: Shrub
-LtcR,Other,Native,Lotic: River
-Sb,ClaySub,Native,sub-irrigated: water table close to surface during growing season
-Sy,SandyLoam,Native,sandy-loam-textured soils; SandyLoam
-BdL,RapidDrain,Native,Badland/Bedrock
-CS,RapidDrain,Native,Choppy sandhills (Loamy sand and san soils with duned land surface)
-Gr,RapidDrain,Native,Gravel
-Sa,RapidDrain,Native,"Sand: Loams sand and sand soils, and not with a dune surface; LoamySand and Sand"
-SwG,RapidDrain,Native,Shallow to Gravel
-TB,ThinBreak,Native,Thin Breaks (Areas with bedrock at or near the soil surface)
-BlO,Blowout,Native,Blowouts/solonetzic
-LenA,Other,Native,Lentic Alkaline:poorly drained Saline Gleysolic soils
-Ov,Other,Native,"overflow; receive additional moisture from overland flow, non-saline chernozomic and regosolic soils"
-SL,Blowout,Native,Saline lowland
-UNK,SoilUnknown,Native,Unknown soil
-Water,SoilWater,Native,Undiffferentiated permananet water bodies including lakes 
-UrbanIndustrial,Urban,RuralUrban,
-UrbanResidence,Urban,RuralUrban,
-RuralResidentialIndustrial,Rural,RuralUrban,
-IndustrialSiteRural,Industrial,RuralUrban,
-WindGenerationFacility,Industrial,Energy,
-OtherDisturbedVegetation,Rural,Misc,
-MineSite,Mine,Energy,
-PeatMine,Mine,Misc,
-WellSite,Well,Energy,
-Pipeline,EnSoftLin,Energy,
-TransmissionLine,EnSoftLin,Energy,
-SeismicLineNarrow,EnSeismic,Energy,
-SeismicLineWide,EnSeismic,Energy,
-RoadHardSurface,HardLin,Transportation,
-RailHardSurface,HardLin,Transportation,
-RoadTrailVegetated,TrSoftLin,Transportation,
-RoadVegetatedVerge,TrSoftLin,Transportation,
-RailVegetatedVerge,TrSoftLin,Transportation,
-CultivationCrop,Crop,Agriculture,
-CultivationAbandoned,RoughP,Agriculture,
-CultivationRoughPasture,RoughP,Agriculture,
-CultivationTamePasture,TameP,Agriculture,
-HighDensityLivestockOperation,Industrial,Agriculture,
-BorrowpitsDugoutsSumps,HWater,Misc,
-MunicipalWaterSewage,HWater,Misc,
-Reservoirs,HWater,Misc,
-Canals,HWater,Misc,
-CutBlocks,HFor,Forestry,
+﻿ID,UseInAnalysis,Sector,UseAvail,Description
+Cy,ClaySub,Native,ClayLoamSand,clayey
+Len,Other,Native,Other,Lentic
+LenS,Other,Native,Other,Lentic: Seasonal
+LenSP,Other,Native,Other,Lentic: semi permanent to permanent
+LenT,Other,Native,Other,Lentic: Temporary
+LenW,Other,Native,Other,Lentic: Permanent
+Li,RapidDrain,Native,RapidDrain,Limy-Eroded  or immature soils with free lime (CaCO3) at the soil surface
+Lo,Loamy,Native,ClayLoamSand,loamy
+Ltc,Other,Native,Other,Lotic
+LtcC,Other,Native,Other,Lotic: Coniferous
+LtcD,Other,Native,Other,Lotic: Deciduous
+LtcH,Other,Native,Other,Lotic- Herbaceous
+LtcS,Other,Native,Other,Lotic: Shrub
+LtcR,Other,Native,Other,Lotic: River
+Sb,ClaySub,Native,ClayLoamSand,sub-irrigated: water table close to surface during growing season
+Sy,SandyLoam,Native,ClayLoamSand,sandy-loam-textured soils; SandyLoam
+BdL,RapidDrain,Native,RapidDrain,Badland/Bedrock
+CS,RapidDrain,Native,RapidDrain,Choppy sandhills (Loamy sand and san soils with duned land surface)
+Gr,RapidDrain,Native,RapidDrain,Gravel
+Sa,RapidDrain,Native,RapidDrain,"Sand: Loams sand and sand soils, and not with a dune surface; LoamySand and Sand"
+SwG,RapidDrain,Native,RapidDrain,Shallow to Gravel
+TB,ThinBreak,Native,ThinBreak,Thin Breaks (Areas with bedrock at or near the soil surface)
+BlO,Blowout,Native,Blowout,Blowouts/solonetzic
+LenA,Other,Native,RapidDrain,Lentic Alkaline:poorly drained Saline Gleysolic soils
+Ov,Other,Native,RapidDrain,"overflow; receive additional moisture from overland flow, non-saline chernozomic and regosolic soils"
+SL,Blowout,Native,RapidDrain,Saline lowland
+UNK,SoilUnknown,Native,EXCLUDE,Unknown soil
+Water,SoilWater,Native,EXCLUDE,Undiffferentiated permananet water bodies including lakes 
+UrbanIndustrial,Urban,RuralUrban,UrbInd,
+UrbanResidence,Urban,RuralUrban,UrbInd,
+RuralResidentialIndustrial,Rural,RuralUrban,UrbInd,
+IndustrialSiteRural,Industrial,RuralUrban,UrbInd,
+WindGenerationFacility,Industrial,Energy,UrbInd,
+OtherDisturbedVegetation,Rural,Misc,UrbInd,
+MineSite,Mine,Energy,UrbInd,
+PeatMine,Mine,Misc,UrbInd,
+WellSite,Well,Energy,UrbInd,
+Pipeline,EnSoftLin,Energy,SoftLin,
+TransmissionLine,EnSoftLin,Energy,SoftLin,
+SeismicLineNarrow,EnSeismic,Energy,SoftLin,
+SeismicLineWide,EnSeismic,Energy,SoftLin,
+RoadHardSurface,HardLin,Transportation,HardLin,
+RailHardSurface,HardLin,Transportation,HardLin,
+RoadTrailVegetated,TrSoftLin,Transportation,SoftLin,
+RoadVegetatedVerge,TrSoftLin,Transportation,SoftLin,
+RailVegetatedVerge,TrSoftLin,Transportation,SoftLin,
+CultivationCrop,Crop,Agriculture,Crop,
+CultivationAbandoned,RoughP,Agriculture,RoughP,
+CultivationRoughPasture,RoughP,Agriculture,RoughP,
+CultivationTamePasture,TameP,Agriculture,TameP,
+HighDensityLivestockOperation,Industrial,Agriculture,UrbInd,
+BorrowpitsDugoutsSumps,HWater,Misc,EXCLUDE,
+MunicipalWaterSewage,HWater,Misc,EXCLUDE,
+Reservoirs,HWater,Misc,EXCLUDE,
+Canals,HWater,Misc,EXCLUDE,
+CutBlocks,HFor,Forestry,EXCLUDE,
