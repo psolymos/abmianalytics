@@ -170,80 +170,162 @@ As <- ee$sc1[rownames(Ys),]
 Yn <- en$YY
 An <- ee$vc1[rownames(Yn),]
 
+tax <- ee$tax
+colnames(Ys) <- tax$sppid[match(colnames(Ys), tax$code)]
+colnames(Yn) <- tax$sppid[match(colnames(Yn), tax$code)]
+
+
 compare_sets(ls$ID, colnames(As))
 compare_sets(lv$ID, colnames(An))
 
 pn <- groupSums(An, 2, lv[colnames(An), "UseAvail"])
+pn <- pn[,colnames(pn) != "EXCLUDE"]
+pn <- pn / rowSums(pn)
+pn <- pn[,c("Decid", "Mixedwood", "Pine", "Spruce", "TreedBogFen", "Swamp",
+    "GrassHerb", "Shrub", "NonTreedBogFen", "Marsh",
+    "Crop", "RoughP", "TameP", "UrbInd", "SoftLin",
+    "HardLin", "Forestry")]
 ps <- groupSums(As, 2, ls[colnames(As), "UseAvail"])
-
+ps <- ps[,colnames(ps) != "EXCLUDE"]
+ps <- ps / rowSums(ps)
+ps <- ps[,c("ClayLoamSand", "RapidDrain", "Blowout", "ThinBreak", "Other",
+     "Crop", "RoughP", "TameP", "UrbInd", "SoftLin", "HardLin")]
 
 wrs <- t(pbapply::pbapply(as.matrix(Ys), 2, function(z) wrsi(z, x=ps)$rWRSI))
 colnames(wrs) <- rownames(wrsi(Ys[,1], x=ps))
 wrn <- t(pbapply::pbapply(as.matrix(Yn), 2, function(z) wrsi(z, x=pn)$rWRSI))
 colnames(wrn) <- rownames(wrsi(Yn[,1], x=pn))
 
-save(wrs, wrn, file="s:/AB_data_v2020/Results/UseAvail-birds.RData")
+
+## Use avail for other taxa
+
+Taxa <- c(lichens="Lichen", mites="Mite", mosses="Moss", vplants="VPlant")
+UA <- list()
+for (taxa in names(Taxa)) {
+    f <- sprintf(
+        paste0(
+        "s:/AB_data_v2020/Results/Results from Ermias/Compiled data/",
+        "Compiled %s %s analysis 2020_Quad.RData"), "South", Taxa[taxa])
+
+    e <- new.env()
+    load(f, envir=e)
+    names(e)
+    d <- e$d
+    ys <- d[,e$SpTable.ua]
+    v <- d[,which(colnames(d) == "ClaySub"):ncol(d)]
+    v <- v[,!startsWith(colnames(v), "Surr")]
+    tmp <- intersect(colnames(v),ls$UseInAnalysis)
+    vv1 <- groupSums(as.matrix(v[,tmp]), 2, ls$UseAvail[match(tmp, ls$UseInAnalysis)])
+    setdiff(ls$UseAvail, colnames(vv1))
+    vv1 <- cbind(vv1, UrbInd=v[,"UrbInd"])
+    vv1 <- vv1[,colnames(vv1) != "EXCLUDE"]
+    psx <- vv1 / rowSums(vv1)
+    psx <- psx[,colnames(ps)]
 
 
+    f <- sprintf(
+        paste0(
+        "s:/AB_data_v2020/Results/Results from Ermias/Compiled data/",
+        "Compiled %s %s analysis 2020_Quad.RData"), "North", Taxa[taxa])
+    e <- new.env()
+    load(f, envir=e)
+    names(e)
+    d <- e$d
+    yn <- d[,e$SpTable.ua]
+    v <- d[,which(colnames(d) == "DeciduousR"):ncol(d)]
+    v <- v[,!startsWith(colnames(v), "Surr")]
+    colnames(v) <- gsub("Deciduous", "Decid", colnames(v))
+    colnames(v) <- gsub("WhiteSpruce", "Spruce", colnames(v))
+    colnames(v) <- gsub("BlackSpruce", "TreedBog", colnames(v))
+    colnames(v) <- gsub("TreedFen", "TreedFenR", colnames(v))
+    colnames(v) <- gsub("TreedSwamp", "TreedSwampR", colnames(v))
+    colnames(v) <- gsub("Grass", "GrassHerb", colnames(v))
+    tmp <- intersect(colnames(v),lv$UseInAnalysis)
+    vv1 <- groupSums(as.matrix(v[,tmp]), 2, lv$UseAvail[match(tmp, lv$UseInAnalysis)])
+    setdiff(lv$UseAvail, colnames(vv1))
+    vv1 <- cbind(vv1, UrbInd=v[,"UrbInd"])
+    vv1 <- vv1[,colnames(vv1) != "EXCLUDE"]
+    pnx <- vv1 / rowSums(vv1)
+    pnx <- pnx[,colnames(pn)]
+
+    pnx[is.na(pnx)] <- 0
+    psx[is.na(psx)] <- 0
+
+    N <- t(pbapply::pbapply(as.matrix(yn), 2, function(z) wrsi(z, x=pnx)$rWRSI))
+    colnames(N) <- rownames(wrsi(yn[,1], x=pnx))
+    S <- t(pbapply::pbapply(as.matrix(ys), 2, function(z) wrsi(z, x=psx)$rWRSI))
+    colnames(S) <- rownames(wrsi(ys[,1], x=psx))
 
 
+    UA[[taxa]] <- list(north=N, south=S)
 
-x <- as.matrix(uan[ ,c("Deciduous","Mixedwood","WhiteSpruce","Pine","BlackSpruce","TreedFen","Open","Wetland","HFor","Crop", "TameP", "RoughP","UrbInd","HardLin","SoftLin")])
-HabLabel <- c("Deciduous","Mixedwood","Upland Spruce","Pine","Black Spruce","Treed Fen","Open Upland","Open Wetland","Forestry","Crop", "Tame Pasture", "Rough Pasture","Urban/Industry","Hard Linear","Soft Linear" )
-col1<-brewer.pal(8, "Dark2")[c(1,1,1,1, 5,5, 6,7)]
-col2<-brewer.pal(12, "Paired")[c(4,7,7,7,12,12,10)]
-cols <- c(col1,col2)
-
-#SPP <- rownames(tab)[tab$UseavailNorth]
-SPP <- rownames(tab)[tab$UseavailNorth & tab$Group == "birds"]
-
-for (spp in SPP) {
-    gr <- tab[spp, "Group"]
-    spnam <- if (is.na(tab[spp, "CommonName"])) {
-        as.character(tab[spp, "ScientificName"])
-    } else {
-        paste0(as.character(tab[spp, "CommonName"]), " (", as.character(tab[spp, "ScientificName"]), ")")
-    }
-    cat(gr, spp, "\n");flush.console()
-    png(paste0(ROOT, "/figs/", gr, "/", spp, "-useavail-north.png"),
-        height=480, width=600)
-    op <- par(mar=c(6,4,2,2)+0.1, las=2)
-    x1 <- barplot(as.vector(x [spp, ]), horiz=FALSE, ylab="Affinity",space=NULL, col=cols, border=cols, ylim=c(-1,1), axes=FALSE,axisnames=F )
-    axis(side=2)
-    abline(h=0, col="red4", lwd=2)
-    mtext(side=3,at=x1[1],adj=0, spnam, cex=1.2,col="grey40",las=1)
-    text(x=x1, y=par()$usr[3]-0.01,labels=HabLabel, srt=60, adj=1, col=cols, xpd=TRUE)
-    par(op)
-    dev.off()
 }
 
-x<- as.matrix(uas[ , c("Productive","Clay","Saline","RapidDrain","Crop","TameP","RoughP","UrbInd","HardLin","SoftLin")])
-HabLabel <- c("Productive","Clay","Saline","Rapid Drain","Crop", "Tame Pasture", "Rough Pasture","Urban/Industry","Hard Linear","Soft Linear" )
-col1<-brewer.pal(8, "Dark2")[c(7,7,7,7)]
-col2<-brewer.pal(12, "Paired")[c(7,7,7,12,12,10)]
+UA$birds <- list(north=wrn, south=wrs)
+
+save(UA, file="s:/AB_data_v2020/Results/UseAvail-all.RData")
+
+
+## use-avail plots N/S
+
+library(RColorBrewer)
+
+col1<-brewer.pal(8, "Dark2")[c(1,1,1,1,1, 6, 7,7)]
+col2<-brewer.pal(12, "Paired")[c(12,7,7)]
 cols <- c(col1,col2)
+names(cols) <- colnames(ps)
+colsS <- cols
 
-#SPP <- rownames(tab)[tab$UseavailSouth]
-SPP <- rownames(tab)[tab$UseavailSouth & tab$Group == "birds"]
+col1<-brewer.pal(8, "Dark2")[c(1,1,1,1,5,5,2,2,3,3, 6, 7,7)]
+col2<-brewer.pal(12, "Paired")[c(12,7,7,3)]
+cols <- c(col1,col2)
+names(cols) <- colnames(pn)
+colsN <- cols
 
-for (spp in SPP) {
-    gr <- tab[spp, "Group"]
-    spnam <- if (is.na(tab[spp, "CommonName"])) {
-        as.character(tab[spp, "ScientificName"])
-    } else {
-        paste0(as.character(tab[spp, "CommonName"]), " (", as.character(tab[spp, "ScientificName"]), ")")
+for (taxon in names(UA)) {
+
+    Z <- UA[[taxon]]$north
+    for (spp in rownames(Z)) {
+        cat(taxon, spp, "north\n")
+        flush.console()
+
+        DIR <- file.path("s:/AB_data_v2020/Results/web", taxon, spp)
+        if (!dir.exists(DIR))
+            dir.create(DIR)
+
+        v <- Z[spp,names(colsN)]
+        png(file.path(DIR, "useavail-north.png"),
+            height=480, width=600)
+        op <- par(mar=c(7,4,2,2)+0.1, las=2)
+        x1 <- barplot(v, horiz=FALSE, ylab="Affinity",space=NULL, col=cols, border=cols, ylim=c(-1,1), axes=FALSE,axisnames=F )
+        axis(side=2)
+        abline(h=0, col="red4", lwd=2)
+        mtext(side=3,at=x1[1],adj=0,spp,cex=1.2,col="grey40",las=1)
+        text(x=x1, y=par()$usr[3]-0.01,labels=names(cols), srt=60, adj=1, col=cols, xpd=TRUE)
+        par(op)
+        dev.off()
     }
-    cat(gr, spp, "\n");flush.console()
-    png(paste0(ROOT, "/figs/", gr, "/", spp, "-useavail-south.png"),
-        height=480, width=600)
-    op <- par(mar=c(6,4,2,2)+0.1, las=2)
-    x1 <- barplot(as.vector(x[spp, ]), horiz=FALSE, ylab="Affinity",space=NULL, col=cols, border=cols, ylim=c(-1,1), axes=FALSE,axisnames=F )
-    axis(side=2)
-    abline(h=0, col="red4", lwd=2)
-    mtext(side=3,at=x1[1],adj=0,spnam,cex=1.2,col="grey40",las=1)
-    text(x=x1, y=par()$usr[3]-0.01,labels=HabLabel, srt=60, adj=1, col=cols, xpd=TRUE)
-    par(op)
-    dev.off()
-}
 
+    Z <- UA[[taxon]]$south
+    for (spp in rownames(Z)) {
+        cat(taxon, spp, "south\n")
+        flush.console()
+
+        DIR <- file.path("s:/AB_data_v2020/Results/web", taxon, spp)
+        if (!dir.exists(DIR))
+            dir.create(DIR)
+
+        v <- Z[spp,names(colsS)]
+        png(file.path(DIR, "useavail-south.png"),
+            height=480, width=600)
+        op <- par(mar=c(7,4,2,2)+0.1, las=2)
+        x1 <- barplot(v, horiz=FALSE, ylab="Affinity",space=NULL, col=cols, border=cols, ylim=c(-1,1), axes=FALSE,axisnames=F )
+        axis(side=2)
+        abline(h=0, col="red4", lwd=2)
+        mtext(side=3,at=x1[1],adj=0, spp, cex=1.2,col="grey40",las=1)
+        text(x=x1, y=par()$usr[3]-0.01,labels=names(cols), srt=60, adj=1, col=cols, xpd=TRUE)
+        par(op)
+        dev.off()
+    }
+}
 
