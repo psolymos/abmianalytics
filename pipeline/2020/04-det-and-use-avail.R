@@ -145,17 +145,48 @@ for (spp in SPP2) {
     dev.off()
 }
 
+## use-avail for birds
+
+library(mefa4)
+source("~/repos/abmianalytics/birds/00-functions.R")
+
+ls <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v2020.csv")
+rownames(ls) <- ls[,1]
+lv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v2020.csv")
+rownames(lv) <- lv[,1]
+
+ROOT <- "d:/abmi/AB_data_v2020/data/analysis/species/birds" # change this bit
+
+ee <- new.env()
+load(file.path(ROOT, "ab-birds-all-2020-09-23.RData"), envir=ee)
+
+en <- new.env()
+load(file.path(ROOT, "data", "ab-birds-north-2020-09-23.RData"), envir=en)
+es <- new.env()
+load(file.path(ROOT, "data", "ab-birds-south-2020-09-23.RData"), envir=es)
+
+Ys <- es$YY
+As <- ee$sc1[rownames(Ys),]
+Yn <- en$YY
+An <- ee$vc1[rownames(Yn),]
+
+compare_sets(ls$ID, colnames(As))
+compare_sets(lv$ID, colnames(An))
+
+pn <- groupSums(An, 2, lv[colnames(An), "UseAvail"])
+ps <- groupSums(As, 2, ls[colnames(As), "UseAvail"])
+
+
+wrs <- t(pbapply::pbapply(as.matrix(Ys), 2, function(z) wrsi(z, x=ps)$rWRSI))
+colnames(wrs) <- rownames(wrsi(Ys[,1], x=ps))
+wrn <- t(pbapply::pbapply(as.matrix(Yn), 2, function(z) wrsi(z, x=pn)$rWRSI))
+colnames(wrn) <- rownames(wrsi(Yn[,1], x=pn))
+
+save(wrs, wrn, file="s:/AB_data_v2020/Results/UseAvail-birds.RData")
 
 
 
-load("d:/abmi/reports/2018/misc/DataPortalUpdate.RData")
 
-library(RColorBrewer)
-
-
-tab <- OUT$Species
-uan <- OUT$UseavailNorth
-uas <- OUT$UseavailSouth
 
 x <- as.matrix(uan[ ,c("Deciduous","Mixedwood","WhiteSpruce","Pine","BlackSpruce","TreedFen","Open","Wetland","HFor","Crop", "TameP", "RoughP","UrbInd","HardLin","SoftLin")])
 HabLabel <- c("Deciduous","Mixedwood","Upland Spruce","Pine","Black Spruce","Treed Fen","Open Upland","Open Wetland","Forestry","Crop", "Tame Pasture", "Rough Pasture","Urban/Industry","Hard Linear","Soft Linear" )
