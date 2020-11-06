@@ -2,6 +2,8 @@
 library(mefa4)
 
 load("s:/AB_data_v2020/Results/COEFS-ALL.RData")
+load("s:/AB_data_v2020/Results/COEFS-ALL2.RData")
+
 load("d:/abmi/AB_data_v2020/data/analysis/kgrid_table_km.RData") # kgrid
 ## chSoil/chVeg/trSoil/trVeg
 load("d:/abmi/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2018_transitions_wide.RData")
@@ -11,7 +13,8 @@ trSoil <- trSoil[rownames(kgrid),rownames(chSoil)]
 ## common functions and variables
 
 ## organize space-climate variables using kgrid table
-make_clim <- function(x, birds=FALSE) {
+## not sure if truncated latitude is needed: S study are excluded >56.7
+make_clim <- function(x, birds=FALSE, truncate_latitude=FALSE) {
     if (birds) {
         z <- with(x, cbind(
             pWater_KM=pWater,
@@ -33,9 +36,10 @@ make_clim <- function(x, birds=FALSE) {
             `xAHM:xMAT`=z[,"xAHM"]*z[,"xMAT"],
             `xX:xY`=z[,"xX"]*z[,"xY"])
     } else {
+        LAT <- pmin(x$POINT_Y, 56.5)
         z <- with(x, cbind(
             Intercept=1,
-            Lat=x$POINT_Y,
+            Lat=LAT,
             Long=x$POINT_X,
             AHM=x$AHM,
             PET=x$PET,
@@ -44,9 +48,9 @@ make_clim <- function(x, birds=FALSE) {
             MAT=x$MAT,
             MCMT=x$MCMT,
             MWMT=x$MWMT,
-            Lat2=x$POINT_Y^2,
+            Lat2=LAT^2,
             Long2=x$POINT_X^2,
-            LatLong=x$POINT_X*x$POINT_Y,
+            LatLong=x$POINT_X*LAT,
             MAPPET=x$MAP*x$PET,
             MATAHM=x$MAT*x$AHM,
             MAPFFP=x$MAP*x$FFP,
@@ -345,12 +349,15 @@ BMAX <- 100
 ROOT <- "s:/AB_data_v2020/Results/pred"
 ROOT2 <- "s:/AB_data_v2020/Results/boot"
 
+COEFS$mammals <- COEFS2$mammals
+COEFS$habitats <- COEFS2$habitats
+
 TAXA <- names(COEFS)
 for (taxon in TAXA) {
 
-    if (!dir.exists(file.path(ROOT, taxon)))
+    if (SEFF && !dir.exists(file.path(ROOT, taxon)))
         dir.create(file.path(ROOT, taxon))
-    if (!dir.exists(file.path(ROOT2, taxon)))
+    if (BOOT && !dir.exists(file.path(ROOT2, taxon)))
         dir.create(file.path(ROOT2, taxon))
 
     SPPn <- if (taxon!="birds")
@@ -389,6 +396,11 @@ for (taxon in TAXA) {
             XclimN <- Xclim_nonb_N
             FUN <- binomial()$linkinv
         }
+        if (taxon == "mammals")
+            FUN <- function (eta)
+                pmin(pmax(exp(eta), .Machine$double.eps), .Machine$double.xmax)
+        if (taxon == "habitats")
+            FUN <- binomial(COEFS[[taxon]]$species[spp, "link"])$linkinv
 
 
         ## bootstrap for current map
@@ -460,9 +472,19 @@ for (taxon in TAXA) {
                 ## space-climate coefs
                 bscl <- if (taxon == "birds")
                     cfs[colnames(Xclim_bird), i] else cfs[colnames(Xclim_nonb), i]
+                bscl[is.na(bscl)] <- 0 # this happens for habitat elements
                 bspa <- cfs["pAspen", i]
                 ## additive components for south
-                muscl <- drop(XclimS %*% bscl)
+                if (taxon=="mammals") {
+                    ## space/clim includes presence-absence piece
+                    #Total.Abundance.approx<- exp(log(TA.vegHF) + SC.pOcc + pAspen.pa + pAspen.agp)
+                    pApa <- COEFS[[taxon]]$pAspenPA[spp]
+                    muscl <- drop(cbind(XclimS, pA) %*% c(bscl, pApa))
+                    if (spp == "Pronghorn")
+                        muscl <- (muscl - mean(muscl))/1000
+                } else {
+                    muscl <- drop(XclimS %*% bscl)
+                }
                 muspa <- pA * bspa
 
                 muscr <- matrix(muscl + muspa, nrow=nrow(Pscr), ncol=ncol(Pscr))
@@ -488,11 +510,14 @@ for (taxon in TAXA) {
                 ## space-climate coefs
                 bncl <- if (taxon == "birds")
                     cfn[colnames(Xclim_bird), i] else cfn[colnames(Xclim_nonb), i]
+                bncl[is.na(bncl)] <- 0 # this happens for habitat elements
                 ## additive components for north
                 muncl <- drop(XclimN %*% bncl)
+
                 muncr <- matrix(muncl, nrow=nrow(Pncr), ncol=ncol(Pncr))
                 muncr <- t(t(muncr) + bncr)
                 NNcr <- as.matrix(groupSums(Pncr * FUN(muncr), 2, chVcr$sector_use))
+
                 munrf <- matrix(muncl, nrow=nrow(Pnrf), ncol=ncol(Pnrf))
                 munrf <- t(t(munrf) + bnrf)
                 NNrf <- as.matrix(groupSums(Pnrf * FUN(munrf), 2, chVrf$sector_use))
@@ -603,6 +628,8 @@ library(mefa4)
 library(raster)
 
 load("s:/AB_data_v2020/Results/COEFS-ALL.RData")
+load("s:/AB_data_v2020/Results/COEFS-ALL2.RData")
+COEFS <- c(COEFS, COEFS2)
 load("d:/abmi/AB_data_v2020/data/analysis/kgrid_table_km.RData") # kgrid
 ## chSoil/chVeg/trSoil/trVeg
 load("d:/abmi/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2018_transitions_wide.RData")
@@ -687,9 +714,14 @@ SEs <- cure4insect:::.plot_sector1(CurrS[sectors], RefS[sectors], AreaS, RefTota
 }
 
 SE <- list()
-for (taxon in names(COEFS)[5]) {
-    if (!dir.exists(file.path(ROOT2, taxon)))
-        dir.create(file.path(ROOT2, taxon))
+TAXA <- names(COEFS)
+doSEFF <- TRUE
+doMAPS <- FALSE
+for (taxon in TAXA) {
+
+    if (!dir.exists(file.path(ROOT, taxon)))
+        dir.create(file.path(ROOT, taxon))
+
     SE[[taxon]] <- list()
     A <- if (taxon == "birds")
         COEFS[[taxon]]$north$marginal else COEFS[[taxon]]$north
@@ -698,8 +730,17 @@ for (taxon in names(COEFS)[5]) {
         COEFS[[taxon]]$south$marginal else COEFS[[taxon]]$south
     SPPs <- dimnames(A)[[1]]
     SPP <- sort(unique(c(SPPn, SPPs)))
+    SPP <- SPP[SPP != "Do.not.analyze"]
 
     for (spp in SPP) {
+
+        spp0 <- spp
+
+        if (endsWith(spp, "."))
+            spp <- substr(spp, 1, nchar(spp)-1)
+        if (grepl("\\.\\.", spp))
+            spp <- gsub("\\.\\.", "\\.", spp)
+
         cat(taxon, spp, "\n")
         flush.console()
 
@@ -712,107 +753,139 @@ for (taxon in names(COEFS)[5]) {
         if (!dir.exists(file.path(ROOT2, taxon, spp)))
             dir.create(file.path(ROOT2, taxon, spp))
 
-        load(file.path(ROOT, taxon, paste0(spp, ".RData"))) # Ncr, Nrf
+        load(file.path(ROOT, taxon, paste0(spp0, ".RData"))) # Ncr, Nrf
 
-        if (spp %in% SPPn) {
-            RefN <- colSums(Nrf[rn,])
-            RefTotalN <- sum(RefN)
-            CurrN <- colSums(Ncr[rn,])
-            png(file.path(ROOT2, taxon, spp, "sector-north.png"), width=600, height=500)
-            SEn <- cure4insect:::.plot_sector1(
-                CurrN[sectors], RefN[sectors],
-                AreaN, RefTotalN, main=spp)
+        if (doSEFF) {
+            if (spp %in% SPPn) {
+                RefN <- colSums(Nrf[rn,])
+                RefTotalN <- sum(RefN)
+                CurrN <- colSums(Ncr[rn,])
+                png(file.path(ROOT2, taxon, spp, "sector-north.png"), width=3*600, height=500)
+                op <- par(mfrow=c(1,3))
+                SEn1 <- cure4insect:::.plot_sector1(
+                    Curr=CurrN[sectors], Ref=RefN[sectors],
+                    Area=AreaN, RefTotal=RefTotalN, main=paste(spp, "Unit effect"))
+                SEn2 <- cure4insect:::.plot_sector2(
+                    Curr=CurrN[sectors], Ref=RefN[sectors],
+                    RefTotal=RefTotalN, regional=TRUE, main="Regional effect")
+                SEn3 <- cure4insect:::.plot_sector2(
+                    Curr=CurrN[sectors], Ref=RefN[sectors],
+                    RefTotal=RefTotalN, regional=FALSE, main="Under HF effect")
+                par(op)
+                dev.off()
+                SEn <- list(unit=SEn1, regional=SEn2, underhf=SEn3)
+            } else {
+                SEn <- NULL
+            }
+
+            if (spp %in% SPPs) {
+                ## delete forestry here???
+                RefS <- colSums(Nrf[rs,])
+                if (DEL_FOR)
+                    RefS["Forestry"] <- 0
+                RefTotalS <- sum(RefS)
+                CurrS <- colSums(Ncr[rs,])
+                if (DEL_FOR)
+                    CurrS["Forestry"] <- 0
+                png(file.path(ROOT2, taxon, spp, "sector-south.png"), width=3*600, height=500)
+                op <- par(mfrow=c(1,3))
+                SEs1 <- cure4insect:::.plot_sector1(
+                    Curr=CurrS[sectors], Ref=RefS[sectors],
+                    Area=AreaS, RefTotal=RefTotalS, main=paste(spp, "Unit effect"))
+                SEs2 <- cure4insect:::.plot_sector2(
+                    Curr=CurrS[sectors], Ref=RefS[sectors],
+                    RefTotal=RefTotalS, regional=TRUE, main="Regional effect")
+                SEs3 <- cure4insect:::.plot_sector2(
+                    Curr=CurrS[sectors], Ref=RefS[sectors],
+                    RefTotal=RefTotalS, regional=FALSE, main="Under HF effect")
+                par(op)
+                dev.off()
+                SEs <- list(unit=SEs1, regional=SEs2, underhf=SEs3)
+            } else {
+                SEs <- NULL
+            }
+
+            SE[[taxon]][[spp]] <- list(north=SEn, south=SEs)
+        }
+
+        if (doMAPS) {
+            Dcr <- rowSums(Ncr)[match(rownames(kgrid), rownames(Ncr))]
+            Drf <- rowSums(Nrf)[match(rownames(kgrid), rownames(Nrf))]
+            NA_VAL <- 0
+            if (spp == "pH")
+                NA_VAL <- 7
+
+            Dcr[is.na(Dcr)] <- NA_VAL
+            q <- quantile(Dcr, 0.99)
+            Dcr[Dcr > q] <- q
+            Drf[is.na(Drf)] <- NA_VAL
+            q <- quantile(Drf, 0.99)
+            Drf[Drf > q] <- q
+            MAX <- max(Dcr, Drf)
+            if (taxon == "habitats" && COEFS[[taxon]]$species[spp, "Unit"] == "%" && spp != "SoilCarbon")
+                MAX <- 1
+            if (spp == "pH") {
+                Dcr[Dcr < 0] <- 0
+                Drf[Drf < 0] <- 0
+                MAX <- 14
+            }
+
+            df <- (Dcr-Drf) / MAX
+            df <- sign(df) * abs(df)^0.5
+            df <- pmin(200, ceiling(99 * df)+100)
+            df[df==0] <- 1
+            cr <- pmin(100, ceiling(99 * sqrt(Dcr / MAX))+1)
+            rf <- pmin(100, ceiling(99 * sqrt(Drf / MAX))+1)
+
+            Rcr <- make_raster(cr, kgrid, rt)
+            Rrf <- make_raster(rf, kgrid, rt)
+            Rdf <- make_raster(df-100, kgrid, rt)
+
+            if (TYPE == "S")
+                Msk <- Rmasks
+            if (TYPE == "N")
+                Msk <- Rmaskn
+            if (TYPE != "C") {
+                Rcr <- mask(Rcr, Msk)
+                Rrf <- mask(Rrf, Msk)
+                Rdf <- mask(Rdf, Msk)
+            }
+    #        if (taxon != "birds") {
+    #            Rcr <- mask(Rcr, Rmaskm)
+    #            Rrf <- mask(Rrf, Rmaskm)
+    #            Rdf <- mask(Rdf, Rmaskm)
+    #        }
+
+            png(file.path(ROOT2, taxon, spp, "map.png"),
+                height=1500*1, width=1000*3, res=300)
+            op <- par(mfrow=c(1,3), mar=c(2,1,2,3))
+
+            plot(rt, col=CE, axes=FALSE, box=FALSE, main="Reference", legend=FALSE)
+            plot(Rrf, add=TRUE, col=col1[1:max(rf)])
+            plot(Rw, add=TRUE, col=CW, legend=FALSE)
+
+            plot(rt, col=CE, axes=FALSE, box=FALSE, main="Current", legend=FALSE)
+            plot(Rcr, add=TRUE, col=col1[1:max(cr)])
+            plot(Rw, add=TRUE, col=CW, legend=FALSE)
+
+            plot(rt, col=CE, axes=FALSE, box=FALSE, main="Difference", legend=FALSE)
+            plot(Rdf, add=TRUE, col=col3[min(df):max(df)])
+            plot(Rw, add=TRUE, col=CW, legend=FALSE)
+
+            par(op)
             dev.off()
-        } else {
-            SEn <- NULL
+
+            if (!dir.exists(file.path("s:/AB_data_v2020/Results/normalized-maps", taxon)))
+                dir.create(file.path("s:/AB_data_v2020/Results/normalized-maps", taxon))
+
+            out <- data.frame(Current=cr, Reference=rf, Difference=df)
+            rownames(out) <- rownames(kgrid)
+            out <- out[rownames(Ncr),]
+            save(out, file=file.path("s:/AB_data_v2020/Results/normalized-maps", taxon,
+                paste0(spp, ".RData")))
+
+            gc()
         }
-
-        if (spp %in% SPPs) {
-            ## delete forestry here???
-            RefS <- colSums(Nrf[rs,])
-            if (DEL_FOR)
-                RefS["Forestry"] <- 0
-            RefTotalS <- sum(RefS)
-            CurrS <- colSums(Ncr[rs,])
-            if (DEL_FOR)
-                CurrS["Forestry"] <- 0
-            png(file.path(ROOT2, taxon, spp, "sector-south.png"), width=600, height=500)
-            SEs <- cure4insect:::.plot_sector1(
-                CurrS[sectors], RefS[sectors],
-                AreaS, RefTotalS, main=spp)
-            dev.off()
-        } else {
-            SEs <- NULL
-        }
-
-        SE[[taxon]][[spp]] <- list(north=SEn, south=SEs)
-
-
-        Dcr <- rowSums(Ncr)[match(rownames(kgrid), rownames(Ncr))]
-        Dcr[is.na(Dcr)] <- 0
-        q <- quantile(Dcr, 0.99)
-        Dcr[Dcr > q] <- q
-        Drf <- rowSums(Nrf)[match(rownames(kgrid), rownames(Nrf))]
-        Drf[is.na(Drf)] <- 0
-        q <- quantile(Drf, 0.99)
-        Drf[Drf > q] <- q
-        MAX <- max(Dcr, Drf)
-
-        df <- (Dcr-Drf) / MAX
-        df <- sign(df) * abs(df)^0.5
-        df <- pmin(200, ceiling(99 * df)+100)
-        df[df==0] <- 1
-        cr <- pmin(100, ceiling(99 * sqrt(Dcr / MAX))+1)
-        rf <- pmin(100, ceiling(99 * sqrt(Drf / MAX))+1)
-
-        Rcr <- make_raster(cr, kgrid, rt)
-        Rrf <- make_raster(rf, kgrid, rt)
-        Rdf <- make_raster(df-100, kgrid, rt)
-
-        if (TYPE == "S")
-            Msk <- Rmasks
-        if (TYPE == "N")
-            Msk <- Rmaskn
-        if (TYPE != "C") {
-            Rcr <- mask(Rcr, Msk)
-            Rrf <- mask(Rrf, Msk)
-            Rdf <- mask(Rdf, Msk)
-        }
-#        if (taxon != "birds") {
-#            Rcr <- mask(Rcr, Rmaskm)
-#            Rrf <- mask(Rrf, Rmaskm)
-#            Rdf <- mask(Rdf, Rmaskm)
-#        }
-
-        png(file.path(ROOT2, taxon, spp, "map.png"),
-            height=1500*1, width=1000*3, res=300)
-        op <- par(mfrow=c(1,3), mar=c(2,1,2,3))
-
-        plot(rt, col=CE, axes=FALSE, box=FALSE, main="Reference", legend=FALSE)
-        plot(Rrf, add=TRUE, col=col1[1:max(rf)])
-        plot(Rw, add=TRUE, col=CW, legend=FALSE)
-
-        plot(rt, col=CE, axes=FALSE, box=FALSE, main="Current", legend=FALSE)
-        plot(Rcr, add=TRUE, col=col1[1:max(cr)])
-        plot(Rw, add=TRUE, col=CW, legend=FALSE)
-
-        plot(rt, col=CE, axes=FALSE, box=FALSE, main="Difference", legend=FALSE)
-        plot(Rdf, add=TRUE, col=col3[min(df):max(df)])
-        plot(Rw, add=TRUE, col=CW, legend=FALSE)
-
-        par(op)
-        dev.off()
-
-        if (!dir.exists(file.path("s:/AB_data_v2020/Results/normalized-maps", taxon)))
-            dir.create(file.path("s:/AB_data_v2020/Results/normalized-maps", taxon))
-
-        out <- data.frame(Current=cr, Reference=rf, Difference=df)
-        rownames(out) <- rownames(kgrid)
-        out <- out[rownames(Ncr),]
-        save(out, file=file.path("s:/AB_data_v2020/Results/normalized-maps", taxon,
-            paste0(spp, ".RData")))
-
-        gc()
 
 
     }
@@ -822,191 +895,5 @@ for (taxon in names(COEFS)[5]) {
 save(SE,  file="s:/AB_data_v2020/Results/SE-ESTIMATES.RData")
 
 
-## detection map and use avail
-
-## use avail figures
-
-load("d:/abmi/reports/2018/misc/DataPortalUpdate.RData")
-
-library(RColorBrewer)
 
 
-tab <- OUT$Species
-uan <- OUT$UseavailNorth
-uas <- OUT$UseavailSouth
-
-x <- as.matrix(uan[ ,c("Deciduous","Mixedwood","WhiteSpruce","Pine","BlackSpruce","TreedFen","Open","Wetland","HFor","Crop", "TameP", "RoughP","UrbInd","HardLin","SoftLin")])
-HabLabel <- c("Deciduous","Mixedwood","Upland Spruce","Pine","Black Spruce","Treed Fen","Open Upland","Open Wetland","Forestry","Crop", "Tame Pasture", "Rough Pasture","Urban/Industry","Hard Linear","Soft Linear" )
-col1<-brewer.pal(8, "Dark2")[c(1,1,1,1, 5,5, 6,7)]
-col2<-brewer.pal(12, "Paired")[c(4,7,7,7,12,12,10)]
-cols <- c(col1,col2)
-
-#SPP <- rownames(tab)[tab$UseavailNorth]
-SPP <- rownames(tab)[tab$UseavailNorth & tab$Group == "birds"]
-
-for (spp in SPP) {
-    gr <- tab[spp, "Group"]
-    spnam <- if (is.na(tab[spp, "CommonName"])) {
-        as.character(tab[spp, "ScientificName"])
-    } else {
-        paste0(as.character(tab[spp, "CommonName"]), " (", as.character(tab[spp, "ScientificName"]), ")")
-    }
-    cat(gr, spp, "\n");flush.console()
-    png(paste0(ROOT, "/figs/", gr, "/", spp, "-useavail-north.png"),
-        height=480, width=600)
-    op <- par(mar=c(6,4,2,2)+0.1, las=2)
-    x1 <- barplot(as.vector(x [spp, ]), horiz=FALSE, ylab="Affinity",space=NULL, col=cols, border=cols, ylim=c(-1,1), axes=FALSE,axisnames=F )
-    axis(side=2)
-    abline(h=0, col="red4", lwd=2)
-    mtext(side=3,at=x1[1],adj=0, spnam, cex=1.2,col="grey40",las=1)
-    text(x=x1, y=par()$usr[3]-0.01,labels=HabLabel, srt=60, adj=1, col=cols, xpd=TRUE)
-    par(op)
-    dev.off()
-}
-
-x<- as.matrix(uas[ , c("Productive","Clay","Saline","RapidDrain","Crop","TameP","RoughP","UrbInd","HardLin","SoftLin")])
-HabLabel <- c("Productive","Clay","Saline","Rapid Drain","Crop", "Tame Pasture", "Rough Pasture","Urban/Industry","Hard Linear","Soft Linear" )
-col1<-brewer.pal(8, "Dark2")[c(7,7,7,7)]
-col2<-brewer.pal(12, "Paired")[c(7,7,7,12,12,10)]
-cols <- c(col1,col2)
-
-#SPP <- rownames(tab)[tab$UseavailSouth]
-SPP <- rownames(tab)[tab$UseavailSouth & tab$Group == "birds"]
-
-for (spp in SPP) {
-    gr <- tab[spp, "Group"]
-    spnam <- if (is.na(tab[spp, "CommonName"])) {
-        as.character(tab[spp, "ScientificName"])
-    } else {
-        paste0(as.character(tab[spp, "CommonName"]), " (", as.character(tab[spp, "ScientificName"]), ")")
-    }
-    cat(gr, spp, "\n");flush.console()
-    png(paste0(ROOT, "/figs/", gr, "/", spp, "-useavail-south.png"),
-        height=480, width=600)
-    op <- par(mar=c(6,4,2,2)+0.1, las=2)
-    x1 <- barplot(as.vector(x[spp, ]), horiz=FALSE, ylab="Affinity",space=NULL, col=cols, border=cols, ylim=c(-1,1), axes=FALSE,axisnames=F )
-    axis(side=2)
-    abline(h=0, col="red4", lwd=2)
-    mtext(side=3,at=x1[1],adj=0,spnam,cex=1.2,col="grey40",las=1)
-    text(x=x1, y=par()$usr[3]-0.01,labels=HabLabel, srt=60, adj=1, col=cols, xpd=TRUE)
-    par(op)
-    dev.off()
-}
-
-## detection maps for non birds
-
-m <- read.csv("~/repos/abmianalytics/lookup/sitemetadata.csv")
-rt <- raster(system.file("extdata/AB_1km_mask.tif", package="cure4insect"))
-
-rnr <- make_raster(as.integer(kgrid$NRNAME), kgrid, rt)
-cnr <- c('#b3e2cd','#fdcdac','#cbd5e8','#f4cae4','#e6f5c9','#fff2ae')
-cnr <- cnr[c(5,6,1,2,4,3)]
-
-
-ex <- new.env()
-gr <- "mites"
-load("s:/Result from Ermias_2018/mites/Species detection Mites 2018.RData", envir=ex)
-
-ex <- new.env()
-gr <- "lichens"
-load("s:/Result from Ermias_2018/lichens/Species detection Lichens 2018.RData", envir=ex)
-
-ex <- new.env()
-gr <- "mosses"
-load("s:/Result from Ermias_2018/mosses/Species detection Moss 2018.RData", envir=ex)
-
-ex <- new.env()
-gr <- "vplants"
-load("s:/Result from Ermias_2018/vplants/Species detection Vascular plants 2018.RData", envir=ex)
-
-
-
-site <- ex$dd$Site
-og <- ex$dd$OnOffGrid == "OG"
-ogs <- sapply(strsplit(site[og], "-"), "[[", 3)
-site[og] <- ogs
-site <- gsub("B", "", site)
-siten <- as.integer(site)
-
-xy <- data.frame(x=m$PUBLIC_LONGITUDE, y=m$PUBLIC_LATTITUDE)[match(site, m$SITE_ID),]
-coordinates(xy) <- ~x+y
-proj4string(xy) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
-xy <- spTransform(xy, proj4string(rt))
-
-yy <- ex$dd[,6:ncol(ex$dd)]
-compare_sets(colnames(yy), rownames(tab[tab$Group == gr,]))
-
-SPP <- rownames(tab[tab$Group == gr,])
-
-for (spp in SPP) {
-    spnam <- if (is.na(tab[spp, "CommonName"])) {
-        as.character(tab[spp, "ScientificName"])
-    } else {
-        paste0(as.character(tab[spp, "CommonName"]), " (", as.character(tab[spp, "ScientificName"]), ")")
-    }
-    cat(gr, spp, "\n");flush.console()
-    xy0 <- xy[yy[,spp] == 0 & !duplicated(site),]
-    xy1 <- xy[yy[,spp] > 0,]
-    png(paste0(ROOT, "/figs/", gr, "/", spp, "-det.png"),
-        height=1500*1.5, width=1000*1.5, res=300)
-    op <- par(mar=c(1,1,1,1))
-    plot(rnr,col=cnr, axes=FALSE, box=FALSE, main=spnam, legend=FALSE)
-    plot(xy0, add=TRUE, pch=19, col="#aaaaaa88", legend=FALSE, cex=0.8)
-    plot(xy1, add=TRUE, pch=19, col="red4", legend=FALSE, cex=0.8)
-    par(op)
-    dev.off()
-
-}
-
-## detection maps for birds
-
-## detections
-ROOT <- "d:/abmi/AB_data_v2018/data/analysis/birds" # change this bit
-ee <- new.env()
-load(file.path(ROOT, "ab-birds-all-2018-11-29.RData"), envir=ee)
-
-en <- new.env()
-load(file.path(ROOT, "data", "ab-birds-north-2018-12-07.RData"), envir=en)
-es <- new.env()
-load(file.path(ROOT, "data", "ab-birds-south-2018-12-07.RData"), envir=es)
-
-ddd <- ee$dd
-## subset based on analysis data -- same filtering applied
-ddd <- ddd[unique(c(rownames(en$DAT), rownames(es$DAT))),]
-ddd <- nonDuplicated(ddd, ddd$SS, TRUE)
-yyy <- groupSums(ee$yy, 1, ee$dd$SS)[rownames(ddd),]
-yyy[yyy > 0] <- 1
-ss <- !is.na(ddd$X) & !is.na(ddd$NRNAME)
-ddd <- ddd[ss,]
-yyy <- yyy[ss,]
-
-xy <- SpatialPoints(as.matrix(ddd[,c("X","Y")]))
-proj4string(xy) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
-xy <- spTransform(xy, proj4string(rt))
-rt10 <- aggregate(rt, fact=10)
-sam0 <- rasterize(xy, rt10, field=1, fun='sum')
-values(sam0)[!is.na(values(sam0))] <- 1
-
-load("d:/abmi/sppweb2018/c4i/tables/lookup-birds.RData")
-tax <- droplevels(Lookup[Lookup$UseavailNorth | Lookup$UseavailSouth,])
-rownames(tax) <- tax$Code
-
-SPP <- rownames(OUT$Species[OUT$Species$Group == gr,])
-tax <- tax[tax$SpeciesID %in% SPP,]
-
-gr <- "birds"
-for (spp in rownames(tax)) {
-    cat(gr, spp, "\n");flush.console()
-    xy1 <- SpatialPoints(as.matrix(ddd[yyy[,spp] > 0,c("X","Y")]))
-    proj4string(xy1) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
-    xy1 <- spTransform(xy1, proj4string(rt))
-    sam1 <- rasterize(xy1, rt10, field=1, fun='last')
-    png(paste0("d:/abmi/AB_data_v2018/www", "/figs/", gr, "/", as.character(tax[spp, "SpeciesID"]), "-det.png"),
-        height=1500*1.5, width=1000*1.5, res=300)
-    op <- par(mar=c(1,1,1,1))
-    plot(rnr,col=cnr, axes=FALSE, box=FALSE, main=as.character(tax[spp, "CommonName"]), legend=FALSE)
-    plot(sam0,add=TRUE, col="#aaaaaa88", legend=FALSE)
-    plot(sam1,add=TRUE, col="red4", legend=FALSE)
-    par(op)
-    dev.off()
-}

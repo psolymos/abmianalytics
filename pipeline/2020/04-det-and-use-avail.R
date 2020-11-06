@@ -155,6 +155,13 @@ rownames(ls) <- ls[,1]
 lv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v2020.csv")
 rownames(lv) <- lv[,1]
 
+Cn <- c("Decid", "Mixedwood", "Pine", "Spruce", "TreedBogFen", "Swamp",
+    "GrassHerb", "Shrub", "NonTreedBogFen", "Marsh",
+    "Crop", "RoughP", "TameP", "UrbInd", "SoftLin",
+    "HardLin", "Forestry")
+Cs <- c("ClayLoamSand", "RapidDrain", "Blowout", "ThinBreak", "Other",
+     "Crop", "RoughP", "TameP", "UrbInd", "SoftLin", "HardLin")
+
 ROOT <- "d:/abmi/AB_data_v2020/data/analysis/species/birds" # change this bit
 
 ee <- new.env()
@@ -181,15 +188,11 @@ compare_sets(lv$ID, colnames(An))
 pn <- groupSums(An, 2, lv[colnames(An), "UseAvail"])
 pn <- pn[,colnames(pn) != "EXCLUDE"]
 pn <- pn / rowSums(pn)
-pn <- pn[,c("Decid", "Mixedwood", "Pine", "Spruce", "TreedBogFen", "Swamp",
-    "GrassHerb", "Shrub", "NonTreedBogFen", "Marsh",
-    "Crop", "RoughP", "TameP", "UrbInd", "SoftLin",
-    "HardLin", "Forestry")]
+pn <- pn[,Cn]
 ps <- groupSums(As, 2, ls[colnames(As), "UseAvail"])
 ps <- ps[,colnames(ps) != "EXCLUDE"]
 ps <- ps / rowSums(ps)
-ps <- ps[,c("ClayLoamSand", "RapidDrain", "Blowout", "ThinBreak", "Other",
-     "Crop", "RoughP", "TameP", "UrbInd", "SoftLin", "HardLin")]
+ps <- ps[,Cs]
 
 wrs <- t(pbapply::pbapply(as.matrix(Ys), 2, function(z) wrsi(z, x=ps)$rWRSI))
 colnames(wrs) <- rownames(wrsi(Ys[,1], x=ps))
@@ -263,6 +266,61 @@ for (taxa in names(Taxa)) {
 
 UA$birds <- list(north=wrn, south=wrs)
 
+## use-avail for mammals
+
+load("s:/AB_data_v2020/Results/UseAvail-all.RData")
+
+load("s:/AB_data_v2020/Results/Camera mammal models revised June 2020/North/UseavailNorth.Rdata")
+load("s:/AB_data_v2020/Results/Camera mammal models revised June 2020/South/UseavailSouth.Rdata")
+
+cn <- colnames(UA$lichens$north)
+mefa4::compare_sets(colnames(UseavailNorth), cn)
+
+CN <- c(Decid="Deciduous",
+    Mixedwood="Mixedwood",
+    Pine="Pine",
+    Spruce="WhiteSpruce",
+    TreedBogFen="BlackSpruce", # BlackSpruce + TreedFen
+    Swamp="Wetland",
+    GrassHerb="Open",
+    Shrub="Open",
+    NonTreedBogFen="Wetland",
+    Marsh="Wetland",
+    Crop="Crop",
+    RoughP="RoughP",
+    TameP="TameP",
+    UrbInd="RurUrbInd",
+    SoftLin="SoftLin",
+    HardLin="HardLin",
+    Forestry="HFor")
+xn <- UseavailNorth[,CN]
+colnames(xn) <- names(CN)
+xn[,"TreedBogFen"] <-  0.5 * (UseavailNorth[,"BlackSpruce"] + UseavailNorth[,"TreedFen"])
+xn[,"UrbInd"] <-  0.8 * UseavailNorth[,"RurUrbInd"] + 0.2 * UseavailNorth[,"Well"]
+
+cs <- colnames(UA$lichens$south)
+mefa4::compare_sets(colnames(UseavailSouth), cs)
+setdiff(colnames(UseavailSouth), cs)
+
+CS <- c(ClayLoamSand="Clay",
+    RapidDrain="RapidDrain",
+    Blowout="Saline",
+    ThinBreak="Saline",
+    Other="Productive",
+    Crop="Crop",
+    RoughP="RoughP",
+    TameP="TameP",
+    UrbInd="RurUrbInd",
+    SoftLin="SoftLin",
+    HardLin="HardLin")
+xs <- UseavailSouth[,CS]
+colnames(xs) <- names(CS)
+xs[,"UrbInd"] <-  0.8 * UseavailSouth[,"RurUrbInd"] + 0.2 * UseavailSouth[,"Well"]
+xs[,"ThinBreak"] <-  0
+
+
+UA$mammals <- list(north=xn, south=xs)
+
 save(UA, file="s:/AB_data_v2020/Results/UseAvail-all.RData")
 
 
@@ -270,16 +328,18 @@ save(UA, file="s:/AB_data_v2020/Results/UseAvail-all.RData")
 
 library(RColorBrewer)
 
+load("s:/AB_data_v2020/Results/UseAvail-all.RData")
+
 col1<-brewer.pal(8, "Dark2")[c(1,1,1,1,1, 6, 7,7)]
 col2<-brewer.pal(12, "Paired")[c(12,7,7)]
 cols <- c(col1,col2)
-names(cols) <- colnames(ps)
+names(cols) <- Cs
 colsS <- cols
 
 col1<-brewer.pal(8, "Dark2")[c(1,1,1,1,5,5,2,2,3,3, 6, 7,7)]
 col2<-brewer.pal(12, "Paired")[c(12,7,7,3)]
 cols <- c(col1,col2)
-names(cols) <- colnames(pn)
+names(cols) <- Cn
 colsN <- cols
 
 for (taxon in names(UA)) {
@@ -294,6 +354,9 @@ for (taxon in names(UA)) {
             dir.create(DIR)
 
         v <- Z[spp,names(colsN)]
+#        unlink(file.path(DIR, "useavail-north.svg"))
+#        svglite::svglite(file.path(DIR, "useavail-north.svg"),
+#            height=4, width=7)
         png(file.path(DIR, "useavail-north.png"),
             height=480, width=600)
         op <- par(mar=c(7,4,2,2)+0.1, las=2)
@@ -316,6 +379,9 @@ for (taxon in names(UA)) {
             dir.create(DIR)
 
         v <- Z[spp,names(colsS)]
+#        unlink(file.path(DIR, "useavail-south.svg"))
+#        svglite::svglite(file.path(DIR, "useavail-south.svg"),
+#            height=4, width=7)
         png(file.path(DIR, "useavail-south.png"),
             height=480, width=600)
         op <- par(mar=c(7,4,2,2)+0.1, las=2)
@@ -329,3 +395,69 @@ for (taxon in names(UA)) {
     }
 }
 
+
+## det maps for mammals
+
+l <- list.files("s:/AB_data_v2020/Results/Camera mammal models revised June 2020/Maps/Occurrence")
+l <- gsub("\\.png", "", l)
+
+l2 <- list.dirs("s:/AB_data_v2020/Results/web/mammals", full.name=FALSE, recursive=FALSE)
+mefa4::compare_sets(l, l2)
+
+for (i in l) {
+    if (!dir.exists(paste0("s:/AB_data_v2020/Results/web/mammals/", i)))
+        dir.create(paste0("s:/AB_data_v2020/Results/web/mammals/", i))
+    file.copy(
+        paste0("s:/AB_data_v2020/Results/Camera mammal models revised June 2020/Maps/Occurrence/",
+            i, ".png"),
+        paste0("s:/AB_data_v2020/Results/web/mammals/", i, "/det.png")
+    )
+}
+
+
+
+## mammal exact prediction maps
+library(magick)
+
+load("s:/AB_data_v2020/Results/COEFS-ALL2.RData")
+taxon <- "mammals"
+SPPn <- dimnames(COEFS2[[taxon]]$north)[[1]]
+SPPs <- dimnames(COEFS2[[taxon]]$south)[[1]]
+SPP <- sort(unique(c(SPPn, SPPs)))
+
+spp="Coyote"
+
+for (spp in SPP) {
+f3 <- paste0(
+    "s:/AB_data_v2020/Results/Camera mammal models revised June 2020/Maps/",
+    c("Reference/", "Current/", "Difference/"),
+    spp, ".png")
+
+i3 <- image_append( image_read(f3))
+image_write(i3, paste0("s:/AB_data_v2020/Results/web/mammals/", spp, "/map2.png"))
+}
+
+
+# updated south figures
+for (spp in SPPs) {
+    cat(spp, "\n")
+    f1 <- paste0(
+        "s:/AB_data_v2020/Results/Camera mammal models South revised Nov 2020/",
+        "South/Figures/Best model/",
+        c("Non-treed", "Treed"), "/Soil+HF figure best model ", spp, ".png")
+
+    i1 <- image_append( image_read(f1), stack = TRUE)
+    image_write(i1,
+        paste0("s:/AB_data_v2020/Results/web/mammals/", spp, "/soilhf2.png"))
+
+    f2 <- paste0(
+        "s:/AB_data_v2020/Results/Camera mammal models South revised Nov 2020/",
+        "South/Maps/",
+        c("Reference", "Current", "Difference"),
+        "/", spp, ".jpg")
+
+    i2 <- image_append( image_read(f2), stack = FALSE)
+    image_write(i2,
+        paste0("s:/AB_data_v2020/Results/web/mammals/", spp, "/map2s.png"))
+
+}

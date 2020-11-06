@@ -1,7 +1,9 @@
 ## load coefficients
 
 library(intrval)
+library(svglite)
 load("s:/AB_data_v2020/Results/COEFS-ALL.RData")
+load("s:/AB_data_v2020/Results/COEFS-ALL2.RData") # mammals & habitat elements
 
 ## fancy labels for the coefficients
 
@@ -95,16 +97,17 @@ labs <- list(
 ## soil/hf plots: cf is a coef table (not spp name & taxa as will be in c4i)
 ## coef from the S model is expected
 .plot_abundance_soil_2020 <- function(cf, plot=TRUE, paspen=0, ylim, main, ylab,
-    bird=FALSE, ...) {
+    link="logit", precalc=FALSE, ...) {
 
     if (paspen %)(% c(0, 1))
         stop("paspen must be in [0, 1]")
     lab <- c(labs$soil$native, labs$soil$hfpoly)
 
-    FUN <- if (bird)
-        exp else plogis
+    #FUN <- if (bird)
+    #    exp else plogis
+    FUN <- binomial(link)$linkinv
     p <- t(t(cf[lab,]) + paspen*cf["pAspen",])
-    p <- .get_stats(FUN(p))
+    p <- .get_stats(FUN(p), precalc=precalc)
 
     out <- p[,c("Median", "Lower", "Upper")]
     colnames(out) <- c("Estimate", "LCL", "UCL")
@@ -160,9 +163,10 @@ labs <- list(
 ## linear plots: cf is a coef table (not spp name & taxa as will be in c4i)
 ## need to provide N/S coef as required
 .plot_abundance_lin_2020 <- function(cf, plot=TRUE, veg=TRUE, ylim, main, xlab, ylab,
-    bird=FALSE, ...) {
-    FUN <- if (bird)
-        exp else plogis
+    link="logit", precalc=FALSE, ...) {
+#    FUN <- if (bird)
+#        exp else plogis
+    FUN <- binomial(link)$linkinv
     if (veg) {
         x0 <- FUN(cf[labs$veg$native,,drop=FALSE])
         xs <- FUN(cf[labs$veg$hfsoft,,drop=FALSE])
@@ -176,7 +180,7 @@ labs <- list(
     tab <- rbind(AverageCoef=colMeans(x0),
         SoftLin10=0.9*colMeans(x0)+0.1*colMeans(xs),
         HardLin10=0.9*colMeans(x0)+0.1*colMeans(xh))
-    out <- .get_stats(tab)
+    out <- .get_stats(tab, precalc=precalc)
 
     if (plot) {
         p.mean <- out["AverageCoef", "Median"]
@@ -230,13 +234,14 @@ labs <- list(
 ## veg/hf plots: cf is a coef table (not spp name & taxa as will be in c4i)
 ## coef from the north model is expectes
 .plot_abundance_veg_2020 <- function(cf, plot=TRUE, ylim, main, ylab, bw=FALSE,
-    bird=FALSE, ...){
+    link="logit", precalc=FALSE, ...){
 
     lab <- c(labs$veg$native, labs$veg$hfpoly, labs$veg$hffor)
     # collapse treed fen as average
 
-    FUN <- if (bird)
-        exp else plogis
+#    FUN <- if (bird)
+#        exp else plogis
+    FUN <- binomial(link)$linkinv
     p <- cf[lab,]
     ii <- grep("TreedFen", lab)
     p[ii[1],] <- colMeans(p[ii,])
@@ -245,12 +250,11 @@ labs <- list(
     names(lab)[ii[1]] <- "Treed fen"
     lab <- lab[-ii[-1]]
     rownames(p) <- lab
-    p <- .get_stats(FUN(p))
+    p <- .get_stats(FUN(p), precalc=precalc)
 
     out <- p[,c("Median", "Lower", "Upper")]
     colnames(out) <- c("Estimate", "LCL", "UCL")
     rownames(out) <- names(lab)
-    out[out < 10^-5] <- 10^-6
 
     if (plot) {
 
@@ -391,7 +395,14 @@ labs <- list(
 }
 
 ## get nice stats
-.get_stats <- function(x) {
+.get_stats <- function(x, precalc=FALSE) {
+    if (precalc) {
+        return(
+            data.frame(Label=factor(rownames(x), rownames(x)),
+                First=x[,1], Mean=x[,1], SD=NA,
+                Median=x[,1], Lower=x[,2], Upper=x[,3])
+        )
+    }
     q <- apply(x, 1, quantile, c(0.5, 0.05, 0.95))
     data.frame(Label=factor(rownames(x), rownames(x)),
         First=x[,1], Mean=rowMeans(x), SD=apply(x, 1, sd),
@@ -399,8 +410,11 @@ labs <- list(
 }
 
 ## make figures
-TAXA <- c("lichens", "mites", "mosses", "vplants", "birds")
+TAXA <- c("lichens", "mites", "mosses", "vplants", "birds", "mammals", "habitats")
+#TAXA <- c("mammals", "habitats")
 ROOT <- "s:/AB_data_v2020/Results/web"
+COEFS$mammals <- COEFS2$mammals
+COEFS$habitats <- COEFS2$habitats
 
 ## store results for bio browser
 RESULTS <- list(
@@ -413,6 +427,10 @@ RESULTS <- list(
 SPECIES <- NULL
 
 for (taxon in TAXA) {
+
+    LINK <- switch(taxon, birds="log", mammals="log", "logit")
+    PRECALC <- taxon %in% names(COEFS2)
+
     if (!dir.exists(file.path(ROOT, taxon)))
         dir.create(file.path(ROOT, taxon))
     ## North
@@ -423,17 +441,22 @@ for (taxon in TAXA) {
         cat(taxon, spp, "north\n")
         flush.console()
 
+        if (taxon=="habitats")
+            LINK <- COEFS[[taxon]]$species[spp, "link"]
+
         if (!dir.exists(file.path(ROOT, taxon, spp)))
             dir.create(file.path(ROOT, taxon, spp))
         cf <- A[spp,,]
         ## veghf plot
         png(file.path(ROOT, taxon, spp, "veghf.png"), width=1000, height=500)
-        vhf <- .plot_abundance_veg_2020(cf,main=spp, bird=taxon=="birds")
+#        svglite(file.path(ROOT, taxon, spp, "veghf.svg"), width=10, height=5)
+        vhf <- .plot_abundance_veg_2020(cf,main=spp, link=LINK, precalc=PRECALC)
         dev.off()
         RESULTS$veghf[[spp]] <- vhf
         ## linear N plot
         png(file.path(ROOT, taxon, spp, "lin-north.png"), width=500, height=500)
-        linn <- .plot_abundance_lin_2020(cf, main=spp, veg=TRUE, bird=taxon=="birds")
+#        svglite(file.path(ROOT, taxon, spp, "lin-north.svg"), width=5, height=5)
+        linn <- .plot_abundance_lin_2020(cf, main=spp, veg=TRUE, link=LINK, precalc=PRECALC)
         dev.off()
         RESULTS$linn[[spp]] <- linn
     }
@@ -446,12 +469,15 @@ for (taxon in TAXA) {
         cat(taxon, spp, "south\n")
         flush.console()
 
+        if (taxon=="habitats")
+            LINK <- COEFS[[taxon]]$species[spp, "link"]
+
         if (!dir.exists(file.path(ROOT, taxon, spp)))
             dir.create(file.path(ROOT, taxon, spp))
         cf <- A[spp,,]
         ## veghf plot
-        shf0 <- .plot_abundance_soil_2020(cf,main=spp, paspen=0, bird=taxon=="birds", plot=FALSE)
-        shf1 <- .plot_abundance_soil_2020(cf,main=spp, paspen=1, bird=taxon=="birds", plot=FALSE)
+        shf0 <- .plot_abundance_soil_2020(cf,main=spp, paspen=0, link=LINK, precalc=PRECALC, plot=FALSE)
+        shf1 <- .plot_abundance_soil_2020(cf,main=spp, paspen=1, link=LINK, precalc=PRECALC, plot=FALSE)
         MAX <- max(shf0, shf1, na.rm=TRUE)
         MAXest <- max(shf0$Estimate, shf1$Estimate, na.rm=TRUE)
         if (MAX > 2.5*MAXest)
@@ -459,16 +485,16 @@ for (taxon in TAXA) {
         png(file.path(ROOT, taxon, spp, "soilhf.png"), width=1000, height=500)
         op <- par(mfrow=c(1,2))
         .plot_abundance_soil_2020(cf,main=paste(spp, "non-treed"),
-            paspen=0, bird=taxon=="birds", plot=TRUE, ylim=c(0, MAX))
+            paspen=0, link=LINK, precalc=PRECALC, plot=TRUE, ylim=c(0, MAX))
         .plot_abundance_soil_2020(cf,main=paste(spp, "treed"),
-            paspen=1, bird=taxon=="birds", plot=TRUE, ylim=c(0, MAX))
+            paspen=1, link=LINK, precalc=PRECALC, plot=TRUE, ylim=c(0, MAX))
         par(op)
         dev.off()
         RESULTS$soilhfnontreed[[spp]] <- shf0
         RESULTS$soilhftreed[[spp]] <- shf1
         ## linear N plot
         png(file.path(ROOT, taxon, spp, "lin-south.png"), width=500, height=500)
-        lins <- .plot_abundance_lin_2020(cf, main=spp, veg=FALSE, bird=taxon=="birds")
+        lins <- .plot_abundance_lin_2020(cf, main=spp, veg=FALSE, link=LINK, precalc=PRECALC)
         dev.off()
         RESULTS$lins[[spp]] <- lins
     }

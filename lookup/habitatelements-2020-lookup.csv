@@ -31,7 +31,7 @@ Rock,,,Rock Cover,TRUE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
 ShrubCover,,,Shrub Cover,TRUE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
 pcBare,,,Bare Ground,TRUE,TRUE,FALSE,FALSE,,,FALSE,Binom,Binom,,,,habitatelements,%
 OrgDepth,,,Organic Depth,TRUE,TRUE,FALSE,FALSE,,,FALSE,Log-normal,Log-normal,,,,habitatelements,cm
-SoilCarbon,,,Soil Carbon,TRUE,TRUE,FALSE,FALSE,,,FALSE,Log-normal,Log-normal,,,,habitatelements,%
+SoilCarbon,,,Soil Carbon,TRUE,TRUE,FALSE,FALSE,,,FALSE,Log-normal,Log-normal,,,,habitatelements,% of dry weight
 pH,,,pH,TRUE,TRUE,FALSE,FALSE,,,FALSE,Normal,Normal,,,,habitatelements,
 Live Deciduous BA,,,Live Deciduous BA,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,m^2/ha
 Live Upland Conifer BA,,,Live Upland Conifer BA,TRUE,FALSE,FALSE,FALSE,,,FALSE,NegBinom,NegBinom,,,,habitatelements,m^2/ha

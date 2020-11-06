@@ -32,6 +32,7 @@ for (taxon in TAXA) {
     load(paste0(ROOT, fn), envir=en)
     es <- new.env()
     load(paste0(ROOT, fs), envir=es)
+    et <- new.env()
 
     #' # North
     #' Combine together the pieces into a logit scaled matrix (no surrounding effects)
@@ -149,6 +150,7 @@ for (taxon in TAXA) {
     CFs[CFs < -10^4] <- -10^4
     CFs[CFs > 10^4] <- 10^4
 
+
     COEFS[[taxon]] <- list(north=CFn, south=CFs)
 
 }
@@ -170,18 +172,22 @@ for (taxon in TAXA) {
     if (taxon == "lichens") {
         fn <- "Lichen_North Bootstrap coefficents 2020.Rdata"
         fs <- "Lichen_South Bootstrap coefficents 2020.Rdata"
+        ft <- "s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for Lichens 2020.RData"
     }
     if (taxon == "mites") {
         fn <- "Mite_North Bootstrap coefficents 2020.Rdata"
         fs <- "Mite_South Bootstrap coefficents 2020.Rdata"
+        ft <- "s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for Mites 2020.RData"
     }
     if (taxon == "mosses") {
         fn <- "Moss_North Bootstrap coefficents 2020.Rdata"
         fs <- "Moss_South Bootstrap coefficents 2020.Rdata"
+        ft <- "s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for Moss 2020.RData"
     }
     if (taxon == "vplants") {
         fn <- "VPlant_North Bootstrap coefficents 2020.Rdata"
         fs <- "VPlant_South Bootstrap coefficents 2020.Rdata"
+        ft <- "s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for VPlants 2020.RData"
     }
 
     #' load North and south coefs into their respective environments
@@ -189,6 +195,10 @@ for (taxon in TAXA) {
     load(paste0(ROOT, fn), envir=en)
     es <- new.env()
     load(paste0(ROOT, fs), envir=es)
+    load(ft, envir=et)
+    st <- et$Lookup
+    if (taxon=="vplants")
+        st$SpeciesID <- st$Analysis_Name
 
     #' # North
     #' Combine together the pieces into a logit scaled matrix (no surrounding effects)
@@ -269,7 +279,13 @@ for (taxon in TAXA) {
     CFs[CFs < -10^4] <- -10^4
     CFs[CFs > 10^4] <- 10^4
 
-    COEFS[[taxon]] <- list(north=CFn, south=CFs)
+    cat(taxon, "--------------------\n")
+    print(mefa4::compare_sets(dimnames(CFs)[[1]], st$SpeciesID))
+    print(mefa4::compare_sets(dimnames(CFn)[[1]], st$SpeciesID))
+    print(head(st))
+    cat("\n\n\n")
+
+    COEFS[[taxon]] <- list(north=CFn, south=CFs, species=st)
 
 }
 
@@ -647,25 +663,25 @@ setdiff(rownames(t2), rownames(t1))
 tt <- data.frame(New=t2[,2], Old=t1[match(rownames(t2), rownames(t1)),c("UseInAnalysisFine")])
 rownames(tt) <- rownames(t2)
 
-CS <- c(
-    Loamy="Productive",
-    SandyLoam="Productive",
-    RapidDrain="RapidDrain",
-    ClaySub="Clay",
-    ThinBreak="RapidDrain",
-    Blowout="Saline",
-    Other="SoilWetland", # "SoilWetland" "Lotic"
-    Crop="Crop",
-    TameP="TameP",
-    RoughP="RoughP",
-    Wellsites="Wells",
-    EnSeismic="SoftLin",
-    EnSoftLin="SoftLin",
-    TrSoftLin="SoftLin",
-    HardLin="HardLin",
-    Rural="RuralResInd",
-    Urban="UrbInd",
-    Industrial="RuralResInd")
+#CS <- c(
+#    Loamy="Productive",
+#    SandyLoam="Productive",
+#    RapidDrain="RapidDrain",
+#    ClaySub="Clay",
+#    ThinBreak="RapidDrain",
+#    Blowout="Saline",
+#    Other="SoilWetland", # "SoilWetland" "Lotic"
+#    Crop="Crop",
+#    TameP="TameP",
+#    RoughP="RoughP",
+#    Wellsites="Wells",
+#    EnSeismic="SoftLin",
+#    EnSoftLin="SoftLin",
+#    TrSoftLin="SoftLin",
+#    HardLin="HardLin",
+#    Rural="RuralResInd",
+#    Urban="UrbInd",
+#    Industrial="RuralResInd")
 CN <- c(
     WhiteSpruceR="WhiteSpruce_0-10",
     WhiteSpruce1="WhiteSpruce_10-20",
@@ -771,35 +787,37 @@ colnames(st)[1] <- "sppid"
 
 ## south
 es <- new.env()
-load(file.path(ROOT,
-    "Habitat coefficients South May 2020 OFFICIAL coefficients.Rdata"), envir=es)
+#load(file.path(ROOT,
+#    "Habitat coefficients South May 2020 OFFICIAL coefficients.Rdata"), envir=es)
+load(file.path("s:/AB_data_v2020/Results/Habitat elements Oct 2020",
+    "Habitat coefficients South Oct 2020 OFFICIAL coefficients.Rdata"), envir=es)
+
+
 names(es)
-l10s <- read.csv(file.path(ROOT,
-    "Linear 10pc figure values for habitat South.csv"))
+#l10s <- read.csv(file.path(ROOT,
+#    "Linear 10pc figure values for habitat South.csv"))
 pA <- read.csv(file.path(ROOT,
     "Habitat coefficients South May 2020 pApen coefficients.csv"))
 pA <- structure(pA$pAspen, names=as.character(pA$Sp))
-xs <- es$Coef.official
-rownames(xs)[rownames(xs) == "CanopyCover"] <- "CanopyClosure"
-xs0 <- xs[,CS]
-colnames(xs0) <- names(CS)
+xs0 <- es$Coef.official
+colnames(xs0)[colnames(xs0) == "Well"] <- "Wellsites"
 xs0 <- cbind(xs0, Mine=0, MineV=0, Water=0)
-xs0[,"Other"] <- 0.5 * (xs[,"SoilWetland"] + xs[,"Lotic"])
+xs0 <- xs0[,cfs0[cfs0 != "pAspen"]]
 
 
-xsl <- es$Coef.official.lci
-rownames(xsl)[rownames(xsl) == "CanopyCover"] <- "CanopyClosure"
-xsl0 <- xsl[,CS]
-colnames(xsl0) <- names(CS)
+xsl0 <- es$Coef.official.lci
+colnames(xsl0)[colnames(xsl0) == "Well"] <- "Wellsites"
 xsl0 <- cbind(xsl0, Mine=0, MineV=0, Water=0)
-xsl0[,"Other"] <- 0.5 * (xsl[,"SoilWetland"] + xsl[,"Lotic"])
+xsl0 <- xsl0[,cfs0[cfs0 != "pAspen"]]
 
-xsu <- es$Coef.official.uci
-rownames(xsu)[rownames(xsu) == "CanopyCover"] <- "CanopyClosure"
-xsu0 <- xsu[,CS]
-colnames(xsu0) <- names(CS)
+xsu0 <- es$Coef.official.uci
+colnames(xsu0)[colnames(xsu0) == "Well"] <- "Wellsites"
 xsu0 <- cbind(xsu0, Mine=0, MineV=0, Water=0)
-xsu0[,"Other"] <- 0.5 * (xsu[,"SoilWetland"] + xsu[,"Lotic"])
+xsu0 <- xsu0[,cfs0[cfs0 != "pAspen"]]
+
+rownames(xs0)[rownames(xs0) == "CanopyCover"] <- "CanopyClosure"
+rownames(xsl0)[rownames(xsl0) == "CanopyCover"] <- "CanopyClosure"
+rownames(xsu0)[rownames(xsu0) == "CanopyCover"] <- "CanopyClosure"
 
 ## link function comes here
 for (i in rownames(xs0)) {
@@ -810,14 +828,16 @@ for (i in rownames(xs0)) {
 }
 
 names(pA)[names(pA) == "CanopyCover"] <- "CanopyClosure"
-pA <- pA[rownames(xs)]
-all(names(pA)==rownames(xs))
+pA <- pA[rownames(xs0)]
+all(names(pA)==rownames(xs0))
 
-xscl <- cbind(es$Res.coef.official, Intercept=0)[,cfs1]
+xscl <- es$Res.coef.official[,cfs1]
+rownames(xscl)[rownames(xscl) == "CanopyCover"] <- "CanopyClosure"
+xscl <- xscl[rownames(xs0),]
 
-CFs <- array(NA, c(nrow(xs), length(cfs), 3))
-dimnames(CFs) <- list(rownames(xs), cfs, c("Estimate", "LCL", "UCL"))
-CFs[,,"Estimate"] <- cbind(xs0, pAspen=pA, xscl)[,cfs]
+CFs <- array(NA, c(nrow(xs0), length(cfs), 3))
+dimnames(CFs) <- list(rownames(xs0), cfs, c("Estimate", "LCL", "UCL"))
+CFs[,cfs,"Estimate"] <- cbind(xs0, pAspen=pA, xscl)[,cfs]
 CFs[,cfs0[cfs0 != "pAspen"],"LCL"] <- xsl0[,cfs0[cfs0 != "pAspen"]]
 CFs[,cfs0[cfs0 != "pAspen"],"UCL"] <- xsu0[,cfs0[cfs0 != "pAspen"]]
 CFs[!is.na(CFs) & CFs < -10^4] <- -10^4
@@ -854,6 +874,13 @@ xnu0 <- xnu[,CN]
 colnames(xnu0) <- names(CN)
 xnu0 <- cbind(xnu0, Mine=0, MineV=0, SnowIce=0)
 
+## link function comes here
+for (i in rownames(xn0)) {
+    FUN <- binomial(st[i,"link"])$linkfun
+    xn0[i,] <- FUN(xn0[i,])
+    xnl0[i,] <- FUN(xnl0[i,])
+    xnu0[i,] <- FUN(xnu0[i,])
+}
 
 xncl <- en$Res.coef.official[,cfn1]
 xncl <- xncl[match(rownames(xn0), rownames(xncl)),]
@@ -867,7 +894,154 @@ CFn[,cfn0[cfn0 != "pAspen"],"UCL"] <- xnu0[,cfn0[cfn0 != "pAspen"]]
 CFn[!is.na(CFn) & CFn < -10^4] <- -10^4
 CFn[!is.na(CFn) & CFn > 10^4] <- 10^4
 
+dimnames(CFs)[[1]] <- gsub(" ", "", dimnames(CFs)[[1]])
+dimnames(CFn)[[1]] <- gsub(" ", "", dimnames(CFn)[[1]])
+rownames(st) <- gsub(" ", "",rownames(st))
+dimnames(CFs)[[1]] <- gsub("_", ".", dimnames(CFs)[[1]])
+dimnames(CFn)[[1]] <- gsub("_", ".", dimnames(CFn)[[1]])
+rownames(st) <- gsub("_", ".",rownames(st))
+st$sppid <- rownames(st)
+
+CFs[,"pAspen",2] <- CFs[,"pAspen",3] <- CFs[,"pAspen",1]
+
+COEFS2 <- list(habitats = list(north=CFn, south=CFs, species=st))
+
+## mammals (camera)
+
+library(mefa4)
+load("s:/AB_data_v2020/Results/COEFS-EAboot.RData")
+cfn <- dimnames(COEFS$mites$north)[[2]]
+cfn0 <- cfn[1:(which(cfn=="Intercept")-1)]
+cfn1 <- cfn[!(cfn %in% cfn0)]
+cfs <- dimnames(COEFS$mites$south)[[2]]
+cfs0 <- cfs[1:(which(cfs=="Intercept")-1)]
+cfs1 <- cfs[!(cfs %in% cfs0)]
+rm(COEFS)
+
+ROOT <- "s:/AB_data_v2020/Results"
+st <- read.csv(file.path(ROOT,
+    "Camera mammal models revised June 2020", "Mammal header table June 2020.csv"))
+pA <- read.csv(file.path(ROOT,
+    "Camera mammal models revised June 2020", "South", "Mammal coefficients South June 2020 Best model pApen coefficients.csv"))
+rownames(pA) <- pA[,1]
+en <- new.env()
+es <- new.env()
+load(file.path(ROOT,
+    "Camera mammal models revised June 2020", "North",
+    "Mammal coefficients North June 2020 Best model OFFICIAL coefficients.Rdata"
+), envir=en)
+load(file.path(ROOT,
+    "Camera mammal models revised June 2020", "South",
+    "Mammal coefficients South June 2020 Best model OFFICIAL coefficients.Rdata"
+), envir=es)
+names(en)
+
+# south
+CS <- c(
+    Loamy="Productive",
+    SandyLoam="Productive",
+    RapidDrain="RapidDrain",
+    ClaySub="Clay",
+    ThinBreak="RapidDrain",
+    Blowout="Saline",
+    Other="SoilWetland", # "SoilWetland" "Lotic"
+    Crop="Crop",
+    TameP="TameP",
+    RoughP="RoughP",
+    Wellsites="Well",
+    EnSeismic="EnSeismic",
+    EnSoftLin="EnSoftLin",
+    TrSoftLin="TrSoftLin",
+    HardLin="HardLin",
+    Rural="Rural",
+    Urban="Urban",
+    Industrial="Industrial")
+
+names(es)
+xs <- es$Coef.official
+xs0 <- xs[,CS]
+colnames(xs0) <- names(CS)
+xs0 <- cbind(xs0, Mine=0, MineV=0, Water=0)
+xs0[,"Other"] <- 0.5 * (xs[,"SoilWetland"] + xs[,"Lotic"])
 
 
-COEFS$habitat <- list(north=CFn, south=CFs, species=st)
+xsl <- es$Coef.official.lci
+xsl0 <- xsl[,CS]
+colnames(xsl0) <- names(CS)
+xsl0 <- cbind(xsl0, Mine=0, MineV=0, Water=0)
+xsl0[,"Other"] <- 0.5 * (xsl[,"SoilWetland"] + xsl[,"Lotic"])
 
+xsu <- es$Coef.official.uci
+xsu0 <- xsu[,CS]
+colnames(xsu0) <- names(CS)
+xsu0 <- cbind(xsu0, Mine=0, MineV=0, Water=0)
+xsu0[,"Other"] <- 0.5 * (xsu[,"SoilWetland"] + xsu[,"Lotic"])
+
+FUN <- log
+xs0 <- FUN(xs0)
+xsl0 <- FUN(xsl0)
+xsu0 <- FUN(xsu0)
+
+## pa and agp ???
+pA <- pA[rownames(xs), ]
+
+xscl <- es$Res.coef.official[rownames(xs),cfs1]
+
+CFs <- array(NA, c(nrow(xs), length(cfs), 3))
+dimnames(CFs) <- list(rownames(xs), cfs, c("Estimate", "LCL", "UCL"))
+CFs[,,"Estimate"] <- cbind(xs0, pAspen=pA[,"pAspen.agp"], xscl)[,cfs]
+CFs[,cfs0[cfs0 != "pAspen"],"LCL"] <- xsl0[,cfs0[cfs0 != "pAspen"]]
+CFs[,cfs0[cfs0 != "pAspen"],"UCL"] <- xsu0[,cfs0[cfs0 != "pAspen"]]
+CFs[!is.na(CFs) & CFs < -10^4] <- -10^4
+CFs[!is.na(CFs) & CFs > 10^4] <- 10^4
+
+CFs[,"pAspen",2] <- CFs[,"pAspen",3] <- CFs[,"pAspen",1]
+
+pA2 <- pA[,"pAspen.pa"]
+names(pA2) <- rownames(pA)
+
+
+# north
+
+names(en)
+xn <- en$Coef.official
+xnl <- en$Coef.official.lci
+xnu <- en$Coef.official.uci
+
+compare_sets(colnames(xn0), cfn0)
+setdiff(colnames(xn0), cfn0)
+setdiff(cfn0, colnames(xn0))
+
+colnames(xn) <- gsub("Spruce", "WhiteSpruce", colnames(xn))
+colnames(xn) <- gsub("Decid", "Deciduous", colnames(xn))
+colnames(xn) <- gsub("BSpr", "TreedBog", colnames(xn))
+colnames(xn) <- gsub("Larch", "TreedFen", colnames(xn))
+colnames(xn) <- gsub("Well", "Wellsites", colnames(xn))
+colnames(xnl) <- colnames(xnu) <- colnames(xn)
+
+xn0 <- cbind(xn, ShrubbyFen=xn[,"ShrubbyBog"], Water=0, MineV=0)[,cfn0]
+xnl0 <- cbind(xnl, ShrubbyFen=xnl[,"ShrubbyBog"], Water=0, MineV=0)[,cfn0]
+xnu0 <- cbind(xnu, ShrubbyFen=xnu[,"ShrubbyBog"], Water=0, MineV=0)[,cfn0]
+
+FUN <- log
+xn0 <- FUN(xn0)
+xnl0 <- FUN(xnl0)
+xnu0 <- FUN(xnu0)
+
+xncl <- en$Res.coef.official[rownames(xn0),cfn1]
+
+CFn <- array(NA, c(nrow(xn), length(cfn), 3))
+dimnames(CFn) <- list(rownames(xn), cfn, c("Estimate", "LCL", "UCL"))
+CFn[,,"Estimate"] <- cbind(xn0, xncl)[,cfn]
+CFn[,cfn0[cfn0 != "pAspen"],"LCL"] <- xnl0[,cfn0[cfn0 != "pAspen"]]
+CFn[,cfn0[cfn0 != "pAspen"],"UCL"] <- xnu0[,cfn0[cfn0 != "pAspen"]]
+CFn[!is.na(CFn) & CFn < -10^4] <- -10^4
+CFn[!is.na(CFn) & CFn > 10^4] <- 10^4
+
+WM <- data.frame(Estimate=xn[,"WetlandMargin"],
+    xnl[,"WetlandMargin"], xnu[,"WetlandMargin"])[rownames(xn0),]
+
+COEFS2$mammals <- list(north=CFn, south=CFs, species=st, pAspenPA=pA2, WetlandMargin=WM)
+
+save(COEFS2,
+    file="s:/AB_data_v2020/Results/COEFS-ALL2.RData")
