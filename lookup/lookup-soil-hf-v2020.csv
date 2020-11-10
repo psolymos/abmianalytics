@@ -22,9 +22,9 @@ Sa,RapidDrain,Native,RapidDrain,"Sand: Loams sand and sand soils, and not with a
 SwG,RapidDrain,Native,RapidDrain,Shallow to Gravel
 TB,ThinBreak,Native,ThinBreak,Thin Breaks (Areas with bedrock at or near the soil surface)
 BlO,Blowout,Native,Blowout,Blowouts/solonetzic
-LenA,Other,Native,RapidDrain,Lentic Alkaline:poorly drained Saline Gleysolic soils
-Ov,Other,Native,RapidDrain,"overflow; receive additional moisture from overland flow, non-saline chernozomic and regosolic soils"
-SL,Blowout,Native,RapidDrain,Saline lowland
+LenA,Other,Native,Other,Lentic Alkaline:poorly drained Saline Gleysolic soils
+Ov,Other,Native,Other,"overflow; receive additional moisture from overland flow, non-saline chernozomic and regosolic soils"
+SL,Blowout,Native,Blowout,Saline lowland
 UNK,SoilUnknown,Native,EXCLUDE,Unknown soil
 Water,SoilWater,Native,EXCLUDE,Undiffferentiated permananet water bodies including lakes 
 UrbanIndustrial,Urban,RuralUrban,UrbInd,
