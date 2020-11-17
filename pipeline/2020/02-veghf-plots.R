@@ -109,17 +109,20 @@ labs <- list(
     p <- t(t(cf[lab,]) + paspen*cf["pAspen",])
     p <- .get_stats(FUN(p), precalc=precalc)
 
-    out <- p[,c("Median", "Lower", "Upper")]
+    #USE <- "Median"
+    USE <- "First"
+    out <- as.matrix(p[,c(USE, "Lower", "Upper")])
     colnames(out) <- c("Estimate", "LCL", "UCL")
     rownames(out) <- names(lab)
+    out[is.infinite(out)] <- NA
     out[out < 10^-5] <- 10^-6
     if (plot) {
         op <- par(mai=c(1.5, 1, 0.2, 0.3))
         on.exit(par(op))
 
-        lci <- out$LCL
-        uci <- out$UCL
-        y1 <- out$Estimate
+        lci <- out[,"LCL"]
+        uci <- out[,"UCL"]
+        y1 <- out[,"Estimate"]
         x <- 1:14
 
         if (missing(main))
@@ -127,7 +130,7 @@ labs <- list(
         if (missing(ylab))
             ylab <- "Relative abundance"
         if (missing(ylim)) {
-            ymax <- max(min(max(uci[x]), 2*max(y1)), y1*1.02)
+            ymax <- max(min(max(uci[x], na.rm=TRUE), 2*max(y1, na.rm=TRUE)), y1*1.02)
             ylim <- c(0, ymax)
         } else {
             ymax <- max(ylim)
@@ -157,7 +160,7 @@ labs <- list(
             col=col, las=2)
         mtext(side=3, at=0, adj=0, main, col="grey30")
     }
-    invisible(out)
+    invisible(as.data.frame(out))
 }
 
 ## linear plots: cf is a coef table (not spp name & taxa as will be in c4i)
@@ -176,16 +179,22 @@ labs <- list(
         xs <- FUN(cf[labs$soil$hfsoft,,drop=FALSE])
         xh <- FUN(cf[labs$soil$hfhard,,drop=FALSE])
     }
+    x0[is.infinite(x0)] <- NA
+    xs[is.infinite(xs)] <- NA
+    xh[is.infinite(xh)] <- NA
     # apply land cover weights (proportions here if needed)
-    tab <- rbind(AverageCoef=colMeans(x0),
-        SoftLin10=0.9*colMeans(x0)+0.1*colMeans(xs),
-        HardLin10=0.9*colMeans(x0)+0.1*colMeans(xh))
+    tab <- rbind(AverageCoef=colMeans(x0, na.rm=TRUE),
+        SoftLin10=0.9*colMeans(x0, na.rm=TRUE)+0.1*colMeans(xs, na.rm=TRUE),
+        HardLin10=0.9*colMeans(x0, na.rm=TRUE)+0.1*colMeans(xh, na.rm=TRUE))
     out <- .get_stats(tab, precalc=precalc)
 
+    #USE <- "Median"
+    USE <- "First"
+
     if (plot) {
-        p.mean <- out["AverageCoef", "Median"]
-        p.softlin10 <- out["SoftLin10", "Median"]
-        p.hardlin10 <- out["HardLin10", "Median"]
+        p.mean <- out["AverageCoef", USE]
+        p.softlin10 <- out["SoftLin10", USE]
+        p.hardlin10 <- out["HardLin10", USE]
 
         if (missing(ylim)) {
             ymax1 <- max(p.softlin10, p.hardlin10, 2*p.mean)*1.03
@@ -252,15 +261,18 @@ labs <- list(
     rownames(p) <- lab
     p <- .get_stats(FUN(p), precalc=precalc)
 
-    out <- p[,c("Median", "Lower", "Upper")]
+    #USE <- "Median"
+    USE <- "First"
+    out <- as.matrix(p[,c(USE, "Lower", "Upper")])
     colnames(out) <- c("Estimate", "LCL", "UCL")
     rownames(out) <- names(lab)
+    out[is.infinite(out)] <- NA
 
     if (plot) {
 
-        lci <- out$LCL
-        uci <- out$UCL
-        y1 <- out$Estimate
+        lci <- out[,"LCL"]
+        uci <- out[,"UCL"]
+        y1 <- out[,"Estimate"]
         names(y1) <- rownames(out)
 
         if (missing(main))
@@ -268,7 +280,7 @@ labs <- list(
         if (missing(ylab))
             ylab <- "Relative abundance"
         if (missing(ylim)) {
-            ymax <- min(max(uci), 2 * max(y1))
+            ymax <- min(max(uci, na.rm=TRUE), 2 * max(y1, na.rm=TRUE))
             ylim <- c(0, ymax)
         } else {
             ymax <- max(ylim)
@@ -391,7 +403,7 @@ labs <- list(
         points(x2[1:5],y1[i1],pch=18,cex=1,col="grey30")
         points(x2[1:5],y1[i1],pch=5,cex=0.7,col="grey10")
     }
-    invisible(out)
+    invisible(as.data.frame(out))
 }
 
 ## get nice stats

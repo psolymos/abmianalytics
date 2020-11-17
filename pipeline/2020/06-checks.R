@@ -59,3 +59,34 @@ p <- ggplot(u, aes(x=cr_exact, y=cr_approx)) +
 head(x)
 head(z)
 compare_sets(x$LinkID, z$LinkID)
+
+
+## check predictive maps
+
+load("d:/abmi/AB_data_v2020/data/analysis/kgrid_table_km.RData") # kgrid
+## chSoil/chVeg/trSoil/trVeg
+load("d:/abmi/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2018_transitions_wide.RData")
+#load("d:/abmi/AB_data_v2020/data/analysis/veghf/veghf_w2w_2018_wide.RData")
+trVeg <- trVeg[rownames(kgrid),rownames(chVeg)]
+trSoil <- trSoil[rownames(kgrid),rownames(chSoil)]
+
+
+xvr <- groupSums(trVeg, 2, chVeg[colnames(trVeg), "rf"])
+xvc <- groupSums(trVeg, 2, chVeg[colnames(trVeg), "cr"])
+setdiff(colnames(xvr), colnames(xvc))
+setdiff(colnames(xvc), colnames(xvr))
+i <- intersect(colnames(xvc), colnames(xvr))
+d <- (xvr[,i] - xvc[,i]) / 10^6
+range(d)
+summary(rowSums(d))
+table(rowSums(d < 0))
+j <- which(rowSums(d < 0) > 13)
+u <- d[j,]
+u <- u[,colSums(u<0) > 1]
+
+xvc <- dd_2018$veg_current
+xvr <- dd_2018$veg_reference
+d <- (xvr[,i] - xvc[,i]) / 10^6
+range(d)
+
+load("s:/AB_data_v2018/data/analysis/grid/veg-hf_transitions_v61hf2016v3WildFireUpTo2016.Rdata")

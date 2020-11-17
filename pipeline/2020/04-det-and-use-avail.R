@@ -364,7 +364,7 @@ for (taxon in names(UA)) {
         axis(side=2)
         abline(h=0, col="red4", lwd=2)
         mtext(side=3,at=x1[1],adj=0,spp,cex=1.2,col="grey40",las=1)
-        text(x=x1, y=par()$usr[3]-0.01,labels=names(cols), srt=60, adj=1, col=cols, xpd=TRUE)
+        text(x=x1, y=par()$usr[3]-0.01,labels=names(colsN), srt=60, adj=1, col=cols, xpd=TRUE)
         par(op)
         dev.off()
     }
@@ -389,7 +389,7 @@ for (taxon in names(UA)) {
         axis(side=2)
         abline(h=0, col="red4", lwd=2)
         mtext(side=3,at=x1[1],adj=0, spp, cex=1.2,col="grey40",las=1)
-        text(x=x1, y=par()$usr[3]-0.01,labels=names(cols), srt=60, adj=1, col=cols, xpd=TRUE)
+        text(x=x1, y=par()$usr[3]-0.01,labels=names(colsS), srt=60, adj=1, col=cols, xpd=TRUE)
         par(op)
         dev.off()
     }
@@ -423,13 +423,14 @@ load("s:/AB_data_v2020/Results/COEFS-ALL2.RData")
 taxon <- "mammals"
 SPPn <- dimnames(COEFS2[[taxon]]$north)[[1]]
 SPPs <- dimnames(COEFS2[[taxon]]$south)[[1]]
+SPPs <- SPPs[SPPs != "Fisher"]
 SPP <- sort(unique(c(SPPn, SPPs)))
 
 spp="Coyote"
 
 for (spp in SPP) {
 f3 <- paste0(
-    "s:/AB_data_v2020/Results/Camera mammal models revised June 2020/Maps/",
+    "s:/AB_data_v2020/Results/Camera mammal models South revised Nov 2020/Combine regions/Maps/",
     c("Reference/", "Current/", "Difference/"),
     spp, ".png")
 

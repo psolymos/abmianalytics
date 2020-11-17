@@ -47,25 +47,28 @@ toJSON(head(XT$lichens), pretty=TRUE)
 # append linear image to coef
 if (FALSE) {
 library(magick)
+#RT <- "s:"
+RT <- "d:/abmi"
 for (taxon in names(XT)) {
     for (spp in rownames(XT[[taxon]])) {
+        gc(full=TRUE)
         cat(taxon, spp, "\n")
         flush.console()
         xt <- XT[[taxon]][spp,]
         if (xt$veghf) {
             i1 <- image_append(image_read(
-                paste0("s:/AB_data_v2020/Results/web/", taxon, "/", spp,
+                paste0(RT, "/AB_data_v2020/Results/web/", taxon, "/", spp,
                     c("/veghf.png", "/lin-north.png"))))
             image_write(i1,
-                paste0("s:/AB_data_v2020/Results/web/", taxon, "/", spp,
+                paste0(RT, "/AB_data_v2020/Results/web/", taxon, "/", spp,
                     "/coef-north.png"))
         }
         if (xt$soilhf) {
             i1 <- image_append(image_read(
-                paste0("s:/AB_data_v2020/Results/web/", taxon, "/", spp,
+                paste0(RT, "/AB_data_v2020/Results/web/", taxon, "/", spp,
                     c("/soilhf.png", "/lin-south.png"))))
             image_write(i1,
-                paste0("s:/AB_data_v2020/Results/web/", taxon, "/", spp,
+                paste0(RT, "/AB_data_v2020/Results/web/", taxon, "/", spp,
                     "/coef-south.png"))
         }
     }
@@ -89,7 +92,7 @@ xx <- list(
         ),
         list(
             id="vplants",
-            name="Vasculer plants"
+            name="Vascular plants"
         ),
         list(
             id="mites",
@@ -111,9 +114,9 @@ xx <- list(
 )
 
 toJSON(xx, auto_unbox=TRUE, pretty=TRUE)
-writeLines(
-    toJSON(x, auto_unbox=TRUE),
-    "s:/AB_data_v2020/Results/web/index.json")
+#writeLines(
+#    toJSON(xx, auto_unbox=TRUE),
+#    "s:/AB_data_v2020/Results/web/index.json")
 
 
 load("s:/AB_data_v2020/Results/COEFS-ALL.RData")
@@ -123,12 +126,19 @@ COEFS$habitats <- COEFS2$habitats
 
 
 #taxon <- "habitats"
+RES <- NULL
 for (taxon in names(COEFS)) {
     cat(taxon, "\n")
 
 
     s0 <- COEFS[[taxon]]$species
 
+    if (taxon=="vplants") {
+        load("s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for VPlants 2020.RData")
+        compare_sets(Lookup$SppCode, s0$SppCode)
+        Lookup <- Lookup[match(s0$SppCode, Lookup$SppCode),]
+        s0$Common <- Lookup$Common.Name
+    }
     if (!(taxon %in% c("habitats", "birds", "mammals"))) {
         s <- s0
         s <- data.frame(
@@ -136,6 +146,8 @@ for (taxon in names(COEFS)) {
                 scientific=as.character(s[,grep("Scient", colnames(s))]),
                 common=NA_character_,
                 stringsAsFactors = FALSE)
+        if (taxon=="vplants")
+            s$common <- s0$Common
         #s$id[grep("\\.\\.", s$id)] <- gsub("\\.\\.", "\\.", s$id[grep("\\.\\.", s$id)])
         s$id[endsWith(s$id, ".")] <- substr(s$id[endsWith(s$id, ".")], 1,
             nchar(s$id[endsWith(s$id, ".")])-1)
@@ -177,6 +189,10 @@ for (taxon in names(COEFS)) {
         s$display <- ifelse(is.na(s$scientific), s$common,
             paste0(s$common, " (", s$scientific, ")"))
     }
+    if (taxon=="vplants") {
+        s$display <- ifelse(is.na(s$common), s$scientific,
+            paste0(s$scientific, " - ", s$common))
+    }
 
     #"Do.not.analyze" to exclude
     x <- XT[[taxon]]
@@ -196,13 +212,14 @@ for (taxon in names(COEFS)) {
     s$sectornorth <- x$`sector-north`
     s$sectorsouth <- x$`sector-south`
 
-    s <- s[order(s$display),]
+    s <- s[order(as.character(s$display)),]
     s$idprev <- c(s$id[length(s$id)], s$id[-length(s$id)])
     s$idnext <- c(s$id[-1], s$id[1])
 
     o <- xx$taxa[sapply(xx$taxa, "[[", "id") == taxon][[1]]
     o$species <- s
 
+#if (FALSE) {
     #toJSON(o, auto_unbox=TRUE, pretty=TRUE)
     writeLines(
         toJSON(o, auto_unbox=TRUE),
@@ -220,5 +237,22 @@ for (taxon in names(COEFS)) {
             paste0("s:/AB_data_v2020/Results/web/", taxon, "/", spp, "/index.json"))
 
     }
+#}
+    sss <- s
+    sss$taxonid <- o$id
+    sss$taxonname <- o$name
+    RES <- rbind(RES, sss)
+
 
 }
+
+
+
+cn <- c("id", "scientific", "common", "display",  "taxonid", "taxonname")
+xxx <- xx
+xxx$species <- RES[,cn]
+
+writeLines(
+    toJSON(xxx, auto_unbox=TRUE),
+    "s:/AB_data_v2020/Results/web/index.json")
+
