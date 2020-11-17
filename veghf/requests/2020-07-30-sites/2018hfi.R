@@ -67,6 +67,8 @@ rm(s)
 gc()
 
 save(ds, file="s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_grid1sqkm_merged.RData")
+#load("s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_grid1sqkm_merged.RData")
+
 
 ds$oyear18 <- ds$Origin_Year
 ds$oyear18[ds$Origin_Year_cor != 9999] <- ds$Origin_Year[ds$Origin_Year_cor != 9999] +
@@ -105,6 +107,7 @@ save(ds, file="s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_grid1sqkm_merged
 
 ## 2018 w2w
 
+load("s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_grid1sqkm_merged_clean.RData")
 ds$Origin_Year <- ds$oyear18
 ds$FEATURE_TY <- ds$FEATURE_TY_2018cond
 dd18 <- make_vegHF_wide_v6(ds,
@@ -114,9 +117,9 @@ dd18 <- make_vegHF_wide_v6(ds,
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     HF_fine=TRUE, wide=TRUE)
-
 x <- nonDuplicated(ds, GRID_LABEL, TRUE)[rownames(dd18)[[1]],]
 dd18 <- fill_in_0ages_v6(dd18, x$NSRNAME, ages_list)
+ds$Origin_Year <- ds$FEATURE_TY <- NULL
 
 save(dd18, file="s:/AB_data_v2020/data/analysis/veghf/w2w_veghf2018_grid1sqkm.RData")
 
@@ -454,15 +457,28 @@ dt2 <- dt2[,c("v10", "a10",  "an10", "v18", "a18", "an18",  "area", "diff", "tr2
 
 write.csv(dt2, row.names = FALSE, file="~/GoogleWork/abmi/tr1018/transitions-w2w-2010-2018.csv")
 
-## use clean transitions to process dd
+
+
+## use clean transitions to process dd -----------------------------------------------------
+
+
 
 od <- setwd("~/repos/recurring/veghf")
 source("00-setup.R")
 setwd(od)
 
+checks <- function(xvr, xvc) {
+  i <- intersect(colnames(xvc), colnames(xvr))
+  d <- (xvr[,i] - xvc[,i]) / 10^6
+  list(rf_only=setdiff(colnames(xvr), colnames(xvc)),
+    cr_only=setdiff(colnames(xvc), colnames(xvr)),
+    rf_minus_cr_range=range(d))
+}
+
 tv <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v61.csv")
 rownames(tv) <- tv[,1]
 hf <- rownames(tv)[tv$is_HF]
+hf <- c(hf, "CutBlocks")
 
 load("s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_grid1sqkm_merged_clean_long.RData")
 load("s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_transitions.RData")
@@ -489,25 +505,47 @@ dd$cr_soil_10[ss] <- dd$rf_soil[ss]
 ss <- dd$cr_soil_18 %in% hf & !(dd$cr_veg_18 %in% hf)
 100*sum(dd$Shape_Area[ss])/sum(dd$Shape_Area)
 
+## year specific reference
+dd$rf_veg_10 <- dd$cr_veg_10
+dd$rf_veg_10[dd$cr_veg_10 %in% hf] <- dd$rf_veg[dd$cr_veg_10 %in% hf]
+dd$rf_veg_18 <- dd$cr_veg_18
+dd$rf_veg_18[dd$cr_veg_18 %in% hf] <- dd$rf_veg[dd$cr_veg_18 %in% hf]
+dd$rf_soil_10 <- dd$cr_soil_10
+dd$rf_soil_10[dd$cr_soil_10 %in% hf] <- dd$rf_soil[dd$cr_soil_10 %in% hf]
+dd$rf_soil_18 <- dd$cr_soil_18
+dd$rf_soil_18[dd$cr_soil_18 %in% hf] <- dd$rf_soil[dd$cr_soil_18 %in% hf]
 
 dd$tr <- dd$tr2 <- NULL
+dd$rf_veg <- dd$rf_soil <- NULL
+
+with(dd, table(isHF=cr_veg_10 %in% hf, cr_rf_same=cr_veg_10 == rf_veg_10))
+with(dd, table(isHF=cr_veg_18 %in% hf, cr_rf_same=cr_veg_18 == rf_veg_18))
+with(dd, table(isHF=cr_soil_10 %in% hf, cr_rf_same=cr_soil_10 == rf_soil_10))
+with(dd, table(isHF=cr_soil_18 %in% hf, cr_rf_same=cr_soil_18 == rf_soil_18))
+
 
 ## 2010 and 2018 w2w
 dd_2010 <- list(
   veg_current=Xtab(Shape_Area ~ GRID_LABEL + cr_veg_10, dd),
-  veg_reference=Xtab(Shape_Area ~ GRID_LABEL + rf_veg, dd),
+  veg_reference=Xtab(Shape_Area ~ GRID_LABEL + rf_veg_10, dd),
   soil_current=Xtab(Shape_Area ~ GRID_LABEL + cr_soil_10, dd),
-  soil_reference=Xtab(Shape_Area ~ GRID_LABEL + rf_soil, dd))
+  soil_reference=Xtab(Shape_Area ~ GRID_LABEL + rf_soil_10, dd))
 dd_2018 <- list(
   veg_current=Xtab(Shape_Area ~ GRID_LABEL + cr_veg_18, dd),
-  veg_reference=Xtab(Shape_Area ~ GRID_LABEL + rf_veg, dd),
+  veg_reference=Xtab(Shape_Area ~ GRID_LABEL + rf_veg_18, dd),
   soil_current=Xtab(Shape_Area ~ GRID_LABEL + cr_soil_18, dd),
-  soil_reference=Xtab(Shape_Area ~ GRID_LABEL + rf_soil, dd))
+  soil_reference=Xtab(Shape_Area ~ GRID_LABEL + rf_soil_18, dd))
+
+checks(dd_2010$veg_reference, dd_2010$veg_current)
+checks(dd_2010$soil_reference, dd_2010$soil_current)
+
+checks(dd_2018$veg_reference, dd_2018$veg_current)
+checks(dd_2018$soil_reference, dd_2018$soil_current)
 
 ## ref->2018 transitions
 dd$trv_1018 <- ifelse(dd$cr_veg_10 == dd$cr_veg_18, dd$cr_veg_10, paste0(dd$cr_veg_10, "->", dd$cr_veg_18))
-dd$trv_rf18 <- ifelse(dd$rf_veg == dd$cr_veg_18, dd$rf_veg, paste0(dd$rf_veg, "->", dd$cr_veg_18))
-dd$trs_rf18 <- ifelse(dd$rf_soil == dd$cr_soil_18, dd$rf_soil, paste0(dd$rf_soil, "->", dd$cr_soil_18))
+dd$trv_rf18 <- ifelse(dd$rf_veg_18 == dd$cr_veg_18, dd$rf_veg_18, paste0(dd$rf_veg_18, "->", dd$cr_veg_18))
+dd$trs_rf18 <- ifelse(dd$rf_soil_18 == dd$cr_soil_18, dd$rf_soil_18, paste0(dd$rf_soi_18l, "->", dd$cr_soil_18))
 
 trVeg_1018 <- Xtab(Shape_Area ~ GRID_LABEL + trv_1018, dd)
 trVeg <- Xtab(Shape_Area ~ GRID_LABEL + trv_rf18, dd)
