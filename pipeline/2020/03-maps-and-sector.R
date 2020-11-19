@@ -6,9 +6,19 @@ load("s:/AB_data_v2020/Results/COEFS-ALL2.RData")
 
 load("d:/abmi/AB_data_v2020/data/analysis/kgrid_table_km.RData") # kgrid
 ## chSoil/chVeg/trSoil/trVeg
-load("d:/abmi/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2018_transitions_wide.RData")
+load("s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2018_transitions_wide.RData")
 trVeg <- trVeg[rownames(kgrid),rownames(chVeg)]
 trSoil <- trSoil[rownames(kgrid),rownames(chSoil)]
+
+if (FALSE) {
+xvr <- groupSums(trVeg, 2, chVeg[colnames(trVeg), "rf"])
+xvc <- groupSums(trVeg, 2, chVeg[colnames(trVeg), "cr"])
+setdiff(colnames(xvr), colnames(xvc))
+setdiff(colnames(xvc), colnames(xvr))
+i <- intersect(colnames(xvc), colnames(xvr))
+d <- (xvr[,i] - xvc[,i]) / 10^6
+range(d)
+}
 
 ## common functions and variables
 
@@ -111,7 +121,7 @@ FORE <- c("CCDecid1", "CCDecid2",
     "TreedSwamp4", "TreedSwamp5", "TreedSwamp6", "TreedSwamp7", "TreedSwamp8",
     "TreedSwampR")
 UNKN <- chSoil$rf=="UNK" | chSoil$cr=="UNK"
-kgrid$pSoilUnk <- rowSums(trSoil[,UNKN]) / rowSums(trSoil)
+kgrid$pSoilUnk <- rowSums(trSoil[,UNKN,drop=FALSE]) / rowSums(trSoil)
 kgrid$pFor <- rowSums(trVeg[,chVeg$cr %in% FORE]) / rowSums(trVeg)
 
 kgrid$wS <- (1-kgrid$pAspen)*(1-kgrid$pSoilUnk)*(1-kgrid$pFor)
@@ -333,6 +343,17 @@ sapply(chVeg,function(z) nlevels(droplevels(as.factor(z))))/ncol(Pn)
 ## this is the current landscape only
 Pncr2 <- groupSums(Pn, 2, chVeg$cr2)
 Pscr2 <- groupSums(Ps, 2, chSoil$cr2)
+
+## some checks
+if (FALSE) {
+xvr <- groupSums(trVeg, 2, chVeg[colnames(trVeg), "rf2"])
+xvc <- groupSums(trVeg, 2, chVeg[colnames(trVeg), "cr2"])
+setdiff(colnames(xvr), colnames(xvc))
+setdiff(colnames(xvc), colnames(xvr))
+i <- intersect(colnames(xvc), colnames(xvr))
+d <- (xvr[,i] - xvc[,i]) / 10^6
+range(d)
+}
 
 ## species specific part begins here
 
@@ -630,9 +651,9 @@ library(raster)
 load("s:/AB_data_v2020/Results/COEFS-ALL.RData")
 load("s:/AB_data_v2020/Results/COEFS-ALL2.RData")
 COEFS <- c(COEFS, COEFS2)
-load("d:/abmi/AB_data_v2020/data/analysis/kgrid_table_km.RData") # kgrid
+load("s:/AB_data_v2020/data/analysis/kgrid_table_km.RData") # kgrid
 ## chSoil/chVeg/trSoil/trVeg
-load("d:/abmi/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2018_transitions_wide.RData")
+load("s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2018_transitions_wide.RData")
 trVeg <- trVeg[rownames(kgrid),rownames(chVeg)]
 trSoil <- trSoil[rownames(kgrid),rownames(chSoil)]
 
@@ -716,7 +737,7 @@ SEs <- cure4insect:::.plot_sector1(CurrS[sectors], RefS[sectors], AreaS, RefTota
 SE <- list()
 TAXA <- names(COEFS)
 doSEFF <- TRUE
-doMAPS <- FALSE
+doMAPS <- TRUE
 for (taxon in TAXA) {
 
     if (!dir.exists(file.path(ROOT, taxon)))
@@ -805,7 +826,8 @@ for (taxon in TAXA) {
                 SEs <- NULL
             }
 
-            SE[[taxon]][[spp]] <- list(north=SEn, south=SEs)
+#            SE[[taxon]][[spp]] <- list(north=SEn, south=SEs)
+            SE[[spp]] <- list(north=SEn, south=SEs)
         }
 
         if (doMAPS) {
@@ -889,10 +911,11 @@ for (taxon in TAXA) {
 
 
     }
+    save(SE,
+        file=paste0("s:/AB_data_v2020/Results/SEffect-", taxon, ".RData"))
+
 
 }
-
-save(SE,  file="s:/AB_data_v2020/Results/SE-ESTIMATES.RData")
 
 
 

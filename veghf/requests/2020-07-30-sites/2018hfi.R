@@ -545,7 +545,7 @@ checks(dd_2018$soil_reference, dd_2018$soil_current)
 ## ref->2018 transitions
 dd$trv_1018 <- ifelse(dd$cr_veg_10 == dd$cr_veg_18, dd$cr_veg_10, paste0(dd$cr_veg_10, "->", dd$cr_veg_18))
 dd$trv_rf18 <- ifelse(dd$rf_veg_18 == dd$cr_veg_18, dd$rf_veg_18, paste0(dd$rf_veg_18, "->", dd$cr_veg_18))
-dd$trs_rf18 <- ifelse(dd$rf_soil_18 == dd$cr_soil_18, dd$rf_soil_18, paste0(dd$rf_soi_18l, "->", dd$cr_soil_18))
+dd$trs_rf18 <- ifelse(dd$rf_soil_18 == dd$cr_soil_18, dd$rf_soil_18, paste0(dd$rf_soil_18, "->", dd$cr_soil_18))
 
 trVeg_1018 <- Xtab(Shape_Area ~ GRID_LABEL + trv_1018, dd)
 trVeg <- Xtab(Shape_Area ~ GRID_LABEL + trv_rf18, dd)
