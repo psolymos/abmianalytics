@@ -6,7 +6,7 @@ load("s:/AB_data_v2020/Results/COEFS-ALL2.RData")
 
 load("d:/abmi/AB_data_v2020/data/analysis/kgrid_table_km.RData") # kgrid
 ## chSoil/chVeg/trSoil/trVeg
-load("s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2018_transitions_wide.RData")
+load("s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2018_transitions_wide_water.RData")
 trVeg <- trVeg[rownames(kgrid),rownames(chVeg)]
 trSoil <- trSoil[rownames(kgrid),rownames(chSoil)]
 
@@ -236,6 +236,9 @@ lt <- list(
         "CCPine3", "CCPine4", "CCSpruceR", "CCSpruce1", "CCSpruce2",
         "CCSpruce3", "CCSpruce4", "Bare", "BorrowpitsDugoutsSumps", "Canals",
         "MunicipalWaterSewage", "Reservoirs", "SnowIce"), class = "data.frame"))
+lt$south["OtherDisturbedVegetation", "Sector"] <- "RuralUrban"
+lt$north["OtherDisturbedVegetation", "Sector"] <- "RuralUrban"
+
 
 ## define sectors to be used here
 ## i.e. change to attribution stuff or keep finer level transitions etc
