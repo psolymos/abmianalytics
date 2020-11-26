@@ -483,6 +483,7 @@ hf <- c(hf, "CutBlocks")
 load("s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_grid1sqkm_merged_clean_long.RData")
 load("s:/AB_data_v2020/data/inter/veghf/veghf2018_2010_transitions.RData")
 
+
 veg10 <- as.character(dd$cr_veg_10)
 veg18 <- as.character(dd$cr_veg_18)
 
@@ -523,6 +524,35 @@ with(dd, table(isHF=cr_veg_18 %in% hf, cr_rf_same=cr_veg_18 == rf_veg_18))
 with(dd, table(isHF=cr_soil_10 %in% hf, cr_rf_same=cr_soil_10 == rf_soil_10))
 with(dd, table(isHF=cr_soil_18 %in% hf, cr_rf_same=cr_soil_18 == rf_soil_18))
 
+#tmp <- paste0("s", ifelse(dd$rf_soil_10=="Water", 1, 0), "-v", ifelse(dd$rf_veg_10=="Water", 1, 0))
+#mefa4::sum_by(100*dd$Shape_Area/sum(dd$Shape_Area), tmp)
+#tmp <- paste0("s", ifelse(dd$rf_soil_18=="Water", 1, 0), "-v", ifelse(dd$rf_veg_18=="Water", 1, 0))
+#mefa4::sum_by(100*dd$Shape_Area/sum(dd$Shape_Area), tmp)
+#mefa4::sum_by(100*dd$Shape_Area[tmp=="s1-v0"]/sum(dd$Shape_Area[tmp=="s1-v0"]), dd$rf_veg_18[tmp=="s1-v0"])
+
+## adjusting Water polygon labels
+str(dd)
+W <- c("Water", #"SoilWater",
+  "BorrowpitsDugoutsSumps",
+  "MunicipalWaterSewage",
+  "Reservoirs",
+  "Canals")
+TOT <- sum(dd$Shape_Area)
+WaterAnytime <- rep(FALSE, nrow(dd))
+for (i in 3:ncol(dd)) {
+#  if (is.character(dd[,i]))
+#    WaterAnytime[dd[,i] %in% W] <- TRUE
+  cat(colnames(dd)[i],
+    ":\tWater: ", round(100*sum(dd$Shape_Area[dd[,i] %in% W[1]]) / TOT, 3),
+    ":\tHFWater: ", round(100*sum(dd$Shape_Area[dd[,i] %in% W[-1]]) / TOT, 3),
+    "\n", sep="")
+}
+table(WaterAnytime)
+100*sum(dd$Shape_Area[WaterAnytime]) / TOT
+
+for (i in 3:ncol(dd)) {
+  dd[WaterAnytime,i] <- "Water"
+}
 
 ## 2010 and 2018 w2w
 dd_2010 <- list(
@@ -547,9 +577,17 @@ dd$trv_1018 <- ifelse(dd$cr_veg_10 == dd$cr_veg_18, dd$cr_veg_10, paste0(dd$cr_v
 dd$trv_rf18 <- ifelse(dd$rf_veg_18 == dd$cr_veg_18, dd$rf_veg_18, paste0(dd$rf_veg_18, "->", dd$cr_veg_18))
 dd$trs_rf18 <- ifelse(dd$rf_soil_18 == dd$cr_soil_18, dd$rf_soil_18, paste0(dd$rf_soil_18, "->", dd$cr_soil_18))
 
+dd$trv_rf10 <- ifelse(dd$rf_veg_10 == dd$cr_veg_10, dd$rf_veg_10, paste0(dd$rf_veg_10, "->", dd$cr_veg_10))
+dd$trs_rf10 <- ifelse(dd$rf_soil_10 == dd$cr_soil_10, dd$rf_soil_10, paste0(dd$rf_soil_10, "->", dd$cr_soil_10))
+
 trVeg_1018 <- Xtab(Shape_Area ~ GRID_LABEL + trv_1018, dd)
 trVeg <- Xtab(Shape_Area ~ GRID_LABEL + trv_rf18, dd)
 trSoil <- Xtab(Shape_Area ~ GRID_LABEL + trs_rf18, dd)
+
+trVeg10 <- Xtab(Shape_Area ~ GRID_LABEL + trv_rf10, dd)
+trSoil10 <- Xtab(Shape_Area ~ GRID_LABEL + trs_rf10, dd)
+
+
 
 lts <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v2020.csv")
 rownames(lts) <- lts[,1]
@@ -589,25 +627,50 @@ chSoil <- data.frame(
 chSoil$sector <- lts$Sector[match(chSoil$cr, lts$ID)]
 rownames(chSoil) <- cn
 
+
+
+cn <- colnames(trVeg10)
+tmp <- strsplit(cn, "->")
+chVeg10 <- data.frame(
+  label=cn,
+  rf=sapply(tmp, "[[", 1),
+  cr=sapply(tmp, function(z) if (length(z) > 1) z[2] else z[1]))
+chVeg10$sector <- ltv$Sector[match(chVeg10$cr, ltv$ID)]
+rownames(chVeg10) <- cn
+
+cn <- colnames(trSoil10)
+tmp <- strsplit(cn, "->")
+chSoil10 <- data.frame(
+  label=cn,
+  rf=sapply(tmp, "[[", 1),
+  cr=sapply(tmp, function(z) if (length(z) > 1) z[2] else z[1]))
+chSoil10$sector <- lts$Sector10[match(chSoil10$cr, lts$ID)]
+rownames(chSoil10) <- cn
+
 save(
   ltv, lts,
   dd_2010,
-  file="s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_2010_wide.RData"
+  file="s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_2010_wide_water.RData"
 )
 save(
   ltv, lts,
   dd_2018,
-  file="s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_2018_wide.RData"
+  file="s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_2018_wide_water.RData"
 )
 
 save(
   trVeg,  trSoil,
   chVeg, chSoil,
-  file="s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2018_transitions_wide.RData"
+  file="s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2018_transitions_wide_water.RData"
+)
+save(
+  trVeg10,  trSoil10,
+  chVeg10, chSoil10,
+  file="s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2010_transitions_wide_water.RData"
 )
 
 save(trVeg_1018, chVeg_1018,
-  file="s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_2010_2018_transitions_wide.RData"
+  file="s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_2010_2018_transitions_wide_water.RData"
 )
 
 

@@ -651,7 +651,7 @@ library(raster)
 load("s:/AB_data_v2020/Results/COEFS-ALL.RData")
 load("s:/AB_data_v2020/Results/COEFS-ALL2.RData")
 COEFS <- c(COEFS, COEFS2)
-load("s:/AB_data_v2020/data/analysis/kgrid_table_km.RData") # kgrid
+load("d:/abmi/AB_data_v2020/data/analysis/kgrid_table_km.RData") # kgrid
 ## chSoil/chVeg/trSoil/trVeg
 load("s:/AB_data_v2020/data/analysis/veghf/veghf_w2w_ref_2018_transitions_wide.RData")
 trVeg <- trVeg[rownames(kgrid),rownames(chVeg)]
