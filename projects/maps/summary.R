@@ -32,11 +32,11 @@ for (i in 1:nrow(xy)) {
     cat(i, "\n")
     flush.console()
     zi <- st_point(xy[i,])
-    v <- st_buffer(zi, 5000)
-    v <- st_sfc(v)
-    st_crs(v) <- st_crs(a)
+    q <- st_buffer(zi, 5000)
+    q <- st_sfc(q)
+    st_crs(q) <- st_crs(a)
 
-    ii <- st_intersection(b, v) # this is why we need as_cast above, otherwise this fails
+    ii <- st_intersection(b, q) # this is why we need as_cast above, otherwise this fails
 
     tmp <- data.frame(
         hf=ii$FEATURE_TY,
@@ -67,3 +67,46 @@ summary(y)
 ## save
 yy <- data.frame(Site=rownames(y), y)
 write.csv(yy, row.names=FALSE, file=file.path(ROOT, "HF_class_proportions.csv"))
+
+## summarize veg/hf
+
+v <- st_read(file.path(ROOT, "BIRDSMAP_veghf2018.gdb"))
+v <- st_cast(v, "MULTIPOLYGON")
+
+cnm <- c("FID_sta_latlong_10TMf_buff5km",
+    "Origin_Year",
+    "Origin_Source", "PreBackfill_Source",
+    "Pct_of_Larch", "NSRNAME", "NRNAME", "Soil_Type_1",
+    "CWCS_Class","Origin_Year_cor",
+    "WILDFIRE_YEAR", "FEATURE_TY", "YEAR", "ORIG_FID_1",
+    "Combined_ChgByCWCS", "Shape_Area")
+d <- as.data.frame(v[,cnm])
+d$NSRNAME[] <- "Central Mixedwood"
+
+#rm(list=ls())
+od <- setwd("~/repos/recurring/veghf")
+source("00-setup.R")
+
+#FILE <- "s:\\AB_data_v2020\\data\\raw\\veghf\\Summary_buf5m_VegHfSoil_AllYears.csv"
+#d <- read.csv(FILE)
+
+UID_COL    = "FID_sta_latlong_10TMf_buff5km"
+VEG_COL    = "Combined_ChgByCWCS"
+BASE_YR    = 2018
+AREA_COL   = "Shape_Area"
+AREA       = TRUE
+TOL        = 0
+UNROUND    = FALSE
+
+source("02-long.R")
+source("03-wide.R")
+
+summary(rowSums(d_wide[[1]])/(5000^2*pi))
+
+save(d_wide,
+    file=file.path(ROOT, "BIRDSMAP_veghf2018.RData"))
+
+
+## estimate abundance
+
+
