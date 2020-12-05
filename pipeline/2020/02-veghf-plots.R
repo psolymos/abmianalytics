@@ -424,7 +424,8 @@ labs <- list(
 ## make figures
 TAXA <- c("lichens", "mites", "mosses", "vplants", "birds", "mammals", "habitats")
 #TAXA <- c("mammals", "habitats")
-ROOT <- "s:/AB_data_v2020/Results/web"
+#ROOT <- "s:/AB_data_v2020/Results/web"
+ROOT <- "s:/AB_data_v2020/Results/web1"
 COEFS$mammals <- COEFS2$mammals
 COEFS$habitats <- COEFS2$habitats
 

@@ -301,6 +301,7 @@ save(COEFS, file="s:/AB_data_v2020/Results/COEFS-EAboot.RData")
 library(mefa4)
 library(intrval)
 source("~/repos/abmianalytics/birds/00-functions.R")
+source("~/repos/abmianalytics/pipeline/2020/00-functions.R")
 
 ROOT <- "d:/abmi/AB_data_v2020/data/analysis/species/birds"
 
@@ -312,7 +313,7 @@ rm(ee)
 en <- new.env()
 load(file.path(ROOT, "data", "ab-birds-north-2020-09-23.RData"), envir=en)
 es <- new.env()
-load(file.path(ROOT, "data", "ab-birds-south-2020-09-23.RData"), envir=es)
+load(file.path(ROOT, "data", "ab-birds-south-2020-12-04.RData"), envir=es)
 Xn <- get_model_matrix(en$DAT, en$mods)
 Xs <- get_model_matrix(es$DAT, es$mods)
 
@@ -320,138 +321,6 @@ Xage <- as.matrix(read.csv("~/repos/abmianalytics/lookup/Xn-veg-v2020.csv"))
 colnames(Xage) <- colnames(Xn)[match(colnames(Xage), make.names(colnames(Xn)))]
 
 load("s:/AB_data_v2020/Results/COEFS-EAboot.RData")
-
-get_coef_north <- function(resn, STAGE="ARU", subset=1, ...) {
-    estn <- suppressWarnings(get_coef(resn, Xn, stage=STAGE, na.out=FALSE))
-    estn <- estn[subset,]
-
-    mu <- drop(Xage %*% estn[colnames(Xage)])
-    lam1 <- exp(mu)
-    lam1 <- lam1[!grepl("9", names(lam1))]
-    lamCC <- lam1[grepl("CC", names(lam1))]
-
-    MOD <- c("ROAD", "mWell", "mSoft",
-        "mEnSft", "mTrSft", "mSeism")
-    Z <- exp(estn[MOD])
-    isSoft <- estn["mSoft"] != 0 & estn["mEnSft"] == 0
-    #isSoft2 <- get_mid(resn)[,"Contrast"] == 3
-    if (isSoft) {
-        estn["mEnSft"] <- estn["mSoft"]
-        estn["mTrSft"] <- estn["mSoft"]
-        estn["mSeism"] <- estn["mSoft"]
-    }
-    pm <- c("ROAD"=1, "mWell"=0.2, "mSoft"=0.2,
-        "mEnSft"=0.2, "mTrSft"=0.2, "mSeism"=0.05)
-    for (i in MOD)
-        Z[i] <- linexp(1, estn[i], pm[i])
-
-    HFc <- c("Crop", "Industrial", "Mine", "RoughP", "Rural", "TameP", "Urban")
-
-    FUN <- mean
-
-    # not in HFc and not forestry!
-    Xn2 <- Xn[en$DAT$mWell > 0 & en$DAT$vegc %ni% HFc & en$DAT$fCC2 == 0, colnames(Xage)]
-    nWell <- nrow(Xn2)
-    lamWell <- exp(Xn2 %*% estn[colnames(Xn2)])
-    estWell <- FUN(lamWell * Z["mWell"])
-
-    Xn2 <- Xn[en$DAT$mEnSft > 0 & en$DAT$vegc %ni% HFc & en$DAT$fCC2 == 0, colnames(Xage)]
-    nEnSoft <- nrow(Xn2)
-    lamEnSft <- exp(Xn2 %*% estn[colnames(Xn2)])
-    estEnSft <- FUN(lamEnSft * Z["mEnSft"])
-
-    ## TrSft incorporates ROAD effect as well?
-    Xn2 <- Xn[en$DAT$mTrSft > 0 & en$DAT$vegc %ni% HFc & en$DAT$fCC2 == 0, colnames(Xage)]
-    nTrSoft <- nrow(Xn2)
-    lamTrSft <- exp(Xn2 %*% estn[colnames(Xn2)])
-    #estTrSft <- quantile(lamTrSft * Z[,"mTrSft"] * Z[,"ROAD"], c(0.5, 0.05, 0.95))
-    estTrSft <- FUN(lamTrSft * Z["mTrSft"])
-
-    ESMAX <- max(lamCC[endsWith(names(lamCC), "R")], EnSft=estEnSft, TrSft=estTrSft)
-    Xn2 <- Xn[en$DAT$mSeism > 0 & en$DAT$vegc %ni% HFc & en$DAT$fCC2 == 0, colnames(Xage)]
-    nSeism <- nrow(Xn2)
-    lamSeism <- exp(Xn2 %*% estn[colnames(Xn2)])
-    estSeism <- FUN(lamSeism * Z["mSeism"])
-    if (estSeism > ESMAX)
-        estSeism <- ESMAX
-
-    ## UrbInd
-    #Xn2 <- Xn[en$DAT$vegc %ni% c("Industrial", "Mine", "Rural", "Urban"), colnames(Xage)]
-    #nUI <- nrow(Xn2)
-    #lamUI <- apply(exp(Xn2 %*% t(estn[,colnames(Xn2),drop=FALSE])), 2, median)
-    #estUI <- quantile((nUI * lamUI + nWell * lamWell) / (nUI + nWell),
-    #    c(0.5, 0.05, 0.95))
-
-    lam1 <- c(lam1,
-        Wellsites=estWell,
-        EnSeismic=estSeism,
-        EnSoftLin=estEnSft,
-        TrSoftLin=estTrSft,
-        HardLin=0,
-        Water=0,
-        Bare=0,
-        SnowIce=0,
-        MineV=unname(lam1["Mine"]))
-    lam1["Mine"] <- 0
-    names(lam1) <- gsub("Spruce", "WhiteSpruce", names(lam1))
-    names(lam1) <- gsub("Decid", "Deciduous", names(lam1))
-    lam1
-}
-
-get_coef_south <- function(ress, STAGE="ARU", subset=1, ...) {
-    ests <- suppressWarnings(get_coef(ress, Xs, stage=STAGE, na.out=FALSE))
-    ests <- ests[subset,]
-    LCC <- c("soilcBlowout", "soilcClaySub", "soilcCrop",
-        "soilcIndustrial", "soilcMine", "soilcOther", "soilcRapidDrain",
-        "soilcRoughP", "soilcRural", "soilcSandyLoam", "soilcTameP",
-        "soilcThinBreak", "soilcUrban")
-    muLCC <- c(ests[1], ests[1]+ests[LCC])
-    names(muLCC) <- levels(es$DAT$soilc)
-    lamLCC0 <- exp(muLCC) # nontreed
-    o <- c("Loamy", "Blowout", "ClaySub", "RapidDrain", "SandyLoam", "ThinBreak", "Other",
-        "RoughP", "TameP","Crop","Urban", "Rural", "Industrial", "Mine")
-    lamLCC0 <- lamLCC0[o]
-
-    MOD <- c("ROAD", "mWell", "mSoft")
-    Z <- exp(ests[MOD])
-    pm <- c("ROAD"=1, "mWell"=0.2, "mSoft"=0.2)
-    for (i in MOD)
-        Z[i] <- linexp(1, ests[i], pm[i])
-    lamMOD <- Z
-    names(lamMOD) <- c("Road", "Well", "Soft")
-
-    HFc <- c("RoughP", "TameP","Crop","Urban", "Rural", "Industrial", "Mine")
-
-    FUN <- mean
-
-    Xs2 <- Xs[es$DAT$mSoft > 0 & es$DAT$soilc %ni% HFc, colnames(Xs)]
-    nSoft <- nrow(Xs2)
-    lamSoft <- exp(Xs2 %*% ests[colnames(Xs2)])
-    estSoft <- FUN(lamSoft * Z["mSoft"])
-
-    Xs2 <- Xs[es$DAT$mWell > 0 & es$DAT$soilc %ni% HFc, colnames(Xs)]
-    nWell <- nrow(Xs2)
-    lamWell <- exp(Xs2 %*% ests[colnames(Xs2)])
-    estWell <- FUN(lamWell * Z["mWell"])
-
-    Xs2 <- Xs[es$DAT$ROAD > 0 & es$DAT$soilc %ni% HFc, colnames(Xs)]
-    nROAD <- nrow(Xs2)
-    lamROAD <- exp(Xs2 %*% ests[colnames(Xs2)])
-    estROAD <- FUN(lamROAD * Z["ROAD"])
-
-    lam0 <- c(lamLCC0,
-        EnSeismic=estSoft,
-        EnSoftLin=estSoft,
-        TrSoftLin=estSoft,
-        HardLin=estROAD,
-        Wellsites=estWell,
-        #HFor=0,
-        MineV=unname(lamLCC0["Mine"]),
-        Water=0)
-    lam0["Mine"] <- 0
-    attr(lam0, "pAspen") <- ests["pAspen"]
-    lam0
-}
 
 ## all species
 SPPn <- substr(list.files(file.path(ROOT, "out", "north")), 1, 4)
@@ -461,6 +330,17 @@ names(SPPs) <- bt[SPPs, "sppid"]
 ## same B as for other taxa
 B <- dim(COEFS[[1]]$north)[3]
 
+## take info from revisions:
+## c=N+S combo
+## n/s=N/S model only
+## u=use avail (no model)
+## o=exclude (passing through, extinct, bogus)
+blist <- read.csv("~/repos/abmianalytics/pipeline/2020/birds-v2020.csv")
+compare_sets(blist$common, bt$species)
+blist$id <- bt$sppid[match(blist$common, bt$species)]
+rownames(blist) <- blist$id
+SPPn <- SPPn[names(SPPn) %in% rownames(blist)[blist$show %in% c("c", "n")]]
+SPPs <- SPPs[names(SPPs) %in% rownames(blist)[blist$show %in% c("c", "s")]]
 
 cfn <- list()
 for (spp in SPPn) {
@@ -468,16 +348,17 @@ for (spp in SPPn) {
     flush.console()
 
     res <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
+
     est1 <- suppressWarnings(get_coef(res, Xn, stage="ARU", na.out=FALSE))
     est2 <- suppressWarnings(get_coef(res, Xn, stage="Space", na.out=FALSE))
 
     BB <- min(B, nrow(est1))
-    cf1 <- sapply(1:BB, function(i) get_coef_north(res, STAGE="ARU", subset=i))
-    cf2 <- sapply(1:BB, function(i) get_coef_north(res, STAGE="Space", subset=i))
+    cf1 <- sapply(1:BB, function(i) get_coef_north(est1, subset=i))
+    cf2 <- sapply(1:BB, function(i) get_coef_north(est2, subset=i))
 
     cfn[[spp]] <- list(estARU=est1, estSpace=est2, coefARU=cf1, coefSpace=cf2)
 }
-save(cfn, file="s:/AB_data_v2020/Results/BIRDS-North.RData")
+save(cfn, file="s:/AB_data_v2020/Results/BIRDS-North-rev1.RData")
 
 cfs <- list()
 for (spp in SPPs) {
@@ -489,17 +370,33 @@ for (spp in SPPs) {
     est2 <- suppressWarnings(get_coef(res, Xs, stage="Space", na.out=FALSE))
 
     BB <- min(B, nrow(est1))
-    cf1 <- sapply(1:BB, function(i) get_coef_south(res, STAGE="ARU", subset=i))
-    cf2 <- sapply(1:BB, function(i) get_coef_south(res, STAGE="Space", subset=i))
+    cf1 <- sapply(1:BB, function(i) get_coef_south(est1, subset=i))
+    cf2 <- sapply(1:BB, function(i) get_coef_south(est1, subset=i))
 
     cfs[[spp]] <- list(estARU=est1, estSpace=est2, coefARU=cf1, coefSpace=cf2)
 }
 
-save(cfs, file="s:/AB_data_v2020/Results/BIRDS-South.RData")
+save(cfs, file="s:/AB_data_v2020/Results/BIRDS-South-rev2.RData")
+
+
+for (spp in union(names(SPPn), names(SPPs))) {
+    file.copy(paste0("s:/AB_data_v2020/Results/web1/birds/", spp, "/map.png"),
+        paste0("s:/AB_data_v2020/Results/web1/tmp/", spp, ".png"))
+}
+for (spp in names(SPPs)) {
+    file.copy(paste0("s:/AB_data_v2020/Results/web1/birds/", spp, "/soilhf.png"),
+        paste0("s:/AB_data_v2020/Results/web1/soil/", spp, ".png"))
+}
+for (spp in names(SPPn)) {
+    file.copy(paste0("s:/AB_data_v2020/Results/web1/birds/", spp, "/veghf.png"),
+        paste0("s:/AB_data_v2020/Results/web1/veg/", spp, ".png"))
+}
+
 
 ## combine birds and other taxa
 
 library(mefa4)
+source("~/repos/abmianalytics/pipeline/2020/00-functions.R")
 
 ## species names etc
 ROOT <- "d:/abmi/AB_data_v2020/data/analysis/species/birds"
@@ -510,8 +407,8 @@ rm(ee)
 
 #load("s:/AB_data_v2020/Results/COEFS-EA.RData")
 load("s:/AB_data_v2020/Results/COEFS-EAboot.RData")
-load("s:/AB_data_v2020/Results/BIRDS-North.RData")
-load("s:/AB_data_v2020/Results/BIRDS-South.RData")
+load("s:/AB_data_v2020/Results/BIRDS-North-rev1.RData")
+load("s:/AB_data_v2020/Results/BIRDS-South-rev2.RData")
 
 if (FALSE) { # testing CC effects
 spp <- "OSFL"
@@ -530,12 +427,20 @@ for (i in 1:4) {
 }
 }
 
-SPPn <- as.character(TAX$sppid[match(names(cfn), TAX$code)])
-SPPs <- as.character(TAX$sppid[match(names(cfs), TAX$code)])
+blist <- read.csv("~/repos/abmianalytics/pipeline/2020/birds-v2020.csv")
+compare_sets(blist$common, TAX$species)
+TAX$type <- blist$show[match(TAX$species, blist$common)]
+
+#SPPn <- as.character(TAX$sppid[match(names(cfn), TAX$code)])
+#SPPs <- as.character(TAX$sppid[match(names(cfs), TAX$code)])
+SPPn <- names(ALLBIRDSPP$north[match(names(cfn), ALLBIRDSPP$north)])
+SPPs <- names(ALLBIRDSPP$south[match(names(cfs), ALLBIRDSPP$south)])
 rownames(TAX) <- TAX$sppid
 TAX <- TAX[sort(union(SPPn,SPPs)),]
 names(cfs) <- SPPs
 names(cfn) <- SPPn
+
+
 
 ## organizing bird coefs
 

@@ -152,8 +152,8 @@ lt <- list(
         "Native", "Native", "Native", "Native", "Native", "Native", "Native",
         "Native", "Native", "Native", "Native", "Native", "Native", "Native",
         "Native", "Native", "Native", "Native", "RuralUrban", "RuralUrban",
-        "RuralUrban", "RuralUrban", "Energy", "Misc", "Energy", "Misc",
-        "Energy", "Energy", "Energy", "Energy", "Energy", "Transportation",
+        "RuralUrban", "RuralUrban", "Energy", "RuralUrban", "Energy",
+        "Misc", "Energy", "Energy", "Energy", "Energy", "Energy", "Transportation",
         "Transportation", "Transportation", "Transportation", "Transportation",
         "Agriculture", "Agriculture", "Agriculture", "Agriculture", "Agriculture",
         "Misc", "Misc", "Misc", "Misc", "Forestry")), row.names = c("Cy",
@@ -186,7 +186,7 @@ lt <- list(
         "Industrial", "Rural", "Mine", "Mine", "Wellsites", "EnSoftLin",
         "EnSoftLin", "EnSeismic", "EnSeismic", "HardLin", "HardLin",
         "TrSoftLin", "TrSoftLin", "TrSoftLin", "Crop", "RoughP", "RoughP",
-        "TameP", "TameP", "CCDeciduousR", "CCDeciduous1", "CCDeciduous2",
+        "TameP", "Industrial", "CCDeciduousR", "CCDeciduous1", "CCDeciduous2",
         "CCDeciduous3", "CCDeciduous4", "CCMixedwoodR", "CCMixedwood1",
         "CCMixedwood2", "CCMixedwood3", "CCMixedwood4", "CCPineR", "CCPine1",
         "CCPine2", "CCPine3", "CCPine4", "CCWhiteSpruceR", "CCWhiteSpruce1",
@@ -203,8 +203,8 @@ lt <- list(
         "Native", "Native", "Native", "Native", "Native", "Native", "Native",
         "Native", "Native", "Native", "Native", "Native", "Native", "Native",
         "RuralUrban", "RuralUrban", "RuralUrban", "RuralUrban", "Energy",
-        "Misc", "Energy", "Misc", "Energy", "Energy", "Energy", "Energy",
-        "Energy", "Transportation", "Transportation", "Transportation",
+        "RuralUrban", "Energy", "Misc", "Energy", "Energy", "Energy",
+        "Energy", "Energy", "Transportation", "Transportation", "Transportation",
         "Transportation", "Transportation", "Agriculture", "Agriculture",
         "Agriculture", "Agriculture", "Agriculture", "Forestry", "Forestry",
         "Forestry", "Forestry", "Forestry", "Forestry", "Forestry", "Forestry",
@@ -236,9 +236,9 @@ lt <- list(
         "CCPine3", "CCPine4", "CCSpruceR", "CCSpruce1", "CCSpruce2",
         "CCSpruce3", "CCSpruce4", "Bare", "BorrowpitsDugoutsSumps", "Canals",
         "MunicipalWaterSewage", "Reservoirs", "SnowIce"), class = "data.frame"))
-lt$south["OtherDisturbedVegetation", "Sector"] <- "RuralUrban"
-lt$north["OtherDisturbedVegetation", "Sector"] <- "RuralUrban"
-
+#lt$south["OtherDisturbedVegetation", "Sector"] <- "RuralUrban"
+#lt$north["OtherDisturbedVegetation", "Sector"] <- "RuralUrban"
+#lt$north["HighDensityLivestockOperation", "Label"] <- "Industrial"
 
 ## define sectors to be used here
 ## i.e. change to attribution stuff or keep finer level transitions etc
@@ -255,8 +255,15 @@ chSoil$rf2 <- lt$south$Label[match(chSoil$rf, rownames(lt$south))]
 #chSoil$sector2 <- lt$south$Sector[match(chSoil$cr, rownames(lt$south))]
 #with(chSoil, table(sector, sector2)) # sector definition is up to date
 
+chSoil[chSoil$cr=="WindGenerationFacility",]
+rowSums(with(chSoil[chSoil$sector != "Native",], table(cr2, sector_use))>0)
+with(chSoil[chSoil$sector != "Native",], table(cr2, sector_use))
+chSoil[chSoil$cr2=="Mine",c("sector_use","cr2", "cr")]
+chSoil[chSoil$cr2=="Industrial",c("sector_use","cr2", "cr")]
+
 # aggregating the monster matrix
-chSoil$tr2 <- paste0(chSoil$rf2, "->", chSoil$cr2)
+# need to use _sector b/c Industrial and Mine belongs to multiple sectors
+chSoil$tr2 <- paste0(chSoil$rf2, "->", chSoil$cr2, "_", chSoil$sector_use)
 chSoil$tr2[chSoil$rf2 == chSoil$cr2] <- chSoil$rf2[chSoil$rf2 == chSoil$cr2]
 chSoil$tr2[chSoil$cr2=="UNK" | chSoil$rf2=="UNK"] <- "UNK"
 length(unique(chSoil$tr2))/nrow(chSoil) # savings!
@@ -298,8 +305,15 @@ chVeg$rf2 <- lt$north$Label[match(chVeg$rf, rownames(lt$north))]
 #chVeg$sector2 <- lt$north$Sector[match(chVeg$cr, rownames(lt$north))]
 #with(chVeg, table(sector, sector2)) # sector definition is up to date
 
+chVeg[chVeg$cr=="WindGenerationFacility",]
+rowSums(with(chVeg[chVeg$sector != "Native",], table(cr2, sector_use))>0)
+with(chVeg[chVeg$sector != "Native",], table(cr2, sector_use))
+chVeg[chVeg$cr2=="Mine",c("sector_use","cr2", "cr")]
+chVeg[chVeg$cr2=="Industrial",c("sector_use","cr2", "cr")]
+
 # aggregating the monster matrix
-chVeg$tr2 <- paste0(chVeg$rf2, "->", chVeg$cr2)
+# need to use _sector b/c Industrial and Mine belongs to multiple sectors
+chVeg$tr2 <- paste0(chVeg$rf2, "->", chVeg$cr2, "_", chVeg$sector_use)
 chVeg$tr2[chVeg$rf2 == chVeg$cr2] <- chVeg$rf2[chVeg$rf2 == chVeg$cr2]
 chVeg$tr2[chVeg$cr2=="UNK" | chVeg$rf2=="UNK"] <- "UNK"
 length(unique(chVeg$tr2))/nrow(chVeg) # savings!
@@ -361,6 +375,7 @@ range(d)
 ## species specific part begins here
 
 #spp <- "AlderFlycatcher"
+#spp <- "RedtailedHawk"
 #taxon <- "birds"
 
 #spp <- "Actaea.rubra"
@@ -370,13 +385,15 @@ BOOT <- FALSE # do bootstrap?
 SEFF <- TRUE  # non bootstrapped map/SE stuff
 BMAX <- 100
 
-ROOT <- "s:/AB_data_v2020/Results/pred"
+#ROOT <- "s:/AB_data_v2020/Results/pred"
+ROOT <- "s:/AB_data_v2020/Results/pred1"
 ROOT2 <- "s:/AB_data_v2020/Results/boot"
 
 COEFS$mammals <- COEFS2$mammals
 COEFS$habitats <- COEFS2$habitats
 
 TAXA <- names(COEFS)
+#TAXA=TAXA[c(2,4)]
 for (taxon in TAXA) {
 
     if (SEFF && !dir.exists(file.path(ROOT, taxon)))
@@ -496,6 +513,10 @@ for (taxon in TAXA) {
                 ## space-climate coefs
                 bscl <- if (taxon == "birds")
                     cfs[colnames(Xclim_bird), i] else cfs[colnames(Xclim_nonb), i]
+#                if (taxon == "birds") {
+#                    bscl[bscl < -10] <- -10
+#                    bscl[bscl > 10] <- 10
+#                }
                 bscl[is.na(bscl)] <- 0 # this happens for habitat elements
                 bspa <- cfs["pAspen", i]
                 ## additive components for south
@@ -550,6 +571,7 @@ for (taxon in TAXA) {
                 NNrf <- NULL
             }
 
+
             ## combine NS and NN together (weighted avg in overlap zone) for species with Combo (N+S)
             if (type == "C") {
                 # averaging comes here
@@ -586,6 +608,25 @@ for (taxon in TAXA) {
     }
 
 }
+
+
+v <- rowSums(NNcr)
+v <- rowSums(NScr)
+v <- rowSums(Ncr)
+q <- quantile(v, 0.99)
+v[v>q] <- q
+hist(v)
+r <- make_raster(v, kgrid, rt)
+plot(r, col=hcl.colors(25))
+
+i <- sample.int(nrow(kgrid), 10^4)
+plot(rowSums(NScr)[i], rowSums(Ncr)[i], pch=19,
+    col=ifelse(kgrid$NRNAME=="Grassland", "#ff000022", "#22222222")[i])
+abline(0,1,col=2)
+v <- rowSums(NNcr)
+q <- quantile(v, 0.99)
+v[v>q] <- q
+plot(make_raster(v, kgrid, rt), col=hcl.colors(25))
 
 
 ## check correlations for use-avail
@@ -673,8 +714,10 @@ AreaN <- 100 * AreaN/sum(AreaN)
 AreaS <- colSums(groupSums(trVeg[rs,], 2, chVeg$sector))
 AreaS <- 100 * AreaS/sum(AreaS)
 
-ROOT <- "s:/AB_data_v2020/Results/pred"
-ROOT2 <- "s:/AB_data_v2020/Results/web"
+#ROOT <- "s:/AB_data_v2020/Results/pred"
+#ROOT2 <- "s:/AB_data_v2020/Results/web"
+ROOT <- "s:/AB_data_v2020/Results/pred1"
+ROOT2 <- "s:/AB_data_v2020/Results/web1"
 sectors <- c("Agriculture","Forestry","Energy","RuralUrban","Transportation")
 
 DEL_FOR <- FALSE
