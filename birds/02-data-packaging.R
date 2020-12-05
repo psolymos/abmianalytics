@@ -501,6 +501,36 @@ cat("Estimate for", ncol(YY), "species and", B, "runs is", ceiling(unname(ncol(Y
 
 save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
     file="d:/abmi/AB_data_v2020/data/analysis/species/birds/data/ab-birds-south-2020-09-23.RData")
+if (FALSE) {
+## update S models
+library(mefa4)
+load("d:/abmi/AB_data_v2020/data/analysis/species/birds/data/ab-birds-south-2020-09-23.RData")
+
+mods$Hab[[3]] <- . ~ . + soilc2
+mods$Hab[[4]] <- . ~ . + soilc2 + pAspen
+mods$Hab[[5]] <- . ~ . + soilc1
+mods$Hab[[6]] <- . ~ . + soilc1 + pAspen
+
+str(DAT)
+DAT$soilc2 <- as.character(DAT$soilc)
+DAT$soilc1 <- as.character(DAT$soilc)
+DAT$soilc1[DAT$soilc1 %in% c("Loamy", "ClaySub", "SandyLoam",
+    "Other", "ThinBreak", "RapidDrain", "Blowout")] <- "SoilNative"
+DAT$soilc1[DAT$soilc1 %in% c("Industrial", "Mine", "Urban", "Rural")] <- "UrbIndRur"
+DAT$soilc2[DAT$soilc2 %in% c("Loamy", "ClaySub", "SandyLoam")] <- "ClaySubLoamSand"
+DAT$soilc2[DAT$soilc2 %in% c("Other", "ThinBreak", "RapidDrain", "Blowout")] <- "OtherBlowThinRapid"
+DAT$soilc2[DAT$soilc2 %in% c("Industrial", "Mine", "Urban")] <- "UrbInd"
+DAT$soilc1 <- as.factor(DAT$soilc1)
+DAT$soilc1 <- relevel(DAT$soilc1, "SoilNative")
+DAT$soilc2 <- as.factor(DAT$soilc2)
+DAT$soilc2 <- relevel(DAT$soilc2, "ClaySubLoamSand")
+addmargins(table(DAT$soilc, DAT$soilc2))
+addmargins(table(DAT$soilc, DAT$soilc1))
+
+save(DAT, YY, OFF, OFFmean, SSH, BB, mods,
+    file="d:/abmi/AB_data_v2020/data/analysis/species/birds/data/ab-birds-south-2020-12-04.RData")
+
+}
 #'
 #' ## North
 #'
