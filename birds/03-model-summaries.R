@@ -484,3 +484,30 @@ round(data.frame(Dominant=exp(cf1), Composition=exp(cf2)),4)
 plot(exp(cf1), exp(cf2))
 abline(0,1)
 
+## Bird result checking and revision
+
+library(cure4insect)
+load_common_data()
+x <- read.csv("~/Dropbox/Public/birds-lookup.csv")
+x$v2020 <- paste0(ifelse(x$coefnorth=="+", "N", ""), ifelse(x$coefsouth=="+", "S", ""))
+x$v2020[x$v2020=="NS"] <- "N+S"
+table(x$v2020)
+s <- get_species_table("birds")
+s$v2018 <- s$model_region
+levels(s$v2018) <- c("N", "N+S", "S", "")
+s <- s[match(x$id, s$SpeciesID),]
+x$v2018 <- s$v2018
+x$v2018[is.na(x$v2018)] <- ""
+
+v <- read.csv("~/repos/abmispecies/_data/birds.csv")
+v <- v[match(x$id, v$sppid),]
+x$comments <- v$comments
+x$comments[is.na(x$comments)] <- ""
+
+addmargins(with(x, table(v2018, v2020)))
+nc <- nchar(x$comments)
+x$remarks <- substr(x$comments, 1, pmin(nc, 25))
+
+xx <- x[,c("common", "order", "family", "v2018", "v2020", "remarks")]
+xx <- xx[order(xx$order, xx$family, xx$common),]
+write.csv(xx, row.names = FALSE, file="~/Dropbox/Public/birds-lookup-2.csv")
