@@ -371,7 +371,7 @@ for (spp in SPPs) {
 
     BB <- min(B, nrow(est1))
     cf1 <- sapply(1:BB, function(i) get_coef_south(est1, subset=i))
-    cf2 <- sapply(1:BB, function(i) get_coef_south(est1, subset=i))
+    cf2 <- sapply(1:BB, function(i) get_coef_south(est2, subset=i))
 
     cfs[[spp]] <- list(estARU=est1, estSpace=est2, coefARU=cf1, coefSpace=cf2)
 }
@@ -379,17 +379,23 @@ for (spp in SPPs) {
 save(cfs, file="s:/AB_data_v2020/Results/BIRDS-South-rev2.RData")
 
 
-for (spp in union(names(SPPn), names(SPPs))) {
+#for (spp in union(names(SPPn), names(SPPs))) {
+for (spp in union(SPPn, SPPs)) {
     file.copy(paste0("s:/AB_data_v2020/Results/web1/birds/", spp, "/map.png"),
-        paste0("s:/AB_data_v2020/Results/web1/tmp/", spp, ".png"))
+        paste0("s:/AB_data_v2020/Results/web1/tmp/", spp, ".png"),
+        overwrite=TRUE)
 }
-for (spp in names(SPPs)) {
+#for (spp in names(SPPs)) {
+for (spp in SPPs) {
     file.copy(paste0("s:/AB_data_v2020/Results/web1/birds/", spp, "/soilhf.png"),
-        paste0("s:/AB_data_v2020/Results/web1/soil/", spp, ".png"))
+        paste0("s:/AB_data_v2020/Results/web1/soil/", spp, ".png"),
+        overwrite=TRUE)
 }
-for (spp in names(SPPn)) {
+#for (spp in names(SPPs)) {
+for (spp in SPPs) {
     file.copy(paste0("s:/AB_data_v2020/Results/web1/birds/", spp, "/veghf.png"),
-        paste0("s:/AB_data_v2020/Results/web1/veg/", spp, ".png"))
+        paste0("s:/AB_data_v2020/Results/web1/veg/", spp, ".png"),
+        overwrite=TRUE)
 }
 
 
@@ -950,3 +956,91 @@ COEFS2$mammals <- list(north=CFn, south=CFs, species=st, pAspenPA=pA2, WetlandMa
 
 save(COEFS2,
     file="s:/AB_data_v2020/Results/COEFS-ALL2.RData")
+
+## mammal results - latest: Dec 16, 2020
+library(mefa4)
+
+### organizing all the coefs
+
+ROOT <- "s:/AB_data_v2020/Results/mammal-coefs-2020-12-15"
+x0 <- read.csv(file.path(ROOT,
+    "Mammal coefficients South June 2020 Best model pApen coefficients.csv"))
+x2 <- new.env()
+load(file.path(ROOT,
+    "Mammal coefficients North June 2020 Best model OFFICIAL coefficients.Rdata"),
+    envir=x2)
+x3 <- new.env()
+load(file.path(ROOT,
+    "Mammal coefficients South Oct 2020 Best model OFFICIAL coefficients.Rdata"),
+    envir=x3)
+names(x0)
+x1 <- as.matrix(x0[,-1])
+rownames(x1) <- x0$Sp
+x1 <- x1[rownames(x3$Coef.official),]
+
+names(x2)
+identical(rownames(x2$Coef.official), rownames(x2$Res.coef.official))
+identical(dimnames(x2$Coef.official), dimnames(x2$Coef.pa.all))
+identical(dimnames(x2$Coef.official), dimnames(x2$Coef.official.lci))
+identical(dimnames(x2$Coef.official), dimnames(x2$Coef.official.uci))
+
+names(x3)
+identical(rownames(x3$Coef.official), rownames(x1))
+identical(rownames(x3$Coef.official), rownames(x3$Res.coef.official))
+identical(dimnames(x3$Coef.official), dimnames(x3$Coef.pa.all))
+identical(dimnames(x3$Coef.official), dimnames(x3$Coef.official.lci))
+identical(dimnames(x3$Coef.official), dimnames(x3$Coef.official.uci))
+
+CF <- list(
+    north=list(
+        total=x2$Coef.official,
+        pa=x2$Coef.pa.all,
+        agp=x2$Coef.official/x2$Coef.pa.all,
+        lwr=x2$Coef.official.lci,
+        upr=x2$Coef.official.uci,
+        clim=x2$Res.coef.official
+    ),
+    south=list(
+        total=x3$Coef.official,
+        pa=x3$Coef.pa.all,
+        agp=x3$Coef.official/x3$Coef.pa.all,
+        lwr=x3$Coef.official.lci,
+        upr=x3$Coef.official.uci,
+        clim=x3$Res.coef.official,
+        asp=x1
+    )
+)
+for (i in 1:length(CF$south))
+    colnames(CF$south[[i]])[colnames(CF$south[[i]]) == "Well"] <- "Wellsites"
+cn <- colnames(CF$north$total)
+cn[cn == "Well"] <- "Wellsites"
+cn <- gsub("Decid", "Deciduous", cn)
+cn <- gsub("Spruce", "WhiteSpruce", cn)
+cn <- gsub("BSpr", "TreedBog", cn)
+cn <- gsub("Larch", "TreedFen", cn)
+for (i in c("total", "pa", "agp", "lwr", "upr")) {
+    colnames(CF$north[[i]]) <- cn
+    CF$north[[i]] <- CF$north[[i]][,!grepl("9", cn)]
+    CF$north[[i]] <- cbind(CF$north[[i]], Water=0, ShrubbyFen=CF$north[[i]][,"ShrubbyBog"])
+}
+
+
+
+## mapping soil types to soilhf categories
+s <- colnames(CF$south$total)
+compare_sets(lt$south$Label, s)
+setdiff(lt$south$Label, s)
+setdiff(s, lt$south$Label)
+
+## mapping veg types to veghf categories
+s <- colnames(CF$north$total)
+compare_sets(lt$north$Label, s)
+setdiff(lt$north$Label, s)
+setdiff(s, lt$north$Label)
+
+COEFS3 <- CF
+
+save(COEFS3,
+    file="s:/AB_data_v2020/Results/COEFS3-mammals.RData")
+
+

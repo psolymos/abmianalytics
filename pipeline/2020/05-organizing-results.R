@@ -47,8 +47,8 @@ toJSON(head(XT$lichens), pretty=TRUE)
 # append linear image to coef
 if (FALSE) {
 library(magick)
-#RT <- "s:"
-RT <- "d:/abmi"
+RT <- "s:"
+#RT <- "d:/abmi"
 for (taxon in names(XT)) {
     for (spp in rownames(XT[[taxon]])) {
         gc(full=TRUE)

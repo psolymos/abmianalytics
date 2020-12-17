@@ -90,3 +90,147 @@ d <- (xvr[,i] - xvc[,i]) / 10^6
 range(d)
 
 load("s:/AB_data_v2018/data/analysis/grid/veg-hf_transitions_v61hf2016v3WildFireUpTo2016.Rdata")
+
+
+## checking overlap region issues with birds
+
+# run parts from 03-maps-and-sector.R
+taxon <- "birds"
+spp <- "AmericanCrow"
+
+
+SPPn <- if (taxon!="birds")
+    dimnames(COEFS[[taxon]]$north)[[1]] else dimnames(COEFS[[taxon]]$north$joint)[[1]]
+SPPs <- if (taxon!="birds")
+    dimnames(COEFS[[taxon]]$south)[[1]] else dimnames(COEFS[[taxon]]$south$joint)[[1]]
+SPP <- sort(union(SPPn, SPPs))
+
+type <- "C" # combo species (N+S)
+M <- list(N=spp %in% SPPn, S=spp %in% SPPs)
+if (M$N & !M$S)
+    type <- "N"
+if (!M$N & M$S)
+    type <- "S"
+cfn <- if (type == "S")
+    NULL else COEFS[[taxon]]$north$joint[spp,,]
+cfs <- if (type == "N")
+    NULL else COEFS[[taxon]]$south$joint[spp,,]
+XclimS <- Xclim_bird_S
+XclimN <- Xclim_bird_N
+FUN <- function (eta)
+    pmin(pmax(exp(eta), .Machine$double.eps), .Machine$double.xmax)
+
+
+i <- 1
+if (type != "N") {
+                gc()
+                ## south calculations for the i'th run
+                #compare_sets(rownames(cfs), chSoil$cr2)
+                bscr <- cfs[chScr$cr2, i] # current land cover
+                bsrf <- cfs[chSrf$rf2, i] # reference land cover
+                ## space-climate coefs
+                bscl <- if (taxon == "birds")
+                    cfs[colnames(Xclim_bird), i] else cfs[colnames(Xclim_nonb), i]
+#                if (taxon == "birds") {
+#                    bscl[bscl < -10] <- -10
+#                    bscl[bscl > 10] <- 10
+#                }
+                bscl[is.na(bscl)] <- 0 # this happens for habitat elements
+                bspa <- cfs["pAspen", i]
+                ## additive components for south
+                if (taxon=="mammals") {
+                    ## space/clim includes presence-absence piece
+                    #Total.Abundance.approx<- exp(log(TA.vegHF) + SC.pOcc + pAspen.pa + pAspen.agp)
+                    pApa <- COEFS[[taxon]]$pAspenPA[spp]
+                    muscl <- drop(cbind(XclimS, pA) %*% c(bscl, pApa))
+                    if (spp == "Pronghorn")
+                        muscl <- (muscl - mean(muscl))/1000
+                } else {
+                    muscl <- drop(XclimS %*% bscl)
+                }
+                muspa <- pA * bspa
+
+                muscr <- matrix(muscl + muspa, nrow=nrow(Pscr), ncol=ncol(Pscr))
+                muscr <- t(t(muscr) + bscr)
+                NScr <- as.matrix(groupSums(Pscr * FUN(muscr), 2, chScr$sector_use))
+                NScr <- cbind(NScr, Forestry=0)
+
+                musrf <- matrix(muscl + muspa, nrow=nrow(Psrf), ncol=ncol(Psrf))
+                musrf <- t(t(musrf) + bsrf)
+                NSrf <- as.matrix(groupSums(Psrf * FUN(musrf), 2, chSrf$sector_use))
+                NSrf <- cbind(NSrf, Forestry=0)
+            } else {
+                NScr <- NULL
+                NSrf <- NULL
+            }
+            if (type != "S") {
+                gc()
+                ## north calculations for the i'th run
+                #compare_sets(rownames(cfn), chVeg$cr2)
+                tmpn <- c(cfn[,i], Bare=-10^4, SnowIce= -10^4)
+                bncr <- tmpn[chVcr$cr2] # current land cover
+                bnrf <- tmpn[chVrf$rf2] # reference land cover
+                ## space-climate coefs
+                bncl <- if (taxon == "birds")
+                    cfn[colnames(Xclim_bird), i] else cfn[colnames(Xclim_nonb), i]
+                bncl[is.na(bncl)] <- 0 # this happens for habitat elements
+                ## additive components for north
+                muncl <- drop(XclimN %*% bncl)
+
+                muncr <- matrix(muncl, nrow=nrow(Pncr), ncol=ncol(Pncr))
+                muncr <- t(t(muncr) + bncr)
+                NNcr <- as.matrix(groupSums(Pncr * FUN(muncr), 2, chVcr$sector_use))
+
+                munrf <- matrix(muncl, nrow=nrow(Pnrf), ncol=ncol(Pnrf))
+                munrf <- t(t(munrf) + bnrf)
+                NNrf <- as.matrix(groupSums(Pnrf * FUN(munrf), 2, chVrf$sector_use))
+            } else {
+                NNcr <- NULL
+                NNrf <- NULL
+}
+if (type == "C") {
+                # averaging comes here
+                NNcr <- NNcr[match(rownames(kgrid), rownames(NNcr)),]
+                NNrf <- NNrf[match(rownames(kgrid), rownames(NNrf)),]
+                NNcr[is.na(NNcr)] <- 0
+                NNrf[is.na(NNrf)] <- 0
+                rownames(NNcr) <- rownames(NNrf) <- rownames(kgrid)
+
+                NScr <- NScr[match(rownames(kgrid), rownames(NScr)),]
+                NSrf <- NSrf[match(rownames(kgrid), rownames(NSrf)),]
+                NScr[is.na(NScr)] <- 0
+                NSrf[is.na(NSrf)] <- 0
+                rownames(NScr) <- rownames(NSrf) <- rownames(kgrid)
+
+                Ncr <- kgrid$wN * NNcr + (1-kgrid$wN) * NScr
+                Nrf <- kgrid$wN * NNrf + (1-kgrid$wN) * NSrf
+}
+
+library(raster)
+rt <- raster(system.file("extdata/AB_1km_mask.tif", package="cure4insect"))
+make_raster <- function(value, rc, rt) {
+    value <- as.numeric(value)
+    r <- as.matrix(Xtab(value ~ Row + Col, rc))
+    r[is.na(as.matrix(rt))] <- NA
+    raster(x=r, template=rt)
+}
+f <- function(x) {
+    v <- rowSums(x)
+    q <- quantile(v, 0.99)
+    v[v>q] <- q
+    hist(v)
+    make_raster(v, kgrid, rt)
+}
+l <- stack(list(south=f(NScr), north=f(NNcr), combo=f(Ncr)))
+
+par(mar=c(2,2,3,10))
+plot(l, col=hcl.colors(100)[30:100])
+
+i <- sample.int(nrow(kgrid), 10^4)
+plot(rowSums(NScr)[i], rowSums(Ncr)[i], pch=19,
+    col=ifelse(kgrid$NRNAME=="Grassland", "#ff000022", "#22222222")[i])
+abline(0,1,col=2)
+v <- rowSums(NNcr)
+q <- quantile(v, 0.99)
+v[v>q] <- q
+plot(make_raster(v, kgrid, rt), col=hcl.colors(25))

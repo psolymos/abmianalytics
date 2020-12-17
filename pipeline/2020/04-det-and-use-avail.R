@@ -131,7 +131,7 @@ for (spp in SPP2) {
     xy1 <- spTransform(xy1, proj4string(rt))
     sam1 <- rasterize(xy1, rt10, field=1, fun='last')
 
-    DIR <- file.path("s:/AB_data_v2020/Results/web", taxon, spp)
+    DIR <- file.path("s:/AB_data_v2020/Results/web1", taxon, spp)
     if (!dir.exists(DIR))
         dir.create(DIR)
 
@@ -349,7 +349,7 @@ for (taxon in names(UA)) {
         cat(taxon, spp, "north\n")
         flush.console()
 
-        DIR <- file.path("s:/AB_data_v2020/Results/web", taxon, spp)
+        DIR <- file.path("s:/AB_data_v2020/Results/web1", taxon, spp)
         if (!dir.exists(DIR))
             dir.create(DIR)
 
@@ -374,7 +374,7 @@ for (taxon in names(UA)) {
         cat(taxon, spp, "south\n")
         flush.console()
 
-        DIR <- file.path("s:/AB_data_v2020/Results/web", taxon, spp)
+        DIR <- file.path("s:/AB_data_v2020/Results/web1", taxon, spp)
         if (!dir.exists(DIR))
             dir.create(DIR)
 
