@@ -117,7 +117,7 @@ dd18 <- make_vegHF_wide_v6(ds,
     col.HABIT="Combined_ChgByCWCS",
     col.SOIL="Soil_Type_1",
     HF_fine=TRUE, wide=TRUE)
-x <- nonDuplicated(ds, GRID_LABEL, TRUE)[rownames(dd18)[[1]],]
+x <- nonDuplicated(ds, GRID_LABEL, TRUE)[rownames(dd18[[1]]),]
 dd18 <- fill_in_0ages_v6(dd18, x$NSRNAME, ages_list)
 ds$Origin_Year <- ds$FEATURE_TY <- NULL
 
