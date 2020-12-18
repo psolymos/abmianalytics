@@ -420,9 +420,39 @@ ROOT2 <- "s:/AB_data_v2020/Results/boot"
 COEFS$mammals <- COEFS2$mammals
 COEFS$habitats <- COEFS2$habitats
 
+library(raster)
+rt <- raster(system.file("extdata/AB_1km_mask.tif", package="cure4insect"))
+make_raster <- function(value, rc, rt) {
+    value <- as.numeric(value)
+    r <- as.matrix(Xtab(value ~ Row + Col, rc))
+    r[is.na(as.matrix(rt))] <- NA
+    raster(x=r, template=rt)
+}
+f <- function(x) {
+    if (is.null(x)) {
+        v <- rep(0, nrow(kgrid))
+    } else {
+        v <- if (is.null(dim(x)))
+            x else rowSums(x)
+        q <- quantile(v, 0.99)
+        v[v>q] <- q
+    }
+    make_raster(v, kgrid, rt)
+}
+# this helps quickly plot stuff on a map
+p <- function(vcl, ...) {
+    vcl <- if (is.null(dim(vcl))) vcl else rowSums(vcl)
+    vcl <- vcl[match(rownames(kgrid),names(vcl))]
+    print(summary(vcl))
+    vcl[is.na(vcl)] <- -999
+    vr <- f(vcl)
+    values(vr)[values(vr) == -999] <- NA
+    plot(vr, col=hcl.colors(100, "plasma"), ...)
+    invisible(vr)
+}
+
 TAXA <- names(COEFS)
-#TAXA="birds"
-#taxon="mammals"
+#TAXA="mammals"
 #spp="Moose"
 for (taxon in TAXA) {
 
@@ -506,6 +536,11 @@ for (taxon in TAXA) {
             XclimS <- Xclim_mamm_S[,names(cfs_cl)]
             XclimN <- Xclim_mamm_N[,names(cfn_cl)]
             cfs_asp <- if (type == "N") NULL else COEFS3$south$asp[spp,]
+
+#            round(data.frame(tot=cfn_tot, pa=cfn_pa, agp=cfn_agp), 3)
+#            round(data.frame(tot_nt=cfs_tot, # non treed
+#                tot_tr=plogis(qlogis(cfs_pa)+cfs_asp[1])*cfs_agp), 3) # treed
+
 
         }
         if (taxon == "habitats")
@@ -601,42 +636,50 @@ for (taxon in TAXA) {
                         bscra <- tmps[chScr$cr2] # current land cover
                         bsrfa <- tmps[chSrf$rf2] # reference land cover
 
-                        mpacr <- matrix(bscra, nrow=nrow(Pscr), ncol=ncol(Pscr), byrow=TRUE) + muspaPA
-                        magpcr <- matrix(bscrp, nrow=nrow(Pscr), ncol=ncol(Pscr), byrow=TRUE) + muspaAGP
+                        mpacr <- matrix(bscrp, nrow=nrow(Pscr), ncol=ncol(Pscr), byrow=TRUE) + muspaPA
+                        magpcr <- matrix(bscra, nrow=nrow(Pscr), ncol=ncol(Pscr), byrow=TRUE) + muspaAGP
                         muscr <- matrix(muscl, nrow=nrow(Pscr), ncol=ncol(Pscr))
                         muscr <- exp(log(plogis(mpacr) * exp(magpcr)) + muscr)
                         NScr <- as.matrix(groupSums(Pscr * muscr, 2, chScr$sector_use))
 
-                        mparf <- matrix(bsrfa, nrow=nrow(Psrf), ncol=ncol(Psrf), byrow=TRUE) + muspaPA
-                        magprf <- matrix(bsrfp, nrow=nrow(Psrf), ncol=ncol(Psrf), byrow=TRUE) + muspaAGP
+                        mparf <- matrix(bsrfp, nrow=nrow(Psrf), ncol=ncol(Psrf), byrow=TRUE) + muspaPA
+                        magprf <- matrix(bsrfa, nrow=nrow(Psrf), ncol=ncol(Psrf), byrow=TRUE) + muspaAGP
                         musrf <- matrix(muscl, nrow=nrow(Psrf), ncol=ncol(Psrf))
                         musrf <- exp(log(plogis(mparf) * exp(magprf)) + musrf)
-                        NSrf <- as.matrix(groupSums(Psrf * exp(musrf), 2, chSrf$sector_use))
+                        NSrf <- as.matrix(groupSums(Psrf * musrf, 2, chSrf$sector_use))
                     } else {
                         # pa
-                        tmps <- c(cfs_pa, SnowIce=0)
-                        tmps <- qlogis(tmps)
-                        tmps[is.na(tmps)] <- -10^4
-                        bscrp <- tmps[chScr$cr2] # current land cover
-                        bsrfp <- tmps[chSrf$rf2] # reference land cover
+                        tmpsp <- c(cfs_pa, SnowIce=0)
+                        tmpsp <- qlogis(tmpsp)
+                        tmpsp[is.na(tmpsp)] <- -10^4
+                        bscrp <- tmpsp[chScr$cr2] # current land cover
+                        bsrfp <- tmpsp[chSrf$rf2] # reference land cover
                         # agp
-                        tmps <- c(cfs_agp, SnowIce=0)
-                        tmps <- log(tmps)
-                        tmps[is.na(tmps)] <- -10^4
-                        bscra <- tmps[chScr$cr2] # current land cover
-                        bsrfa <- tmps[chSrf$rf2] # reference land cover
+                        tmpsa <- c(cfs_agp, SnowIce=0)
+                        tmpsa <- log(tmpsa)
+                        tmpsa[is.na(tmpsa)] <- -10^4
+                        bscra <- tmpsa[chScr$cr2] # current land cover
+                        bsrfa <- tmpsa[chSrf$rf2] # reference land cover
 
-                        mpacr <- matrix(bscra, nrow=nrow(Pscr), ncol=ncol(Pscr), byrow=TRUE) + muspaPA
-                        magpcr <- matrix(bscrp, nrow=nrow(Pscr), ncol=ncol(Pscr), byrow=TRUE) + muspaAGP
+                        mpacr <- matrix(bscrp, nrow=nrow(Pscr), ncol=ncol(Pscr), byrow=TRUE) + muspaPA
+                        magpcr <- matrix(bscra, nrow=nrow(Pscr), ncol=ncol(Pscr), byrow=TRUE) + muspaAGP
                         muscr <- matrix(muscl, nrow=nrow(Pscr), ncol=ncol(Pscr))
                         muscr <- plogis(mpacr + muscr) * exp(magpcr)
                         NScr <- as.matrix(groupSums(Pscr * muscr, 2, chScr$sector_use))
 
-                        mparf <- matrix(bsrfa, nrow=nrow(Psrf), ncol=ncol(Psrf), byrow=TRUE) + muspaPA
-                        magprf <- matrix(bsrfp, nrow=nrow(Psrf), ncol=ncol(Psrf), byrow=TRUE) + muspaAGP
+                        mparf <- matrix(bsrfp, nrow=nrow(Psrf), ncol=ncol(Psrf), byrow=TRUE) + muspaPA
+                        magprf <- matrix(bsrfa, nrow=nrow(Psrf), ncol=ncol(Psrf), byrow=TRUE) + muspaAGP
                         musrf <- matrix(muscl, nrow=nrow(Psrf), ncol=ncol(Psrf))
                         musrf <- plogis(mparf + musrf) * exp(magprf)
                         NSrf <- as.matrix(groupSums(Psrf * exp(musrf), 2, chSrf$sector_use))
+
+#                        p(Pscr * plogis(mpacr))
+#                        p(Pscr * exp(magpcr))
+#                        p(plogis(mpacr + muscr))
+#                        p(Psrf * plogis(mparf))
+#                        p(Psrf * exp(magprf))
+
+
                     }
                     NScr <- cbind(NScr, Forestry=0)
                     NSrf <- cbind(NSrf, Forestry=0)
@@ -996,6 +1039,7 @@ SE <- list()
 TAXA <- names(COEFS)
 doSEFF <- TRUE
 doMAPS <- TRUE
+#TAXA="mammals"
 for (taxon in TAXA) {
 
     if (!dir.exists(file.path(ROOT, taxon)))
@@ -1096,8 +1140,39 @@ for (taxon in TAXA) {
         }
 
         if (doMAPS) {
+            if (taxon=="mammals") {
+                u <- read.csv(paste0(
+                    "s:/AB_data_v2020/Results/Camera mammal models South revised Nov 2020/Combine regions/Km2 summaries Oct 2020/",
+                    spp, ".csv"))
+                NDcr <- u$Curr[match(rownames(kgrid), u$LinkID)]
+                NDrf <- u$Ref[match(rownames(kgrid), u$LinkID)]
+                Ncr <- Ncr[match(u$LinkID, rownames(Ncr)),]
+                Nrf <- Nrf[match(u$LinkID, rownames(Nrf)),]
+
+
+            }
+
             Dcr <- rowSums(Ncr)[match(rownames(kgrid), rownames(Ncr))]
             Drf <- rowSums(Nrf)[match(rownames(kgrid), rownames(Nrf))]
+
+            if (FALSE) {
+                summary(NDcr)
+                summary(Dcr)
+                summary(NDrf)
+                summary(Drf)
+                cor(cbind(NDcr,Dcr,NDrf,Drf), use="c")
+                plot(NDcr,Dcr)
+                plot(NDrf,Drf)
+
+                op <- par(mfrow=c(2,2), mar=c(1,4,1,4))
+                plot(make_raster(Dcr, kgrid, rt),col=hcl.colors(50))
+                plot(make_raster(Drf, kgrid, rt),col=hcl.colors(50))
+                plot(make_raster(NDcr, kgrid, rt),col=hcl.colors(50))
+                plot(make_raster(NDrf, kgrid, rt),col=hcl.colors(50))
+                par(op)
+            }
+
+
             NA_VAL <- 0
             if (spp == "pH")
                 NA_VAL <- 7
@@ -1127,6 +1202,7 @@ for (taxon in TAXA) {
             Rcr <- make_raster(cr, kgrid, rt)
             Rrf <- make_raster(rf, kgrid, rt)
             Rdf <- make_raster(df-100, kgrid, rt)
+
 
             if (TYPE == "S")
                 Msk <- Rmasks
