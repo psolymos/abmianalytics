@@ -441,6 +441,8 @@ f <- function(x) {
 }
 # this helps quickly plot stuff on a map
 p <- function(vcl, ...) {
+    if (is.null(vcl))
+        return(NULL)
     vcl <- if (is.null(dim(vcl))) vcl else rowSums(vcl)
     vcl <- vcl[match(rownames(kgrid),names(vcl))]
     print(summary(vcl))
@@ -663,21 +665,27 @@ for (taxon in TAXA) {
 
                         mpacr <- matrix(bscrp, nrow=nrow(Pscr), ncol=ncol(Pscr), byrow=TRUE) + muspaPA
                         magpcr <- matrix(bscra, nrow=nrow(Pscr), ncol=ncol(Pscr), byrow=TRUE) + muspaAGP
-                        muscr <- matrix(muscl, nrow=nrow(Pscr), ncol=ncol(Pscr))
-                        muscr <- plogis(mpacr + muscr) * exp(magpcr)
+                        #muscr0 <- matrix(muscl, nrow=nrow(Pscr), ncol=ncol(Pscr))
+                        muscr <- plogis(mpacr + muscl) * exp(magpcr)
                         NScr <- as.matrix(groupSums(Pscr * muscr, 2, chScr$sector_use))
 
                         mparf <- matrix(bsrfp, nrow=nrow(Psrf), ncol=ncol(Psrf), byrow=TRUE) + muspaPA
                         magprf <- matrix(bsrfa, nrow=nrow(Psrf), ncol=ncol(Psrf), byrow=TRUE) + muspaAGP
-                        musrf <- matrix(muscl, nrow=nrow(Psrf), ncol=ncol(Psrf))
-                        musrf <- plogis(mparf + musrf) * exp(magprf)
-                        NSrf <- as.matrix(groupSums(Psrf * exp(musrf), 2, chSrf$sector_use))
+                        #musrf0 <- matrix(muscl, nrow=nrow(Psrf), ncol=ncol(Psrf))
+                        musrf <- plogis(mparf + muscl) * exp(magprf)
+                        NSrf <- as.matrix(groupSums(Psrf * musrf, 2, chSrf$sector_use))
 
+#                        rownames(mpacr) <- rownames(mparf) <-
+#                            rownames(magpcr) <- rownames(magprf) <- rownames(XclimS)
+#                        p(muscl)
 #                        p(Pscr * plogis(mpacr))
 #                        p(Pscr * exp(magpcr))
-#                        p(plogis(mpacr + muscr))
+#                        p(plogis(mpacr + muscl))
 #                        p(Psrf * plogis(mparf))
 #                        p(Psrf * exp(magprf))
+#                        p(plogis(mparf + muscl))
+#                        p(NScr)
+#                        p(NSrf)
 
 
                     }
@@ -1146,8 +1154,10 @@ for (taxon in TAXA) {
                     spp, ".csv"))
                 NDcr <- u$Curr[match(rownames(kgrid), u$LinkID)]
                 NDrf <- u$Ref[match(rownames(kgrid), u$LinkID)]
-                Ncr <- Ncr[match(u$LinkID, rownames(Ncr)),]
-                Nrf <- Nrf[match(u$LinkID, rownames(Nrf)),]
+                names(NDcr) <- names(NDrf) <- rownames(kgrid)
+#                Ncr <- Ncr[match(u$LinkID, rownames(Ncr)),]
+#                Nrf <- Nrf[match(u$LinkID, rownames(Nrf)),]
+
 
 
             }
@@ -1161,6 +1171,9 @@ for (taxon in TAXA) {
                 summary(NDrf)
                 summary(Drf)
                 cor(cbind(NDcr,Dcr,NDrf,Drf), use="c")
+                library(ggplot2)
+                ggplot(data.frame(NDcr,Dcr,NDrf,Drf), aes(x=Dcr, y=NDcr)) + geom_bin2d()
+                ggplot(data.frame(NDcr,Dcr,NDrf,Drf), aes(x=Drf, y=NDrf)) + geom_bin2d()
                 plot(NDcr,Dcr)
                 plot(NDrf,Drf)
 
