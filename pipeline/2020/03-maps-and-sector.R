@@ -273,6 +273,15 @@ lt <- list(
 chVeg$sector_use <- chVeg$sector
 chSoil$sector_use <- chSoil$sector
 
+## fine sector attribution
+if (FALSE) {
+    tmp1 <- read.csv("~/repos/abmianalytics/lookup/lookup-veg-hf-age-v2020.csv")
+    tmp2 <- read.csv("~/repos/abmianalytics/lookup/lookup-soil-hf-v2020.csv")
+    chVeg$sector_fine <- tmp1$SectorFine[match(chVeg$cr, tmp1$ID)]
+    chSoil$sector_fine <- tmp2$SectorFine[match(chSoil$cr, tmp2$ID)]
+    chVeg$sector_use <- chVeg$sector_fine
+    chSoil$sector_use <- chSoil$sector_fine
+}
 
 ## process south monster matrix and find some efficiencies
 
@@ -415,7 +424,9 @@ BMAX <- 100
 
 ROOT <- "s:/AB_data_v2020/Results/pred"
 #ROOT <- "s:/AB_data_v2020/Results/pred1"
+#ROOT <- "s:/AB_data_v2020/Results/pred-fine" # fine sectors
 ROOT2 <- "s:/AB_data_v2020/Results/boot"
+
 
 COEFS$mammals <- COEFS2$mammals
 COEFS$habitats <- COEFS2$habitats
