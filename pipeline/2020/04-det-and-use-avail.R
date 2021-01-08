@@ -27,7 +27,7 @@ f <- paste0(
     c("Lichen", "Mites", "Moss", "VPlants"),
     "_Site_Compiled species data.RData")
 names(f) <- c("lichens", "mites", "mosses", "vplants")
-
+# no det maps for nnplants
 
 #taxon <- "lichens"
 for (taxon in names(f)) {
@@ -118,11 +118,13 @@ taxon <- "birds"
 SPPn <- dimnames(COEFS[[taxon]]$north$joint)[[1]]
 SPPs <- dimnames(COEFS[[taxon]]$south$joint)[[1]]
 SPP <- sort(union(SPPn, SPPs))
-
+SPPall <- rownames(COEFS$birds$species)
 tax <- ee$tax
 
 colnames(yyy) <- tax$sppid[match(colnames(yyy), tax$code)]
 SPP2 <- colnames(yyy)
+compare_sets(SPPall, SPP2)
+SPP2 <- SPPall
 
 for (spp in SPP2) {
     cat(taxon, spp, "\n");flush.console()
@@ -131,7 +133,7 @@ for (spp in SPP2) {
     xy1 <- spTransform(xy1, proj4string(rt))
     sam1 <- rasterize(xy1, rt10, field=1, fun='last')
 
-    DIR <- file.path("s:/AB_data_v2020/Results/web1", taxon, spp)
+    DIR <- file.path("s:/AB_data_v2020/Results/web", taxon, spp)
     if (!dir.exists(DIR))
         dir.create(DIR)
 
@@ -181,6 +183,15 @@ tax <- ee$tax
 colnames(Ys) <- tax$sppid[match(colnames(Ys), tax$code)]
 colnames(Yn) <- tax$sppid[match(colnames(Yn), tax$code)]
 
+spt <- COEFS$birds$species
+with(spt, table(ModelNorth, rownames(spt) %in% colnames(Yn)))
+with(spt, table(ModelSouth, rownames(spt) %in% colnames(Ys)))
+SPPsw <- rownames(spt)[rownames(spt) %in% colnames(Ys) &
+        !spt$ModelSouth]
+SPPnw <- rownames(spt)[rownames(spt) %in% colnames(Yn) &
+        !spt$ModelNorth]
+Ys <- Ys[,SPPsw]
+Yn <- Yn[,SPPnw]
 
 compare_sets(ls$ID, colnames(As))
 compare_sets(lv$ID, colnames(An))
@@ -254,6 +265,12 @@ for (taxa in names(Taxa)) {
     pnx[is.na(pnx)] <- 0
     psx[is.na(psx)] <- 0
 
+    spt <- COEFS[[taxa]]$species
+    SPPnw <- rownames(spt)[spt$UseavailNorth]
+    SPPsw <- rownames(spt)[spt$UseavailSouth]
+    yn <- yn[,SPPnw]
+    ys <- ys[,SPPsw]
+
     N <- t(pbapply::pbapply(as.matrix(yn), 2, function(z) wrsi(z, x=pnx)$rWRSI))
     colnames(N) <- rownames(wrsi(yn[,1], x=pnx))
     S <- t(pbapply::pbapply(as.matrix(ys), 2, function(z) wrsi(z, x=psx)$rWRSI))
@@ -318,6 +335,14 @@ colnames(xs) <- names(CS)
 xs[,"UrbInd"] <-  0.8 * UseavailSouth[,"RurUrbInd"] + 0.2 * UseavailSouth[,"Well"]
 xs[,"ThinBreak"] <-  0
 
+load("s:/AB_data_v2020/Results/COEFS-ALL2.RData")
+
+spt <- COEFS2$mammals$species
+SPPnw <- rownames(spt)[spt$UseavailNorth & !spt$ModelNorth]
+SPPsw <- rownames(spt)[spt$UseavailSouth & !spt$ModelSouth]
+xn <- xn[SPPnw,]
+xs <- xs[SPPsw,]
+
 
 UA$mammals <- list(north=xn, south=xs)
 
@@ -349,7 +374,7 @@ for (taxon in names(UA)) {
         cat(taxon, spp, "north\n")
         flush.console()
 
-        DIR <- file.path("s:/AB_data_v2020/Results/web1", taxon, spp)
+        DIR <- file.path("s:/AB_data_v2020/Results/web", taxon, spp)
         if (!dir.exists(DIR))
             dir.create(DIR)
 
@@ -374,7 +399,7 @@ for (taxon in names(UA)) {
         cat(taxon, spp, "south\n")
         flush.console()
 
-        DIR <- file.path("s:/AB_data_v2020/Results/web1", taxon, spp)
+        DIR <- file.path("s:/AB_data_v2020/Results/web", taxon, spp)
         if (!dir.exists(DIR))
             dir.create(DIR)
 

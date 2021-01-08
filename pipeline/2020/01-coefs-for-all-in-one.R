@@ -1,5 +1,103 @@
-## organizing results for mites, lichens, mosses, vplants
+## species lookup table to begin with
+## include model performance matrics AUC R2
 
+ROOT <- "s:/AB_data_v2020/Results/Results from Ermias"
+
+
+
+sp <- list()
+sp$lichens <- read.csv(file.path(ROOT, "Species lookup for Lichens 2020 - with decisions.csv"))
+sp$mites <- read.csv(file.path(ROOT, "Species lookup for Mites 2020 - with decisions.csv"))
+sp$mosses <- read.csv(file.path(ROOT, "Species lookup for Moss 2020 - with decisions.csv"))
+sp$vplants <- read.csv(file.path(ROOT, "Species lookup for Plants 2020 - with decision.csv"))
+
+ms <- list()
+mn <- list()
+f <- function(x) {
+    e <- new.env()
+    load(x, envir=e)
+    e$ModValid.df
+}
+ms$lichens <- f(file.path(ROOT, "Model performance tables","Lichen_South_Model performance table.RData"))
+mn$lichens <- f(file.path(ROOT, "Model performance tables","Lichen_North_Model performance table.RData"))
+ms$mites <- f(file.path(ROOT, "Model performance tables","Mites_South_Model performance table.RData"))
+mn$mites <- f(file.path(ROOT, "Model performance tables","Mites_North_Model performance table.RData"))
+ms$mosses <- f(file.path(ROOT, "Model performance tables","Moss_South_Model performance table.RData"))
+mn$mosses <- f(file.path(ROOT, "Model performance tables","Moss_North_Model performance table.RData"))
+ms$vplants <- f(file.path(ROOT, "Model performance tables","VPlants_South_Model performance table.RData"))
+mn$vplants <- f(file.path(ROOT, "Model performance tables","VPlants_North_Model performance table.RData"))
+
+f <- function(x) {
+    e <- new.env()
+    load(x, envir=e)
+    e$Lookup
+}
+st <- list()
+st$lichens <- f("s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for Lichens 2020.RData")
+st$mites <- f("s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for Mites 2020.RData")
+st$mosses <- f("s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for Moss 2020.RData")
+st$vplants <- f("s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for VPlants 2020.RData")
+
+
+taxon <- "mites"
+SPTAB <- list()
+for (taxon in names(sp)) {
+
+    St <- st[[taxon]]
+    Sp <- sp[[taxon]]
+    rownames(Sp) <- Sp$Analysis_Name
+    Mn <- mn[[taxon]]
+    Ms <- ms[[taxon]]
+    Sp$ExcludeN <- grepl("NO", as.character(Sp$North_Model_use))
+    Sp$ExcludeS <- grepl("NO", as.character(Sp$South_Model_use))
+
+    SPP <- as.character(Sp$Analysis_Name)
+    Sp <- Sp[SPP,]
+    St <- St[SPP,]
+    Mn <- Mn[SPP,]
+    Ms <- Ms[SPP,]
+
+    xx <- data.frame(
+        SpeciesID=SPP,
+        ScientificName=Sp$Scientific_Name_Analysis,
+        TSNID=Sp$TSNID,
+        CommonName=NA,
+        ModelNorth=Sp$Analysis.North & !Sp$ExcludeN,
+        ModelSouth=Sp$Analysis.South & !Sp$ExcludeS,
+        UseavailNorth=Sp$UseAvailability.North,
+        UseavailSouth=Sp$UseAvailability.South,
+        Occurrences=Sp$Occurrences,
+        nSites=Sp$nSites,
+        SizeNorth=NA,
+        SizeSouth=NA,
+        Nonnative=FALSE,
+        LinkHabitat="logit",
+        LinkSpclim="logit",
+        AUCNorth=Mn$AUC.All,
+        AUCSouth=Ms$AUC.All,
+        R2North=Mn$PseudoR2.All,
+        R2South=Ms$PseudoR2.All,
+        Comments=NA,
+        Group=taxon)
+    if (taxon == "vplants") {
+        xx$CommonName <- Sp$Common.Name
+        xx$Nonnative <- Sp$Origin != "Native"
+    }
+    rownames(xx) <- xx$SpeciesID
+    xx$UseavailNorth[xx$ModelNorth] <- FALSE
+    xx$UseavailSouth[xx$ModelSouth] <- FALSE
+
+
+    SPTAB[[taxon]] <- xx
+}
+
+for (i in 1:length(SPTAB))
+    for (j in 1:ncol(SPTAB[[i]]))
+        if (is.factor(SPTAB[[i]][,j]))
+            SPTAB[[i]][,j] <- as.character(SPTAB[[i]][,j])
+
+## organizing results for mites, lichens, mosses, vplants
+if (FALSE) {
 ROOT <- "s:/AB_data_v2020/Results/Results from Ermias/Preliminary/"
 
 TAXA <- c("lichens", "mites", "mosses", "vplants")
@@ -156,6 +254,7 @@ for (taxon in TAXA) {
 }
 
 save(COEFS, file="s:/AB_data_v2020/Results/COEFS-EA.RData")
+}
 
 ## bootstrap based coef tables (i.e. not normal SEs)
 
@@ -172,22 +271,22 @@ for (taxon in TAXA) {
     if (taxon == "lichens") {
         fn <- "Lichen_North Bootstrap coefficents 2020.Rdata"
         fs <- "Lichen_South Bootstrap coefficents 2020.Rdata"
-        ft <- "s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for Lichens 2020.RData"
+        #ft <- "s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for Lichens 2020.RData"
     }
     if (taxon == "mites") {
         fn <- "Mite_North Bootstrap coefficents 2020.Rdata"
         fs <- "Mite_South Bootstrap coefficents 2020.Rdata"
-        ft <- "s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for Mites 2020.RData"
+        #ft <- "s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for Mites 2020.RData"
     }
     if (taxon == "mosses") {
         fn <- "Moss_North Bootstrap coefficents 2020.Rdata"
         fs <- "Moss_South Bootstrap coefficents 2020.Rdata"
-        ft <- "s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for Moss 2020.RData"
+        #ft <- "s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for Moss 2020.RData"
     }
     if (taxon == "vplants") {
         fn <- "VPlant_North Bootstrap coefficents 2020.Rdata"
         fs <- "VPlant_South Bootstrap coefficents 2020.Rdata"
-        ft <- "s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for VPlants 2020.RData"
+        #ft <- "s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for VPlants 2020.RData"
     }
 
     #' load North and south coefs into their respective environments
@@ -195,10 +294,11 @@ for (taxon in TAXA) {
     load(paste0(ROOT, fn), envir=en)
     es <- new.env()
     load(paste0(ROOT, fs), envir=es)
-    load(ft, envir=et)
-    st <- et$Lookup
-    if (taxon=="vplants")
-        st$SpeciesID <- st$Analysis_Name
+    #load(ft, envir=et)
+    #st <- et$Lookup
+    st <- SPTAB[[taxon]]
+    #if (taxon=="vplants")
+    #    st$SpeciesID <- st$Analysis_Name
 
     #' # North
     #' Combine together the pieces into a logit scaled matrix (no surrounding effects)
@@ -280,12 +380,15 @@ for (taxon in TAXA) {
     CFs[CFs > 10^4] <- 10^4
 
     cat(taxon, "--------------------\n")
-    print(mefa4::compare_sets(dimnames(CFs)[[1]], st$SpeciesID))
-    print(mefa4::compare_sets(dimnames(CFn)[[1]], st$SpeciesID))
-    print(head(st))
+    SPPn <- st$SpeciesID[st$ModelNorth]
+    SPPs <- st$SpeciesID[st$ModelSouth]
+    print(mefa4::compare_sets(dimnames(CFs)[[1]], SPPs))
+    print(mefa4::compare_sets(dimnames(CFn)[[1]], SPPn))
+    #print(head(st))
     cat("\n\n\n")
 
-    COEFS[[taxon]] <- list(north=CFn, south=CFs, species=st)
+
+    COEFS[[taxon]] <- list(north=CFn[SPPn,,], south=CFs[SPPs,,], species=st)
 
 }
 
@@ -342,6 +445,37 @@ rownames(blist) <- blist$id
 SPPn <- SPPn[names(SPPn) %in% rownames(blist)[blist$show %in% c("c", "n")]]
 SPPs <- SPPs[names(SPPs) %in% rownames(blist)[blist$show %in% c("c", "s")]]
 
+
+AUCNorth <- list()
+for (spp in SPPn) {
+    cat(spp, "N\n");flush.console()
+    resn <- load_species(file.path(ROOT, "out", "north", paste0(spp, ".RData")))
+    yn <- as.numeric(en$YY[,spp])
+    off <- if (spp %in% colnames(en$OFF))
+        en$OFF[,spp] else en$OFFmean
+    lamn <- exp(predict_with_SSH(resn, Xn, en$SSH, stage="Space") + off)
+    rocn <- simple_roc(ifelse(yn > 0, 1, 0), rowMeans(lamn))
+    aucn <- simple_auc(rocn)
+    AUCNorth[[spp]] <- aucn
+}
+AUCNorth <- unlist(AUCNorth)
+save(AUCNorth, file="s:/AB_data_v2020/Results/BIRDS-North-AUC.RData")
+
+AUCSouth <- list()
+for (spp in SPPs) {
+    cat(spp, "S\n");flush.console()
+    ress <- load_species(file.path(ROOT, "out", "south", paste0(spp, ".RData")))
+    ys <- as.numeric(es$YY[,spp])
+    off <- if (spp %in% colnames(es$OFF))
+        es$OFF[,spp] else es$OFFmean
+    lams <- exp(predict_with_SSH(ress, Xs, es$SSH, stage="Space") + off)
+    rocs <- simple_roc(ifelse(ys > 0, 1, 0), rowMeans(lams))
+    aucs <- simple_auc(rocs)
+    AUCSouth[[spp]] <- aucs
+}
+AUCSouth <- unlist(AUCSouth)
+save(AUCSouth, file="s:/AB_data_v2020/Results/BIRDS-South-AUC.RData")
+
 cfn <- list()
 for (spp in SPPn) {
     cat(spp, "\n")
@@ -378,7 +512,7 @@ for (spp in SPPs) {
 
 save(cfs, file="s:/AB_data_v2020/Results/BIRDS-South-rev2.RData")
 
-
+if (FALSE) {
 #for (spp in union(names(SPPn), names(SPPs))) {
 for (spp in union(SPPn, SPPs)) {
     file.copy(paste0("s:/AB_data_v2020/Results/web1/birds/", spp, "/map.png"),
@@ -397,7 +531,7 @@ for (spp in SPPs) {
         paste0("s:/AB_data_v2020/Results/web1/veg/", spp, ".png"),
         overwrite=TRUE)
 }
-
+}
 
 ## combine birds and other taxa
 
@@ -409,12 +543,14 @@ ROOT <- "d:/abmi/AB_data_v2020/data/analysis/species/birds"
 ee <- new.env()
 load(file.path(ROOT, "ab-birds-all-2020-09-23.RData"), envir=ee)
 TAX <- ee$tax
-rm(ee)
+#rm(ee)
 
 #load("s:/AB_data_v2020/Results/COEFS-EA.RData")
 load("s:/AB_data_v2020/Results/COEFS-EAboot.RData")
 load("s:/AB_data_v2020/Results/BIRDS-North-rev1.RData")
 load("s:/AB_data_v2020/Results/BIRDS-South-rev2.RData")
+load("s:/AB_data_v2020/Results/BIRDS-North-AUC.RData")
+load("s:/AB_data_v2020/Results/BIRDS-South-AUC.RData")
 
 if (FALSE) { # testing CC effects
 spp <- "OSFL"
@@ -445,7 +581,6 @@ rownames(TAX) <- TAX$sppid
 TAX <- TAX[sort(union(SPPn,SPPs)),]
 names(cfs) <- SPPs
 names(cfn) <- SPPn
-
 
 
 ## organizing bird coefs
@@ -539,13 +674,55 @@ for (spp in names(cfn)) {
     CFnj[spp,,] <- cfnj
 }
 
+
+#COEFS$lichens$north <- COEFS$lichens$north[dimnames(COEFS$lichens$north)[[1]] != "Do.not.analyze",,]
+#COEFS$lichens$south <- COEFS$lichens$south[dimnames(COEFS$lichens$south)[[1]] != "Do.not.analyze",,]
+
+## Bird lookup table here
+
+uu <- ee$tax
+uu$keep <- as.character(uu$species) %in%
+    as.character(blist[blist$show != "o","common"])
+uu <- uu[uu$keep,]
+uu$show <- blist$show[match(uu$species, blist$common)]
+uu <- uu[!is.na(uu$show),]
+table(uu$show)
+
+uu$AUCn <- AUCNorth[match(uu$code, names(AUCNorth))]
+uu$AUCs <- AUCSouth[match(uu$code, names(AUCSouth))]
+uu$pocc <- colSums(ee$yy[,rownames(uu)] > 0)
+
+spb <- data.frame(
+        SpeciesID=uu$sppid,
+        ScientificName=uu$scinam,
+        TSNID=NA,
+        CommonName=uu$species,
+        ModelNorth=uu$show %in% c("c", "n"),
+        ModelSouth=uu$show %in% c("c", "s"),
+        UseavailNorth=NA,
+        UseavailSouth=NA,
+        Occurrences=uu$pocc,
+        nSites=NA,
+        SizeNorth=NA,
+        SizeSouth=NA,
+        Nonnative=FALSE,
+        LinkHabitat="log",
+        LinkSpclim="log",
+        AUCNorth=uu$AUCn,
+        AUCSouth=uu$AUCs,
+        R2North=NA,
+        R2South=NA,
+        Comments=uu$code,
+        Group="birds")
+for (j in 1:ncol(spb))
+    if (is.factor(spb[,j]))
+        spb[,j] <- as.character(spb[,j])
+rownames(spb) <- spb$SpeciesID
+
 COEFS$birds <- list(
     north=list(marginal=CFnm, joint=CFnj),
     south=list(marginal=CFsm, joint=CFsj),
-    species=TAX)
-
-COEFS$lichens$north <- COEFS$lichens$north[dimnames(COEFS$lichens$north)[[1]] != "Do.not.analyze",,]
-COEFS$lichens$south <- COEFS$lichens$south[dimnames(COEFS$lichens$south)[[1]] != "Do.not.analyze",,]
+    species=spb)
 
 save(COEFS,
     file="s:/AB_data_v2020/Results/COEFS-ALL.RData")
@@ -1044,3 +1221,237 @@ save(COEFS3,
     file="s:/AB_data_v2020/Results/COEFS3-mammals.RData")
 
 
+## updating habitat element and mammal lookup tables
+
+load("s:/AB_data_v2020/Results/COEFS-ALL2.RData")
+
+uu <- COEFS2$habitats$species
+
+xx <- data.frame(
+        SpeciesID=uu$sppid,
+        ScientificName=NA,
+        TSNID=NA,
+        CommonName=uu$CommonName,
+        ModelNorth=uu$ModelNorth,
+        ModelSouth=uu$ModelSouth,
+        UseavailNorth=FALSE,
+        UseavailSouth=FALSE,
+        Occurrences=NA,
+        nSites=NA,
+        SizeNorth=NA,
+        SizeSouth=NA,
+        Nonnative=FALSE,
+        LinkHabitat=uu$link,
+        LinkSpclim=uu$link,
+        AUCNorth=uu$AUCNorth,
+        AUCSouth=uu$AUCNorth,
+        R2North=NA,
+        R2South=NA,
+        Comments=uu$Unit,
+        Group="habitats")
+for (j in 1:ncol(xx))
+    if (is.factor(xx[,j]))
+        xx[,j] <- as.character(xx[,j])
+COEFS2$habitats$species <- xx
+
+uu <- COEFS2$mammals$species
+
+xx <- data.frame(
+        SpeciesID=uu$SpeciesID,
+        ScientificName=uu$ScientificName,
+        TSNID=NA,
+        CommonName=uu$CommonName,
+        ModelNorth=uu$ModelNorth,
+        ModelSouth=uu$ModelSouth,
+        UseavailNorth=uu$UseavailNorth,
+        UseavailSouth=uu$UseavailSouth,
+        Occurrences=NA,
+        nSites=NA,
+        SizeNorth=NA,
+        SizeSouth=NA,
+        Nonnative=FALSE,
+        LinkHabitat=paste0("N:", uu$LinkHabitatNorth, "-S:", uu$LinkHabitatSouth),
+        LinkSpclim=paste0("N:", uu$LinkSpclimNorth, "-S:", uu$LinkSpclimSouth),
+        AUCNorth=uu$AUCNorth,
+        AUCSouth=uu$AUCNorth,
+        R2North=NA,
+        R2South=NA,
+        Comments=uu$Notes,
+        Group="mammals")
+for (j in 1:ncol(xx))
+    if (is.factor(xx[,j]))
+        xx[,j] <- as.character(xx[,j])
+COEFS2$mammals$species <- xx
+
+load("s:/AB_data_v2020/Results/COEFS3-mammals.RData")
+
+COEFS2$mammals$fullcf <- COEFS3
+
+save(COEFS2,
+    file="s:/AB_data_v2020/Results/COEFS-ALL2.RData")
+
+## adding NN richness
+
+taxon <- "nnplants"
+
+xx <- data.frame(
+        SpeciesID="NNplantRich",
+        ScientificName=NA,
+        TSNID=NA,
+        CommonName="Non-native Plant Richness",
+        ModelNorth=TRUE,
+        ModelSouth=TRUE,
+        UseavailNorth=FALSE,
+        UseavailSouth=FALSE,
+        Occurrences=NA,
+        nSites=NA,
+        SizeNorth=NA,
+        SizeSouth=NA,
+        Nonnative=TRUE,
+        LinkHabitat="log",
+        LinkSpclim="log",
+        AUCNorth=NA,
+        AUCSouth=NA,
+        R2North=NA,
+        R2South=NA,
+        Comments=NA,
+        Group=taxon)
+for (j in 1:ncol(xx))
+    if (is.factor(xx[,j]))
+        xx[,j] <- as.character(xx[,j])
+
+fn <- "s:/AB_data_v2020/Results/Results from Ermias/Non-native vascular plants/R objects North NNplants Coefficient tables 2020_Quad.Rdata"
+fs <- "s:/AB_data_v2020/Results/Results from Ermias/Non-native vascular plants/R objects South NNplants Coefficient tables 2020_Quad.Rdata"
+
+en <- new.env()
+load(fn, envir=en)
+es <- new.env()
+load(fs, envir=es)
+
+B <- 100
+
+    #' # North
+    #' Combine together the pieces into a logit scaled matrix (no surrounding effects)
+    cfn <- en$Coef
+    colnames(cfn) <- gsub("BlackSpruce", "TreedBog", colnames(cfn))
+    cfn <- cbind(cfn,
+            TreedFenR=cfn[,"TreedFen"],
+            TreedFen1=cfn[,"TreedFen"],
+            TreedFen2=cfn[,"TreedFen"],
+            TreedFen3=cfn[,"TreedFen"],
+            TreedFen4=cfn[,"TreedFen"],
+            TreedFen5=cfn[,"TreedFen"],
+            TreedFen6=cfn[,"TreedFen"],
+            TreedFen7=cfn[,"TreedFen"],
+            TreedFen8=cfn[,"TreedFen"],
+            Rural=cfn[,"UrbInd"],
+            Urban=cfn[,"UrbInd"],
+            Industrial=cfn[,"UrbInd"],
+            Mine=0, MineV=0, Water=0,
+            GrassHerb=cfn[,"Grass"])
+    cfn <- cfn[,!(colnames(cfn) %in% c("TreedFen", "UrbInd", "Grass")),drop=FALSE]
+    xCFn <- cbind(log(cfn), en$Sc.coef)
+    #' array: bootstrap x species x coefs
+    CFn <- array(0, c(nrow(xCFn), ncol(xCFn), B),
+        dimnames=list(rownames(xCFn), colnames(xCFn), NULL))
+    for (i in 1:B) {
+        cfn <- en$Coef
+        colnames(cfn) <- gsub("BlackSpruce", "TreedBog", colnames(cfn))
+        cfn <- cbind(cfn,
+            TreedFenR=cfn[,"TreedFen"],
+            TreedFen1=cfn[,"TreedFen"],
+            TreedFen2=cfn[,"TreedFen"],
+            TreedFen3=cfn[,"TreedFen"],
+            TreedFen4=cfn[,"TreedFen"],
+            TreedFen5=cfn[,"TreedFen"],
+            TreedFen6=cfn[,"TreedFen"],
+            TreedFen7=cfn[,"TreedFen"],
+            TreedFen8=cfn[,"TreedFen"],
+            Rural=cfn[,"UrbInd"],
+            Urban=cfn[,"UrbInd"],
+            Industrial=cfn[,"UrbInd"],
+            Mine=0, MineV=0, Water=0,
+            GrassHerb=cfn[,"Grass"])
+        cfn <- cfn[,!(colnames(cfn) %in% c("TreedFen", "UrbInd", "Grass")),drop=FALSE]
+        ses <- en$Coef.se
+        colnames(ses) <- gsub("BlackSpruce", "TreedBog", colnames(ses))
+        ses <- cbind(ses,
+            TreedFenR=ses[,"TreedFen"],
+            TreedFen1=ses[,"TreedFen"],
+            TreedFen2=ses[,"TreedFen"],
+            TreedFen3=ses[,"TreedFen"],
+            TreedFen4=ses[,"TreedFen"],
+            TreedFen5=ses[,"TreedFen"],
+            TreedFen6=ses[,"TreedFen"],
+            TreedFen7=ses[,"TreedFen"],
+            TreedFen8=ses[,"TreedFen"],
+            Rural=ses[,"UrbInd"],
+            Urban=ses[,"UrbInd"],
+            Industrial=ses[,"UrbInd"],
+            Mine=0, MineV=0, Water=0,
+            GrassHerb=ses[,"Grass"])
+        ses <- ses[,!(colnames(ses) %in% c("TreedFen", "UrbInd", "Grass")),drop=FALSE]
+        if (i > 1) {
+            se <- ses
+            se[se > 5] <- 5
+            eps <- rnorm(length(se), 0, se)
+        } else {
+            eps <- 0
+        }
+        CFn[,,i] <- cbind(log(cfn) + eps, en$Sc.coef)
+    }
+
+
+    #' # South
+    #' Combine together the pieces into a logit scaled matrix (no surrounding effects)
+    cfs <- es$Coef
+    cfs <- cbind(cfs,
+            Rural=cfs[,"UrbInd"],
+            Urban=cfs[,"UrbInd"],
+            Industrial=cfs[,"UrbInd"],
+            Mine=0, MineV=0, Water=0)
+    cfs <- cfs[,colnames(cfs) != "UrbInd",drop=FALSE]
+    xCFs <- cbind(log(cfs), pAspen=es$Coef.pAspen, es$Sc.coef)
+    #' array: bootstrap x species x coefs
+    CFs <- array(0, c(nrow(xCFs), ncol(xCFs), B),
+        dimnames=list(rownames(xCFs), colnames(xCFs), NULL))
+    for (i in 1:B) {
+        cfs <- es$Coef
+        cfs <- cbind(cfs,
+            Rural=cfs[,"UrbInd"],
+            Urban=cfs[,"UrbInd"],
+            Industrial=cfs[,"UrbInd"],
+            Mine=0, MineV=0, Water=0)
+        cfs <- cfs[,colnames(cfs) != "UrbInd",drop=FALSE]
+        ses <- es$Coef.se
+        ses <- cbind(ses,
+            Rural=ses[,"UrbInd"],
+            Urban=ses[,"UrbInd"],
+            Industrial=ses[,"UrbInd"],
+            Mine=0, MineV=0, Water=0)
+        ses <- ses[,colnames(ses) != "UrbInd",drop=FALSE]
+        if (i > 1) {
+            se <- ses
+            se[se > 5] <- 5
+            eps <- rnorm(length(se), 0, se)
+        } else {
+            eps <- 0
+        }
+        CFs[,,i] <- cbind(log(cfs) + eps, pAspen=es$Coef.pAspen, es$Sc.coef)
+    }
+    #range(CFn)
+    #range(CFs)
+    CFn[CFn < -10^4] <- -10^4
+    CFn[CFn > 10^4] <- 10^4
+    CFs[CFs < -10^4] <- -10^4
+    CFs[CFs > 10^4] <- 10^4
+
+
+    COEFS2[[taxon]] <- list(north=CFn, south=CFs, species=xx)
+
+rownames(COEFS2$mammals$species) <- COEFS2$mammals$species$SpeciesID
+rownames(COEFS2$habitats$species) <- COEFS2$habitats$species$SpeciesID
+rownames(COEFS2$nnplants$species) <- COEFS2$nnplants$species$SpeciesID
+
+save(COEFS2,
+    file="s:/AB_data_v2020/Results/COEFS-ALL2.RData")

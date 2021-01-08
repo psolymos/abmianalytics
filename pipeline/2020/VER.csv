@@ -1,0 +1,9 @@
+group,version,yr_first,yr_last,method,hf,veg,model,species
+mammals,2020,2015,2019,camera_trap,2018,v6.1,by_species,19
+birds,2020,1997,2019,point_count,2018,v6.1,poisson_log,127
+mites,2020,2007,2019,soil_core,2018,v6.1,binomial_logit,118
+mosses,2020,2003,2016,centre_plot,2018,v6.1,binomial_logit,120
+lichens,2020,2003,2019,centre_plot,2018,v6.1,binomial_logit,164
+vplants,2020,2003,2019,centre_plot,2018,v6.1,binomial_logit,456
+habitats,2020,2003,2019,centre_plot,2018,v6.1,by_species,45
+nnplants,2020,2003,2019,centre_plot,2018,v6.1,poisson_log,1

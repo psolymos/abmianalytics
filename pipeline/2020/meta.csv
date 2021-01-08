@@ -1,0 +1,493 @@
+SheetName,SheetDescription,FieldName,FieldDescription
+Info,Info about the file,group,Taxonomic group
+Info,Info about the file,version,Version of the update
+Info,Info about the file,yr_first,Firs survey year for the group
+Info,Info about the file,yr_last,Latest survey year for the group
+Info,Info about the file,method,Field method
+Info,Info about the file,hf,Human footprint version used for summaries
+Info,Info about the file,veg,Vegetation layer version used for summaries
+Info,Info about the file,model,Statistical model
+Info,Info about the file,species,Number of species with models
+Species,Lookup table for species,SpeciesID,Unique ID for species
+Species,Lookup table for species,ScientificName,Scientific name of species
+Species,Lookup table for species,CommonName,Common name
+Species,Lookup table for species,TSNID,Taxonomic serial number
+Species,Lookup table for species,Group,Taxonomic group
+Species,Lookup table for species,det,Detection map available
+Species,Lookup table for species,useavailnorth,If only basic summaries for northern Alberta are available
+Species,Lookup table for species,useavailsouth,If only basic summaries for southern Alberta are available
+Species,Lookup table for species,coefnorth,If model based results for northern Alberta are available
+Species,Lookup table for species,coefsouth,If model based results for southern Alberta are available
+Species,Lookup table for species,map,If predictive map is available
+Species,Lookup table for species,sectornorth,If sector effects in the north are available
+Species,Lookup table for species,sectorsouth,If sector effects in the south are available
+Species,Lookup table for species,Occurrences,Number of occurrences (multiple subsamples per site)
+Species,Lookup table for species,nSites,Number of sites with occurrences
+Species,Lookup table for species,Nonnative,Non-native status indicator
+Species,Lookup table for species,LinkHabitat,Link function for statistical model describing habitat associations
+Species,Lookup table for species,LinkSpclim,Link function for statistical model describing spatial/climate relationships
+Species,Lookup table for species,AUCNorth,Area under the ROC curve for northern Alberta models including habitat and space/climate variables
+Species,Lookup table for species,AUCSouth,Area under the ROC curve for southern Alberta models including habitat and space/climate variables
+Species,Lookup table for species,Comments,Comments
+UseavailNorth,Use-availability summaries for species in northern Alberta,SpeciesID,Unique ID for species
+UseavailNorth,Use-availability summaries for species in northern Alberta,ScientificName,Scientific name of species
+UseavailNorth,Use-availability summaries for species in northern Alberta,CommonName,Common name
+UseavailNorth,Use-availability summaries for species in northern Alberta,TSNID,Taxonomic serial number
+UseavailNorth,Use-availability summaries for species in northern Alberta,Group,Taxonomic group
+UseavailNorth,Use-availability summaries for species in northern Alberta,Decid,Deciduous dominated forest
+UseavailNorth,Use-availability summaries for species in northern Alberta,Mixedwood,Mixedwood dominated forest
+UseavailNorth,Use-availability summaries for species in northern Alberta,Pine,Pine dominated forest
+UseavailNorth,Use-availability summaries for species in northern Alberta,Spruce,White Spruce dominated forest
+UseavailNorth,Use-availability summaries for species in northern Alberta,TreedBogFen,Treed bog and fen
+UseavailNorth,Use-availability summaries for species in northern Alberta,Swamp,Swamp
+UseavailNorth,Use-availability summaries for species in northern Alberta,GrassHerb,Grass/herb
+UseavailNorth,Use-availability summaries for species in northern Alberta,Shrub,Shrub
+UseavailNorth,Use-availability summaries for species in northern Alberta,NonTreedBogFen,Nontreed bog and fen
+UseavailNorth,Use-availability summaries for species in northern Alberta,Marsh,Marsh
+UseavailNorth,Use-availability summaries for species in northern Alberta,Crop,Crop
+UseavailNorth,Use-availability summaries for species in northern Alberta,RoughP,Tame pasture
+UseavailNorth,Use-availability summaries for species in northern Alberta,TameP,Rough pasture
+UseavailNorth,Use-availability summaries for species in northern Alberta,UrbInd,Urban/Industrial human footprint
+UseavailNorth,Use-availability summaries for species in northern Alberta,SoftLin,"Soft linear human footprint features (seismic lines, pipelines, power lines, road verges)"
+UseavailNorth,Use-availability summaries for species in northern Alberta,HardLin,Hard linear human footprint features (road and rails)
+UseavailNorth,Use-availability summaries for species in northern Alberta,Forestry,Forest altered by forest harvest
+UseavailSouth,Use-availability summaries for species in northern Alberta,SpeciesID,Unique ID for species
+UseavailSouth,Use-availability summaries for species in northern Alberta,ScientificName,Scientific name of species
+UseavailSouth,Use-availability summaries for species in northern Alberta,CommonName,Common name
+UseavailSouth,Use-availability summaries for species in northern Alberta,TSNID,Taxonomic serial number
+UseavailSouth,Use-availability summaries for species in northern Alberta,Group,Taxonomic group
+UseavailSouth,Use-availability summaries for species in northern Alberta,ClayLoamSand,"Clay, loamy, sady"
+UseavailSouth,Use-availability summaries for species in northern Alberta,RapidDrain,Rapid drain
+UseavailSouth,Use-availability summaries for species in northern Alberta,Blowout,Blowout
+UseavailSouth,Use-availability summaries for species in northern Alberta,ThinBreak,Thin breaks
+UseavailSouth,Use-availability summaries for species in northern Alberta,Other,Other
+UseavailSouth,Use-availability summaries for species in northern Alberta,Crop,Crop
+UseavailSouth,Use-availability summaries for species in northern Alberta,RoughP,Tame pasture
+UseavailSouth,Use-availability summaries for species in northern Alberta,TameP,Rough pasture
+UseavailSouth,Use-availability summaries for species in northern Alberta,UrbInd,Urban/Industrial human footprint
+UseavailSouth,Use-availability summaries for species in northern Alberta,SoftLin,"Soft linear human footprint features (seismic lines, pipelines, power lines, road verges)"
+UseavailSouth,Use-availability summaries for species in northern Alberta,HardLin,Hard linear human footprint features (road and rails)
+VeghfNorth,Habitat coefficients for species in northern Alberta,SpeciesID,Unique ID for species
+VeghfNorth,Habitat coefficients for species in northern Alberta,ScientificName,Scientific name of species
+VeghfNorth,Habitat coefficients for species in northern Alberta,CommonName,Common name
+VeghfNorth,Habitat coefficients for species in northern Alberta,TSNID,Taxonomic serial number
+VeghfNorth,Habitat coefficients for species in northern Alberta,Group,Taxonomic group
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 0-9,"White Spruce dominated forest, 0-10 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 10-19,"White Spruce dominated forest, 10-20 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 20-39,"White Spruce dominated forest, 20-40 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 40-59,"White Spruce dominated forest, 40-60 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 60-79,"White Spruce dominated forest, 60-80 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 80-99,"White Spruce dominated forest, 80-100 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 100-119,"White Spruce dominated forest, 100-120 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 120-139,"White Spruce dominated forest, 120-140 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 140+,"White Spruce dominated forest, >140 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 0-9,"Pine dominated forest, 0-10 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 10-19,"Pine dominated forest, 10-20 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 20-39,"Pine dominated forest, 20-40 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 40-59,"Pine dominated forest, 40-60 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 60-79,"Pine dominated forest, 60-80 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 80-99,"Pine dominated forest, 80-100 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 100-119,"Pine dominated forest, 100-120 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 120-139,"Pine dominated forest, 120-140 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 140+,"Pine dominated forest, >140 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 0-9,"Deciduous dominated forest, 0-10 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 10-19,"Deciduous dominated forest, 10-20 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 20-39,"Deciduous dominated forest, 20-40 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 40-59,"Deciduous dominated forest, 40-60 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 60-79,"Deciduous dominated forest, 60-80 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 80-99,"Deciduous dominated forest, 80-100 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 100-119,"Deciduous dominated forest, 100-120 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 120-139,"Deciduous dominated forest, 120-140 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 140+,"Deciduous dominated forest, >140 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 0-9,"Mixedwood dominated forest, 0-10 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 10-19,"Mixedwood dominated forest, 10-20 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 20-39,"Mixedwood dominated forest, 20-40 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 40-59,"Mixedwood dominated forest, 40-60 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 60-79,"Mixedwood dominated forest, 60-80 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 80-99,"Mixedwood dominated forest, 80-100 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 100-119,"Mixedwood dominated forest, 100-120 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 120-139,"Mixedwood dominated forest, 120-140 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 140+,"Mixedwood dominated forest, >140 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 0-9,"Black Spruce dominated forest, 0-10 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 10-19,"Black Spruce dominated forest, 10-20 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 20-39,"Black Spruce dominated forest, 20-40 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 40-59,"Black Spruce dominated forest, 40-60 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 60-79,"Black Spruce dominated forest, 60-80 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 80-99,"Black Spruce dominated forest, 80-100 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 100-119,"Black Spruce dominated forest, 100-120 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 120-139,"Black Spruce dominated forest, 120-140 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 140+,"Black Spruce dominated forest, >140 yrs post natural disturbance"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed fen,Treed fen (usually Larch dominated)
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed swamp,Treed swamp
+VeghfNorth,Habitat coefficients for species in northern Alberta,Shrubby swamp,Shrubby swamp
+VeghfNorth,Habitat coefficients for species in northern Alberta,Shrubby bog,Shrubby bog
+VeghfNorth,Habitat coefficients for species in northern Alberta,Shrubby fen,Shrubby fen
+VeghfNorth,Habitat coefficients for species in northern Alberta,Graminoid fen,Graminoid fen
+VeghfNorth,Habitat coefficients for species in northern Alberta,Marsh,Marsh
+VeghfNorth,Habitat coefficients for species in northern Alberta,Shrub,Shubby habitat in uplands
+VeghfNorth,Habitat coefficients for species in northern Alberta,Grass/herb,"Grass, herb in uplands"
+VeghfNorth,Habitat coefficients for species in northern Alberta,Cropland,Cropland
+VeghfNorth,Habitat coefficients for species in northern Alberta,Tame pasture,Tame pasture
+VeghfNorth,Habitat coefficients for species in northern Alberta,Rough pasture,Rough pasture
+VeghfNorth,Habitat coefficients for species in northern Alberta,Well sites,Well sites
+VeghfNorth,Habitat coefficients for species in northern Alberta,Rural residential,Rural residential
+VeghfNorth,Habitat coefficients for species in northern Alberta,Urban/Industrial,Urban/Industrial
+VeghfNorth,Habitat coefficients for species in northern Alberta,Industrial (rural),Industrial (rural)
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, White spruce 0-9","White Spruce dominated forest, 0-10 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, white spruce 10-19","White Spruce dominated forest, 10-20 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, white spruce 20-39","White Spruce dominated forest, 20-40 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, white spruce 40-59","White Spruce dominated forest, 40-60 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, white spruce 60-79","White Spruce dominated forest, 60-80 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 0-9","Pine dominated forest, 0-10 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 10-19","Pine dominated forest, 10-20 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 20-39","Pine dominated forest, 20-40 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 40-59","Pine dominated forest, 40-60 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 60-79","Pine dominated forest, 60-80 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 0-9","Deciduous dominated forest, 0-10 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 10-19","Deciduous dominated forest, 10-20 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 20-39","Deciduous dominated forest, 20-40 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 40-59","Deciduous dominated forest, 40-60 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 60-79","Deciduous dominated forest, 60-80 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 0-9","Mixedwood dominated forest, 0-10 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 10-19","Mixedwood dominated forest, 10-20 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 20-39","Mixedwood dominated forest, 20-40 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 40-59","Mixedwood dominated forest, 40-60 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 60-79","Mixedwood dominated forest, 60-80 yrs post forest harvest"
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 0-9.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 10-19.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 20-39.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 40-59.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 60-79.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 80-99.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 100-119.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 120-139.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 140+.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 0-9.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 10-19.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 20-39.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 40-59.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 60-79.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 80-99.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 100-119.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 120-139.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 140+.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 0-9.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 10-19.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 20-39.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 40-59.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 60-79.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 80-99.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 100-119.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 120-139.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 140+.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 0-9.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 10-19.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 20-39.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 40-59.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 60-79.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 80-99.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 100-119.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 120-139.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 140+.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 0-9.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 10-19.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 20-39.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 40-59.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 60-79.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 80-99.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 100-119.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 120-139.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 140+.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed fen.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed swamp.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Shrubby swamp.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Shrubby bog.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Shrubby fen.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Graminoid fen.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Marsh.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Shrub.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Grass/herb.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Cropland.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Tame pasture.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Rough pasture.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Well sites.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Rural residential.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Urban/Industrial.LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Industrial (rural).LCL,Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, White spruce 0-9.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, white spruce 10-19.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, white spruce 20-39.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, white spruce 40-59.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, white spruce 60-79.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 0-9.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 10-19.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 20-39.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 40-59.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 60-79.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 0-9.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 10-19.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 20-39.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 40-59.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 60-79.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 0-9.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 10-19.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 20-39.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 40-59.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 60-79.LCL",Lower confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 0-9.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 10-19.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 20-39.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 40-59.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 60-79.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 80-99.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 100-119.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 120-139.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,White spruce 140+.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 0-9.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 10-19.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 20-39.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 40-59.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 60-79.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 80-99.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 100-119.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 120-139.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Pine 140+.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 0-9.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 10-19.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 20-39.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 40-59.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 60-79.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 80-99.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 100-119.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 120-139.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Deciduous 140+.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 0-9.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 10-19.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 20-39.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 40-59.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 60-79.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 80-99.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 100-119.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 120-139.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Mixedwood 140+.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 0-9.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 10-19.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 20-39.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 40-59.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 60-79.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 80-99.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 100-119.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 120-139.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed bog 140+.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed fen.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Treed swamp.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Shrubby swamp.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Shrubby bog.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Shrubby fen.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Graminoid fen.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Marsh.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Shrub.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Grass/herb.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Cropland.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Tame pasture.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Rough pasture.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Well sites.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Rural residential.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Urban/Industrial.UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,Industrial (rural).UCL,Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, White spruce 0-9.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, white spruce 10-19.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, white spruce 20-39.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, white spruce 40-59.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, white spruce 60-79.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 0-9.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 10-19.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 20-39.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 40-59.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, pine 60-79.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 0-9.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 10-19.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 20-39.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 40-59.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, deciduous 60-79.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 0-9.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 10-19.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 20-39.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 40-59.UCL",Upper confidence limit
+VeghfNorth,Habitat coefficients for species in northern Alberta,"Harvest, mixedwood 60-79.UCL",Upper confidence limit
+LinearNorth,Species' responses to linear features in northern Alberta,SpeciesID,Unique ID for species
+LinearNorth,Species' responses to linear features in northern Alberta,ScientificName,Scientific name of species
+LinearNorth,Species' responses to linear features in northern Alberta,CommonName,Common name
+LinearNorth,Species' responses to linear features in northern Alberta,TSNID,Taxonomic serial number
+LinearNorth,Species' responses to linear features in northern Alberta,Group,Taxonomic group
+LinearNorth,Species' responses to linear features in northern Alberta,AverageCoef,Average relative abundance in northern land cover classes
+LinearNorth,Species' responses to linear features in northern Alberta,SoftLin10,Average relative abundance when 10% of the survey area is covered by soft linear features
+LinearNorth,Species' responses to linear features in northern Alberta,HardLin10,Average relative abundance when 10% of the survey area is covered by hard linear features
+LinearNorth,Species' responses to linear features in northern Alberta,AverageCoef.LCL,Lower confidence limit
+LinearNorth,Species' responses to linear features in northern Alberta,SoftLin10.LCL,Lower confidence limit
+LinearNorth,Species' responses to linear features in northern Alberta,HardLin10.LCL,Lower confidence limit
+LinearNorth,Species' responses to linear features in northern Alberta,AverageCoef.UCL,Upper confidence limit
+LinearNorth,Species' responses to linear features in northern Alberta,SoftLin10.UCL,Upper confidence limit
+LinearNorth,Species' responses to linear features in northern Alberta,HardLin10.UCL,Upper confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",SpeciesID,Unique ID for species
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",ScientificName,Scientific name of species
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",CommonName,Common name
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",TSNID,Taxonomic serial number
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Group,Taxonomic group
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Loamy,Loamy
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Sandy/loamy,Sandy/loamy
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Rapid drain,Rapid drain
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Clay,Clay soil
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Thin break,Thin break
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Blowout,Blowout
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Other soil types,Other soil types
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Cropland,Cropland
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Tame pasture,Tame pasture
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Rough pasture,Rough pasture
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Well sites,Well sites
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Rural residential,Rural residential
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Urban/Industrial,Urban/Industrial
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Industrial (rural),Industrial (rural)
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Loamy.LCL,Lower confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Sandy/loamy.LCL,Lower confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Rapid drain.LCL,Lower confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Clay.LCL,Lower confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Thin break.LCL,Lower confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Blowout.LCL,Lower confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Other soil types.LCL,Lower confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Cropland.LCL,Lower confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Tame pasture.LCL,Lower confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Rough pasture.LCL,Lower confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Well sites.LCL,Lower confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Rural residential.LCL,Lower confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Urban/Industrial.LCL,Lower confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Industrial (rural).LCL,Lower confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Loamy.UCL,Upper confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Sandy/loamy.UCL,Upper confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Rapid drain.UCL,Upper confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Clay.UCL,Upper confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Thin break.UCL,Upper confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Blowout.UCL,Upper confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Other soil types.UCL,Upper confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Cropland.UCL,Upper confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Tame pasture.UCL,Upper confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Rough pasture.UCL,Upper confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Well sites.UCL,Upper confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Rural residential.UCL,Upper confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Urban/Industrial.UCL,Upper confidence limit
+SoilhfSouthNontreed,"Habitat coefficients for species in southern Alberta, non-treed habitats",Industrial (rural).UCL,Upper confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",SpeciesID,Unique ID for species
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",ScientificName,Scientific name of species
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",CommonName,Common name
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",TSNID,Taxonomic serial number
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Group,Taxonomic group
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Loamy,Loamy
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Sandy/loamy,Sandy/loamy
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Rapid drain,Rapid drain
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Clay,Clay soil
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Thin break,Thin break
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Blowout,Blowout
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Other soil types,Other soil types
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Cropland,Cropland
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Tame pasture,Tame pasture
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Rough pasture,Rough pasture
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Well sites,Well sites
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Rural residential,Rural residential
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Urban/Industrial,Urban/Industrial
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Industrial (rural),Industrial (rural)
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Loamy.LCL,Lower confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Sandy/loamy.LCL,Lower confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Rapid drain.LCL,Lower confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Clay.LCL,Lower confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Thin break.LCL,Lower confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Blowout.LCL,Lower confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Other soil types.LCL,Lower confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Cropland.LCL,Lower confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Tame pasture.LCL,Lower confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Rough pasture.LCL,Lower confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Well sites.LCL,Lower confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Rural residential.LCL,Lower confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Urban/Industrial.LCL,Lower confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Industrial (rural).LCL,Lower confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Loamy.UCL,Upper confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Sandy/loamy.UCL,Upper confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Rapid drain.UCL,Upper confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Clay.UCL,Upper confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Thin break.UCL,Upper confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Blowout.UCL,Upper confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Other soil types.UCL,Upper confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Cropland.UCL,Upper confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Tame pasture.UCL,Upper confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Rough pasture.UCL,Upper confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Well sites.UCL,Upper confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Rural residential.UCL,Upper confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Urban/Industrial.UCL,Upper confidence limit
+SoilhfSouthTreed,"Habitat coefficients for species in southern Alberta, treed habitats",Industrial (rural).UCL,Upper confidence limit
+LinearSouth,Species' responses to linear features in southern Alberta,SpeciesID,Unique ID for species
+LinearSouth,Species' responses to linear features in southern Alberta,ScientificName,Scientific name of species
+LinearSouth,Species' responses to linear features in southern Alberta,CommonName,Common name
+LinearSouth,Species' responses to linear features in southern Alberta,TSNID,Taxonomic serial number
+LinearSouth,Species' responses to linear features in southern Alberta,Group,Taxonomic group
+LinearSouth,Species' responses to linear features in southern Alberta,AverageCoef,Average relative abundance in northern land cover classes
+LinearSouth,Species' responses to linear features in southern Alberta,SoftLin10,Average relative abundance when 10% of the survey area is covered by soft linear features
+LinearSouth,Species' responses to linear features in southern Alberta,HardLin10,Average relative abundance when 10% of the survey area is covered by hard linear features
+LinearSouth,Species' responses to linear features in southern Alberta,AverageCoef.LCL,Lower confidence limit
+LinearSouth,Species' responses to linear features in southern Alberta,SoftLin10.LCL,Lower confidence limit
+LinearSouth,Species' responses to linear features in southern Alberta,HardLin10.LCL,Lower confidence limit
+LinearSouth,Species' responses to linear features in southern Alberta,AverageCoef.UCL,Upper confidence limit
+LinearSouth,Species' responses to linear features in southern Alberta,SoftLin10.UCL,Upper confidence limit
+LinearSouth,Species' responses to linear features in southern Alberta,HardLin10.UCL,Upper confidence limit
+SectorNorth,Sector effects summaries for species in northern Alberta,SpeciesID,Unique ID for species
+SectorNorth,Sector effects summaries for species in northern Alberta,ScientificName,Scientific name of species
+SectorNorth,Sector effects summaries for species in northern Alberta,CommonName,Common name
+SectorNorth,Sector effects summaries for species in northern Alberta,TSNID,Taxonomic serial number
+SectorNorth,Sector effects summaries for species in northern Alberta,Group,Taxonomic group
+SectorNorth,Sector effects summaries for species in northern Alberta,area.Agriculture,
+SectorNorth,Sector effects summaries for species in northern Alberta,area.Forestry,
+SectorNorth,Sector effects summaries for species in northern Alberta,area.Energy,
+SectorNorth,Sector effects summaries for species in northern Alberta,area.RuralUrban,
+SectorNorth,Sector effects summaries for species in northern Alberta,area.Transportation,
+SectorNorth,Sector effects summaries for species in northern Alberta,regional.Agriculture,
+SectorNorth,Sector effects summaries for species in northern Alberta,regional.Forestry,
+SectorNorth,Sector effects summaries for species in northern Alberta,regional.Energy,
+SectorNorth,Sector effects summaries for species in northern Alberta,regional.RuralUrban,
+SectorNorth,Sector effects summaries for species in northern Alberta,regional.Transportation,
+SectorNorth,Sector effects summaries for species in northern Alberta,underhf.Agriculture,
+SectorNorth,Sector effects summaries for species in northern Alberta,underhf.Forestry,
+SectorNorth,Sector effects summaries for species in northern Alberta,underhf.Energy,
+SectorNorth,Sector effects summaries for species in northern Alberta,underhf.RuralUrban,
+SectorNorth,Sector effects summaries for species in northern Alberta,underhf.Transportation,
+SectorNorth,Sector effects summaries for species in northern Alberta,unit.Agriculture,
+SectorNorth,Sector effects summaries for species in northern Alberta,unit.Forestry,
+SectorNorth,Sector effects summaries for species in northern Alberta,unit.Energy,
+SectorNorth,Sector effects summaries for species in northern Alberta,unit.RuralUrban,
+SectorNorth,Sector effects summaries for species in northern Alberta,unit.Transportation,
+SectorSouth,Sector effects summaries for species in southern Alberta,SpeciesID,Unique ID for species
+SectorSouth,Sector effects summaries for species in southern Alberta,ScientificName,Scientific name of species
+SectorSouth,Sector effects summaries for species in southern Alberta,CommonName,Common name
+SectorSouth,Sector effects summaries for species in southern Alberta,TSNID,Taxonomic serial number
+SectorSouth,Sector effects summaries for species in southern Alberta,Group,Taxonomic group
+SectorSouth,Sector effects summaries for species in southern Alberta,area.Agriculture,
+SectorSouth,Sector effects summaries for species in southern Alberta,area.Forestry,
+SectorSouth,Sector effects summaries for species in southern Alberta,area.Energy,
+SectorSouth,Sector effects summaries for species in southern Alberta,area.RuralUrban,
+SectorSouth,Sector effects summaries for species in southern Alberta,area.Transportation,
+SectorSouth,Sector effects summaries for species in southern Alberta,regional.Agriculture,
+SectorSouth,Sector effects summaries for species in southern Alberta,regional.Forestry,
+SectorSouth,Sector effects summaries for species in southern Alberta,regional.Energy,
+SectorSouth,Sector effects summaries for species in southern Alberta,regional.RuralUrban,
+SectorSouth,Sector effects summaries for species in southern Alberta,regional.Transportation,
+SectorSouth,Sector effects summaries for species in southern Alberta,underhf.Agriculture,
+SectorSouth,Sector effects summaries for species in southern Alberta,underhf.Forestry,
+SectorSouth,Sector effects summaries for species in southern Alberta,underhf.Energy,
+SectorSouth,Sector effects summaries for species in southern Alberta,underhf.RuralUrban,
+SectorSouth,Sector effects summaries for species in southern Alberta,underhf.Transportation,
+SectorSouth,Sector effects summaries for species in southern Alberta,unit.Agriculture,
+SectorSouth,Sector effects summaries for species in southern Alberta,unit.Forestry,
+SectorSouth,Sector effects summaries for species in southern Alberta,unit.Energy,
+SectorSouth,Sector effects summaries for species in southern Alberta,unit.RuralUrban,
+SectorSouth,Sector effects summaries for species in southern Alberta,unit.Transportation,
+Metadata,Metadata,SheetName,Sheet name
+Metadata,Metadata,SheetDescription,Sheet description
+Metadata,Metadata,FieldName,Field name
+Metadata,Metadata,FieldDescription,Field description

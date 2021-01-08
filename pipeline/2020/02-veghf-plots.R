@@ -1,9 +1,8 @@
 ## load coefficients
 
 library(intrval)
-library(svglite)
 load("s:/AB_data_v2020/Results/COEFS-ALL.RData")
-load("s:/AB_data_v2020/Results/COEFS-ALL2.RData") # mammals & habitat elements
+load("s:/AB_data_v2020/Results/COEFS-ALL2.RData") # mammals & habitat elements & nnplants
 
 ## fancy labels for the coefficients
 
@@ -422,12 +421,13 @@ labs <- list(
 }
 
 ## make figures
-TAXA <- c("lichens", "mites", "mosses", "vplants", "birds", "mammals", "habitats")
-#TAXA <- c("mammals", "habitats")
-#ROOT <- "s:/AB_data_v2020/Results/web"
-ROOT <- "s:/AB_data_v2020/Results/web1"
+ROOT <- "s:/AB_data_v2020/Results/web"
+#ROOT <- "s:/AB_data_v2020/Results/web1"
+TAXA <- c("lichens", "mites", "mosses", "vplants", "birds", "mammals", "habitats", "nnplants")
+#TAXA <- c( "habitats", "mammals")
 COEFS$mammals <- COEFS2$mammals
 COEFS$habitats <- COEFS2$habitats
+COEFS$nnplants <- COEFS2$nnplants
 
 ## store results for bio browser
 RESULTS <- list(
@@ -441,7 +441,8 @@ SPECIES <- NULL
 
 for (taxon in TAXA) {
 
-    LINK <- switch(taxon, birds="log", mammals="log", "logit")
+    LINK <- switch(taxon,
+        birds="log", mammals="log", nnplants="log", "logit")
     PRECALC <- taxon %in% names(COEFS2)
 
     if (!dir.exists(file.path(ROOT, taxon)))
@@ -455,7 +456,7 @@ for (taxon in TAXA) {
         flush.console()
 
         if (taxon=="habitats")
-            LINK <- COEFS[[taxon]]$species[spp, "link"]
+            LINK <- COEFS[[taxon]]$species[spp, "LinkHabitat"]
 
         if (!dir.exists(file.path(ROOT, taxon, spp)))
             dir.create(file.path(ROOT, taxon, spp))
@@ -483,7 +484,7 @@ for (taxon in TAXA) {
         flush.console()
 
         if (taxon=="habitats")
-            LINK <- COEFS[[taxon]]$species[spp, "link"]
+            LINK <- COEFS[[taxon]]$species[spp, "LinkHabitat"]
 
         if (!dir.exists(file.path(ROOT, taxon, spp)))
             dir.create(file.path(ROOT, taxon, spp))

@@ -3,7 +3,7 @@ library(mefa4)
 library(jsonlite)
 
 Taxa <- c("lichens", "mites", "mosses", "vplants", "birds",
-    "mammals", "habitats")
+    "mammals", "habitats", "nnplants")
 names(Taxa) <- Taxa
 
 ROOT <- "s:/AB_data_v2020/Results"
@@ -38,6 +38,8 @@ XT <- lapply(Taxa, function(i) {
 })
 XT$habitats$`sector-north` <- FALSE
 XT$habitats$`sector-south` <- FALSE
+XT$nnplants$`sector-north` <- FALSE
+XT$nnplants$`sector-south` <- FALSE
 sapply(XT, function(z) range(rowSums(z)))
 
 addmargins(sapply(XT, function(z) colSums(z)))
@@ -109,6 +111,10 @@ xx <- list(
         list(
             id="habitats",
             name="Habitat elements"
+        ),
+        list(
+            id="nnplants",
+            name="Non-native plant richness"
         )
     )
 )
@@ -123,64 +129,21 @@ load("s:/AB_data_v2020/Results/COEFS-ALL.RData")
 load("s:/AB_data_v2020/Results/COEFS-ALL2.RData")
 COEFS$mammals <- COEFS2$mammals
 COEFS$habitats <- COEFS2$habitats
+COEFS$nnplants <- COEFS2$nnplants
 
 
 #taxon <- "habitats"
 RES <- NULL
 for (taxon in names(COEFS)) {
-    cat(taxon, "\n")
+    cat("\n\n\n", taxon, "---------------\n\n")
 
-
-    s0 <- COEFS[[taxon]]$species
-
-    if (taxon=="vplants") {
-        load("s:/AB_data_v2020/Results/Results from Ermias/Species look up tables/Species lookup for VPlants 2020.RData")
-        compare_sets(Lookup$SppCode, s0$SppCode)
-        Lookup <- Lookup[match(s0$SppCode, Lookup$SppCode),]
-        s0$Common <- Lookup$Common.Name
-    }
-    if (!(taxon %in% c("habitats", "birds", "mammals"))) {
-        s <- s0
-        s <- data.frame(
-                id=as.character(s$SpeciesID),
-                scientific=as.character(s[,grep("Scient", colnames(s))]),
-                common=NA_character_,
-                stringsAsFactors = FALSE)
-        if (taxon=="vplants")
-            s$common <- s0$Common
-        #s$id[grep("\\.\\.", s$id)] <- gsub("\\.\\.", "\\.", s$id[grep("\\.\\.", s$id)])
-        s$id[endsWith(s$id, ".")] <- substr(s$id[endsWith(s$id, ".")], 1,
-            nchar(s$id[endsWith(s$id, ".")])-1)
-    }
-    if (taxon=="habitats") {
-        s <- s0
-        s <- data.frame(
-            id=as.character(s$sppid),
-            scientific=as.character(s$ScientificName),
-            common=as.character(s$CommonName),
-            stringsAsFactors = FALSE)
-    }
-    if (taxon=="mammals") {
-        s <- s0
-        s <- data.frame(
-            id=as.character(s$SpeciesID),
-            scientific=as.character(s$ScientificName),
-            common=as.character(s$CommonName),
-            stringsAsFactors = FALSE)
-    }
-    if (taxon=="birds") {
-        ROOT <- "d:/abmi/AB_data_v2020/data/analysis/species/birds"
-        ee <- new.env()
-        load(file.path(ROOT, "ab-birds-all-2020-09-23.RData"), envir=ee)
-        TAX <- ee$tax
-        rm(ee)
-        s <- TAX
-        s <- data.frame(
-            id=as.character(s$sppid),
-            scientific=as.character(s$scinam),
-            common=as.character(s$species),
-            stringsAsFactors = FALSE)
-    }
+    s <- COEFS[[taxon]]$species
+    s$SpeciesID[endsWith(s$SpeciesID, ".")] <- substr(
+        s$SpeciesID[endsWith(s$SpeciesID, ".")], 1,
+            nchar(s$SpeciesID[endsWith(s$SpeciesID, ".")])-1)
+    s$id <- s$SpeciesID
+    s$scientific <- s$ScientificName
+    s$common <- s$CommonName
 
     rownames(s) <- s$id
     if (all(is.na(s$common))) {
@@ -196,10 +159,10 @@ for (taxon in names(COEFS)) {
 
     #"Do.not.analyze" to exclude
     x <- XT[[taxon]]
-    x <- x[rownames(x) != "Do.not.analyze", ]
-    compare_sets(rownames(s), rownames(x))
-    setdiff(rownames(s), rownames(x))
-    setdiff(rownames(x), rownames(s))
+    #x <- x[rownames(x) != "Do.not.analyze", ]
+    print(compare_sets(rownames(s), rownames(x)))
+    print(setdiff(rownames(s), rownames(x)))
+    print(setdiff(rownames(x), rownames(s)))
 
     s <- s[rownames(x),]
 
@@ -219,7 +182,7 @@ for (taxon in names(COEFS)) {
     o <- xx$taxa[sapply(xx$taxa, "[[", "id") == taxon][[1]]
     o$species <- s
 
-#if (FALSE) {
+if (FALSE) {
     #toJSON(o, auto_unbox=TRUE, pretty=TRUE)
     writeLines(
         toJSON(o, auto_unbox=TRUE),
@@ -237,7 +200,7 @@ for (taxon in names(COEFS)) {
             paste0("s:/AB_data_v2020/Results/web/", taxon, "/", spp, "/index.json"))
 
     }
-#}
+}
     sss <- s
     sss$taxonid <- o$id
     sss$taxonname <- o$name
@@ -246,13 +209,209 @@ for (taxon in names(COEFS)) {
 
 }
 
+ok <- RES$ModelNorth | RES$ModelSouth
+data.frame(table(RES$Group[ok]))
 
+RES$SizeNorth <- RES$SizeSouth <- RES$R2North <- RES$R2South <- NULL
+
+
+VER <- read.csv("pipeline/2020/VER.csv")
 
 cn <- c("id", "scientific", "common", "display",  "taxonid", "taxonname")
 xxx <- xx
+xxx$version <- VER
 xxx$species <- RES[,cn]
 
 writeLines(
     toJSON(xxx, auto_unbox=TRUE),
     "s:/AB_data_v2020/Results/web/index.json")
+
+
+
+## BioBrowser updates
+
+library(openxlsx)
+
+RT <- "s:/AB_data_v2020/Results"
+load(file.path(RT, "BB-ESTIMATES.RData")) # "RESULTS" "SPECIES"
+load(file.path(RT, "UseAvail-all.RData")) # UA
+SEff <- list()
+load(file.path(RT, "SEffect-birds.RData")) # SE
+#tmp <- rownames(RES)[RES$Group=="birds"]
+#table(names(SE) %in% tmp)
+#SE <- SE[names(SE) %in% tmp]
+#save(SE, file=file.path(RT, "SEffect-birds.RData"))
+SEff$birds <- SE
+load(file.path(RT, "SEffect-habitats.RData"))
+SEff$habitats <- SE
+load(file.path(RT, "SEffect-lichens.RData"))
+SEff$lichens <- SE
+load(file.path(RT, "SEffect-mammals.RData"))
+SEff$mammals <- SE
+load(file.path(RT, "SEffect-mites.RData"))
+SEff$mites <- SE
+load(file.path(RT, "SEffect-mosses.RData"))
+SEff$mosses <- SE
+load(file.path(RT, "SEffect-nnplants.RData"))
+SEff$nnplants <- SE
+load(file.path(RT, "SEffect-vplants.RData"))
+SEff$vplants <- SE
+SE <- SEff
+rm(SEff)
+cn0 <- c("SpeciesID", "ScientificName",  "CommonName", "TSNID", "Group")
+
+# useavail north
+v <- do.call(rbind, lapply(UA, function(z) z$north))
+rownames(v)[endsWith(rownames(v), ".")] <-
+    substr(rownames(v)[endsWith(rownames(v), ".")], 1, nchar(rownames(v)[endsWith(rownames(v), ".")])-1)
+p <- RES[RES$useavailnorth, cn0]
+compare_sets(rownames(p), rownames(v))
+UAn <- data.frame(p, v[rownames(p),])
+
+# useavail south
+v <- do.call(rbind, lapply(UA, function(z) z$south))
+rownames(v)[endsWith(rownames(v), ".")] <-
+    substr(rownames(v)[endsWith(rownames(v), ".")], 1, nchar(rownames(v)[endsWith(rownames(v), ".")])-1)
+p <- RES[RES$useavailsouth, cn0]
+compare_sets(rownames(p), rownames(v))
+UAs <- data.frame(p, v[rownames(p),])
+
+fse <- function(z, north=TRUE) {
+    zz <- if (north)
+        z$north else z$south
+    if (is.null(zz))
+        return(NULL)
+    c(area=zz$unit["area",],
+        regional=zz$regional, underhf=zz$underhf, unit=zz$unit["unit",])
+}
+# sector north
+v <- do.call(rbind, lapply(SE, function(tx) do.call(rbind, lapply(tx, fse, north=TRUE))))
+p <- RES[RES$sectornorth, cn0]
+compare_sets(rownames(p), rownames(v))
+SEn <- data.frame(p, v[rownames(p),])
+
+# sector south
+v <- do.call(rbind, lapply(SE, function(tx) do.call(rbind, lapply(tx, fse, north=FALSE))))
+p <- RES[RES$sectorsouth, cn0]
+compare_sets(rownames(p), rownames(v))
+SEs <- data.frame(p, v[rownames(p),])
+
+# veghf north
+v <- do.call(rbind, lapply(RESULTS$veghf, function(z) {
+    c0 <- z$Estimate
+    c1 <- z$LCL
+    c2 <- z$UCL
+    names(c0) <- rownames(z)
+    names(c1) <- paste0(rownames(z), ".LCL")
+    names(c2) <- paste0(rownames(z), ".UCL")
+    c(c0, c1, c2)
+}))
+p <- RES[RES$coefnorth, cn0]
+rownames(v)[endsWith(rownames(v), ".")] <-
+    substr(rownames(v)[endsWith(rownames(v), ".")], 1, nchar(rownames(v)[endsWith(rownames(v), ".")])-1)
+compare_sets(rownames(p), rownames(v))
+CFn <- data.frame(p, v[rownames(p),])
+
+# veghf north
+v <- do.call(rbind, lapply(RESULTS$linn, function(z) {
+    o <- c(z$First, z$Lower, z$Upper)
+    names(o) <- c(rownames(z), paste0(rownames(z), ".LCL"), paste0(rownames(z), ".UCL"))
+    o
+}))
+p <- RES[RES$coefnorth, cn0]
+rownames(v)[endsWith(rownames(v), ".")] <-
+    substr(rownames(v)[endsWith(rownames(v), ".")], 1, nchar(rownames(v)[endsWith(rownames(v), ".")])-1)
+compare_sets(rownames(p), rownames(v))
+CFLn <- data.frame(p, v[rownames(p),])
+
+# veghf south
+v <- do.call(rbind, lapply(RESULTS$lins, function(z) {
+    o <- c(z$First, z$Lower, z$Upper)
+    names(o) <- c(rownames(z), paste0(rownames(z), ".LCL"), paste0(rownames(z), ".UCL"))
+    o
+}))
+p <- RES[RES$coefsouth, cn0]
+rownames(v)[endsWith(rownames(v), ".")] <-
+    substr(rownames(v)[endsWith(rownames(v), ".")], 1, nchar(rownames(v)[endsWith(rownames(v), ".")])-1)
+compare_sets(rownames(p), rownames(v))
+CFLs <- data.frame(p, v[rownames(p),])
+
+# soilhfnontreed
+v <- do.call(rbind, lapply(RESULTS$soilhfnontreed, function(z) {
+    c0 <- z$Estimate
+    c1 <- z$LCL
+    c2 <- z$UCL
+    names(c0) <- rownames(z)
+    names(c1) <- paste0(rownames(z), ".LCL")
+    names(c2) <- paste0(rownames(z), ".UCL")
+    c(c0, c1, c2)
+}))
+p <- RES[RES$coefsouth, cn0]
+rownames(v)[endsWith(rownames(v), ".")] <-
+    substr(rownames(v)[endsWith(rownames(v), ".")], 1, nchar(rownames(v)[endsWith(rownames(v), ".")])-1)
+compare_sets(rownames(p), rownames(v))
+CFNTs <- data.frame(p, v[rownames(p),])
+
+# soilhftreed
+v <- do.call(rbind, lapply(RESULTS$soilhftreed, function(z) {
+    c0 <- z$Estimate
+    c1 <- z$LCL
+    c2 <- z$UCL
+    names(c0) <- rownames(z)
+    names(c1) <- paste0(rownames(z), ".LCL")
+    names(c2) <- paste0(rownames(z), ".UCL")
+    c(c0, c1, c2)
+}))
+p <- RES[RES$coefsouth, cn0]
+rownames(v)[endsWith(rownames(v), ".")] <-
+    substr(rownames(v)[endsWith(rownames(v), ".")], 1, nchar(rownames(v)[endsWith(rownames(v), ".")])-1)
+compare_sets(rownames(p), rownames(v))
+CFTs <- data.frame(p, v[rownames(p),])
+
+z <- RESULTS$veghf[[1]]
+tmp <- c(cn0, rownames(z), paste0(rownames(z), ".LCL"), paste0(rownames(z), ".UCL"))
+colnames(CFn) <- tmp
+
+z <- RESULTS$soilhfnontreed[[1]]
+tmp <- c(cn0, rownames(z), paste0(rownames(z), ".LCL"), paste0(rownames(z), ".UCL"))
+colnames(CFNTs) <- colnames(CFTs) <- tmp
+
+meta <- read.csv("pipeline/2020/meta.csv")
+
+
+LIST <- list(
+    Info=VER,
+    Species=RES[,c("SpeciesID", "ScientificName",  "CommonName", "TSNID", "Group",
+        "det", "useavailnorth", "useavailsouth",
+        "coefnorth", "coefsouth", "map", "sectornorth", "sectorsouth",
+        "Occurrences", "nSites", "Nonnative", "LinkHabitat",
+        "LinkSpclim", "AUCNorth", "AUCSouth", "Comments")],
+    UseavailNorth=UAn,
+    UseavailSouth=UAs,
+    VeghfNorth=CFn,
+    LinearNorth=CFLn,
+    SoilhfSouthNontreed=CFNTs,
+    SoilhfSouthTreed=CFTs,
+    LinearSouth=CFLs,
+    SectorNorth=SEn,
+    SectorSouth=SEs,
+    Metadata=meta)
+
+
+write.xlsx(LIST, file.path(RT, "DataPortalUpdate_2021-01-08.xlsx"))
+
+
+lf <- list.files(file.path(RT, "normalized-maps"), recursive = TRUE, full.names = TRUE)
+lf2 <- lf
+lf2 <- gsub("normalized-maps", "normalized-maps-csv", lf2)
+lf2 <- gsub("RData", "csv", lf2)
+for (i in 1:length(lf2)) {
+    cat(i, "\n")
+    flush.console()
+    local({
+        load(lf[i])
+        out <- data.frame(LinkID=rownames(out), out)
+        write.csv(out, row.names = FALSE, file=lf2[i])
+    })
+}
 

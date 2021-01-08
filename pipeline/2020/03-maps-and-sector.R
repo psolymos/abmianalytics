@@ -419,6 +419,7 @@ ROOT2 <- "s:/AB_data_v2020/Results/boot"
 
 COEFS$mammals <- COEFS2$mammals
 COEFS$habitats <- COEFS2$habitats
+COEFS$nnplants <- COEFS2$nnplants
 
 library(raster)
 rt <- raster(system.file("extdata/AB_1km_mask.tif", package="cure4insect"))
@@ -513,9 +514,12 @@ for (taxon in TAXA) {
             #FUN <- function (eta)
             #    pmin(pmax(exp(eta), .Machine$double.eps), .Machine$double.xmax)
             INFO <- TAB[spp,]
+            II <- read.csv("s:/AB_data_v2020/Results/Camera mammal models revised June 2020/Mammal header table June 2020.csv")
+            rownames(II) <- II$SpeciesID
+            II <- II[spp,]
             Link <- list(
-                N=as.character(INFO$LinkSpclimNorth),
-                S=as.character(INFO$LinkSpclimSouth))
+                N=as.character(II$LinkSpclimNorth),
+                S=as.character(II$LinkSpclimSouth))
             if (is.na(Link$N))
                 Link$N <- "Log" # option 3 - no climate model, use 0
             if (is.na(Link$S))
@@ -546,7 +550,7 @@ for (taxon in TAXA) {
 
         }
         if (taxon == "habitats")
-            FUN <- binomial(COEFS[[taxon]]$species[spp, "link"])$linkinv
+            FUN <- binomial(COEFS[[taxon]]$species[spp, "LinkHabitat"])$linkinv
 
 
         ## bootstrap for current map
@@ -827,7 +831,8 @@ for (taxon in TAXA) {
                 Nrf <- NNrf
             }
 
-            if (TRUE) {
+            ## mammals troubleshooting
+            if (FALSE) {
                 u <- read.csv(paste0(
                     "s:/AB_data_v2020/Results/Camera mammal models South revised Nov 2020/Combine regions/Km2 summaries Oct 2020/",
                     spp, ".csv"))
@@ -1197,7 +1202,7 @@ for (taxon in TAXA) {
             q <- quantile(Drf, 0.99)
             Drf[Drf > q] <- q
             MAX <- max(Dcr, Drf)
-            if (taxon == "habitats" && COEFS[[taxon]]$species[spp, "Unit"] == "%" && spp != "SoilCarbon")
+            if (taxon == "habitats" && COEFS[[taxon]]$species[spp, "Comments"] == "%" && spp != "SoilCarbon")
                 MAX <- 1
             if (spp == "pH") {
                 Dcr[Dcr < 0] <- 0
