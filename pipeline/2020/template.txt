@@ -1,0 +1,34 @@
+<template>
+  <spp :blob="blob"></spp>
+</template>
+<script>
+export default {
+  head () {
+    return {
+      title: this.blob.display
+    }
+  },
+  data () {
+    return {
+      blob: {
+        id: "{{id}}",
+        scientific: "{{scientific}}",
+        common: "{{common}}",
+        display: "{{display}}",
+        det: {{det}},
+        useavailnorth: {{useavailnorth}},
+        useavailsouth: {{useavailsouth}},
+        coefnorth: {{coefnorth}},
+        coefsouth: {{coefsouth}},
+        map: {{map}},
+        sectornorth: {{sectornorth}},
+        sectorsouth: {{sectorsouth}},
+        idprev: "{{idprev}}",
+        idnext: "{{idnext}}",
+        taxonid: "{{taxonid}}",
+        taxonname: "{{taxonname}}"
+      }
+    }
+  }
+}
+</script>

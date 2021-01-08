@@ -131,9 +131,16 @@ COEFS$mammals <- COEFS2$mammals
 COEFS$habitats <- COEFS2$habitats
 COEFS$nnplants <- COEFS2$nnplants
 
+COEFS$mammals$species["Mountaingoat", "CommonName"] <- "Mountaingoat"
+COEFS$mammals$species["RiverOtter", "CommonName"] <- "River Otter"
+COEFS$vplants$species["Petunia.x.atkinsiana","ScientificName"] <- "Petunia x atkinsiana"
 
 #taxon <- "habitats"
 RES <- NULL
+ckeep <- c("id", "scientific", "common", "display",
+        "det", "useavailnorth",
+        "useavailsouth", "coefnorth", "coefsouth", "map", "sectornorth",
+        "sectorsouth", "idprev", "idnext")
 for (taxon in names(COEFS)) {
     cat("\n\n\n", taxon, "---------------\n\n")
 
@@ -180,9 +187,9 @@ for (taxon in names(COEFS)) {
     s$idnext <- c(s$id[-1], s$id[1])
 
     o <- xx$taxa[sapply(xx$taxa, "[[", "id") == taxon][[1]]
-    o$species <- s
+    o$species <- s[,ckeep]
 
-if (FALSE) {
+#if (FALSE) {
     #toJSON(o, auto_unbox=TRUE, pretty=TRUE)
     writeLines(
         toJSON(o, auto_unbox=TRUE),
@@ -190,7 +197,7 @@ if (FALSE) {
 
     for (spp in rownames(s)) {
 
-        oo <- as.list(s[spp,])
+        oo <- as.list(s[spp,ckeep])
         oo$taxonid <- xx$taxa[sapply(xx$taxa, "[[", "id") == taxon][[1]]$id
         oo$taxonname <- xx$taxa[sapply(xx$taxa, "[[", "id") == taxon][[1]]$name
 
@@ -200,7 +207,7 @@ if (FALSE) {
             paste0("s:/AB_data_v2020/Results/web/", taxon, "/", spp, "/index.json"))
 
     }
-}
+#}
     sss <- s
     sss$taxonid <- o$id
     sss$taxonname <- o$name
@@ -211,15 +218,13 @@ if (FALSE) {
 
 ok <- RES$ModelNorth | RES$ModelSouth
 data.frame(table(RES$Group[ok]))
-
-RES$SizeNorth <- RES$SizeSouth <- RES$R2North <- RES$R2South <- NULL
-
+any(is.na(RES$display))
 
 VER <- read.csv("pipeline/2020/VER.csv")
 
 cn <- c("id", "scientific", "common", "display",  "taxonid", "taxonname")
 xxx <- xx
-xxx$version <- VER
+xxx$info <- VER
 xxx$species <- RES[,cn]
 
 writeLines(
@@ -400,11 +405,12 @@ LIST <- list(
 
 write.xlsx(LIST, file.path(RT, "DataPortalUpdate_2021-01-08.xlsx"))
 
-
+## csv version
 lf <- list.files(file.path(RT, "normalized-maps"), recursive = TRUE, full.names = TRUE)
 lf2 <- lf
 lf2 <- gsub("normalized-maps", "normalized-maps-csv", lf2)
 lf2 <- gsub("RData", "csv", lf2)
+if (FALSE) {
 for (i in 1:length(lf2)) {
     cat(i, "\n")
     flush.console()
@@ -413,5 +419,6 @@ for (i in 1:length(lf2)) {
         out <- data.frame(LinkID=rownames(out), out)
         write.csv(out, row.names = FALSE, file=lf2[i])
     })
+}
 }
 
