@@ -1,5 +1,7 @@
 ## mapping and sector effects
 library(mefa4)
+library(qs)
+library(raster)
 
 load("s:/AB_data_v2020/Results/COEFS-ALL.RData")
 load("s:/AB_data_v2020/Results/COEFS-ALL2.RData")
@@ -409,30 +411,6 @@ d <- (xvr[,i] - xvc[,i]) / 10^6
 range(d)
 }
 
-## species specific part begins here
-
-#spp <- "AlderFlycatcher"
-#spp <- "RedtailedHawk"
-#taxon <- "birds"
-
-#spp <- "Actaea.rubra"
-#taxon <- "vplants"
-
-BOOT <- FALSE # do bootstrap?
-SEFF <- TRUE  # non bootstrapped map/SE stuff
-BMAX <- 100
-
-ROOT <- "s:/AB_data_v2020/Results/pred"
-#ROOT <- "s:/AB_data_v2020/Results/pred1"
-#ROOT <- "s:/AB_data_v2020/Results/pred-fine" # fine sectors
-ROOT2 <- "s:/AB_data_v2020/Results/boot"
-
-
-COEFS$mammals <- COEFS2$mammals
-COEFS$habitats <- COEFS2$habitats
-COEFS$nnplants <- COEFS2$nnplants
-
-library(raster)
 rt <- raster(system.file("extdata/AB_1km_mask.tif", package="cure4insect"))
 make_raster <- function(value, rc, rt) {
     value <- as.numeric(value)
@@ -465,12 +443,34 @@ p <- function(vcl, ...) {
     invisible(vr)
 }
 
+COEFS$mammals <- COEFS2$mammals
+COEFS$habitats <- COEFS2$habitats
+COEFS$nnplants <- COEFS2$nnplants
+
+## species specific part begins here
+
+#spp <- "AlderFlycatcher"
+#spp <- "RedtailedHawk"
+#taxon <- "birds"
+
+#spp <- "Actaea.rubra"
+#taxon <- "vplants"
+
+BOOT <- TRUE # do bootstrap?
+BMAX <- 100
+
+ROOT <- "s:/AB_data_v2020/Results/pred"
+#ROOT <- "s:/AB_data_v2020/Results/pred-fine" # fine sectors
+ROOT2 <- "s:/AB_data_v2020/Results/pred-boot"
+
+
 TAXA <- names(COEFS)
+#TAXA="birds"
 #TAXA="mammals"
 #spp="Moose"
 for (taxon in TAXA) {
 
-    if (SEFF && !dir.exists(file.path(ROOT, taxon)))
+    if (!dir.exists(file.path(ROOT, taxon)))
         dir.create(file.path(ROOT, taxon))
     if (BOOT && !dir.exists(file.path(ROOT2, taxon)))
         dir.create(file.path(ROOT2, taxon))
@@ -491,9 +491,6 @@ for (taxon in TAXA) {
     #SPPn <- intersect(SPPn, SPPs)
 
     for (spp in SPP) {
-
-        cat(taxon, spp)
-        flush.console()
 
         type <- "C" # combo species (N+S)
         M <- list(N=spp %in% SPPn, S=spp %in% SPPs)
@@ -554,76 +551,19 @@ for (taxon in TAXA) {
             XclimN <- Xclim_mamm_N[,names(cfn_cl)]
             cfs_asp <- if (type == "N") NULL else COEFS3$south$asp[spp,]
 
-#            round(data.frame(tot=cfn_tot, pa=cfn_pa, agp=cfn_agp), 3)
-#            round(data.frame(tot_nt=cfs_tot, # non treed
-#                tot_tr=plogis(qlogis(cfs_pa)+cfs_asp[1])*cfs_agp), 3) # treed
-
-
         }
         if (taxon == "habitats")
             FUN <- binomial(COEFS[[taxon]]$species[spp, "LinkHabitat"])$linkinv
 
-
-        ## bootstrap for current map
-        ## note: it is still slow. wait and run final set on westgid
-        ## this BOOT code does not handle mammals, we don't have bootstrap either
-        if (BOOT && taxon != "mammals" && taxon != "habitats") {
-            for (i in 1:BMAX) {
-                t0 <- proc.time()
-                if (type != "N") {
-                    gc()
-                    ## south calculations for the i'th run
-                    bscr <- cfs[colnames(Pscr2), i] # current land cover
-                    ## space-climate coefs
-                    bscl <- if (taxon == "birds")
-                        cfs[colnames(Xclim_bird), i] else cfs[colnames(Xclim_nonb), i]
-                    bspa <- cfs["pAspen", i]
-                    ## additive components for south
-                    muscl <- drop(XclimS %*% bscl) + pA * bspa
-                    if (taxon == "birds") {
-                        # exponential link is 3-4x faster without creating the matrix
-                        muscr <- t(t(Pscr2) * FUN(bscr)) * FUN(muscl)
-                        NScr <- rowSums(muscr)
-                    } else {
-                        muscr <- matrix(muscl, nrow=nrow(Pscr2), ncol=ncol(Pscr2))
-                        muscr <- t(t(muscr) + bscr)
-                        NScr <- rowSums(Pscr2 * FUN(muscr))
-                        # using outer is surprisingly less efficient than transpose
-                        #muscr <- outer(muscl, bscr, FUN="+")
-                        #NScr <- rowSums(Pscr2 * FUN(muscr))
-
-                    }
-                } else {
-                    NScr <- NULL
-                }
-                if (type != "S") {
-                    gc()
-                    ## north calculations for the i'th run
-                    tmpn <- c(cfn[,i], Bare=-10^4, SnowIce= -10^4)
-                    bncr <- tmpn[colnames(Pncr2)] # current land cover
-                    ## space-climate coefs
-                    bncl <- if (taxon == "birds")
-                        cfn[colnames(Xclim_bird), i] else cfn[colnames(Xclim_nonb), i]
-                    ## additive components for north
-                    muncl <- drop(XclimN %*% bncl)
-                    if (taxon == "birds") {
-                        muncr <- t(t(Pncr2) * FUN(bncr)) * FUN(muncl)
-                        NNcr <- rowSums(muncr)
-                    } else {
-                        muncr <- matrix(muncl, nrow=nrow(Pncr2), ncol=ncol(Pncr2))
-                        muncr <- t(t(muncr) + bncr)
-                        NNcr <- rowSums(Pncr2 * FUN(muncr))
-                    }
-                } else {
-                    NNcr <- NULL
-                }
-                cat("\t", proc.time()[3]-t0[3], "\n")
-            }
-        }
-
         ## only doing 1 run for sector effects
-        if (SEFF) {
-            i <- 1
+        imax <- if (BOOT)
+            BMAX else 1
+        #i <- 1
+        ## for loop for boot
+        for (i in seq_len(imax)) {
+
+            cat(taxon, spp, i)
+            flush.console()
             t0 <- proc.time()
             if (taxon == "mammals") {
                 if (type != "N") {
@@ -634,7 +574,6 @@ for (taxon in TAXA) {
                     bscl[is.na(bscl)] <- 0 # this happens for habitat elements
                     muscl <- drop(XclimS %*% bscl)
 
-                    #bspa <- cfs["pAspen", i]
                     muspaPA <-  pA * cfs_asp["pAspen.pa"]
                     muspaAGP <- pA * cfs_asp["pAspen.agp"]
 
@@ -689,19 +628,6 @@ for (taxon in TAXA) {
                         #musrf0 <- matrix(muscl, nrow=nrow(Psrf), ncol=ncol(Psrf))
                         musrf <- plogis(mparf + muscl) * exp(magprf)
                         NSrf <- as.matrix(groupSums(Psrf * musrf, 2, chSrf$sector_use))
-
-#                        rownames(mpacr) <- rownames(mparf) <-
-#                            rownames(magpcr) <- rownames(magprf) <- rownames(XclimS)
-#                        p(muscl)
-#                        p(Pscr * plogis(mpacr))
-#                        p(Pscr * exp(magpcr))
-#                        p(plogis(mpacr + muscl))
-#                        p(Psrf * plogis(mparf))
-#                        p(Psrf * exp(magprf))
-#                        p(plogis(mparf + muscl))
-#                        p(NScr)
-#                        p(NSrf)
-
 
                     }
                     NScr <- cbind(NScr, Forestry=0)
@@ -759,6 +685,7 @@ for (taxon in TAXA) {
                     NNcr <- NULL
                     NNrf <- NULL
                 }
+            ## non-mammal taxa
             } else {
                 if (type != "N") {
                     gc()
@@ -866,11 +793,21 @@ for (taxon in TAXA) {
                 dev.off()
             }
 
-            save(Ncr, Nrf,
-                file=file.path(ROOT, taxon, paste0(spp, ".RData")))
+            if (BOOT) {
+                if (!dir.exists(file.path(ROOT2, taxon, spp)))
+                    dir.create(file.path(ROOT2, taxon, spp))
+                # this is 5x faster and a littla bit smaller (load with qs::qloadm)
+                qsavem(Ncr, Nrf,
+                    file=file.path(ROOT2, taxon, spp, paste0(spp, "-", i, ".qrda")))
+                #save(Ncr, Nrf,
+                #    file=file.path(ROOT2, taxon, spp, paste0(spp, "-", i, ".RData")))
+            } else {
+                save(Ncr, Nrf,
+                    file=file.path(ROOT, taxon, paste0(spp, ".RData")))
+            }
             cat("\t", proc.time()[3]-t0[3], "\n")
 
-        } # end SEFF
+        } # end of for loop for boot
 
     }
 
