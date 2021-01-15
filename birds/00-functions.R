@@ -150,7 +150,7 @@ glm_skeleton <- function(object, ..., CAICalpha=0.5) {
 coef.glm_skeleton <- function(object, ...) object$coef
 #' most useful stats
 fstat <- function(x, level=0.95, ...) {
-    .fstat <- function(x, level=0.95)
+    .fstat <- function(x, level=0.95, ...)
         c(Mean=mean(x, ...), Median=median(x, ...),
             quantile(x, c((1-level)/2, 1 - (1-level)/2), ...))
     if (is.null(dim(x)))

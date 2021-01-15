@@ -462,6 +462,7 @@ BMAX <- 100
 ROOT <- "s:/AB_data_v2020/Results/pred"
 #ROOT <- "s:/AB_data_v2020/Results/pred-fine" # fine sectors
 ROOT2 <- "s:/AB_data_v2020/Results/pred-boot"
+#ROOT2 <- "s:/AB_data_v2020/Results/pred-boot-fine"
 
 
 TAXA <- names(COEFS)
@@ -489,6 +490,7 @@ for (taxon in TAXA) {
     }
     SPP <- sort(union(SPPn, SPPs))
     #SPPn <- intersect(SPPn, SPPs)
+    #SPP <- c("RuffedGrouse", "PileatedWoodpecker", "BrownheadedCowbird")#, "Ovenbird", "CanadaWarbler")
 
     for (spp in SPP) {
 
@@ -560,7 +562,10 @@ for (taxon in TAXA) {
             BMAX else 1
         #i <- 1
         ## for loop for boot
-        for (i in seq_len(imax)) {
+        ivec <- seq_len(imax)
+        #ivec <- 1:25
+        #ivec <- 26:100
+        for (i in ivec) {
 
             cat(taxon, spp, i)
             flush.console()

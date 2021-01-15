@@ -234,3 +234,100 @@ v <- rowSums(NNcr)
 q <- quantile(v, 0.99)
 v[v>q] <- q
 plot(make_raster(v, kgrid, rt), col=hcl.colors(25))
+
+
+## bootstrap based efficiencies
+## can we use 10% of the pixels to predict the rest?
+## compare agains the 100% based timings
+
+library(qs)
+ROOT2 <- "s:/AB_data_v2020/Results/pred-boot"
+
+taxon <- "birds"
+SPP <- list.dirs(file.path(ROOT2, taxon), full.names=FALSE)
+SPP <- SPP[-1]
+B <- 100
+ii <- 1:B
+names(ii) <- 1:B
+ii <- ii[order(names(ii))]
+
+spp <- SPP[1]
+fl <- list.files(file.path(ROOT2, taxon, spp), full.names = TRUE)
+fl <- fl[order(ii)]
+ft <- file.info(fl)$ctime
+dt <- as.numeric(diff(ft))
+
+i <- 1
+qreadm(file.path(ROOT2, taxon, spp, paste0(spp, "-", i, ".qrda")))
+M <- matrix(0, nrow(Ncr), B)
+rownames(M) <- rownames(Ncr)
+M[,1] <- rowSums(Ncr)
+
+for (i in 2:B) {
+    cat(i, "\n")
+    flush.console()
+    qreadm(file.path(ROOT2, taxon, spp, paste0(spp, "-", i, ".qrda")))
+    M[,i] <- rowSums(Ncr)
+}
+
+p <- 0.1
+Rnd <- sample.int(100, nrow(M), replace=TRUE)
+Mt <- data.frame(M[Rnd <= round(p*100),])
+Mv <- data.frame(M[Rnd > round(p*100),])
+
+library(e1071)
+
+system.time({
+    m <- svm(X1 ~ ., Mt)
+    pr <- predict(m, Mv)
+})
+
+lm(Mv$X1 ~ pr)
+cor(cbind(Mv$X1, pr))[1,2]
+# taking 2-3x longer than calculation
+
+## see if SD's are unaffected
+
+res <- NULL
+for (j in 1:10) {
+    MM <- M[,sample(100, 100)]
+    SD <- matrix(0, nrow(Ncr), 10)
+    for (i in 1:10) {
+        cat(j, i, "\n")
+        flush.console()
+        SD[,i] <- apply(MM[,1:(i*10)], 1, sd)
+    }
+
+    L <- list()
+    for (i in 1:9) {
+        L[[i]] <- lm(SD[,i] ~ SD[,10])
+    }
+
+    U <- t(sapply(L, function(z) {
+        c(coef(z), sigma(z))
+    }))
+    colnames(U) <- c("b0", "b1", "s")
+    U
+
+    plot(1:9*10, U[,1], type="b")
+    plot(1:9*10, U[,2], type="b")
+    plot(1:9*10, U[,3], type="b")
+
+
+    B <- 1:9*10
+    u <- data.frame(coef=rep(colnames(U), each=9), estimate=as.numeric(U), B=B)
+    u <- rbind(u, data.frame(
+        coef=colnames(U),
+        estimate=c(0,1,0),
+        B=c(100, 100, 100)
+    ))
+    u$run <- j
+    res <- rbind(res, u)
+}
+
+
+library(ggplot2)
+ggplot(res, aes(x=B, y=estimate, color=as.factor(run))) +
+    geom_line() +
+#    geom_smooth() +
+    facet_wrap(vars(coef), scales="free_y")
