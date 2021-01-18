@@ -42,10 +42,20 @@ library(knitr)
 library(opticut)
 library(rgdal)
 library(sp)
+library(raster)
 source("~/repos/abmianalytics/birds/00-functions.R")
 knitr::opts_chunk$set(cache=TRUE, echo=FALSE, message=FALSE, warning=FALSE, fig.pos="H", fig.align="center")
 
+if (interactive())
+  params <- list(species="PileatedWoodpecker")
 
+## change here when power is down in the office, things should be mirrored
+ROOT <- "~/GoogleWork/abmi/osm-2021"
+#ROOT <- "s:/AB_data_v2020/Results/osm"
+
+load(file.path(ROOT, "RES1.RData"))
+RES <- RES1[[params$species]]
+rm(RES1)
 
 ## Bayne et al 2016 Condor results for Ovenbird
 MM <- list(BHCO = list(est = structure(c(3.55, 1.83, 1.03, 0, 0, 0, 
@@ -76,21 +86,53 @@ SppName <- switch(params$species,
   "BrownheadedCowbird"="Brown-headed Cowbird", 
   "PileatedWoodpecker"="Pileated Woodpecker")
 
-b16 <- list(est = structure(c(0.81, 0.98, 0.96, 0.98, 0.77, 0.76, 0.31, 
-    0.89, 0.88), .Dim = c(3L, 3L), .Dimnames = list(c("50m", "100m", 
-    "Unlimited"), c("Seismic", "Pipeline", "Wellpad"))), lwr = structure(c(0.65, 
-    0.84, 0.85, 0.73, 0.64, 0.64, 0.21, 0.74, 0.74), .Dim = c(3L, 
-    3L), .Dimnames = list(c("50m", "100m", "Unlimited"), c("Seismic", 
-    "Pipeline", "Wellpad"))), upr = structure(c(1.01, 1.13, 1.09, 
-    1.33, 0.92, 0.89, 0.45, 1.07, 1.05), .Dim = c(3L, 3L), .Dimnames = list(
-    c("50m", "100m", "Unlimited"), c("Seismic", "Pipeline", "Wellpad"
-    ))))
-## modifiers
-modSpace <- new.env()
-load("data/pred/lamMod.RData", envir=modSpace)
-## additive (Space level) sector effects
-load("data/pred/osm-oven-space-all.RData")
-#load("data/pred/osm-oven-hf-all.RData")
+rt <- raster(system.file("extdata/AB_1km_mask.tif", package="cure4insect"))
+
+make_raster <- function(value, rc, rt) {
+    value <- as.numeric(value)
+    r <- as.matrix(Xtab(value ~ Row + Col, rc))
+    r[is.na(as.matrix(rt))] <- NA
+    raster(x=r, template=rt)
+}
+
+col1 <- colorRampPalette(rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8","#91BFDB","#4575B4")))(100)
+col2 <- colorRampPalette(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B", "#D9EF8B",
+    "#A6D96A", "#66BD63", "#1A9850", "#006837"))(100)
+col3 <- colorRampPalette(c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0","#A1D76A","#4D9221"))(200)
+CW <- rgb(0.4,0.3,0.8) # water
+CE <- "lightcyan4" # exclude
+
+pl <- readOGR(file.path(ROOT, "Oilsands-Boundaries.gdb"), "OilsandRegionDissolve10TM")
+pl <- spTransform(pl, proj4string(rt))
+
+uhfs <- 100*tanh(log(1+RES$se[,grep("UnderHF", colnames(RES$se))]/100))
+colnames(uhfs) <- gsub("UnderHF.", "", colnames(uhfs), fixed=TRUE)
+uhfs2 <- 100*tanh(log(1+RES$fine[,grep("UnderHF", colnames(RES$fine))]/100))
+colnames(uhfs2) <- gsub("UnderHF.", "", colnames(uhfs2), fixed=TRUE)
+rownames(uhfs) <- rownames(uhfs2) <- paste0("Run", 1:100)
+Uhfs <- Melt(uhfs[,c("Agriculture", "RuralUrban", "Energy", "Transportation", "Forestry")])
+Uhfs2 <- Melt(uhfs2[,c("Crop", "TameP", "RoughP", "Industrial", "Mine", "Rural", "Urban", "Well", "HardLin", "EnSoftLin", "TrSoftLin", "EnSeismic", "Forestry")])
+colnames(Uhfs) <- colnames(Uhfs2) <- c("Run", "Sector", "UnderHF")
+
+fstat(t(uhfs[,c("Agriculture", "RuralUrban", "Energy", "Transportation", "Forestry")]))
+fstat(t(uhfs2[,c("Crop", "TameP", "RoughP", "Industrial", "Mine", "Rural", "Urban", "Well", "HardLin", "EnSoftLin", "TrSoftLin", "EnSeismic", "Forestry")]))
+
+ggplot(Uhfs, aes(x=Sector, y=UnderHF, fill=Sector)) +
+  geom_boxplot() +
+  geom_abline(intercept=0, slope=0, col=2) +
+  ylim(-100, 100) +
+  coord_flip() +
+  labs(title=SppName) +
+  theme_minimal()
+
+ggplot(Uhfs2, aes(x=Sector, y=UnderHF, fill=Sector)) +
+  geom_boxplot() +
+  geom_abline(intercept=0, slope=0, col=2) +
+  ylim(-100, 100) +
+  coord_flip() +
+  labs(title=SppName) +
+  theme_minimal()
+
 getSE <- function(s) {
     Ns1 <- colSums(HCR[s,,drop=FALSE])
     Ns0 <- colSums(HRF[s,,drop=FALSE])
@@ -111,7 +153,7 @@ hf <- function(x, ...) {
   lines(quantile(x, c(0.05, 0.95)), c(0, 0), lwd=4, col=2)
   invisible(d)
 }
-enhf <- c("RoadRailVerge", "SeismicLine", "Industrial", "WellSite", "MineSite", "PipeTransLine")
+#enhf <- c("RoadRailVerge", "SeismicLine", "Industrial", "WellSite", "MineSite", "PipeTransLine")
 ```
 
 # Introduction
