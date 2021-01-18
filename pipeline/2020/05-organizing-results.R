@@ -189,7 +189,7 @@ for (taxon in names(COEFS)) {
     o <- xx$taxa[sapply(xx$taxa, "[[", "id") == taxon][[1]]
     o$species <- s[,ckeep]
 
-#if (FALSE) {
+if (FALSE) {
     #toJSON(o, auto_unbox=TRUE, pretty=TRUE)
     writeLines(
         toJSON(o, auto_unbox=TRUE),
@@ -207,7 +207,7 @@ for (taxon in names(COEFS)) {
             paste0("s:/AB_data_v2020/Results/web/", taxon, "/", spp, "/index.json"))
 
     }
-#}
+}
     sss <- s
     sss$taxonid <- o$id
     sss$taxonname <- o$name
@@ -384,6 +384,38 @@ colnames(CFNTs) <- colnames(CFTs) <- tmp
 meta <- read.csv("pipeline/2020/meta.csv")
 
 
+fcheck <- function(zz) {
+    zzz <- zz[,6:ncol(zz)]
+    print(zzz[rowSums(is.na(zzz))>0,])
+    cat("\n")
+    print(range(zzz, na.rm=TRUE))
+    invisible()
+}
+fcheck(UAn)
+fcheck(UAs)
+fcheck(CFn)
+fcheck(CFLn)
+fcheck(CFNTs)
+fcheck(CFTs)
+fcheck(CFLs)
+fcheck(SEn)
+fcheck(SEs)
+
+ffix <- function(zz) {
+    zz[is.na(zz)] <- 0
+    zz[zz > 10^4] <- 10^4
+    zz
+}
+fcheck(ffix(UAn))
+fcheck(ffix(UAs))
+fcheck(ffix(CFn))
+fcheck(ffix(CFLn))
+fcheck(ffix(CFNTs))
+fcheck(ffix(CFTs))
+fcheck(ffix(CFLs))
+fcheck(ffix(SEn))
+fcheck(ffix(SEs))
+
 LIST <- list(
     Info=VER,
     Species=RES[,c("SpeciesID", "ScientificName",  "CommonName", "TSNID", "Group",
@@ -391,19 +423,19 @@ LIST <- list(
         "coefnorth", "coefsouth", "map", "sectornorth", "sectorsouth",
         "Occurrences", "nSites", "Nonnative", "LinkHabitat",
         "LinkSpclim", "AUCNorth", "AUCSouth", "Comments")],
-    UseavailNorth=UAn,
-    UseavailSouth=UAs,
-    VeghfNorth=CFn,
-    LinearNorth=CFLn,
-    SoilhfSouthNontreed=CFNTs,
-    SoilhfSouthTreed=CFTs,
-    LinearSouth=CFLs,
-    SectorNorth=SEn,
-    SectorSouth=SEs,
+    UseavailNorth=ffix(UAn),
+    UseavailSouth=ffix(UAs),
+    VeghfNorth=ffix(CFn),
+    LinearNorth=ffix(CFLn),
+    SoilhfSouthNontreed=ffix(CFNTs),
+    SoilhfSouthTreed=ffix(CFTs),
+    LinearSouth=ffix(CFLs),
+    SectorNorth=ffix(SEn),
+    SectorSouth=ffix(SEs),
     Metadata=meta)
 
 
-write.xlsx(LIST, file.path(RT, "DataPortalUpdate_2021-01-08.xlsx"))
+write.xlsx(LIST, file.path(RT, "DataPortalUpdate_2021-01-15.xlsx"))
 
 ## csv version
 lf <- list.files(file.path(RT, "normalized-maps"), recursive = TRUE, full.names = TRUE)
