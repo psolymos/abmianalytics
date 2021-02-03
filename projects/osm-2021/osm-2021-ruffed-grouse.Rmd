@@ -1,5 +1,5 @@
 ---
-title: "Pileated Woodpecker"
+title: "Ruffed Grouse"
 subtitle: "OSM Synthesis"
 author: "Peter Solymos, Marcus Becker, Erin Bayne"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
@@ -18,7 +18,7 @@ google-font: TRUE
 main-font: "Montserrat"
 header-font: "Domine"
 params:
-  species: "PileatedWoodpecker"
+  species: "RuffedGrouse"
 ---
 
 ```{r preamble,include=FALSE}
@@ -29,11 +29,11 @@ library(knitr)
 knitr::opts_chunk$set(cache=TRUE, echo=FALSE, message=FALSE, warning=FALSE, fig.pos="H", fig.align="center")
 
 if (interactive())
-  params <- list(species="BrownheadedCowbird")
+  params <- list(species="RuffedGrouse")
 
 ## change here when power is down in the office, things should be mirrored
 ROOT <- "/Users/Peter/GoogleWork/abmi/osm-2021"
-#ROOT <- "s:/AB_data_v2020/Results/osm"
+ROOT <- "s:/AB_data_v2020/Results/osm"
 
 ## Bayne et al 2016 Condor results for Ovenbird
 MM <- list(
@@ -96,7 +96,7 @@ INFO <- switch(params$species,
 library(rgdal)
 library(sp)
 library(raster)
-source("~/repos/abmianalytics/birds/00-functions.R")
+source("https://raw.githubusercontent.com/psolymos/abmianalytics/master/birds/00-functions.R")
 
 load(file.path(ROOT, "RES1.RData"))
 RES <- RES1[[params$species]]
