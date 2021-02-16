@@ -120,6 +120,33 @@ spp <- SPP[3]
 
 rn <- rownames(kgrid)[ss]
 
+## pop sizes
+ROOT <- "s:/AB_data_v2020/Results/pred-boot"
+NNN <- list()
+for (spp in SPP) {
+    gc()
+    NNi <- matrix(NA, 2, 100)
+    rownames(NNi) <- c("Ref", "Curr")
+    for (i in 1:100) {
+        cat(spp, i, "\n")
+        flush.console()
+        qreadm(file.path(ROOT, "birds", spp, paste0(spp, "-", i, ".qrda"))) # Ncr, Nrf
+        NNi["Ref", i] <- sum(Nrf[rn,])
+        NNi["Curr", i] <- sum(Ncr[rn,])
+    }
+    NNN[[spp]] <- NNi
+}
+## these are summaed average densities
+## x100 to get number of males, x200 to get pop size
+save(NNN, file="s:/AB_data_v2020/Results/osm/NNN.RData")
+save(NNN, file="~/GoogleWork/abmi/osm-2021/NNN.RData")
+
+
+## scaling
+
+x <- 1:1000
+y <- ifelse(x <= 100, x, plogis((x-100)/100)*200)
+plot(x, y, type="l")
 
 ## usual sectors
 ROOT <- "s:/AB_data_v2020/Results/pred-boot"
