@@ -402,9 +402,10 @@ fcheck(SEn)
 fcheck(SEs)
 
 ffix <- function(zz) {
-    zz[is.na(zz)] <- 0
-    zz[zz > 10^4] <- 10^4
-    zz
+    zzz <- zz[,!(colnames(zz) %in% cn0)]
+    zzz[is.na(zzz)] <- 0
+    zzz[zzz > 10^4] <- 10^4
+    data.frame(zz[,cn0], zzz)
 }
 fcheck(ffix(UAn))
 fcheck(ffix(UAs))
@@ -435,7 +436,7 @@ LIST <- list(
     Metadata=meta)
 
 
-write.xlsx(LIST, file.path(RT, "DataPortalUpdate_2021-01-15.xlsx"))
+write.xlsx(LIST, file.path(RT, "DataPortalUpdate_2021-01-18.xlsx"))
 
 ## csv version
 lf <- list.files(file.path(RT, "normalized-maps"), recursive = TRUE, full.names = TRUE)
