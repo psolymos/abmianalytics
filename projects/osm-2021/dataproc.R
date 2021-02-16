@@ -276,26 +276,3 @@ for (spp in SPP) {
 save(RES1, file="s:/AB_data_v2020/Results/osm/RES1.RData")
 save(RES1, file="~/GoogleWork/abmi/osm-2021/RES1.RData")
 
-## --
-
-rt <- raster(system.file("extdata/AB_1km_mask.tif", package="cure4insect"))
-
-make_raster <- function(value, rc, rt) {
-    value <- as.numeric(value)
-    r <- as.matrix(Xtab(value ~ Row + Col, rc))
-    r[is.na(as.matrix(rt))] <- NA
-    raster(x=r, template=rt)
-}
-
-Rmaskm <- make_raster(as.integer(!kgrid$NRNAME == "Grassland"), kgrid, rt)
-values(Rmaskm)[values(Rmaskm) == 0] <- NA
-Rw <- make_raster(as.integer(kgrid$pWater > 0.99), kgrid, rt)
-values(Rw)[values(Rw) == 0] <- NA
-
-col1 <- colorRampPalette(rev(c("#D73027","#FC8D59","#FEE090","#E0F3F8","#91BFDB","#4575B4")))(100)
-col2 <- colorRampPalette(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE08B", "#D9EF8B",
-    "#A6D96A", "#66BD63", "#1A9850", "#006837"))(100)
-col3 <- colorRampPalette(c("#C51B7D","#E9A3C9","#FDE0EF","#E6F5D0","#A1D76A","#4D9221"))(200)
-CW <- rgb(0.4,0.3,0.8) # water
-CE <- "lightcyan4" # exclude
-
