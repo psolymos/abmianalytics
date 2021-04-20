@@ -469,6 +469,13 @@ TAXA <- names(COEFS)
 #TAXA="birds"
 #TAXA="mammals"
 #spp="Moose"
+
+## vplants last spp is Carex.filifolia 110 --> SPP[111:456]
+which(SPP == spp)
+
+TAXA="vplants"
+
+
 for (taxon in TAXA) {
 
     if (!dir.exists(file.path(ROOT, taxon)))
@@ -490,9 +497,13 @@ for (taxon in TAXA) {
     }
     SPP <- sort(union(SPPn, SPPs))
     #SPPn <- intersect(SPPn, SPPs)
-    #SPP <- c("RuffedGrouse", "PileatedWoodpecker", "BrownheadedCowbird")#, "Ovenbird", "CanadaWarbler")
+    Dir <- list.dirs(file.path(ROOT2, taxon), full.names = FALSE)[-1]
 
-    for (spp in SPP) {
+    #SPPlist <- SPP#[111:456]
+    SPPlist <- sort(setdiff(SPP, Dir))
+    #SPPlist <- rev(SPPlist)
+
+    for (spp in SPPlist) {
 
         type <- "C" # combo species (N+S)
         M <- list(N=spp %in% SPPn, S=spp %in% SPPs)
