@@ -28,6 +28,25 @@ load(file.path(ROOT, "data", "ab-birds-south-2020-09-23.RData"), envir=es)
 Xn <- get_model_matrix(en$DAT, en$mods)
 Xs <- get_model_matrix(es$DAT, es$mods)
 
+if (FALSE) {
+    ## arbitrary species data
+    spp <- "LISP"
+    xn=en$DAT
+    xn[[paste0(spp, "_count")]] <- as.numeric(en$YY[,spp])
+    xn[[paste0(spp, "_offset")]] <- as.numeric(en$OFF[,spp])
+    xs=es$DAT
+    xs[[paste0(spp, "_count")]] <- as.numeric(es$YY[,spp])
+    xs[[paste0(spp, "_offset")]] <- as.numeric(es$OFF[,spp])
+    write.csv(xn, row.names = FALSE, file="~/Desktop/x/LISP-ABMI-North-2020.csv")
+    write.csv(xs, row.names = FALSE, file="~/Desktop/x/LISP-ABMI-South-2020.csv")
+
+    xxn <- data.frame(colname=colnames(xn), description="")
+    xxs <- data.frame(colname=colnames(xs), description="")
+    write.csv(xxn, row.names = FALSE, file="~/Desktop/x/Metadata-ABMI-North-2020.csv")
+    write.csv(xxs, row.names = FALSE, file="~/Desktop/x/Metadata-ABMI-South-2020.csv")
+}
+
+
 #Xage <- as.matrix(read.csv("~/repos/abmianalytics/lookup/Xn-veg-v61.csv"))
 Xage <- as.matrix(read.csv("~/repos/abmianalytics/lookup/Xn-veg-v2020.csv"))
 colnames(Xage) <- colnames(Xn)[match(colnames(Xage), make.names(colnames(Xn)))]
