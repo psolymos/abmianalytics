@@ -409,6 +409,29 @@ setdiff(colnames(xvc), colnames(xvr))
 i <- intersect(colnames(xvc), colnames(xvr))
 d <- (xvr[,i] - xvc[,i]) / 10^6
 range(d)
+
+
+kcn <- c("POINT_X", "POINT_Y",
+    "NSRNAME", "NRNAME", "LUF_NAME", "AHM", "PET", "FFP", "MAP",
+    "MAT", "MCMT", "MWMT", "pAspen", "pWater", "pSoil", "wN")
+spclim <- cbind(kgrid[,kcn], Xclim_mammal[,c("PeaceRiver",
+    "NSR1CentralMixedwood", "NSR1DryMixedwood", "NSR1Foothills",
+    "NSR1Mountain", "NSR1North", "NSR1Parkland", "NSR1Shield")])
+p_veghf <- Pncr2
+p_soilhf <- Pscr2
+
+is_SS <- c(
+    sample(which(kgrid$wN==0))[1:10],
+    sample(which(kgrid$wN==1))[1:10],
+    sample(which(kgrid$wN > 0.2 & kgrid$wN < 0.8))[1:10])
+
+spclim <- spclim[is_SS,]
+spclim <- spclim[order(spclim$wN),]
+p_veghf <- p_veghf[rownames(spclim),]
+p_soilhf <- p_soilhf[rownames(spclim),]
+
+save(spclim, p_veghf, p_soilhf, file="inst/extdata/example.RData")
+
 }
 
 rt <- raster(system.file("extdata/AB_1km_mask.tif", package="cure4insect"))
@@ -429,6 +452,31 @@ f <- function(x) {
     }
     make_raster(v, kgrid, rt)
 }
+## save important variables
+if (FALSE) {
+zz=data.frame(kgrid,Xclim_mammal)
+cn <- c("AHM", "PET", "FFP", "MAP",
+    "MAT", "MCMT", "MWMT", "pAspen",
+    "pWater", "wN", "PeaceRiver",
+    "NSR1CentralMixedwood", "NSR1DryMixedwood",
+    "NSR1Foothills", "NSR1Mountain", "NSR1North",
+    "NSR1Parkland", "NSR1Shield")
+zz <- zz[,cn]
+for (i in cn) {
+    cat(i, "\n")
+    flush.console()
+    ri <- make_raster(zz[,i], kgrid, rt)
+#    writeRaster(ri,
+#        paste0("~/repos/allinone-coefs/spatial/", i, ".tif"),
+#        overwrite=TRUE)
+    png(paste0("~/repos/allinone-coefs/spatial/", i, ".png"),
+        width=400, height=600)
+    plot(ri, col=hcl.colors(100, "plasma"), axes=FALSE, box=FALSE)
+    dev.off()
+}
+}
+
+
 # this helps quickly plot stuff on a map
 p <- function(vcl, ...) {
     if (is.null(vcl))
@@ -446,6 +494,27 @@ p <- function(vcl, ...) {
 COEFS$mammals <- COEFS2$mammals
 COEFS$habitats <- COEFS2$habitats
 COEFS$nnplants <- COEFS2$nnplants
+
+## save coefs
+if (FALSE) {
+    COEFS$lichens$north <- COEFS$lichens$north[,,1:100]
+    COEFS$lichens$south <- COEFS$lichens$south[,,1:100]
+    COEFS$mites$north <- COEFS$mites$north[,,1:100]
+    COEFS$mites$south <- COEFS$mites$south[,,1:100]
+    COEFS$mosses$north <- COEFS$mosses$north[,,1:100]
+    COEFS$mosses$south <- COEFS$mosses$south[,,1:100]
+    COEFS$vplants$north <- COEFS$vplants$north[,,1:100]
+    COEFS$vplants$south <- COEFS$vplants$south[,,1:100]
+    COEFS$birds$north$marginal <-     COEFS$birds$north$marginal[,,1:100]
+    COEFS$birds$south$marginal <-     COEFS$birds$south$marginal[,,1:100]
+    COEFS$birds$north$joint <-     COEFS$birds$north$joint[,,1:100]
+    COEFS$birds$south$joint <-     COEFS$birds$south$joint[,,1:100]
+
+    COEFS$mammals$north <- COEFS3$north
+    COEFS$mammals$south <- COEFS3$south
+
+    save(COEFS, file="~/repos/allinone-coefs/v2020/COEFS.RData")
+}
 
 ## species specific part begins here
 
@@ -471,7 +540,7 @@ TAXA <- names(COEFS)
 #spp="Moose"
 
 ## vplants last spp is Carex.filifolia 110 --> SPP[111:456]
-which(SPP == spp)
+#which(SPP == spp)
 
 TAXA="vplants"
 
@@ -1240,3 +1309,43 @@ for (taxon in TAXA) {
 }
 
 
+## finding 'range' from pixel maps
+
+library(opticut)
+
+taxon <- "birds"
+spp <- "AlderFlycatcher"
+spp <- "CanadaWarbler"
+spp <- "RustyBlackbird"
+
+load(file.path(ROOT, taxon, paste0(spp, ".RData"))) # Ncr, Nrf
+
+## calculate mean abundance in km pixel
+Dcr <- rowSums(Ncr)[match(rownames(kgrid), rownames(Ncr))]
+## deal with NAs (unmodeled areas) and truncate
+Dcr[is.na(Dcr)] <- 0
+q <- quantile(Dcr, 0.99)
+Dcr[Dcr > q] <- q
+
+## construct Lorenz curve
+l <- lorenz(Dcr)
+## calculate abundance threshold for quantiles
+a <- c(0.99, 0.9, 0.8)
+lq <- quantile(l, 1-a, "L")
+## make an ordered version of abundances
+Dcr1 <- ifelse(Dcr >= lq[1], 1, 0)
+Dcr1[Dcr >= lq[2]] <- 2
+Dcr1[Dcr >= lq[3]] <- 3
+
+## make a raster of the original for plotting
+Rcr <- make_raster(Dcr, kgrid, rt)
+## make raster from the ordered vector
+Rcr1 <- make_raster(Dcr1, kgrid, rt)
+
+op <- par(mfrow=c(1,2), mar=c(2,1,2,3))
+plot(Rcr, col=col1, axes=FALSE, box=FALSE, main=paste(spp, taxon), legend=FALSE)
+plot(Rw, add=TRUE, col=CW, legend=FALSE)
+plot(Rcr1, col=hcl.colors(4, "Lajolla"),
+    axes=FALSE, box=FALSE, main="Quantized", legend=FALSE)
+plot(Rw, add=TRUE, col=CW, legend=FALSE)
+par(op)
