@@ -10,7 +10,7 @@
 #SBATCH --mail-type=ALL
 
 # Load modules
-module nixpkgs/16.09
+module load nixpkgs/16.09
 module load gcc/7.3.0
 module load openmpi/3.1.2
 module load r/3.5.1
