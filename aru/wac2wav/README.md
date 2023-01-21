@@ -1,3 +1,4 @@
+> The code in this directory is no longer maintained, see <https://github.com/psolymos/wac2wav> instead
 
 ### Current release
 
